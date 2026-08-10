@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Life OS</title>
+<style>
+:root{--ink:#10231C;--panel:#0B1913;--line:#2A3E36;--chalk:#F2EFE6;--faded:#8FA69B;--marker:#FF8A3D;--tape:#E8C547;--bad:#E06C5A}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;color:var(--chalk);background:var(--ink);
+background-image:radial-gradient(ellipse at top,#16332A 0%,#10231C 60%);
+font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+padding:calc(14px + env(safe-area-inset-top)) 16px calc(92px + env(safe-area-inset-bottom));max-width:520px;margin-inline:auto}
+h1{font-size:24px;margin:6px 0 4px;font-weight:900;letter-spacing:.5px}
+.tape{display:inline-block;background:var(--tape);color:var(--ink);font-size:11px;font-weight:700;letter-spacing:2px;padding:3px 10px;transform:rotate(-1deg);margin:14px 0 6px}
+.sub{color:var(--faded);font-size:13px;line-height:1.5;margin:4px 0 10px}
+.body{color:var(--chalk);font-size:14px;line-height:1.5}
+label{display:block;font-size:12px;color:var(--tape);margin:12px 0 6px;letter-spacing:.5px}
+textarea,input,select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--chalk);font-size:15px;padding:11px 13px;font-family:inherit;resize:none;outline:none}
+input[type=checkbox]{width:22px;height:22px}
+.btn{width:100%;margin-top:12px;background:var(--marker);color:var(--ink);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn:disabled{opacity:.4}.btn.done{background:var(--tape)}.btn.ghost{background:transparent;border:1px dashed var(--faded);color:var(--faded)}
+.btn.mini{width:auto;padding:8px 14px;font-size:13px;margin:0}
+.btn.danger{background:var(--bad);color:var(--ink)}
+.score{display:flex;align-items:center;justify-content:space-around;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 6px;margin-bottom:12px;text-align:center}
+.score .num{font-size:24px;font-weight:900;color:var(--marker)}
+.score .num.gold{color:var(--tape)}.score .num.dim{color:var(--faded)}
+.score .lbl{font-size:9px;letter-spacing:1.2px;color:var(--faded);text-transform:uppercase;margin-top:2px}
+.score .div{width:1px;height:34px;background:var(--line)}
+.xpbar{height:8px;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:4px 0 14px}
+.xpbar>div{height:100%;background:linear-gradient(90deg,var(--marker),var(--tape))}
+.row{width:100%;display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px;color:var(--chalk);font-family:inherit;cursor:pointer;text-align:left}
+.row.hit{border-color:var(--tape)}.row.mvp{border-color:var(--marker)}
+.row .ico{font-size:19px;margin-right:10px}
+.t1{font-size:14px;font-weight:700}.t2{font-size:12px;color:var(--faded);margin-top:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cell{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--faded);background:#1A2E27}
+.flex{display:flex;gap:8px;align-items:center}.grow{flex:1}
+.pill{font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--line);color:var(--faded)}
+.pill.on{background:var(--tape);color:var(--ink);border-color:var(--tape)}
+.banner{width:100%;background:#3A2A24;border:1px solid var(--marker);color:var(--chalk);border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:12px;cursor:pointer;text-align:left}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;display:flex;background:var(--panel);border-top:1px solid var(--line);padding:8px 0 calc(12px + env(safe-area-inset-bottom));z-index:5}
+nav button{flex:1;background:none;border:none;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.3px;color:var(--faded);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button span{font-size:17px}nav button.on{color:var(--marker)}
+.dots{display:flex;gap:8px;justify-content:center;margin-top:18px}
+.dot{width:8px;height:8px;border-radius:4px;background:var(--line)}.dot.on{background:var(--marker)}
+.hide{display:none}
+.timer{font-size:56px;font-weight:900;text-align:center;letter-spacing:2px;margin:18px 0;font-variant-numeric:tabular-nums}
+.mood{display:flex;gap:8px;justify-content:space-between}
+.mood button{flex:1;font-size:22px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 0;cursor:pointer}
+.mood button.on{border-color:var(--tape);background:#2A3520}
+canvas{width:100%;height:90px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.del{background:none;border:none;color:var(--bad);font-size:16px;cursor:pointer;padding:4px 8px}
+.checkbig{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;margin-right:10px}
+.checkbig.on{background:var(--tape);border-color:var(--tape);color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav id="nav" class="hide">
+<button data-tab="today"><span>⚔️</span>Today</button>
+<button data-tab="plan"><span>🧭</span>Plan</button>
+<button data-tab="focus"><span>⏱️</span>Focus</button>
+<button data-tab="track"><span>📈</span>Track</button>
+<button data-tab="stats"><span>🏆</span>Stats</button>
+</nav>
+<script>
+// ================= CORE =================
+const AREAS=[
+{id:"career",label:"Career & Money",icon:"💼"},
+{id:"health",label:"Health & Body",icon:"🫀"},
+{id:"learning",label:"Skills & Learning",icon:"📚"},
+{id:"life",label:"People & Life",icon:"🤝"}];
+const KEY="lifeos-v2";
+const uid=()=>Math.random().toString(36).slice(2,9);
+const keyFor=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayKey=()=>keyFor(new Date());
+const fromKey=k=>{const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)};
+const esc=s=>(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+let state=load(); let tab="today"; let setupStep=0; let draft={};
+
+function load(){
+  try{const r=localStorage.getItem(KEY); if(r) return migrate(JSON.parse(r));}catch(e){}
+  // migrate v1 if present
+  try{const v1=localStorage.getItem("lifeos-state");
+    if(v1){const o=JSON.parse(v1); const s=fresh();
+      if(o.goals) AREAS.forEach(a=>{if(o.goals[a.id])s.goals[a.id]={northStar:o.goals[a.id].northStar||"",quarter:"",why:"",floor:o.goals[a.id].floor||""}});
+      s.reviews=o.reviews||[]; return s;}
+  }catch(e){}
+  return fresh();
+}
+function fresh(){return{goals:{},habits:[],tasks:{},inbox:[],metrics:[],journal:{},focus:{},urges:{},reviews:[],xp:0,scored:{},createdAt:todayKey(),lastReview:null,remind:false,remindTime:"08:00"}}
+function migrate(s){const f=fresh();for(const k in f)if(s[k]===undefined)s[k]=f[k];return s}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+
+function tasksFor(k){if(!state.tasks[k])state.tasks[k]=[];return state.tasks[k]}
+function habitDone(h,k){return !!(h.history&&h.history[k])}
+function habitStreak(h){let s=0;const d=new Date();if(!habitDone(h,keyFor(d)))d.setDate(d.getDate()-1);
+  while(habitDone(h,keyFor(d))){s++;d.setDate(d.getDate()-1)}return s}
+function weekCount(h){let c=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(habitDone(h,keyFor(d)))c++}return c}
+
+// ---- daily score: 0-100 ----
+function dayScore(k){
+  const t=tasksFor(k); let sc=0;
+  const mvp=t.find(x=>x.mvp); if(mvp&&mvp.done)sc+=35;
+  const others=t.filter(x=>!x.mvp); const od=others.filter(x=>x.done).length;
+  if(others.length)sc+=Math.round(15*od/others.length);
+  const hs=state.habits; if(hs.length){const hd=hs.filter(h=>habitDone(h,k)).length;sc+=Math.round(25*hd/hs.length)}else sc+=25;
+  if(state.journal[k]&&(state.journal[k].note||state.journal[k].mood))sc+=10;
+  if((state.focus[k]||0)>=25)sc+=15;
+  return Math.min(100,sc);
+}
+function dayWon(k){return dayScore(k)>=60}
+function commitScore(){ // award XP once per day, retroactively safe
+  const k=todayKey(); const sc=dayScore(k);
+  const prev=state.scored[k]||0;
+  if(sc>prev){state.xp+=(sc-prev);state.scored[k]=sc;save()}
+}
+function level(){return Math.floor(state.xp/500)+1}
+function pastWon(k){return (state.scored[k]||0)>=60}
+function streak(){let s=0;const d=new Date();
+  if(!dayWon(keyFor(d)))d.setDate(d.getDate()-1);else{s++;d.setDate(d.getDate()-1)}
+  while(pastWon(keyFor(d))){s++;d.setDate(d.getDate()-1)}return s}
+function totalWins(){return Object.keys(state.scored).filter(pastWon).length}
+function reviewDue(){const b=state.lastReview||state.createdAt;return Math.floor((fromKey(todayKey())-fromKey(b))/864e5)>=7}
+
+// ---- notifications ----
+async function syncReminder(){try{
+  const LN=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications;
+  if(!LN)return; await LN.requestPermissions();
+  const p=await LN.getPending(); if(p.notifications&&p.notifications.length)await LN.cancel({notifications:p.notifications});
+  if(state.remind){const[h,m]=state.remindTime.split(":").map(Number);
+    await LN.schedule({notifications:[
+      {id:1,title:"Life OS",body:"Set your battle plan: MVP task + top 3.",schedule:{on:{hour:h,minute:m},allowWhileIdle:true}},
+      {id:2,title:"Life OS",body:"Evening check: score your day, log your journal.",schedule:{on:{hour:21,minute:0},allowWhileIdle:true}}]});}
+}catch(e){}}
+
+// ---- backup ----
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="lifeos-backup-"+todayKey()+".json";a.click();
+}
+function importData(file){
+  const r=new FileReader();
+  r.onload=()=>{try{state=migrate(JSON.parse(r.result));save();render();alert("Backup restored ✓")}catch(e){alert("Invalid backup file")}};
+  r.readAsText(file);
+}
+// ================= VIEWS =================
+function render(){
+  commitScore();
+  const app=document.getElementById("app");const nav=document.getElementById("nav");
+  if(Object.keys(state.goals).length<4){nav.classList.add("hide");return renderSetup(app)}
+  nav.classList.remove("hide");
+  nav.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  ({today:renderToday,plan:renderPlan,focus:renderFocus,track:renderTrack,stats:renderStats,review:renderReview})[tab](app);
+}
+
+function renderSetup(app){
+  const a=AREAS[setupStep];const d=draft[a.id]||{northStar:"",quarter:"",why:""};
+  app.innerHTML=`<div class="tape">SETUP · ${setupStep+1}/4</div>
+  <h1>${a.icon} ${a.label}</h1>
+  <p class="sub">Direction first. Habits and tasks come after.</p>
+  <label>North Star — 1 year from now</label><textarea id="ns" rows="2">${esc(d.northStar)}</textarea>
+  <label>This quarter's milestone (90 days)</label><textarea id="qt" rows="2">${esc(d.quarter)}</textarea>
+  <label>Why does this matter to you?</label><textarea id="wy" rows="2">${esc(d.why)}</textarea>
+  <button class="btn" id="next">${setupStep<3?"Next →":"Lock it in ✓"}</button>
+  <div class="dots">${AREAS.map((x,i)=>`<span class="dot ${i<=setupStep?"on":""}"></span>`).join("")}</div>`;
+  document.getElementById("next").onclick=()=>{
+    const ns=v("ns"),qt=v("qt"),wy=v("wy"); if(!ns||!qt)return;
+    draft[a.id]={northStar:ns,quarter:qt,why:wy};
+    if(setupStep<3){setupStep++;render()}
+    else{AREAS.forEach(x=>state.goals[x.id]=draft[x.id]);
+      if(!state.habits.length)state.habits=AREAS.map(x=>({id:uid(),area:x.id,name:"5-min minimum: "+x.label,target:7,history:{}}));
+      save();tab="today";render()}
+  };
+}
+const v=id=>document.getElementById(id).value.trim();
+
+function scoreboard(){
+  const k=todayKey();const sc=dayScore(k);const w=dayWon(k);
+  const xpIn=state.xp%500;
+  return `<div class="score">
+    <div><div class="num">${streak()}</div><div class="lbl">streak</div></div><div class="div"></div>
+    <div><div class="num">${totalWins()}</div><div class="lbl">wins</div></div><div class="div"></div>
+    <div><div class="num ${w?"gold":""}">${sc}</div><div class="lbl">today /100</div></div><div class="div"></div>
+    <div><div class="num dim">Lv${level()}</div><div class="lbl">${state.xp} xp</div></div>
+  </div><div class="xpbar"><div style="width:${xpIn/5}%"></div></div>`;
+}
+
+function renderToday(app){
+  const k=todayKey();const t=tasksFor(k);const mvp=t.find(x=>x.mvp);
+  app.innerHTML=`${scoreboard()}
+  ${reviewDue()?'<button class="banner" id="gorev">🧭 Weekly review due — 2 minutes. Tap here.</button>':""}
+  <div class="tape">MVP — THE ONE THING</div>
+  ${mvp?`<button class="row mvp" id="mvprow"><span class="checkbig ${mvp.done?"on":""}">${mvp.done?"✓":""}</span>
+    <span class="grow t1">${esc(mvp.text)}</span></button>`:
+  `<div class="flex"><input id="mvpin" class="grow" placeholder="The single action that wins today…">
+   <button class="btn mini" id="mvpadd">Set</button></div>`}
+  <div class="tape">TOP 3 SUPPORT TASKS</div>
+  ${t.filter(x=>!x.mvp).map(x=>`<button class="row" data-task="${x.id}">
+    <span class="checkbig ${x.done?"on":""}">${x.done?"✓":""}</span><span class="grow t1">${esc(x.text)}</span>
+    <span class="del" data-del="${x.id}">✕</span></button>`).join("")}
+  ${t.filter(x=>!x.mvp).length<3?`<div class="flex"><input id="tin" class="grow" placeholder="Add support task…">
+   <button class="btn mini" id="tadd">+</button></div>`:""}
+  <div class="tape">HABITS · ${state.habits.filter(h=>habitDone(h,k)).length}/${state.habits.length}</div>
+  ${state.habits.map(h=>{const a=AREAS.find(x=>x.id===h.area);const d=habitDone(h,k);
+    return `<button class="row ${d?"hit":""}" data-habit="${h.id}">
+    <span class="ico">${d?"✅":a?a.icon:"▫️"}</span>
+    <span class="grow"><div class="t1">${esc(h.name)}</div>
+    <div class="t2">🔥 ${habitStreak(h)} streak · ${weekCount(h)}/${h.target} this week</div></span></button>`}).join("")}
+  <div class="tape">BRAIN DUMP</div>
+  <p class="sub">Distracting thought? Park it here and get back to work.</p>
+  <div class="flex"><input id="bin" class="grow" placeholder="Capture it…"><button class="btn mini" id="badd">+</button></div>
+  ${state.inbox.slice(-5).reverse().map(x=>`<div class="row"><span class="grow t2">${esc(x.text)}</span>
+    <span class="del" data-inboxdel="${x.id}">✕</span></div>`).join("")}
+  <button class="btn ghost" id="urge">😵 I feel the pull to waste time (${state.urges[k]||0} today)</button>`;
+  bindToday(app,k,t);
+}
+function bindToday(app,k,t){
+  const mvprow=document.getElementById("mvprow");
+  if(mvprow)mvprow.onclick=()=>{const m=t.find(x=>x.mvp);m.done=!m.done;save();render()};
+  const mvpadd=document.getElementById("mvpadd");
+  if(mvpadd)mvpadd.onclick=()=>{const val=v("mvpin");if(!val)return;t.push({id:uid(),text:val,done:false,mvp:true});save();render()};
+  const tadd=document.getElementById("tadd");
+  if(tadd)tadd.onclick=()=>{const val=v("tin");if(!val)return;t.push({id:uid(),text:val,done:false,mvp:false});save();render()};
+  app.querySelectorAll("[data-task]").forEach(b=>b.onclick=e=>{
+    if(e.target.dataset.del)return;
+    const x=t.find(y=>y.id===b.dataset.task);x.done=!x.done;save();render()});
+  app.querySelectorAll("[data-del]").forEach(b=>b.onclick=e=>{e.stopPropagation();
+    state.tasks[k]=t.filter(y=>y.id!==b.dataset.del);save();render()});
+  app.querySelectorAll("[data-habit]").forEach(b=>b.onclick=()=>{
+    const h=state.habits.find(y=>y.id===b.dataset.habit);
+    if(!h.history)h.history={};h.history[k]=!h.history[k];if(!h.history[k])delete h.history[k];save();render()});
+  document.getElementById("badd").onclick=()=>{const val=v("bin");if(!val)return;
+    state.inbox.push({id:uid(),text:val,ts:Date.now()});save();render()};
+  app.querySelectorAll("[data-inboxdel]").forEach(b=>b.onclick=()=>{
+    state.inbox=state.inbox.filter(y=>y.id!==b.dataset.inboxdel);save();render()});
+  document.getElementById("urge").onclick=()=>{state.urges[k]=(state.urges[k]||0)+1;save();render()};
+  const g=document.getElementById("gorev");if(g)g.onclick=()=>{tab="review";render()};
+}
+
+function renderPlan(app){
+  app.innerHTML=`${scoreboard()}
+  <div class="tape">NORTH STARS</div>
+  ${AREAS.map(a=>{const g=state.goals[a.id];
+    return `<div class="card"><div class="t1">${a.icon} ${a.label}</div>
+    <div class="body" style="margin-top:6px">🎯 ${esc(g.northStar)}</div>
+    <div class="t2" style="margin-top:6px">90 days: ${esc(g.quarter)}</div>
+    ${g.why?`<div class="t2">Why: ${esc(g.why)}</div>`:""}</div>`}).join("")}
+  <button class="btn ghost" id="rewrite">Rewrite goals</button>
+  <div class="tape">HABIT BUILDER</div>
+  <p class="sub">Systems beat motivation. Add habits tied to each area.</p>
+  <label>New habit</label>
+  <input id="hname" placeholder="e.g. Read 10 pages">
+  <div class="flex" style="margin-top:8px">
+    <select id="harea">${AREAS.map(a=>`<option value="${a.id}">${a.icon} ${a.label}</option>`).join("")}</select>
+    <select id="htarget">${[7,6,5,4,3,2,1].map(n=>`<option value="${n}">${n}×/week</option>`).join("")}</select>
+  </div>
+  <button class="btn" id="hadd">Add habit</button>
+  ${state.habits.map(h=>{const a=AREAS.find(x=>x.id===h.area);
+    return `<div class="row"><span class="ico">${a?a.icon:"▫️"}</span>
+    <span class="grow"><div class="t1">${esc(h.name)}</div><div class="t2">${h.target}×/week · 🔥${habitStreak(h)}</div></span>
+    <span class="del" data-hdel="${h.id}">✕</span></div>`}).join("")}
+  <div class="tape">SETTINGS</div>
+  <div class="card"><div class="switch flex"><span class="t1 grow">🔔 Daily reminders</span>
+    <input type="checkbox" id="rem" ${state.remind?"checked":""}></div>
+    <div class="${state.remind?"":"hide"}" style="margin-top:10px"><input type="time" id="remt" value="${state.remindTime}"></div></div>
+  <div class="flex"><button class="btn" id="exp">⬇️ Backup data</button>
+  <button class="btn ghost" id="impbtn">⬆️ Restore</button></div>
+  <input type="file" id="impfile" class="hide" accept=".json">`;
+  document.getElementById("rewrite").onclick=()=>{draft=Object.assign({},state.goals);state.goals={};setupStep=0;save();render()};
+  document.getElementById("hadd").onclick=()=>{const n=v("hname");if(!n)return;
+    state.habits.push({id:uid(),name:n,area:document.getElementById("harea").value,
+    target:+document.getElementById("htarget").value,history:{}});save();render()};
+  app.querySelectorAll("[data-hdel]").forEach(b=>b.onclick=()=>{
+    if(!confirm("Delete this habit and its history?"))return;
+    state.habits=state.habits.filter(y=>y.id!==b.dataset.hdel);save();render()});
+  document.getElementById("rem").onchange=e=>{state.remind=e.target.checked;save();syncReminder();render()};
+  const rt=document.getElementById("remt");if(rt)rt.onchange=e=>{state.remindTime=e.target.value;save();syncReminder()};
+  document.getElementById("exp").onclick=exportData;
+  document.getElementById("impbtn").onclick=()=>document.getElementById("impfile").click();
+  document.getElementById("impfile").onchange=e=>{if(e.target.files[0])importData(e.target.files[0])};
+}
+// ================= FOCUS TIMER =================
+let timer={left:25*60,running:false,int:null,mode:25};
+function renderFocus(app){
+  const k=todayKey();
+  app.innerHTML=`${scoreboard()}
+  <div class="tape">DEEP WORK</div>
+  <p class="sub">One block of real focus beats a day of busy. Phone face down after you press start.</p>
+  <div class="flex" style="justify-content:center">
+    ${[25,50,90].map(m=>`<button class="pill ${timer.mode===m?"on":""}" data-mode="${m}">${m} min</button>`).join("")}
+  </div>
+  <div class="timer" id="tdisp">${fmt(timer.left)}</div>
+  <button class="btn ${timer.running?"danger":""}" id="tstart">${timer.running?"Give up (no credit)":"Start focus block"}</button>
+  <div class="card" style="margin-top:16px"><div class="t1">📊 Today's deep work</div>
+  <div class="body" style="margin-top:4px">${state.focus[k]||0} minutes logged</div>
+  <div class="t2">25+ min = +15 points on today's score</div></div>
+  <div class="tape">LAST 7 DAYS</div>
+  <canvas id="fchart" width="480" height="90"></canvas>`;
+  app.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
+    if(timer.running)return;timer.mode=+b.dataset.mode;timer.left=timer.mode*60;render()});
+  document.getElementById("tstart").onclick=()=>{
+    if(timer.running){clearInterval(timer.int);timer.running=false;timer.left=timer.mode*60;render();return}
+    timer.running=true;
+    timer.int=setInterval(()=>{
+      timer.left--;
+      const el=document.getElementById("tdisp");if(el)el.textContent=fmt(timer.left);
+      if(timer.left<=0){clearInterval(timer.int);timer.running=false;
+        state.focus[k]=(state.focus[k]||0)+timer.mode;timer.left=timer.mode*60;save();
+        try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+        alert("Block complete. +"+timer.mode+" min logged. 💪");render()}
+    },1000);render();
+  };
+  drawBars("fchart",last7(d=>state.focus[keyFor(d)]||0),"#FF8A3D");
+}
+const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+function last7(fn){const out=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);out.push({label:d.getDate(),val:fn(d)})}return out}
+function drawBars(id,data,color){
+  const c=document.getElementById(id);if(!c)return;const x=c.getContext("2d");
+  const W=c.width,H=c.height,max=Math.max(1,...data.map(p=>p.val));
+  x.clearRect(0,0,W,H);const bw=W/data.length;
+  data.forEach((p,i)=>{const h=(p.val/max)*(H-24);
+    x.fillStyle=p.val?color:"#1A2E27";x.fillRect(i*bw+8,H-18-h,bw-16,Math.max(3,h));
+    x.fillStyle="#8FA69B";x.font="10px sans-serif";x.textAlign="center";
+    x.fillText(p.label,i*bw+bw/2,H-5);});
+}
+
+// ================= TRACK (journal + metrics) =================
+function renderTrack(app){
+  const k=todayKey();const j=state.journal[k]||{mood:0,energy:0,note:""};
+  app.innerHTML=`${scoreboard()}
+  <div class="tape">TODAY'S JOURNAL</div>
+  <label>Mood</label><div class="mood" id="mood">${[1,2,3,4,5].map(n=>`<button data-m="${n}" class="${j.mood===n?"on":""}">${["😖","😕","😐","🙂","🔥"][n-1]}</button>`).join("")}</div>
+  <label>Energy</label><div class="mood" id="energy">${[1,2,3,4,5].map(n=>`<button data-e="${n}" class="${j.energy===n?"on":""}">${["🪫","😴","😌","⚡","🚀"][n-1]}</button>`).join("")}</div>
+  <label>Note — what happened, what did you learn?</label>
+  <textarea id="jnote" rows="3">${esc(j.note)}</textarea>
+  <button class="btn" id="jsave">Save journal ✓</button>
+  <div class="tape">METRICS</div>
+  <p class="sub">Track any number: weight, sleep hrs, savings, pages read…</p>
+  <div class="flex"><input id="mname" class="grow" placeholder="Metric name (e.g. Sleep hrs)">
+  <button class="btn mini" id="madd">+</button></div>
+  ${state.metrics.map(m=>{const today=m.entries[k];
+    return `<div class="card"><div class="flex"><span class="t1 grow">${esc(m.name)}</span>
+    <span class="del" data-mdel="${m.id}">✕</span></div>
+    <div class="flex" style="margin-top:8px"><input type="number" step="any" id="min-${m.id}" class="grow" placeholder="Today's value" value="${today!==undefined?today:""}">
+    <button class="btn mini" data-mset="${m.id}">Log</button></div>
+    <canvas id="mc-${m.id}" width="480" height="90" style="margin-top:10px"></canvas></div>`}).join("")}`;
+  app.querySelectorAll("#mood button").forEach(b=>b.onclick=()=>{j.mood=+b.dataset.m;state.journal[k]=j;save();render()});
+  app.querySelectorAll("#energy button").forEach(b=>b.onclick=()=>{j.energy=+b.dataset.e;state.journal[k]=j;save();render()});
+  document.getElementById("jsave").onclick=()=>{j.note=document.getElementById("jnote").value;state.journal[k]=j;save();render()};
+  document.getElementById("madd").onclick=()=>{const n=v("mname");if(!n)return;
+    state.metrics.push({id:uid(),name:n,entries:{}});save();render()};
+  app.querySelectorAll("[data-mset]").forEach(b=>b.onclick=()=>{
+    const m=state.metrics.find(y=>y.id===b.dataset.mset);
+    const val=document.getElementById("min-"+m.id).value;if(val==="")return;
+    m.entries[k]=+val;save();render()});
+  app.querySelectorAll("[data-mdel]").forEach(b=>b.onclick=()=>{
+    if(!confirm("Delete this metric and its history?"))return;
+    state.metrics=state.metrics.filter(y=>y.id!==b.dataset.mdel);save();render()});
+  state.metrics.forEach(m=>drawBars("mc-"+m.id,last7(d=>m.entries[keyFor(d)]||0),"#E8C547"));
+}
+
+// ================= STATS + REVIEW =================
+function renderStats(app){
+  let cells="";
+  for(let i=27;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=keyFor(d);
+    const sc=state.scored[k];const w=sc!==undefined&&sc>=60;
+    cells+=`<div class="cell" style="${sc!==undefined?(w?"background:#E8C547;color:#10231C":"background:#3A2A24"):""}">${d.getDate()}</div>`}
+  const urg7=last7(d=>state.urges[keyFor(d)]||0).reduce((a,b)=>a+b.val,0);
+  const foc7=last7(d=>state.focus[keyFor(d)]||0).reduce((a,b)=>a+b.val,0);
+  app.innerHTML=`${scoreboard()}
+  <div class="tape">LAST 28 DAYS</div><div class="grid">${cells}</div>
+  <p class="sub" style="margin-top:12px">Gold = score ≥60. Rule of the house: never miss twice in a row.</p>
+  <div class="card"><div class="t1">This week</div>
+  <div class="body" style="margin-top:6px">🧠 ${foc7} min deep work · 😵 ${urg7} urges resisted-or-logged</div></div>
+  <div class="tape">HABIT LEAGUE</div>
+  ${state.habits.slice().sort((a,b)=>habitStreak(b)-habitStreak(a)).map(h=>`<div class="row">
+    <span class="grow t1">${esc(h.name)}</span><span class="pill on">🔥 ${habitStreak(h)}</span></div>`).join("")}
+  <div class="tape">SCORE TREND · 7 DAYS</div>
+  <canvas id="schart" width="480" height="90"></canvas>
+  ${state.reviews.length?'<div class="tape">PAST REVIEWS</div>'+state.reviews.slice(-4).reverse().map(r=>`<div class="card">
+    <div class="t2">${r.date}</div><div class="body" style="margin-top:4px">Win: ${esc(r.win)}</div>
+    <div class="body">Drag: ${esc(r.drag)}</div><div class="body">Change: ${esc(r.change)}</div></div>`).join(""):""}
+  <button class="btn ghost" id="gorev2">Open weekly review</button>`;
+  drawBars("schart",last7(d=>state.scored[keyFor(d)]||0),"#FF8A3D");
+  document.getElementById("gorev2").onclick=()=>{tab="review";render()};
+}
+
+function renderReview(app){
+  app.innerHTML=`${scoreboard()}
+  <div class="tape">WEEKLY REVIEW</div>
+  <p class="sub">The course-correction loop. Honest answers only.</p>
+  <label>1 · Biggest win this week?</label><textarea id="rw" rows="2"></textarea>
+  <label>2 · What dragged you down most?</label><textarea id="rd" rows="2"></textarea>
+  <label>3 · One change for next week?</label><textarea id="rc" rows="2"></textarea>
+  <button class="btn" id="saverev">Save review ✓</button>`;
+  document.getElementById("saverev").onclick=()=>{
+    state.reviews.push({date:todayKey(),win:v("rw"),drag:v("rd"),change:v("rc")});
+    state.lastReview=todayKey();save();tab="today";render()};
+}
+
+document.getElementById("nav").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;tab=b.dataset.tab;render()});
+render();syncReminder();
+</script>
+</body>
+</html>

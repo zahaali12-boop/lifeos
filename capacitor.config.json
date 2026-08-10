@@ -1,0 +1,14 @@
+{
+  "appId": "com.lifeos.app",
+  "appName": "Life OS",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#FF8A3D"
+    }
+  }
+}
