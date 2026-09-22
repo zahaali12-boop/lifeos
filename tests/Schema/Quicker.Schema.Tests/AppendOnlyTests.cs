@@ -2,7 +2,7 @@ using Dapper;
 using Npgsql;
 using Quicker.Testing;
 
-namespace Quicker.Persistence.Tests;
+namespace Quicker.Schema.Tests;
 
 /// <summary>ADR-0007: append-only tables refuse UPDATE and DELETE from every role, except in audited maintenance mode.</summary>
 public sealed class AppendOnlyTests(DatabaseFixture fixture) : IClassFixture<DatabaseFixture>

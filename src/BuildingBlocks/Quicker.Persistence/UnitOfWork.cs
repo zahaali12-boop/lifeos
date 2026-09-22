@@ -1,5 +1,6 @@
 using System.Data;
 using Npgsql;
+using Quicker.Kernel.Ids;
 using Quicker.Kernel.Tenancy;
 
 namespace Quicker.Persistence;
@@ -15,6 +16,19 @@ public interface IUnitOfWork : IAsyncDisposable
     NpgsqlTransaction Transaction { get; }
 
     TenantContext Context { get; }
+
+    /// <summary>
+    /// Moves the transaction into a tenant (sign-up, SSO, invitations start anonymous and continue inside the new
+    /// tenant). Re-applies the session variables so RLS and audit see the new tenant and actor from here on.
+    /// </summary>
+    Task SwitchTenantAsync(TenantId tenantId, UserId? userId = null, MembershipId? membershipId = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// When true, the host commits this unit of work even though the request ends in an error response. Security
+    /// bookkeeping sets it (failed-login counters, lockouts, refresh-token reuse revocation, audit of refusals) so a
+    /// refusal can never roll back its own evidence. Services set it only when every write so far is safe to keep.
+    /// </summary>
+    bool CommitOnFailure { get; set; }
 
     Task CommitAsync(CancellationToken cancellationToken = default);
 
@@ -36,7 +50,7 @@ public sealed class UnitOfWorkFactory(NpgsqlDataSource appDataSource, DbOptions 
         {
             var transaction = await connection.BeginTransactionAsync(isolationLevel, cancellationToken);
             await TenantSession.ApplyAsync(connection, transaction, context, options, cancellationToken);
-            return new UnitOfWork(connection, transaction, context);
+            return new UnitOfWork(connection, transaction, context, options);
         }
         catch
         {
@@ -45,7 +59,7 @@ public sealed class UnitOfWorkFactory(NpgsqlDataSource appDataSource, DbOptions 
         }
     }
 
-    private sealed class UnitOfWork(NpgsqlConnection connection, NpgsqlTransaction transaction, TenantContext context) : IUnitOfWork
+    private sealed class UnitOfWork(NpgsqlConnection connection, NpgsqlTransaction transaction, TenantContext context, DbOptions options) : IUnitOfWork
     {
         private bool _completed;
 
@@ -53,7 +67,23 @@ public sealed class UnitOfWorkFactory(NpgsqlDataSource appDataSource, DbOptions 
 
         public NpgsqlTransaction Transaction => transaction;
 
-        public TenantContext Context => context;
+        public TenantContext Context { get; private set; } = context;
+
+        public bool CommitOnFailure { get; set; }
+
+        public async Task SwitchTenantAsync(TenantId tenantId, UserId? userId = null, MembershipId? membershipId = null, CancellationToken cancellationToken = default)
+        {
+            var actorType = userId is null ? TenantContext.ActorSystem : TenantContext.ActorUser;
+            Context = Context with
+            {
+                TenantId = tenantId,
+                UserId = userId ?? Context.UserId,
+                MembershipId = membershipId ?? Context.MembershipId,
+                ActorType = actorType,
+                ActorDisplay = userId?.Value.ToString() ?? Context.ActorDisplay,
+            };
+            await TenantSession.ApplyAsync(connection, transaction, Context, options, cancellationToken);
+        }
 
         public async Task CommitAsync(CancellationToken cancellationToken = default)
         {

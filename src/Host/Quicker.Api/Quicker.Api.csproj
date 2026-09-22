@@ -11,6 +11,11 @@
     <PackageReference Include="Dapper" />
     <ProjectReference Include="../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Messaging/Quicker.Messaging.csproj" />
+    <ProjectReference Include="../../Modules/Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Modules/Tenancy/Quicker.Tenancy/Quicker.Tenancy.csproj" />
+    <ProjectReference Include="../../Modules/Identity/Quicker.Identity/Quicker.Identity.csproj" />
   </ItemGroup>
 
 </Project>

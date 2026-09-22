@@ -30,25 +30,35 @@ Branch: `claude/quicker-erp-founding-arch-4cq18i` (all Phase 0 work). Default br
 | 1.1 Repository and toolchain | done | `Quicker.sln` with central package versions and analyzers, `Makefile`, `docker-compose.yml`, GitHub Actions CI (`.github/workflows/ci.yml`), devcontainer, pnpm workspace, `apps/web` bootstrap (Vite/React/TS, ESLint typed, Vitest), `tools/check-diagrams`, Dockerfiles for migrator/api/web. The worker host and its Compose service arrive with the outbox in 1.8. |
 | 1.2 Database foundation | done | `db/migrations/V0001__foundation.sql` (schemas, extensions, tenant catalogue, default privileges), `db/repeatable/R__0001_app_functions.sql` (RLS/append-only/updated_at procedures, contract views), `Quicker.Migrator` (DbUp: versioned + repeatable + seed, role bootstrap), `Quicker.Persistence` (data sources, unit of work with SET LOCAL tenant session, Dapper conventions), `Quicker.Testing` (database-per-test-class from a migrated template; `IsolationRegistry` forces a row factory per tenant table), tests: schema contract, RLS isolation, append-only, migration replay, no floating-point columns, composite tenant FKs. |
 | 1.3 Kernel | done | `Quicker.Kernel`: `Money`, `Currency`, `RoundingPolicy` (half-away/half-even, cash increments, largest-remainder allocation), `ExchangeRate`, `Quantity`/`UomConversion` (rational factors), typed ids (UUIDv7), `IClock`/`FakeClock`, `Result`/`Error` with `why`, `LocalizedText`, `AmountInWords` (EN + Arabic agreement rules), `TenantContext`. `Quicker.Analyzers`: QK0001 no floating point, QK0002 no ad-hoc rounding, QK0003 no ambient clock, applied to every production project. 48 tests incl. property tests. |
-| 1.4–1.12 | next | in roadmap order |
+| 1.4 Tenancy and identity | done | Modules `Quicker.Tenancy` (catalogue, security policy, provisioning) and `Quicker.Identity` (users, memberships, sessions, roles, permissions, scopes, field and document-type rules, SoD, API keys, SSO). Migration `V0002__identity.sql`. Built-in auth: Argon2id passwords with policy and optional HIBP check, lockout, tenant selection, TOTP + recovery codes, WebAuthn registration/assertion (Fido2), rotating refresh tokens with reuse detection, step-up, password reset, invitations, OIDC authorization-code flow with PKCE and JIT provisioning + group→role mapping. Request pipeline: unit of work per request (middleware) with commit-on-success filter and an explicit `CommitOnFailure` for security bookkeeping; principal resolution cached by permissions epoch; `RequirePermission` and `RequireRecentAuth` endpoint filters; problem details by `ErrorKind`. Tests: 19 API-level tests (sign-up, lockout, refresh reuse, MFA, step-up, reset, invitations, SoD, API keys, cross-tenant 404s, tenant selection, full OIDC flow against an in-process fake provider) plus row factories so the schema suite covers all 9 new tenant tables. |
+| 1.5–1.12 | next | in roadmap order |
 
 ## In progress
 
-- M1 slice 1.4 Tenancy and identity (next up).
+- M1 slice 1.5 Audit log (next up).
 
 ## Next
 
-1. M1 slice 1.4: control-plane users and memberships, built-in auth (Argon2id, TOTP, WebAuthn), OIDC federation, sessions, API keys, roles/permissions/scopes/field rules/document-type rules/SoD, effective permissions.
-2. M1 slices 1.5–1.12 in roadmap order.
+1. M1 slice 1.5: hash-chained `aud_events`, EF interceptor capture, explicit events, record timeline and explorer APIs, anchoring and verification jobs; replace the interim `LoggingAuditSink` in the API host.
+2. M1 slices 1.6–1.12 in roadmap order.
+
+## Known gaps and interim pieces (explicit, per the working rules)
+
+- **Audit sink is interim.** `src/Host/Quicker.Api/LoggingAuditSink.cs` writes structured log lines; every module already calls `IAuditSink`, so 1.5 swaps the implementation without touching callers.
+- **Email is captured, not sent.** `CapturingEmailSender` (dev/test) is the only `IEmailSender`; the SMTP/API provider ships with the Collaboration module in 1.8. Invitation and reset links are therefore only visible in logs locally.
+- **WebAuthn ceremonies are not covered by automated tests.** Registration/assertion options, storage and verification are implemented with Fido2NetLib, but no test generates a real authenticator attestation; a browser check is scheduled with the web shell in 1.10.
+- **Worker host and Compose service** arrive with the outbox in 1.8.
+- **Rate limiting, idempotency keys, cursor pagination and the filter language** are slice 1.9.
 
 ## How to run what exists
 
 ```
 # prerequisites: .NET 10 SDK, Node 22 + pnpm, PostgreSQL 16+ (or Docker for `make up`)
 make migrate            # applies db/migrations and db/repeatable to the local database
-make test-dotnet        # 58 tests: kernel, schema contract, RLS isolation, append-only, migration replay
+make test-dotnet        # 77 tests: kernel, schema contract, RLS isolation, append-only, migration replay, identity API
 pnpm install && pnpm --filter @quicker/web test && pnpm --filter @quicker/tools check-diagrams
 make api                # http://localhost:8080/health/ready and /api/v1/openapi.json
+# sign up a workspace: POST /api/v1/auth/signup {tenantName, slug, ownerEmail, ownerName, password}
 ```
 
 ## Open issues and decisions pending

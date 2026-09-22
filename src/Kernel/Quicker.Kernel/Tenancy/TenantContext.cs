@@ -23,6 +23,14 @@ public sealed record TenantContext(
 
     public static TenantContext System(TenantId tenantId, string requestId, string language = "en") =>
         new(tenantId, null, null, ActorSystem, "system", requestId, null, language);
+
+    /// <summary>No tenant: used for sign-up, login and other control-plane work. RLS hides every tenant table.</summary>
+    public static TenantContext Anonymous(string requestId, string language = "en") =>
+        new(new TenantId(Guid.Empty), null, null, ActorAnonymous, "anonymous", requestId, null, language);
+
+    public const string ActorAnonymous = "anonymous";
+
+    public bool IsAnonymous => TenantId.Value == Guid.Empty;
 }
 
 /// <summary>Ambient access to the current context; implemented with AsyncLocal by the hosting layer.</summary>

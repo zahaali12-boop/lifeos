@@ -31,7 +31,8 @@ public static class TenantSession
 
         await connection.ExecuteAsync(new CommandDefinition(sql, new
         {
-            tenant = context.TenantId.Value.ToString(),
+            // An anonymous context (Guid.Empty) sets an empty tenant id: RLS then yields no rows for app tables.
+            tenant = context.TenantId.Value == Guid.Empty ? string.Empty : context.TenantId.Value.ToString(),
             user = context.UserId?.Value.ToString() ?? string.Empty,
             membership = context.MembershipId?.Value.ToString() ?? string.Empty,
             request = context.RequestId,

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The database contract suite: every tenant table of every module, verified against the migrated schema. -->
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <ProjectReference Include="../../../src/BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../src/BuildingBlocks/Quicker.Testing/Quicker.Testing.csproj" />
+    <ProjectReference Include="../../../src/Host/Quicker.Migrator/Quicker.Migrator.csproj" />
+    <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
+  </ItemGroup>
+
+</Project>

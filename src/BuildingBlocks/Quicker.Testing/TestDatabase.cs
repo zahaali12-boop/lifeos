@@ -18,6 +18,7 @@ namespace Quicker.Testing;
 public sealed class TestDatabase : IAsyncDisposable
 {
     private static readonly SemaphoreSlim TemplateLock = new(1, 1);
+    private static readonly SemaphoreSlim CloneLock = new(1, 1);
     private static string? _templateName;
     private static string? _ownerBase;
     private static PostgreSqlContainer? _container;
@@ -42,10 +43,29 @@ public sealed class TestDatabase : IAsyncDisposable
         var ownerBase = await EnsureTemplateAsync(cancellationToken);
         var name = "quicker_test_" + Guid.NewGuid().ToString("N")[..12];
 
-        await using (var admin = new NpgsqlConnection(ownerBase))
+        // CREATE DATABASE ... TEMPLATE fails while any other session touches the template (including a concurrent
+        // clone in another test process), so serialise in-process and retry on "object in use".
+        await CloneLock.WaitAsync(cancellationToken);
+        try
         {
+            await using var admin = new NpgsqlConnection(ownerBase);
             await admin.OpenAsync(cancellationToken);
-            await admin.ExecuteAsync($"CREATE DATABASE \"{name}\" TEMPLATE \"{_templateName}\"");
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    await admin.ExecuteAsync($"CREATE DATABASE \"{name}\" TEMPLATE \"{_templateName}\"");
+                    break;
+                }
+                catch (PostgresException ex) when (string.Equals(ex.SqlState, PostgresErrorCodes.ObjectInUse, StringComparison.Ordinal) && attempt < 50)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(100 + (20 * attempt)), cancellationToken);
+                }
+            }
+        }
+        finally
+        {
+            CloneLock.Release();
         }
 
         var owner = new NpgsqlConnectionStringBuilder(ownerBase) { Database = name, Pooling = false }.ConnectionString;

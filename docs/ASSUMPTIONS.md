@@ -67,6 +67,12 @@ Status legend: `proposed` (my call, proceeding), `confirmed` (founder agreed), `
 | A-040 | **AI provider** is abstracted; the reference implementation uses the Claude API. AI never executes raw SQL; it produces semantic-layer queries executed under the user's permissions, and it can only create drafts. ADR-0028. | confirmed |
 | A-041 | **Backups**: point-in-time recovery with 35-day retention for SaaS; documented restore drill in M10. On-premise ships the same scripts. | confirmed |
 | A-042 | **Licensing** of the codebase is proprietary (all rights reserved) until the founder decides otherwise; only permissively licensed dependencies (MIT/Apache/BSD/PostgreSQL) are used, checked in CI. | confirmed |
+| A-044 | **Segregation of duties and super users.** The all-access grant `*` (owner, admin) is excluded from SoD conflict evaluation; members holding it are listed as super users in the SoD report instead. Every other grant, including module wildcards, is evaluated. | confirmed |
+| A-045 | **Security bookkeeping survives refusals.** A request that ends in an error normally rolls back its unit of work; failed-login counters, lockouts, refresh-token reuse revocation and the audit events of refusals are committed anyway through an explicit `CommitOnFailure` flag set by the identity services. | confirmed |
+| A-046 | **HTTP status comes from the error kind.** Domain errors carry a kind (validation 422, not found 404, conflict 409, forbidden 403, unauthorized 401, locked 423, rate limited 429); codes are stable strings and never parsed for status. Cross-tenant access always answers 404. | confirmed |
+| A-047 | **API keys** are `qk_<tenant id>.<secret>`; only the SHA-256 of the secret is stored; a key acts as its creating member with optionally narrowed scopes and never as an owner. | confirmed |
+| A-048 | **Emails are stored lower-cased** and compared exactly; sign-in is case-insensitive by construction. | confirmed |
+| A-049 | **Default security policy**: 12-character minimum passwords, lockout after 10 failures for 15 minutes, 10-minute access tokens, 14-day sessions, 5-minute step-up window, MFA optional (tenant admins can require it). | confirmed |
 | A-043 | **Performance budgets**: p95 under 300 ms for everyday API calls with 50 concurrent users per tenant on a 4-vCPU database; interactive pivots over 10M fact rows under 5 s; document posting under 500 ms p95 including cost adjustment for typical chains. Verified in M10 with seeded data. | confirmed |
 
 ## 4. Process assumptions

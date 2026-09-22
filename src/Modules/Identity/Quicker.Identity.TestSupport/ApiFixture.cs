@@ -1,0 +1,118 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Quicker.Kernel.Time;
+using Quicker.Messaging;
+using Quicker.Testing;
+
+namespace Quicker.Identity.TestSupport;
+
+/// <summary>
+/// Boots the real API host against a migrated database of its own, with a controllable clock and a capturing
+/// email sender. One fixture per test class; tests create their own tenants through the public API.
+/// </summary>
+public sealed class ApiFixture : IAsyncDisposable
+{
+    public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    private WebApplicationFactory<Program>? _factory;
+
+    public TestDatabase Db { get; private set; } = null!;
+
+    public FakeClock Clock { get; } = new(new DateTimeOffset(2026, 9, 22, 8, 0, 0, TimeSpan.Zero));
+
+    public CapturingEmailSender Emails { get; private set; } = null!;
+
+    public HttpClient Client { get; private set; } = null!;
+
+    public IServiceProvider Services => _factory!.Services;
+
+    public static async Task<ApiFixture> StartAsync()
+    {
+        var fixture = new ApiFixture();
+        fixture.Db = await TestDatabase.CreateAsync();
+        fixture._factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+            builder.UseSetting("Quicker:Db:AppConnection", fixture.Db.AppConnectionString);
+            builder.UseSetting("Quicker:Db:OwnerConnection", fixture.Db.OwnerConnectionString);
+            builder.UseSetting("Quicker:Auth:PublicOrigin", "http://localhost");
+            builder.UseSetting("Quicker:Auth:ApiOrigin", "http://localhost");
+            builder.UseSetting("Logging:LogLevel:Default", "Warning");
+            builder.ConfigureServices(services =>
+            {
+                services.AddSingleton<IClock>(fixture.Clock);
+            });
+        });
+        fixture.Client = fixture._factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        fixture.Emails = fixture._factory.Services.GetRequiredService<CapturingEmailSender>();
+        return fixture;
+    }
+
+    public HttpClient ClientFor(string accessToken)
+    {
+        var client = _factory!.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        return client;
+    }
+
+    public HttpClient ClientForApiKey(string apiKey)
+    {
+        var client = _factory!.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+        return client;
+    }
+
+    /// <summary>Creates a tenant with an owner through the public sign-up endpoint.</summary>
+    public async Task<Workspace> SignupAsync(string? slug = null, string password = "correct-horse-battery-staple")
+    {
+        slug ??= "ws" + Guid.NewGuid().ToString("N")[^10..];
+        var email = $"owner-{slug}@example.test";
+        var response = await Client.PostAsJsonAsync("/api/v1/auth/signup", new { tenantName = "Workspace " + slug, slug, ownerEmail = email, ownerName = "Owner " + slug, password }, Json);
+        var body = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Sign-up failed ({(int)response.StatusCode}): {body}");
+        }
+
+        using var doc = JsonDocument.Parse(body);
+        var root = doc.RootElement;
+        return new Workspace(slug, email, password, root.GetProperty("accessToken").GetString()!, root.GetProperty("refreshToken").GetString()!,
+            root.GetProperty("tenant").GetProperty("id").GetGuid(), root.GetProperty("membershipId").GetGuid(), root.GetProperty("user").GetProperty("id").GetGuid());
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Client?.Dispose();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
+
+        if (Db is not null)
+        {
+            await Db.DisposeAsync();
+        }
+    }
+}
+
+public sealed record Workspace(string Slug, string OwnerEmail, string OwnerPassword, string AccessToken, string RefreshToken, Guid TenantId, Guid MembershipId, Guid UserId);
+
+public static class HttpAssertions
+{
+    public static async Task<JsonElement> ReadJsonAsync(this HttpResponseMessage response)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+        var text = await response.Content.ReadAsStringAsync();
+        return string.IsNullOrWhiteSpace(text) ? default : JsonDocument.Parse(text).RootElement.Clone();
+    }
+
+    public static async Task<string?> ErrorCodeAsync(this HttpResponseMessage response)
+    {
+        var json = await response.ReadJsonAsync();
+        return json.ValueKind == JsonValueKind.Object && json.TryGetProperty("code", out var code) ? code.GetString() : null;
+    }
+}

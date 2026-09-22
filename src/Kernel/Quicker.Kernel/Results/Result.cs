@@ -1,18 +1,49 @@
 namespace Quicker.Kernel.Results;
 
+/// <summary>How an error should be treated by callers and mapped to transport (HTTP status) by hosts.</summary>
+public enum ErrorKind
+{
+    /// <summary>The request is well-formed but violates a rule (422).</summary>
+    Validation = 0,
+
+    /// <summary>The target does not exist for this principal (404, never distinguishing "exists elsewhere").</summary>
+    NotFound = 1,
+
+    /// <summary>The request conflicts with current state: duplicates, blocked transitions, concurrency (409).</summary>
+    Conflict = 2,
+
+    /// <summary>Authenticated but not allowed (403).</summary>
+    Forbidden = 3,
+
+    /// <summary>Not authenticated, or the credential presented is not acceptable (401).</summary>
+    Unauthorized = 4,
+
+    /// <summary>Temporarily locked, for example after repeated failures (423).</summary>
+    Locked = 5,
+
+    /// <summary>Too many requests (429).</summary>
+    RateLimited = 6,
+}
+
 /// <summary>
-/// A domain error with a stable machine-readable code (surfaced as the API problem `code`), a human message and a
-/// structured "why" payload for business blocks (rule, threshold, actual values).
+/// A domain error with a stable machine-readable code (surfaced as the API problem `code`), a human message, its
+/// kind (which decides the HTTP status) and a structured "why" payload for business blocks (rule, threshold, values).
 /// </summary>
-public sealed record Error(string Code, string Message, IReadOnlyDictionary<string, object?>? Why = null)
+public sealed record Error(string Code, string Message, IReadOnlyDictionary<string, object?>? Why = null, ErrorKind Kind = ErrorKind.Validation)
 {
     public static Error Validation(string code, string message) => new(code, message);
 
-    public static Error NotFound(string entity, object id) => new($"{entity}.not_found", $"{entity} '{id}' was not found.");
+    public static Error NotFound(string entity, object id) => new($"{entity}.not_found", $"{entity} '{id}' was not found.", Kind: ErrorKind.NotFound);
 
-    public static Error Conflict(string code, string message) => new(code, message);
+    public static Error Conflict(string code, string message) => new(code, message, Kind: ErrorKind.Conflict);
 
-    public static Error Forbidden(string code, string message) => new(code, message);
+    public static Error Forbidden(string code, string message) => new(code, message, Kind: ErrorKind.Forbidden);
+
+    public static Error Unauthorized(string code, string message) => new(code, message, Kind: ErrorKind.Unauthorized);
+
+    public static Error Locked(string code, string message) => new(code, message, Kind: ErrorKind.Locked);
+
+    public static Error RateLimited(string code, string message) => new(code, message, Kind: ErrorKind.RateLimited);
 
     public Error WithWhy(params (string Key, object? Value)[] facts)
     {

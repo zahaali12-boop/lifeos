@@ -2,7 +2,7 @@ using Dapper;
 using Npgsql;
 using Quicker.Testing;
 
-namespace Quicker.Persistence.Tests;
+namespace Quicker.Schema.Tests;
 
 /// <summary>The database contract from ADR-0003/ADR-0004/ADR-0005, checked against the migrated schema.</summary>
 public sealed class SchemaConventionsTests(DatabaseFixture fixture) : IClassFixture<DatabaseFixture>
@@ -100,7 +100,7 @@ public sealed class SchemaConventionsTests(DatabaseFixture fixture) : IClassFixt
     [Fact]
     public async Task Migrations_are_idempotent_on_replay()
     {
-        var runner = new Migrator.MigrationRunner(fixture.Db.OwnerConnectionString, new SilentLog());
+        var runner = new Quicker.Migrator.MigrationRunner(fixture.Db.OwnerConnectionString, new SilentLog());
         runner.PendingScripts().ShouldBeEmpty();
         var result = runner.Migrate();
         result.Successful.ShouldBeTrue(result.Error?.ToString());

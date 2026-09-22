@@ -1,6 +1,6 @@
 using Quicker.Testing;
 
-namespace Quicker.Persistence.Tests;
+namespace Quicker.Schema.Tests;
 
 /// <summary>One migrated database per test class.</summary>
 public sealed class DatabaseFixture : IAsyncLifetime
@@ -9,5 +9,11 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync() => Db = await TestDatabase.CreateAsync();
 
-    public async ValueTask DisposeAsync() => await Db.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        if (Db is not null)
+        {
+            await Db.DisposeAsync();
+        }
+    }
 }

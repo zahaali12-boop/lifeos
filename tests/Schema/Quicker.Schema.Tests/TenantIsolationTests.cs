@@ -2,7 +2,7 @@ using Dapper;
 using Npgsql;
 using Quicker.Testing;
 
-namespace Quicker.Persistence.Tests;
+namespace Quicker.Schema.Tests;
 
 /// <summary>
 /// Hard scenario 18 at the database layer: for every registered tenant table, rows of tenant A are invisible and
