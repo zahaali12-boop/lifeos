@@ -46,6 +46,7 @@ public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccess
         var dimension = new Dimension { Id = Guid.CreateVersion7(), Code = code.Value, Name = name.Value, IsHierarchical = request.IsHierarchical, SortOrder = request.SortOrder, IsActive = request.IsActive, CreatedAt = now, UpdatedAt = now };
         db.Dimensions.Add(dimension);
         await db.SaveChangesAsync(cancellationToken);
+        _directoryCache = null;
         return Map(dimension);
     }
 
@@ -87,6 +88,7 @@ public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccess
         dimension.IsActive = request.IsActive;
         dimension.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        _directoryCache = null;
         return Map(dimension);
     }
 
@@ -126,6 +128,7 @@ public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccess
 
         db.DimensionValues.Add(value);
         await db.SaveChangesAsync(cancellationToken);
+        _directoryCache = null;
         return Map(value);
     }
 
@@ -152,6 +155,7 @@ public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccess
 
         value.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        _directoryCache = null;
         return Map(value);
     }
 
@@ -282,8 +286,11 @@ public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccess
     public async Task<IReadOnlyDictionary<string, Guid>?> GetAsync(Guid setId, CancellationToken cancellationToken = default) =>
         await db.DimensionSets.Where(s => s.Id == setId).Select(static s => s.Values).SingleOrDefaultAsync(cancellationToken);
 
+    // The dimension list is read for every posted line; memoised for the life of this scoped service, dropped after every write it makes.
+    private IReadOnlyList<DimensionInfo>? _directoryCache;
+
     async Task<IReadOnlyList<DimensionInfo>> IDimensionDirectory.ListAsync(CancellationToken cancellationToken) =>
-        await db.Dimensions.OrderBy(static d => d.SortOrder).ThenBy(static d => d.Code).Select(static d => new DimensionInfo(d.Id, d.Code, d.Name, d.IsActive)).ToListAsync(cancellationToken);
+        _directoryCache ??= await db.Dimensions.OrderBy(static d => d.SortOrder).ThenBy(static d => d.Code).Select(static d => new DimensionInfo(d.Id, d.Code, d.Name, d.IsActive)).ToListAsync(cancellationToken);
 
     public async Task<DimensionValueInfo?> FindValueAsync(Guid valueId, CancellationToken cancellationToken = default) =>
         await db.DimensionValues.Where(v => v.Id == valueId).Select(static v => new DimensionValueInfo(v.Id, v.DimensionId, v.Code, v.Name, v.IsActive)).SingleOrDefaultAsync(cancellationToken);

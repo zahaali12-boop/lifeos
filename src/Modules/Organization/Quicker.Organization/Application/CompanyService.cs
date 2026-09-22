@@ -95,6 +95,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
 
         await db.SaveChangesAsync(cancellationToken);
 
+        ForgetLookups();
         // A company must be able to post from day one: open the fiscal year that contains today in its time zone.
         await calendars.EnsureYearCoversAsync(company.FiscalCalendarId, clock.TodayIn(company.TimeZone), cancellationToken);
         return Map(company);
@@ -122,6 +123,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
 
         company.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        ForgetLookups();
         return Map(company);
     }
 
@@ -279,6 +281,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         db.DimensionValues.Add(value);
         db.Branches.Add(branch);
         await db.SaveChangesAsync(cancellationToken);
+        ForgetLookups();
         return Map(branch);
     }
 
@@ -316,6 +319,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         value.IsActive = request.IsActive;
         value.UpdatedAt = branch.UpdatedAt;
         await db.SaveChangesAsync(cancellationToken);
+        ForgetLookups();
         return Map(branch);
     }
 
@@ -384,6 +388,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         row.CashRoundingIncrement = request.CashRoundingIncrement;
         row.IsEnabled = request.IsEnabled;
         await db.SaveChangesAsync(cancellationToken);
+        ForgetLookups();
         await audit.RecordAsync(new AuditEntry("company_currency", companyId, $"{company.Code} {code.Value}", before is null ? AuditActions.Created : AuditActions.Updated,
             Before: before, After: new { row.DisplayDecimals, row.CashRoundingIncrement, row.IsEnabled }, CompanyId: companyId), cancellationToken);
         return new CompanyCurrencySummary(row.Currency, iso.MinorUnits, row.DisplayDecimals, row.CashRoundingIncrement, row.IsEnabled, row.Currency == company.FunctionalCurrency);
@@ -446,6 +451,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         row.UpdatedBy = ActorUserId;
         row.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        ForgetLookups();
         return Map(row);
     }
 
@@ -468,6 +474,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         company.ChartId = chartId;
         company.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        ForgetLookups();
         await audit.RecordAsync(new AuditEntry("company", company.Id, company.Code, AuditActions.Updated, Before: new { chartId = before }, After: new { chartId }), cancellationToken);
         return Result.Success();
     }
@@ -497,14 +504,33 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         company.PostingProfileId = profileId;
         company.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        ForgetLookups();
         await audit.RecordAsync(new AuditEntry("company", company.Id, company.Code, AuditActions.Updated, Before: new { postingProfileId = before }, After: new { postingProfileId = profileId }), cancellationToken);
         return Result.Success();
     }
 
+    // Lookups the posting path repeats many times per request are memoised for the life of this scoped service and dropped after every write it makes.
+    private readonly Dictionary<Guid, CompanyInfo?> _companyCache = new();
+    private readonly Dictionary<Guid, BranchInfo?> _branchCache = new();
+    private readonly Dictionary<string, Currency?> _currencyCache = new(StringComparer.Ordinal);
+
+    private void ForgetLookups()
+    {
+        _companyCache.Clear();
+        _branchCache.Clear();
+    }
+
     public async Task<CompanyInfo?> FindAsync(CompanyId id, CancellationToken cancellationToken = default)
     {
+        if (_companyCache.TryGetValue(id.Value, out var cached))
+        {
+            return cached;
+        }
+
         var company = await db.Companies.SingleOrDefaultAsync(c => c.Id == id.Value, cancellationToken);
-        return company is null ? null : await ToInfoAsync(company, cancellationToken);
+        var info = company is null ? null : await ToInfoAsync(company, cancellationToken);
+        _companyCache[id.Value] = info;
+        return info;
     }
 
     public async Task<IReadOnlyList<CompanyInfo>> ListAsync(CancellationToken cancellationToken = default)
@@ -521,15 +547,29 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
 
     public async Task<BranchInfo?> FindBranchAsync(BranchId id, CancellationToken cancellationToken = default)
     {
+        if (_branchCache.TryGetValue(id.Value, out var cached))
+        {
+            return cached;
+        }
+
         var branch = await db.Branches.SingleOrDefaultAsync(b => b.Id == id.Value, cancellationToken);
-        return branch is null ? null : new BranchInfo(new BranchId(branch.Id), new CompanyId(branch.CompanyId), branch.Code, branch.Name, branch.DimensionValueId, branch.IsActive);
+        var info = branch is null ? null : new BranchInfo(new BranchId(branch.Id), new CompanyId(branch.CompanyId), branch.Code, branch.Name, branch.DimensionValueId, branch.IsActive);
+        _branchCache[id.Value] = info;
+        return info;
     }
 
     public async Task<Currency?> FindCurrencyAsync(string code, CancellationToken cancellationToken = default)
     {
         var normalized = code?.Trim().ToUpperInvariant() ?? string.Empty;
+        if (_currencyCache.TryGetValue(normalized, out var cached))
+        {
+            return cached;
+        }
+
         var iso = await db.IsoCurrencies.SingleOrDefaultAsync(c => c.Code == normalized, cancellationToken);
-        return iso is null ? null : Currency.Of(iso.Code, iso.MinorUnits);
+        Currency? currency = iso is null ? null : Currency.Of(iso.Code, iso.MinorUnits);
+        _currencyCache[normalized] = currency;
+        return currency;
     }
 
     private async Task<CompanyInfo> ToInfoAsync(Company company, CancellationToken cancellationToken)

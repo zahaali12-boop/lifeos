@@ -8,6 +8,7 @@ using Quicker.Identity.Application;
 using Quicker.Identity.Domain;
 using Quicker.Identity.Persistence;
 using Quicker.Identity.Security;
+using Quicker.Integrity.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Tenancy;
@@ -20,7 +21,7 @@ using Quicker.Tenancy.Contracts;
 
 namespace Quicker.Migrator.Demo;
 
-public sealed record DemoSeedResult(Guid TenantId, bool Created, TimeSpan Elapsed, int Companies, int Branches, int Users, int Rates);
+public sealed record DemoSeedResult(Guid TenantId, bool Created, TimeSpan Elapsed, int Companies, int Branches, int Users, int Rates, int Journals = 0, int Entries = 0, int PeriodsClosed = 0);
 
 /// <summary>
 /// Builds the demo tenant in one transaction through the modules' own services (ADR-0029). With
@@ -120,6 +121,7 @@ public static class DemoSeeder
         // Companies, branches and the currencies each one trades in.
         var companies = services.GetRequiredService<CompanyService>();
         var companyIds = new Dictionary<string, Guid>(StringComparer.Ordinal);
+        var createdCompanies = new List<(DemoCompany Definition, CompanySummary Company)>();
         var branches = 0;
         foreach (var company in DemoData.Companies)
         {
@@ -134,6 +136,7 @@ public static class DemoSeeder
                 RegistrationNumbers: new Dictionary<string, string>(StringComparer.Ordinal) { ["tax_id"] = company.TaxId, ["commercial_registration"] = company.Registration },
                 Address: new Dictionary<string, string>(StringComparer.Ordinal) { ["street"] = company.Street, ["city"] = company.City, ["country"] = company.Country }), cancellationToken));
             companyIds[company.Code] = created.Id;
+            createdCompanies.Add((company, created));
             foreach (var branch in company.Branches)
             {
                 Require(await companies.CreateBranchAsync(created.Id, new SaveBranchRequest(
@@ -195,10 +198,28 @@ public static class DemoSeeder
 
         await organization.SaveChangesAsync(cancellationToken);
 
+        // The books (roadmap 2.7): charts, dimensions, a year of journals, routines, period control; the harness must pass.
+        var books = await DemoBooks.SeedAsync(services, createdCompanies, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
+
         await services.GetRequiredService<IAuditSink>().RecordAsync(new AuditEntry("tenant", tenant.Id.Value, DemoData.Slug, "seeded",
-            After: new { companies = DemoData.Companies.Count, branches, users = DemoData.Users.Count, rates = series.Count }), cancellationToken);
+            After: new { companies = DemoData.Companies.Count, branches, users = DemoData.Users.Count, rates = series.Count, journals = books.Journals, entries = books.Entries }), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
-        return new DemoSeedResult(tenant.Id.Value, Created: true, stopwatch.Elapsed, DemoData.Companies.Count, branches, DemoData.Users.Count, series.Count);
+        return new DemoSeedResult(tenant.Id.Value, Created: true, stopwatch.Elapsed, DemoData.Companies.Count, branches, DemoData.Users.Count, series.Count, books.Journals, books.Entries, books.PeriodsClosed);
+    }
+
+    /// <summary>Runs the invariant harness over the demo tenant as the system actor (tests and operators: the seeded books must hold).</summary>
+    public static async Task<InvariantReport> VerifyAsync(string ownerConnection, string appConnection, IClock? clock = null, CancellationToken cancellationToken = default)
+    {
+        using var host = DemoHost.Build(ownerConnection, appConnection, clock ?? SystemClock.Instance);
+        await using var scope = host.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        var context = TenantContext.System(new TenantId(DemoData.TenantId), "demo-verify-" + Guid.CreateVersion7().ToString("N")[^12..]);
+        await using var unitOfWork = await services.GetRequiredService<IUnitOfWorkFactory>().BeginAsync(context, cancellationToken: cancellationToken);
+        services.GetRequiredService<IUnitOfWorkAccessor>().Set(unitOfWork);
+        using var ambient = services.GetRequiredService<ITenantContextAccessor>().Use(context);
+        var report = await services.GetRequiredService<IInvariantHarness>().RunAsync(null, cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+        return report;
     }
 
     private static Dictionary<string, string> Bilingual(string en, string ar) => new(StringComparer.Ordinal) { ["en"] = en, ["ar"] = ar };

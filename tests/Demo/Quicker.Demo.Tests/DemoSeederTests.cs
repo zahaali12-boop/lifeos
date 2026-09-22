@@ -81,6 +81,25 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.org_exchange_rates WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(first.Rates);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.aud_events WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThan(20, "creations went through the services and were audited");
 
+        // The books (roadmap 2.7): a chart and a profile per company, dimension values, a year of journals, routines, period control, and the harness green.
+        first.Journals.ShouldBeGreaterThan(250, "twelve months of journals for three companies");
+        first.Entries.ShouldBeGreaterThan(first.Journals, "reversals, recurring journals and deferral lines post entries of their own");
+        first.PeriodsClosed.ShouldBeGreaterThanOrEqualTo(30, "every month before the current one is closed for each company");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.org_companies WHERE tenant_id = @t AND chart_id IS NOT NULL AND posting_profile_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(3);
+        (await db.QueryAsync<string>("SELECT c.template_code FROM app.gl_charts c WHERE c.tenant_id = @t ORDER BY c.code", new { t = DemoData.TenantId })).ShouldBe(["GCC", "IRAQ_UAS", "IFRS_SME"]);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.org_dimension_values WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(9 + 5, "cost centres, departments and projects next to the branch values");
+        var offBalance = (await db.QueryAsync<(Guid CompanyId, decimal Off)>("SELECT company_id, sum(debit_fc - credit_fc) FROM app.gl_journal_lines WHERE tenant_id = @t GROUP BY company_id", new { t = DemoData.TenantId })).ToList();
+        offBalance.Count.ShouldBe(3);
+        offBalance.ShouldAllBe(static c => c.Off == 0m);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_recurring_templates WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_deferral_schedules WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(4);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_journal_entries WHERE tenant_id = @t AND is_auto_reversal", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(30, "the utility accruals of the closed months reversed on their date");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.org_period_module_states WHERE tenant_id = @t AND state = 'hard_closed'", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(27);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_manual_journals WHERE tenant_id = @t AND corrects_journal_id IS NOT NULL AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(1, "scenario 7 lives in the demo");
+        var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
+        verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
+        verified.Checks.Count.ShouldBe(6);
+
         // A plain run (make up) leaves the tenant as it is: same company ids, nothing added.
         var companyIds = companies.Select(static c => c.Id).ToList();
         var second = await DemoSeeder.SeedAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, reseed: false, cancellationToken: TestContext.Current.CancellationToken);
@@ -96,6 +115,8 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         third.TenantId.ShouldBe(DemoData.TenantId);
         third.Elapsed.ShouldBeLessThan(Budget);
         third.Rates.ShouldBe(first.Rates);
+        third.Journals.ShouldBe(first.Journals, "the books are deterministic for the same day");
+        third.Entries.ShouldBe(first.Entries);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

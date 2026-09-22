@@ -58,6 +58,7 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         var calendar = new FiscalCalendar { Id = Guid.CreateVersion7(), Code = code.Value, Name = name.Value, StartMonth = request.StartMonth, PeriodsPerYear = request.PeriodsPerYear, CreatedAt = now, UpdatedAt = now };
         db.FiscalCalendars.Add(calendar);
         await db.SaveChangesAsync(cancellationToken);
+        _resolveCache.Clear();
         return Map(calendar);
     }
 
@@ -98,6 +99,7 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         calendar.PeriodsPerYear = request.PeriodsPerYear;
         calendar.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        _resolveCache.Clear();
         return Map(calendar);
     }
 
@@ -136,6 +138,7 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         var year = BuildYear(calendar, startsOn, status.Value);
         calendar.Years.Add(year);
         await db.SaveChangesAsync(cancellationToken);
+        _resolveCache.Clear();
         return Map(year);
     }
 
@@ -158,6 +161,7 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         var year = BuildYear(calendar, startsOn, "open");
         calendar.Years.Add(year);
         await db.SaveChangesAsync(cancellationToken);
+        _resolveCache.Clear();
         return year;
     }
 
@@ -307,6 +311,8 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        _resolveCache.Clear();
         return await ListStatesAsync(periodId, companyId, cancellationToken);
     }
 
@@ -385,6 +391,8 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        _resolveCache.Clear();
         var after = await ListWindowsAsync(companyId, cancellationToken);
         await audit.RecordAsync(new AuditEntry("company", companyId, "posting windows", AuditActions.Updated, Before: new { windows = before }, After: new { windows = after.Value }, CompanyId: companyId), cancellationToken);
         return after;
@@ -411,7 +419,23 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
 
     // ------------------------------------------------------------------ resolver (contract)
 
+    // Period resolution runs for every posting; memoised for the life of this scoped service, dropped after every write it makes.
+    private readonly Dictionary<(Guid Company, DateOnly Date, string Module), Result<PeriodState>> _resolveCache = new();
+
     public async Task<Result<PeriodState>> ResolveAsync(CompanyId companyId, DateOnly postingDate, string module, CancellationToken cancellationToken = default)
+    {
+        var key = (companyId.Value, postingDate, module?.Trim().ToUpperInvariant() ?? string.Empty);
+        if (_resolveCache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var resolved = await ResolveUncachedAsync(companyId, postingDate, module, cancellationToken);
+        _resolveCache[key] = resolved;
+        return resolved;
+    }
+
+    private async Task<Result<PeriodState>> ResolveUncachedAsync(CompanyId companyId, DateOnly postingDate, string? module, CancellationToken cancellationToken)
     {
         var normalizedModule = module?.Trim().ToUpperInvariant() ?? string.Empty;
         if (!PostingModules.IsValid(normalizedModule))

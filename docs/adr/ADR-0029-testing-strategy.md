@@ -50,6 +50,8 @@ A scenario test fails if any invariant fails, so a scenario cannot pass by break
 
 A deterministic seeder builds the demo tenant: three companies (IQD, USD, AED functional), five branches, eight warehouses, 5,000 items with variants, lots and serials, 800 customers, 300 suppliers, a full year of documents (about 250k lines) with returns, backdated receipts, late landed costs, FX settlements, cheques and counts, so both demos and tests run on realistic data. A larger 10M-line variant exists for M7/M10 benchmarks.
 
+*Implementation note (M1.12, M2.7):* the seeder grows with the milestones. v1 built the organisation layer (companies, branches, users, roles, a year of rates); v2 adds a chart, a posting profile, dimensions and a year of posted journals per company through the accounting services, with the routines run, periods closed, one correction and the invariant harness green before the seed commits (ASSUMPTIONS A-087, A-095). Items, warehouses, partners and documents arrive with M3–M6.
+
 ## Alternatives considered
 
 * **Mock-heavy unit tests for services.** Fast, but they prove the mocks, not the books.

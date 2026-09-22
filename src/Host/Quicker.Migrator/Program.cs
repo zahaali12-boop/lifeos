@@ -101,7 +101,7 @@ internal static class MigratorProgram
     private static int ReportDemo(DemoSeedResult result)
     {
         Console.WriteLine(result.Created
-            ? $"Demo tenant '{DemoData.Slug}' seeded in {result.Elapsed.ToString(@"s\.f", CultureInfo.InvariantCulture)} s: {result.Companies} companies, {result.Branches} branches, {result.Users} users, {result.Rates} exchange rates."
+            ? $"Demo tenant '{DemoData.Slug}' seeded in {result.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture)} s: {result.Companies} companies, {result.Branches} branches, {result.Users} users, {result.Rates} exchange rates, {result.Journals} journals posted ({result.Entries} ledger entries), {result.PeriodsClosed} period closings; the invariant harness passed."
             : $"Demo tenant '{DemoData.Slug}' already exists; run the 'demo' command to rebuild it.");
         Console.WriteLine($"Sign in as {DemoData.Owner.Email} with password {DemoData.Password} (every demo user shares it).");
         return 0;

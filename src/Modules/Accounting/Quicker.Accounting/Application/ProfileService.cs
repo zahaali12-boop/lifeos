@@ -75,6 +75,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         group.IsActive = request.IsActive;
         group.UpdatedAt = now;
         await db.SaveChangesAsync(cancellationToken);
+        _rulesCache.Clear();
         return new PostingGroupSummary(group.Id, group.Kind, group.Code, group.Name.Values, group.IsActive);
     }
 
@@ -121,6 +122,8 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        _rulesCache.Clear();
         return (await GetProfileAsync(created.Value.Id, cancellationToken))!;
     }
 
@@ -160,6 +163,8 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        _rulesCache.Clear();
         var activated = await ActivateAsync(profile.Id, cancellationToken);
         return activated.IsFailure ? activated.Error! : activated.Value;
     }
@@ -307,6 +312,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         profile.Rules.AddRange(rules);
         profile.UpdatedAt = now;
         await db.SaveChangesAsync(cancellationToken);
+        _rulesCache.Clear();
         await audit.RecordAsync(new AuditEntry("gl_posting_profile", profile.Id, $"{profile.Code} v{profile.Version}", "rules_replaced", Before: new { rules = before }, After: new { rules = rules.Count }), cancellationToken);
         return (await GetProfileAsync(profile.Id, cancellationToken))!;
     }
@@ -335,6 +341,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         profile.Status = "active";
         profile.UpdatedAt = now;
         await db.SaveChangesAsync(cancellationToken);
+        _rulesCache.Clear();
         var assigned = await companies.AssignPostingProfileAsync(new CompanyId(profile.CompanyId), profile.Id, cancellationToken);
         if (assigned.IsFailure)
         {
@@ -350,9 +357,25 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
     /// and effective on the date, else the latest version (active or since retired, never a draft) effective on the
     /// date, so a back-dated entry posts with the rules that governed its date after a newer version took over.
     /// </summary>
+    // The rules are read for every posting; memoised per company, profile and date for the life of this scoped service, dropped after every write it makes.
+    private readonly Dictionary<(Guid Company, Guid? Profile, DateOnly Date), Result<(Guid ProfileId, IReadOnlyList<RuleCandidate> Rules)>> _rulesCache = new();
+
     public async Task<Result<(Guid ProfileId, IReadOnlyList<RuleCandidate> Rules)>> ActiveRulesAsync(CompanyInfo company, DateOnly date, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(company);
+        var key = (company.Id.Value, company.PostingProfileId, date);
+        if (_rulesCache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var resolved = await ActiveRulesUncachedAsync(company, date, cancellationToken);
+        _rulesCache[key] = resolved;
+        return resolved;
+    }
+
+    private async Task<Result<(Guid ProfileId, IReadOnlyList<RuleCandidate> Rules)>> ActiveRulesUncachedAsync(CompanyInfo company, DateOnly date, CancellationToken cancellationToken)
+    {
         PostingProfile? profile = null;
         if (company.PostingProfileId is { } current)
         {
