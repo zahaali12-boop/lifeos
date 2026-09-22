@@ -48,3 +48,15 @@ public interface IAuditSink
 {
     Task RecordAsync(AuditEntry entry, CancellationToken cancellationToken = default);
 }
+
+/// <summary>The outcome of walking the current tenant's audit chain link by link (ADR-0015): status ok, empty, broken, truncated or anchor_mismatch.</summary>
+public sealed record AuditChainStatus(string Status, long FromSeq, long ToSeq, long? FirstBrokenSeq, string? Message)
+{
+    public bool Intact => Status is "ok" or "empty";
+}
+
+/// <summary>Chain verification for other modules (the invariant harness): recomputes every link of the current tenant's chain.</summary>
+public interface IAuditChainVerifier
+{
+    Task<AuditChainStatus> VerifyTenantChainAsync(CancellationToken cancellationToken = default);
+}

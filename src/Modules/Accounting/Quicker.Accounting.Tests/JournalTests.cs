@@ -93,6 +93,8 @@ public sealed class JournalTests(ApiHostFixture host)
         var adjustment = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/journals", new { postingDate = "2026-09-22", currency = "IQD", lines = new[] { Line("1210", debit: 10m, subledgerType: "AR", subledgerRef: customer), Line("4100", credit: 10m) } });
         (await owner.PostAsync($"/api/v1/accounting/journals/{adjustment.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("posted");
         (await owner.GetOkAsync($"/api/v1/accounting/companies/{companyId}/journals?status=posted")).GetProperty("items").GetArrayLength().ShouldBe(2);
+
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
@@ -142,6 +144,8 @@ public sealed class JournalTests(ApiHostFixture host)
         reversalEntry.GetProperty("reversesEntryId").GetGuid().ShouldBe(accrualEntryId);
         reversalEntry.GetProperty("links").EnumerateArray().Select(static l => l.GetProperty("relation").GetString()).ShouldBe(["auto_reversal_of", "reverses"], ignoreOrder: true);
         (await owner.PostAsync($"/api/v1/accounting/routines/run?companyId={companyId}&asOf=2026-10-02", new { }, HttpStatusCode.OK)).GetProperty("autoReversals").GetArrayLength().ShouldBe(0, "reversed once");
+
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
@@ -220,6 +224,8 @@ public sealed class JournalTests(ApiHostFixture host)
         (await owner.PostAsync($"/api/v1/accounting/deferrals/{scheduleId}/post-due?asOf=2026-12-31", new { }, HttpStatusCode.OK)).GetArrayLength().ShouldBe(0, "nothing else is due");
         var cancelled = await owner.PostAsync($"/api/v1/accounting/deferrals/{scheduleId}/cancel", new { }, HttpStatusCode.OK);
         cancelled.GetProperty("lines").EnumerateArray().Count(static l => l.GetProperty("status").GetString() == "cancelled").ShouldBe(8);
+
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
@@ -251,5 +257,7 @@ public sealed class JournalTests(ApiHostFixture host)
         var json = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/journals/import", new { journals = new[] { new { postingDate = "2026-09-15", currency = "IQD", lines = new[] { Line("6150", debit: 40000m), Line("2170", credit: 40000m) } } } }, HttpStatusCode.OK);
         json.GetProperty("created").GetInt32().ShouldBe(1);
         JsonSerializer.Serialize(json).ShouldContain("journalIds");
+
+        await owner.AssertInvariantsAsync();
     }
 }

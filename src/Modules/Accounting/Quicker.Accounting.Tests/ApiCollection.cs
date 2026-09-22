@@ -71,6 +71,13 @@ internal static class AccountingApi
         return (json.GetProperty("code").GetString()!, json);
     }
 
+    /// <summary>The invariant harness after a scenario (ADR-0029): the books, the derived balances, the audit chain and isolation must hold.</summary>
+    public static async Task AssertInvariantsAsync(this HttpClient client)
+    {
+        var report = await client.PostAsync("/api/v1/platform/integrity/run", new { }, HttpStatusCode.OK);
+        report.GetProperty("passed").GetBoolean().ShouldBeTrue("invariants violated: " + string.Join(" | ", report.GetProperty("checks").EnumerateArray().Where(static c => !c.GetProperty("passed").GetBoolean()).Select(static c => c.GetProperty("code").GetString() + ": " + string.Join("; ", c.GetProperty("problems").EnumerateArray().Select(static p => p.GetString())))));
+    }
+
     public static async Task<(string Code, JsonElement Problem)> GetErrorAsync(this HttpClient client, string path, HttpStatusCode expected)
     {
         var response = await client.GetAsync(new Uri(path, UriKind.Relative));

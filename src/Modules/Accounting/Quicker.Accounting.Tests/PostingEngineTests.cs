@@ -108,6 +108,8 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         balances.Single(static b => b.GetProperty("accountCode").GetString() == "1210").GetProperty("debitFc").GetDecimal().ShouldBe(367.29m);
         balances.Single(static b => b.GetProperty("accountCode").GetString() == "4100").GetProperty("creditTc").GetDecimal().ShouldBe(66.68m);
         (await owner.GetOkAsync($"/api/v1/accounting/companies/{setup.CompanyId}/balances/verify")).GetProperty("isConsistent").GetBoolean().ShouldBeTrue();
+
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
@@ -168,6 +170,8 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         closedWhy.GetProperty("why").GetProperty("state").GetString().ShouldBe("hard_closed");
         closedWhy.GetProperty("why").GetProperty("requiredPermission").GetString().ShouldBe("accounting.period.reopen");
         (await owner.PostAsync(post, Posting(setup.CompanyId, "IQD", [Line("Cogs", 100m), Line("Revenue", -100m)], postingDate: "2026-10-05"))).GetProperty("postingDate").GetString().ShouldBe("2026-10-05");
+
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
@@ -265,5 +269,7 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         rebuilt.GetProperty("rowsAfter").GetInt32().ShouldBe(rebuilt.GetProperty("rowsBefore").GetInt32());
         (await owner.GetOkAsync($"/api/v1/accounting/companies/{setup.CompanyId}/balances/verify")).GetProperty("isConsistent").GetBoolean().ShouldBeTrue();
         second.GetProperty("number").GetString().ShouldBe("JE-2026-000002");
+
+        await owner.AssertInvariantsAsync();
     }
 }

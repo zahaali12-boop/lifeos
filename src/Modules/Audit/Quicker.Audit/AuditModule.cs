@@ -40,6 +40,7 @@ public static class AuditModule
         services.AddScoped<AuditQueries>();
         services.AddScoped<ChainAnchoring>();
         services.AddScoped<ChainVerifier>();
+        services.AddScoped<IAuditChainVerifier>(static sp => sp.GetRequiredService<ChainVerifier>());
         services.AddSingleton<AuditChainJobs>();
         services.AddJobHandler<AuditAnchorAllJob, AuditAnchorAllPayload>();
         services.AddJobHandler<AuditVerifyAllJob, AuditVerifyAllPayload>();

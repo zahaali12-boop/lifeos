@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using Dapper;
+using Quicker.Audit.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Time;
 using Quicker.Persistence;
@@ -38,7 +39,7 @@ public sealed record ChainVerification(
 /// link, and the newest anchor (database row and external store) equal to the hash at its sequence number.
 /// The canonical text is rendered by PostgreSQL from the stored columns; the hashing happens here.
 /// </summary>
-public sealed class ChainVerifier(IUnitOfWorkAccessor unitOfWork, IClock clock, IAuditAnchorStore store, ChainAnchoring anchoring)
+public sealed class ChainVerifier(IUnitOfWorkAccessor unitOfWork, IClock clock, IAuditAnchorStore store, ChainAnchoring anchoring) : IAuditChainVerifier
 {
     private const int PageSize = 2000;
 
@@ -95,6 +96,12 @@ public sealed class ChainVerifier(IUnitOfWorkAccessor unitOfWork, IClock clock, 
     public Task<ChainVerification> VerifyTenantAsync(CancellationToken cancellationToken) => VerifyAsync(ChainKind.Tenant, TenantId, cancellationToken);
 
     public Task<ChainVerification> VerifyPlatformAsync(CancellationToken cancellationToken) => VerifyAsync(ChainKind.Platform, null, cancellationToken);
+
+    public async Task<AuditChainStatus> VerifyTenantChainAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await VerifyTenantAsync(cancellationToken);
+        return new AuditChainStatus(result.Status, result.FromSeq, result.ToSeq, result.FirstBrokenSeq, result.Message);
+    }
 
     public Task<IReadOnlyList<ChainVerification>> ListTenantVerificationsAsync(int limit, CancellationToken cancellationToken) => ListAsync(ChainKind.Tenant, TenantId, limit, cancellationToken);
 

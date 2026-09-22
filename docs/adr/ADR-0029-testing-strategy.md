@@ -36,6 +36,8 @@ A reusable checker invoked at the end of every scenario test and nightly in prod
 
 A scenario test fails if any invariant fails, so a scenario cannot pass by breaking the books elsewhere.
 
+*Implementation note (M2.6):* items 1, 2, 5 (`gl_balances`), 6 (numbering), 7 and 8 run as the `Quicker.Integrity` harness (`IInvariantHarness`, `POST /platform/integrity/run`, job `integrity.check_all`); item 8 is checked from the catalogue (every tenant table policed and forced) since the tenant context cannot see other tenants; items 3 and 4 join with the subledgers and inventory. Accounting scenario tests end with the harness (ASSUMPTIONS A-094).
+
 ### Rules of engagement
 
 * Tests use the public API or module Contracts, never internals, except unit tests of pure functions.

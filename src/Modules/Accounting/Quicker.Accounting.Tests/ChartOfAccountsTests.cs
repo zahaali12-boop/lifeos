@@ -116,6 +116,8 @@ public sealed class ChartOfAccountsTests(ApiHostFixture host)
         failed.ShouldBe("import.parent_unknown");
         problem.GetProperty("why").GetProperty("row").GetInt32().ShouldBe(1);
         (await owner.GetOkAsync($"/api/v1/accounting/charts/{copyId}/accounts")).EnumerateArray().Count(static a => a.GetProperty("code").GetString() == "6199").ShouldBe(0);
+
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
@@ -197,6 +199,8 @@ public sealed class ChartOfAccountsTests(ApiHostFixture host)
         (await owner.PutAsync($"/api/v1/accounting/companies/{otherCompanyId}/chart", new { chartId })).GetProperty("chartCode").GetString().ShouldBe("MAIN");
         (await owner.PostAsync($"/api/v1/accounting/accounts/{accounts["1210"]}/check", new { companyId = otherCompanyId }, HttpStatusCode.OK)).GetProperty("accountCode").GetString().ShouldBe("1210");
         (await owner.PutAsync($"/api/v1/accounting/companies/{otherCompanyId}/chart", new { chartId = (Guid?)null })).GetProperty("chartId").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
@@ -226,5 +230,7 @@ public sealed class ChartOfAccountsTests(ApiHostFixture host)
         changed.EnumerateArray().Single(static m => m.GetProperty("accountCode").GetString() == "9100").GetProperty("statutoryCode").GetString().ShouldBe("9");
         changed.EnumerateArray().Single(static m => m.GetProperty("accountCode").GetString() == "1210").GetProperty("statutoryCode").ValueKind.ShouldBe(JsonValueKind.Null);
         (await owner.GetAsync($"/api/v1/accounting/charts/{chartId}/mappings/NOPE")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        await owner.AssertInvariantsAsync();
     }
 }

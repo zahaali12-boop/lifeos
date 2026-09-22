@@ -8730,6 +8730,37 @@
           }
         }
       }
+    },
+    "/api/v1/platform/integrity/run": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Runs the invariant harness for the tenant (or one company) and answers with every check: balanced entries, trial balance zero, derived balances equal the lines, audit chain intact, tenant isolation, gapless numbering",
+        "operationId": "postPlatformIntegrityRun",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvariantReport"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12204,6 +12235,88 @@
             "format": "int32"
           }
         }
+      },
+      "InvariantReport": {
+        "required": [
+          "tenantId",
+          "companyId",
+          "ranAt",
+          "checks",
+          "passed"
+        ],
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "ranAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvariantResult"
+            }
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "failedCodes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A run of the harness for one tenant (optionally one company): every check with its outcome."
+      },
+      "InvariantResult": {
+        "required": [
+          "code",
+          "passed",
+          "checked",
+          "problems",
+          "summary"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "checked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "description": "One check: what it looked at, whether it holds, and the first problems it found (never more than a page)."
       },
       "InviteUserRequest": {
         "required": [

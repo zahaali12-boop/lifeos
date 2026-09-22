@@ -131,6 +131,8 @@ public sealed class PeriodControlTests(ApiHostFixture host)
         (await owner.PostErrorAsync($"/api/v1/accounting/journals/{ownerLate.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.Conflict)).Code.ShouldBe("posting.outside_window");
         var clerkLate = await clerk.PostAsync(journals, Journal("2026-11-05", "6120", "2170", 5000m));
         (await clerk.PostAsync($"/api/v1/accounting/journals/{clerkLate.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("posted", "a role window replaces the company window for its holders");
+
+        await owner.AssertInvariantsAsync();
     }
 
     private async Task<(string Token, Guid RoleId)> InviteAsync(HttpClient owner, Workspace ws, string code, params string[] grants)

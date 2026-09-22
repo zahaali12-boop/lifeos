@@ -173,5 +173,7 @@ public sealed class InquiryTests(ApiHostFixture host)
         var exported = (await owner.GetOkAsync($"/api/v1/audit/records/report/{companyId}")).EnumerateArray().ToList();
         exported.Count.ShouldBe(2);
         exported.ShouldAllBe(static e => e.GetProperty("action").GetString() == "exported");
+
+        await owner.AssertInvariantsAsync();
     }
 }
