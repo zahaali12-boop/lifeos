@@ -220,7 +220,8 @@ public sealed class Company : ITenantEntity
 
     public Dictionary<string, string> Address { get; set; } = new(StringComparer.Ordinal);
 
-    public Dictionary<string, string> CustomFields { get; set; } = new(StringComparer.Ordinal);
+    /// <summary>Tenant-defined values validated against the Collaboration custom-field definitions for "company".</summary>
+    public string CustomFields { get; set; } = "{}";
 
     public bool IsActive { get; set; } = true;
 

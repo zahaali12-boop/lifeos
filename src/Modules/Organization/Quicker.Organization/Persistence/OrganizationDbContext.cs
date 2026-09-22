@@ -132,7 +132,7 @@ public sealed class OrganizationDbContext(DbContextOptions<OrganizationDbContext
             b.Property(static c => c.TradeName).HasColumnName("trade_name_i18n");
             b.Property(static c => c.RegistrationNumbers).HasConversion(StringMapConverter, StringMapComparer).HasColumnType("jsonb");
             b.Property(static c => c.Address).HasConversion(StringMapConverter, StringMapComparer).HasColumnType("jsonb");
-            b.Property(static c => c.CustomFields).HasConversion(StringMapConverter, StringMapComparer).HasColumnType("jsonb");
+            b.Property(static c => c.CustomFields).HasColumnType("jsonb");
             b.HasOne<FiscalCalendar>().WithMany().HasForeignKey(static c => new { c.TenantId, c.FiscalCalendarId });
             b.HasOne<BusinessCalendar>().WithMany().HasForeignKey(static c => new { c.TenantId, c.BusinessCalendarId });
             b.HasAuditTrail("company", static c => c.Code);

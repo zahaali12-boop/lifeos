@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Messaging;
 using Quicker.Organization.Application;
@@ -17,6 +18,7 @@ public static class OrganizationModule
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
         PermissionCatalog.Register(OrganizationPermissions.All);
+        CustomFieldHosts.Register(new CustomFieldHost("company", "app.org_companies", "custom_fields"));
 
         services.Configure<RateProviderOptions>(configuration.GetSection(RateProviderOptions.SectionName));
         services.AddHttpClient<EcbRateProvider>(static client => client.Timeout = TimeSpan.FromSeconds(20));

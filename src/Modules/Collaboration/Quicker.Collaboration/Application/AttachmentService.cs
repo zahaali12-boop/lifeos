@@ -1,9 +1,11 @@
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Quicker.Collaboration.Contracts;
 using Quicker.Collaboration.Domain;
 using Quicker.Collaboration.Persistence;
 using Quicker.Kernel.Results;
+using Quicker.Kernel.Text;
 using Quicker.Kernel.Time;
 using Quicker.Persistence;
 using Quicker.Storage;
@@ -17,7 +19,7 @@ public sealed record AttachmentSummary(Guid Id, string EntityType, Guid EntityId
 /// <c>tenants/{tenant}/attachments/{id}</c>. Uploads are spooled to a temporary file while the size limit is
 /// enforced and the SHA-256 computed, then stored; deletion removes the object just before the row's commit.
 /// </summary>
-public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IObjectStorage storage, StorageOptions options, IClock clock)
+public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IObjectStorage storage, StorageOptions options, IActivityLog activities, IClock clock)
 {
     public const int MaxFileNameLength = 255;
 
@@ -75,6 +77,7 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
         await storage.PutAsync(attachment.StorageKey, spool, attachment.ContentType, null, cancellationToken);
         db.Attachments.Add(attachment);
         await db.SaveChangesAsync(cancellationToken);
+        await activities.RecordAsync(new ActivityEntry(type, entityId, ActivityKinds.AttachmentAdded, LocalizedText.Bilingual($"Attached {name}", $"أُرفق {name}"), new { attachmentId = id, fileName = name, sizeBytes = size }), cancellationToken);
         return Map(attachment);
     }
 
@@ -124,6 +127,7 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
 
         db.Attachments.Remove(attachment);
         await db.SaveChangesAsync(cancellationToken);
+        await activities.RecordAsync(new ActivityEntry(attachment.EntityType, attachment.EntityId, ActivityKinds.AttachmentRemoved, LocalizedText.Bilingual($"Removed {attachment.FileName}", $"أُزيل {attachment.FileName}"), new { attachmentId = id, fileName = attachment.FileName }), cancellationToken);
         var key = attachment.StorageKey;
         unitOfWork.Current.BeforeCommit(ct => storage.DeleteAsync(key, ct));
         return Result.Success();

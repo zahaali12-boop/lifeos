@@ -74,6 +74,7 @@ public static class CollaborationEndpoints
             ApiProblems.From(await service.DeleteAsync(attachmentId, ct), static () => Results.NoContent()))
             .RequirePermission(CollaborationPermissions.AttachmentManage);
 
+        group.MapRecordEndpoints();
         return api;
     }
 }

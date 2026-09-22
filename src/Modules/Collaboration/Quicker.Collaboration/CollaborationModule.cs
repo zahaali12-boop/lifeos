@@ -19,6 +19,15 @@ public static class CollaborationModule
         services.AddScoped<NotificationService>();
         services.AddScoped<INotifier>(static sp => sp.GetRequiredService<NotificationService>());
         services.AddScoped<AttachmentService>();
+        services.AddScoped<ActivityService>();
+        services.AddScoped<IActivityLog>(static sp => sp.GetRequiredService<ActivityService>());
+        services.AddScoped<CommentService>();
+        services.AddScoped<DocumentLinkService>();
+        services.AddScoped<IDocumentLinks>(static sp => sp.GetRequiredService<DocumentLinkService>());
+        services.AddScoped<SavedViewService>();
+        services.AddSingleton<CustomFieldIndexer>();
+        services.AddScoped<CustomFieldService>();
+        services.AddScoped<ICustomFieldValidator>(static sp => sp.GetRequiredService<CustomFieldService>());
         services.AddJobHandler<EmailSendJob, EmailSendPayload>();
         return services;
     }

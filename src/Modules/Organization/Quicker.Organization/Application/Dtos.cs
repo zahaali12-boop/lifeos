@@ -24,7 +24,8 @@ public sealed record SaveCompanyRequest(
     string BankRevaluationMode = "permanent",
     IReadOnlyDictionary<string, string>? RegistrationNumbers = null,
     IReadOnlyDictionary<string, string>? Address = null,
-    bool IsActive = true);
+    bool IsActive = true,
+    JsonElement? CustomFields = null);
 
 public sealed record CompanySummary(
     Guid Id,
@@ -47,7 +48,8 @@ public sealed record CompanySummary(
     string BankRevaluationMode,
     IReadOnlyDictionary<string, string> RegistrationNumbers,
     IReadOnlyDictionary<string, string> Address,
-    bool IsActive);
+    bool IsActive,
+    JsonElement CustomFields);
 
 public sealed record SaveBranchRequest(
     string Code,

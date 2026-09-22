@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Quicker.Audit.Contracts;
+using Quicker.Collaboration.Contracts;
 using Quicker.Kernel.Amounts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
@@ -14,7 +15,7 @@ using Quicker.Persistence;
 namespace Quicker.Organization.Application;
 
 /// <summary>Companies, branches (with their BRANCH dimension value), enabled currencies and settings.</summary>
-public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, FiscalCalendarService calendars, IAuditSink audit, IClock clock) : ICompanyDirectory
+public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, FiscalCalendarService calendars, IAuditSink audit, ICustomFieldValidator customFields, IClock clock) : ICompanyDirectory
 {
     private static readonly string[] CostingMethods = ["fifo", "average", "standard"];
     private static readonly string[] CostingScopes = ["company", "warehouse"];
@@ -161,6 +162,14 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
             return Error.NotFound("business_calendar", businessCalendarId);
         }
 
+        var values = request.CustomFields ?? (isNew ? null : JsonDocument.Parse(company.CustomFields).RootElement);
+        var validated = await customFields.ValidateAsync("company", values, cancellationToken);
+        if (validated.IsFailure)
+        {
+            return validated.Error!;
+        }
+
+        company.CustomFields = validated.Value;
         company.Code = code.Value;
         company.LegalName = legalName.Value;
         company.TradeName = request.TradeName is { Count: > 0 } ? Validation.Name(request.TradeName, "company").Value : new LocalizedText();
@@ -458,7 +467,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
     internal static CompanySummary Map(Company c) => new(
         c.Id, c.Code, c.LegalName.Values, c.TradeName.Values, c.Country, c.FunctionalCurrency, c.ReportingCurrency, c.TimeZone, c.DefaultLanguage,
         c.FiscalCalendarId, c.BusinessCalendarId, c.CostingMethod, c.CostingScope, c.RevenueRecognitionPoint, c.TaxRoundingMode, c.RoundingMode,
-        c.NegativeStockPolicy, c.BankRevaluationMode, c.RegistrationNumbers, c.Address, c.IsActive);
+        c.NegativeStockPolicy, c.BankRevaluationMode, c.RegistrationNumbers, c.Address, c.IsActive, JsonDocument.Parse(c.CustomFields).RootElement.Clone());
 
     internal static BranchSummary Map(Branch b) => new(b.Id, b.CompanyId, b.Code, b.Name.Values, b.Address, b.TaxRegistrations, b.DimensionValueId, b.IsActive);
 

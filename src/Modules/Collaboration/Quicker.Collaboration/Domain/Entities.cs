@@ -106,3 +106,129 @@ public sealed class Attachment : ITenantEntity
 
     public DateTimeOffset CreatedAt { get; set; }
 }
+
+/// <summary>A comment on a record; mentions are membership ids; deletion is soft so threads keep their shape.</summary>
+public sealed class Comment : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string EntityType { get; set; } = string.Empty;
+
+    public Guid EntityId { get; set; }
+
+    public Guid AuthorMembershipId { get; set; }
+
+    public string Body { get; set; } = string.Empty;
+
+    public Guid[] Mentions { get; set; } = [];
+
+    public Guid? ParentId { get; set; }
+
+    public DateTimeOffset? EditedAt { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class Activity : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string EntityType { get; set; } = string.Empty;
+
+    public Guid EntityId { get; set; }
+
+    public string Kind { get; set; } = string.Empty;
+
+    public Guid? ActorMembershipId { get; set; }
+
+    public LocalizedText Summary { get; set; } = new();
+
+    public string Data { get; set; } = "{}";
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class DocumentLinkRecord : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string FromType { get; set; } = string.Empty;
+
+    public Guid FromId { get; set; }
+
+    public string ToType { get; set; } = string.Empty;
+
+    public Guid ToId { get; set; }
+
+    public string Relation { get; set; } = string.Empty;
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A grid configuration (filters, sort, columns, grouping) owned by a member, optionally shared with the tenant.</summary>
+public sealed class SavedView : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string EntityType { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+
+    public Guid OwnerMembershipId { get; set; }
+
+    public bool Shared { get; set; }
+
+    public bool IsDefault { get; set; }
+
+    public string Definition { get; set; } = "{}";
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>A tenant-defined field on a host entity: type, requiredness, options for selects, rules, and whether the host column is indexed on it.</summary>
+public sealed class CustomFieldDefinition : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string EntityType { get; set; } = string.Empty;
+
+    public string Key { get; set; } = string.Empty;
+
+    public LocalizedText Label { get; set; } = new();
+
+    public LocalizedText Description { get; set; } = new();
+
+    public string Type { get; set; } = "text";
+
+    public bool Required { get; set; }
+
+    public string Options { get; set; } = "[]";
+
+    public string Rules { get; set; } = "{}";
+
+    public bool Indexed { get; set; }
+
+    public int Position { get; set; }
+
+    public bool Active { get; set; } = true;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
