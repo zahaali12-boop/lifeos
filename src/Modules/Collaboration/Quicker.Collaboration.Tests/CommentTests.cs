@@ -36,12 +36,12 @@ public sealed class CommentTests(ApiHostFixture host)
         comment.GetProperty("authorName").GetString().ShouldBe("clerk");
         comment.GetProperty("mentions").EnumerateArray().Single().GetGuid().ShouldBe(ws.MembershipId);
 
-        var mention = (await (await owner.GetAsync("/api/v1/collaboration/notifications?unreadOnly=true")).ReadJsonAsync()).EnumerateArray().Single(n => n.GetProperty("kind").GetString() == "collaboration.mention");
+        var mention = (await (await owner.GetAsync("/api/v1/collaboration/notifications?unreadOnly=true")).ReadJsonAsync()).GetProperty("items").EnumerateArray().Single(n => n.GetProperty("kind").GetString() == "collaboration.mention");
         mention.GetProperty("title").Map()["en"].ShouldBe("clerk mentioned you");
         mention.GetProperty("entityId").GetGuid().ShouldBe(invoiceId);
         mention.GetProperty("data").GetProperty("commentId").GetGuid().ShouldBe(comment.GetProperty("id").GetGuid());
 
-        var timeline = (await (await clerk.GetAsync($"/api/v1/collaboration/activities?entityType=sales_invoice&entityId={invoiceId}")).ReadJsonAsync()).EnumerateArray().ToList();
+        var timeline = (await (await clerk.GetAsync($"/api/v1/collaboration/activities?entityType=sales_invoice&entityId={invoiceId}")).ReadJsonAsync()).GetProperty("items").EnumerateArray().ToList();
         timeline.Select(static a => a.GetProperty("kind").GetString()).ShouldBe(["comment.added", "attachment.added"]);
         timeline[0].GetProperty("summary").Map()["ar"].ShouldBe("علّق clerk");
         timeline[1].GetProperty("data").GetProperty("fileName").GetString().ShouldBe("note.txt");
@@ -64,7 +64,7 @@ public sealed class CommentTests(ApiHostFixture host)
         thread[0].GetProperty("deletedAt").ValueKind.ShouldNotBe(JsonValueKind.Null);
         thread[0].GetProperty("body").GetString().ShouldBe(string.Empty);
         thread[1].GetProperty("editedAt").ValueKind.ShouldBe(JsonValueKind.Null);
-        (await (await owner.GetAsync($"/api/v1/collaboration/activities?entityType=sales_invoice&entityId={invoiceId}")).ReadJsonAsync()).EnumerateArray().Select(static a => a.GetProperty("kind").GetString()).ShouldBe(["comment.deleted", "comment.edited", "comment.edited", "comment.added", "comment.added", "attachment.added"]);
+        (await (await owner.GetAsync($"/api/v1/collaboration/activities?entityType=sales_invoice&entityId={invoiceId}")).ReadJsonAsync()).GetProperty("items").EnumerateArray().Select(static a => a.GetProperty("kind").GetString()).ShouldBe(["comment.deleted", "comment.edited", "comment.edited", "comment.added", "comment.added", "attachment.added"]);
 
         var other = await Api.SignupAsync();
         using var outsider = Api.ClientFor(other.AccessToken);
@@ -91,7 +91,7 @@ public sealed class CommentTests(ApiHostFixture host)
         fromOrder.GetProperty("from").GetProperty("id").GetGuid().ShouldBe(invoice.id);
         fromOrder.GetProperty("relation").GetString().ShouldBe("source");
         (await (await owner.GetAsync($"/api/v1/collaboration/links?entityType=sales_invoice&entityId={invoice.id}")).ReadJsonAsync()).GetArrayLength().ShouldBe(1);
-        (await (await owner.GetAsync($"/api/v1/collaboration/activities?entityType=sales_order&entityId={order.id}")).ReadJsonAsync()).EnumerateArray().Single().GetProperty("kind").GetString().ShouldBe("link.added");
+        (await (await owner.GetAsync($"/api/v1/collaboration/activities?entityType=sales_order&entityId={order.id}")).ReadJsonAsync()).GetProperty("items").EnumerateArray().Single().GetProperty("kind").GetString().ShouldBe("link.added");
 
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/links", new { from = invoice, to = invoice, relation = "related" }, Json)).ErrorCodeAsync()).ShouldBe("link.self");
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/links", new { from = invoice, to = order, relation = "Is Source Of" }, Json)).ErrorCodeAsync()).ShouldBe("link.relation_invalid");
@@ -101,6 +101,6 @@ public sealed class CommentTests(ApiHostFixture host)
         (await outsider.DeleteAsync($"/api/v1/collaboration/links/{link.GetProperty("id").GetGuid()}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await owner.DeleteAsync($"/api/v1/collaboration/links/{link.GetProperty("id").GetGuid()}")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await (await owner.GetAsync($"/api/v1/collaboration/links?entityType=sales_order&entityId={order.id}")).ReadJsonAsync()).GetArrayLength().ShouldBe(0);
-        (await (await owner.GetAsync($"/api/v1/collaboration/activities?entityType=sales_invoice&entityId={invoice.id}")).ReadJsonAsync()).EnumerateArray().Select(static a => a.GetProperty("kind").GetString()).ShouldBe(["link.removed", "link.added"]);
+        (await (await owner.GetAsync($"/api/v1/collaboration/activities?entityType=sales_invoice&entityId={invoice.id}")).ReadJsonAsync()).GetProperty("items").EnumerateArray().Select(static a => a.GetProperty("kind").GetString()).ShouldBe(["link.removed", "link.added"]);
     }
 }

@@ -16,9 +16,9 @@ public static class CollaborationEndpoints
         var group = api.MapGroup("/collaboration").WithTags("Collaboration").RequireAuthorization();
 
         var notifications = group.MapGroup("/notifications");
-        notifications.MapGet("/", async (bool? unreadOnly, int? limit, Guid? before, NotificationService service, CancellationToken ct) =>
-            ApiProblems.Ok(await service.ListMineAsync(unreadOnly ?? false, limit ?? 50, before, ct)))
-            .WithSummary("My notifications, newest first; pass the last id as 'before' to page");
+        notifications.MapGet("/", async (bool? unreadOnly, [AsParameters] PageRequest page, NotificationService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.ListMineAsync(unreadOnly ?? false, page, ct)))
+            .WithSummary("My notifications, newest first; page with limit and the returned nextCursor");
         notifications.MapGet("/unread-count", async (NotificationService service, CancellationToken ct) =>
             ApiProblems.From(await service.UnreadCountAsync(ct), static count => Results.Ok(new { count })));
         notifications.MapPost("/{notificationId:guid}/read", async (Guid notificationId, NotificationService service, CancellationToken ct) =>

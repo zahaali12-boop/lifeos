@@ -1004,6 +1004,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Companies, optionally filtered: filter=country eq 'IQ' and isActive eq true and cf.region eq 'north' */
         get: operations["getOrganizationCompanies"];
         put?: never;
         /** Create a company; its functional currency is enabled and the fiscal year containing today is opened */
@@ -1021,7 +1022,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** One company; expand=branches embeds its branches; the ETag is its version for If-Match on PUT */
         get: operations["getOrganizationCompaniesByCompanyId"];
+        /** Replace a company; send If-Match with the ETag from GET to refuse lost updates (412) */
         put: operations["putOrganizationCompaniesByCompanyId"];
         post?: never;
         delete?: never;
@@ -2052,7 +2055,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** My notifications, newest first; pass the last id as 'before' to page */
+        /** My notifications, newest first; page with limit and the returned nextCursor */
         get: operations["getCollaborationNotifications"];
         put?: never;
         post?: never;
@@ -2642,6 +2645,9 @@ export interface components {
             };
             isActive: boolean;
             customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            updatedAt: string;
+            branches?: null | components["schemas"]["BranchSummary"][];
         };
         CounterSummary: {
             periodKey: string;
@@ -3045,6 +3051,21 @@ export interface components {
             startYear: number | string;
             /** @default open */
             status: string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfActivityView: {
+            items: components["schemas"]["ActivityView"][];
+            nextCursor: null | string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfDeliverySummary: {
+            items: components["schemas"]["DeliverySummary"][];
+            nextCursor: null | string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfNotificationView: {
+            items: components["schemas"]["NotificationView"][];
+            nextCursor: null | string;
         };
         /** @description Gapless audit for one reset period of a series: what was issued and which numbers are missing (expected: none). */
         PeriodGaps: {
@@ -5329,7 +5350,9 @@ export interface operations {
     };
     getOrganizationCompanies: {
         parameters: {
-            query?: never;
+            query?: {
+                filter?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -5373,7 +5396,9 @@ export interface operations {
     };
     getOrganizationCompaniesByCompanyId: {
         parameters: {
-            query?: never;
+            query?: {
+                expand?: string;
+            };
             header?: never;
             path: {
                 companyId: string;
@@ -7228,7 +7253,8 @@ export interface operations {
         parameters: {
             query?: {
                 status?: string;
-                limit?: number | string;
+                Limit?: number | string;
+                Cursor?: string;
             };
             header?: never;
             path: {
@@ -7244,7 +7270,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DeliverySummary"][];
+                    "application/json": components["schemas"]["PageOfDeliverySummary"];
                 };
             };
         };
@@ -7297,8 +7323,8 @@ export interface operations {
         parameters: {
             query?: {
                 unreadOnly?: boolean;
-                limit?: number | string;
-                before?: string;
+                Limit?: number | string;
+                Cursor?: string;
             };
             header?: never;
             path?: never;
@@ -7312,7 +7338,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotificationView"][];
+                    "application/json": components["schemas"]["PageOfNotificationView"];
                 };
             };
         };
@@ -7646,7 +7672,8 @@ export interface operations {
             query: {
                 entityType?: string;
                 entityId: string;
-                limit?: number | string;
+                Limit?: number | string;
+                Cursor?: string;
             };
             header?: never;
             path?: never;
@@ -7660,7 +7687,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ActivityView"][];
+                    "application/json": components["schemas"]["PageOfActivityView"];
                 };
             };
         };

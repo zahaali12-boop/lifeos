@@ -55,6 +55,7 @@ public abstract class ModuleDbContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         base.OnModelCreating(modelBuilder);
+        JsonFunctions.Register(modelBuilder);
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {

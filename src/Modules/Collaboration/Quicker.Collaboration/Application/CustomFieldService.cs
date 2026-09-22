@@ -69,7 +69,7 @@ public sealed class CustomFieldIndexer(DbOptions options) : IDisposable
         var schema = host.Table.Split('.')[0];
         var name = IndexName(host, key);
         var sql = indexed
-            ? $"CREATE INDEX IF NOT EXISTS \"{name}\" ON {host.Table} (tenant_id, (({host.Column}->>'{key}')))"
+            ? $"CREATE INDEX IF NOT EXISTS \"{name}\" ON {host.Table} (tenant_id, ({Quicker.Persistence.EntityFramework.JsonFunctions.IndexExpression(host.Column, key)}))" // the filter language translates cf.<key> to the same expression, so it uses the index
             : $"DROP INDEX IF EXISTS {schema}.\"{name}\"";
         await using var connection = await _owner.Value.OpenConnectionAsync(cancellationToken);
         await connection.ExecuteAsync(new CommandDefinition(sql, cancellationToken: cancellationToken));

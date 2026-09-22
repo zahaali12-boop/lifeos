@@ -23,6 +23,9 @@ public enum ErrorKind
 
     /// <summary>Too many requests (429).</summary>
     RateLimited = 6,
+
+    /// <summary>A conditional request's precondition (If-Match) does not hold (412).</summary>
+    PreconditionFailed = 7,
 }
 
 /// <summary>

@@ -40,6 +40,7 @@ builder.Services.AddOpenApi("v1", static options => options.AddOperationTransfor
 builder.Services.AddQuickerMessaging(builder.Configuration);
 builder.Services.AddQuickerIdempotency(builder.Configuration);
 builder.Services.AddQuickerRateLimiting(builder.Configuration);
+builder.Services.AddQuickerResponseShaping();
 if (builder.Configuration.GetValue<bool>("Quicker:Worker:Embedded"))
 {
     // Single-node installs run the dispatcher, job slots and scheduler inside the API process (ADR-0010).
@@ -63,6 +64,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 app.UseQuickerUnitOfWork("/api");
 app.UseQuickerIdempotency("/api");
+app.UseQuickerResponseShaping("/api");
 
 app.MapOpenApi("/api/{documentName}/openapi.json");
 

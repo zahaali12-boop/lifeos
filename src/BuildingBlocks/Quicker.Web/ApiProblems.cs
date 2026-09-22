@@ -70,6 +70,7 @@ public static class ApiProblems
         ErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
         ErrorKind.Locked => StatusCodes.Status423Locked,
         ErrorKind.RateLimited => StatusCodes.Status429TooManyRequests,
+        ErrorKind.PreconditionFailed => StatusCodes.Status412PreconditionFailed,
         _ => StatusCodes.Status422UnprocessableEntity,
     };
 
@@ -79,6 +80,7 @@ public static class ApiProblems
         403 => "Forbidden",
         404 => "Not found",
         409 => "Conflict",
+        412 => "Precondition failed",
         422 => "Request cannot be processed",
         423 => "Locked",
         429 => "Too many requests",

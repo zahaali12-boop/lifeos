@@ -58,14 +58,14 @@ public sealed class WebhookTests(ApiHostFixture host)
         WebhookSigning.Verify("whsec_wrong", sales.Headers[WebhookSigning.TimestampHeader], sales.Body, sales.Headers[WebhookSigning.SignatureHeader]).ShouldBeFalse();
         all.Headers[WebhookSigning.EventIdHeader].ShouldBe(sales.Headers[WebhookSigning.EventIdHeader]);
 
-        var deliveries = (await (await owner.GetAsync($"/api/v1/integration/webhooks/{salesId}/deliveries")).ReadJsonAsync()).EnumerateArray().ToList();
+        var deliveries = (await (await owner.GetAsync($"/api/v1/integration/webhooks/{salesId}/deliveries")).ReadJsonAsync()).GetProperty("items").EnumerateArray().ToList();
         var delivery = deliveries.ShouldHaveSingleItem();
         delivery.GetProperty("status").GetString().ShouldBe("delivered");
         delivery.GetProperty("responseStatus").GetInt32().ShouldBe(200);
         delivery.GetProperty("attempt").GetInt32().ShouldBe(1);
         delivery.GetProperty("responseExcerpt").GetString()!.ShouldContain("ok");
-        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{otherId}/deliveries")).ReadJsonAsync()).GetArrayLength().ShouldBe(0);
-        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{allId}/deliveries")).ReadJsonAsync()).GetArrayLength().ShouldBe(1);
+        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{otherId}/deliveries")).ReadJsonAsync()).GetProperty("items").GetArrayLength().ShouldBe(0);
+        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{allId}/deliveries")).ReadJsonAsync()).GetProperty("items").GetArrayLength().ShouldBe(1);
 
         // Another tenant sees nothing, and an inactive subscription receives nothing new.
         var other = await Api.SignupAsync();
@@ -75,8 +75,8 @@ public sealed class WebhookTests(ApiHostFixture host)
         (await owner.PutAsJsonAsync($"/api/v1/integration/webhooks/{allId}", new { name = "everything", url = host.Receiver.BaseUrl + "all", eventTypes = new[] { "*" }, active = false }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
         await host.PublishAsync(ws.TenantId, new OrderShipped(Guid.NewGuid(), "SO-1002", 1m));
         await host.RunWorkerAsync();
-        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{allId}/deliveries")).ReadJsonAsync()).GetArrayLength().ShouldBe(1);
-        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{salesId}/deliveries")).ReadJsonAsync()).GetArrayLength().ShouldBe(2);
+        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{allId}/deliveries")).ReadJsonAsync()).GetProperty("items").GetArrayLength().ShouldBe(1);
+        (await (await owner.GetAsync($"/api/v1/integration/webhooks/{salesId}/deliveries")).ReadJsonAsync()).GetProperty("items").GetArrayLength().ShouldBe(2);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public sealed class WebhookTests(ApiHostFixture host)
         host.Receiver.ResponseStatus = 500;
         await host.PublishAsync(ws.TenantId, new OrderShipped(Guid.NewGuid(), "SO-2001", 1m));
         await host.RunWorkerAsync();
-        var failed = (await (await owner.GetAsync($"/api/v1/integration/webhooks/{id}/deliveries")).ReadJsonAsync()).EnumerateArray().Single();
+        var failed = (await (await owner.GetAsync($"/api/v1/integration/webhooks/{id}/deliveries")).ReadJsonAsync()).GetProperty("items").EnumerateArray().Single();
         failed.GetProperty("status").GetString().ShouldBe("pending");
         failed.GetProperty("attempt").GetInt32().ShouldBe(1);
         failed.GetProperty("responseStatus").GetInt32().ShouldBe(500);

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Quicker.Kernel.Results;
 using Quicker.Organization.Application;
 using Quicker.Organization.Contracts;
 using Quicker.Web;
@@ -26,18 +27,39 @@ public static class OrganizationEndpoints
     private static void MapCompanies(RouteGroupBuilder org)
     {
         var companies = org.MapGroup("/companies");
-        companies.MapGet("/", async (CompanyService service, CancellationToken ct) => TypedResults.Ok(await service.ListCompaniesAsync(ct)))
-            .RequirePermission(OrganizationPermissions.CompanyRead);
-        companies.MapGet("/{companyId:guid}", async (Guid companyId, CompanyService service, CancellationToken ct) =>
-            ApiProblems.Found(await service.GetCompanyAsync(companyId, ct), "company", companyId))
-            .RequirePermission(OrganizationPermissions.CompanyRead);
+        companies.MapGet("/", async (string? filter, CompanyService service, CancellationToken ct) => ApiProblems.Ok(await service.ListCompaniesAsync(filter, ct)))
+            .RequirePermission(OrganizationPermissions.CompanyRead)
+            .WithSummary("Companies, optionally filtered: filter=country eq 'IQ' and isActive eq true and cf.region eq 'north'");
+        companies.MapGet("/{companyId:guid}", async (Guid companyId, string? expand, HttpResponse response, CompanyService service, CancellationToken ct) =>
+        {
+            var company = await service.GetCompanyAsync(companyId, expand, ct);
+            if (company is not null)
+            {
+                response.Headers.ETag = ETags.ForVersion(company.UpdatedAt);
+            }
+
+            return ApiProblems.Found(company, "company", companyId);
+        }).RequirePermission(OrganizationPermissions.CompanyRead)
+          .WithSummary("One company; expand=branches embeds its branches; the ETag is its version for If-Match on PUT");
         companies.MapPost("/", async (SaveCompanyRequest request, CompanyService service, CancellationToken ct) =>
             ApiProblems.Created(await service.CreateCompanyAsync(request, ct), static c => $"/api/v1/organization/companies/{c.Id}"))
             .RequirePermission(OrganizationPermissions.CompanyManage)
             .WithSummary("Create a company; its functional currency is enabled and the fiscal year containing today is opened");
-        companies.MapPut("/{companyId:guid}", async (Guid companyId, SaveCompanyRequest request, CompanyService service, CancellationToken ct) =>
-            ApiProblems.Ok(await service.UpdateCompanyAsync(companyId, request, ct)))
-            .RequirePermission(OrganizationPermissions.CompanyManage);
+        companies.MapPut("/{companyId:guid}", async (Guid companyId, SaveCompanyRequest request, HttpRequest http, CompanyService service, CancellationToken ct) =>
+        {
+            if (http.Headers.IfMatch.Count > 0)
+            {
+                var current = await service.GetCompanyAsync(companyId, null, ct);
+                var precondition = current is null ? Result.Success() : ETags.RequireMatch(http, current.UpdatedAt);
+                if (precondition.IsFailure)
+                {
+                    return ApiProblems.From(precondition.Error!);
+                }
+            }
+
+            return ApiProblems.Ok(await service.UpdateCompanyAsync(companyId, request, ct));
+        }).RequirePermission(OrganizationPermissions.CompanyManage)
+          .WithSummary("Replace a company; send If-Match with the ETag from GET to refuse lost updates (412)");
 
         companies.MapGet("/{companyId:guid}/branches", async (Guid companyId, CompanyService service, CancellationToken ct) => TypedResults.Ok(await service.ListBranchesAsync(companyId, ct)))
             .RequirePermission(OrganizationPermissions.CompanyRead);

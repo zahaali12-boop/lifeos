@@ -6,6 +6,7 @@ using Quicker.Collaboration.Persistence;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Persistence;
+using Quicker.Web;
 
 namespace Quicker.Collaboration.Application;
 
@@ -38,7 +39,7 @@ public sealed class ActivityService(CollaborationDbContext db, IUnitOfWorkAccess
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<Result<IReadOnlyList<ActivityView>>> ListAsync(string? entityType, Guid entityId, int limit, CancellationToken cancellationToken)
+    public async Task<Result<Page<ActivityView>>> ListAsync(string? entityType, Guid entityId, PageRequest page, CancellationToken cancellationToken)
     {
         var type = entityType?.Trim() ?? string.Empty;
         if (!EntityTypes.IsValid(type) || entityId == Guid.Empty)
@@ -46,7 +47,9 @@ public sealed class ActivityService(CollaborationDbContext db, IUnitOfWorkAccess
             return Error.Validation("activity.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
-        var rows = await db.Activities.Where(a => a.EntityType == type && a.EntityId == entityId).OrderByDescending(static a => a.Id).Take(Math.Clamp(limit, 1, 500)).ToListAsync(cancellationToken);
-        return rows.Select(static a => new ActivityView(a.Id, a.EntityType, a.EntityId, a.Kind, a.ActorMembershipId, a.Summary.Values, JsonDocument.Parse(a.Data).RootElement.Clone(), a.CreatedAt)).ToList();
+        var paged = await KeysetPaging.ByIdDescendingAsync(db.Activities.Where(a => a.EntityType == type && a.EntityId == entityId), static a => a.Id, page, cancellationToken);
+        return paged.IsSuccess
+            ? paged.Value.Map(static a => new ActivityView(a.Id, a.EntityType, a.EntityId, a.Kind, a.ActorMembershipId, a.Summary.Values, JsonDocument.Parse(a.Data).RootElement.Clone(), a.CreatedAt))
+            : paged.Error!;
     }
 }

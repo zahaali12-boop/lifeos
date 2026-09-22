@@ -28,8 +28,8 @@ public static class RecordEndpoints
             ApiProblems.NoContent(await service.DeleteAsync(commentId, ct)))
             .RequirePermission(CollaborationPermissions.CommentWrite);
 
-        group.MapGet("/activities", async (string? entityType, Guid entityId, int? limit, ActivityService service, CancellationToken ct) =>
-            ApiProblems.Ok(await service.ListAsync(entityType, entityId, limit ?? 100, ct)))
+        group.MapGet("/activities", async (string? entityType, Guid entityId, [AsParameters] PageRequest page, ActivityService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.ListAsync(entityType, entityId, page, ct)))
             .RequirePermission(CollaborationPermissions.ActivityRead)
             .WithSummary("A record's timeline, newest first");
 

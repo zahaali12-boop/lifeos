@@ -8,6 +8,7 @@ using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Messaging.Jobs;
 using Quicker.Persistence;
+using Quicker.Web;
 
 namespace Quicker.Integration.Application;
 
@@ -141,7 +142,7 @@ public sealed class WebhookService(IntegrationDbContext db, IUnitOfWorkAccessor 
 
     // ------------------------------------------------------------------ deliveries
 
-    public async Task<Result<IReadOnlyList<DeliverySummary>>> ListDeliveriesAsync(Guid subscriptionId, string? status, int limit, CancellationToken cancellationToken)
+    public async Task<Result<Page<DeliverySummary>>> ListDeliveriesAsync(Guid subscriptionId, string? status, PageRequest page, CancellationToken cancellationToken)
     {
         if (!await db.Subscriptions.AnyAsync(s => s.Id == subscriptionId, cancellationToken))
         {
@@ -154,8 +155,8 @@ public sealed class WebhookService(IntegrationDbContext db, IUnitOfWorkAccessor 
             query = query.Where(d => d.Status == status);
         }
 
-        var rows = await query.OrderByDescending(static d => d.CreatedAt).Take(Math.Clamp(limit, 1, 500)).ToListAsync(cancellationToken);
-        return rows.Select(Map).ToList();
+        var paged = await KeysetPaging.ByIdDescendingAsync(query, static d => d.Id, page, cancellationToken);
+        return paged.IsSuccess ? paged.Value.Map(Map) : paged.Error!;
     }
 
     public async Task<DeliverySummary?> GetDeliveryAsync(Guid deliveryId, CancellationToken cancellationToken)

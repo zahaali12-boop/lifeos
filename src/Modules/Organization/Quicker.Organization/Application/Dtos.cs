@@ -49,7 +49,9 @@ public sealed record CompanySummary(
     IReadOnlyDictionary<string, string> RegistrationNumbers,
     IReadOnlyDictionary<string, string> Address,
     bool IsActive,
-    JsonElement CustomFields);
+    JsonElement CustomFields,
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<BranchSummary>? Branches = null);
 
 public sealed record SaveBranchRequest(
     string Code,

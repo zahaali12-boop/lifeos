@@ -11,6 +11,7 @@ using Quicker.Organization.Contracts;
 using Quicker.Organization.Domain;
 using Quicker.Organization.Persistence;
 using Quicker.Persistence;
+using Quicker.Web;
 
 namespace Quicker.Organization.Application;
 
@@ -30,13 +31,42 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
 
     // ------------------------------------------------------------------ companies
 
-    public async Task<IReadOnlyList<CompanySummary>> ListCompaniesAsync(CancellationToken cancellationToken) =>
-        (await db.Companies.OrderBy(static c => c.Code).ToListAsync(cancellationToken)).Select(Map).ToList();
+    /// <summary>Fields of the list filter language on companies (slice 1.9); <c>cf.&lt;key&gt;</c> reaches custom fields.</summary>
+    public static readonly FilterSpec<Company> Filter = new FilterSpec<Company>()
+        .Field("code", static c => c.Code)
+        .Field("country", static c => c.Country)
+        .Field("functionalCurrency", static c => c.FunctionalCurrency)
+        .Field("reportingCurrency", static c => c.ReportingCurrency)
+        .Field("timeZone", static c => c.TimeZone)
+        .Field("isActive", static c => c.IsActive)
+        .Field("fiscalCalendarId", static c => c.FiscalCalendarId)
+        .Field("createdAt", static c => c.CreatedAt)
+        .Field("updatedAt", static c => c.UpdatedAt)
+        .CustomFields(static c => c.CustomFields);
 
-    public async Task<CompanySummary?> GetCompanyAsync(Guid companyId, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<CompanySummary>>> ListCompaniesAsync(string? filter, CancellationToken cancellationToken)
+    {
+        var filtered = Filter.Apply(db.Companies, filter);
+        if (filtered.IsFailure)
+        {
+            return filtered.Error!;
+        }
+
+        return (await filtered.Value.OrderBy(static c => c.Code).ToListAsync(cancellationToken)).Select(Map).ToList();
+    }
+
+    /// <summary>One company; <paramref name="expand"/> is a comma-separated list of expansions (<c>branches</c> embeds the company's branches).</summary>
+    public async Task<CompanySummary?> GetCompanyAsync(Guid companyId, string? expand, CancellationToken cancellationToken)
     {
         var company = await db.Companies.SingleOrDefaultAsync(c => c.Id == companyId, cancellationToken);
-        return company is null ? null : Map(company);
+        if (company is null)
+        {
+            return null;
+        }
+
+        var summary = Map(company);
+        var expansions = (expand ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return expansions.Contains("branches", StringComparer.OrdinalIgnoreCase) ? summary with { Branches = await ListBranchesAsync(companyId, cancellationToken) } : summary;
     }
 
     public async Task<Result<CompanySummary>> CreateCompanyAsync(SaveCompanyRequest request, CancellationToken cancellationToken)
@@ -467,7 +497,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
     internal static CompanySummary Map(Company c) => new(
         c.Id, c.Code, c.LegalName.Values, c.TradeName.Values, c.Country, c.FunctionalCurrency, c.ReportingCurrency, c.TimeZone, c.DefaultLanguage,
         c.FiscalCalendarId, c.BusinessCalendarId, c.CostingMethod, c.CostingScope, c.RevenueRecognitionPoint, c.TaxRoundingMode, c.RoundingMode,
-        c.NegativeStockPolicy, c.BankRevaluationMode, c.RegistrationNumbers, c.Address, c.IsActive, JsonDocument.Parse(c.CustomFields).RootElement.Clone());
+        c.NegativeStockPolicy, c.BankRevaluationMode, c.RegistrationNumbers, c.Address, c.IsActive, JsonDocument.Parse(c.CustomFields).RootElement.Clone(), c.UpdatedAt);
 
     internal static BranchSummary Map(Branch b) => new(b.Id, b.CompanyId, b.Code, b.Name.Values, b.Address, b.TaxRegistrations, b.DimensionValueId, b.IsActive);
 

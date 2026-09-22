@@ -10,6 +10,7 @@ using Quicker.Kernel.Text;
 using Quicker.Kernel.Time;
 using Quicker.Messaging.Jobs;
 using Quicker.Persistence;
+using Quicker.Web;
 
 namespace Quicker.Collaboration.Application;
 
@@ -125,7 +126,7 @@ public sealed class NotificationService(CollaborationDbContext db, IUnitOfWorkAc
 
     // ------------------------------------------------------------------ my notifications
 
-    public async Task<Result<IReadOnlyList<NotificationView>>> ListMineAsync(bool unreadOnly, int limit, Guid? before, CancellationToken cancellationToken)
+    public async Task<Result<Page<NotificationView>>> ListMineAsync(bool unreadOnly, PageRequest page, CancellationToken cancellationToken)
     {
         if (CurrentMembership is not { } me)
         {
@@ -138,19 +139,9 @@ public sealed class NotificationService(CollaborationDbContext db, IUnitOfWorkAc
             query = query.Where(static n => n.ReadAt == null);
         }
 
-        if (before is { } cursor)
-        {
-            if (!await db.Notifications.AnyAsync(n => n.MembershipId == me && n.Id == cursor, cancellationToken))
-            {
-                return Error.NotFound("notification", cursor);
-            }
-
-            query = query.Where(n => n.Id.CompareTo(cursor) < 0);
-        }
-
         // Ids are version-7 GUIDs: their byte order is creation order, which makes them the paging key.
-        var rows = await query.OrderByDescending(static n => n.Id).Take(Math.Clamp(limit, 1, 200)).ToListAsync(cancellationToken);
-        return rows.Select(Map).ToList();
+        var paged = await KeysetPaging.ByIdDescendingAsync(query, static n => n.Id, page, cancellationToken);
+        return paged.IsSuccess ? paged.Value.Map(Map) : paged.Error!;
     }
 
     public async Task<Result<int>> UnreadCountAsync(CancellationToken cancellationToken) =>

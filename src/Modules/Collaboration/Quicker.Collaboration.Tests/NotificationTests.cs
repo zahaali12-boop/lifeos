@@ -36,7 +36,7 @@ public sealed class NotificationTests(ApiHostFixture host)
         outcome.GetProperty("emails").GetInt32().ShouldBe(1);
 
         // The clerk's inbox.
-        var inbox = (await (await clerk.GetAsync("/api/v1/collaboration/notifications")).ReadJsonAsync()).EnumerateArray().ToList();
+        var inbox = (await (await clerk.GetAsync("/api/v1/collaboration/notifications")).ReadJsonAsync()).GetProperty("items").EnumerateArray().ToList();
         var note = inbox.ShouldHaveSingleItem();
         note.GetProperty("kind").GetString().ShouldBe("system.announcement");
         note.GetProperty("title").Map()["ar"].ShouldBe("إقفال الشهر");
@@ -48,7 +48,7 @@ public sealed class NotificationTests(ApiHostFixture host)
         var read = await (await clerk.PostAsync($"/api/v1/collaboration/notifications/{note.GetProperty("id").GetGuid()}/read", null)).ReadJsonAsync();
         read.GetProperty("readAt").GetDateTimeOffset().ShouldBe(Api.Clock.UtcNow);
         (await (await clerk.GetAsync("/api/v1/collaboration/notifications/unread-count")).ReadJsonAsync()).GetProperty("count").GetInt32().ShouldBe(0);
-        (await (await clerk.GetAsync("/api/v1/collaboration/notifications?unreadOnly=true")).ReadJsonAsync()).GetArrayLength().ShouldBe(0);
+        (await (await clerk.GetAsync("/api/v1/collaboration/notifications?unreadOnly=true")).ReadJsonAsync()).GetProperty("items").GetArrayLength().ShouldBe(0);
 
         // The owner gets the email (their preferences are the defaults) once the worker runs the send job.
         await host.RunWorkerAsync();
@@ -68,16 +68,19 @@ public sealed class NotificationTests(ApiHostFixture host)
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/notifications/announce", new { title = new { en = "  " } }, Json)).ErrorCodeAsync()).ShouldBe("announcement.title_required");
         var other = await Api.SignupAsync();
         using var outsider = Api.ClientFor(other.AccessToken);
-        (await (await outsider.GetAsync("/api/v1/collaboration/notifications")).ReadJsonAsync()).GetArrayLength().ShouldBe(0);
+        (await (await outsider.GetAsync("/api/v1/collaboration/notifications")).ReadJsonAsync()).GetProperty("items").GetArrayLength().ShouldBe(0);
         (await outsider.PostAsync($"/api/v1/collaboration/notifications/{note.GetProperty("id").GetGuid()}/read", null)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         // Read-all and paging by cursor.
         await owner.PostAsJsonAsync("/api/v1/collaboration/notifications/announce", new { title = new { en = "Second" } }, Json);
         await owner.PostAsJsonAsync("/api/v1/collaboration/notifications/announce", new { title = new { en = "Third" } }, Json);
-        var latest = (await (await clerk.GetAsync("/api/v1/collaboration/notifications?limit=1")).ReadJsonAsync()).EnumerateArray().Single();
-        latest.GetProperty("title").Map()["en"].ShouldBe("Third");
-        var older = (await (await clerk.GetAsync($"/api/v1/collaboration/notifications?before={latest.GetProperty("id").GetGuid()}")).ReadJsonAsync()).EnumerateArray().Select(static n => n.GetProperty("title").Map()["en"]).ToList();
-        older.ShouldBe(["Second", "Month-end close"]);
+        var firstPage = await (await clerk.GetAsync("/api/v1/collaboration/notifications?limit=1")).ReadJsonAsync();
+        firstPage.GetProperty("items").EnumerateArray().Single().GetProperty("title").Map()["en"].ShouldBe("Third");
+        var cursor = firstPage.GetProperty("nextCursor").GetString().ShouldNotBeNull();
+        var secondPage = await (await clerk.GetAsync($"/api/v1/collaboration/notifications?cursor={Uri.EscapeDataString(cursor)}")).ReadJsonAsync();
+        secondPage.GetProperty("items").EnumerateArray().Select(static n => n.GetProperty("title").Map()["en"]).ToList().ShouldBe(["Second", "Month-end close"]);
+        secondPage.GetProperty("nextCursor").ValueKind.ShouldBe(JsonValueKind.Null);
+        (await (await clerk.GetAsync("/api/v1/collaboration/notifications?cursor=not-a-cursor")).ErrorCodeAsync()).ShouldBe("page.cursor_invalid");
         (await (await clerk.PostAsync("/api/v1/collaboration/notifications/read-all", null)).ReadJsonAsync()).GetProperty("marked").GetInt32().ShouldBe(2);
         (await (await clerk.GetAsync("/api/v1/collaboration/notifications/unread-count")).ReadJsonAsync()).GetProperty("count").GetInt32().ShouldBe(0);
     }

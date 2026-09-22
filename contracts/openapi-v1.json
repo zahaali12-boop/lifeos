@@ -1967,7 +1967,17 @@
         "tags": [
           "Organization"
         ],
+        "summary": "Companies, optionally filtered: filter=country eq 'IQ' and isActive eq true and cf.region eq 'north'",
         "operationId": "getOrganizationCompanies",
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2019,6 +2029,7 @@
         "tags": [
           "Organization"
         ],
+        "summary": "One company; expand=branches embeds its branches; the ETag is its version for If-Match on PUT",
         "operationId": "getOrganizationCompaniesByCompanyId",
         "parameters": [
           {
@@ -2028,6 +2039,13 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2048,6 +2066,7 @@
         "tags": [
           "Organization"
         ],
+        "summary": "Replace a company; send If-Match with the ETag from GET to refuse lost updates (412)",
         "operationId": "putOrganizationCompaniesByCompanyId",
         "parameters": [
           {
@@ -4790,7 +4809,7 @@
             }
           },
           {
-            "name": "limit",
+            "name": "Limit",
             "in": "query",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -4800,6 +4819,13 @@
               ],
               "format": "int32"
             }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4808,10 +4834,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DeliverySummary"
-                  }
+                  "$ref": "#/components/schemas/PageOfDeliverySummary"
                 }
               }
             }
@@ -4886,7 +4909,7 @@
         "tags": [
           "Collaboration"
         ],
-        "summary": "My notifications, newest first; pass the last id as 'before' to page",
+        "summary": "My notifications, newest first; page with limit and the returned nextCursor",
         "operationId": "getCollaborationNotifications",
         "parameters": [
           {
@@ -4897,7 +4920,7 @@
             }
           },
           {
-            "name": "limit",
+            "name": "Limit",
             "in": "query",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -4909,11 +4932,10 @@
             }
           },
           {
-            "name": "before",
+            "name": "Cursor",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4923,10 +4945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationView"
-                  }
+                  "$ref": "#/components/schemas/PageOfNotificationView"
                 }
               }
             }
@@ -5376,7 +5395,7 @@
             }
           },
           {
-            "name": "limit",
+            "name": "Limit",
             "in": "query",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -5386,6 +5405,13 @@
               ],
               "format": "int32"
             }
+          },
+          {
+            "name": "Cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5394,10 +5420,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ActivityView"
-                  }
+                  "$ref": "#/components/schemas/PageOfActivityView"
                 }
               }
             }
@@ -6683,7 +6706,8 @@
           "registrationNumbers",
           "address",
           "isActive",
-          "customFields"
+          "customFields",
+          "updatedAt"
         ],
         "type": "object",
         "properties": {
@@ -6770,6 +6794,19 @@
           },
           "customFields": {
             "$ref": "#/components/schemas/JsonElement"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "branches": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/BranchSummary"
+            }
           }
         }
       },
@@ -8243,6 +8280,72 @@
           }
         },
         "description": "Opens the fiscal year that starts in StartYear (on the calendar's start month) as `open` or `future`."
+      },
+      "PageOfActivityView": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityView"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
+      "PageOfDeliverySummary": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliverySummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
+      "PageOfNotificationView": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationView"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
       },
       "PeriodGaps": {
         "required": [
