@@ -10,6 +10,7 @@
     <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Audit/Quicker.Audit.TestSupport/Quicker.Audit.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Organization/Quicker.Organization.TestSupport/Quicker.Organization.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Numbering/Quicker.Numbering.TestSupport/Quicker.Numbering.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

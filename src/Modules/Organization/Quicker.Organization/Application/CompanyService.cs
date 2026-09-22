@@ -430,6 +430,12 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         return infos;
     }
 
+    public async Task<BranchInfo?> FindBranchAsync(BranchId id, CancellationToken cancellationToken = default)
+    {
+        var branch = await db.Branches.SingleOrDefaultAsync(b => b.Id == id.Value, cancellationToken);
+        return branch is null ? null : new BranchInfo(new BranchId(branch.Id), new CompanyId(branch.CompanyId), branch.Code, branch.Name, branch.DimensionValueId, branch.IsActive);
+    }
+
     public async Task<Currency?> FindCurrencyAsync(string code, CancellationToken cancellationToken = default)
     {
         var normalized = code?.Trim().ToUpperInvariant() ?? string.Empty;

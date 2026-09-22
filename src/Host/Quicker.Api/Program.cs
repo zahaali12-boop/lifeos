@@ -8,6 +8,8 @@ using Quicker.Identity.Api;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
 using Quicker.Messaging;
+using Quicker.Numbering;
+using Quicker.Numbering.Api;
 using Quicker.Organization;
 using Quicker.Organization.Api;
 using Quicker.Persistence;
@@ -34,6 +36,7 @@ builder.Services.AddTenancyModule();
 builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddOrganizationModule(builder.Configuration);
+builder.Services.AddNumberingModule();
 
 var app = builder.Build();
 
@@ -65,6 +68,7 @@ var api = app.MapGroup("/api/v1").AddEndpointFilter<UnitOfWorkFilter>();
 api.MapIdentityEndpoints();
 api.MapAuditEndpoints();
 api.MapOrganizationEndpoints();
+api.MapNumberingEndpoints();
 
 app.Run();
 

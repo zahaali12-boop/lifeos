@@ -26,11 +26,15 @@ public sealed record CompanyInfo(
     Guid BusinessCalendarId,
     bool IsActive);
 
+public sealed record BranchInfo(BranchId Id, CompanyId CompanyId, string Code, LocalizedText Name, Guid DimensionValueId, bool IsActive);
+
 public interface ICompanyDirectory
 {
     Task<CompanyInfo?> FindAsync(CompanyId id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CompanyInfo>> ListAsync(CancellationToken cancellationToken = default);
+
+    Task<BranchInfo?> FindBranchAsync(BranchId id, CancellationToken cancellationToken = default);
 
     /// <summary>ISO 4217 reference: the currency with its minor units, or null for an unknown code.</summary>
     Task<Currency?> FindCurrencyAsync(string code, CancellationToken cancellationToken = default);

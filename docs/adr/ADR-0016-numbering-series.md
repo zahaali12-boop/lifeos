@@ -15,7 +15,8 @@ Numbering per company, branch, fiscal year and document type; gapless where the 
 * **Void policy**: a posted gapless document cannot be deleted; it is reversed or credited, so the number sequence remains complete for auditors.
 * **Year reset** uses the company's fiscal year; the series template can embed the year to keep numbers unique across years.
 * **Import of legacy numbers**: opening documents can carry external numbers in `external_number`; series start values are configurable so live numbering continues from the legacy system.
-* **Audit**: series changes (start value, prefix) are audited; decreasing `next_number` requires the `numbering.reset` permission and a reason.
+* **Audit**: series changes (start value, prefix) are audited; decreasing a counter requires the `numbering.counter.reset` permission and a reason, and never goes below a number already issued.
+* **Implementation note (M1.7)**: the counter lives in `num_series_counters`, one row per series and reset period, so yearly and monthly resets are separate counters rather than an in-place rewind; every issued number is recorded in the append-only `num_allocations` (unique per series/period/number and per series/document), which is what the gapless audit report reads.
 * Concurrency proof: parallel posting test (ADR-0009) shows consecutive numbers; a gapless audit report lists every series with any missing numbers (expected: none).
 
 ## Alternatives considered

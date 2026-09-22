@@ -347,7 +347,7 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
 
     // ------------------------------------------------------------------ mapping
 
-    private IQueryable<FiscalCalendar> Query() => db.FiscalCalendars.Include(static c => c.Years).ThenInclude(static y => y.Periods);
+    private IQueryable<FiscalCalendar> Query() => db.FiscalCalendars.Include(static c => c.Years).ThenInclude(static y => y.Periods).AsSplitQuery();
 
     private static FiscalCalendarSummary Map(FiscalCalendar c) => new(c.Id, c.Code, c.Name.Values, c.StartMonth, c.PeriodsPerYear, c.IsSystem,
         c.Years.OrderBy(static y => y.StartsOn).Select(Map).ToList());
