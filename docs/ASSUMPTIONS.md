@@ -1,0 +1,77 @@
+# Assumptions and open questions
+
+Every decision made where the brief is silent, plus the few questions that genuinely need the founder's answer.
+Assumptions are numbered `A-nnn` and referenced from ADRs, the domain model and the roadmap.
+When the founder answers a question, the answer is recorded here and the assumption is marked **confirmed** or **changed**.
+
+Status legend: `proposed` (my call, proceeding), `confirmed` (founder agreed), `changed` (founder overruled; see note).
+
+---
+
+## 1. Questions for the founder (answer these; everything else proceeds on my defaults)
+
+| # | Question | Why it matters | My default if unanswered |
+|---|----------|----------------|--------------------------|
+| Q1 | Is **Quicker** the final product name, and is there a brand (logo, colours) to follow? | Name appears in package names, tenant URLs, print templates and docs. Renaming later is cheap but noisy. | Product name "Quicker"; code namespace `Quicker`; neutral brand palette until told otherwise. |
+| Q2 | This repository (`lifeos`) currently contains an unrelated single-file "Life OS" mobile app (`index.html`, `capacitor.config.json`, `package.json`, `build-apk.yml`). May I move those four files into `legacy/lifeos/` in M1 so the ERP owns the repository root? Or should the ERP live in a new repository? | The ERP needs the root for its monorepo layout, CI workflows and one-command setup. | Move them to `legacy/lifeos/` untouched, in the first M1 commit, and note it in PROGRESS.md. |
+| Q3 | **Hosting region for the SaaS** and data-residency needs. Candidates: AWS Bahrain (me-south-1), AWS UAE (me-central-1), Azure UAE North/Qatar, or a European region. Saudi customers in regulated sectors may require in-Kingdom hosting. | Affects latency for Iraqi users, compliance (KSA PDPL, UAE PDPL) and cost. Reversible, but migrations are work. | Design region-agnostic; first environment on a Middle-East region; per-tenant region field from day one. |
+| Q4 | **Launch vertical.** I assume the first paying customers are trading/distribution companies (import, wholesale, multi-branch retail-to-business) in Iraq. Is there a known first pilot customer whose needs should shape M4–M6? | Industry templates, demo data and the order of finance features (for example post-dated cheques before fixed assets). | Trading/distribution first; services and light assembly second. |
+| Q5 | **Commercial model for SaaS**: per-user per-month subscription with plan tiers (Starter, Business, Enterprise) plus an on-premise licence. Any preference? | Determines the subscription and feature-flag model in M1/M8 and metering. | Per-user tiers with feature flags; annual on-premise licence key. |
+| Q6 | **Identity providers** customers must sign in with: Microsoft Entra ID, Google Workspace, generic OIDC/SAML? | SSO adapters and testing in M1. | Built-in accounts with MFA, plus Microsoft Entra ID and Google via OIDC; SAML deferred to M8. |
+| Q7 | **Official versus market exchange rates** (Iraq): many Iraqi businesses book at the Central Bank rate for statutory purposes and use the market rate operationally. Should the demo company keep IQD or USD as its functional currency? | Shapes the demo data and the default rate types. The engine supports both regardless. | Demo group: an IQD-functional trading company, a USD-functional import company and an AED-functional entity; rate types "official" and "market" seeded. |
+| Q8 | **Arabic numerals**: Western digits (0-9) or Eastern Arabic digits (٠-٩) by default in the Arabic UI? | Formatting defaults; both are supported per user. | Western digits by default in Arabic UI, per-user toggle. |
+
+---
+
+## 2. Product and market assumptions
+
+| ID | Assumption | Status |
+|----|------------|--------|
+| A-001 | **Launch definition.** "First paying customers" are trading and distribution companies (1–50 users, 1–5 legal entities, 1–20 branches/warehouses) in Iraq and the GCC. At launch they must run: chart of accounts and GL with IFRS statements; customers, suppliers, items; quotes to cash and requisitions to payment with partial deliveries and invoicing; multi-warehouse stock with FIFO/average costing, lots and serials; bilingual (EN/AR) invoices and statements; bank reconciliation and post-dated cheques; multi-currency with revaluation; roles, approvals and audit; report builder with drill-down; import of opening balances. That is milestones M1–M7 plus the import toolkit, custom fields and workflow items of M8 (see ROADMAP.md "Launch gate"). | proposed |
+| A-002 | **Deployment: both.** Cloud SaaS multi-tenant is the primary product; on-premise is the same container image run single-tenant. One codebase, one schema, no feature divergence. | proposed |
+| A-003 | **IFRS by default.** Default chart of accounts template, revenue recognition point, FX treatment (IAS 21), inventory (IAS 2: lower of cost and NRV, FIFO or weighted average; LIFO not offered), fixed assets (IAS 16) and leases (out of v1) follow IFRS for SMEs where simpler and full IFRS otherwise. Local statutory charts (Iraq Unified Accounting System, Saudi/GCC layouts) are mappings over the IFRS chart, with parallel adjustment books when required. | proposed |
+| A-004 | **Tax regimes seeded** for Iraq (no general VAT; sales tax on specified goods and services; contractor withholding), Saudi Arabia (15% VAT, ZATCA e-invoicing phase 2), UAE (5% VAT), Bahrain (10% VAT), Oman (5% VAT), Qatar and Kuwait (no VAT), Jordan (16% GST), Egypt (14% VAT with e-invoicing), Turkey (20% VAT) and a generic "EU VAT" template. Rates and rules are configuration, not code, and each template is validated by a local accountant before a customer goes live in that country. | proposed |
+| A-005 | **Working week** defaults to Sunday–Thursday for Iraq and GCC companies, Monday–Friday elsewhere; configurable per company and used for due dates, escalations and schedules. Public-holiday calendars are per company. | proposed |
+| A-006 | **Calendars.** Gregorian is the system calendar for all posting. Hijri (Umm al-Qura) is available for display and printing where a company enables it. Fiscal years may start in any month; a 13th adjustment period is supported. | proposed |
+| A-007 | **Languages.** UI in English and Arabic at launch, with full RTL. Master data fields that print on documents (item names, account names, partner names, UoM, payment terms, addresses) are bilingual, with automatic fallback to the other language. The i18n framework supports adding Kurdish (Sorani, RTL), Turkish and French later without schema change. | proposed |
+| A-008 | **Currencies.** Full ISO 4217 list seeded (over 160 codes) with minor units; company-level overrides for practical precision and cash rounding (for example IQD rounded to 250 or 1,000 dinars on cash documents, KWD/BHD/OMR at 3 decimals). | proposed |
+| A-009 | **Point of sale, manufacturing/MRP, HR/payroll and e-commerce connectors** are out of v1 as stated, but the model keeps hooks: the stock ledger accepts a `production` entry family, partners have an `employee` role, and sales orders carry a `channel` attribute. | proposed |
+| A-010 | **Not built in v1** and not pretended: payroll, project accounting beyond a project dimension, lease accounting (IFRS 16), hedge accounting, tax filing submissions (only reports and export files), electronic payment file generation (SWIFT MT101/pain.001) is M8 stretch, EDI. Each is listed in ROADMAP.md "Deferred". | proposed |
+
+## 3. Architecture and stack assumptions (see ADRs for reasoning)
+
+| ID | Assumption | Status |
+|----|------------|--------|
+| A-020 | Backend in **C# on .NET 10 LTS**; PostgreSQL 17; front end in **TypeScript + React 19**. Reasoning in ADR-0002 and ADR-0013. | proposed |
+| A-021 | **Monorepo** with the .NET solution, the web app and infrastructure in one repository, one CI pipeline. | proposed |
+| A-022 | **Multi-tenancy:** shared database and shared schema with a `tenant_id` column on every tenant-scoped table and PostgreSQL row-level security, plus an optional dedicated-database tier for large or regulated tenants using the identical schema. On-premise is a dedicated database with one tenant. ADR-0004. | proposed |
+| A-023 | Infrastructure kept deliberately small: PostgreSQL, S3-compatible object storage, the API/worker containers and headless Chromium for PDF. **No Redis, no message broker** in v1; queues and the outbox live in PostgreSQL. A columnar store (ClickHouse) is introduced only if the M7 benchmark on PostgreSQL read models misses the 10M-line target. ADR-0021. | proposed |
+| A-024 | **Identifiers** are UUIDv7 everywhere; human-readable document numbers come from numbering series. Timestamps are `timestamptz` in UTC; posting dates are calendar dates in the company's time zone. ADR-0011. | proposed |
+| A-025 | **Precision.** Monetary amounts stored as `numeric(20,6)` and rounded to the currency's minor unit only when posted or printed; unit prices and unit costs `numeric(24,10)`; quantities `numeric(24,9)` in the item's base unit; exchange rates `numeric(24,12)`. Rounding: half away from zero by default, configurable per company (half even available). ADR-0005. | proposed |
+| A-026 | **Revenue recognition point** defaults to the invoice (the tax point in every target regime), with COGS recognised at shipment. A period-close checklist step accrues shipped-not-invoiced revenue (auto-reversing). Companies may switch the point to shipment. ADR-0026, POSTING_RULES. | proposed |
+| A-027 | **FX revaluation** of open AR/AP items posts unrealised gain/loss with automatic reversal on the first day of the next period (as the brief requires). Foreign-currency bank and cash balances are translated permanently (no reversal) because their carrying amount genuinely changes; this is configurable per company. ADR-0017. | proposed |
+| A-028 | **Reversals** post a mirrored journal with debits and credits swapped (never negative amounts), flagged `is_reversal` and linked to the original, so turnover reports can net or show both. Posting into a closed period is refused; corrections post in the first open period with a reference to the original. ADR-0026. | proposed |
+| A-029 | **Costing granularity.** Cost is tracked per company and item; a company may choose to value per warehouse instead. FIFO layers are per (company, item, warehouse, lot/serial). Moving average uses a daily average-cost period so backdated entries recompute deterministically. Standard cost variances post at receipt. Cost adjustments run synchronously after each posting; if more than 2,000 downstream entries must be re-applied, the run continues as an immediate background job with the item marked "valuation pending" (target completion: seconds). ADR-0008. | proposed |
+| A-030 | **Negative stock** is blocked by default. Companies may allow it per warehouse or item category, in which case issues are costed at the expected (last/standard) cost and adjusted when the receipt arrives. ADR-0008. | proposed |
+| A-031 | **Numbering.** Gapless series are allocated inside the posting transaction under a row lock; drafts carry a temporary draft number. Non-gapless series may allocate at creation. Per company, branch, fiscal year and document type. ADR-0016. | proposed |
+| A-032 | **API** is REST/JSON with OpenAPI 3.1, URL versioning (`/api/v1`), cursor pagination, `Idempotency-Key` on all mutating calls, ETags for optimistic concurrency, HMAC-signed webhooks. GraphQL is not offered; the semantic-layer query endpoint covers ad-hoc analytics. ADR-0012. | proposed |
+| A-033 | **Front-end grid and pivot** are built in-house on TanStack Table/Virtual rather than a commercial grid, to keep RTL, accessibility, licensing and drill-down fully under our control. ADR-0013. | proposed |
+| A-034 | **Authentication** is built-in (email + password with Argon2id, TOTP and WebAuthn passkeys for MFA) plus OIDC federation. Sessions use short-lived access tokens and rotating refresh tokens. ADR-0014. | proposed |
+| A-035 | **Audit log** is an append-only table with a per-tenant hash chain; the chain head is anchored daily to object storage with object-lock. ADR-0015. | proposed |
+| A-036 | **Custom fields** are stored in a JSONB column on every extensible entity, described by metadata that drives validation, UI, API and reporting. ADR-0019. | proposed |
+| A-037 | **PDF and print** are HTML/CSS templates (Scriban/Liquid syntax) rendered by headless Chromium; this is the only approach that handles Arabic shaping, bidi and fonts reliably. ADR-0022. | proposed |
+| A-038 | **Global search** uses PostgreSQL full-text and trigram indexes per tenant; an external search engine is not introduced unless measured. ADR-0023. | proposed |
+| A-039 | **Email** goes through an SMTP/API provider abstraction (any provider); SMS/WhatsApp notifications are a later adapter. | proposed |
+| A-040 | **AI provider** is abstracted; the reference implementation uses the Claude API. AI never executes raw SQL; it produces semantic-layer queries executed under the user's permissions, and it can only create drafts. ADR-0028. | proposed |
+| A-041 | **Backups**: point-in-time recovery with 35-day retention for SaaS; documented restore drill in M10. On-premise ships the same scripts. | proposed |
+| A-042 | **Licensing** of the codebase is proprietary (all rights reserved) until the founder decides otherwise; only permissively licensed dependencies (MIT/Apache/BSD/PostgreSQL) are used, checked in CI. | proposed |
+| A-043 | **Performance budgets**: p95 under 300 ms for everyday API calls with 50 concurrent users per tenant on a 4-vCPU database; interactive pivots over 10M fact rows under 5 s; document posting under 500 ms p95 including cost adjustment for typical chains. Verified in M10 with seeded data. | proposed |
+
+## 4. Process assumptions
+
+| ID | Assumption | Status |
+|----|------------|--------|
+| A-060 | The founder reviews at the end of each milestone; within a milestone I proceed on documented defaults and stop only for expensive-to-reverse decisions. | proposed |
+| A-061 | Every session starts by reading `CLAUDE.md`, `docs/PROGRESS.md` and the ADR index, and ends by updating `docs/PROGRESS.md` and committing. | proposed |
+| A-062 | Demo data is generated by a deterministic seeder (fixed random seed) so demos and performance tests are reproducible. | proposed |
+| A-063 | Documentation language is English; UI strings are authored in English and translated to Arabic in the same pull request that adds them (no untranslated strings reach `main`). | proposed |
