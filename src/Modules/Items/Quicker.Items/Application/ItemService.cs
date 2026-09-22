@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Quicker.Accounting.Contracts;
 using Quicker.Audit.Contracts;
 using Quicker.Collaboration.Contracts;
+using Quicker.Inventory.Contracts;
 using Quicker.Items.Contracts;
 using Quicker.Items.Domain;
 using Quicker.Items.Persistence;
@@ -26,6 +27,7 @@ public sealed class ItemService(
     IUomDirectory uoms,
     ICompanyDirectory companies,
     IPostingGroupDirectory postingGroups,
+    IWarehouseDirectory warehouses,
     ICustomFieldValidator customFields,
     IAuditSink audit,
     IClock clock)
@@ -855,6 +857,15 @@ public sealed class ItemService(
             }
         }
 
+        if (request.DefaultWarehouseId is { } defaultWarehouseId)
+        {
+            var warehouse = await warehouses.FindAsync(defaultWarehouseId, cancellationToken);
+            if (warehouse is null || warehouse.CompanyId != companyId)
+            {
+                return Error.Validation("item_settings.default_warehouse_invalid", "The default warehouse must belong to the company.").WithWhy(("defaultWarehouseId", defaultWarehouseId), ("companyId", companyId));
+            }
+        }
+
         var settings = await db.CompanySettings.SingleOrDefaultAsync(s => s.ItemId == itemId && s.CompanyId == companyId, cancellationToken);
         if (settings is null)
         {
@@ -906,6 +917,11 @@ public sealed class ItemService(
         if (warehouseId == Guid.Empty)
         {
             return Error.Validation("item_settings.warehouse_required", "Warehouse settings name their warehouse.");
+        }
+
+        if (await warehouses.FindAsync(warehouseId, cancellationToken) is null)
+        {
+            return Error.NotFound("warehouse", warehouseId);
         }
 
         foreach (var check in new[]

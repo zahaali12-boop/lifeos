@@ -9,6 +9,7 @@ using Quicker.Collaboration;
 using Quicker.Identity;
 using Quicker.Integration;
 using Quicker.Integrity;
+using Quicker.Inventory;
 using Quicker.Items;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
@@ -69,6 +70,7 @@ internal static class DemoHost
         services.AddAccountingModule();
         services.AddIntegrityModule();
         services.AddItemsModule();
+        services.AddInventoryModule();
         return builder.Build();
     }
 }

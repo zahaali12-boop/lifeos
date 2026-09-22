@@ -55,7 +55,10 @@ public static class ItemsRowFactories
         IsolationRegistry.Register("app.itm_item_warehouse_settings", static async (c, tx, t) =>
         {
             var (item, _, _) = await ItemAsync(c, tx, t);
-            await c.ExecuteAsync("INSERT INTO app.itm_item_warehouse_settings (tenant_id, item_id, warehouse_id, reorder_point) VALUES (@t, @item, @warehouse, 1)", new { t, item, warehouse = Guid.CreateVersion7() }, tx);
+            var company = await CompanyAsync(c, tx, t);
+            var warehouse = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.inv_warehouses (tenant_id, id, company_id, code, name_i18n) VALUES (@t, @warehouse, @company, @code, '{}')", new { t, warehouse, company, code = Suffix(warehouse) }, tx);
+            await c.ExecuteAsync("INSERT INTO app.itm_item_warehouse_settings (tenant_id, item_id, warehouse_id, reorder_point) VALUES (@t, @item, @warehouse, 1)", new { t, item, warehouse }, tx);
             return new RowRef("app.itm_item_warehouse_settings", $"item_id = '{item}'");
         });
         IsolationRegistry.Register("app.itm_boms", static async (c, tx, t) => new RowRef("app.itm_boms", $"id = '{(await BomAsync(c, tx, t)).Bom}'"));

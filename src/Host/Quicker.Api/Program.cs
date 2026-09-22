@@ -12,6 +12,8 @@ using Quicker.Integration;
 using Quicker.Integration.Api;
 using Quicker.Integrity;
 using Quicker.Integrity.Api;
+using Quicker.Inventory;
+using Quicker.Inventory.Api;
 using Quicker.Items;
 using Quicker.Items.Api;
 using Quicker.Kernel.Tenancy;
@@ -70,6 +72,7 @@ builder.Services.AddCollaborationModule();
 builder.Services.AddAccountingModule();
 builder.Services.AddIntegrityModule();
 builder.Services.AddItemsModule();
+builder.Services.AddInventoryModule();
 
 var app = builder.Build();
 
@@ -99,6 +102,7 @@ api.MapCollaborationEndpoints();
 api.MapAccountingEndpoints();
 api.MapIntegrityEndpoints();
 api.MapItemsEndpoints();
+api.MapInventoryEndpoints();
 
 app.Run();
 

@@ -145,7 +145,10 @@ public sealed class ItemMasterTests(ApiHostFixture host)
         settings.Dec("standardCost").ShouldBe(1.2345678901m);
         (await owner.PutErrorAsync($"/api/v1/items/{itemId}/company-settings/{Guid.CreateVersion7()}", new { standardCost = 1 }, HttpStatusCode.NotFound)).Code.ShouldBe("company.not_found");
         (await owner.PutErrorAsync($"/api/v1/items/{itemId}/company-settings/{companyId}", new { costingMethodOverride = "lifo" }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("item_settings.costing_method_override.invalid");
-        var warehouseId = Guid.CreateVersion7();
+        var warehouseId = (await owner.PostAsync("/api/v1/inventory/warehouses", new { companyId, code = "MAIN", name = Name("Main", "الرئيسي") })).GetProperty("id").GetGuid();
+        (await owner.PutErrorAsync($"/api/v1/items/{itemId}/warehouse-settings/{Guid.CreateVersion7()}", new { minQty = 1 }, HttpStatusCode.NotFound)).Code.ShouldBe("warehouse.not_found");
+        (await owner.PutErrorAsync($"/api/v1/items/{itemId}/company-settings/{companyId}", new { defaultWarehouseId = Guid.CreateVersion7() }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("item_settings.default_warehouse_invalid");
+        (await owner.PutAsync($"/api/v1/items/{itemId}/company-settings/{companyId}", new { defaultWarehouseId = warehouseId })).GetProperty("defaultWarehouseId").GetGuid().ShouldBe(warehouseId);
         (await owner.PutAsync($"/api/v1/items/{itemId}/warehouse-settings/{warehouseId}", new { reorderPoint = 100, minQty = 50, maxQty = 500, safetyStock = 20, leadTimeDays = 7, cycleCountClass = "a" })).GetProperty("cycleCountClass").GetString().ShouldBe("A");
         (await owner.PutErrorAsync($"/api/v1/items/{itemId}/warehouse-settings/{warehouseId}", new { minQty = 500, maxQty = 50 }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("item_settings.min_above_max");
         (await owner.GetOkAsync($"/api/v1/items/{itemId}/warehouse-settings")).GetArrayLength().ShouldBe(1);

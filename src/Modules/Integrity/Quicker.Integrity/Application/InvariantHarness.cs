@@ -38,6 +38,7 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             await AuditChainIntactAsync(cancellationToken),
             await TenantIsolationAsync(uow, cancellationToken),
             await GaplessNumberingAsync(uow, companyId, cancellationToken),
+            await StockBalancesMatchLedgerAsync(uow, companyId, cancellationToken),
         };
         return new InvariantReport(uow.Context.TenantId.Value, companyId, clock.UtcNow, checks, checks.TrueForAll(static c => c.Passed));
     }
@@ -158,6 +159,51 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
                 : $"series {g.Code} {g.PeriodKey}: counter at {g.NextNumber} after last number {g.Last}")
             .ToList();
         return Result(InvariantCodes.GaplessNumbering, series.Count, problems, $"{series.Count} gapless series periods without a missing number");
+    }
+
+    private sealed record StockMismatch(Guid ItemId, Guid WarehouseId, Guid BinId, Guid LotId, Guid SerialId, string Column, decimal? Stored, decimal? Rebuilt);
+
+    /// <summary>
+    /// The stock balances against the ledger: on hand must equal the sum of the entries of the key and reserved the
+    /// remaining quantity of its active reservations; a balance row without entries, or entries without a row, are
+    /// problems too (full outer join on the key).
+    /// </summary>
+    private static async Task<InvariantResult> StockBalancesMatchLedgerAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(*) FROM app.inv_stock_balances b WHERE (@company::uuid IS NULL OR b.company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<StockMismatch>(new CommandDefinition("""
+            WITH ledger AS (
+              SELECT company_id, item_id, coalesce(variant_id, '00000000-0000-0000-0000-000000000000'::uuid) AS variant_id, warehouse_id,
+                     coalesce(bin_id, '00000000-0000-0000-0000-000000000000'::uuid) AS bin_id, coalesce(lot_id, '00000000-0000-0000-0000-000000000000'::uuid) AS lot_id,
+                     coalesce(serial_id, '00000000-0000-0000-0000-000000000000'::uuid) AS serial_id, sum(quantity) AS on_hand
+              FROM app.inv_stock_ledger_entries
+              WHERE (@company::uuid IS NULL OR company_id = @company)
+              GROUP BY 1, 2, 3, 4, 5, 6, 7
+            ), held AS (
+              SELECT company_id, item_id, coalesce(variant_id, '00000000-0000-0000-0000-000000000000'::uuid) AS variant_id, warehouse_id,
+                     coalesce(bin_id, '00000000-0000-0000-0000-000000000000'::uuid) AS bin_id, coalesce(lot_id, '00000000-0000-0000-0000-000000000000'::uuid) AS lot_id,
+                     coalesce(serial_id, '00000000-0000-0000-0000-000000000000'::uuid) AS serial_id, sum(quantity - consumed_quantity) AS reserved
+              FROM app.inv_reservations
+              WHERE status = 'active' AND (@company::uuid IS NULL OR company_id = @company)
+              GROUP BY 1, 2, 3, 4, 5, 6, 7
+            ), keys AS (
+              SELECT company_id, item_id, variant_id, warehouse_id, bin_id, lot_id, serial_id FROM app.inv_stock_balances WHERE (@company::uuid IS NULL OR company_id = @company)
+              UNION SELECT company_id, item_id, variant_id, warehouse_id, bin_id, lot_id, serial_id FROM ledger
+              UNION SELECT company_id, item_id, variant_id, warehouse_id, bin_id, lot_id, serial_id FROM held
+            )
+            SELECT k.item_id, k.warehouse_id, k.bin_id, k.lot_id, k.serial_id, c.column_name AS "Column", c.stored, c.rebuilt
+            FROM keys k
+            LEFT JOIN app.inv_stock_balances b ON b.company_id = k.company_id AND b.item_id = k.item_id AND b.variant_id = k.variant_id AND b.warehouse_id = k.warehouse_id AND b.bin_id = k.bin_id AND b.lot_id = k.lot_id AND b.serial_id = k.serial_id
+            LEFT JOIN ledger l ON l.company_id = k.company_id AND l.item_id = k.item_id AND l.variant_id = k.variant_id AND l.warehouse_id = k.warehouse_id AND l.bin_id = k.bin_id AND l.lot_id = k.lot_id AND l.serial_id = k.serial_id
+            LEFT JOIN held h ON h.company_id = k.company_id AND h.item_id = k.item_id AND h.variant_id = k.variant_id AND h.warehouse_id = k.warehouse_id AND h.bin_id = k.bin_id AND h.lot_id = k.lot_id AND h.serial_id = k.serial_id
+            CROSS JOIN LATERAL (VALUES ('on_hand', b.on_hand, coalesce(l.on_hand, 0)), ('reserved', b.reserved, coalesce(h.reserved, 0))) AS c (column_name, stored, rebuilt)
+            WHERE c.stored IS DISTINCT FROM c.rebuilt
+            ORDER BY k.item_id, k.warehouse_id, c.column_name
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"item {m.ItemId} in warehouse {m.WarehouseId}{(m.BinId == Guid.Empty ? string.Empty : " bin " + m.BinId)}: {m.Column} stored {N(m.Stored)}, ledger says {N(m.Rebuilt)}").ToList();
+        return Result(InvariantCodes.StockBalancesMatchLedger, checkedCount, problems, $"{checkedCount} stock balance rows, every one equal to its ledger entries and active reservations");
     }
 
     private static InvariantResult Result(string code, long checkedCount, IReadOnlyList<string> problems, string summary) =>

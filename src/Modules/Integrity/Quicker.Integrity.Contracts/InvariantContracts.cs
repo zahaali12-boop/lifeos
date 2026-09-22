@@ -21,7 +21,10 @@ public static class InvariantCodes
     /// <summary>Gapless numbering series have no missing numbers and their counters sit right after the last issued one.</summary>
     public const string GaplessNumbering = "gapless_numbering";
 
-    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering];
+    /// <summary>Every stock balance row equals the sum of its ledger entries and its reservations, in both directions (roadmap 3.2).</summary>
+    public const string StockBalancesMatchLedger = "stock_balances_match_ledger";
+
+    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger];
 }
 
 /// <summary>One check: what it looked at, whether it holds, and the first problems it found (never more than a page).</summary>
