@@ -8,6 +8,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
     <ProjectReference Include="../Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../Quicker.Observability/Quicker.Observability.csproj" />
     <ProjectReference Include="../../Modules/Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
   </ItemGroup>
 

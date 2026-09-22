@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Dapper;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Tenancy;
+using Quicker.Observability;
 using Quicker.Persistence;
 
 namespace Quicker.Messaging.Jobs;
@@ -79,6 +81,15 @@ public sealed class JobRunner(
 
     private async Task ExecuteAsync(JobRecord job, CancellationToken cancellationToken)
     {
+        using var activity = Telemetry.Jobs.StartActivity("job " + job.Type, ActivityKind.Consumer);
+        activity?.SetTag("quicker.job_id", job.Id.ToString());
+        activity?.SetTag("quicker.job_type", job.Type);
+        activity?.SetTag("quicker.job_attempt", job.Attempts);
+        if (job.TenantId is { } tenant)
+        {
+            activity?.SetTag(Telemetry.TenantTag, tenant.ToString());
+        }
+
         using var heartbeatStop = new CancellationTokenSource();
         var heartbeat = HeartbeatAsync(job.Id, heartbeatStop.Token);
         try

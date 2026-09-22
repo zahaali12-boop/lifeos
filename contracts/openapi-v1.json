@@ -14,7 +14,14 @@
         "operationId": "getHealthLive",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportView"
+                }
+              }
+            }
           }
         }
       }
@@ -24,7 +31,7 @@
         "tags": [
           "Health"
         ],
-        "summary": "The database answers under the application role and the schema is migrated",
+        "summary": "The database answers under the application role, the schema is migrated, the outbox and job backlog are within limits",
         "operationId": "getHealthReady",
         "responses": {
           "200": {
@@ -32,7 +39,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HealthStatus"
+                  "$ref": "#/components/schemas/HealthReportView"
                 }
               }
             }
@@ -42,7 +49,38 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HealthStatus"
+                  "$ref": "#/components/schemas/HealthReportView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/deps": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Every dependency check with its data",
+        "operationId": "getHealthDeps",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportView"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportView"
                 }
               }
             }
@@ -8041,10 +8079,38 @@
         },
         "description": "A permission grant with the scopes it applies to (union of all assignments that grant it)."
       },
-      "HealthStatus": {
+      "HealthCheckView": {
+        "required": [
+          "name",
+          "status",
+          "description",
+          "data"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      },
+      "HealthReportView": {
         "required": [
           "status",
-          "migrations"
+          "migrations",
+          "error",
+          "checks"
         ],
         "type": "object",
         "properties": {
@@ -8065,9 +8131,15 @@
               "null",
               "string"
             ]
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthCheckView"
+            }
           }
         },
-        "description": "What the health endpoints answer; `migrations` is the count of applied schema versions when the database answers."
+        "description": "The health payload: a status word, the applied migrations (when the database answers), an error name and each check."
       },
       "HolidaySummary": {
         "required": [

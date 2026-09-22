@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics;
 using System.Text.Json;
 using Dapper;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,7 @@ using Npgsql;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Tenancy;
 using Quicker.Messaging.Jobs;
+using Quicker.Observability;
 using Quicker.Persistence;
 
 namespace Quicker.Messaging.Outbox;
@@ -129,6 +131,15 @@ public sealed class OutboxDispatcher(
 
     private async Task HandleAsync(OutboxMessage message, string handlerName, Func<IServiceProvider, EventContext, CancellationToken, Task> invoke, CancellationToken cancellationToken)
     {
+        using var activity = Telemetry.Outbox.StartActivity("event " + message.EventType, ActivityKind.Consumer);
+        activity?.SetTag("quicker.event_id", message.Id.ToString());
+        activity?.SetTag("quicker.event_type", message.EventType);
+        activity?.SetTag("quicker.handler", handlerName);
+        if (message.TenantId is { } tenantTag)
+        {
+            activity?.SetTag(Telemetry.TenantTag, tenantTag.ToString());
+        }
+
         var requestId = "evt-" + message.Id.ToString("N")[^12..];
         var context = message.ContextFor(requestId);
         await using var scope = scopeFactory.CreateAsyncScope();

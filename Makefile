@@ -17,6 +17,9 @@ up: ## Start PostgreSQL, MinIO, Mailpit; run migrations and seeds; start API and
 	$(COMPOSE) up -d api worker web
 	@echo "API: http://localhost:8080  Worker: http://localhost:8081/health/ready  Web: http://localhost:5173  Mail: http://localhost:8025  MinIO: http://localhost:9001"
 
+observe: ## Start everything plus Grafana/Tempo/Prometheus/Loki (http://localhost:3000, admin/admin); API and worker export traces, metrics and logs
+	docker compose -f docker-compose.yml -f deploy/observability/docker-compose.observability.yml up --build -d
+
 down: ## Stop everything (keeps data volumes)
 	$(COMPOSE) down
 

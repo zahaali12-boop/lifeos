@@ -5,6 +5,7 @@
     <PackageReference Include="Npgsql" />
     <ProjectReference Include="../Quicker.Integration.TestSupport/Quicker.Integration.TestSupport.csproj" />
     <ProjectReference Include="../Quicker.Integration/Quicker.Integration.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Observability/Quicker.Observability.csproj" />
     <ProjectReference Include="../../Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
   </ItemGroup>
 

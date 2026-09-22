@@ -20,6 +20,7 @@
     <ProjectReference Include="../../Modules/Integration/Quicker.Integration/Quicker.Integration.csproj" />
     <ProjectReference Include="../../Modules/Collaboration/Quicker.Collaboration/Quicker.Collaboration.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Quicker.Storage/Quicker.Storage.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Observability/Quicker.Observability.csproj" />
   </ItemGroup>
 
 </Project>

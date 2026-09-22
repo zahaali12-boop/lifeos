@@ -113,6 +113,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quicker.Collaboration.TestS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quicker.Collaboration.Tests", "src\Modules\Collaboration\Quicker.Collaboration.Tests\Quicker.Collaboration.Tests.csproj", "{9C1536D0-EF74-4ED8-A998-10C9FA6E0F32}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quicker.Observability", "src\BuildingBlocks\Quicker.Observability\Quicker.Observability.csproj", "{88C69B30-364A-4D65-8713-6C341B5E2636}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -579,6 +581,18 @@ Global
 		{9C1536D0-EF74-4ED8-A998-10C9FA6E0F32}.Release|x64.Build.0 = Release|Any CPU
 		{9C1536D0-EF74-4ED8-A998-10C9FA6E0F32}.Release|x86.ActiveCfg = Release|Any CPU
 		{9C1536D0-EF74-4ED8-A998-10C9FA6E0F32}.Release|x86.Build.0 = Release|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Debug|x64.Build.0 = Debug|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Debug|x86.Build.0 = Debug|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Release|x64.ActiveCfg = Release|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Release|x64.Build.0 = Release|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Release|x86.ActiveCfg = Release|Any CPU
+		{88C69B30-364A-4D65-8713-6C341B5E2636}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -634,5 +648,6 @@ Global
 		{B6DEAD00-495B-4911-88AD-23ADDF61E2E7} = {347C27AA-80C2-BDA4-F5FF-AC11DEBD94E0}
 		{3301A552-554C-45C4-AE70-0BAABEDE669B} = {347C27AA-80C2-BDA4-F5FF-AC11DEBD94E0}
 		{9C1536D0-EF74-4ED8-A998-10C9FA6E0F32} = {347C27AA-80C2-BDA4-F5FF-AC11DEBD94E0}
+		{88C69B30-364A-4D65-8713-6C341B5E2636} = {7266C4A9-E384-DC00-0EB6-47F6002CFBA7}
 	EndGlobalSection
 EndGlobal

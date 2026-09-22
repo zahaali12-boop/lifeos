@@ -28,8 +28,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The database answers under the application role and the schema is migrated */
+        /** The database answers under the application role, the schema is migrated, the outbox and job backlog are within limits */
         get: operations["getHealthReady"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/deps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every dependency check with its data */
+        get: operations["getHealthDeps"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2938,12 +2955,19 @@ export interface components {
             permission: string;
             scopes: components["schemas"]["RecordScopes"];
         };
-        /** @description What the health endpoints answer; `migrations` is the count of applied schema versions when the database answers. */
-        HealthStatus: {
+        HealthCheckView: {
+            name: string;
+            status: string;
+            description: null | string;
+            data: Record<string, never>;
+        };
+        /** @description The health payload: a status word, the applied migrations (when the database answers), an error name and each check. */
+        HealthReportView: {
             status: string;
             /** Format: int64 */
             migrations: null | number | string;
-            error?: null | string;
+            error: null | string;
+            checks: components["schemas"]["HealthCheckView"][];
         };
         HolidaySummary: {
             /** Format: uuid */
@@ -3985,7 +4009,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HealthReportView"];
+                };
             };
         };
     };
@@ -4004,7 +4030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthStatus"];
+                    "application/json": components["schemas"]["HealthReportView"];
                 };
             };
             /** @description Service Unavailable */
@@ -4013,7 +4039,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthStatus"];
+                    "application/json": components["schemas"]["HealthReportView"];
+                };
+            };
+        };
+    };
+    getHealthDeps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthReportView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthReportView"];
                 };
             };
         };

@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Quicker.Identity.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Tenancy;
+using Quicker.Observability;
 using Quicker.Persistence;
 
 namespace Quicker.Web;
@@ -60,6 +61,9 @@ public sealed class UnitOfWorkMiddleware(IUnitOfWorkFactory factory, ITenantCont
             ClientIp = context.Connection.RemoteIpAddress?.ToString(),
             UserAgent = userAgent is { Length: > 512 } ? userAgent[..512] : userAgent,
         };
+
+        Telemetry.TagCurrent(tenant.TenantId.Value, tenant.UserId?.Value, tenant.MembershipId?.Value, tenant.ActorType, requestId);
+        Telemetry.TenantRequests.Add(1, new KeyValuePair<string, object?>(Telemetry.TenantTag, tenant.IsAnonymous ? "anonymous" : tenant.TenantId.Value.ToString()), new KeyValuePair<string, object?>(Telemetry.ActorTag, tenant.ActorType));
 
         await using var unitOfWork = await factory.BeginAsync(tenant, cancellationToken: context.RequestAborted);
         accessor.Set(unitOfWork);
