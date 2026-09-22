@@ -180,7 +180,7 @@ sequenceDiagram
   Doc->>PE: Post(PostingRequest{lines, posting groups, dimensions, subledger refs})
   PE->>PE: account determination (posting profile), currency conversion, tax lines, rounding line
   PE->>PE: validate: balanced in all three currencies, period open, control-account lines carry subledger refs, dimensions valid
-  PE->>GL: insert journal_entries + journal_lines; increment gl_balances
+  PE->>GL: insert journal_entries and journal_lines, increment gl_balances
   PE-->>Doc: JournalEntryId
   Doc->>OB: append integration event
   Doc->>Doc: commit
