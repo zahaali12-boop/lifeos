@@ -27,12 +27,22 @@ public sealed class MigrationRunner(string ownerConnectionString, IUpgradeLog lo
         await using var admin = new NpgsqlConnection(builder.ConnectionString);
         await admin.OpenAsync(cancellationToken);
 
+        // A parameter placeholder is never substituted inside a dollar-quoted DO block body (it is opaque text to the
+        // outer parser), so the password is handed to the session through set_config first and read back with
+        // current_setting() inside the block, keeping it bound rather than string-built.
+        await using (var stage = admin.CreateCommand())
+        {
+            stage.CommandText = "SELECT set_config('quicker.bootstrap_password', @password, false)";
+            stage.Parameters.AddWithValue("password", appRolePassword);
+            await stage.ExecuteScalarAsync(cancellationToken);
+        }
+
         await using (var cmd = admin.CreateCommand())
         {
             cmd.CommandText = """
                 DO $$ BEGIN
                   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'quicker_app') THEN
-                    EXECUTE format('CREATE ROLE quicker_app LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE PASSWORD %L', @password);
+                    EXECUTE format('CREATE ROLE quicker_app LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE PASSWORD %L', current_setting('quicker.bootstrap_password'));
                   END IF;
                   -- Owner is a member of the app role so maintenance can SET ROLE quicker_app and terminate its sessions.
                   IF NOT EXISTS (SELECT 1 FROM pg_auth_members m JOIN pg_roles r ON r.oid = m.roleid JOIN pg_roles g ON g.oid = m.member
@@ -41,7 +51,6 @@ public sealed class MigrationRunner(string ownerConnectionString, IUpgradeLog lo
                   END IF;
                 END $$;
                 """;
-            cmd.Parameters.AddWithValue("password", appRolePassword);
             await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
