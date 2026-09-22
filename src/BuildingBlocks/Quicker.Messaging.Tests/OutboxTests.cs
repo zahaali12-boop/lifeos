@@ -66,7 +66,8 @@ public sealed class OutboxTests(ApiHostFixture host)
         effects.Count.ShouldBe(30);
         effects.Values.ShouldAllBe(static v => v == 1);
         (await TenantWork.QueryOwnerAsync<long>(Api, "SELECT count(*) FROM ops.outbox_messages WHERE tenant_id = @t AND published_at IS NOT NULL", new { t = ws.TenantId })).ShouldBe(30);
-        (await TenantWork.QueryOwnerAsync<long>(Api, "SELECT count(*) FROM ops.inbox i JOIN ops.outbox_messages o ON o.id = i.event_id WHERE o.tenant_id = @t", new { t = ws.TenantId })).ShouldBe(30);
+        // One inbox row per (handler, event): the typed handler is asserted here; observers such as the webhook fan-out add their own rows.
+        (await TenantWork.QueryOwnerAsync<long>(Api, "SELECT count(*) FROM ops.inbox i JOIN ops.outbox_messages o ON o.id = i.event_id WHERE o.tenant_id = @t AND i.handler = @h", new { t = ws.TenantId, h = typeof(RecordingHandler).FullName })).ShouldBe(30);
 
         // Order held per aggregate even across the crash (a redelivered event never overtakes its predecessor).
         foreach (var aggregate in aggregates)

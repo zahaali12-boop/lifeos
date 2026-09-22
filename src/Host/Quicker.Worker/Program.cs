@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using Quicker.Audit;
 using Quicker.Identity;
+using Quicker.Integration;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
 using Quicker.Messaging;
@@ -34,6 +35,7 @@ builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddOrganizationModule(builder.Configuration);
 builder.Services.AddNumberingModule();
+builder.Services.AddIntegrationModule();
 
 var app = builder.Build();
 

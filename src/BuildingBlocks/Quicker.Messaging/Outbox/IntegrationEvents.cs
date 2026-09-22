@@ -26,6 +26,20 @@ public interface IIntegrationEventHandler<in TEvent> where TEvent : IIntegration
     Task HandleAsync(TEvent integrationEvent, EventContext context, CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// Sees every integration event as stored (type, version, raw payload) regardless of type: webhooks, search indexing,
+/// activity feeds. Same delivery and exactly-once rules as typed handlers.
+/// </summary>
+public interface IIntegrationEventObserver
+{
+    Task ObserveAsync(OutboxMessage message, EventContext context, CancellationToken cancellationToken);
+}
+
+public sealed record EventObserverRegistration(Type ObserverType)
+{
+    public string HandlerName => ObserverType.FullName ?? ObserverType.Name;
+}
+
 /// <summary>One registered (event type, handler) pair; the registry is assembled from DI registrations at start-up.</summary>
 public sealed record EventHandlerRegistration(string EventType, int EventVersion, Type EventClrType, Type HandlerType)
 {
@@ -33,11 +47,13 @@ public sealed record EventHandlerRegistration(string EventType, int EventVersion
     public string HandlerName => HandlerType.FullName ?? HandlerType.Name;
 }
 
-public sealed class EventHandlerRegistry(IEnumerable<EventHandlerRegistration> registrations)
+public sealed class EventHandlerRegistry(IEnumerable<EventHandlerRegistration> registrations, IEnumerable<EventObserverRegistration> observers)
 {
     private readonly ILookup<string, EventHandlerRegistration> _byEventType = registrations.ToLookup(static r => r.EventType, StringComparer.Ordinal);
 
     public IReadOnlyList<EventHandlerRegistration> For(string eventType) => _byEventType[eventType].ToList();
+
+    public IReadOnlyList<EventObserverRegistration> Observers { get; } = observers.ToList();
 
     public IEnumerable<EventHandlerRegistration> All => _byEventType.SelectMany(static g => g);
 }

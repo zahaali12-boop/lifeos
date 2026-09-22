@@ -86,7 +86,7 @@ public static class Tokens
 /// AES-256-GCM protection for secrets at rest (TOTP seeds, OIDC client secrets) with a key from configuration
 /// (ADR-0025). The output carries a key id so keys can be rotated.
 /// </summary>
-public sealed class SecretProtector
+public sealed class SecretProtector : Quicker.Identity.Contracts.ISecretProtector
 {
     private readonly byte[] _key;
     private readonly byte _keyId;

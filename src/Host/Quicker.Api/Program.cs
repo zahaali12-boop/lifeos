@@ -6,6 +6,8 @@ using Quicker.Audit;
 using Quicker.Audit.Api;
 using Quicker.Identity;
 using Quicker.Identity.Api;
+using Quicker.Integration;
+using Quicker.Integration.Api;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
 using Quicker.Messaging;
@@ -32,6 +34,7 @@ builder.Services.AddQuickerWebCore();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi("v1");
 builder.Services.AddQuickerMessaging(builder.Configuration);
+builder.Services.AddQuickerIdempotency(builder.Configuration);
 if (builder.Configuration.GetValue<bool>("Quicker:Worker:Embedded"))
 {
     // Single-node installs run the dispatcher, job slots and scheduler inside the API process (ADR-0010).
@@ -44,6 +47,7 @@ builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddOrganizationModule(builder.Configuration);
 builder.Services.AddNumberingModule();
+builder.Services.AddIntegrationModule();
 
 var app = builder.Build();
 
@@ -51,6 +55,7 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseQuickerUnitOfWork("/api");
+app.UseQuickerIdempotency("/api");
 
 app.MapOpenApi("/api/{documentName}/openapi.json");
 
@@ -77,6 +82,7 @@ api.MapAuditEndpoints();
 api.MapOrganizationEndpoints();
 api.MapNumberingEndpoints();
 api.MapPlatformEndpoints();
+api.MapIntegrationEndpoints();
 
 app.Run();
 

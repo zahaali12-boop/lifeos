@@ -55,6 +55,15 @@ public static class MessagingRegistration
         return services;
     }
 
+    public static IServiceCollection AddIntegrationEventObserver<TObserver>(this IServiceCollection services)
+        where TObserver : class, IIntegrationEventObserver
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddScoped<TObserver>();
+        services.AddSingleton(new EventObserverRegistration(typeof(TObserver)));
+        return services;
+    }
+
     public static IServiceCollection AddJobHandler<THandler, TPayload>(this IServiceCollection services)
         where THandler : class, IJobHandler<TPayload>
     {

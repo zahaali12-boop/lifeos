@@ -18,6 +18,7 @@
     <ProjectReference Include="../../Modules/Identity/Quicker.Identity/Quicker.Identity.csproj" />
     <ProjectReference Include="../../Modules/Organization/Quicker.Organization/Quicker.Organization.csproj" />
     <ProjectReference Include="../../Modules/Numbering/Quicker.Numbering/Quicker.Numbering.csproj" />
+    <ProjectReference Include="../../Modules/Integration/Quicker.Integration/Quicker.Integration.csproj" />
   </ItemGroup>
 
 </Project>

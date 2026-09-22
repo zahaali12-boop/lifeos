@@ -75,31 +75,59 @@ public sealed class OutboxDispatcher(
         return messages.Count;
     }
 
-    /// <summary>Runs every handler; returns null when all succeeded, otherwise the first failure's description.</summary>
+    /// <summary>Runs every typed handler and every observer; returns null when all succeeded, otherwise the first failure's description.</summary>
     private async Task<string?> DeliverAsync(OutboxMessage message, CancellationToken cancellationToken)
     {
-        var handlers = registry.For(message.EventType);
-        foreach (var registration in handlers)
+        foreach (var registration in registry.For(message.EventType))
         {
-            try
+            var failure = await RunAsync(message, registration.HandlerName, (sp, ctx, ct) => InvokeHandlerAsync(sp, registration, message, ctx, ct), cancellationToken);
+            if (failure is not null)
             {
-                await HandleAsync(message, registration, cancellationToken);
+                return failure;
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        }
+
+        foreach (var observer in registry.Observers)
+        {
+            var failure = await RunAsync(message, observer.HandlerName, (sp, ctx, ct) => ((IIntegrationEventObserver)sp.GetRequiredService(observer.ObserverType)).ObserveAsync(message, ctx, ct), cancellationToken);
+            if (failure is not null)
             {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Handler {Handler} failed for event {EventId} ({EventType}), attempt {Attempt}", registration.HandlerName, message.Id, message.EventType, message.Attempts + 1);
-                return $"{registration.HandlerName}: {ex.GetType().Name}: {ex.Message}";
+                return failure;
             }
         }
 
         return null;
     }
 
-    private async Task HandleAsync(OutboxMessage message, EventHandlerRegistration registration, CancellationToken cancellationToken)
+    private async Task<string?> RunAsync(OutboxMessage message, string handlerName, Func<IServiceProvider, EventContext, CancellationToken, Task> invoke, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleAsync(message, handlerName, invoke, cancellationToken);
+            return null;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Handler {Handler} failed for event {EventId} ({EventType}), attempt {Attempt}", handlerName, message.Id, message.EventType, message.Attempts + 1);
+            return $"{handlerName}: {ex.GetType().Name}: {ex.Message}";
+        }
+    }
+
+    private static async Task InvokeHandlerAsync(IServiceProvider services, EventHandlerRegistration registration, OutboxMessage message, EventContext context, CancellationToken cancellationToken)
+    {
+        var payload = JsonSerializer.Deserialize(message.Payload, registration.EventClrType, OutboxJson.Options)
+            ?? throw new InvalidOperationException($"Event {message.Id} payload could not be read as {registration.EventClrType.Name}.");
+        var handler = services.GetRequiredService(registration.HandlerType);
+        var method = registration.HandlerType.GetMethod("HandleAsync", [registration.EventClrType, typeof(EventContext), typeof(CancellationToken)])
+            ?? throw new InvalidOperationException($"{registration.HandlerType.Name} does not implement HandleAsync({registration.EventClrType.Name}).");
+        await (Task)method.Invoke(handler, [payload, context, cancellationToken])!;
+    }
+
+    private async Task HandleAsync(OutboxMessage message, string handlerName, Func<IServiceProvider, EventContext, CancellationToken, Task> invoke, CancellationToken cancellationToken)
     {
         var requestId = "evt-" + message.Id.ToString("N")[^12..];
         var context = message.ContextFor(requestId);
@@ -111,20 +139,15 @@ public sealed class OutboxDispatcher(
         // The inbox row is the idempotency record: inserted with the effect, so both commit or neither does.
         var inserted = await unitOfWork.Connection.ExecuteAsync(new CommandDefinition(
             "INSERT INTO ops.inbox (handler, event_id) VALUES (@handler, @id) ON CONFLICT DO NOTHING",
-            new { handler = registration.HandlerName, id = message.Id }, unitOfWork.Transaction, cancellationToken: cancellationToken));
+            new { handler = handlerName, id = message.Id }, unitOfWork.Transaction, cancellationToken: cancellationToken));
         if (inserted == 0)
         {
             await unitOfWork.RollbackAsync(cancellationToken);
             return;
         }
 
-        var payload = JsonSerializer.Deserialize(message.Payload, registration.EventClrType, OutboxJson.Options)
-            ?? throw new InvalidOperationException($"Event {message.Id} payload could not be read as {registration.EventClrType.Name}.");
-        var handler = scope.ServiceProvider.GetRequiredService(registration.HandlerType);
         var eventContext = new EventContext(message.Id, message.TenantId is { } t ? new TenantId(t) : null, message.OccurredAt, message.CorrelationId, message.CausationId, message.Actor, message.Attempts + 1);
-        var method = registration.HandlerType.GetMethod("HandleAsync", [registration.EventClrType, typeof(EventContext), typeof(CancellationToken)])
-            ?? throw new InvalidOperationException($"{registration.HandlerType.Name} does not implement HandleAsync({registration.EventClrType.Name}).");
-        await (Task)method.Invoke(handler, [payload, eventContext, cancellationToken])!;
+        await invoke(scope.ServiceProvider, eventContext, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
     }
 
