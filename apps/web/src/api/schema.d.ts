@@ -4466,6 +4466,172 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/lots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryLots"];
+        put?: never;
+        /** A lot ahead of its first receipt (receipts create lots by number on their own) */
+        post: operations["postInventoryLots"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/lots/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** First expiry, first out: which lots to take a quantity from in a warehouse */
+        get: operations["getInventoryLotsSuggest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/lots/{lotId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryLotsByLotId"];
+        put: operations["putInventoryLotsByLotId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/lots/{lotId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Quarantine, recall (with its reference; answers with the impact: stock on hand and the customers who received the lot), expire or release a lot */
+        post: operations["postInventoryLotsByLotIdStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/lots/{lotId}/trace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Backward and forward traceability of a lot: where it came from, where it went, where it is, who received it, its serials */
+        get: operations["getInventoryLotsByLotIdTrace"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/serials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventorySerials"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/serials/by-number": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventorySerialsByNumber"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/serials/{serialId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventorySerialsBySerialId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/serials/{serialId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Into repair and back to stock; stock movements set every other status */
+        post: operations["postInventorySerialsBySerialIdStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/serials/{serialId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The serial's full history on one screen: every movement with its document, cost and counterparty, every status change */
+        get: operations["getInventorySerialsBySerialIdHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4589,6 +4755,10 @@ export interface components {
             note: null | string;
             /** Format: double */
             costAmount: null | number | string;
+            lotNumber: null | string;
+            /** Format: date */
+            expiresOn: null | string;
+            serialNumbers: string[];
         };
         AdjustmentSummary: {
             /** Format: uuid */
@@ -4723,6 +4893,8 @@ export interface components {
             binId: null | string;
             /** Format: double */
             costAmount: null | number | string;
+            lotNumber: null | string;
+            serialNumbers: string[];
         };
         AssemblySummary: {
             /** Format: uuid */
@@ -5665,6 +5837,17 @@ export interface components {
             relation: string;
             reason: string;
         };
+        FefoSuggestion: {
+            /** Format: uuid */
+            lotId: string;
+            lotNumber: string;
+            /** Format: date */
+            expiresOn: null | string;
+            /** Format: double */
+            available: number | string;
+            /** Format: double */
+            take: number | string;
+        };
         FieldRule: {
             entityType: string;
             field: string;
@@ -6231,6 +6414,90 @@ export interface components {
             refreshToken?: null | string;
             /** @default false */
             allSessions: boolean;
+        };
+        LotInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            lotNumber: string;
+            /** Format: date */
+            manufacturedOn: null | string;
+            /** Format: date */
+            expiresOn: null | string;
+            supplierLot: null | string;
+            /** Format: uuid */
+            supplierPartnerId: null | string;
+            status: string;
+            statusReason: null | string;
+            recallReference: null | string;
+            /** Format: date-time */
+            statusChangedAt: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        LotStatusRequest: {
+            status: string;
+            reason?: null | string;
+            recallReference?: null | string;
+        };
+        LotStatusResult: {
+            lot: components["schemas"]["LotInfo"];
+            /** Format: int32 */
+            reservationsReleased: number | string;
+            impact: null | components["schemas"]["LotTrace"];
+        };
+        /** @description Where a lot came from, where it went, where it is, and who received it (hard scenario 12). */
+        LotTrace: {
+            lot: components["schemas"]["LotInfo"];
+            inbound: components["schemas"]["LotTraceMovement"][];
+            outbound: components["schemas"]["LotTraceMovement"][];
+            onHand: components["schemas"]["LotTraceBalance"][];
+            shippedTo: components["schemas"]["LotTracePartner"][];
+            serials: components["schemas"]["SerialInfo"][];
+        };
+        LotTraceBalance: {
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            /** Format: double */
+            onHand: number | string;
+            /** Format: double */
+            reserved: number | string;
+            /** Format: double */
+            qualityHold: number | string;
+        };
+        LotTraceMovement: {
+            /** Format: uuid */
+            sleId: string;
+            /** Format: date */
+            postingDate: string;
+            entryType: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            /** Format: uuid */
+            partnerId: null | string;
+            /** Format: uuid */
+            serialId: null | string;
+            serialNumber: null | string;
+        };
+        LotTracePartner: {
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: int32 */
+            shipments: number | string;
+            /** Format: date */
+            lastShippedOn: string;
         };
         ManualJournalSummary: {
             /** Format: uuid */
@@ -7116,6 +7383,10 @@ export interface components {
             reasonCodeId?: null | string;
             reasonCode?: null | string;
             note?: null | string;
+            lotNumber?: null | string;
+            /** Format: date */
+            expiresOn?: null | string;
+            serialNumbers?: null | string[];
         };
         SaveAdjustmentRequest: {
             /** Format: uuid */
@@ -7146,6 +7417,8 @@ export interface components {
             variantId?: null | string;
             /** Format: uuid */
             binId?: null | string;
+            lotNumber?: null | string;
+            serialNumbers?: null | string[];
         };
         SaveAssemblyRequest: {
             /** Format: uuid */
@@ -7164,6 +7437,10 @@ export interface components {
             outputVariantId?: null | string;
             /** Format: uuid */
             outputBinId?: null | string;
+            outputLotNumber?: null | string;
+            /** Format: date */
+            outputExpiresOn?: null | string;
+            outputSerialNumbers?: null | string[];
             lines?: null | components["schemas"]["SaveAssemblyLineRequest"][];
             /** Format: date */
             postingDate?: null | string;
@@ -7583,6 +7860,19 @@ export interface components {
             autoReverseOn?: null | string;
             customFields?: unknown;
         };
+        SaveLotRequest: {
+            /** Format: uuid */
+            itemId: string;
+            lotNumber: string;
+            /** Format: date */
+            manufacturedOn?: null | string;
+            /** Format: date */
+            expiresOn?: null | string;
+            supplierLot?: null | string;
+            /** Format: uuid */
+            supplierPartnerId?: null | string;
+            customFields?: unknown;
+        };
         SavePostingGroupRequest: {
             kind: string;
             code: string;
@@ -7776,6 +8066,10 @@ export interface components {
             fromBinId?: null | string;
             /** Format: uuid */
             toBinId?: null | string;
+            /** Format: uuid */
+            lotId?: null | string;
+            lotNumber?: null | string;
+            serialNumbers?: null | string[];
         };
         SaveTransferRequest: {
             /** Format: uuid */
@@ -7915,6 +8209,68 @@ export interface components {
         SelectTenantRequest: {
             challengeToken: string;
             tenantSlug: string;
+        };
+        /** @description The serial and everything that happened to it, oldest first (hard scenario 13: one screen, one query). */
+        SerialHistory: {
+            serial: components["schemas"]["SerialInfo"];
+            events: components["schemas"]["SerialHistoryEvent"][];
+        };
+        SerialHistoryEvent: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            at: string;
+            /** Format: date */
+            postingDate: null | string;
+            kind: string;
+            entryType: null | string;
+            /** Format: uuid */
+            sleId: null | string;
+            fromStatus: null | string;
+            toStatus: string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            warehouseCode: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+            sourceDocumentType: null | string;
+            /** Format: uuid */
+            sourceDocumentId: null | string;
+            /** Format: double */
+            quantity: null | number | string;
+            /** Format: double */
+            costAmount: null | number | string;
+            note: null | string;
+            /** Format: uuid */
+            actorUserId: null | string;
+        };
+        SerialInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            serialNumber: string;
+            /** Format: uuid */
+            lotId: null | string;
+            lotNumber: null | string;
+            status: string;
+            /** Format: uuid */
+            currentWarehouseId: null | string;
+            currentWarehouseCode: null | string;
+            /** Format: uuid */
+            currentBinId: null | string;
+            /** Format: uuid */
+            currentPartnerId: null | string;
+            /** Format: date */
+            warrantyUntil: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SerialStatusRequest: {
+            status: string;
+            note?: null | string;
         };
         SeriesGapReport: {
             /** Format: uuid */
@@ -8174,6 +8530,11 @@ export interface components {
             available: number | string;
             /** Format: date-time */
             lastMovementAt: null | string;
+            lotNumber?: null | string;
+            /** Format: date */
+            lotExpiresOn?: null | string;
+            lotStatus?: null | string;
+            serialNumber?: null | string;
         };
         StockEntryCostSummary: {
             /** Format: uuid */
@@ -8253,6 +8614,10 @@ export interface components {
             postedBy: null | string;
             /** Format: date-time */
             postedAt: string;
+            lotNumber?: null | string;
+            serialNumber?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
         };
         /** @description One row per item and warehouse for the global stock search: what is there, what is promised, what can be taken. */
         StockSearchRow: {
@@ -8460,6 +8825,10 @@ export interface components {
             fromBinId: null | string;
             /** Format: uuid */
             toBinId: null | string;
+            /** Format: uuid */
+            lotId?: null | string;
+            lotNumber?: null | string;
+            serialNumbers?: null | string[];
         };
         /**
          * @description A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. On a
@@ -8481,6 +8850,8 @@ export interface components {
             shortageReasonCodeId?: null | string;
             shortageReasonCode?: null | string;
             shortageNote?: null | string;
+            serialNumbers?: null | string[];
+            shortageSerialNumbers?: null | string[];
         };
         TransferSummary: {
             /** Format: uuid */
@@ -17085,6 +17456,296 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssemblySummary"];
+                };
+            };
+        };
+    };
+    getInventoryLots: {
+        parameters: {
+            query?: {
+                itemId?: string;
+                status?: string;
+                expiringBefore?: string;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LotInfo"][];
+                };
+            };
+        };
+    };
+    postInventoryLots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLotRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LotInfo"];
+                };
+            };
+        };
+    };
+    getInventoryLotsSuggest: {
+        parameters: {
+            query: {
+                companyId: string;
+                itemId: string;
+                warehouseId: string;
+                quantity: number | string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FefoSuggestion"][];
+                };
+            };
+        };
+    };
+    getInventoryLotsByLotId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LotInfo"];
+                };
+            };
+        };
+    };
+    putInventoryLotsByLotId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLotRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LotInfo"];
+                };
+            };
+        };
+    };
+    postInventoryLotsByLotIdStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LotStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LotStatusResult"];
+                };
+            };
+        };
+    };
+    getInventoryLotsByLotIdTrace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LotTrace"];
+                };
+            };
+        };
+    };
+    getInventorySerials: {
+        parameters: {
+            query?: {
+                itemId?: string;
+                status?: string;
+                warehouseId?: string;
+                lotId?: string;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerialInfo"][];
+                };
+            };
+        };
+    };
+    getInventorySerialsByNumber: {
+        parameters: {
+            query: {
+                itemId: string;
+                serialNumber: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerialInfo"];
+                };
+            };
+        };
+    };
+    getInventorySerialsBySerialId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serialId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerialInfo"];
+                };
+            };
+        };
+    };
+    postInventorySerialsBySerialIdStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serialId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SerialStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerialInfo"];
+                };
+            };
+        };
+    };
+    getInventorySerialsBySerialIdHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serialId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerialHistory"];
                 };
             };
         };

@@ -12651,6 +12651,515 @@
           }
         }
       }
+    },
+    "/api/v1/inventory/lots": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryLots",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expiringBefore",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LotInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "A lot ahead of its first receipt (receipts create lots by number on their own)",
+        "operationId": "postInventoryLots",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/lots/suggest": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "First expiry, first out: which lots to take a quantity from in a warehouse",
+        "operationId": "getInventoryLotsSuggest",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "quantity",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FefoSuggestion"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/lots/{lotId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryLotsByLotId",
+        "parameters": [
+          {
+            "name": "lotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "putInventoryLotsByLotId",
+        "parameters": [
+          {
+            "name": "lotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/lots/{lotId}/status": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Quarantine, recall (with its reference; answers with the impact: stock on hand and the customers who received the lot), expire or release a lot",
+        "operationId": "postInventoryLotsByLotIdStatus",
+        "parameters": [
+          {
+            "name": "lotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotStatusResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/lots/{lotId}/trace": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Backward and forward traceability of a lot: where it came from, where it went, where it is, who received it, its serials",
+        "operationId": "getInventoryLotsByLotIdTrace",
+        "parameters": [
+          {
+            "name": "lotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotTrace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/serials": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventorySerials",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lotId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SerialInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/serials/by-number": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventorySerialsByNumber",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serialNumber",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SerialInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/serials/{serialId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventorySerialsBySerialId",
+        "parameters": [
+          {
+            "name": "serialId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SerialInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/serials/{serialId}/status": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Into repair and back to stock; stock movements set every other status",
+        "operationId": "postInventorySerialsBySerialIdStatus",
+        "parameters": [
+          {
+            "name": "serialId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SerialStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SerialInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/serials/{serialId}/history": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "The serial's full history on one screen: every movement with its document, cost and counterparty, every status change",
+        "operationId": "getInventorySerialsBySerialIdHistory",
+        "parameters": [
+          {
+            "name": "serialId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SerialHistory"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -13017,7 +13526,10 @@
           "reasonCodeId",
           "reasonCode",
           "note",
-          "costAmount"
+          "costAmount",
+          "lotNumber",
+          "expiresOn",
+          "serialNumbers"
         ],
         "type": "object",
         "properties": {
@@ -13105,6 +13617,25 @@
               "string"
             ],
             "format": "double"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -13515,7 +14046,9 @@
           "uomId",
           "uomCode",
           "binId",
-          "costAmount"
+          "costAmount",
+          "lotNumber",
+          "serialNumbers"
         ],
         "type": "object",
         "properties": {
@@ -13581,6 +14114,18 @@
               "string"
             ],
             "format": "double"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -17051,6 +17596,48 @@
           }
         }
       },
+      "FefoSuggestion": {
+        "required": [
+          "lotId",
+          "lotNumber",
+          "expiresOn",
+          "available",
+          "take"
+        ],
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": "string"
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "available": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "take": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "FieldRule": {
         "required": [
           "entityType",
@@ -19233,6 +19820,347 @@
           "allSessions": {
             "type": "boolean",
             "default": false
+          }
+        }
+      },
+      "LotInfo": {
+        "required": [
+          "id",
+          "itemId",
+          "itemCode",
+          "lotNumber",
+          "manufacturedOn",
+          "expiresOn",
+          "supplierLot",
+          "supplierPartnerId",
+          "status",
+          "statusReason",
+          "recallReference",
+          "statusChangedAt",
+          "customFields",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "lotNumber": {
+            "type": "string"
+          },
+          "manufacturedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "supplierLot": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "supplierPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "statusReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recallReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "statusChangedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LotStatusRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recallReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LotStatusResult": {
+        "required": [
+          "lot",
+          "reservationsReleased",
+          "impact"
+        ],
+        "type": "object",
+        "properties": {
+          "lot": {
+            "$ref": "#/components/schemas/LotInfo"
+          },
+          "reservationsReleased": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "impact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LotTrace"
+              }
+            ]
+          }
+        }
+      },
+      "LotTrace": {
+        "required": [
+          "lot",
+          "inbound",
+          "outbound",
+          "onHand",
+          "shippedTo",
+          "serials"
+        ],
+        "type": "object",
+        "properties": {
+          "lot": {
+            "$ref": "#/components/schemas/LotInfo"
+          },
+          "inbound": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotTraceMovement"
+            }
+          },
+          "outbound": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotTraceMovement"
+            }
+          },
+          "onHand": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotTraceBalance"
+            }
+          },
+          "shippedTo": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotTracePartner"
+            }
+          },
+          "serials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SerialInfo"
+            }
+          }
+        },
+        "description": "Where a lot came from, where it went, where it is, and who received it (hard scenario 12)."
+      },
+      "LotTraceBalance": {
+        "required": [
+          "warehouseId",
+          "warehouseCode",
+          "onHand",
+          "reserved",
+          "qualityHold"
+        ],
+        "type": "object",
+        "properties": {
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "onHand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reserved": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qualityHold": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "LotTraceMovement": {
+        "required": [
+          "sleId",
+          "postingDate",
+          "entryType",
+          "quantity",
+          "warehouseId",
+          "warehouseCode",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "partnerId",
+          "serialId",
+          "serialNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "sleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "entryType": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "serialId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "serialNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LotTracePartner": {
+        "required": [
+          "partnerId",
+          "quantity",
+          "shipments",
+          "lastShippedOn"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "shipments": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastShippedOn": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -22526,6 +23454,28 @@
               "null",
               "string"
             ]
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "serialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -22628,6 +23578,21 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "serialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -22694,6 +23659,28 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "outputLotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outputExpiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "outputSerialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           },
           "lines": {
             "type": [
@@ -23999,6 +24986,50 @@
           "customFields": { }
         }
       },
+      "SaveLotRequest": {
+        "required": [
+          "itemId",
+          "lotNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": "string"
+          },
+          "manufacturedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "supplierLot": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "supplierPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customFields": { }
+        }
+      },
       "SavePostingGroupRequest": {
         "required": [
           "kind",
@@ -24631,6 +25662,28 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "lotId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "serialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -25062,6 +26115,262 @@
           },
           "tenantSlug": {
             "type": "string"
+          }
+        }
+      },
+      "SerialHistory": {
+        "required": [
+          "serial",
+          "events"
+        ],
+        "type": "object",
+        "properties": {
+          "serial": {
+            "$ref": "#/components/schemas/SerialInfo"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SerialHistoryEvent"
+            }
+          }
+        },
+        "description": "The serial and everything that happened to it, oldest first (hard scenario 13: one screen, one query)."
+      },
+      "SerialHistoryEvent": {
+        "required": [
+          "id",
+          "at",
+          "postingDate",
+          "kind",
+          "entryType",
+          "sleId",
+          "fromStatus",
+          "toStatus",
+          "warehouseId",
+          "warehouseCode",
+          "partnerId",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "quantity",
+          "costAmount",
+          "note",
+          "actorUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "entryType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fromStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "toStatus": {
+            "type": "string"
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "sourceDocumentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceDocumentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "actorUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "SerialInfo": {
+        "required": [
+          "id",
+          "itemId",
+          "itemCode",
+          "serialNumber",
+          "lotId",
+          "lotNumber",
+          "status",
+          "currentWarehouseId",
+          "currentWarehouseCode",
+          "currentBinId",
+          "currentPartnerId",
+          "warrantyUntil",
+          "customFields",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "lotId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "currentWarehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currentWarehouseCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currentBinId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currentPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "warrantyUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SerialStatusRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -26004,6 +27313,31 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lotExpiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "lotStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "serialNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -26288,6 +27622,25 @@
           "postedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "serialNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -26959,6 +28312,28 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "lotId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "serialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -27015,6 +28390,24 @@
               "null",
               "string"
             ]
+          },
+          "serialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "shortageSerialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         },
         "description": "A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. On a\nreceipt, Shortage is what shipped but never arrived: it is written off from transit with the reason code."

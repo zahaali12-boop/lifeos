@@ -186,6 +186,41 @@ public static class InventoryEndpoints
         assemblies.MapPost("/{assemblyId:guid}/cancel", async (Guid assemblyId, AssemblyService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(assemblyId, ct)))
             .RequirePermission(InventoryPermissions.AssemblyManage);
 
+        // ------------------------------------------------------------------ lots and serials (roadmap 3.5)
+        var lots = inventory.MapGroup("/lots");
+        lots.MapGet("/", async (Guid? itemId, string? status, DateOnly? expiringBefore, string? q, LotService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(itemId, status, expiringBefore, q, ct)))
+            .RequirePermission(InventoryPermissions.StockRead);
+        lots.MapGet("/suggest", async (Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly? asOf, LotService service, CancellationToken ct) => TypedResults.Ok(await service.SuggestAsync(companyId, itemId, warehouseId, quantity, asOf, ct)))
+            .RequirePermission(InventoryPermissions.StockRead)
+            .WithSummary("First expiry, first out: which lots to take a quantity from in a warehouse");
+        lots.MapPost("/", async (SaveLotRequest request, LotService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static l => $"/api/v1/inventory/lots/{l.Id}"))
+            .RequirePermission(InventoryPermissions.LotManage)
+            .WithSummary("A lot ahead of its first receipt (receipts create lots by number on their own)");
+        lots.MapGet("/{lotId:guid}", async (Guid lotId, LotService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(lotId, ct), "lot", lotId))
+            .RequirePermission(InventoryPermissions.StockRead);
+        lots.MapPut("/{lotId:guid}", async (Guid lotId, SaveLotRequest request, LotService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(lotId, request, ct)))
+            .RequirePermission(InventoryPermissions.LotManage);
+        lots.MapPost("/{lotId:guid}/status", async (Guid lotId, LotStatusRequest request, LotService service, CancellationToken ct) => ApiProblems.Ok(await service.SetStatusAsync(lotId, request, ct)))
+            .RequirePermission(InventoryPermissions.LotManage)
+            .WithSummary("Quarantine, recall (with its reference; answers with the impact: stock on hand and the customers who received the lot), expire or release a lot");
+        lots.MapGet("/{lotId:guid}/trace", async (Guid lotId, LotService service, CancellationToken ct) => ApiProblems.Found(await service.TraceAsync(lotId, ct), "lot", lotId))
+            .RequirePermission(InventoryPermissions.StockRead)
+            .WithSummary("Backward and forward traceability of a lot: where it came from, where it went, where it is, who received it, its serials");
+
+        var serials = inventory.MapGroup("/serials");
+        serials.MapGet("/", async (Guid? itemId, string? status, Guid? warehouseId, Guid? lotId, string? q, SerialService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(itemId, status, warehouseId, lotId, q, ct)))
+            .RequirePermission(InventoryPermissions.StockRead);
+        serials.MapGet("/by-number", async (Guid itemId, string serialNumber, SerialService service, CancellationToken ct) => ApiProblems.Found(await service.FindAsync(itemId, serialNumber, ct), "serial", serialNumber))
+            .RequirePermission(InventoryPermissions.StockRead);
+        serials.MapGet("/{serialId:guid}", async (Guid serialId, SerialService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(serialId, ct), "serial", serialId))
+            .RequirePermission(InventoryPermissions.StockRead);
+        serials.MapPost("/{serialId:guid}/status", async (Guid serialId, SerialStatusRequest request, SerialService service, CancellationToken ct) => ApiProblems.Ok(await service.SetStatusAsync(serialId, request, ct)))
+            .RequirePermission(InventoryPermissions.SerialManage)
+            .WithSummary("Into repair and back to stock; stock movements set every other status");
+        serials.MapGet("/{serialId:guid}/history", async (Guid serialId, SerialService service, CancellationToken ct) => ApiProblems.Found(await service.HistoryAsync(serialId, ct), "serial", serialId))
+            .RequirePermission(InventoryPermissions.StockRead)
+            .WithSummary("The serial's full history on one screen: every movement with its document, cost and counterparty, every status change");
+
         return inventory;
     }
 }

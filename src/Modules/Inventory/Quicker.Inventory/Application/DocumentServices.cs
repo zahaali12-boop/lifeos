@@ -146,7 +146,10 @@ public sealed record SaveAdjustmentLineRequest(
     decimal? UnitCost = null,
     Guid? ReasonCodeId = null,
     string? ReasonCode = null,
-    string? Note = null);
+    string? Note = null,
+    string? LotNumber = null,
+    DateOnly? ExpiresOn = null,
+    IReadOnlyList<string>? SerialNumbers = null);
 
 public sealed record RejectRequest(string Reason);
 
@@ -174,7 +177,7 @@ public sealed record AdjustmentSummary(
     IReadOnlyList<AdjustmentLineSummary> Lines,
     DateTimeOffset UpdatedAt);
 
-public sealed record AdjustmentLineSummary(Guid Id, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? VariantId, Guid? BinId, decimal Quantity, Guid UomId, string UomCode, decimal? UnitCost, Guid ReasonCodeId, string ReasonCode, string? Note, decimal? CostAmount);
+public sealed record AdjustmentLineSummary(Guid Id, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? VariantId, Guid? BinId, decimal Quantity, Guid UomId, string UomCode, decimal? UnitCost, Guid ReasonCodeId, string ReasonCode, string? Note, decimal? CostAmount, string? LotNumber, DateOnly? ExpiresOn, IReadOnlyList<string> SerialNumbers);
 
 /// <summary>
 /// Adjustment documents (positive, negative, scrap, opening): drafted with reason codes, optionally approved (company
@@ -423,7 +426,7 @@ public sealed class AdjustmentService(
             _ => StockEntryTypes.Opening,
         };
         var lines = adjustment.Lines.OrderBy(static l => l.LineNo).Select(l => new StockLine(l.ItemId, entryType, l.Quantity, adjustment.WarehouseId, l.UomId, l.VariantId, l.BinId, l.LotId, l.SerialId, SourceLineId: l.Id,
-            UnitCost: l.UnitCost, OffsetRoleOverride: reasons.GetValueOrDefault(l.ReasonCodeId)?.AccountRoleOverride)).ToList();
+            UnitCost: l.UnitCost, OffsetRoleOverride: reasons.GetValueOrDefault(l.ReasonCodeId)?.AccountRoleOverride, LotNumber: l.LotNumber, ExpiresOn: l.ExpiresOn, SerialNumbers: l.SerialNumbers.Count == 0 ? null : l.SerialNumbers)).ToList();
         var posted = await posting.PostAsync(new StockPostingRequest(adjustment.CompanyId, adjustment.PostingDate, DocumentType, adjustment.Id, lines, $"{DocumentType}:{adjustment.Id:N}"), cancellationToken);
         if (posted.IsFailure)
         {
@@ -565,6 +568,9 @@ public sealed class AdjustmentService(
             UnitCost = line.UnitCost,
             ReasonCodeId = reason.Id,
             Note = string.IsNullOrWhiteSpace(line.Note) ? null : line.Note.Trim(),
+            LotNumber = string.IsNullOrWhiteSpace(line.LotNumber) ? null : line.LotNumber.Trim(),
+            ExpiresOn = line.ExpiresOn,
+            SerialNumbers = line.SerialNumbers?.Select(static n => n.Trim()).Where(static n => n.Length > 0).ToList() ?? [],
         };
     }
 
@@ -590,7 +596,7 @@ public sealed class AdjustmentService(
             var item = (await items.FindAsync(l.ItemId, cancellationToken))!;
             var unit = (await items.UomsAsync(l.ItemId, cancellationToken)).First(u => u.UomId == l.UomId);
             lines.Add(new AdjustmentLineSummary(l.Id, l.LineNo, item.Id, item.Code, item.Name.Values, l.VariantId, l.BinId, ItemUomMath.Normalize(l.Quantity), l.UomId, unit.UomCode, l.UnitCost, l.ReasonCodeId, reasons.GetValueOrDefault(l.ReasonCodeId) ?? string.Empty, l.Note,
-                costs.TryGetValue(l.Id, out var amount) ? amount : null));
+                costs.TryGetValue(l.Id, out var amount) ? amount : null, l.LotNumber, l.ExpiresOn, l.SerialNumbers));
         }
 
         return new AdjustmentSummary(a.Id, a.CompanyId, Number(a), a.Kind, a.Status, a.WarehouseId, warehouse?.Code ?? string.Empty, a.PostingDate, a.Reference, a.Notes, JsonDocument.Parse(a.CustomFields).RootElement.Clone(),
@@ -873,12 +879,15 @@ public sealed record SaveAssemblyRequest(
     Guid? OutputUomId = null,
     Guid? OutputVariantId = null,
     Guid? OutputBinId = null,
+    string? OutputLotNumber = null,
+    DateOnly? OutputExpiresOn = null,
+    IReadOnlyList<string>? OutputSerialNumbers = null,
     IReadOnlyList<SaveAssemblyLineRequest>? Lines = null,
     DateOnly? PostingDate = null,
     string? Reference = null,
     string? Notes = null);
 
-public sealed record SaveAssemblyLineRequest(Guid? ItemId = null, string? ItemCode = null, decimal Quantity = 0m, string? Uom = null, Guid? UomId = null, Guid? VariantId = null, Guid? BinId = null);
+public sealed record SaveAssemblyLineRequest(Guid? ItemId = null, string? ItemCode = null, decimal Quantity = 0m, string? Uom = null, Guid? UomId = null, Guid? VariantId = null, Guid? BinId = null, string? LotNumber = null, IReadOnlyList<string>? SerialNumbers = null);
 
 public sealed record AssemblySummary(
     Guid Id,
@@ -907,7 +916,7 @@ public sealed record AssemblySummary(
     IReadOnlyList<AssemblyLineSummary> Lines,
     DateTimeOffset UpdatedAt);
 
-public sealed record AssemblyLineSummary(Guid Id, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? VariantId, decimal Quantity, Guid UomId, string UomCode, Guid? BinId, decimal? CostAmount);
+public sealed record AssemblyLineSummary(Guid Id, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? VariantId, decimal Quantity, Guid UomId, string UomCode, Guid? BinId, decimal? CostAmount, string? LotNumber, IReadOnlyList<string> SerialNumbers);
 
 /// <summary>
 /// Assembly builds: the components of the item's active bill (or the lines given) are consumed and the assembly item
@@ -1033,8 +1042,8 @@ public sealed class AssemblyService(
 
         var company = (await companies.FindAsync(new CompanyId(assembly.CompanyId), cancellationToken))!;
         var lines = assembly.Lines.OrderBy(static l => l.LineNo)
-            .Select(l => new StockLine(l.ComponentItemId, StockEntryTypes.AssemblyConsumption, l.Quantity, assembly.WarehouseId, l.UomId, l.ComponentVariantId, l.BinId, l.LotId, l.SerialId, SourceLineId: l.Id))
-            .Append(new StockLine(assembly.OutputItemId, StockEntryTypes.AssemblyOutput, assembly.OutputQty, assembly.WarehouseId, assembly.OutputUomId, assembly.OutputVariantId, assembly.OutputBinId))
+            .Select(l => new StockLine(l.ComponentItemId, StockEntryTypes.AssemblyConsumption, l.Quantity, assembly.WarehouseId, l.UomId, l.ComponentVariantId, l.BinId, l.LotId, l.SerialId, SourceLineId: l.Id, LotNumber: l.LotNumber, SerialNumbers: l.SerialNumbers.Count == 0 ? null : l.SerialNumbers))
+            .Append(new StockLine(assembly.OutputItemId, StockEntryTypes.AssemblyOutput, assembly.OutputQty, assembly.WarehouseId, assembly.OutputUomId, assembly.OutputVariantId, assembly.OutputBinId, LotNumber: assembly.OutputLotNumber, ExpiresOn: assembly.OutputExpiresOn, SerialNumbers: assembly.OutputSerialNumbers.Count == 0 ? null : assembly.OutputSerialNumbers))
             .ToList();
         var posted = await posting.PostAsync(new StockPostingRequest(assembly.CompanyId, assembly.PostingDate, DocumentType, assembly.Id, lines, $"{DocumentType}:{assembly.Id:N}"), cancellationToken);
         if (posted.IsFailure)
@@ -1134,7 +1143,7 @@ public sealed class AssemblyService(
                     return Error.Validation("assembly.component_is_output", "An assembly does not consume itself.").WithWhy(("item", item.Code));
                 }
 
-                lines.Add(new AssemblyLine { Id = Guid.CreateVersion7(), AssemblyId = assembly.Id, LineNo = ++lineNo, ComponentItemId = item.Id, ComponentVariantId = line.VariantId, Quantity = line.Quantity, UomId = unit.UomId, BinId = line.BinId });
+                lines.Add(new AssemblyLine { Id = Guid.CreateVersion7(), AssemblyId = assembly.Id, LineNo = ++lineNo, ComponentItemId = item.Id, ComponentVariantId = line.VariantId, Quantity = line.Quantity, UomId = unit.UomId, BinId = line.BinId, LotNumber = string.IsNullOrWhiteSpace(line.LotNumber) ? null : line.LotNumber.Trim(), SerialNumbers = line.SerialNumbers?.Select(static n => n.Trim()).Where(static n => n.Length > 0).ToList() ?? [] });
             }
         }
         else
@@ -1175,6 +1184,9 @@ public sealed class AssemblyService(
         assembly.OutputQty = request.OutputQuantity;
         assembly.OutputUomId = outputUnit.UomId;
         assembly.OutputBinId = request.OutputBinId;
+        assembly.OutputLotNumber = string.IsNullOrWhiteSpace(request.OutputLotNumber) ? null : request.OutputLotNumber.Trim();
+        assembly.OutputExpiresOn = request.OutputExpiresOn;
+        assembly.OutputSerialNumbers = request.OutputSerialNumbers?.Select(static n => n.Trim()).Where(static n => n.Length > 0).ToList() ?? [];
         assembly.WarehouseId = request.WarehouseId;
         assembly.PostingDate = request.PostingDate ?? clock.TodayIn(company.TimeZone);
         assembly.Reference = string.IsNullOrWhiteSpace(request.Reference) ? null : request.Reference.Trim();
@@ -1204,7 +1216,7 @@ public sealed class AssemblyService(
         {
             var item = (await items.FindAsync(l.ComponentItemId, cancellationToken))!;
             var unit = (await items.UomsAsync(l.ComponentItemId, cancellationToken)).First(u => u.UomId == l.UomId);
-            lines.Add(new AssemblyLineSummary(l.Id, l.LineNo, item.Id, item.Code, item.Name.Values, l.ComponentVariantId, ItemUomMath.Normalize(l.Quantity), l.UomId, unit.UomCode, l.BinId, costs.TryGetValue(l.Id, out var amount) ? amount : null));
+            lines.Add(new AssemblyLineSummary(l.Id, l.LineNo, item.Id, item.Code, item.Name.Values, l.ComponentVariantId, ItemUomMath.Normalize(l.Quantity), l.UomId, unit.UomCode, l.BinId, costs.TryGetValue(l.Id, out var amount) ? amount : null, l.LotNumber, l.SerialNumbers));
         }
 
         return new AssemblySummary(a.Id, a.CompanyId, a.Number ?? DraftIdentifiers.For(a.Id), a.Status, a.BomId, outputItem.Id, outputItem.Code, outputItem.Name.Values, a.OutputVariantId, ItemUomMath.Normalize(a.OutputQty), a.OutputUomId, outputUnit.UomCode, a.OutputBinId,

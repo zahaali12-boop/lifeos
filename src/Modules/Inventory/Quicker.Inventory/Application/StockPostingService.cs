@@ -35,7 +35,8 @@ public sealed class StockPostingService(
     IAuditSink audit,
     IOutbox outbox,
     IClock clock,
-    CostingService costing) : IInventoryPosting
+    CostingService costing,
+    TrackingResolver tracking) : IInventoryPosting
 {
     private sealed record BalanceKey(Guid CompanyId, Guid ItemId, Guid VariantId, Guid WarehouseId, Guid BinId, Guid LotId, Guid SerialId)
     {
@@ -85,13 +86,13 @@ public sealed class StockPostingService(
         var resolved = new List<ResolvedLine>(request.Lines.Count);
         foreach (var line in request.Lines)
         {
-            var result = await ResolveAsync(company, line, cancellationToken);
+            var result = await ResolveAsync(company, line, request.PostingDate, cancellationToken);
             if (result.IsFailure)
             {
                 return result.Error!;
             }
 
-            resolved.Add(result.Value);
+            resolved.AddRange(result.Value);
         }
 
         // Reservations consumed by this posting, so the availability check counts them as ours.
@@ -174,6 +175,7 @@ public sealed class StockPostingService(
                 SourceLineId = line.Source.SourceLineId,
                 Ownership = line.Source.Ownership,
                 OwnerPartnerId = line.Source.OwnerPartnerId,
+                PartnerId = line.Source.PartnerId,
                 EnteredUnitCost = line.Source.UnitCost,
                 CostIsExpected = line.Source.CostIsExpected,
                 AppliesToSleId = line.Source.AppliesToSleId,
@@ -195,8 +197,11 @@ public sealed class StockPostingService(
             }
         }
 
+        // The document's line order, kept apart from the navigation list the change tracker owns.
+        var written = posting.Entries.ToList();
         db.Postings.Add(posting);
         await db.SaveChangesAsync(cancellationToken);
+        await tracking.AfterPostingAsync(written, resolved.Select(static l => l.Warehouse).ToList(), cancellationToken);
 
         // The value side (ADR-0008): every entry valued and the journal posted in this same unit of work.
         var valued = await costing.ValuePostingAsync(posting, company, cancellationToken);
@@ -215,12 +220,13 @@ public sealed class StockPostingService(
             entries = resolved.Zip(posting.Entries, (l, e) => new { item = l.Item.Code, warehouse = l.Warehouse.Code, type = l.Source.EntryType, quantity = l.BaseQuantity, uom = l.Item.BaseUomCode, cost = valued.Value.Primary.GetValueOrDefault(e.Id)?.Amount }),
         }, CompanyId: company.Id.Value), cancellationToken);
         await outbox.PublishAsync(new StockPosted(posting.Id, posting.CompanyId, posting.PostingDate, posting.SourceDocumentType, posting.SourceDocumentId, posting.EntryCount), cancellationToken);
-        return await ToResultAsync(posting, replayed: false, cancellationToken, valued.Value.JournalEntryId, valued.Value.JournalNumber);
+        return await ToResultAsync(posting, replayed: false, cancellationToken, valued.Value.JournalEntryId, valued.Value.JournalNumber, written);
     }
 
     // ------------------------------------------------------------------ resolution
 
-    private async Task<Result<ResolvedLine>> ResolveAsync(CompanyInfo company, StockLine line, CancellationToken cancellationToken)
+    /// <summary>One resolved line per unit for a serialised item (each with its serial), otherwise one line (with its lot).</summary>
+    private async Task<Result<List<ResolvedLine>>> ResolveAsync(CompanyInfo company, StockLine line, DateOnly postingDate, CancellationToken cancellationToken)
     {
         if (!StockEntryTypes.All.Contains(line.EntryType, StringComparer.Ordinal))
         {
@@ -304,6 +310,28 @@ public sealed class StockPostingService(
         }
 
         var baseQuantity = sign == 0 ? (line.Quantity < 0m ? -converted.Value.Quantity : converted.Value.Quantity) : sign * converted.Value.Quantity;
+        var tracked = await tracking.ResolveAsync(item, warehouse, line, baseQuantity, postingDate, cancellationToken);
+        if (tracked.IsFailure)
+        {
+            return tracked.Error!;
+        }
+
+        if (tracked.Value.SerialIds.Count > 0)
+        {
+            // One unit, one serial, one entry: each serial keeps its own balance row, cost and history.
+            var perUnit = Math.Sign(baseQuantity);
+            var unitLines = new List<ResolvedLine>(tracked.Value.SerialIds.Count);
+            foreach (var serialId in tracked.Value.SerialIds)
+            {
+                var unitLine = line with { Quantity = sign == 0 ? perUnit : 1m, UomId = item.BaseUomId, LotId = tracked.Value.LotId, SerialId = serialId, SerialNumbers = null, ReservationId = null };
+                var unitKey = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, tracked.Value.LotId ?? Guid.Empty, serialId);
+                unitLines.Add(new ResolvedLine(unitLine, item, warehouse, perUnit, item.BaseUomId, item.BaseUomCode, null, unitKey));
+            }
+
+            return unitLines;
+        }
+
+        line = line with { LotId = tracked.Value.LotId };
         Reservation? reservation = null;
         if (line.ReservationId is { } reservationId)
         {
@@ -331,7 +359,7 @@ public sealed class StockPostingService(
         }
 
         var key = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, line.LotId ?? Guid.Empty, line.SerialId ?? Guid.Empty);
-        return new ResolvedLine(line, item, warehouse, baseQuantity, converted.Value.EnteredUomId, converted.Value.EnteredUomCode, reservation, key);
+        return new List<ResolvedLine> { new(line, item, warehouse, baseQuantity, converted.Value.EnteredUomId, converted.Value.EnteredUomCode, reservation, key) };
     }
 
     private async Task<Result<PeriodState>> PeriodForAsync(CompanyInfo company, DateOnly date, CancellationToken cancellationToken)
@@ -399,12 +427,17 @@ public sealed class StockPostingService(
             """, parameters, uow.Transaction, cancellationToken: cancellationToken));
     }
 
-    private async Task<StockPostingResult> ToResultAsync(StockPosting posting, bool replayed, CancellationToken cancellationToken, Guid? journalEntryId = null, string? journalNumber = null)
+    private async Task<StockPostingResult> ToResultAsync(StockPosting posting, bool replayed, CancellationToken cancellationToken, Guid? journalEntryId = null, string? journalNumber = null, IReadOnlyList<StockLedgerEntry>? ordered = null)
     {
         var ids = posting.Entries.Select(static e => e.Id).ToList();
         var values = (await db.ValueEntries.Where(v => v.SleId != null && ids.Contains(v.SleId.Value)).ToListAsync(cancellationToken)).GroupBy(static v => v.SleId!.Value).ToDictionary(static g => g.Key, static g => g.ToList());
+        var lotIds = posting.Entries.Where(static e => e.LotId is not null).Select(static e => e.LotId!.Value).Distinct().ToList();
+        var lotNumbers = lotIds.Count == 0 ? new Dictionary<Guid, string>() : await db.Lots.Where(l => lotIds.Contains(l.Id)).ToDictionaryAsync(static l => l.Id, static l => l.LotNumber, cancellationToken);
+        var serialIds = posting.Entries.Where(static e => e.SerialId is not null).Select(static e => e.SerialId!.Value).Distinct().ToList();
+        var serialNumbers = serialIds.Count == 0 ? new Dictionary<Guid, string>() : await db.Serials.Where(x => serialIds.Contains(x.Id)).ToDictionaryAsync(static x => x.Id, static x => x.SerialNumber, cancellationToken);
         var entries = new List<StockEntryInfo>(posting.Entries.Count);
-        foreach (var e in posting.Entries.OrderBy(static e => e.Sequence))
+        // The document's line order (a replayed posting comes back by sequence).
+        foreach (var e in ordered ?? posting.Entries.OrderBy(static e => e.Sequence).ToList())
         {
             var units = await items.UomsAsync(e.ItemId, cancellationToken);
             var code = units.FirstOrDefault(u => u.UomId == e.EnteredUomId)?.UomCode ?? string.Empty;
@@ -412,7 +445,8 @@ public sealed class StockPostingService(
             var amount = valued.Where(static v => CostingService.IsInventoryRole(v.AccountRole)).Sum(static v => v.Amount);
             var quantity = Math.Abs(e.Quantity);
             entries.Add(new StockEntryInfo(e.Id, e.Sequence, e.ItemId, e.VariantId, e.WarehouseId, e.BinId, e.LotId, e.SerialId, e.EntryType, ItemUomMath.Normalize(e.Quantity), e.EnteredUomId, code, ItemUomMath.Normalize(e.EnteredQuantity), e.PostingDate, e.SourceLineId, e.TransferPairId, e.ReservationId,
-                amount, valued.Count == 0 ? null : quantity == 0m ? 0m : Math.Abs(amount) / quantity, valued.Any(static v => v.CostedAtExpected)));
+                amount, valued.Count == 0 ? null : quantity == 0m ? 0m : Math.Abs(amount) / quantity, valued.Any(static v => v.CostedAtExpected),
+                e.LotId is { } lot ? lotNumbers.GetValueOrDefault(lot) : null, e.SerialId is { } serial ? serialNumbers.GetValueOrDefault(serial) : null));
             journalEntryId ??= valued.Select(static v => v.GlJournalEntryId).FirstOrDefault(static id => id is not null);
         }
 

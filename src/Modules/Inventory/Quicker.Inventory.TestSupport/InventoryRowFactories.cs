@@ -89,6 +89,15 @@ public static class InventoryRowFactories
         IsolationRegistry.Register("app.inv_revaluation_lines", static async (c, tx, t) => new RowRef("app.inv_revaluation_lines", $"id = '{(await RevaluationAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.inv_assemblies", static async (c, tx, t) => new RowRef("app.inv_assemblies", $"id = '{(await AssemblyAsync(c, tx, t)).Assembly}'"));
         IsolationRegistry.Register("app.inv_assembly_lines", static async (c, tx, t) => new RowRef("app.inv_assembly_lines", $"id = '{(await AssemblyAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.inv_lots", static async (c, tx, t) => new RowRef("app.inv_lots", $"id = '{(await LotAsync(c, tx, t)).Lot}'"));
+        IsolationRegistry.Register("app.inv_serials", static async (c, tx, t) => new RowRef("app.inv_serials", $"id = '{(await SerialAsync(c, tx, t)).Serial}'"));
+        IsolationRegistry.Register("app.inv_serial_events", static async (c, tx, t) =>
+        {
+            var (serial, _) = await SerialAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.inv_serial_events (tenant_id, id, serial_id, kind, to_status) VALUES (@t, @id, @serial, 'status', 'in_stock')", new { t, id, serial }, tx);
+            return new RowRef("app.inv_serial_events", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.inv_transfers", static async (c, tx, t) => new RowRef("app.inv_transfers", $"id = '{(await TransferAsync(c, tx, t)).Transfer}'"));
         IsolationRegistry.Register("app.inv_transfer_lines", static async (c, tx, t) => new RowRef("app.inv_transfer_lines", $"id = '{(await TransferAsync(c, tx, t)).Line}'"));
     }
@@ -200,6 +209,22 @@ public static class InventoryRowFactories
         await c.ExecuteAsync("INSERT INTO app.inv_assemblies (tenant_id, id, company_id, output_item_id, output_qty, output_uom_id, warehouse_id, posting_date) VALUES (@t, @assembly, @company, @item, 1, @uom, @warehouse, '2026-09-22')", new { t, assembly, company, item, uom, warehouse }, tx);
         await c.ExecuteAsync("INSERT INTO app.inv_assembly_lines (tenant_id, id, assembly_id, line_no, component_item_id, quantity, uom_id) VALUES (@t, @line, @assembly, 1, @component, 2, @componentUom)", new { t, line, assembly, component, componentUom }, tx);
         return (assembly, line);
+    }
+
+    private static async Task<(Guid Lot, Guid Item)> LotAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (item, _) = await ItemAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_lots (tenant_id, id, item_id, lot_number) VALUES (@t, @id, @item, @number)", new { t, id, item, number = Suffix(id) }, tx);
+        return (id, item);
+    }
+
+    private static async Task<(Guid Serial, Guid Item)> SerialAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (lot, item) = await LotAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_serials (tenant_id, id, item_id, serial_number, lot_id) VALUES (@t, @id, @item, @number, @lot)", new { t, id, item, number = Suffix(id), lot }, tx);
+        return (id, item);
     }
 
     private static async Task<(Guid Transfer, Guid Line)> TransferAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

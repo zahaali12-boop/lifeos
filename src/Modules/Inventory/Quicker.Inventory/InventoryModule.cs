@@ -18,6 +18,8 @@ public static class InventoryModule
         PermissionCatalog.Register(InventoryPermissions.All);
         CustomFieldHosts.Register(new CustomFieldHost("stock_transfer", "app.inv_transfers", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost("stock_adjustment", "app.inv_adjustments", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost("lot", "app.inv_lots", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost("serial", "app.inv_serials", "custom_fields"));
         services.AddModuleDbContext<InventoryDbContext>();
         services.AddScoped<WarehouseService>();
         services.AddScoped<IWarehouseDirectory>(static sp => sp.GetRequiredService<WarehouseService>());
@@ -35,6 +37,10 @@ public static class InventoryModule
         services.AddScoped<AdjustmentService>();
         services.AddScoped<RevaluationService>();
         services.AddScoped<AssemblyService>();
+        services.AddScoped<TrackingResolver>();
+        services.AddScoped<LotService>();
+        services.AddScoped<SerialService>();
+        services.AddJobHandler<LotExpiryJob, LotExpiryPayload>();
         services.AddJobHandler<ReservationExpiryJob, ReservationExpiryPayload>();
         services.AddJobHandler<CostRecostJob, CostRecostPayload>();
         return services;

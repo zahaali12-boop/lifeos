@@ -205,8 +205,9 @@ public sealed class TransferService(
             }
 
             var pair = Guid.CreateVersion7();
-            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferOut, quantity, transfer.FromWarehouseId, line.UomId, line.VariantId, line.FromBinId, SourceLineId: line.Id, TransferPairId: pair));
-            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferIn, quantity, intoWarehouse, line.UomId, line.VariantId, oneStep ? line.ToBinId : null, SourceLineId: line.Id, TransferPairId: pair));
+            var serials = line.SerialNumbers.Count == 0 ? null : line.SerialNumbers;
+            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferOut, quantity, transfer.FromWarehouseId, line.UomId, line.VariantId, line.FromBinId, line.LotId, SourceLineId: line.Id, TransferPairId: pair, SerialNumbers: serials));
+            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferIn, quantity, intoWarehouse, line.UomId, line.VariantId, oneStep ? line.ToBinId : null, line.LotId, SourceLineId: line.Id, TransferPairId: pair, SerialNumbers: serials));
             line.QtyShipped = quantity;
             if (oneStep)
             {
@@ -312,7 +313,7 @@ public sealed class TransferService(
                     return Error.Validation("transfer.shortage_note_required", "This reason code requires a note.").WithWhy(("lineNo", line.LineNo), ("reasonCode", reason.Code));
                 }
 
-                shortages.Add(new StockLine(line.ItemId, StockEntryTypes.NegativeAdjustment, shortage, transfer.TransitWarehouseId!.Value, line.UomId, line.VariantId, null, SourceLineId: line.Id, OffsetRoleOverride: reason.AccountRoleOverride));
+                shortages.Add(new StockLine(line.ItemId, StockEntryTypes.NegativeAdjustment, shortage, transfer.TransitWarehouseId!.Value, line.UomId, line.VariantId, null, line.LotId, SourceLineId: line.Id, OffsetRoleOverride: reason.AccountRoleOverride, SerialNumbers: r.ShortageSerialNumbers));
                 line.QtyShortage += shortage;
             }
 
@@ -323,8 +324,9 @@ public sealed class TransferService(
 
             var toBin = requested.TryGetValue(line.Id, out var rq) && rq.ToBinId is not null ? rq.ToBinId : line.ToBinId;
             var pair = Guid.CreateVersion7();
-            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferOut, quantity, transfer.TransitWarehouseId!.Value, line.UomId, line.VariantId, null, SourceLineId: line.Id, TransferPairId: pair));
-            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferIn, quantity, transfer.ToWarehouseId, line.UomId, line.VariantId, toBin, SourceLineId: line.Id, TransferPairId: pair));
+            var receivedSerials = rq?.SerialNumbers ?? (line.SerialNumbers.Count == 0 ? null : line.SerialNumbers.Except(rq?.ShortageSerialNumbers ?? [], StringComparer.Ordinal).ToList());
+            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferOut, quantity, transfer.TransitWarehouseId!.Value, line.UomId, line.VariantId, null, line.LotId, SourceLineId: line.Id, TransferPairId: pair, SerialNumbers: receivedSerials));
+            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferIn, quantity, transfer.ToWarehouseId, line.UomId, line.VariantId, toBin, line.LotId, SourceLineId: line.Id, TransferPairId: pair, SerialNumbers: receivedSerials));
             line.QtyReceived += quantity;
             line.ToBinId = toBin;
         }
@@ -479,7 +481,18 @@ public sealed class TransferService(
             }
 
             _ = byId;
-            lines.Add(new TransferLine { Id = Guid.CreateVersion7(), TransferId = transfer.Id, LineNo = ++lineNo, ItemId = item.Id, VariantId = line.VariantId, QtyRequested = line.Quantity, UomId = unit.UomId, FromBinId = line.FromBinId, ToBinId = line.ToBinId });
+            Guid? lotId = line.LotId;
+            if (lotId is null && !string.IsNullOrWhiteSpace(line.LotNumber))
+            {
+                var number = line.LotNumber.Trim();
+                lotId = await db.Lots.Where(l => l.ItemId == item.Id && l.LotNumber == number).Select(static l => (Guid?)l.Id).SingleOrDefaultAsync(cancellationToken);
+                if (lotId is null)
+                {
+                    return Error.Validation("transfer.lot_unknown", "The lot does not exist for this item.").WithWhy(("item", item.Code), ("lotNumber", number));
+                }
+            }
+
+            lines.Add(new TransferLine { Id = Guid.CreateVersion7(), TransferId = transfer.Id, LineNo = ++lineNo, ItemId = item.Id, VariantId = line.VariantId, QtyRequested = line.Quantity, UomId = unit.UomId, FromBinId = line.FromBinId, ToBinId = line.ToBinId, LotId = lotId, SerialNumbers = line.SerialNumbers?.Select(static n => n.Trim()).Where(static n => n.Length > 0).ToList() ?? [] });
         }
 
         transfer.Kind = kind.Value;
@@ -520,6 +533,8 @@ public sealed class TransferService(
             codes[id] = (await warehouses.FindAsync(id, cancellationToken))?.Code ?? string.Empty;
         }
 
+        var lotIds = t.Lines.Where(static l => l.LotId is not null).Select(static l => l.LotId!.Value).Distinct().ToList();
+        var lotNumbers = lotIds.Count == 0 ? new Dictionary<Guid, string>() : await db.Lots.Where(l => lotIds.Contains(l.Id)).ToDictionaryAsync(static l => l.Id, static l => l.LotNumber, cancellationToken);
         var lines = new List<TransferLineSummary>(t.Lines.Count);
         foreach (var l in t.Lines.OrderBy(static l => l.LineNo))
         {
@@ -529,7 +544,7 @@ public sealed class TransferService(
             var variant = l.VariantId is { } v ? await items.FindVariantAsync(v, cancellationToken) : null;
             var baseQuantity = ItemUomMath.ToBase(l.QtyRequested, unit.Numerator, unit.Denominator, item.BasePrecision);
             lines.Add(new TransferLineSummary(l.Id, l.LineNo, item.Id, item.Code, item.Name.Values, l.VariantId, variant?.Sku, ItemUomMath.Normalize(l.QtyRequested), ItemUomMath.Normalize(l.QtyShipped), ItemUomMath.Normalize(l.QtyReceived), ItemUomMath.Normalize(l.QtyShortage),
-                l.UomId, unit.UomCode, baseQuantity.IsSuccess ? ItemUomMath.Normalize(baseQuantity.Value) : 0m, item.BaseUomCode, l.FromBinId, l.ToBinId));
+                l.UomId, unit.UomCode, baseQuantity.IsSuccess ? ItemUomMath.Normalize(baseQuantity.Value) : 0m, item.BaseUomCode, l.FromBinId, l.ToBinId, l.LotId, l.LotId is { } lid ? lotNumbers.GetValueOrDefault(lid) : null, l.SerialNumbers));
         }
 
         return new TransferSummary(t.Id, t.CompanyId, t.Number ?? DraftIdentifiers.For(t.Id), t.Status, t.Kind, t.FromWarehouseId, codes[t.FromWarehouseId], t.ToWarehouseId, codes[t.ToWarehouseId], t.TransitWarehouseId, t.TransitWarehouseId is { } tw ? codes.GetValueOrDefault(tw) : null,

@@ -23,6 +23,8 @@ public static class InventoryPermissions
     public const string AssemblyRead = "inventory.assembly.read";
     public const string AssemblyManage = "inventory.assembly.manage";
     public const string AssemblyPost = "inventory.assembly.post";
+    public const string LotManage = "inventory.lot.manage";
+    public const string SerialManage = "inventory.serial.manage";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -45,5 +47,7 @@ public static class InventoryPermissions
         new(AssemblyRead, "inventory", "Read assembly builds"),
         new(AssemblyManage, "inventory", "Create, edit and cancel assembly builds"),
         new(AssemblyPost, "inventory", "Post assembly builds (consumes components, produces the assembly)"),
+        new(LotManage, "inventory", "Create and edit lots, quarantine, recall and release them"),
+        new(SerialManage, "inventory", "Send serials to repair and back"),
     ];
 }

@@ -55,7 +55,13 @@ public sealed record StockLine(
     decimal? UnitCost = null,
     bool CostIsExpected = false,
     Guid? AppliesToSleId = null,
-    string? OffsetRoleOverride = null);
+    string? OffsetRoleOverride = null,
+    string? LotNumber = null,
+    DateOnly? ExpiresOn = null,
+    DateOnly? ManufacturedOn = null,
+    string? SupplierLot = null,
+    IReadOnlyList<string>? SerialNumbers = null,
+    Guid? PartnerId = null);
 
 public sealed record StockPostingRequest(
     Guid CompanyId,
@@ -85,7 +91,9 @@ public sealed record StockEntryInfo(
     Guid? ReservationId,
     decimal CostAmount = 0m,
     decimal? UnitCost = null,
-    bool CostedAtExpected = false);
+    bool CostedAtExpected = false,
+    string? LotNumber = null,
+    string? SerialNumber = null);
 
 public sealed record StockPostingResult(Guid PostingId, Guid CompanyId, DateOnly PostingDate, Guid? FiscalPeriodId, IReadOnlyList<StockEntryInfo> Entries, bool Replayed, Guid? JournalEntryId = null, string? JournalNumber = null);
 
@@ -300,3 +308,39 @@ public interface IInventoryCosting
     /// <summary>Settles or adds to an inbound entry's cost after the fact (late invoice, landed cost) and re-applies everything it fed.</summary>
     Task<Result<InboundCostAdjustmentResult>> AdjustInboundCostAsync(InboundCostAdjustmentRequest request, CancellationToken cancellationToken = default);
 }
+
+// ------------------------------------------------------------------ lots and serials (roadmap 3.5)
+
+public static class LotStatuses
+{
+    public const string Active = "active";
+    public const string Quarantine = "quarantine";
+    public const string Recalled = "recalled";
+    public const string Expired = "expired";
+    public const string Consumed = "consumed";
+    public static readonly IReadOnlyList<string> All = [Active, Quarantine, Recalled, Expired, Consumed];
+
+    /// <summary>Stock of a lot in one of these statuses is on quality hold: not available, not shipped.</summary>
+    public static bool Blocks(string status) => status is Quarantine or Recalled or Expired;
+}
+
+public static class SerialStatuses
+{
+    public const string InStock = "in_stock";
+    public const string InTransit = "in_transit";
+    public const string Sold = "sold";
+    public const string Returned = "returned";
+    public const string InRepair = "in_repair";
+    public const string Scrapped = "scrapped";
+    public const string Consumed = "consumed";
+    public const string Consigned = "consigned";
+    public const string ReturnedToSupplier = "returned_to_supplier";
+    public static readonly IReadOnlyList<string> All = [InStock, InTransit, Sold, Returned, InRepair, Scrapped, Consumed, Consigned, ReturnedToSupplier];
+
+    /// <summary>Statuses in which the serial is physically in a warehouse of ours.</summary>
+    public static bool IsOnHand(string status) => status is InStock or InTransit or Returned or InRepair;
+}
+
+public sealed record LotInfo(Guid Id, Guid ItemId, string ItemCode, string LotNumber, DateOnly? ManufacturedOn, DateOnly? ExpiresOn, string? SupplierLot, Guid? SupplierPartnerId, string Status, string? StatusReason, string? RecallReference, DateTimeOffset? StatusChangedAt, System.Text.Json.JsonElement CustomFields, DateTimeOffset UpdatedAt);
+
+public sealed record SerialInfo(Guid Id, Guid ItemId, string ItemCode, string SerialNumber, Guid? LotId, string? LotNumber, string Status, Guid? CurrentWarehouseId, string? CurrentWarehouseCode, Guid? CurrentBinId, Guid? CurrentPartnerId, DateOnly? WarrantyUntil, System.Text.Json.JsonElement CustomFields, DateTimeOffset UpdatedAt);

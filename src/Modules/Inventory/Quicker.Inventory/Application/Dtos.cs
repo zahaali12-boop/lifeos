@@ -54,7 +54,11 @@ public sealed record StockBalanceRow(
     decimal Reserved,
     decimal QualityHold,
     decimal Available,
-    DateTimeOffset? LastMovementAt);
+    DateTimeOffset? LastMovementAt,
+    string? LotNumber = null,
+    DateOnly? LotExpiresOn = null,
+    string? LotStatus = null,
+    string? SerialNumber = null);
 
 /// <summary>One row per item and warehouse for the global stock search: what is there, what is promised, what can be taken.</summary>
 public sealed record StockSearchRow(
@@ -98,7 +102,10 @@ public sealed record StockLedgerRow(
     Guid? TransferPairId,
     Guid? ReservationId,
     Guid? PostedBy,
-    DateTimeOffset PostedAt);
+    DateTimeOffset PostedAt,
+    string? LotNumber = null,
+    string? SerialNumber = null,
+    Guid? PartnerId = null);
 
 // ------------------------------------------------------------------ reservations
 
@@ -142,7 +149,10 @@ public sealed record SaveTransferLineRequest(
     Guid? UomId = null,
     Guid? VariantId = null,
     Guid? FromBinId = null,
-    Guid? ToBinId = null);
+    Guid? ToBinId = null,
+    Guid? LotId = null,
+    string? LotNumber = null,
+    IReadOnlyList<string>? SerialNumbers = null);
 
 public sealed record ShipTransferRequest(DateOnly? ShipDate = null, IReadOnlyList<TransferQuantityRequest>? Lines = null);
 
@@ -152,7 +162,7 @@ public sealed record ReceiveTransferRequest(DateOnly? ReceiveDate = null, IReadO
 /// A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. On a
 /// receipt, <paramref name="Shortage"/> is what shipped but never arrived: it is written off from transit with the reason code.
 /// </summary>
-public sealed record TransferQuantityRequest(Guid LineId, decimal Quantity, Guid? ToBinId = null, decimal Shortage = 0m, Guid? ShortageReasonCodeId = null, string? ShortageReasonCode = null, string? ShortageNote = null);
+public sealed record TransferQuantityRequest(Guid LineId, decimal Quantity, Guid? ToBinId = null, decimal Shortage = 0m, Guid? ShortageReasonCodeId = null, string? ShortageReasonCode = null, string? ShortageNote = null, IReadOnlyList<string>? SerialNumbers = null, IReadOnlyList<string>? ShortageSerialNumbers = null);
 
 public sealed record TransferSummary(
     Guid Id,
@@ -194,4 +204,7 @@ public sealed record TransferLineSummary(
     decimal BaseQtyRequested,
     string BaseUom,
     Guid? FromBinId,
-    Guid? ToBinId);
+    Guid? ToBinId,
+    Guid? LotId = null,
+    string? LotNumber = null,
+    IReadOnlyList<string>? SerialNumbers = null);

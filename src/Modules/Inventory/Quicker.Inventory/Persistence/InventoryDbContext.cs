@@ -52,6 +52,12 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
 
     public DbSet<AssemblyLine> AssemblyLines => Set<AssemblyLine>();
 
+    public DbSet<Lot> Lots => Set<Lot>();
+
+    public DbSet<Serial> Serials => Set<Serial>();
+
+    public DbSet<SerialEvent> SerialEvents => Set<SerialEvent>();
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private static readonly ValueConverter<Dictionary<string, string>, string> StringMapConverter = new(
@@ -206,6 +212,28 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.Quantity).HasPrecision(24, 9);
             b.Property(static x => x.Tracking).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<Lot>(b =>
+        {
+            b.ToTable("inv_lots", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasAuditTrail("lot", static x => x.LotNumber);
+        });
+
+        modelBuilder.Entity<Serial>(b =>
+        {
+            b.ToTable("inv_serials", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasAuditTrail("serial", static x => x.SerialNumber);
+        });
+
+        modelBuilder.Entity<SerialEvent>(b =>
+        {
+            b.ToTable("inv_serial_events", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
         });
 
         modelBuilder.Entity<ItemCostScope>(b =>

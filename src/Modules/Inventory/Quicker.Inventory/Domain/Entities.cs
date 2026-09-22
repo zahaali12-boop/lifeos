@@ -148,6 +148,9 @@ public sealed class StockLedgerEntry : ITenantEntity
     /// <summary>The account role the movement offsets when the document (a reason code) names one.</summary>
     public string? OffsetRoleOverride { get; set; }
 
+    /// <summary>The document's counterparty (customer, supplier), for traceability.</summary>
+    public Guid? PartnerId { get; set; }
+
     public Guid? TransferPairId { get; set; }
 
     public Guid? ReservationId { get; set; }
@@ -307,6 +310,10 @@ public sealed class TransferLine : ITenantEntity
 
     /// <summary>Shipped quantity that never arrived, written off on receipt with a reason code.</summary>
     public decimal QtyShortage { get; set; }
+
+    public Guid? LotId { get; set; }
+
+    public List<string> SerialNumbers { get; set; } = [];
 }
 
 // ------------------------------------------------------------------ costing (ADR-0008, value side)
@@ -628,6 +635,12 @@ public sealed class AdjustmentLine : ITenantEntity
     public Guid ReasonCodeId { get; set; }
 
     public string? Note { get; set; }
+
+    public string? LotNumber { get; set; }
+
+    public DateOnly? ExpiresOn { get; set; }
+
+    public List<string> SerialNumbers { get; set; } = [];
 }
 
 public sealed class Revaluation : ITenantEntity
@@ -713,6 +726,12 @@ public sealed class Assembly : ITenantEntity
 
     public Guid? OutputBinId { get; set; }
 
+    public string? OutputLotNumber { get; set; }
+
+    public DateOnly? OutputExpiresOn { get; set; }
+
+    public List<string> OutputSerialNumbers { get; set; } = [];
+
     public Guid WarehouseId { get; set; }
 
     public DateOnly PostingDate { get; set; }
@@ -765,4 +784,110 @@ public sealed class AssemblyLine : ITenantEntity
     public Guid? SerialId { get; set; }
 
     public string Tracking { get; set; } = "{}";
+
+    public string? LotNumber { get; set; }
+
+    public DateOnly? ExpiresOn { get; set; }
+
+    public List<string> SerialNumbers { get; set; } = [];
+}
+
+// ------------------------------------------------------------------ lots and serials (roadmap 3.5)
+
+public sealed class Lot : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public string LotNumber { get; set; } = string.Empty;
+
+    public DateOnly? ManufacturedOn { get; set; }
+
+    public DateOnly? ExpiresOn { get; set; }
+
+    public string? SupplierLot { get; set; }
+
+    public Guid? SupplierPartnerId { get; set; }
+
+    public string Status { get; set; } = LotStatuses.Active;
+
+    public string? StatusReason { get; set; }
+
+    public string? RecallReference { get; set; }
+
+    public DateTimeOffset? StatusChangedAt { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+public sealed class Serial : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public string SerialNumber { get; set; } = string.Empty;
+
+    public Guid? LotId { get; set; }
+
+    public string Status { get; set; } = SerialStatuses.InStock;
+
+    public Guid? CurrentWarehouseId { get; set; }
+
+    public Guid? CurrentBinId { get; set; }
+
+    public Guid? CurrentPartnerId { get; set; }
+
+    public DateOnly? WarrantyUntil { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+public sealed class SerialEvent : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid SerialId { get; set; }
+
+    public DateTimeOffset At { get; set; }
+
+    public DateOnly? PostingDate { get; set; }
+
+    /// <summary>movement or status.</summary>
+    public string Kind { get; set; } = "movement";
+
+    public string? EntryType { get; set; }
+
+    public Guid? SleId { get; set; }
+
+    public string? FromStatus { get; set; }
+
+    public string ToStatus { get; set; } = SerialStatuses.InStock;
+
+    public Guid? WarehouseId { get; set; }
+
+    public Guid? PartnerId { get; set; }
+
+    public string? SourceDocumentType { get; set; }
+
+    public Guid? SourceDocumentId { get; set; }
+
+    public string? Note { get; set; }
+
+    public Guid? ActorUserId { get; set; }
 }
