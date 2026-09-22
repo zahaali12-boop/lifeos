@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Quicker ERP kernel: money, quantities, rounding, identifiers, time, results. No dependencies.</Description>
+  </PropertyGroup>
+
+</Project>
