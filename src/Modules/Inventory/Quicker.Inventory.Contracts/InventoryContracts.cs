@@ -51,7 +51,10 @@ public sealed record StockLine(
     Guid? ReservationId = null,
     Guid? TransferPairId = null,
     string Ownership = "own",
-    Guid? OwnerPartnerId = null);
+    Guid? OwnerPartnerId = null,
+    decimal? UnitCost = null,
+    bool CostIsExpected = false,
+    Guid? AppliesToSleId = null);
 
 public sealed record StockPostingRequest(
     Guid CompanyId,
@@ -78,9 +81,12 @@ public sealed record StockEntryInfo(
     DateOnly PostingDate,
     Guid? SourceLineId,
     Guid? TransferPairId,
-    Guid? ReservationId);
+    Guid? ReservationId,
+    decimal CostAmount = 0m,
+    decimal? UnitCost = null,
+    bool CostedAtExpected = false);
 
-public sealed record StockPostingResult(Guid PostingId, Guid CompanyId, DateOnly PostingDate, Guid? FiscalPeriodId, IReadOnlyList<StockEntryInfo> Entries, bool Replayed);
+public sealed record StockPostingResult(Guid PostingId, Guid CompanyId, DateOnly PostingDate, Guid? FiscalPeriodId, IReadOnlyList<StockEntryInfo> Entries, bool Replayed, Guid? JournalEntryId = null, string? JournalNumber = null);
 
 /// <summary>
 /// The stock ledger engine (ADR-0008, quantity side): writes the entries of one document movement in the caller's
@@ -182,4 +188,114 @@ public sealed record StockPosted(
     public static int EventVersion => 1;
 
     public string AggregateType => "stock_posting";
+}
+
+// ------------------------------------------------------------------ costing (ADR-0008, value side)
+
+public static class ValueEntryTypes
+{
+    public const string DirectCost = "direct_cost";
+    public const string IndirectCost = "indirect_cost";
+    public const string ExpectedCost = "expected_cost";
+    public const string ExpectedCostReversal = "expected_cost_reversal";
+    public const string Revaluation = "revaluation";
+    public const string Variance = "variance";
+    public const string Rounding = "rounding";
+    public const string CostAdjustment = "cost_adjustment";
+}
+
+public static class CostingMethods
+{
+    public const string Fifo = "fifo";
+    public const string Average = "average";
+    public const string Standard = "standard";
+    public static readonly IReadOnlyList<string> All = [Fifo, Average, Standard];
+}
+
+/// <summary>One value entry of a stock ledger entry, with the reason it exists.</summary>
+public sealed record StockValueEntryInfo(
+    Guid Id,
+    Guid? SleId,
+    DateOnly PostingDate,
+    DateOnly ValuationDate,
+    string ValueType,
+    decimal ValuedQuantity,
+    decimal UnitCost,
+    decimal CostAmountActual,
+    decimal CostAmountExpected,
+    string Currency,
+    string AccountRole,
+    string OffsetRole,
+    Guid? OffsetRef,
+    Guid? JournalEntryId,
+    Guid? AdjustsValueEntryId,
+    Guid? AdjustmentRunId,
+    string SourceDocumentType,
+    Guid SourceDocumentId,
+    IReadOnlyDictionary<string, object?> Reason,
+    bool CostedAtExpected,
+    DateTimeOffset CreatedAt);
+
+/// <summary>The cost of an item in one cost scope at a date: the running quantity, value and average, the last and the standard cost.</summary>
+public sealed record ItemCostInfo(
+    Guid CompanyId,
+    Guid ItemId,
+    Guid? WarehouseId,
+    string CostingMethod,
+    string CostingScope,
+    DateOnly AsOf,
+    decimal Quantity,
+    decimal Value,
+    decimal AverageUnitCost,
+    decimal LastCost,
+    decimal? StandardCost,
+    decimal ExpectedUnitCost,
+    bool ValuationPending);
+
+/// <summary>A late supplier invoice (<c>invoice</c>: the actual unit cost replaces the expected one) or a landed cost (<c>landed_cost</c>: an amount added to the layer).</summary>
+public sealed record InboundCostAdjustmentRequest(
+    Guid SleId,
+    string Kind,
+    string TriggerDocumentType,
+    Guid TriggerDocumentId,
+    decimal? ActualUnitCost = null,
+    decimal? Amount = null,
+    DateOnly? PostingDate = null,
+    string? Reason = null,
+    string? IdempotencyKey = null);
+
+public sealed record CostAdjustmentRunInfo(
+    Guid Id,
+    Guid CompanyId,
+    Guid ItemId,
+    Guid? WarehouseId,
+    string TriggerKind,
+    string TriggerDocumentType,
+    Guid TriggerDocumentId,
+    Guid? TriggerSleId,
+    DateOnly FromDate,
+    string Status,
+    int EntriesWalked,
+    int EntriesReapplied,
+    int ValueEntriesCreated,
+    int JournalEntriesPosted,
+    decimal AmountAdjusted,
+    Guid? JobId,
+    string? Error,
+    DateTimeOffset StartedAt,
+    DateTimeOffset? CompletedAt);
+
+public sealed record InboundCostAdjustmentResult(IReadOnlyList<StockValueEntryInfo> ValueEntries, Guid? JournalEntryId, CostAdjustmentRunInfo? Run);
+
+/// <summary>
+/// The costing engine (ADR-0008): values every stock movement as it posts, re-applies costs when a value-affecting
+/// event lands at an earlier date, and posts the inventory side of the books through the accounting engine.
+/// </summary>
+public interface IInventoryCosting
+{
+    /// <summary>The cost of an item in its cost scope as of a date (today by default).</summary>
+    Task<ItemCostInfo?> CostAsync(Guid companyId, Guid itemId, Guid? warehouseId = null, DateOnly? asOf = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Settles or adds to an inbound entry's cost after the fact (late invoice, landed cost) and re-applies everything it fed.</summary>
+    Task<Result<InboundCostAdjustmentResult>> AdjustInboundCostAsync(InboundCostAdjustmentRequest request, CancellationToken cancellationToken = default);
 }

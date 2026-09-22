@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
@@ -25,7 +26,12 @@ public static class InventoryModule
         services.AddScoped<IStockReservations>(static sp => sp.GetRequiredService<ReservationService>());
         services.AddScoped<TransferService>();
         services.AddScoped<StockInquiryService>();
+        services.AddSingleton(static sp => sp.GetRequiredService<IConfiguration>().GetSection(InventoryOptions.SectionName).Get<InventoryOptions>() ?? new InventoryOptions());
+        services.AddScoped<CostingService>();
+        services.AddScoped<IInventoryCosting>(static sp => sp.GetRequiredService<CostingService>());
+        services.AddScoped<CostInquiryService>();
         services.AddJobHandler<ReservationExpiryJob, ReservationExpiryPayload>();
+        services.AddJobHandler<CostRecostJob, CostRecostPayload>();
         return services;
     }
 }

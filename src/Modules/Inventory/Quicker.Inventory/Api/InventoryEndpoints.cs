@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Quicker.Inventory.Application;
 using Quicker.Inventory.Contracts;
+using Quicker.Kernel.Time;
 using Quicker.Web;
 
 namespace Quicker.Inventory.Api;
@@ -89,6 +90,38 @@ public static class InventoryEndpoints
             .WithSummary("Receives what is in transit (or the given quantities) into the destination; partial receipts leave the transfer partially received");
         transfers.MapPost("/{transferId:guid}/cancel", async (Guid transferId, TransferService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(transferId, ct)))
             .RequirePermission(InventoryPermissions.TransferManage);
+
+        // ------------------------------------------------------------------ costing (ADR-0008)
+        var costing = inventory.MapGroup("/costing");
+        costing.MapGet("/item-cost", async (Guid companyId, Guid itemId, Guid? warehouseId, DateOnly? asOf, CostingService service, CancellationToken ct) =>
+            await service.CostAsync(companyId, itemId, warehouseId, asOf, ct) is { } cost ? Results.Ok(cost) : ApiProblems.From(Kernel.Results.Error.NotFound("item", itemId)))
+            .RequirePermission(InventoryPermissions.CostingRead)
+            .WithSummary("The item's cost in its cost scope at a date: running quantity, value and average, the last and the standard cost, and whether a re-application is pending");
+        costing.MapGet("/valuation", async (Guid companyId, DateOnly? asOf, Guid? warehouseId, Guid? itemId, bool? includeZero, CostInquiryService service, IClock clock, CancellationToken ct) =>
+            TypedResults.Ok(await service.ValuationAsync(companyId, asOf ?? DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), warehouseId, itemId, includeZero ?? false, ct)))
+            .RequirePermission(InventoryPermissions.CostingRead)
+            .WithSummary("Inventory valuation at a date per item and warehouse: quantity, actual and expected value; equals the inventory accounts at that date");
+        costing.MapGet("/entries/{sleId:guid}", async (Guid sleId, CostInquiryService service, CancellationToken ct) => ApiProblems.Ok(await service.ExplainAsync(sleId, ct)))
+            .RequirePermission(InventoryPermissions.CostingRead)
+            .WithSummary("Why did this cost change: the entry's value entries in order with their reasons, the layers it consumed or the entries that consumed it, and the adjustment runs involved");
+        costing.MapGet("/runs", async (Guid? companyId, Guid? itemId, string? status, int? limit, string? cursor, CostInquiryService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.RunsAsync(companyId, itemId, status, new PageRequest(limit, cursor), ct)))
+            .RequirePermission(InventoryPermissions.CostingRead)
+            .WithSummary("Cost adjustment runs newest first: the trigger document, what was walked and re-applied, what was posted");
+        costing.MapGet("/runs/{runId:guid}", async (Guid runId, CostInquiryService service, CancellationToken ct) => ApiProblems.Ok(await service.RunAsync(runId, ct)))
+            .RequirePermission(InventoryPermissions.CostingRead);
+        costing.MapPost("/runs/{runId:guid}/run", async (Guid runId, CostingService service, CancellationToken ct) => ApiProblems.Ok(await service.RunAsync(runId, ct)))
+            .RequirePermission(InventoryPermissions.CostingManage)
+            .WithSummary("Runs a queued re-application now instead of waiting for the worker");
+        costing.MapGet("/standard-costs", async (Guid companyId, Guid itemId, CostInquiryService service, CancellationToken ct) => TypedResults.Ok(await service.StandardCostsAsync(companyId, itemId, ct)))
+            .RequirePermission(InventoryPermissions.CostingRead);
+        costing.MapPost("/standard-costs", async (SetStandardCostRequest request, CostingService service, CancellationToken ct) =>
+            ApiProblems.Created((await service.SetStandardCostAsync(request.CompanyId, request.ItemId, request.StandardCost, request.EffectiveFrom, request.Reason, ct)).Map(CostInquiryService.Map), static v => $"/api/v1/inventory/costing/standard-costs?companyId={v.CompanyId}&itemId={v.ItemId}"))
+            .RequirePermission(InventoryPermissions.CostingManage)
+            .WithSummary("A new standard cost version from a date; under standard costing the stock on hand is revalued and later movements re-applied");
+        costing.MapPost("/inbound-adjustments", async (InboundCostAdjustmentRequest request, CostingService service, CancellationToken ct) => ApiProblems.Ok(await service.AdjustInboundCostAsync(request, ct)))
+            .RequirePermission(InventoryPermissions.CostingManage)
+            .WithSummary("Settles an inbound entry's expected cost with the invoiced one, or adds a landed cost to it, and re-applies everything it fed (hard scenarios 1 and 2)");
 
         return inventory;
     }

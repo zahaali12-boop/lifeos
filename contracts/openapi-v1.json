@@ -11472,6 +11472,382 @@
           }
         }
       }
+    },
+    "/api/v1/inventory/costing/item-cost": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "The item's cost in its cost scope at a date: running quantity, value and average, the last and the standard cost, and whether a re-application is pending",
+        "operationId": "getInventoryCostingItemCost",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/costing/valuation": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Inventory valuation at a date per item and warehouse: quantity, actual and expected value; equals the inventory accounts at that date",
+        "operationId": "getInventoryCostingValuation",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "includeZero",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValuationReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/costing/entries/{sleId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Why did this cost change: the entry's value entries in order with their reasons, the layers it consumed or the entries that consumed it, and the adjustment runs involved",
+        "operationId": "getInventoryCostingEntriesBySleId",
+        "parameters": [
+          {
+            "name": "sleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostExplanation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/costing/runs": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Cost adjustment runs newest first: the trigger document, what was walked and re-applied, what was posted",
+        "operationId": "getInventoryCostingRuns",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfCostAdjustmentRunInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/costing/runs/{runId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryCostingRunsByRunId",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostAdjustmentRunInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/costing/runs/{runId}/run": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Runs a queued re-application now instead of waiting for the worker",
+        "operationId": "postInventoryCostingRunsByRunIdRun",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostAdjustmentRunInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/costing/standard-costs": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryCostingStandardCosts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StandardCostVersionInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "A new standard cost version from a date; under standard costing the stock on hand is revalued and later movements re-applied",
+        "operationId": "postInventoryCostingStandardCosts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetStandardCostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardCostVersionInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/costing/inbound-adjustments": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Settles an inbound entry's expected cost with the invoiced one, or adds a landed cost to it, and re-applies everything it fed (hard scenarios 1 and 2)",
+        "operationId": "postInventoryCostingInboundAdjustments",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InboundCostAdjustmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundCostAdjustmentResult"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -14116,6 +14492,253 @@
           }
         }
       },
+      "CostAdjustmentRunInfo": {
+        "required": [
+          "id",
+          "companyId",
+          "itemId",
+          "warehouseId",
+          "triggerKind",
+          "triggerDocumentType",
+          "triggerDocumentId",
+          "triggerSleId",
+          "fromDate",
+          "status",
+          "entriesWalked",
+          "entriesReapplied",
+          "valueEntriesCreated",
+          "journalEntriesPosted",
+          "amountAdjusted",
+          "jobId",
+          "error",
+          "startedAt",
+          "completedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "triggerKind": {
+            "type": "string"
+          },
+          "triggerDocumentType": {
+            "type": "string"
+          },
+          "triggerDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "triggerSleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fromDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "entriesWalked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "entriesReapplied": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "valueEntriesCreated": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "journalEntriesPosted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "amountAdjusted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "jobId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "CostApplicationInfo": {
+        "required": [
+          "id",
+          "direction",
+          "counterpartSleId",
+          "counterpartEntryType",
+          "counterpartDate",
+          "counterpartQuantity",
+          "quantity",
+          "costAmount",
+          "isReapplication",
+          "runId",
+          "supersededBy",
+          "appliedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "counterpartSleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "counterpartEntryType": {
+            "type": "string"
+          },
+          "counterpartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "counterpartQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isReapplication": {
+            "type": "boolean"
+          },
+          "runId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "supersededBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CostExplanation": {
+        "required": [
+          "entry",
+          "valueEntries",
+          "applications",
+          "runs"
+        ],
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/StockEntryCostSummary"
+          },
+          "valueEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockValueEntryInfo"
+            }
+          },
+          "applications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostApplicationInfo"
+            }
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostAdjustmentRunInfo"
+            }
+          }
+        }
+      },
       "CounterSummary": {
         "required": [
           "periodKey",
@@ -15599,6 +16222,102 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "InboundCostAdjustmentRequest": {
+        "required": [
+          "sleId",
+          "kind",
+          "triggerDocumentType",
+          "triggerDocumentId"
+        ],
+        "type": "object",
+        "properties": {
+          "sleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "triggerDocumentType": {
+            "type": "string"
+          },
+          "triggerDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actualUnitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "idempotencyKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A late supplier invoice (`invoice`: the actual unit cost replaces the expected one) or a landed cost (`landed_cost`: an amount added to the layer)."
+      },
+      "InboundCostAdjustmentResult": {
+        "required": [
+          "valueEntries",
+          "journalEntryId",
+          "run"
+        ],
+        "type": "object",
+        "properties": {
+          "valueEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockValueEntryInfo"
+            }
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "run": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CostAdjustmentRunInfo"
+              }
+            ]
           }
         }
       },
@@ -17958,6 +18677,28 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ActivityView"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
+      "PageOfCostAdjustmentRunInfo": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostAdjustmentRunInfo"
             }
           },
           "nextCursor": {
@@ -22625,6 +23366,43 @@
           }
         }
       },
+      "SetStandardCostRequest": {
+        "required": [
+          "companyId",
+          "itemId",
+          "standardCost",
+          "effectiveFrom"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "standardCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "SettingRequest": {
         "required": [
           "value",
@@ -22947,6 +23725,70 @@
           }
         }
       },
+      "StandardCostVersionInfo": {
+        "required": [
+          "id",
+          "companyId",
+          "itemId",
+          "standardCost",
+          "effectiveFrom",
+          "reason",
+          "revaluationRunId",
+          "approvedBy",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "standardCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "revaluationRunId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "approvedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "StatutoryAccount": {
         "required": [
           "code",
@@ -23226,6 +24068,121 @@
           }
         }
       },
+      "StockEntryCostSummary": {
+        "required": [
+          "id",
+          "sequence",
+          "companyId",
+          "itemId",
+          "warehouseId",
+          "entryType",
+          "quantity",
+          "postingDate",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "transferPairId",
+          "enteredUnitCost",
+          "costIsExpected",
+          "appliesToSleId",
+          "costAmount",
+          "unitCost",
+          "costedAtExpected"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sequence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entryType": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "transferPairId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "enteredUnitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costIsExpected": {
+            "type": "boolean"
+          },
+          "appliesToSleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "costAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costedAtExpected": {
+            "type": "boolean"
+          }
+        }
+      },
       "StockLedgerRow": {
         "required": [
           "id",
@@ -23487,6 +24444,143 @@
           }
         },
         "description": "One row per item and warehouse for the global stock search: what is there, what is promised, what can be taken."
+      },
+      "StockValueEntryInfo": {
+        "required": [
+          "id",
+          "sleId",
+          "postingDate",
+          "valuationDate",
+          "valueType",
+          "valuedQuantity",
+          "unitCost",
+          "costAmountActual",
+          "costAmountExpected",
+          "currency",
+          "accountRole",
+          "offsetRole",
+          "offsetRef",
+          "journalEntryId",
+          "adjustsValueEntryId",
+          "adjustmentRunId",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "reason",
+          "costedAtExpected",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "valuationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "valueType": {
+            "type": "string"
+          },
+          "valuedQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costAmountActual": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costAmountExpected": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "offsetRole": {
+            "type": "string"
+          },
+          "offsetRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "adjustsValueEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "adjustmentRunId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "object"
+          },
+          "costedAtExpected": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "One value entry of a stock ledger entry, with the reason it exists."
       },
       "SubstituteRequest": {
         "type": "object",
@@ -24487,6 +25581,138 @@
           },
           "isPlatformOperator": {
             "type": "boolean"
+          }
+        }
+      },
+      "ValuationReport": {
+        "required": [
+          "companyId",
+          "asOf",
+          "lines",
+          "totalActual",
+          "totalExpected",
+          "totalValue"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValuationRow"
+            }
+          },
+          "totalActual": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalExpected": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ValuationRow": {
+        "required": [
+          "itemId",
+          "itemCode",
+          "itemName",
+          "warehouseId",
+          "warehouseCode",
+          "baseUom",
+          "quantity",
+          "actual",
+          "expected",
+          "value",
+          "averageUnitCost"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "baseUom": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "actual": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expected": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "averageUnitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },

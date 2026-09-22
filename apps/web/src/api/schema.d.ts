@@ -4067,6 +4067,141 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/costing/item-cost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The item's cost in its cost scope at a date: running quantity, value and average, the last and the standard cost, and whether a re-application is pending */
+        get: operations["getInventoryCostingItemCost"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/costing/valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inventory valuation at a date per item and warehouse: quantity, actual and expected value; equals the inventory accounts at that date */
+        get: operations["getInventoryCostingValuation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/costing/entries/{sleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Why did this cost change: the entry's value entries in order with their reasons, the layers it consumed or the entries that consumed it, and the adjustment runs involved */
+        get: operations["getInventoryCostingEntriesBySleId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/costing/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cost adjustment runs newest first: the trigger document, what was walked and re-applied, what was posted */
+        get: operations["getInventoryCostingRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/costing/runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryCostingRunsByRunId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/costing/runs/{runId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs a queued re-application now instead of waiting for the worker */
+        post: operations["postInventoryCostingRunsByRunIdRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/costing/standard-costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryCostingStandardCosts"];
+        put?: never;
+        /** A new standard cost version from a date; under standard costing the stock on hand is revalued and later movements re-applied */
+        post: operations["postInventoryCostingStandardCosts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/costing/inbound-adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Settles an inbound entry's expected cost with the invoiced one, or adds a landed cost to it, and re-applies everything it fed (hard scenarios 1 and 2) */
+        post: operations["postInventoryCostingInboundAdjustments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4792,6 +4927,71 @@ export interface components {
         CorrectJournalRequest: {
             reason: string;
         };
+        CostAdjustmentRunInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            triggerKind: string;
+            triggerDocumentType: string;
+            /** Format: uuid */
+            triggerDocumentId: string;
+            /** Format: uuid */
+            triggerSleId: null | string;
+            /** Format: date */
+            fromDate: string;
+            status: string;
+            /** Format: int32 */
+            entriesWalked: number | string;
+            /** Format: int32 */
+            entriesReapplied: number | string;
+            /** Format: int32 */
+            valueEntriesCreated: number | string;
+            /** Format: int32 */
+            journalEntriesPosted: number | string;
+            /** Format: double */
+            amountAdjusted: number | string;
+            /** Format: uuid */
+            jobId: null | string;
+            error: null | string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt: null | string;
+        };
+        CostApplicationInfo: {
+            /** Format: uuid */
+            id: string;
+            direction: string;
+            /** Format: uuid */
+            counterpartSleId: string;
+            counterpartEntryType: string;
+            /** Format: date */
+            counterpartDate: string;
+            /** Format: double */
+            counterpartQuantity: number | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            costAmount: number | string;
+            isReapplication: boolean;
+            /** Format: uuid */
+            runId: null | string;
+            /** Format: uuid */
+            supersededBy: null | string;
+            /** Format: date-time */
+            appliedAt: string;
+        };
+        CostExplanation: {
+            entry: components["schemas"]["StockEntryCostSummary"];
+            valueEntries: components["schemas"]["StockValueEntryInfo"][];
+            applications: components["schemas"]["CostApplicationInfo"][];
+            runs: components["schemas"]["CostAdjustmentRunInfo"][];
+        };
         CounterSummary: {
             periodKey: string;
             /** Format: int64 */
@@ -5194,6 +5394,29 @@ export interface components {
             unchanged: number | string;
             /** Format: int32 */
             total: number | string;
+        };
+        /** @description A late supplier invoice (`invoice`: the actual unit cost replaces the expected one) or a landed cost (`landed_cost`: an amount added to the layer). */
+        InboundCostAdjustmentRequest: {
+            /** Format: uuid */
+            sleId: string;
+            kind: string;
+            triggerDocumentType: string;
+            /** Format: uuid */
+            triggerDocumentId: string;
+            /** Format: double */
+            actualUnitCost?: null | number | string;
+            /** Format: double */
+            amount?: null | number | string;
+            /** Format: date */
+            postingDate?: null | string;
+            reason?: null | string;
+            idempotencyKey?: null | string;
+        };
+        InboundCostAdjustmentResult: {
+            valueEntries: components["schemas"]["StockValueEntryInfo"][];
+            /** Format: uuid */
+            journalEntryId: null | string;
+            run: null | components["schemas"]["CostAdjustmentRunInfo"];
         };
         /** @description A run of the harness for one tenant (optionally one company): every check with its outcome. */
         InvariantReport: {
@@ -5813,6 +6036,11 @@ export interface components {
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
         PageOfActivityView: {
             items: components["schemas"]["ActivityView"][];
+            nextCursor: null | string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfCostAdjustmentRunInfo: {
+            items: components["schemas"]["CostAdjustmentRunInfo"][];
             nextCursor: null | string;
         };
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
@@ -7177,6 +7405,17 @@ export interface components {
             state: string;
             reason?: null | string;
         };
+        SetStandardCostRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            itemId: string;
+            /** Format: double */
+            standardCost: number | string;
+            /** Format: date */
+            effectiveFrom: string;
+            reason?: null | string;
+        };
         SettingRequest: {
             value: components["schemas"]["JsonElement"];
             valueType: string;
@@ -7268,6 +7507,25 @@ export interface components {
         SsoExchangeRequest: {
             code: string;
         };
+        StandardCostVersionInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            itemId: string;
+            /** Format: double */
+            standardCost: number | string;
+            /** Format: date */
+            effectiveFrom: string;
+            reason: null | string;
+            /** Format: uuid */
+            revaluationRunId: null | string;
+            /** Format: uuid */
+            approvedBy: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         StatutoryAccount: {
             code: string;
             /** Format: int32 */
@@ -7341,6 +7599,38 @@ export interface components {
             available: number | string;
             /** Format: date-time */
             lastMovementAt: null | string;
+        };
+        StockEntryCostSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            sequence: number | string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            entryType: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: date */
+            postingDate: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            /** Format: uuid */
+            transferPairId: null | string;
+            /** Format: double */
+            enteredUnitCost: null | number | string;
+            costIsExpected: boolean;
+            /** Format: uuid */
+            appliesToSleId: null | string;
+            /** Format: double */
+            costAmount: number | string;
+            /** Format: double */
+            unitCost: number | string;
+            costedAtExpected: boolean;
         };
         StockLedgerRow: {
             /** Format: uuid */
@@ -7416,6 +7706,44 @@ export interface components {
             available: number | string;
             /** Format: date-time */
             lastMovementAt: null | string;
+        };
+        /** @description One value entry of a stock ledger entry, with the reason it exists. */
+        StockValueEntryInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            sleId: null | string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            valuationDate: string;
+            valueType: string;
+            /** Format: double */
+            valuedQuantity: number | string;
+            /** Format: double */
+            unitCost: number | string;
+            /** Format: double */
+            costAmountActual: number | string;
+            /** Format: double */
+            costAmountExpected: number | string;
+            currency: string;
+            accountRole: string;
+            offsetRole: string;
+            /** Format: uuid */
+            offsetRef: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            adjustsValueEntryId: null | string;
+            /** Format: uuid */
+            adjustmentRunId: null | string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            reason: Record<string, never>;
+            costedAtExpected: boolean;
+            /** Format: date-time */
+            createdAt: string;
         };
         SubstituteRequest: {
             /** Format: uuid */
@@ -7702,6 +8030,41 @@ export interface components {
             digitStyle: string;
             hasMfa: boolean;
             isPlatformOperator: boolean;
+        };
+        ValuationReport: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            asOf: string;
+            lines: components["schemas"]["ValuationRow"][];
+            /** Format: double */
+            totalActual: number | string;
+            /** Format: double */
+            totalExpected: number | string;
+            /** Format: double */
+            totalValue: number | string;
+        };
+        ValuationRow: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            baseUom: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            actual: number | string;
+            /** Format: double */
+            expected: number | string;
+            /** Format: double */
+            value: number | string;
+            /** Format: double */
+            averageUnitCost: number | string;
         };
         VariantAttributeSummary: {
             /** Format: uuid */
@@ -15379,6 +15742,218 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TransferSummary"];
+                };
+            };
+        };
+    };
+    getInventoryCostingItemCost: {
+        parameters: {
+            query: {
+                companyId: string;
+                itemId: string;
+                warehouseId?: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getInventoryCostingValuation: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf?: string;
+                warehouseId?: string;
+                itemId?: string;
+                includeZero?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValuationReport"];
+                };
+            };
+        };
+    };
+    getInventoryCostingEntriesBySleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostExplanation"];
+                };
+            };
+        };
+    };
+    getInventoryCostingRuns: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                itemId?: string;
+                status?: string;
+                limit?: number | string;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageOfCostAdjustmentRunInfo"];
+                };
+            };
+        };
+    };
+    getInventoryCostingRunsByRunId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostAdjustmentRunInfo"];
+                };
+            };
+        };
+    };
+    postInventoryCostingRunsByRunIdRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CostAdjustmentRunInfo"];
+                };
+            };
+        };
+    };
+    getInventoryCostingStandardCosts: {
+        parameters: {
+            query: {
+                companyId: string;
+                itemId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StandardCostVersionInfo"][];
+                };
+            };
+        };
+    };
+    postInventoryCostingStandardCosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetStandardCostRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StandardCostVersionInfo"];
+                };
+            };
+        };
+    };
+    postInventoryCostingInboundAdjustments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InboundCostAdjustmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboundCostAdjustmentResult"];
                 };
             };
         };

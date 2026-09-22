@@ -26,11 +26,32 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
 
     public DbSet<TransferLine> TransferLines => Set<TransferLine>();
 
+    public DbSet<ItemCostScope> CostScopes => Set<ItemCostScope>();
+
+    public DbSet<StockValueEntry> ValueEntries => Set<StockValueEntry>();
+
+    public DbSet<ItemApplication> Applications => Set<ItemApplication>();
+
+    public DbSet<ItemCost> ItemCosts => Set<ItemCost>();
+
+    public DbSet<CostAdjustmentRun> CostRuns => Set<CostAdjustmentRun>();
+
+    public DbSet<StandardCostVersion> StandardCosts => Set<StandardCostVersion>();
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private static readonly ValueConverter<Dictionary<string, string>, string> StringMapConverter = new(
         static v => JsonSerializer.Serialize(v, Json),
         static s => JsonSerializer.Deserialize<Dictionary<string, string>>(s, Json) ?? new Dictionary<string, string>(StringComparer.Ordinal));
+
+    private static readonly ValueConverter<Dictionary<string, object?>, string> ObjectMapConverter = new(
+        static v => JsonSerializer.Serialize(v, Json),
+        static s => JsonSerializer.Deserialize<Dictionary<string, object?>>(s, Json) ?? new Dictionary<string, object?>(StringComparer.Ordinal));
+
+    private static readonly ValueComparer<Dictionary<string, object?>> ObjectMapComparer = new(
+        static (a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
+        static v => JsonSerializer.Serialize(v, Json).GetHashCode(StringComparison.Ordinal),
+        static v => new Dictionary<string, object?>(v, StringComparer.Ordinal));
 
     private static readonly ValueComparer<Dictionary<string, string>> StringMapComparer = new(
         static (a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
@@ -70,7 +91,7 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             b.Property(static x => x.Sequence).ValueGeneratedOnAdd().UseIdentityAlwaysColumn();
             b.Property(static x => x.Quantity).HasPrecision(24, 9);
             b.Property(static x => x.EnteredQuantity).HasPrecision(24, 9);
-            b.Property(static x => x.RemainingQuantity).HasPrecision(24, 9);
+            b.Property(static x => x.EnteredUnitCost).HasPrecision(24, 10);
             b.HasOne<Warehouse>().WithMany().HasForeignKey(static x => new { x.TenantId, x.WarehouseId });
         });
 
@@ -110,6 +131,62 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             b.Property(static x => x.QtyShipped).HasPrecision(24, 9);
             b.Property(static x => x.QtyReceived).HasPrecision(24, 9);
             b.Property(static x => x.Tracking).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<ItemCostScope>(b =>
+        {
+            b.ToTable("inv_item_cost_scopes", "app");
+            b.HasKey(static x => new { x.TenantId, x.CompanyId, x.ItemId, x.WarehouseId });
+            b.Property(static x => x.LastCost).HasPrecision(24, 10);
+        });
+
+        modelBuilder.Entity<StockValueEntry>(b =>
+        {
+            b.ToTable("inv_stock_value_entries", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Ignore(static x => x.Amount);
+            b.Property(static x => x.ValuedQuantity).HasPrecision(24, 9);
+            b.Property(static x => x.UnitCost).HasPrecision(24, 10);
+            b.Property(static x => x.CostAmountActual).HasPrecision(24, 6);
+            b.Property(static x => x.CostAmountExpected).HasPrecision(24, 6);
+            b.Property(static x => x.Reason).HasConversion(ObjectMapConverter, ObjectMapComparer).HasColumnType("jsonb");
+            b.HasOne<StockValueEntry>().WithMany().HasForeignKey(static x => new { x.TenantId, x.AdjustsSveId });
+        });
+
+        modelBuilder.Entity<ItemApplication>(b =>
+        {
+            b.ToTable("inv_item_applications", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Quantity).HasPrecision(24, 9);
+            b.Property(static x => x.CostAmount).HasPrecision(24, 6);
+            b.HasOne<StockLedgerEntry>().WithMany().HasForeignKey(static x => new { x.TenantId, x.OutboundSleId });
+            b.HasOne<StockLedgerEntry>().WithMany().HasForeignKey(static x => new { x.TenantId, x.InboundSleId });
+        });
+
+        modelBuilder.Entity<ItemCost>(b =>
+        {
+            b.ToTable("inv_item_costs", "app");
+            b.HasKey(static x => new { x.TenantId, x.CompanyId, x.ItemId, x.WarehouseId, x.ValuationDate });
+            b.Property(static x => x.Quantity).HasPrecision(24, 9);
+            b.Property(static x => x.Value).HasPrecision(24, 6);
+            b.Property(static x => x.AverageUnitCost).HasPrecision(24, 10);
+            b.Property(static x => x.LastCost).HasPrecision(24, 10);
+            b.Property(static x => x.StandardCost).HasPrecision(24, 10);
+        });
+
+        modelBuilder.Entity<CostAdjustmentRun>(b =>
+        {
+            b.ToTable("inv_cost_adjustment_runs", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.AmountAdjusted).HasPrecision(24, 6);
+        });
+
+        modelBuilder.Entity<StandardCostVersion>(b =>
+        {
+            b.ToTable("inv_standard_cost_versions", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.StandardCost).HasPrecision(24, 10);
+            b.HasAuditTrail("standard_cost", static x => $"{x.ItemId:N}@{x.EffectiveFrom:yyyy-MM-dd}");
         });
 
         base.OnModelCreating(modelBuilder);

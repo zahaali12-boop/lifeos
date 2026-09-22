@@ -34,7 +34,8 @@ public sealed class StockPostingService(
     ICurrentPrincipal principal,
     IAuditSink audit,
     IOutbox outbox,
-    IClock clock) : IInventoryPosting
+    IClock clock,
+    CostingService costing) : IInventoryPosting
 {
     private sealed record BalanceKey(Guid CompanyId, Guid ItemId, Guid VariantId, Guid WarehouseId, Guid BinId, Guid LotId, Guid SerialId)
     {
@@ -173,7 +174,9 @@ public sealed class StockPostingService(
                 SourceLineId = line.Source.SourceLineId,
                 Ownership = line.Source.Ownership,
                 OwnerPartnerId = line.Source.OwnerPartnerId,
-                RemainingQuantity = line.BaseQuantity > 0m ? line.BaseQuantity : 0m,
+                EnteredUnitCost = line.Source.UnitCost,
+                CostIsExpected = line.Source.CostIsExpected,
+                AppliesToSleId = line.Source.AppliesToSleId,
                 TransferPairId = line.Source.TransferPairId,
                 ReservationId = line.Reservation?.Id,
                 PostedBy = posting.PostedBy,
@@ -193,15 +196,25 @@ public sealed class StockPostingService(
 
         db.Postings.Add(posting);
         await db.SaveChangesAsync(cancellationToken);
+
+        // The value side (ADR-0008): every entry valued and the journal posted in this same unit of work.
+        var valued = await costing.ValuePostingAsync(posting, company, cancellationToken);
+        if (valued.IsFailure)
+        {
+            return valued.Error!;
+        }
+
         await audit.RecordAsync(new AuditEntry("stock_posting", posting.Id, $"{posting.SourceDocumentType}/{posting.SourceDocumentId:N}", AuditActions.Posted, After: new
         {
             company = company.Code,
             postingDate = posting.PostingDate,
             source = new { type = posting.SourceDocumentType, id = posting.SourceDocumentId },
-            entries = resolved.Select(static l => new { item = l.Item.Code, warehouse = l.Warehouse.Code, type = l.Source.EntryType, quantity = l.BaseQuantity, uom = l.Item.BaseUomCode }),
+            journalEntryId = valued.Value.JournalEntryId,
+            journalNumber = valued.Value.JournalNumber,
+            entries = resolved.Zip(posting.Entries, (l, e) => new { item = l.Item.Code, warehouse = l.Warehouse.Code, type = l.Source.EntryType, quantity = l.BaseQuantity, uom = l.Item.BaseUomCode, cost = valued.Value.Primary.GetValueOrDefault(e.Id)?.Amount }),
         }, CompanyId: company.Id.Value), cancellationToken);
         await outbox.PublishAsync(new StockPosted(posting.Id, posting.CompanyId, posting.PostingDate, posting.SourceDocumentType, posting.SourceDocumentId, posting.EntryCount), cancellationToken);
-        return await ToResultAsync(posting, replayed: false, cancellationToken);
+        return await ToResultAsync(posting, replayed: false, cancellationToken, valued.Value.JournalEntryId, valued.Value.JournalNumber);
     }
 
     // ------------------------------------------------------------------ resolution
@@ -385,17 +398,24 @@ public sealed class StockPostingService(
             """, parameters, uow.Transaction, cancellationToken: cancellationToken));
     }
 
-    private async Task<StockPostingResult> ToResultAsync(StockPosting posting, bool replayed, CancellationToken cancellationToken)
+    private async Task<StockPostingResult> ToResultAsync(StockPosting posting, bool replayed, CancellationToken cancellationToken, Guid? journalEntryId = null, string? journalNumber = null)
     {
+        var ids = posting.Entries.Select(static e => e.Id).ToList();
+        var values = (await db.ValueEntries.Where(v => v.SleId != null && ids.Contains(v.SleId.Value)).ToListAsync(cancellationToken)).GroupBy(static v => v.SleId!.Value).ToDictionary(static g => g.Key, static g => g.ToList());
         var entries = new List<StockEntryInfo>(posting.Entries.Count);
         foreach (var e in posting.Entries.OrderBy(static e => e.Sequence))
         {
             var units = await items.UomsAsync(e.ItemId, cancellationToken);
             var code = units.FirstOrDefault(u => u.UomId == e.EnteredUomId)?.UomCode ?? string.Empty;
-            entries.Add(new StockEntryInfo(e.Id, e.Sequence, e.ItemId, e.VariantId, e.WarehouseId, e.BinId, e.LotId, e.SerialId, e.EntryType, ItemUomMath.Normalize(e.Quantity), e.EnteredUomId, code, ItemUomMath.Normalize(e.EnteredQuantity), e.PostingDate, e.SourceLineId, e.TransferPairId, e.ReservationId));
+            var valued = values.GetValueOrDefault(e.Id) ?? [];
+            var amount = valued.Where(static v => CostingService.IsInventoryRole(v.AccountRole)).Sum(static v => v.Amount);
+            var quantity = Math.Abs(e.Quantity);
+            entries.Add(new StockEntryInfo(e.Id, e.Sequence, e.ItemId, e.VariantId, e.WarehouseId, e.BinId, e.LotId, e.SerialId, e.EntryType, ItemUomMath.Normalize(e.Quantity), e.EnteredUomId, code, ItemUomMath.Normalize(e.EnteredQuantity), e.PostingDate, e.SourceLineId, e.TransferPairId, e.ReservationId,
+                amount, valued.Count == 0 ? null : quantity == 0m ? 0m : Math.Abs(amount) / quantity, valued.Any(static v => v.CostedAtExpected)));
+            journalEntryId ??= valued.Select(static v => v.GlJournalEntryId).FirstOrDefault(static id => id is not null);
         }
 
-        return new StockPostingResult(posting.Id, posting.CompanyId, posting.PostingDate, posting.FiscalPeriodId, entries, replayed);
+        return new StockPostingResult(posting.Id, posting.CompanyId, posting.PostingDate, posting.FiscalPeriodId, entries, replayed, journalEntryId, journalNumber);
     }
 
     private static decimal N(decimal value) => ItemUomMath.Normalize(value);

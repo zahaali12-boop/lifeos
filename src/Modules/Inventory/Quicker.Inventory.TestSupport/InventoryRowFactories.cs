@@ -44,6 +44,44 @@ public static class InventoryRowFactories
             await c.ExecuteAsync("INSERT INTO app.inv_reservations (tenant_id, id, company_id, item_id, warehouse_id, quantity, source_document_type, source_document_id) VALUES (@t, @id, @company, @item, @warehouse, 1, 'probe', @doc)", new { t, id, company, item, warehouse, doc = Guid.CreateVersion7() }, tx);
             return new RowRef("app.inv_reservations", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.inv_item_cost_scopes", static async (c, tx, t) =>
+        {
+            var (_, company) = await WarehouseAsync(c, tx, t);
+            var (item, _) = await ItemAsync(c, tx, t);
+            await c.ExecuteAsync("INSERT INTO app.inv_item_cost_scopes (tenant_id, company_id, item_id) VALUES (@t, @company, @item)", new { t, company, item }, tx);
+            return new RowRef("app.inv_item_cost_scopes", $"item_id = '{item}'");
+        });
+        IsolationRegistry.Register("app.inv_stock_value_entries", static async (c, tx, t) => new RowRef("app.inv_stock_value_entries", $"id = '{(await ValueEntryAsync(c, tx, t)).Value}'"));
+        IsolationRegistry.Register("app.inv_item_applications", static async (c, tx, t) =>
+        {
+            var (_, entry, company, item) = await ValueEntryAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.inv_item_applications (tenant_id, id, company_id, item_id, outbound_sle_id, inbound_sle_id, quantity, cost_amount) VALUES (@t, @id, @company, @item, @entry, @entry, 1, 1)", new { t, id, company, item, entry }, tx);
+            return new RowRef("app.inv_item_applications", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.inv_item_costs", static async (c, tx, t) =>
+        {
+            var (_, company) = await WarehouseAsync(c, tx, t);
+            var (item, _) = await ItemAsync(c, tx, t);
+            await c.ExecuteAsync("INSERT INTO app.inv_item_costs (tenant_id, company_id, item_id, valuation_date, quantity, value, average_unit_cost) VALUES (@t, @company, @item, '2026-09-22', 5, 10, 2)", new { t, company, item }, tx);
+            return new RowRef("app.inv_item_costs", $"item_id = '{item}'");
+        });
+        IsolationRegistry.Register("app.inv_cost_adjustment_runs", static async (c, tx, t) =>
+        {
+            var (_, company) = await WarehouseAsync(c, tx, t);
+            var (item, _) = await ItemAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.inv_cost_adjustment_runs (tenant_id, id, company_id, item_id, trigger_kind, trigger_document_type, trigger_document_id, from_date) VALUES (@t, @id, @company, @item, 'probe', 'probe', @doc, '2026-09-22')", new { t, id, company, item, doc = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.inv_cost_adjustment_runs", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.inv_standard_cost_versions", static async (c, tx, t) =>
+        {
+            var (_, company) = await WarehouseAsync(c, tx, t);
+            var (item, _) = await ItemAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.inv_standard_cost_versions (tenant_id, id, company_id, item_id, standard_cost, effective_from) VALUES (@t, @id, @company, @item, 2.5, '2026-09-22')", new { t, id, company, item }, tx);
+            return new RowRef("app.inv_standard_cost_versions", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.inv_transfers", static async (c, tx, t) => new RowRef("app.inv_transfers", $"id = '{(await TransferAsync(c, tx, t)).Transfer}'"));
         IsolationRegistry.Register("app.inv_transfer_lines", static async (c, tx, t) => new RowRef("app.inv_transfer_lines", $"id = '{(await TransferAsync(c, tx, t)).Line}'"));
     }
@@ -89,10 +127,30 @@ public static class InventoryRowFactories
         var doc = Guid.CreateVersion7();
         await c.ExecuteAsync("INSERT INTO app.inv_stock_postings (tenant_id, id, company_id, posting_date, source_document_type, source_document_id, entry_count) VALUES (@t, @posting, @company, '2026-09-22', 'probe', @doc, 1)", new { t, posting, company, doc }, tx);
         await c.ExecuteAsync("""
-            INSERT INTO app.inv_stock_ledger_entries (tenant_id, id, posting_id, company_id, item_id, warehouse_id, entry_type, quantity, entered_uom_id, entered_quantity, posting_date, source_document_type, source_document_id, remaining_quantity)
-            VALUES (@t, @entry, @posting, @company, @item, @warehouse, 'opening', 5, @uom, 5, '2026-09-22', 'probe', @doc, 5)
+            INSERT INTO app.inv_stock_ledger_entries (tenant_id, id, posting_id, company_id, item_id, warehouse_id, entry_type, quantity, entered_uom_id, entered_quantity, posting_date, source_document_type, source_document_id)
+            VALUES (@t, @entry, @posting, @company, @item, @warehouse, 'opening', 5, @uom, 5, '2026-09-22', 'probe', @doc)
             """, new { t, entry, posting, company, item, warehouse, uom, doc }, tx);
         return (posting, entry);
+    }
+
+    private static async Task<(Guid Value, Guid Entry, Guid Company, Guid Item)> ValueEntryAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (warehouse, company) = await WarehouseAsync(c, tx, t);
+        var (item, uom) = await ItemAsync(c, tx, t);
+        var posting = Guid.CreateVersion7();
+        var entry = Guid.CreateVersion7();
+        var doc = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_stock_postings (tenant_id, id, company_id, posting_date, source_document_type, source_document_id, entry_count) VALUES (@t, @posting, @company, '2026-09-22', 'probe', @doc, 1)", new { t, posting, company, doc }, tx);
+        await c.ExecuteAsync("""
+            INSERT INTO app.inv_stock_ledger_entries (tenant_id, id, posting_id, company_id, item_id, warehouse_id, entry_type, quantity, entered_uom_id, entered_quantity, posting_date, source_document_type, source_document_id)
+            VALUES (@t, @entry, @posting, @company, @item, @warehouse, 'opening', 5, @uom, 5, '2026-09-22', 'probe', @doc)
+            """, new { t, entry, posting, company, item, warehouse, uom, doc }, tx);
+        var value = Guid.CreateVersion7();
+        await c.ExecuteAsync("""
+            INSERT INTO app.inv_stock_value_entries (tenant_id, id, sle_id, company_id, item_id, warehouse_id, posting_date, valuation_date, value_type, valued_quantity, unit_cost, cost_amount_actual, currency, account_role, offset_role, source_document_type, source_document_id)
+            VALUES (@t, @value, @entry, @company, @item, @warehouse, '2026-09-22', '2026-09-22', 'direct_cost', 5, 2, 10, 'IQD', 'Inventory', 'OpeningBalanceEquity', 'probe', @doc)
+            """, new { t, value, entry, company, item, warehouse, doc }, tx);
+        return (value, entry, company, item);
     }
 
     private static async Task<(Guid Transfer, Guid Line)> TransferAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

@@ -39,6 +39,7 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             await TenantIsolationAsync(uow, cancellationToken),
             await GaplessNumberingAsync(uow, companyId, cancellationToken),
             await StockBalancesMatchLedgerAsync(uow, companyId, cancellationToken),
+            await InventoryMatchesGlAsync(uow, companyId, cancellationToken),
         };
         return new InvariantReport(uow.Context.TenantId.Value, companyId, clock.UtcNow, checks, checks.TrueForAll(static c => c.Passed));
     }
@@ -204,6 +205,44 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
         var problems = mismatches.Select(m => $"item {m.ItemId} in warehouse {m.WarehouseId}{(m.BinId == Guid.Empty ? string.Empty : " bin " + m.BinId)}: {m.Column} stored {N(m.Stored)}, ledger says {N(m.Rebuilt)}").ToList();
         return Result(InvariantCodes.StockBalancesMatchLedger, checkedCount, problems, $"{checkedCount} stock balance rows, every one equal to its ledger entries and active reservations");
+    }
+
+    private sealed record InventoryMismatch(Guid CompanyId, Guid ItemId, decimal Valued, decimal Booked);
+
+    /// <summary>
+    /// Σ value entries on the inventory accounts (actual + expected) per company and item equals Σ (debit − credit) in the
+    /// functional currency of the journal lines that reference the item on an INV subledger account, in both directions.
+    /// Value entries and journal lines share the GL date, so the equality holds at every date.
+    /// </summary>
+    private static async Task<InvariantResult> InventoryMatchesGlAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(DISTINCT (company_id, item_id)) FROM app.inv_stock_value_entries WHERE (@company::uuid IS NULL OR company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<InventoryMismatch>(new CommandDefinition("""
+            WITH valued AS (
+              SELECT company_id, item_id, sum(cost_amount_actual + cost_amount_expected) AS valued
+              FROM app.inv_stock_value_entries
+              WHERE account_role IN ('Inventory', 'InventoryInTransit') AND (@company::uuid IS NULL OR company_id = @company)
+              GROUP BY 1, 2
+            ), booked AS (
+              SELECT l.company_id, l.subledger_ref AS item_id, sum(l.debit_fc - l.credit_fc) AS booked
+              FROM app.gl_journal_lines l
+              JOIN app.gl_journal_entries e ON e.tenant_id = l.tenant_id AND e.id = l.entry_id
+              WHERE l.subledger_type = 'INV' AND e.source_module = 'inventory' AND (@company::uuid IS NULL OR l.company_id = @company)
+              GROUP BY 1, 2
+            ), keys AS (
+              SELECT company_id, item_id FROM valued UNION SELECT company_id, item_id FROM booked
+            )
+            SELECT k.company_id, k.item_id, coalesce(v.valued, 0) AS valued, coalesce(b.booked, 0) AS booked
+            FROM keys k
+            LEFT JOIN valued v ON v.company_id = k.company_id AND v.item_id = k.item_id
+            LEFT JOIN booked b ON b.company_id = k.company_id AND b.item_id = k.item_id
+            WHERE coalesce(v.valued, 0) <> coalesce(b.booked, 0)
+            ORDER BY k.company_id, k.item_id
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"company {m.CompanyId} item {m.ItemId}: value entries {N(m.Valued)}, inventory accounts {N(m.Booked)}").ToList();
+        return Result(InvariantCodes.InventoryMatchesGl, checkedCount, problems, $"{checkedCount} item(s) valued, every one equal to its inventory account lines");
     }
 
     private static InvariantResult Result(string code, long checkedCount, IReadOnlyList<string> problems, string summary) =>

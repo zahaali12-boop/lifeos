@@ -13,6 +13,8 @@ public static class InventoryPermissions
     public const string TransferReceive = "inventory.transfer.receive";
     public const string ReservationManage = "inventory.reservation.manage";
     public const string PostInSoftClosed = "inventory.period.post_in_soft_closed";
+    public const string CostingRead = "inventory.costing.read";
+    public const string CostingManage = "inventory.costing.manage";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -25,5 +27,7 @@ public static class InventoryPermissions
         new(TransferReceive, "inventory", "Receive a stock transfer (moves stock from transit in)"),
         new(ReservationManage, "inventory", "Reserve stock for a document and release reservations"),
         new(PostInSoftClosed, "inventory", "Move stock in a soft-closed inventory period"),
+        new(CostingRead, "inventory", "Read item costs, the valuation report, value entries and cost adjustment runs"),
+        new(CostingManage, "inventory", "Set standard costs and settle inbound costs (late invoices, landed costs)"),
     ];
 }

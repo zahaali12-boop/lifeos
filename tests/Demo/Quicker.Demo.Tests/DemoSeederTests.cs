@@ -98,7 +98,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_manual_journals WHERE tenant_id = @t AND corrects_journal_id IS NOT NULL AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(1, "scenario 7 lives in the demo");
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
-        verified.Checks.Count.ShouldBe(7);
+        verified.Checks.Count.ShouldBe(8);
 
         // A plain run (make up) leaves the tenant as it is: same company ids, nothing added.
         var companyIds = companies.Select(static c => c.Id).ToList();

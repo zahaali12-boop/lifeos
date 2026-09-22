@@ -6,6 +6,8 @@ using Quicker.Identity.TestSupport;
 using Quicker.Inventory.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Tenancy;
+using Quicker.Messaging.Jobs;
+using Quicker.Messaging.Outbox;
 using Quicker.Persistence;
 
 namespace Quicker.Inventory.Tests;
@@ -15,7 +17,24 @@ public sealed class ApiHostFixture : IAsyncLifetime
 {
     public ApiFixture Api { get; private set; } = null!;
 
-    public async ValueTask InitializeAsync() => Api = await ApiFixture.StartAsync();
+    /// <summary>A re-application walking more than this many entries continues in a background job; low here so the tests exercise both paths.</summary>
+    public const int RecostThreshold = 60;
+
+    public async ValueTask InitializeAsync() => Api = await ApiFixture.StartAsync(static builder => builder.UseSetting("Quicker:Inventory:RecostThreshold", RecostThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+    /// <summary>Drains the outbox and runs every queued job in process (the worker's loop).</summary>
+    public async Task RunWorkerAsync()
+    {
+        var dispatcher = Api.Services.GetRequiredService<OutboxDispatcher>();
+        var runner = Api.Services.GetRequiredService<JobRunner>();
+        while (await dispatcher.RunOnceAsync(CancellationToken.None) > 0)
+        {
+        }
+
+        while (await runner.RunOneAsync(CancellationToken.None))
+        {
+        }
+    }
 
     public async ValueTask DisposeAsync()
     {

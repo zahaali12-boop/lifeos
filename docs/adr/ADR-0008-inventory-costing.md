@@ -64,3 +64,7 @@ Inventory valuation at date D = Σ `cost_amount_actual` (+ expected where report
 * Every cost figure is a sum of immutable rows with reasons; the "why did COGS change" screen is a query, not forensics.
 * Re-application is the most intricate code in the system; it is isolated in one service with property-based tests (random sequences of backdated entries must yield the same cost as posting them in date order) and the hard-scenario tests.
 * The threshold-based background continuation keeps the posting call fast while preserving correctness.
+
+## Amendments
+
+* 2026-09-22 (roadmap 3.3, implemented): `inv_stock_ledger_entries` is append-only, so `remaining_quantity` is derived from `inv_item_applications` rather than stored, and `costed_at_expected` lives on the value entries. Value entries carry `account_role` and `offset_role`/`offset_ref` so the journal is derived from the rows. The cost scope lock table is `inv_item_cost_scopes` (it also carries `valuation_pending`). Within a day, inbound entries are applied before outbound ones; a FIFO shortfall is valued at the expected cost and applied forward to a later layer when one exists. Details and the remaining decisions are in ASSUMPTIONS A-098.
