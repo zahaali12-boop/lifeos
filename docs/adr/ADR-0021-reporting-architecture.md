@@ -1,6 +1,6 @@
 # ADR-0021: Reporting: semantic layer, read models, columnar store when measured
 
-Status: proposed · Date: 2026-09-22
+Status: accepted (founder approved the blueprint on 2026-09-22) · Date: 2026-09-22
 
 ## Context
 

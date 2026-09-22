@@ -1,6 +1,6 @@
 # ADR-0007: Append-only ledgers and derived balances
 
-Status: proposed · Date: 2026-09-22
+Status: accepted (founder approved the blueprint on 2026-09-22) · Date: 2026-09-22
 
 ## Context
 

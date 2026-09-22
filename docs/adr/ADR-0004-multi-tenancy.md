@@ -1,6 +1,6 @@
 # ADR-0004: Multi-tenancy: shared schema with row-level security, dedicated-database tier, on-premise
 
-Status: proposed · Date: 2026-09-22
+Status: accepted (founder approved the blueprint on 2026-09-22) · Date: 2026-09-22
 
 ## Context
 

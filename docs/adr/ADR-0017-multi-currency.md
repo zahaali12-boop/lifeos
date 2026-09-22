@@ -1,6 +1,6 @@
 # ADR-0017: Multi-currency: three amounts per line, rate types, realized and unrealized FX
 
-Status: proposed · Date: 2026-09-22
+Status: accepted (founder approved the blueprint on 2026-09-22) · Date: 2026-09-22
 
 ## Context
 

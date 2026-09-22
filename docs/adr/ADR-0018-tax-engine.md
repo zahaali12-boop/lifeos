@@ -1,6 +1,6 @@
 # ADR-0018: Tax engine and e-invoicing adapters
 
-Status: proposed · Date: 2026-09-22
+Status: accepted (founder approved the blueprint on 2026-09-22) · Date: 2026-09-22
 
 ## Context
 

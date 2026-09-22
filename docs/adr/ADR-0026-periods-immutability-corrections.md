@@ -1,6 +1,6 @@
 # ADR-0026: Periods, locks, immutability and the correction policy
 
-Status: proposed · Date: 2026-09-22
+Status: accepted (founder approved the blueprint on 2026-09-22) · Date: 2026-09-22
 
 ## Context
 

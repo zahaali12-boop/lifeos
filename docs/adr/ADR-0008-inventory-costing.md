@@ -1,6 +1,6 @@
 # ADR-0008: Inventory costing: quantity and value entries, FIFO applications, backdating
 
-Status: proposed · Date: 2026-09-22
+Status: accepted (founder approved the blueprint on 2026-09-22) · Date: 2026-09-22
 
 ## Context
 

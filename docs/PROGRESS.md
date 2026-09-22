@@ -4,7 +4,9 @@ The single place a new session reads first (after `CLAUDE.md`). Keep it current:
 
 ## Status
 
-**Phase 0 (Blueprint): complete, awaiting founder approval.** No application code exists yet, by design.
+**Phase 0 (Blueprint): approved by the founder on 2026-09-22 (defaults accepted for Q1–Q8).**
+
+**M1 Foundations: in progress** (see `docs/ROADMAP.md`). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
 
 Branch: `claude/quicker-erp-founding-arch-4cq18i` (all Phase 0 work). Default branch: `main`.
 
@@ -23,13 +25,12 @@ Branch: `claude/quicker-erp-founding-arch-4cq18i` (all Phase 0 work). Default br
 
 ## In progress
 
-Nothing. Waiting for the founder's review of the blueprint.
+- M1 slice 1.1 Repository and toolchain: legacy Life OS app moved to `legacy/lifeos/` (Q2 default), ADRs marked accepted.
 
 ## Next
 
-1. Founder answers Q1–Q8 in `docs/ASSUMPTIONS.md` (or accepts the defaults) and approves the blueprint. ADR statuses move to `accepted`.
-2. Start **M1 Foundations**, slice 1.1 (repository and toolchain), then 1.2 (database foundation) and 1.3 (kernel), in that order; see `docs/ROADMAP.md`.
-3. First M1 commit moves the legacy Life OS files to `legacy/lifeos/` if Q2 is answered "move".
+1. M1 slice 1.1: .NET solution, kernel, migrator, API host skeleton, web app skeleton, Compose, Makefile, CI.
+2. M1 slices 1.2–1.12 in roadmap order.
 
 ## Open issues and decisions pending
 
