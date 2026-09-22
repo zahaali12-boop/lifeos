@@ -16,6 +16,10 @@ public static class AccountingModule
         services.AddModuleDbContext<AccountingDbContext>();
         services.AddScoped<ChartService>();
         services.AddScoped<IChartOfAccounts>(static sp => sp.GetRequiredService<ChartService>());
+        services.AddScoped<ProfileService>();
+        services.AddScoped<PostingService>();
+        services.AddScoped<IPostingService>(static sp => sp.GetRequiredService<PostingService>());
+        services.AddScoped<JournalService>();
         return services;
     }
 }

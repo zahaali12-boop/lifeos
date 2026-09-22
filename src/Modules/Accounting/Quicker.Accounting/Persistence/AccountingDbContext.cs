@@ -17,6 +17,16 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<AccountMapping> Mappings => Set<AccountMapping>();
 
+    public DbSet<PostingGroup> PostingGroups => Set<PostingGroup>();
+
+    public DbSet<PostingProfile> PostingProfiles => Set<PostingProfile>();
+
+    public DbSet<JournalEntry> Entries => Set<JournalEntry>();
+
+    public DbSet<JournalLine> Lines => Set<JournalLine>();
+
+    public DbSet<EntryLink> Links => Set<EntryLink>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Chart>(b =>
@@ -58,6 +68,52 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
             b.ToTable("gl_account_mappings", "app");
             b.HasKey(static m => new { m.TenantId, m.AccountId, m.StatutoryChartCode });
             b.HasOne<Account>().WithMany().HasForeignKey(static m => new { m.TenantId, m.AccountId });
+        });
+
+        modelBuilder.Entity<PostingGroup>(b =>
+        {
+            b.ToTable("gl_posting_groups", "app");
+            b.HasKey(static g => new { g.TenantId, g.Id });
+            b.Property(static g => g.Name).HasColumnName("name_i18n");
+            b.HasAuditTrail("gl_posting_group", static g => g.Code);
+        });
+
+        modelBuilder.Entity<PostingProfile>(b =>
+        {
+            b.ToTable("gl_posting_profiles", "app");
+            b.HasKey(static p => new { p.TenantId, p.Id });
+            b.Property(static p => p.Name).HasColumnName("name_i18n");
+            b.HasMany(static p => p.Rules).WithOne().HasForeignKey(static r => new { r.TenantId, r.ProfileId });
+            b.HasAuditTrail("gl_posting_profile", static p => p.Code);
+        });
+
+        modelBuilder.Entity<PostingRule>(b =>
+        {
+            b.ToTable("gl_posting_rules", "app");
+            b.HasKey(static r => new { r.TenantId, r.Id });
+            b.HasOne<Account>().WithMany().HasForeignKey(static r => new { r.TenantId, r.AccountId });
+        });
+
+        modelBuilder.Entity<JournalEntry>(b =>
+        {
+            b.ToTable("gl_journal_entries", "app");
+            b.HasKey(static e => new { e.TenantId, e.Id });
+            b.Property(static e => e.Description).HasColumnName("description_i18n");
+            b.HasMany(static e => e.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.EntryId });
+        });
+
+        modelBuilder.Entity<JournalLine>(b =>
+        {
+            b.ToTable("gl_journal_lines", "app");
+            b.HasKey(static l => new { l.TenantId, l.PostingDate, l.Id });
+            b.Property(static l => l.Description).HasColumnName("description_i18n");
+            b.HasOne<Account>().WithMany().HasForeignKey(static l => new { l.TenantId, l.AccountId });
+        });
+
+        modelBuilder.Entity<EntryLink>(b =>
+        {
+            b.ToTable("gl_entry_links", "app");
+            b.HasKey(static l => new { l.TenantId, l.FromEntryId, l.ToEntryId, l.Relation });
         });
 
         base.OnModelCreating(modelBuilder);

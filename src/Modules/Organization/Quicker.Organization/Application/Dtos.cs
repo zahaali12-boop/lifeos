@@ -52,7 +52,8 @@ public sealed record CompanySummary(
     JsonElement CustomFields,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<BranchSummary>? Branches = null,
-    Guid? ChartId = null);
+    Guid? ChartId = null,
+    Guid? PostingProfileId = null);
 
 public sealed record SaveBranchRequest(
     string Code,

@@ -345,6 +345,38 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         return new PeriodState(info, normalizedModule, row?.State ?? DefaultState(year));
     }
 
+    public async Task<Result<PeriodInfo>> FirstOpenPeriodAsync(CompanyId companyId, DateOnly fromDate, string module, CancellationToken cancellationToken = default)
+    {
+        var normalizedModule = module?.Trim().ToUpperInvariant() ?? string.Empty;
+        if (!PostingModules.IsValid(normalizedModule))
+        {
+            return Error.Validation("period.module_invalid", $"Modules are one of {string.Join(", ", PostingModules.All)}.");
+        }
+
+        var company = await db.Companies.SingleOrDefaultAsync(c => c.Id == companyId.Value, cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", companyId.Value);
+        }
+
+        var years = await db.FiscalYears.Where(y => y.CalendarId == company.FiscalCalendarId && y.EndsOn >= fromDate).OrderBy(static y => y.StartsOn).ToListAsync(cancellationToken);
+        var yearIds = years.Select(static y => y.Id).ToList();
+        var periods = await db.FiscalPeriods.Where(p => yearIds.Contains(p.FiscalYearId) && !p.IsAdjustment && p.EndsOn >= fromDate).OrderBy(static p => p.StartsOn).ToListAsync(cancellationToken);
+        var periodIds = periods.Select(static p => p.Id).ToList();
+        var states = await db.PeriodStates.Where(s => periodIds.Contains(s.PeriodId) && s.CompanyId == company.Id && s.Module == normalizedModule).ToDictionaryAsync(static s => s.PeriodId, static s => s.State, cancellationToken);
+        foreach (var period in periods)
+        {
+            var year = years.Single(y => y.Id == period.FiscalYearId);
+            if ((states.GetValueOrDefault(period.Id) ?? DefaultState(year)) == PeriodStates.Open)
+            {
+                return new PeriodInfo(period.Id, year.Id, year.Code, period.Number, period.StartsOn, period.EndsOn, period.IsAdjustment, year.Status);
+            }
+        }
+
+        return Error.Conflict("period.none_open", $"No period of company {company.Code} on or after {fromDate:yyyy-MM-dd} is open for {normalizedModule}.")
+            .WithWhy(("company", company.Code), ("from", fromDate), ("module", normalizedModule));
+    }
+
     // ------------------------------------------------------------------ mapping
 
     private IQueryable<FiscalCalendar> Query() => db.FiscalCalendars.Include(static c => c.Years).ThenInclude(static y => y.Periods).AsSplitQuery();

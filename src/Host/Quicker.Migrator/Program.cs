@@ -3,6 +3,7 @@ using DbUp.Engine.Output;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Quicker.Migrator.Demo;
+using Quicker.Migrator.Maintenance;
 
 namespace Quicker.Migrator;
 
@@ -12,6 +13,7 @@ namespace Quicker.Migrator;
 ///   seed     apply the reference-data seeds (idempotent)
 ///   demo     migrate, seed, then rebuild the demo tenant from scratch (ADR-0029)
 ///   all      migrate, seed, and create the demo tenant only when it is missing
+///   rebuild-balances --tenant SLUG [--company CODE]   recompute gl_balances from the journal lines (ADR-0007)
 /// Configuration: QUICKER__DB__OWNERCONNECTION, QUICKER__DB__APPPASSWORD, QUICKER__DB__APPCONNECTION (env) or appsettings.json.
 /// (A named entry point rather than top-level statements: test support references this host next to the API host.)
 /// </summary>
@@ -69,10 +71,19 @@ internal static class MigratorProgram
                 Report(seeded);
                 return ReportDemo(await DemoSeeder.SeedAsync(ownerConnection, appConnection, reseed: command == "demo"));
 
+            case "rebuild-balances":
+                return await RebuildBalances.RunAsync(ownerConnection, appConnection, Option(args, "--tenant"), Option(args, "--company"));
+
             default:
-                Console.Error.WriteLine($"Unknown command '{command}'. Use migrate, seed, demo, status or all.");
+                Console.Error.WriteLine($"Unknown command '{command}'. Use migrate, seed, demo, status, all or rebuild-balances --tenant <slug> [--company <code>].");
                 return 2;
         }
+    }
+
+    private static string? Option(string[] args, string name)
+    {
+        var index = Array.IndexOf(args, name);
+        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
     }
 
     private static int Report(DbUp.Engine.DatabaseUpgradeResult result)

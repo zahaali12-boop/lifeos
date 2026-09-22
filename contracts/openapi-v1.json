@@ -6111,6 +6111,37 @@
         }
       }
     },
+    "/api/v1/accounting/postings": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Posts a balanced request through the engine: roles resolved by the company's profile, amounts converted to functional and reporting currency, period and control checks, rounding line, balances",
+        "operationId": "postAccountingPostings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostJournalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/accounting/charts": {
       "get": {
         "tags": [
@@ -6772,6 +6803,599 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CompanyAccountingSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/posting-groups": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingPostingGroups",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostingGroupSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Kinds: item, partner_customer, partner_supplier, bank, asset, tax, charge",
+        "operationId": "postAccountingPostingGroups",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePostingGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/posting-groups/{groupId}": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "putAccountingPostingGroupsByGroupId",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePostingGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/posting-profiles": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingCompaniesByCompanyIdPostingProfiles",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostingProfileSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "An empty draft profile (next version of the code)",
+        "operationId": "postAccountingCompaniesByCompanyIdPostingProfiles",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePostingProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingProfileSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/posting-profiles/from-chart": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "An active profile with one default rule per role from the chart's default accounts; unresolvedRoles lists what the chart does not name",
+        "operationId": "postAccountingCompaniesByCompanyIdPostingProfilesFromChart",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SavePostingProfileRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingProfileSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/journal-entries": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingCompaniesByCompanyIdJournalEntries",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sourceDocumentType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfJournalEntrySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/balances": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "The derived balance rows: account × period × transaction currency × dimension set",
+        "operationId": "getAccountingCompaniesByCompanyIdBalances",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "periodId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BalanceRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/balances/verify": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Compares stored balances with the journal lines; differences are listed, nothing changes",
+        "operationId": "getAccountingCompaniesByCompanyIdBalancesVerify",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceVerification"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/balances/rebuild": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Truncates the company's balances and recomputes them from the lines in one transaction (audited)",
+        "operationId": "postAccountingCompaniesByCompanyIdBalancesRebuild",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuildResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/posting-profiles/{profileId}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingPostingProfilesByProfileId",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingProfileSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/posting-profiles/{profileId}/rules": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Replaces every rule: role + account code + optional keys (document type, posting groups, tax code, warehouse, branch, bank account, asset category, charge type)",
+        "operationId": "putAccountingPostingProfilesByProfileIdRules",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PostingRuleRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingProfileSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/posting-profiles/{profileId}/activate": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Makes the profile the company's current one; the previous active version of the same code is retired",
+        "operationId": "postAccountingPostingProfilesByProfileIdActivate",
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingProfileSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journal-entries/{entryId}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingJournalEntriesByEntryId",
+        "parameters": [
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntrySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journal-entries/{entryId}/reverse": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "The mirror entry on the original date when its period is open, else on the first open period; both entries are linked",
+        "operationId": "postAccountingJournalEntriesByEntryIdReverse",
+        "parameters": [
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostingResult"
                 }
               }
             }
@@ -7738,6 +8362,181 @@
           }
         }
       },
+      "BalanceDifference": {
+        "required": [
+          "accountId",
+          "fiscalPeriodId",
+          "currencyTc",
+          "dimensionSetId",
+          "column",
+          "stored",
+          "rebuilt"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fiscalPeriodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currencyTc": {
+            "type": "string"
+          },
+          "dimensionSetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "column": {
+            "type": "string"
+          },
+          "stored": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rebuilt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "BalanceRow": {
+        "required": [
+          "accountId",
+          "accountCode",
+          "fiscalPeriodId",
+          "currencyTc",
+          "dimensionSetId",
+          "debitTc",
+          "creditTc",
+          "debitFc",
+          "creditFc",
+          "debitRc",
+          "creditRc"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "fiscalPeriodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currencyTc": {
+            "type": "string"
+          },
+          "dimensionSetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "debitTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debitFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debitRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "BalanceVerification": {
+        "required": [
+          "companyId",
+          "storedRows",
+          "rebuiltRows",
+          "differences"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "storedRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rebuiltRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "differences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BalanceDifference"
+            }
+          },
+          "isConsistent": {
+            "type": "boolean"
+          }
+        }
+      },
       "BranchSummary": {
         "required": [
           "id",
@@ -8433,6 +9232,13 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "postingProfileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -9090,6 +9896,31 @@
           }
         }
       },
+      "EntryLinkSummary": {
+        "required": [
+          "fromEntryId",
+          "toEntryId",
+          "relation",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "fromEntryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toEntryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "FieldRule": {
         "required": [
           "entityType",
@@ -9704,6 +10535,383 @@
           }
         },
         "description": "A stored job as the runner and the UI see it."
+      },
+      "JournalEntrySummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "postingDate",
+          "documentDate",
+          "fiscalYearId",
+          "fiscalPeriodId",
+          "sourceModule",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "sourceDocumentNumber",
+          "description",
+          "isReversal",
+          "isAutoReversal",
+          "autoReverseOn",
+          "isClosingEntry",
+          "isOpeningEntry",
+          "isManual",
+          "currencyTc",
+          "currencyFc",
+          "currencyRc",
+          "rateType",
+          "rateTcFc",
+          "rateFcRc",
+          "postingProfileId",
+          "lineCount",
+          "postedBy",
+          "postedAt",
+          "reversedByEntryId",
+          "reversesEntryId",
+          "totalDebitTc",
+          "totalDebitFc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fiscalPeriodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceModule": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceDocumentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isReversal": {
+            "type": "boolean"
+          },
+          "isAutoReversal": {
+            "type": "boolean"
+          },
+          "autoReverseOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "isClosingEntry": {
+            "type": "boolean"
+          },
+          "isOpeningEntry": {
+            "type": "boolean"
+          },
+          "isManual": {
+            "type": "boolean"
+          },
+          "currencyTc": {
+            "type": "string"
+          },
+          "currencyFc": {
+            "type": "string"
+          },
+          "currencyRc": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rateType": {
+            "type": "string"
+          },
+          "rateTcFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rateFcRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "postingProfileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lineCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "postedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reversedByEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversesEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "totalDebitTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalDebitFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/JournalLineSummary"
+            }
+          },
+          "links": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EntryLinkSummary"
+            }
+          }
+        }
+      },
+      "JournalLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "accountId",
+          "accountCode",
+          "accountName",
+          "accountRole",
+          "postingRuleId",
+          "debitTc",
+          "creditTc",
+          "debitFc",
+          "creditFc",
+          "debitRc",
+          "creditRc",
+          "dimensionSetId",
+          "branchId",
+          "partnerId",
+          "subledgerType",
+          "subledgerRef",
+          "description",
+          "dueDate",
+          "isRounding"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "postingRuleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "debitTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debitFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debitRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "dimensionSetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subledgerRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "isRounding": {
+            "type": "boolean"
+          }
+        }
       },
       "JsonElement": { },
       "LinkRequest": {
@@ -10356,6 +11564,28 @@
         },
         "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
       },
+      "PageOfJournalEntrySummary": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalEntrySummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
       "PageOfNotificationView": {
         "required": [
           "items",
@@ -10487,6 +11717,765 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "PostedLine": {
+        "required": [
+          "lineId",
+          "lineNo",
+          "accountId",
+          "accountCode",
+          "accountRole",
+          "postingRuleId",
+          "debitTc",
+          "creditTc",
+          "debitFc",
+          "creditFc",
+          "debitRc",
+          "creditRc",
+          "dimensionSetId",
+          "subledgerType",
+          "subledgerRef",
+          "isRounding"
+        ],
+        "type": "object",
+        "properties": {
+          "lineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "postingRuleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "debitTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debitFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debitRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "dimensionSetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subledgerRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isRounding": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostingGroupSummary": {
+        "required": [
+          "id",
+          "kind",
+          "code",
+          "name",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostingProfileSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "version",
+          "validFrom",
+          "status",
+          "isCurrent",
+          "ruleCount",
+          "unresolvedRoles",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "isCurrent": {
+            "type": "boolean"
+          },
+          "ruleCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unresolvedRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rules": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PostingRuleSummary"
+            }
+          }
+        }
+      },
+      "PostingResult": {
+        "required": [
+          "entryId",
+          "number",
+          "companyId",
+          "postingDate",
+          "fiscalYearId",
+          "fiscalPeriodId",
+          "currencyTc",
+          "currencyFc",
+          "currencyRc",
+          "rateTcFc",
+          "rateFcRc",
+          "lines",
+          "isReversal",
+          "replayed"
+        ],
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fiscalPeriodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currencyTc": {
+            "type": "string"
+          },
+          "currencyFc": {
+            "type": "string"
+          },
+          "currencyRc": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rateTcFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rateFcRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostedLine"
+            }
+          },
+          "isReversal": {
+            "type": "boolean"
+          },
+          "replayed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostingRuleRequest": {
+        "required": [
+          "accountRole",
+          "accountCode"
+        ],
+        "type": "object",
+        "properties": {
+          "accountRole": {
+            "type": "string"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "assetCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "chargeTypeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "PostingRuleSummary": {
+        "required": [
+          "id",
+          "accountRole",
+          "accountId",
+          "accountCode",
+          "documentType",
+          "itemPostingGroupId",
+          "partnerPostingGroupId",
+          "taxCodeId",
+          "warehouseId",
+          "branchId",
+          "bankAccountId",
+          "assetCategoryId",
+          "chargeTypeId",
+          "specificity"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "assetCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "chargeTypeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "specificity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PostJournalRequest": {
+        "required": [
+          "companyId",
+          "sourceModule",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "postingDate",
+          "currency",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceModule": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostLineRequest"
+            }
+          },
+          "sourceDocumentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "documentDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "rateType": {
+            "type": "string",
+            "default": "spot"
+          },
+          "rateOverride": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rateOverrideReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "idempotencyKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isManual": {
+            "type": "boolean",
+            "default": false
+          },
+          "isOpeningEntry": {
+            "type": "boolean",
+            "default": false
+          },
+          "isClosingEntry": {
+            "type": "boolean",
+            "default": false
+          },
+          "autoReverseOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "PostLineRequest": {
+        "required": [
+          "accountRole",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "accountRole": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "documentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "assetCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "chargeTypeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subledgerRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxBase": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -10738,6 +12727,39 @@
           }
         }
       },
+      "RebuildResult": {
+        "required": [
+          "companyId",
+          "rowsBefore",
+          "rowsAfter"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "rowsBefore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rowsAfter": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "RecordScopes": {
         "required": [
           "companyIds",
@@ -10834,6 +12856,24 @@
           },
           "password": {
             "type": "string"
+          }
+        }
+      },
+      "ReverseRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -11506,6 +13546,57 @@
             "additionalProperties": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SavePostingGroupRequest": {
+        "required": [
+          "kind",
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SavePostingProfileRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "default": "DEFAULT"
+          },
+          "name": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },

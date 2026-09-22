@@ -1,6 +1,7 @@
 using System.Globalization;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
+using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Numbering.Contracts;
 using Quicker.Numbering.Domain;
@@ -14,9 +15,26 @@ namespace Quicker.Numbering.Application;
 /// Picks the series for a request (most specific match wins: branch, then fiscal year, then default) and takes the
 /// next number under the counter's row lock inside the current unit of work (ADR-0016).
 /// </summary>
-public sealed class NumberAllocator(NumberingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IFiscalPeriodResolver periods) : INumberAllocator
+public sealed class NumberAllocator(NumberingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IFiscalPeriodResolver periods, SeriesService seriesService) : INumberAllocator
 {
     private sealed record Selection(Series Series, string PeriodKey, string RenderedTemplate);
+
+    public async Task<Result<Guid>> EnsureDefaultSeriesAsync(string documentType, CompanyId companyId, string code, string template, string resetPolicy = "yearly", CancellationToken cancellationToken = default)
+    {
+        var type = documentType?.Trim().ToLowerInvariant() ?? string.Empty;
+        var existing = await db.Series
+            .Where(s => s.DocumentType == type && s.CompanyId == companyId.Value && s.BranchId == null && s.FiscalYearId == null && s.IsActive)
+            .OrderByDescending(static s => s.IsDefault).ThenBy(static s => s.Code)
+            .Select(static s => (Guid?)s.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (existing is { } id)
+        {
+            return id;
+        }
+
+        var created = await seriesService.CreateAsync(new SaveSeriesRequest(code, type, companyId.Value, template, Gapless: true, ResetPolicy: resetPolicy, IsDefault: true), cancellationToken);
+        return created.IsFailure ? created.Error! : created.Value.Id;
+    }
 
     public async Task<Result<AllocatedNumber>> AllocateAsync(NumberRequest request, CancellationToken cancellationToken = default)
     {

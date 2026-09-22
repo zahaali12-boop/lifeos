@@ -120,6 +120,7 @@ public static class AccountingEndpoints
             .RequirePermission(AccountingPermissions.ChartManage)
             .WithSummary("The chart the company posts to: shared or dedicated to it; null detaches");
 
+        accounting.MapPostingEndpoints();
         return api;
     }
 

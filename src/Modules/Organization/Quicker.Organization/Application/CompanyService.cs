@@ -472,6 +472,27 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         return Result.Success();
     }
 
+    public async Task<Result> AssignPostingProfileAsync(CompanyId id, Guid? profileId, CancellationToken cancellationToken = default)
+    {
+        var company = await db.Companies.SingleOrDefaultAsync(c => c.Id == id.Value, cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", id.Value);
+        }
+
+        if (company.PostingProfileId == profileId)
+        {
+            return Result.Success();
+        }
+
+        var before = company.PostingProfileId;
+        company.PostingProfileId = profileId;
+        company.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry("company", company.Id, company.Code, AuditActions.Updated, Before: new { postingProfileId = before }, After: new { postingProfileId = profileId }), cancellationToken);
+        return Result.Success();
+    }
+
     public async Task<CompanyInfo?> FindAsync(CompanyId id, CancellationToken cancellationToken = default)
     {
         var company = await db.Companies.SingleOrDefaultAsync(c => c.Id == id.Value, cancellationToken);
@@ -510,7 +531,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         return new CompanyInfo(new CompanyId(company.Id), company.Code, company.LegalName, company.Country, functional, reporting, company.TimeZone, company.DefaultLanguage,
             company.RoundingMode == "half_even" ? RoundingMode.HalfEven : RoundingMode.HalfAwayFromZero,
             company.CostingMethod, company.CostingScope, company.TaxRoundingMode, company.NegativeStockPolicy, company.BankRevaluationMode,
-            company.FiscalCalendarId, company.BusinessCalendarId, company.IsActive, company.ChartId);
+            company.FiscalCalendarId, company.BusinessCalendarId, company.IsActive, company.ChartId, company.PostingProfileId);
     }
 
     // ------------------------------------------------------------------ mapping
@@ -518,7 +539,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
     internal static CompanySummary Map(Company c) => new(
         c.Id, c.Code, c.LegalName.Values, c.TradeName.Values, c.Country, c.FunctionalCurrency, c.ReportingCurrency, c.TimeZone, c.DefaultLanguage,
         c.FiscalCalendarId, c.BusinessCalendarId, c.CostingMethod, c.CostingScope, c.RevenueRecognitionPoint, c.TaxRoundingMode, c.RoundingMode,
-        c.NegativeStockPolicy, c.BankRevaluationMode, c.RegistrationNumbers, c.Address, c.IsActive, JsonDocument.Parse(c.CustomFields).RootElement.Clone(), c.UpdatedAt, ChartId: c.ChartId);
+        c.NegativeStockPolicy, c.BankRevaluationMode, c.RegistrationNumbers, c.Address, c.IsActive, JsonDocument.Parse(c.CustomFields).RootElement.Clone(), c.UpdatedAt, ChartId: c.ChartId, PostingProfileId: c.PostingProfileId);
 
     internal static BranchSummary Map(Branch b) => new(b.Id, b.CompanyId, b.Code, b.Name.Values, b.Address, b.TaxRegistrations, b.DimensionValueId, b.IsActive);
 

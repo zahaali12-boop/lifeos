@@ -22,6 +22,13 @@ public interface INumberAllocator
     Task<Result<AllocatedNumber>> AllocateAsync(NumberRequest request, CancellationToken cancellationToken = default);
 
     Task<Result<NumberPreview>> PreviewAsync(NumberRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The id of an active series for the document type and company, creating a default one (gapless, the given
+    /// template and reset policy) when the company has none yet, so system documents such as journal entries can be
+    /// numbered on day one; administrators refine the series afterwards.
+    /// </summary>
+    Task<Result<Guid>> EnsureDefaultSeriesAsync(string documentType, CompanyId companyId, string code, string template, string resetPolicy = "yearly", CancellationToken cancellationToken = default);
 }
 
 /// <summary>Drafts and unposted documents show this instead of a legal number and are never printed as invoices.</summary>

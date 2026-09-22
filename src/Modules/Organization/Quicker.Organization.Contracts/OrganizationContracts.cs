@@ -25,7 +25,8 @@ public sealed record CompanyInfo(
     Guid FiscalCalendarId,
     Guid BusinessCalendarId,
     bool IsActive,
-    Guid? ChartId = null);
+    Guid? ChartId = null,
+    Guid? PostingProfileId = null);
 
 public sealed record BranchInfo(BranchId Id, CompanyId CompanyId, string Code, LocalizedText Name, Guid DimensionValueId, bool IsActive);
 
@@ -35,6 +36,9 @@ public interface ICompanyDirectory
 
     /// <summary>Sets the chart of accounts a company posts to (accounting validates the chart first); null detaches it.</summary>
     Task<Result> AssignChartAsync(CompanyId id, Guid? chartId, CancellationToken cancellationToken = default);
+
+    /// <summary>Sets the company's current posting profile (accounting activates the profile first).</summary>
+    Task<Result> AssignPostingProfileAsync(CompanyId id, Guid? profileId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CompanyInfo>> ListAsync(CancellationToken cancellationToken = default);
 
@@ -99,6 +103,9 @@ public sealed record PeriodState(PeriodInfo Period, string Module, string State)
 
 public interface IFiscalPeriodResolver
 {
+    /// <summary>The first period of the company on or after the date whose state for the module allows posting (open), or an error when none does.</summary>
+    Task<Result<PeriodInfo>> FirstOpenPeriodAsync(CompanyId companyId, DateOnly fromDate, string module, CancellationToken cancellationToken = default);
+
     /// <summary>Period for (company, posting date, module) with its effective state; fails with <c>period.no_fiscal_year</c> when no year covers the date.</summary>
     Task<Result<PeriodState>> ResolveAsync(CompanyId companyId, DateOnly postingDate, string module, CancellationToken cancellationToken = default);
 }
