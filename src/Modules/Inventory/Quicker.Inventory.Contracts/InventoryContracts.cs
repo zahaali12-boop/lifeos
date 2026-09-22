@@ -344,3 +344,14 @@ public static class SerialStatuses
 public sealed record LotInfo(Guid Id, Guid ItemId, string ItemCode, string LotNumber, DateOnly? ManufacturedOn, DateOnly? ExpiresOn, string? SupplierLot, Guid? SupplierPartnerId, string Status, string? StatusReason, string? RecallReference, DateTimeOffset? StatusChangedAt, System.Text.Json.JsonElement CustomFields, DateTimeOffset UpdatedAt);
 
 public sealed record SerialInfo(Guid Id, Guid ItemId, string ItemCode, string SerialNumber, Guid? LotId, string? LotNumber, string Status, Guid? CurrentWarehouseId, string? CurrentWarehouseCode, Guid? CurrentBinId, Guid? CurrentPartnerId, DateOnly? WarrantyUntil, System.Text.Json.JsonElement CustomFields, DateTimeOffset UpdatedAt);
+
+// ------------------------------------------------------------------ replenishment (roadmap 3.7)
+
+/// <summary>Stock on its way into a warehouse from outside the stock ledger (open purchase order lines, M4); transfers in transit are read from the ledger itself.</summary>
+public sealed record IncomingSupplyInfo(Guid ItemId, Guid WarehouseId, decimal Quantity, DateOnly? ExpectedOn, string SourceDocumentType, Guid SourceDocumentId);
+
+/// <summary>What the purchasing module (M4) reports as incoming; the inventory module ships a default that reports nothing.</summary>
+public interface IIncomingSupply
+{
+    Task<IReadOnlyList<IncomingSupplyInfo>> IncomingAsync(Guid companyId, Guid warehouseId, CancellationToken cancellationToken = default);
+}

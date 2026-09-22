@@ -53,6 +53,9 @@ public interface IBomDirectory
     Task<Result<BomBuildInfo?>> BuildAsync(Guid itemId, decimal outputQuantity, CancellationToken cancellationToken = default);
 }
 
+/// <summary>An item's planning parameters in one warehouse (its warehouse settings) with its preferred supplier and lead time.</summary>
+public sealed record ItemPlanningInfo(Guid ItemId, string ItemCode, Guid WarehouseId, decimal? ReorderPoint, decimal? MinQty, decimal? MaxQty, decimal? SafetyStock, int? LeadTimeDays, Guid? PreferredSupplierId, int? SupplierLeadTimeDays, Guid? PurchaseUomId);
+
 /// <summary>Read access to the item master for the modules that move, buy, sell and cost items.</summary>
 public interface IItemDirectory
 {
@@ -76,6 +79,9 @@ public interface IItemDirectory
     Task<BarcodeMatch?> FindByBarcodeAsync(string barcode, CancellationToken cancellationToken = default);
 
     Task<ItemCompanyPolicy?> CompanyPolicyAsync(Guid itemId, Guid companyId, CancellationToken cancellationToken = default);
+
+    /// <summary>Every active item with planning parameters (a reorder point, a minimum or a maximum) in the warehouse.</summary>
+    Task<IReadOnlyList<ItemPlanningInfo>> PlanningParametersAsync(Guid warehouseId, CancellationToken cancellationToken = default);
 
     /// <summary>The items whose warehouse settings put them in one of the cycle-count classes (A, B, C) for the warehouse.</summary>
     Task<IReadOnlyList<Guid>> ItemsForCycleCountAsync(Guid warehouseId, IReadOnlyList<string> classes, CancellationToken cancellationToken = default);

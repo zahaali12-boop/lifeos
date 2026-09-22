@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Inventory.Application;
@@ -41,6 +42,9 @@ public static class InventoryModule
         services.AddScoped<LotService>();
         services.AddScoped<SerialService>();
         services.AddScoped<CountService>();
+        services.AddScoped<ReplenishmentService>();
+        services.TryAddScoped<IIncomingSupply, NoIncomingSupply>();
+        services.AddJobHandler<ReplenishmentJob, ReplenishmentPayload>();
         services.AddJobHandler<LotExpiryJob, LotExpiryPayload>();
         services.AddJobHandler<ReservationExpiryJob, ReservationExpiryPayload>();
         services.AddJobHandler<CostRecostJob, CostRecostPayload>();

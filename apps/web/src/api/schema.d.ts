@@ -4814,6 +4814,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/replenishment/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the planner now for a company (or one warehouse): every item with a reorder point, minimum or maximum is checked against its projected stock */
+        post: operations["postInventoryReplenishmentRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/replenishment/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryReplenishmentRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/replenishment/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Purchase suggestions, each explaining its arithmetic (on hand, reserved, hold, incoming, reorder point, minimum, maximum, safety stock, lead time) */
+        get: operations["getInventoryReplenishmentSuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/replenishment/suggestions/{suggestionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryReplenishmentSuggestionsBySuggestionId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/replenishment/suggestions/{suggestionId}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accepts a suggestion (with the quantity and supplier to buy); the purchase order lands with the purchasing module */
+        post: operations["postInventoryReplenishmentSuggestionsBySuggestionIdAccept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/replenishment/suggestions/{suggestionId}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryReplenishmentSuggestionsBySuggestionIdDismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4822,6 +4921,13 @@ export interface components {
             token: string;
             password: string;
             displayName?: null | string;
+        };
+        AcceptSuggestionRequest: {
+            /** Format: double */
+            quantity?: null | number | string;
+            /** Format: uuid */
+            supplierId?: null | string;
+            note?: null | string;
         };
         AccountLedger: {
             /** Format: uuid */
@@ -6107,6 +6213,9 @@ export interface components {
             /** Format: date */
             validTo: null | string;
             isActive: boolean;
+        };
+        DismissSuggestionRequest: {
+            reason: string;
         };
         DocumentLink: {
             /** Format: uuid */
@@ -7479,6 +7588,75 @@ export interface components {
             reason: string;
             /** @default open */
             state: string;
+        };
+        ReplenishmentRunRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: date */
+            asOf?: null | string;
+        };
+        ReplenishmentRunSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            /** Format: date-time */
+            ranAt: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: int32 */
+            itemsChecked: number | string;
+            /** Format: int32 */
+            suggestionsCreated: number | string;
+            /** Format: int32 */
+            suggestionsRefreshed: number | string;
+            /** Format: int32 */
+            suggestionsClosed: number | string;
+            /** Format: uuid */
+            startedBy: null | string;
+        };
+        ReplenishmentSuggestionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            baseUom: string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            /** Format: uuid */
+            runId: null | string;
+            /** Format: double */
+            suggestedQty: number | string;
+            /** Format: uuid */
+            suggestedSupplierId: null | string;
+            /** Format: date */
+            neededBy: null | string;
+            explanation: Record<string, never>;
+            status: string;
+            /** Format: double */
+            acceptedQty: null | number | string;
+            /** Format: uuid */
+            acceptedSupplierId: null | string;
+            /** Format: uuid */
+            purchaseOrderLineId: null | string;
+            decisionNote: null | string;
+            /** Format: uuid */
+            decidedBy: null | string;
+            /** Format: date-time */
+            decidedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         ReservationInfo: {
             /** Format: uuid */
@@ -18372,6 +18550,151 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    postInventoryReplenishmentRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplenishmentRunRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentRunSummary"];
+                };
+            };
+        };
+    };
+    getInventoryReplenishmentRuns: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentRunSummary"][];
+                };
+            };
+        };
+    };
+    getInventoryReplenishmentSuggestions: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                warehouseId?: string;
+                itemId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentSuggestionSummary"][];
+                };
+            };
+        };
+    };
+    getInventoryReplenishmentSuggestionsBySuggestionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentSuggestionSummary"];
+                };
+            };
+        };
+    };
+    postInventoryReplenishmentSuggestionsBySuggestionIdAccept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["AcceptSuggestionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentSuggestionSummary"];
+                };
+            };
+        };
+    };
+    postInventoryReplenishmentSuggestionsBySuggestionIdDismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DismissSuggestionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentSuggestionSummary"];
                 };
             };
         };

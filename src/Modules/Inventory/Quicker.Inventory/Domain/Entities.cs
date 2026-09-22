@@ -1012,3 +1012,72 @@ public sealed class CountLine : ITenantEntity
     /// <summary>open, counted, recount, skipped or posted.</summary>
     public string Status { get; set; } = "open";
 }
+
+// ------------------------------------------------------------------ replenishment (roadmap 3.7)
+
+public sealed class ReplenishmentRun : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? WarehouseId { get; set; }
+
+    public DateTimeOffset RanAt { get; set; }
+
+    public DateOnly AsOf { get; set; }
+
+    public int ItemsChecked { get; set; }
+
+    public int SuggestionsCreated { get; set; }
+
+    public int SuggestionsRefreshed { get; set; }
+
+    public int SuggestionsClosed { get; set; }
+
+    public Guid? StartedBy { get; set; }
+}
+
+public sealed class ReplenishmentSuggestion : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public Guid? RunId { get; set; }
+
+    public decimal SuggestedQty { get; set; }
+
+    public Guid? SuggestedSupplierId { get; set; }
+
+    public DateOnly? NeededBy { get; set; }
+
+    public Dictionary<string, object?> Explanation { get; set; } = new(StringComparer.Ordinal);
+
+    /// <summary>open, accepted, dismissed or superseded.</summary>
+    public string Status { get; set; } = "open";
+
+    public decimal? AcceptedQty { get; set; }
+
+    public Guid? AcceptedSupplierId { get; set; }
+
+    public Guid? PurchaseOrderLineId { get; set; }
+
+    public string? DecisionNote { get; set; }
+
+    public Guid? DecidedBy { get; set; }
+
+    public DateTimeOffset? DecidedAt { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}

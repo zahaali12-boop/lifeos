@@ -30,6 +30,8 @@ public static class InventoryPermissions
     public const string CountEnter = "inventory.count.enter";
     public const string CountApprove = "inventory.count.approve";
     public const string CountPost = "inventory.count.post";
+    public const string ReplenishmentRead = "inventory.replenishment.read";
+    public const string ReplenishmentManage = "inventory.replenishment.manage";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -59,5 +61,7 @@ public static class InventoryPermissions
         new(CountEnter, "inventory", "Enter counted quantities on a count sheet"),
         new(CountApprove, "inventory", "Approve count variances"),
         new(CountPost, "inventory", "Post count variances (moves stock and posts the journal)"),
+        new(ReplenishmentRead, "inventory", "Read replenishment runs and purchase suggestions"),
+        new(ReplenishmentManage, "inventory", "Run the replenishment planner, accept and dismiss suggestions"),
     ];
 }

@@ -22,6 +22,19 @@ public sealed class ApiHostFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync() => Api = await ApiFixture.StartAsync(static builder => builder.UseSetting("Quicker:Inventory:RecostThreshold", RecostThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
+    /// <summary>Enqueues a platform job (no tenant), the way the scheduler does.</summary>
+    public async Task EnqueueAsync(string jobType, object? payload)
+    {
+        await using var scope = Api.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        var context = TenantContext.Anonymous("test-job-" + Guid.CreateVersion7().ToString("N")[^12..]);
+        await using var unitOfWork = await services.GetRequiredService<IUnitOfWorkFactory>().BeginAsync(context, cancellationToken: TestContext.Current.CancellationToken);
+        services.GetRequiredService<IUnitOfWorkAccessor>().Set(unitOfWork);
+        using var ambient = services.GetRequiredService<ITenantContextAccessor>().Use(context);
+        await services.GetRequiredService<IJobQueue>().EnqueueAsync(new JobRequest(jobType, payload), TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+    }
+
     /// <summary>Drains the outbox and runs every queued job in process (the worker's loop).</summary>
     public async Task RunWorkerAsync()
     {

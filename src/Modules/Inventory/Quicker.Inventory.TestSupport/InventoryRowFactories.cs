@@ -106,6 +106,21 @@ public static class InventoryRowFactories
             return new RowRef("app.inv_count_snapshots", $"count_id = '{count}'");
         });
         IsolationRegistry.Register("app.inv_count_lines", static async (c, tx, t) => new RowRef("app.inv_count_lines", $"id = '{(await CountAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.inv_replenishment_runs", static async (c, tx, t) =>
+        {
+            var company = await CompanyAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.inv_replenishment_runs (tenant_id, id, company_id, as_of) VALUES (@t, @id, @company, '2026-09-22')", new { t, id, company }, tx);
+            return new RowRef("app.inv_replenishment_runs", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.inv_replenishment_suggestions", static async (c, tx, t) =>
+        {
+            var (warehouse, company) = await WarehouseAsync(c, tx, t);
+            var (item, _) = await ItemAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.inv_replenishment_suggestions (tenant_id, id, company_id, item_id, warehouse_id, suggested_qty) VALUES (@t, @id, @company, @item, @warehouse, 10)", new { t, id, company, item, warehouse }, tx);
+            return new RowRef("app.inv_replenishment_suggestions", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.inv_transfers", static async (c, tx, t) => new RowRef("app.inv_transfers", $"id = '{(await TransferAsync(c, tx, t)).Transfer}'"));
         IsolationRegistry.Register("app.inv_transfer_lines", static async (c, tx, t) => new RowRef("app.inv_transfer_lines", $"id = '{(await TransferAsync(c, tx, t)).Line}'"));
     }

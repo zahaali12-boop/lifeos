@@ -256,6 +256,24 @@ public static class InventoryEndpoints
         counts.MapPost("/{countId:guid}/cancel", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(countId, ct)))
             .RequirePermission(InventoryPermissions.CountManage);
 
+        // ------------------------------------------------------------------ replenishment (roadmap 3.7)
+        var replenishment = inventory.MapGroup("/replenishment");
+        replenishment.MapPost("/run", async (ReplenishmentRunRequest request, ReplenishmentService service, CancellationToken ct) => ApiProblems.Ok(await service.RunAsync(request.CompanyId, request.WarehouseId, request.AsOf, ct)))
+            .RequirePermission(InventoryPermissions.ReplenishmentManage)
+            .WithSummary("Runs the planner now for a company (or one warehouse): every item with a reorder point, minimum or maximum is checked against its projected stock");
+        replenishment.MapGet("/runs", async (Guid? companyId, ReplenishmentService service, CancellationToken ct) => TypedResults.Ok(await service.RunsAsync(companyId, ct)))
+            .RequirePermission(InventoryPermissions.ReplenishmentRead);
+        replenishment.MapGet("/suggestions", async (Guid? companyId, Guid? warehouseId, Guid? itemId, string? status, ReplenishmentService service, CancellationToken ct) => TypedResults.Ok(await service.SuggestionsAsync(companyId, warehouseId, itemId, status, ct)))
+            .RequirePermission(InventoryPermissions.ReplenishmentRead)
+            .WithSummary("Purchase suggestions, each explaining its arithmetic (on hand, reserved, hold, incoming, reorder point, minimum, maximum, safety stock, lead time)");
+        replenishment.MapGet("/suggestions/{suggestionId:guid}", async (Guid suggestionId, ReplenishmentService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(suggestionId, ct), "replenishment_suggestion", suggestionId))
+            .RequirePermission(InventoryPermissions.ReplenishmentRead);
+        replenishment.MapPost("/suggestions/{suggestionId:guid}/accept", async (Guid suggestionId, AcceptSuggestionRequest? request, ReplenishmentService service, CancellationToken ct) => ApiProblems.Ok(await service.AcceptAsync(suggestionId, request ?? new AcceptSuggestionRequest(), ct)))
+            .RequirePermission(InventoryPermissions.ReplenishmentManage)
+            .WithSummary("Accepts a suggestion (with the quantity and supplier to buy); the purchase order lands with the purchasing module");
+        replenishment.MapPost("/suggestions/{suggestionId:guid}/dismiss", async (Guid suggestionId, DismissSuggestionRequest request, ReplenishmentService service, CancellationToken ct) => ApiProblems.Ok(await service.DismissAsync(suggestionId, request, ct)))
+            .RequirePermission(InventoryPermissions.ReplenishmentManage);
+
         return inventory;
     }
 }

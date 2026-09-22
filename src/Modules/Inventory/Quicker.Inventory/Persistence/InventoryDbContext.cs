@@ -64,6 +64,10 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
 
     public DbSet<CountLine> CountLines => Set<CountLine>();
 
+    public DbSet<ReplenishmentRun> ReplenishmentRuns => Set<ReplenishmentRun>();
+
+    public DbSet<ReplenishmentSuggestion> ReplenishmentSuggestions => Set<ReplenishmentSuggestion>();
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private static readonly ValueConverter<Dictionary<string, string>, string> StringMapConverter = new(
@@ -256,6 +260,22 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             b.ToTable("inv_count_snapshots", "app");
             b.HasKey(static x => new { x.TenantId, x.CountId, x.ItemId, x.VariantId, x.BinId, x.LotId, x.SerialId });
             b.Property(static x => x.ExpectedQty).HasPrecision(24, 9);
+        });
+
+        modelBuilder.Entity<ReplenishmentRun>(b =>
+        {
+            b.ToTable("inv_replenishment_runs", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+        });
+
+        modelBuilder.Entity<ReplenishmentSuggestion>(b =>
+        {
+            b.ToTable("inv_replenishment_suggestions", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.SuggestedQty).HasPrecision(24, 9);
+            b.Property(static x => x.AcceptedQty).HasPrecision(24, 9);
+            b.Property(static x => x.Explanation).HasConversion(ObjectMapConverter, ObjectMapComparer).HasColumnType("jsonb");
+            b.HasAuditTrail("replenishment_suggestion", static x => x.Id.ToString("N"));
         });
 
         modelBuilder.Entity<CountLine>(b =>

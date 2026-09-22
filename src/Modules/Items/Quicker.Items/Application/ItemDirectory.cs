@@ -128,6 +128,33 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         return new BarcodeMatch(match.i.Id, match.i.Code, match.b.VariantId, match.u.Id, match.u.UomId, byId[match.u.UomId].Code, match.b.Barcode, match.b.Symbology);
     }
 
+    public async Task<IReadOnlyList<ItemPlanningInfo>> PlanningParametersAsync(Guid warehouseId, CancellationToken cancellationToken = default)
+    {
+        var settings = await db.WarehouseSettings.Where(s => s.WarehouseId == warehouseId && (s.ReorderPoint != null || s.MinQty != null || s.MaxQty != null)).ToListAsync(cancellationToken);
+        if (settings.Count == 0)
+        {
+            return [];
+        }
+
+        var itemIds = settings.Select(static s => s.ItemId).Distinct().ToList();
+        var codes = await db.Items.Where(i => itemIds.Contains(i.Id) && i.IsActive).ToDictionaryAsync(static i => i.Id, static i => new { i.Code, i.PurchaseUomId }, cancellationToken);
+        var suppliers = (await db.Suppliers.Where(s => itemIds.Contains(s.ItemId)).ToListAsync(cancellationToken))
+            .GroupBy(static s => s.ItemId).ToDictionary(static g => g.Key, static g => g.OrderByDescending(static s => s.IsPreferred).ThenBy(static s => s.Id).First());
+        var result = new List<ItemPlanningInfo>(settings.Count);
+        foreach (var s in settings)
+        {
+            if (!codes.TryGetValue(s.ItemId, out var item))
+            {
+                continue;
+            }
+
+            var supplier = suppliers.GetValueOrDefault(s.ItemId);
+            result.Add(new ItemPlanningInfo(s.ItemId, item.Code, s.WarehouseId, s.ReorderPoint, s.MinQty, s.MaxQty, s.SafetyStock, s.LeadTimeDays, supplier?.PartnerId, supplier?.LeadTimeDays, item.PurchaseUomId));
+        }
+
+        return result;
+    }
+
     public async Task<IReadOnlyList<Guid>> ItemsForCycleCountAsync(Guid warehouseId, IReadOnlyList<string> classes, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(classes);
