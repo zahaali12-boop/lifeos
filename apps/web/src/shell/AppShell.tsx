@@ -120,7 +120,7 @@ export function AppShell() {
           <nav className="flex-1 overflow-y-auto p-2">
             <ul className="flex flex-col gap-0.5">
               {visibleNavigation.map((item) => {
-                const active = item.to === "/" ? location === "/" : location.startsWith(item.to);
+                const active = item.to === "/" ? location === "/" : location === item.to || location.startsWith(`${item.to}/`);
                 return (
                   <li key={item.to}>
                     <Link

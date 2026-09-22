@@ -1,6 +1,6 @@
-import { Bell, BookMarked, BookOpen, Building2, CalendarRange, ClipboardList, Coins, Layers, LayoutDashboard, ListChecks, NotebookPen, Scale, ShieldCheck, SlidersHorizontal, Users, Webhook, type LucideIcon } from "lucide-react";
+import { Bell, BookMarked, BookOpen, Building2, CalendarRange, ClipboardList, Coins, Layers, LayoutDashboard, ListChecks, NotebookPen, Scale, ScanLine, ShieldCheck, SlidersHorizontal, Users, Webhook, type LucideIcon } from "lucide-react";
 
-/** The primary navigation: one entry per admin area shipped in 1.4–1.8 and the accounting screens of M2, each with a "g <key>" shortcut. */
+/** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
   to: string;
   /** Translation key of the label. */
@@ -21,6 +21,7 @@ export const navigation: NavigationItem[] = [
   { to: "/accounting/ledger", label: "nav.ledger", icon: BookMarked, shortcut: "g l", permission: "accounting.journal.read" },
   { to: "/accounting/journal-entries", label: "nav.journalEntries", icon: Layers, shortcut: "g e", permission: "accounting.journal.read" },
   { to: "/accounting/periods", label: "nav.periods", icon: CalendarRange, shortcut: "g p", permission: "organization.company.read" },
+  { to: "/m", label: "nav.mobile", icon: ScanLine, shortcut: "g s", permission: "inventory.count.enter" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },
   { to: "/roles", label: "nav.roles", icon: ShieldCheck, shortcut: "g o", permission: "identity.role.read" },
   { to: "/custom-fields", label: "nav.customFields", icon: SlidersHorizontal, shortcut: "g f" },

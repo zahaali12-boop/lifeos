@@ -187,6 +187,9 @@ public sealed class StockLedgerTests(ApiHostFixture host)
         (await s.Owner.PostErrorAsync("/api/v1/inventory/warehouses", new { companyId = s.CompanyId, code = "MAIN", name = Name("Again", "مرة") }, HttpStatusCode.Conflict)).Code.ShouldBe("warehouse.code_taken");
         (await s.Owner.PostErrorAsync("/api/v1/inventory/warehouses", new { companyId = s.CompanyId, code = "T2", name = Name("T", "T"), kind = "in_transit", binsEnabled = true }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("warehouse.transit_no_bins");
         var binId = binA.GetProperty("id").GetGuid();
+        await s.Owner.PostAsync($"/api/v1/inventory/warehouses/{coldId}/bins", new { code = "A-02", zone = "A", pickSequence = 1 });
+        var listedBins = await s.Owner.GetOkAsync($"/api/v1/inventory/warehouses/{coldId}/bins");
+        listedBins.EnumerateArray().Select(b => b.GetProperty("code").GetString()).ShouldBe(["A-01", "A-02"], "bins list by pick sequence then code (the scanner matches bins from this list)");
         await Should.ThrowAsync<InvalidOperationException>(() => host.PostStockAsync(s.Ws.TenantId, new StockPostingRequest(s.CompanyId, new DateOnly(2026, 9, 1), "test_opening", Guid.CreateVersion7(), [new StockLine(s.ItemId, StockEntryTypes.Opening, 5m, coldId)])));
         await host.PostStockAsync(s.Ws.TenantId, new StockPostingRequest(s.CompanyId, new DateOnly(2026, 9, 1), "test_opening", Guid.CreateVersion7(), [new StockLine(s.ItemId, StockEntryTypes.Opening, 5m, coldId, BinId: binId)]));
         var balances = await s.Owner.GetOkAsync($"/api/v1/inventory/stock/balances?companyId={s.CompanyId}&warehouseId={coldId}");

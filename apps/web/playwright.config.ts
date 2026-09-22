@@ -3,9 +3,13 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Browser journeys (ADR-0029): the app served by Vite against a running API (E2E_API_URL, default the local host
  * on 8080, as `make api` starts it). CI starts PostgreSQL, the migrator and the API before this runs.
+ * Desktop journeys run in Desktop Chrome; the mobile scanning journeys (mobile-*.spec.ts) run in an emulated phone.
  */
 const apiUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8080";
 const port = Number(process.env.E2E_WEB_PORT ?? 5173);
+// E2E_CHROMIUM_PATH points at a pre-installed Chromium (containers without browser downloads); CI installs the matching build.
+const launch = process.env.E2E_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.E2E_CHROMIUM_PATH } } : {};
+const mobileSpecs = /mobile-.*\.spec\.ts$/;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -19,8 +23,10 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  // E2E_CHROMIUM_PATH points at a pre-installed Chromium (containers without browser downloads); CI installs the matching build.
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], ...(process.env.E2E_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.E2E_CHROMIUM_PATH } } : {}) } }],
+  projects: [
+    { name: "chromium", testIgnore: mobileSpecs, use: { ...devices["Desktop Chrome"], ...launch } },
+    { name: "mobile", testMatch: mobileSpecs, use: { ...devices["Pixel 7"], ...launch } },
+  ],
   webServer: {
     command: `pnpm exec vite --host 127.0.0.1 --port ${port} --strictPort`,
     url: `http://127.0.0.1:${port}`,

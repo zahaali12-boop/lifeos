@@ -39,7 +39,8 @@
     "trialBalance": "Trial balance",
     "ledger": "Account ledger",
     "journalEntries": "Journal entries",
-    "periods": "Period control"
+    "periods": "Period control",
+    "mobile": "Scanner"
   },
   "shell": {
     "skipToContent": "Skip to content",
@@ -469,5 +470,93 @@
     "everyone": "Everyone",
     "allowFrom": "Allow from",
     "allowTo": "Allow to"
+  },
+  "mobile": {
+    "title": "Scanner",
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "{count, plural, =0 {Nothing waiting} one {# waiting to sync} other {# waiting to sync}}",
+    "backToDesktop": "Full app",
+    "switchLanguage": "Switch language",
+    "tabs": {
+      "label": "Scanner",
+      "home": "Home",
+      "count": "Count",
+      "transfer": "Transfer",
+      "queue": "Queue"
+    },
+    "home": {
+      "title": "Scanning",
+      "description": "Pick where you are working. Counts and transfers are captured here and sync as soon as the network allows.",
+      "company": "Company",
+      "warehouse": "Warehouse",
+      "chooseCompany": "Choose a company",
+      "chooseWarehouse": "Choose a warehouse",
+      "startCount": "Count stock",
+      "startTransfer": "Transfer stock",
+      "openQueue": "Sync queue",
+      "installHint": "Add this page to the home screen for a full-screen scanner."
+    },
+    "scan": {
+      "label": "Scan or type a code",
+      "placeholder": "Bin, barcode or item code",
+      "submit": "Enter",
+      "camera": "Use camera",
+      "stopCamera": "Stop camera",
+      "cameraOn": "Camera scanning ({engine})",
+      "engineNative": "browser",
+      "engineZxing": "decoder",
+      "cameraUnavailable": "The camera is unavailable here: type the code or use a hardware scanner."
+    },
+    "count": {
+      "title": "Count",
+      "noContext": "Choose a company and a warehouse first.",
+      "pick": "Open count",
+      "chooseCount": "Choose a count",
+      "none": "No frozen count for this warehouse. Freeze one on the desktop first.",
+      "bin": "Bin",
+      "scanBin": "Scan the bin",
+      "changeBin": "Change bin",
+      "binUnknown": "No bin {code} in this warehouse.",
+      "scanItem": "Scan an item",
+      "itemUnknown": "No item matches {code}.",
+      "itemOffline": "Offline: {code} is resolved when it syncs.",
+      "quantity": "Counted quantity",
+      "lot": "Lot number",
+      "serial": "Serial number",
+      "add": "Add",
+      "captured": "Captured on this device",
+      "synced": "Synced",
+      "queued": "Queued",
+      "failed": "Failed",
+      "lines": "{count, plural, =0 {No lines counted yet} one {# line counted} other {# lines counted}}",
+      "quantityInvalid": "Enter a quantity of zero or more."
+    },
+    "transfer": {
+      "title": "Transfer",
+      "to": "To warehouse",
+      "chooseTo": "Choose the destination",
+      "scanItem": "Scan an item",
+      "quantity": "Quantity",
+      "addLine": "Add line",
+      "lines": "Lines",
+      "noLines": "Scan items to build the transfer.",
+      "ship": "Ship {count, plural, one {# line} other {# lines}}",
+      "remove": "Remove",
+      "sameWarehouse": "The destination must differ from the source.",
+      "queued": "The transfer is queued and ships when it syncs."
+    },
+    "queue": {
+      "title": "Sync queue",
+      "empty": "Everything is synced.",
+      "sync": "Sync now",
+      "syncing": "Syncing…",
+      "result": "{synced} synced, {failed} failed",
+      "remove": "Remove",
+      "countLabel": "Count {number}: {label}",
+      "transferLabel": "Transfer to {label}",
+      "error": "Failed: {message}",
+      "waiting": "Waiting for the network"
+    }
   }
 }

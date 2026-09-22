@@ -132,7 +132,9 @@ public sealed class WarehouseService(InventoryDbContext db, ICompanyDirectory co
             return Error.NotFound("warehouse", warehouseId);
         }
 
-        return (await db.Bins.Where(b => b.WarehouseId == warehouseId).OrderBy(static b => b.PickSequence).ThenBy(static b => b.Code, StringComparer.Ordinal).ToListAsync(cancellationToken)).Select(Map).ToList();
+        // Ordered by the database (a comparer is not translatable); the collation of the code column decides ties.
+        var bins = await db.Bins.Where(b => b.WarehouseId == warehouseId).OrderBy(static b => b.PickSequence).ThenBy(static b => b.Code).ToListAsync(cancellationToken);
+        return bins.Select(Map).ToList();
     }
 
     public async Task<Result<BinSummary>> SaveBinAsync(Guid warehouseId, Guid? binId, SaveBinRequest request, CancellationToken cancellationToken)

@@ -19,8 +19,13 @@ import { JournalsPage } from "./accounting/JournalsPage";
 import { LedgerPage } from "./accounting/LedgerPage";
 import { PeriodsPage } from "./accounting/PeriodsPage";
 import { TrialBalancePage } from "./accounting/TrialBalancePage";
+import { MobileCountPage } from "./mobile/MobileCountPage";
+import { MobileHomePage } from "./mobile/MobileHomePage";
+import { MobileQueuePage } from "./mobile/MobileQueuePage";
+import { MobileShell } from "./mobile/MobileShell";
+import { MobileTransferPage } from "./mobile/MobileTransferPage";
 
-/** Typed routes (ADR-0013): anonymous auth screens, and the shell whose children require a session. */
+/** Typed routes (ADR-0013): anonymous auth screens, the shell whose children require a session, and the mobile scanner under /m. */
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 
 const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: "/login", component: LoginPage, beforeLoad: () => { if (getSession()) { throw redirect({ to: "/" }); } } });
@@ -57,10 +62,27 @@ const ledgerRoute = createRoute({ getParentRoute: () => shellRoute, path: "/acco
 const journalEntriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/journal-entries", component: JournalBrowserPage, validateSearch: searchRecord });
 const periodsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/periods", component: PeriodsPage });
 
+// The scanner (roadmap 3.8): its own thumb-first shell, the same session.
+const mobileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "mobile",
+  component: MobileShell,
+  beforeLoad: () => {
+    if (!getSession()) {
+      throw redirect({ to: "/login" });
+    }
+  },
+});
+const mobileHomeRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m", component: MobileHomePage });
+const mobileCountRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/count", component: MobileCountPage });
+const mobileTransferRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/transfer", component: MobileTransferPage });
+const mobileQueueRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/queue", component: MobileQueuePage });
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
   shellRoute.addChildren([dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute, chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute]),
+  mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
