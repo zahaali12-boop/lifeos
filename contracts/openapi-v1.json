@@ -6319,7 +6319,7 @@
         "tags": [
           "Accounting"
         ],
-        "summary": "A complete chart from a template, optionally assigned to a company so it can post on day one",
+        "summary": "A complete chart from a template, optionally assigned to a company (which then also gets its first posting profile from the chart's default accounts) so it can post on day one",
         "operationId": "postAccountingChartsFromTemplate",
         "requestBody": {
           "content": {

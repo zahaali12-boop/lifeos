@@ -1,6 +1,6 @@
-import { Bell, Building2, ClipboardList, Coins, LayoutDashboard, ListChecks, ShieldCheck, SlidersHorizontal, Users, Webhook, type LucideIcon } from "lucide-react";
+import { Bell, BookMarked, BookOpen, Building2, CalendarRange, ClipboardList, Coins, Layers, LayoutDashboard, ListChecks, NotebookPen, Scale, ShieldCheck, SlidersHorizontal, Users, Webhook, type LucideIcon } from "lucide-react";
 
-/** The primary navigation: one entry per admin area shipped in 1.4–1.8, each with a "g <key>" shortcut. */
+/** The primary navigation: one entry per admin area shipped in 1.4–1.8 and the accounting screens of M2, each with a "g <key>" shortcut. */
 export interface NavigationItem {
   to: string;
   /** Translation key of the label. */
@@ -15,6 +15,12 @@ export const navigation: NavigationItem[] = [
   { to: "/", label: "nav.dashboard", icon: LayoutDashboard, shortcut: "g d" },
   { to: "/companies", label: "nav.companies", icon: Building2, shortcut: "g c", permission: "organization.company.read" },
   { to: "/rates", label: "nav.rates", icon: Coins, shortcut: "g r", permission: "organization.company.read" },
+  { to: "/accounting/chart", label: "nav.chart", icon: BookOpen, shortcut: "g h", permission: "accounting.chart.read" },
+  { to: "/accounting/journals", label: "nav.journals", icon: NotebookPen, shortcut: "g u", permission: "accounting.journal.read" },
+  { to: "/accounting/trial-balance", label: "nav.trialBalance", icon: Scale, shortcut: "g t", permission: "accounting.journal.read" },
+  { to: "/accounting/ledger", label: "nav.ledger", icon: BookMarked, shortcut: "g l", permission: "accounting.journal.read" },
+  { to: "/accounting/journal-entries", label: "nav.journalEntries", icon: Layers, shortcut: "g e", permission: "accounting.journal.read" },
+  { to: "/accounting/periods", label: "nav.periods", icon: CalendarRange, shortcut: "g p", permission: "organization.company.read" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },
   { to: "/roles", label: "nav.roles", icon: ShieldCheck, shortcut: "g o", permission: "identity.role.read" },
   { to: "/custom-fields", label: "nav.customFields", icon: SlidersHorizontal, shortcut: "g f" },

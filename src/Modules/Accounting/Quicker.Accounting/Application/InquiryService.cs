@@ -170,7 +170,7 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
         parameters.Add("take", size + 1);
         var rows = (await uow.Connection.QueryAsync<LedgerRow>(new CommandDefinition($"""
             SELECT l.id AS line_id, e.id AS entry_id, e.number, l.posting_date, e.document_date, e.source_module, e.source_document_type, e.source_document_id, e.source_document_number,
-                   l.description_i18n::text AS description, l.currency_tc, l.debit_tc, l.credit_tc, l.debit_{sfx} AS debit, l.credit_{sfx} AS credit, ds.values::text AS dimensions,
+                   (CASE WHEN l.description_i18n = jsonb_build_object() THEN e.description_i18n ELSE l.description_i18n END)::text AS description, l.currency_tc, l.debit_tc, l.credit_tc, l.debit_{sfx} AS debit, l.credit_{sfx} AS credit, ds.values::text AS dimensions,
                    l.branch_id, l.partner_id, l.subledger_type, l.subledger_ref, e.is_reversal, l.is_rounding, l.line_no
             FROM app.gl_journal_lines l
             JOIN app.gl_journal_entries e ON e.tenant_id = l.tenant_id AND e.id = l.entry_id

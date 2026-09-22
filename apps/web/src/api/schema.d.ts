@@ -1149,6 +1149,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organization/companies/{companyId}/posting-windows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's allow-posting-from/to windows: one for everyone (roleId null) and any per role */
+        get: operations["getOrganizationCompaniesByCompanyIdPostingWindows"];
+        /** Replaces the windows; the posting engine refuses a posting date outside the actor's effective window (the widest of their roles' windows, else the company's) */
+        put: operations["putOrganizationCompaniesByCompanyIdPostingWindows"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organization/companies/{companyId}/working-days": {
         parameters: {
             query?: never;
@@ -2381,6 +2399,875 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounting/chart-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The chart templates a company can start from: IFRS for SMEs, GCC (VAT and Zakat), Iraq (mapped to the Unified Accounting System) */
+        get: operations["getAccountingChartTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/account-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingAccountCategories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/account-categories/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putAccountingAccountCategoriesByCode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/statutory-charts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingStatutoryCharts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/postings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts a balanced request through the engine: roles resolved by the company's profile, amounts converted to functional and reporting currency, period and control checks, rounding line, balances */
+        post: operations["postAccountingPostings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/routines/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the daily routines now for the tenant (or one company): automatic reversals, recurring journals, deferral postings; what waited says why */
+        post: operations["postAccountingRoutinesRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/charts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingCharts"];
+        put?: never;
+        /** An empty chart (accounts are added one by one or imported); accountCodeFormat uses # digit, A letter, ? either */
+        post: operations["postAccountingCharts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/charts/from-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A complete chart from a template, optionally assigned to a company so it can post on day one */
+        post: operations["postAccountingChartsFromTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/charts/{chartId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ?expand=accounts includes the whole tree in code order with level and path */
+        get: operations["getAccountingChartsByChartId"];
+        put: operations["putAccountingChartsByChartId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/charts/{chartId}/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingChartsByChartIdAccounts"];
+        put?: never;
+        /** Parent by parentId or parentCode (a header of the same type); control accounts name their subledger */
+        post: operations["postAccountingChartsByChartIdAccounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/charts/{chartId}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CSV with one row per account (the import format) */
+        get: operations["getAccountingChartsByChartIdExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/charts/{chartId}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upsert accounts by code from CSV (the export format) or JSON; parents may come after children; all or nothing */
+        post: operations["postAccountingChartsByChartIdImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/charts/{chartId}/mappings/{statutoryChartCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every postable account with its statutory code (null = unmapped) */
+        get: operations["getAccountingChartsByChartIdMappingsByStatutoryChartCode"];
+        put: operations["putAccountingChartsByChartIdMappingsByStatutoryChartCode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/accounts/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingAccountsByAccountId"];
+        put: operations["putAccountingAccountsByAccountId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/accounts/{accountId}/dimension-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingAccountsByAccountIdDimensionRules"];
+        /** Replaces the account's rules: required, optional (with an optional default value) or blocked per dimension */
+        put: operations["putAccountingAccountsByAccountIdDimensionRules"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/accounts/{accountId}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Would a line on this account be accepted for the company? Returns the dimensions with defaults applied, or the problem the posting engine would raise */
+        post: operations["postAccountingAccountsByAccountIdCheck"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingCompaniesByCompanyIdSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/chart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** The chart the company posts to: shared or dedicated to it; null detaches */
+        put: operations["putAccountingCompaniesByCompanyIdChart"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/posting-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingPostingGroups"];
+        put?: never;
+        /** Kinds: item, partner_customer, partner_supplier, bank, asset, tax, charge */
+        post: operations["postAccountingPostingGroups"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/posting-groups/{groupId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putAccountingPostingGroupsByGroupId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/posting-profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingCompaniesByCompanyIdPostingProfiles"];
+        put?: never;
+        /** An empty draft profile (next version of the code) */
+        post: operations["postAccountingCompaniesByCompanyIdPostingProfiles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/posting-profiles/from-chart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** An active profile with one default rule per role from the chart's default accounts; unresolvedRoles lists what the chart does not name */
+        post: operations["postAccountingCompaniesByCompanyIdPostingProfilesFromChart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/journal-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The journal browser: newest first, filtered by dates, source document type, number prefix, an account on any line, manual only, a minimum total and free text over descriptions and numbers */
+        get: operations["getAccountingCompaniesByCompanyIdJournalEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The derived balance rows: account × period × transaction currency × dimension set */
+        get: operations["getAccountingCompaniesByCompanyIdBalances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/balances/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compares stored balances with the journal lines; differences are listed, nothing changes */
+        get: operations["getAccountingCompaniesByCompanyIdBalancesVerify"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/balances/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Truncates the company's balances and recomputes them from the lines in one transaction (audited) */
+        post: operations["postAccountingCompaniesByCompanyIdBalancesRebuild"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/posting-profiles/{profileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingPostingProfilesByProfileId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/posting-profiles/{profileId}/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replaces every rule: role + account code + optional keys (document type, posting groups, tax code, warehouse, branch, bank account, asset category, charge type) */
+        put: operations["putAccountingPostingProfilesByProfileIdRules"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/posting-profiles/{profileId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Makes the profile the company's current one; the previous active version of the same code is retired */
+        post: operations["postAccountingPostingProfilesByProfileIdActivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journal-entries/{entryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingJournalEntriesByEntryId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journal-entries/{entryId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The mirror entry on the original date when its period is open, else on the first open period; both entries are linked */
+        post: operations["postAccountingJournalEntriesByEntryIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journal-entries/{entryId}/correct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses the entry into the first open period and posts the replacement there (or on its own later date); the replacement is linked to the original as its correction */
+        post: operations["postAccountingJournalEntriesByEntryIdCorrect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/journals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingCompaniesByCompanyIdJournals"];
+        put?: never;
+        /** A draft journal: kind manual|opening|accrual|reversing|allocation, lines by account code with debit or credit; accruals name their auto-reversal date */
+        post: operations["postAccountingCompaniesByCompanyIdJournals"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/journals/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Drafts from a batch: JSON journals or CSV rows grouped by journal_ref (columns: journal_ref, posting_date, currency, account_code, debit, credit, description); all or nothing */
+        post: operations["postAccountingCompaniesByCompanyIdJournalsImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/recurring-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingCompaniesByCompanyIdRecurringTemplates"];
+        put?: never;
+        /** Cron in the company's time zone; amountMode fixed (amounts), percentage (shares of a base amount) or variable (accounts only, always reviewed) */
+        post: operations["postAccountingCompaniesByCompanyIdRecurringTemplates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/deferrals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingCompaniesByCompanyIdDeferrals"];
+        put?: never;
+        /** A prepayment, accrual or deferred revenue schedule over N fiscal periods (straight line or daily), amortised to the minor unit */
+        post: operations["postAccountingCompaniesByCompanyIdDeferrals"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/deferrals/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postAccountingCompaniesByCompanyIdDeferralsPreview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journals/{journalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingJournalsByJournalId"];
+        put: operations["putAccountingJournalsByJournalId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journals/{journalId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Balanced drafts move to pending_approval when the company setting accounting.journals.approval is "required", else straight to approved */
+        post: operations["postAccountingJournalsByJournalIdSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journals/{journalId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** By someone other than the submitter */
+        post: operations["postAccountingJournalsByJournalIdApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journals/{journalId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postAccountingJournalsByJournalIdReject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journals/{journalId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postAccountingJournalsByJournalIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journals/{journalId}/correct": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A correction draft of a posted journal: its lines copied, dated in the first open period on or after the original; posting it reverses the original there and posts the replacement, both linked (ADR-0026) */
+        post: operations["postAccountingJournalsByJournalIdCorrect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/journals/{journalId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts through the engine; the journal keeps its number and the entry id */
+        post: operations["postAccountingJournalsByJournalIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/recurring-templates/{templateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingRecurringTemplatesByTemplateId"];
+        put: operations["putAccountingRecurringTemplatesByTemplateId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/recurring-templates/{templateId}/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generates the journal of the next due run (or the given date) and posts it unless the template requires review */
+        post: operations["postAccountingRecurringTemplatesByTemplateIdGenerate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/deferrals/{scheduleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAccountingDeferralsByScheduleId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/deferrals/{scheduleId}/post-due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the planned lines due on or before the date (today in the company's time zone by default) */
+        post: operations["postAccountingDeferralsByScheduleIdPostDue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/deferrals/{scheduleId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postAccountingDeferralsByScheduleIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/reports/trial-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=DIMENSION, dimension filters d.CODE=valueId, format=csv|xlsx; every row carries its ledger drill parameters */
+        get: operations["getAccountingCompaniesByCompanyIdReportsTrialBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/reports/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account ledger (accountId or accountCode) from a date to a date with opening, running balance and the source document of every line (sourceLink where the platform knows the document); paged by limit/cursor; format=csv|xlsx exports up to 10,000 lines */
+        get: operations["getAccountingCompaniesByCompanyIdReportsLedger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/companies/{companyId}/reports/dimension-balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Balances per value of one dimension (lines without the dimension are the row without a value), optionally for one account type or account; the same window and filter parameters as the trial balance */
+        get: operations["getAccountingCompaniesByCompanyIdReportsDimensionBalances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2389,6 +3276,67 @@ export interface components {
             token: string;
             password: string;
             displayName?: null | string;
+        };
+        AccountLedger: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            accountName: {
+                [key: string]: string;
+            };
+            currency: string;
+            basis: string;
+            /** Format: date */
+            from: null | string;
+            /** Format: date */
+            to: string;
+            filters: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            opening: number | string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            /** Format: double */
+            closing: number | string;
+            items: components["schemas"]["LedgerItem"][];
+            nextCursor: null | string;
+        };
+        AccountSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            chartId: string;
+            /** Format: uuid */
+            parentId: null | string;
+            parentCode: null | string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            type: string;
+            subtype: string;
+            categoryCode: null | string;
+            isHeader: boolean;
+            isControl: boolean;
+            subledgerType: null | string;
+            currencyRestriction: null | string;
+            allowManualPosting: boolean;
+            revalueFx: boolean;
+            cashFlowCategory: null | string;
+            defaultRole: null | string;
+            /** Format: uuid */
+            companyId: null | string;
+            isActive: boolean;
+            /** Format: int32 */
+            level: number | string;
+            path: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         ActivityView: {
             /** Format: uuid */
@@ -2488,6 +3436,10 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             revokedAt: null | string;
+        };
+        AssignChartRequest: {
+            /** Format: uuid */
+            chartId: null | string;
         };
         AssignmentSummary: {
             /** Format: uuid */
@@ -2599,6 +3551,52 @@ export interface components {
             items: components["schemas"]["AuditEventSummary"][];
             nextCursor: null | string;
         };
+        BalanceDifference: {
+            /** Format: uuid */
+            accountId: string;
+            /** Format: uuid */
+            fiscalPeriodId: string;
+            currencyTc: string;
+            /** Format: uuid */
+            dimensionSetId: string;
+            column: string;
+            /** Format: double */
+            stored: number | string;
+            /** Format: double */
+            rebuilt: number | string;
+        };
+        BalanceRow: {
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            /** Format: uuid */
+            fiscalPeriodId: string;
+            currencyTc: string;
+            /** Format: uuid */
+            dimensionSetId: string;
+            /** Format: double */
+            debitTc: number | string;
+            /** Format: double */
+            creditTc: number | string;
+            /** Format: double */
+            debitFc: number | string;
+            /** Format: double */
+            creditFc: number | string;
+            /** Format: double */
+            debitRc: number | string;
+            /** Format: double */
+            creditRc: number | string;
+        };
+        BalanceVerification: {
+            /** Format: uuid */
+            companyId: null | string;
+            /** Format: int32 */
+            storedRows: number | string;
+            /** Format: int32 */
+            rebuiltRows: number | string;
+            differences: components["schemas"]["BalanceDifference"][];
+            isConsistent?: boolean;
+        };
         BranchSummary: {
             /** Format: uuid */
             id: string;
@@ -2629,6 +3627,18 @@ export interface components {
             isSystem: boolean;
             holidays: components["schemas"]["HolidaySummary"][];
         };
+        CategorySummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            statement: string;
+            /** Format: int32 */
+            sortOrder: number | string;
+            isSystem: boolean;
+        };
         ChainVerification: {
             /** Format: uuid */
             id: string;
@@ -2656,6 +3666,42 @@ export interface components {
             currentPassword: string;
             newPassword: string;
         };
+        ChartSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            templateCode: null | string;
+            accountCodeFormat: string;
+            /** Format: uuid */
+            companyId: null | string;
+            isActive: boolean;
+            /** Format: int32 */
+            accountCount: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+            accounts?: null | components["schemas"]["AccountSummary"][];
+        };
+        CheckLineRequest: {
+            /** Format: uuid */
+            companyId: string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+            currency?: null | string;
+            /** @default false */
+            manual: boolean;
+        };
+        CheckLineResult: {
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            dimensions: {
+                [key: string]: string;
+            };
+        };
         CommentView: {
             /** Format: uuid */
             id: string;
@@ -2675,6 +3721,16 @@ export interface components {
             editedAt: null | string;
             /** Format: date-time */
             deletedAt: null | string;
+        };
+        CompanyAccountingSettings: {
+            /** Format: uuid */
+            companyId: string;
+            companyCode: string;
+            /** Format: uuid */
+            chartId: null | string;
+            chartCode: null | string;
+            /** Format: uuid */
+            postingProfileId: null | string;
         };
         CompanyCurrencyRequest: {
             currency: string;
@@ -2736,6 +3792,22 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             branches?: null | components["schemas"]["BranchSummary"][];
+            /** Format: uuid */
+            chartId?: null | string;
+            /** Format: uuid */
+            postingProfileId?: null | string;
+        };
+        /** @description The replacement of an entry (its lines as a posting request; the company is the original's) and why. */
+        CorrectEntryRequest: {
+            reason: string;
+            replacement: components["schemas"]["PostJournalRequest"];
+        };
+        CorrectionResult: {
+            reversal: components["schemas"]["PostingResult"];
+            replacement: components["schemas"]["PostingResult"];
+        };
+        CorrectJournalRequest: {
+            reason: string;
         };
         CounterSummary: {
             periodKey: string;
@@ -2805,6 +3877,60 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        DeferralLineSummary: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: uuid */
+            fiscalPeriodId: null | string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: double */
+            amount: number | string;
+            status: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+        };
+        DeferralPreview: {
+            lines: components["schemas"]["DeferralLineSummary"][];
+            /** Format: double */
+            totalAmount: number | string;
+        };
+        DeferralScheduleSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            kind: string;
+            sourceDocumentType: null | string;
+            /** Format: uuid */
+            sourceLineId: null | string;
+            /** Format: uuid */
+            balanceAccountId: string;
+            balanceAccountCode: string;
+            /** Format: uuid */
+            targetAccountId: string;
+            targetAccountCode: string;
+            /** Format: date */
+            startsOn: string;
+            /** Format: int32 */
+            periods: number | string;
+            method: string;
+            /** Format: double */
+            totalAmount: number | string;
+            currency: string;
+            dimensions: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            status: string;
+            /** Format: double */
+            postedAmount: number | string;
+            /** Format: double */
+            remainingAmount: number | string;
+            lines: components["schemas"]["DeferralLineSummary"][];
+        };
         DeliverySummary: {
             /** Format: uuid */
             id: string;
@@ -2831,6 +3957,52 @@ export interface components {
             nextAttemptAt: null | string;
             /** Format: date-time */
             deliveredAt: null | string;
+        };
+        DimensionBalanceRow: {
+            /** Format: uuid */
+            valueId: null | string;
+            valueCode: null | string;
+            valueName: null | {
+                [key: string]: string;
+            };
+            /** Format: double */
+            opening: number | string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            /** Format: double */
+            closing: number | string;
+        };
+        DimensionBalances: {
+            /** Format: uuid */
+            companyId: string;
+            dimension: string;
+            currency: string;
+            basis: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: date */
+            from: null | string;
+            accountType: null | string;
+            /** Format: uuid */
+            accountId: null | string;
+            rows: components["schemas"]["DimensionBalanceRow"][];
+            totals: components["schemas"]["TrialBalanceAmounts"];
+        };
+        DimensionRuleRequest: {
+            dimensionCode: string;
+            rule: string;
+            /** Format: uuid */
+            defaultValueId?: null | string;
+        };
+        DimensionRuleSummary: {
+            /** Format: uuid */
+            dimensionId: string;
+            dimensionCode: string;
+            rule: string;
+            /** Format: uuid */
+            defaultValueId: null | string;
         };
         DimensionSetRequest: {
             values: {
@@ -2904,6 +4076,14 @@ export interface components {
             body: string;
             mentions?: null | string[];
         };
+        EntryLinkSummary: {
+            /** Format: uuid */
+            fromEntryId: string;
+            /** Format: uuid */
+            toEntryId: string;
+            relation: string;
+            reason: string;
+        };
         FieldRule: {
             entityType: string;
             field: string;
@@ -2949,6 +4129,23 @@ export interface components {
         };
         ForgotPasswordRequest: {
             email: string;
+        };
+        FromTemplateRequest: {
+            templateCode: string;
+            code: string;
+            name?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId?: null | string;
+            /** @default true */
+            shared: boolean;
+        };
+        GenerateRecurringRequest: {
+            /** Format: date */
+            runDate?: null | string;
+            /** Format: double */
+            baseAmount?: null | number | string;
         };
         /** @description A permission grant with the scopes it applies to (union of all assignments that grant it). */
         Grant: {
@@ -3002,6 +4199,19 @@ export interface components {
             skipped: number | string;
             currencies: string[];
         };
+        ImportRequest: {
+            accounts: components["schemas"]["SaveAccountRequest"][];
+        };
+        ImportResult: {
+            /** Format: int32 */
+            created: number | string;
+            /** Format: int32 */
+            updated: number | string;
+            /** Format: int32 */
+            unchanged: number | string;
+            /** Format: int32 */
+            total: number | string;
+        };
         InviteUserRequest: {
             email: string;
             displayName: null | string;
@@ -3046,7 +4256,229 @@ export interface components {
             /** Format: date-time */
             finishedAt?: null | string;
         };
+        JournalEntrySummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            documentDate: string;
+            /** Format: uuid */
+            fiscalYearId: string;
+            /** Format: uuid */
+            fiscalPeriodId: string;
+            sourceModule: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            sourceDocumentNumber: null | string;
+            description: {
+                [key: string]: string;
+            };
+            isReversal: boolean;
+            isAutoReversal: boolean;
+            /** Format: date */
+            autoReverseOn: null | string;
+            isClosingEntry: boolean;
+            isOpeningEntry: boolean;
+            isManual: boolean;
+            currencyTc: string;
+            currencyFc: string;
+            currencyRc: null | string;
+            rateType: string;
+            /** Format: double */
+            rateTcFc: number | string;
+            /** Format: double */
+            rateFcRc: null | number | string;
+            /** Format: uuid */
+            postingProfileId: null | string;
+            /** Format: int32 */
+            lineCount: number | string;
+            /** Format: uuid */
+            postedBy: null | string;
+            /** Format: date-time */
+            postedAt: string;
+            /** Format: uuid */
+            reversedByEntryId: null | string;
+            /** Format: uuid */
+            reversesEntryId: null | string;
+            /** Format: double */
+            totalDebitTc: number | string;
+            /** Format: double */
+            totalDebitFc: number | string;
+            lines?: null | components["schemas"]["JournalLineSummary"][];
+            links?: null | components["schemas"]["EntryLinkSummary"][];
+        };
+        JournalImportRequest: {
+            journals: components["schemas"]["SaveJournalRequest"][];
+        };
+        JournalImportResult: {
+            /** Format: int32 */
+            created: number | string;
+            journalIds: string[];
+        };
+        JournalLineRequest: {
+            /**
+             * Format: double
+             * @default 0
+             */
+            debit: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            credit: number | string;
+            accountCode?: null | string;
+            /** Format: uuid */
+            accountId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            partnerId?: null | string;
+            subledgerType?: null | string;
+            /** Format: uuid */
+            subledgerRef?: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            description?: null | {
+                [key: string]: string;
+            };
+            /** Format: date */
+            dueDate?: null | string;
+        };
+        JournalLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            accountName: {
+                [key: string]: string;
+            };
+            accountRole: string;
+            /** Format: uuid */
+            postingRuleId: null | string;
+            /** Format: double */
+            debitTc: number | string;
+            /** Format: double */
+            creditTc: number | string;
+            /** Format: double */
+            debitFc: number | string;
+            /** Format: double */
+            creditFc: number | string;
+            /** Format: double */
+            debitRc: number | string;
+            /** Format: double */
+            creditRc: number | string;
+            /** Format: uuid */
+            dimensionSetId: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+            subledgerType: null | string;
+            /** Format: uuid */
+            subledgerRef: null | string;
+            description: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            dueDate: null | string;
+            isRounding: boolean;
+        };
+        JournalLineSummaryView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            accountName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            dimensions: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            partnerId: null | string;
+            subledgerType: null | string;
+            /** Format: uuid */
+            subledgerRef: null | string;
+            /** Format: uuid */
+            taxCodeId: null | string;
+            description: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            dueDate: null | string;
+        };
         JsonElement: unknown;
+        /** @description What a figure drills to: the ledger of the account over the same window with the same dimension filters. */
+        LedgerDrill: {
+            /** Format: uuid */
+            accountId: string;
+            /** Format: date */
+            from: null | string;
+            /** Format: date */
+            to: string;
+            dimensions: {
+                [key: string]: string;
+            };
+        };
+        LedgerItem: {
+            /** Format: uuid */
+            lineId: string;
+            /** Format: uuid */
+            entryId: string;
+            entryNumber: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            documentDate: string;
+            sourceModule: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            sourceDocumentNumber: null | string;
+            sourceLink: null | string;
+            description: {
+                [key: string]: string;
+            };
+            currencyTc: string;
+            /** Format: double */
+            debitTc: number | string;
+            /** Format: double */
+            creditTc: number | string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            /** Format: double */
+            balance: number | string;
+            dimensions: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            branchId: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+            subledgerType: null | string;
+            /** Format: uuid */
+            subledgerRef: null | string;
+            isReversal: boolean;
+            isRounding: boolean;
+        };
         LinkRequest: {
             from: components["schemas"]["DocumentRef"];
             to: components["schemas"]["DocumentRef"];
@@ -3069,6 +4501,79 @@ export interface components {
             refreshToken?: null | string;
             /** @default false */
             allSessions: boolean;
+        };
+        ManualJournalSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            kind: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            documentDate: string;
+            currency: string;
+            rateType: string;
+            /** Format: double */
+            rateOverride: null | number | string;
+            rateOverrideReason: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            description: {
+                [key: string]: string;
+            };
+            reference: null | string;
+            status: string;
+            autoReverse: boolean;
+            /** Format: date */
+            autoReverseOn: null | string;
+            /** Format: uuid */
+            templateId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: double */
+            totalDebit: number | string;
+            /** Format: double */
+            totalCredit: number | string;
+            /** Format: uuid */
+            submittedBy: null | string;
+            /** Format: date-time */
+            submittedAt: null | string;
+            /** Format: uuid */
+            approvedBy: null | string;
+            /** Format: date-time */
+            approvedAt: null | string;
+            rejectionReason: null | string;
+            /** Format: uuid */
+            postedBy: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+            lines?: null | components["schemas"]["JournalLineSummaryView"][];
+            /** Format: uuid */
+            correctsJournalId?: null | string;
+            /** Format: uuid */
+            correctedByJournalId?: null | string;
+            correctionReason?: null | string;
+        };
+        MappingRequest: {
+            accountCode: string;
+            statutoryCode: string;
+        };
+        MappingSummary: {
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            accountName: {
+                [key: string]: string;
+            };
+            statutoryCode: null | string;
+            statutoryName: null | {
+                [key: string]: string;
+            };
         };
         MemberSummary: {
             /** Format: uuid */
@@ -3207,6 +4712,16 @@ export interface components {
             nextCursor: null | string;
         };
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfJournalEntrySummary: {
+            items: components["schemas"]["JournalEntrySummary"][];
+            nextCursor: null | string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfManualJournalSummary: {
+            items: components["schemas"]["ManualJournalSummary"][];
+            nextCursor: null | string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
         PageOfNotificationView: {
             items: components["schemas"]["NotificationView"][];
             nextCursor: null | string;
@@ -3237,6 +4752,239 @@ export interface components {
             /** Format: date-time */
             changedAt: null | string;
             reason: null | string;
+        };
+        PostedLine: {
+            /** Format: uuid */
+            lineId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            accountRole: string;
+            /** Format: uuid */
+            postingRuleId: null | string;
+            /** Format: double */
+            debitTc: number | string;
+            /** Format: double */
+            creditTc: number | string;
+            /** Format: double */
+            debitFc: number | string;
+            /** Format: double */
+            creditFc: number | string;
+            /** Format: double */
+            debitRc: number | string;
+            /** Format: double */
+            creditRc: number | string;
+            /** Format: uuid */
+            dimensionSetId: null | string;
+            subledgerType: null | string;
+            /** Format: uuid */
+            subledgerRef: null | string;
+            isRounding: boolean;
+        };
+        PostingGroupSummary: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            isActive: boolean;
+        };
+        PostingProfileSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            version: number | string;
+            /** Format: date */
+            validFrom: string;
+            status: string;
+            isCurrent: boolean;
+            /** Format: int32 */
+            ruleCount: number | string;
+            unresolvedRoles: string[];
+            /** Format: date-time */
+            updatedAt: string;
+            rules?: null | components["schemas"]["PostingRuleSummary"][];
+        };
+        PostingResult: {
+            /** Format: uuid */
+            entryId: string;
+            number: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: uuid */
+            fiscalYearId: string;
+            /** Format: uuid */
+            fiscalPeriodId: string;
+            currencyTc: string;
+            currencyFc: string;
+            currencyRc: null | string;
+            /** Format: double */
+            rateTcFc: number | string;
+            /** Format: double */
+            rateFcRc: null | number | string;
+            lines: components["schemas"]["PostedLine"][];
+            isReversal: boolean;
+            replayed: boolean;
+        };
+        PostingRuleRequest: {
+            accountRole: string;
+            accountCode: string;
+            documentType?: null | string;
+            /** Format: uuid */
+            itemPostingGroupId?: null | string;
+            /** Format: uuid */
+            partnerPostingGroupId?: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            /** Format: uuid */
+            bankAccountId?: null | string;
+            /** Format: uuid */
+            assetCategoryId?: null | string;
+            /** Format: uuid */
+            chargeTypeId?: null | string;
+        };
+        PostingRuleSummary: {
+            /** Format: uuid */
+            id: string;
+            accountRole: string;
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            documentType: null | string;
+            /** Format: uuid */
+            itemPostingGroupId: null | string;
+            /** Format: uuid */
+            partnerPostingGroupId: null | string;
+            /** Format: uuid */
+            taxCodeId: null | string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            /** Format: uuid */
+            bankAccountId: null | string;
+            /** Format: uuid */
+            assetCategoryId: null | string;
+            /** Format: uuid */
+            chargeTypeId: null | string;
+            /** Format: int32 */
+            specificity: number | string;
+        };
+        /** @description One allow-posting window: for everyone when RoleId is null, else for that role; at least one bound. */
+        PostingWindowRequest: {
+            /** Format: uuid */
+            roleId: null | string;
+            /** Format: date */
+            allowFrom: null | string;
+            /** Format: date */
+            allowTo: null | string;
+            reason?: null | string;
+        };
+        PostingWindowSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            roleId: null | string;
+            /** Format: date */
+            allowFrom: null | string;
+            /** Format: date */
+            allowTo: null | string;
+            reason: null | string;
+            /** Format: uuid */
+            changedBy: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PostJournalRequest: {
+            /** Format: uuid */
+            companyId: string;
+            sourceModule: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            /** Format: date */
+            postingDate: string;
+            currency: string;
+            lines: components["schemas"]["PostLineRequest"][];
+            sourceDocumentNumber?: null | string;
+            /** Format: date */
+            documentDate?: null | string;
+            description?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            branchId?: null | string;
+            /** @default spot */
+            rateType: string;
+            /** Format: double */
+            rateOverride?: null | number | string;
+            rateOverrideReason?: null | string;
+            idempotencyKey?: null | string;
+            /** @default false */
+            isManual: boolean;
+            /** @default false */
+            isOpeningEntry: boolean;
+            /** @default false */
+            isClosingEntry: boolean;
+            /** Format: date */
+            autoReverseOn?: null | string;
+        };
+        PostLineRequest: {
+            accountRole: string;
+            /** Format: double */
+            amount: number | string;
+            documentType?: null | string;
+            /** Format: uuid */
+            itemPostingGroupId?: null | string;
+            /** Format: uuid */
+            partnerPostingGroupId?: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            /** Format: uuid */
+            bankAccountId?: null | string;
+            /** Format: uuid */
+            assetCategoryId?: null | string;
+            /** Format: uuid */
+            chargeTypeId?: null | string;
+            /** Format: uuid */
+            accountId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            partnerId?: null | string;
+            subledgerType?: null | string;
+            /** Format: uuid */
+            subledgerRef?: null | string;
+            /** Format: double */
+            taxBase?: null | number | string;
+            description?: null | {
+                [key: string]: string;
+            };
+            /** Format: date */
+            dueDate?: null | string;
         };
         PreferenceInput: {
             kind: string;
@@ -3304,6 +5052,14 @@ export interface components {
             /** Format: int32 */
             marked: number | string;
         };
+        RebuildResult: {
+            /** Format: uuid */
+            companyId: null | string;
+            /** Format: int32 */
+            rowsBefore: number | string;
+            /** Format: int32 */
+            rowsAfter: number | string;
+        };
         /** @description Record scopes attached to a principal's grants; an empty set for a scope type means "all". */
         RecordScopes: {
             companyIds: string[];
@@ -3313,8 +5069,62 @@ export interface components {
         RecoveryCodesResponse: {
             codes: string[];
         };
+        /** @description A template line: amounts in fixed mode, percentages of the base amount in percentage mode (debit or credit side), accounts only in variable mode. */
+        RecurringLineRequest: {
+            accountCode: string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            debit: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            credit: number | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+            description?: null | {
+                [key: string]: string;
+            };
+        };
+        RecurringTemplateSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            cron: string;
+            timeZone: string;
+            /** Format: date */
+            nextRunOn: null | string;
+            /** Format: date */
+            endsOn: null | string;
+            amountMode: string;
+            /** Format: double */
+            baseAmount: null | number | string;
+            currency: string;
+            lines: components["schemas"]["RecurringLineRequest"][];
+            description: {
+                [key: string]: string;
+            };
+            requiresReview: boolean;
+            autoReverse: boolean;
+            isActive: boolean;
+            /** Format: date */
+            lastGeneratedOn: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         RefreshRequest: {
             refreshToken: string;
+        };
+        RejectJournalRequest: {
+            reason: string;
         };
         ReopenPeriodRequest: {
             /** Format: uuid */
@@ -3327,6 +5137,11 @@ export interface components {
         ResetPasswordRequest: {
             token: string;
             password: string;
+        };
+        ReverseRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
         };
         RoleSummary: {
             /** Format: uuid */
@@ -3342,6 +5157,55 @@ export interface components {
             grants: string[];
             fieldRules: components["schemas"]["FieldRule"][];
             documentTypeRules: components["schemas"]["DocumentTypeRule"][];
+        };
+        /** @description One item the routine handled: what it targeted, what it produced, or why it waited. */
+        RoutineOutcome: {
+            /** Format: uuid */
+            targetId: string;
+            outcome: string;
+            /** Format: uuid */
+            producedId: null | string;
+            producedNumber: null | string;
+            problem: null | string;
+        };
+        /** @description What one run of the daily routines did for a company (or a tenant when Guid? RoutineRunResult.CompanyId is null). */
+        RoutineRunResult: {
+            /** Format: uuid */
+            companyId: null | string;
+            /** Format: date */
+            asOf: string;
+            autoReversals: components["schemas"]["RoutineOutcome"][];
+            recurringJournals: components["schemas"]["RoutineOutcome"][];
+            deferralPostings: components["schemas"]["RoutineOutcome"][];
+        };
+        SaveAccountRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            type: string;
+            parentCode?: null | string;
+            /** Format: uuid */
+            parentId?: null | string;
+            /** @default  */
+            subtype: string;
+            categoryCode?: null | string;
+            /** @default false */
+            isHeader: boolean;
+            /** @default false */
+            isControl: boolean;
+            subledgerType?: null | string;
+            currencyRestriction?: null | string;
+            /** @default true */
+            allowManualPosting: boolean;
+            /** @default false */
+            revalueFx: boolean;
+            cashFlowCategory?: null | string;
+            defaultRole?: null | string;
+            /** Format: uuid */
+            companyId?: null | string;
+            /** @default true */
+            isActive: boolean;
         };
         SaveBranchRequest: {
             code: string;
@@ -3363,6 +5227,29 @@ export interface components {
                 [key: string]: string;
             };
             workingDays: (number | string)[];
+        };
+        SaveCategoryRequest: {
+            name: {
+                [key: string]: string;
+            };
+            statement: string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            sortOrder: number | string;
+        };
+        SaveChartRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** @default  */
+            accountCodeFormat: string;
+            /** Format: uuid */
+            companyId?: null | string;
+            /** @default true */
+            isActive: boolean;
         };
         SaveCompanyRequest: {
             code: string;
@@ -3429,6 +5316,29 @@ export interface components {
             description?: null | {
                 [key: string]: string;
             };
+        };
+        SaveDeferralRequest: {
+            kind: string;
+            balanceAccountCode: string;
+            targetAccountCode: string;
+            /** Format: date */
+            startsOn: string;
+            /** Format: int32 */
+            periods: number | string;
+            /** Format: double */
+            totalAmount: number | string;
+            currency: string;
+            /** @default straight_line */
+            method: string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+            description?: null | {
+                [key: string]: string;
+            };
+            sourceDocumentType?: null | string;
+            /** Format: uuid */
+            sourceLineId?: null | string;
         };
         SaveDimensionRequest: {
             code: string;
@@ -3501,6 +5411,50 @@ export interface components {
                 [key: string]: string;
             };
         };
+        SaveJournalRequest: {
+            /** Format: date */
+            postingDate: string;
+            currency: string;
+            lines: components["schemas"]["JournalLineRequest"][];
+            /** @default manual */
+            kind: string;
+            /** Format: date */
+            documentDate?: null | string;
+            description?: null | {
+                [key: string]: string;
+            };
+            reference?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            /** @default spot */
+            rateType: string;
+            /** Format: double */
+            rateOverride?: null | number | string;
+            rateOverrideReason?: null | string;
+            /** @default false */
+            autoReverse: boolean;
+            /** Format: date */
+            autoReverseOn?: null | string;
+            customFields?: unknown;
+        };
+        SavePostingGroupRequest: {
+            kind: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** @default true */
+            isActive: boolean;
+        };
+        SavePostingProfileRequest: {
+            /** @default DEFAULT */
+            code: string;
+            name?: null | {
+                [key: string]: string;
+            };
+            /** Format: date */
+            validFrom?: null | string;
+        };
         SaveRateRequest: {
             rateType: string;
             fromCurrency: string;
@@ -3516,6 +5470,32 @@ export interface components {
             name: {
                 [key: string]: string;
             };
+        };
+        SaveRecurringTemplateRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            cron: string;
+            currency: string;
+            lines: components["schemas"]["RecurringLineRequest"][];
+            /** @default fixed */
+            amountMode: string;
+            /** Format: double */
+            baseAmount?: null | number | string;
+            /** Format: date */
+            startsOn?: null | string;
+            /** Format: date */
+            endsOn?: null | string;
+            description?: null | {
+                [key: string]: string;
+            };
+            /** @default true */
+            requiresReview: boolean;
+            /** @default false */
+            autoReverse: boolean;
+            /** @default true */
+            isActive: boolean;
         };
         SaveRoleRequest: {
             code: string;
@@ -3816,9 +5796,38 @@ export interface components {
         SsoExchangeRequest: {
             code: string;
         };
+        StatutoryAccount: {
+            code: string;
+            /** Format: int32 */
+            level: number | string;
+            name: {
+                [key: string]: string;
+            };
+        };
+        StatutoryChartSummary: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            notes: string;
+            accounts: components["schemas"]["StatutoryAccount"][];
+        };
         StepUpRequest: {
             password?: null | string;
             code?: null | string;
+        };
+        TemplateSummary: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            accounts: number | string;
+            roles: string[];
+            statutoryChartCode: null | string;
         };
         /** @description Security policy a tenant admin controls (stored in control.tenants.settings). */
         TenantSecurityPolicy: {
@@ -3894,6 +5903,65 @@ export interface components {
             methodId: string;
             secret: string;
             provisioningUri: string;
+        };
+        TrialBalance: {
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            basis: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: date */
+            from: null | string;
+            /** Format: date */
+            compareAsOf: null | string;
+            /** Format: date */
+            compareFrom: null | string;
+            groupBy: null | string;
+            filters: {
+                [key: string]: string;
+            };
+            includeClosing: boolean;
+            rows: components["schemas"]["TrialBalanceRow"][];
+            totals: components["schemas"]["TrialBalanceAmounts"];
+            compareTotals: null | components["schemas"]["TrialBalanceAmounts"];
+            balanced: boolean;
+        };
+        TrialBalanceAmounts: {
+            /** Format: double */
+            opening: number | string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            /** Format: double */
+            closing: number | string;
+        };
+        TrialBalanceRow: {
+            /** Format: uuid */
+            accountId: string;
+            accountCode: string;
+            accountName: {
+                [key: string]: string;
+            };
+            accountType: string;
+            isControl: boolean;
+            /** Format: uuid */
+            dimensionValueId: null | string;
+            dimensionValueCode: null | string;
+            dimensionValueName: null | {
+                [key: string]: string;
+            };
+            /** Format: double */
+            opening: number | string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            /** Format: double */
+            closing: number | string;
+            compare: null | components["schemas"]["TrialBalanceAmounts"];
+            drill: components["schemas"]["LedgerDrill"];
         };
         UnreadCount: {
             /** Format: int32 */
@@ -5865,6 +7933,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getOrganizationCompaniesByCompanyIdPostingWindows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingWindowSummary"][];
+                };
+            };
+        };
+    };
+    putOrganizationCompaniesByCompanyIdPostingWindows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostingWindowRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingWindowSummary"][];
+                };
             };
         };
     };
@@ -8223,6 +10339,1589 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getAccountingChartTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateSummary"][];
+                };
+            };
+        };
+    };
+    getAccountingAccountCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySummary"][];
+                };
+            };
+        };
+    };
+    putAccountingAccountCategoriesByCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySummary"];
+                };
+            };
+        };
+    };
+    getAccountingStatutoryCharts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatutoryChartSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingPostings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingResult"];
+                };
+            };
+        };
+    };
+    postAccountingRoutinesRun: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutineRunResult"];
+                };
+            };
+        };
+    };
+    getAccountingCharts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingCharts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveChartRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartSummary"];
+                };
+            };
+        };
+    };
+    postAccountingChartsFromTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FromTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartSummary"];
+                };
+            };
+        };
+    };
+    getAccountingChartsByChartId: {
+        parameters: {
+            query?: {
+                expand?: string;
+            };
+            header?: never;
+            path: {
+                chartId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartSummary"];
+                };
+            };
+        };
+    };
+    putAccountingChartsByChartId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chartId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveChartRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChartSummary"];
+                };
+            };
+        };
+    };
+    getAccountingChartsByChartIdAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chartId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingChartsByChartIdAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chartId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSummary"];
+                };
+            };
+        };
+    };
+    getAccountingChartsByChartIdExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chartId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postAccountingChartsByChartIdImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chartId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequest"];
+                "text/csv": components["schemas"]["ImportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+        };
+    };
+    getAccountingChartsByChartIdMappingsByStatutoryChartCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chartId: string;
+                statutoryChartCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MappingSummary"][];
+                };
+            };
+        };
+    };
+    putAccountingChartsByChartIdMappingsByStatutoryChartCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chartId: string;
+                statutoryChartCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MappingRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MappingSummary"][];
+                };
+            };
+        };
+    };
+    getAccountingAccountsByAccountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSummary"];
+                };
+            };
+        };
+    };
+    putAccountingAccountsByAccountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSummary"];
+                };
+            };
+        };
+    };
+    getAccountingAccountsByAccountIdDimensionRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DimensionRuleSummary"][];
+                };
+            };
+        };
+    };
+    putAccountingAccountsByAccountIdDimensionRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DimensionRuleRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DimensionRuleSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingAccountsByAccountIdCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckLineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckLineResult"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyAccountingSettings"];
+                };
+            };
+        };
+    };
+    putAccountingCompaniesByCompanyIdChart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignChartRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyAccountingSettings"];
+                };
+            };
+        };
+    };
+    getAccountingPostingGroups: {
+        parameters: {
+            query?: {
+                kind?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingGroupSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingPostingGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePostingGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingGroupSummary"];
+                };
+            };
+        };
+    };
+    putAccountingPostingGroupsByGroupId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePostingGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingGroupSummary"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdPostingProfiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingProfileSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdPostingProfiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePostingProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingProfileSummary"];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdPostingProfilesFromChart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["SavePostingProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingProfileSummary"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdJournalEntries: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                sourceDocumentType?: string;
+                number?: string;
+                accountId?: string;
+                isManual?: boolean;
+                minAmount?: number | string;
+                text?: string;
+                limit?: number | string;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageOfJournalEntrySummary"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdBalances: {
+        parameters: {
+            query?: {
+                periodId?: string;
+                accountId?: string;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceRow"][];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdBalancesVerify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceVerification"];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdBalancesRebuild: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RebuildResult"];
+                };
+            };
+        };
+    };
+    getAccountingPostingProfilesByProfileId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingProfileSummary"];
+                };
+            };
+        };
+    };
+    putAccountingPostingProfilesByProfileIdRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostingRuleRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingProfileSummary"];
+                };
+            };
+        };
+    };
+    postAccountingPostingProfilesByProfileIdActivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profileId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingProfileSummary"];
+                };
+            };
+        };
+    };
+    getAccountingJournalEntriesByEntryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntrySummary"];
+                };
+            };
+        };
+    };
+    postAccountingJournalEntriesByEntryIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostingResult"];
+                };
+            };
+        };
+    };
+    postAccountingJournalEntriesByEntryIdCorrect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectEntryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionResult"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdJournals: {
+        parameters: {
+            query?: {
+                status?: string;
+                from?: string;
+                to?: string;
+                limit?: number | string;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageOfManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdJournals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdJournalsImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JournalImportRequest"];
+                "text/csv": components["schemas"]["JournalImportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalImportResult"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdRecurringTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringTemplateSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdRecurringTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRecurringTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringTemplateSummary"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdDeferrals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeferralScheduleSummary"][];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdDeferrals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDeferralRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeferralScheduleSummary"];
+                };
+            };
+        };
+    };
+    postAccountingCompaniesByCompanyIdDeferralsPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDeferralRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeferralPreview"];
+                };
+            };
+        };
+    };
+    getAccountingJournalsByJournalId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    putAccountingJournalsByJournalId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingJournalsByJournalIdSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingJournalsByJournalIdApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingJournalsByJournalIdReject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingJournalsByJournalIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingJournalsByJournalIdCorrect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectJournalRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    postAccountingJournalsByJournalIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                journalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    getAccountingRecurringTemplatesByTemplateId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringTemplateSummary"];
+                };
+            };
+        };
+    };
+    putAccountingRecurringTemplatesByTemplateId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRecurringTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringTemplateSummary"];
+                };
+            };
+        };
+    };
+    postAccountingRecurringTemplatesByTemplateIdGenerate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["GenerateRecurringRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualJournalSummary"];
+                };
+            };
+        };
+    };
+    getAccountingDeferralsByScheduleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeferralScheduleSummary"];
+                };
+            };
+        };
+    };
+    postAccountingDeferralsByScheduleIdPostDue: {
+        parameters: {
+            query?: {
+                asOf?: string;
+            };
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutineOutcome"][];
+                };
+            };
+        };
+    };
+    postAccountingDeferralsByScheduleIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeferralScheduleSummary"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdReportsTrialBalance: {
+        parameters: {
+            query?: {
+                asOf?: string;
+                from?: string;
+                compareAsOf?: string;
+                basis?: string;
+                groupBy?: string;
+                includeClosing?: boolean;
+                format?: string;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialBalance"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdReportsLedger: {
+        parameters: {
+            query?: {
+                accountId?: string;
+                accountCode?: string;
+                from?: string;
+                to?: string;
+                basis?: string;
+                includeClosing?: boolean;
+                limit?: number | string;
+                cursor?: string;
+                format?: string;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountLedger"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdReportsDimensionBalances: {
+        parameters: {
+            query: {
+                dimension: string;
+                asOf?: string;
+                from?: string;
+                accountType?: string;
+                accountId?: string;
+                basis?: string;
+                includeClosing?: boolean;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DimensionBalances"];
+                };
             };
         };
     };

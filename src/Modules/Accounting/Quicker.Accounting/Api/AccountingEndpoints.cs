@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Quicker.Accounting.Application;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
+using Quicker.Organization.Contracts;
 using Quicker.Web;
 
 namespace Quicker.Accounting.Api;
@@ -27,10 +29,23 @@ public static class AccountingEndpoints
             ApiProblems.Created(await service.CreateChartAsync(request, ct), static c => $"/api/v1/accounting/charts/{c.Id}"))
             .RequirePermission(AccountingPermissions.ChartManage)
             .WithSummary("An empty chart (accounts are added one by one or imported); accountCodeFormat uses # digit, A letter, ? either");
-        charts.MapPost("/from-template", async (FromTemplateRequest request, ChartService service, CancellationToken ct) =>
-            ApiProblems.Created(await service.CreateFromTemplateAsync(request, ct), static c => $"/api/v1/accounting/charts/{c.Id}"))
+        charts.MapPost("/from-template", async Task<Results<Created<ChartSummary>, ProblemHttpResult>> (FromTemplateRequest request, ChartService service, ProfileService profiles, ICompanyDirectory companies, CancellationToken ct) =>
+        {
+            var created = await service.CreateFromTemplateAsync(request, ct);
+            if (created.IsSuccess && request.CompanyId is { } companyId && await companies.FindAsync(new CompanyId(companyId), ct) is { PostingProfileId: null })
+            {
+                // The template's promise is posting on day one: a company without a profile gets its first one from the chart's default accounts.
+                var profile = await profiles.CreateFromChartAsync(companyId, null, ct);
+                if (profile.IsFailure)
+                {
+                    return ApiProblems.From(profile.Error!);
+                }
+            }
+
+            return ApiProblems.Created(created, static c => $"/api/v1/accounting/charts/{c.Id}");
+        })
             .RequirePermission(AccountingPermissions.ChartManage)
-            .WithSummary("A complete chart from a template, optionally assigned to a company so it can post on day one");
+            .WithSummary("A complete chart from a template, optionally assigned to a company (which then also gets its first posting profile from the chart's default accounts) so it can post on day one");
         charts.MapGet("/{chartId:guid}", async (Guid chartId, string? expand, ChartService service, CancellationToken ct) =>
             ApiProblems.Found(await service.GetChartAsync(chartId, expand, ct), "chart", chartId))
             .RequirePermission(AccountingPermissions.ChartRead)

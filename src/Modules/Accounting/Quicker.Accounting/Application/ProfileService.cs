@@ -345,7 +345,11 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         return (await GetProfileAsync(profile.Id, cancellationToken))!;
     }
 
-    /// <summary>The rules the engine resolves against for a company on a date: the company's current profile when it is active and effective, else the latest effective active one.</summary>
+    /// <summary>
+    /// The rules the engine resolves against for a company on a date: the company's current profile when it is active
+    /// and effective on the date, else the latest version (active or since retired, never a draft) effective on the
+    /// date, so a back-dated entry posts with the rules that governed its date after a newer version took over.
+    /// </summary>
     public async Task<Result<(Guid ProfileId, IReadOnlyList<RuleCandidate> Rules)>> ActiveRulesAsync(CompanyInfo company, DateOnly date, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(company);
@@ -356,7 +360,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         }
 
         profile ??= await db.Set<PostingProfile>().Include(static p => p.Rules)
-            .Where(p => p.CompanyId == company.Id.Value && p.Status == "active" && p.ValidFrom <= date)
+            .Where(p => p.CompanyId == company.Id.Value && p.Status != "draft" && p.ValidFrom <= date)
             .OrderByDescending(static p => p.ValidFrom).ThenByDescending(static p => p.Version)
             .FirstOrDefaultAsync(cancellationToken);
         if (profile is null)

@@ -13,6 +13,12 @@ import { RatesPage } from "./RatesPage";
 import { RolesPage } from "./RolesPage";
 import { SignupPage } from "./SignupPage";
 import { WebhooksPage } from "./WebhooksPage";
+import { ChartPage } from "./accounting/ChartPage";
+import { JournalBrowserPage } from "./accounting/JournalBrowserPage";
+import { JournalsPage } from "./accounting/JournalsPage";
+import { LedgerPage } from "./accounting/LedgerPage";
+import { PeriodsPage } from "./accounting/PeriodsPage";
+import { TrialBalancePage } from "./accounting/TrialBalancePage";
 
 /** Typed routes (ADR-0013): anonymous auth screens, and the shell whose children require a session. */
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
@@ -44,11 +50,17 @@ const notificationsRoute = createRoute({ getParentRoute: () => shellRoute, path:
 const auditRoute = createRoute({ getParentRoute: () => shellRoute, path: "/audit", component: AuditPage });
 const jobsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/jobs", component: JobsPage });
 const webhooksRoute = createRoute({ getParentRoute: () => shellRoute, path: "/webhooks", component: WebhooksPage });
+const chartRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/chart", component: ChartPage });
+const journalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/journals", component: JournalsPage, validateSearch: searchRecord });
+const trialBalanceRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/trial-balance", component: TrialBalancePage });
+const ledgerRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/ledger", component: LedgerPage, validateSearch: searchRecord });
+const journalEntriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/journal-entries", component: JournalBrowserPage, validateSearch: searchRecord });
+const periodsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/periods", component: PeriodsPage });
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
-  shellRoute.addChildren([dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute]),
+  shellRoute.addChildren([dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute, chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
