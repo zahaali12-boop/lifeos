@@ -42,18 +42,22 @@ public sealed class WorkerLoopTests(ApiHostFixture host)
                 jobId = await sp.GetRequiredService<IJobQueue>().EnqueueAsync(new JobRequest("test.effect", new EffectPayload("woken")));
             });
 
+            // Handlers commit their own units of work before the dispatcher commits the claim that marks the batch
+            // published, so wait for both signs of life rather than reading the outbox the instant the effects appear.
             var deadline = DateTime.UtcNow.AddSeconds(15);
             Dictionary<string, int> effects;
+            long unpublished;
             do
             {
                 await Task.Delay(100);
                 effects = await Effects.ReadAsync(Api, ws.TenantId, "test.");
+                unpublished = await TenantWork.QueryOwnerAsync<long>(Api, "SELECT count(*) FROM ops.outbox_messages WHERE tenant_id = @t AND published_at IS NULL", new { t = ws.TenantId });
             }
-            while (effects.Count < 2 && DateTime.UtcNow < deadline);
+            while ((effects.Count < 2 || unpublished > 0) && DateTime.UtcNow < deadline);
 
             effects.Count.ShouldBe(2, "both loops were woken by NOTIFY (poll interval is 10 minutes)");
             (await TenantWork.QueryOwnerAsync<string>(Api, "SELECT state FROM ops.jobs WHERE id = @id", new { id = jobId })).ShouldBe("succeeded");
-            (await TenantWork.QueryOwnerAsync<long>(Api, "SELECT count(*) FROM ops.outbox_messages WHERE tenant_id = @t AND published_at IS NULL", new { t = ws.TenantId })).ShouldBe(0);
+            unpublished.ShouldBe(0);
         }
         finally
         {

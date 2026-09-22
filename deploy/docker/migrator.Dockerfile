@@ -5,7 +5,8 @@ COPY src ./src
 COPY db ./db
 RUN dotnet publish src/Host/Quicker.Migrator/Quicker.Migrator.csproj -c Release -o /out
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0
+# The demo seeder composes the modules (ASP.NET Core services), so the runtime image is the aspnet one.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /out .
 ENTRYPOINT ["dotnet", "Quicker.Migrator.dll", "all"]

@@ -15,8 +15,10 @@ public static class RoleTemplates
     [
         new("owner", LocalizedText.Bilingual("Owner", "المالك"), "Full access, including tenant settings and billing", ["*"]),
         new("admin", LocalizedText.Bilingual("Administrator", "مدير النظام"), "Full access to configuration and all modules", ["*"]),
-        new("accountant", LocalizedText.Bilingual("Accountant", "محاسب"), "General ledger, periods, finance and reporting",
-            ["accounting.*", "finance.*", "tax.*", "reporting.*", "organization.company.read", "identity.user.read"]),
+        // Reopening a closed period is a controller's decision, kept apart from posting (default SoD rule), so the
+        // template names the accounting areas instead of "accounting.*": a default role must be assignable on its own.
+        new("accountant", LocalizedText.Bilingual("Accountant", "محاسب"), "General ledger, period close, finance and reporting",
+            ["accounting.journal.*", "accounting.ledger.*", "accounting.chart.*", "accounting.dimension.*", "accounting.period.manage", "accounting.period.post_in_soft_closed", "finance.*", "tax.*", "reporting.*", "organization.company.read", "identity.user.read"]),
         new("ar_clerk", LocalizedText.Bilingual("Receivables clerk", "موظف الذمم المدينة"), "Customer invoices, receipts, statements and dunning",
             ["sales.invoice.*", "receivables.*", "partners.customer.read", "reporting.report.run"]),
         new("ap_clerk", LocalizedText.Bilingual("Payables clerk", "موظف الذمم الدائنة"), "Supplier invoices, matching and payments",

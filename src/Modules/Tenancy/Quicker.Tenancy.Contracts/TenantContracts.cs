@@ -42,7 +42,8 @@ public interface ITenantDirectory
     Task BumpPermissionsEpochAsync(TenantId id, CancellationToken cancellationToken = default);
 }
 
-public sealed record ProvisionTenantRequest(string Slug, string Name, string DefaultLanguage, string Region = "me", string Tier = "shared");
+/// <summary>A new tenant. <paramref name="Id"/> is given only by seeders that need a stable identifier; sign-up leaves it empty.</summary>
+public sealed record ProvisionTenantRequest(string Slug, string Name, string DefaultLanguage, string Region = "me", string Tier = "shared", Guid? Id = null);
 
 /// <summary>
 /// Module hook run once for every new tenant, inside the sign-up unit of work after the tenant session is switched,

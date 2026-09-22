@@ -1,62 +1,98 @@
+using System.Globalization;
 using DbUp.Engine.Output;
 using Microsoft.Extensions.Configuration;
-using Quicker.Migrator;
+using Npgsql;
+using Quicker.Migrator.Demo;
 
-// Usage: quicker-migrate [migrate|seed|status|all]  (default: all)
-// Configuration: QUICKER__DB__OWNERCONNECTION, QUICKER__DB__APPPASSWORD (env) or appsettings.json.
-var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true)
-    .AddEnvironmentVariables()
-    .Build();
+namespace Quicker.Migrator;
 
-var ownerConnection = configuration["QUICKER:DB:OWNERCONNECTION"] ?? configuration["Quicker:Db:OwnerConnection"]
-    ?? "Host=localhost;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker";
-var appPassword = configuration["QUICKER:DB:APPPASSWORD"] ?? configuration["Quicker:Db:AppPassword"] ?? "quicker";
-var command = args.Length > 0 ? args[0].ToLowerInvariant() : "all";
-
-var log = new ConsoleUpgradeLog();
-var migrator = new MigrationRunner(ownerConnection, log);
-
-switch (command)
+/// <summary>
+/// Usage: quicker-migrate [migrate|seed|demo|status|all]  (default: all)
+///   migrate  create roles and database, apply versioned and repeatable scripts
+///   seed     apply the reference-data seeds (idempotent)
+///   demo     migrate, seed, then rebuild the demo tenant from scratch (ADR-0029)
+///   all      migrate, seed, and create the demo tenant only when it is missing
+/// Configuration: QUICKER__DB__OWNERCONNECTION, QUICKER__DB__APPPASSWORD, QUICKER__DB__APPCONNECTION (env) or appsettings.json.
+/// (A named entry point rather than top-level statements: test support references this host next to the API host.)
+/// </summary>
+internal static class MigratorProgram
 {
-    case "status":
-        foreach (var script in migrator.PendingScripts())
-        {
-            Console.WriteLine($"pending: {script}");
-        }
-
-        return 0;
-
-    case "migrate":
-        await migrator.EnsureDatabaseAndRolesAsync(appPassword);
-        return Report(migrator.Migrate());
-
-    case "seed":
-        return Report(migrator.Seed());
-
-    case "all":
-        await migrator.EnsureDatabaseAndRolesAsync(appPassword);
-        var migrated = migrator.Migrate();
-        if (!migrated.Successful)
-        {
-            return Report(migrated);
-        }
-
-        return Report(migrator.Seed());
-
-    default:
-        Console.Error.WriteLine($"Unknown command '{command}'. Use migrate, seed, status or all.");
-        return 2;
-}
-
-static int Report(DbUp.Engine.DatabaseUpgradeResult result)
-{
-    if (result.Successful)
+    private static async Task<int> Main(string[] args)
     {
-        Console.WriteLine($"OK: {result.Scripts.Count()} script(s) executed.");
-        return 0;
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        var ownerConnection = configuration["QUICKER:DB:OWNERCONNECTION"] ?? configuration["Quicker:Db:OwnerConnection"]
+            ?? "Host=localhost;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker";
+        var appPassword = configuration["QUICKER:DB:APPPASSWORD"] ?? configuration["Quicker:Db:AppPassword"] ?? "quicker";
+        var appConnection = configuration["QUICKER:DB:APPCONNECTION"] ?? configuration["Quicker:Db:AppConnection"]
+            ?? new NpgsqlConnectionStringBuilder(ownerConnection) { Username = "quicker_app", Password = appPassword }.ConnectionString;
+        var command = args.Length > 0 ? args[0].ToLowerInvariant() : "all";
+
+        var log = new ConsoleUpgradeLog();
+        var migrator = new MigrationRunner(ownerConnection, log);
+
+        switch (command)
+        {
+            case "status":
+                foreach (var script in migrator.PendingScripts())
+                {
+                    Console.WriteLine($"pending: {script}");
+                }
+
+                return 0;
+
+            case "migrate":
+                await migrator.EnsureDatabaseAndRolesAsync(appPassword);
+                return Report(migrator.Migrate());
+
+            case "seed":
+                return Report(migrator.Seed());
+
+            case "all":
+            case "demo":
+                await migrator.EnsureDatabaseAndRolesAsync(appPassword);
+                var migrated = migrator.Migrate();
+                if (!migrated.Successful)
+                {
+                    return Report(migrated);
+                }
+
+                var seeded = migrator.Seed();
+                if (!seeded.Successful)
+                {
+                    return Report(seeded);
+                }
+
+                Report(seeded);
+                return ReportDemo(await DemoSeeder.SeedAsync(ownerConnection, appConnection, reseed: command == "demo"));
+
+            default:
+                Console.Error.WriteLine($"Unknown command '{command}'. Use migrate, seed, demo, status or all.");
+                return 2;
+        }
     }
 
-    Console.Error.WriteLine($"FAILED at {result.ErrorScript?.Name}: {result.Error}");
-    return 1;
+    private static int Report(DbUp.Engine.DatabaseUpgradeResult result)
+    {
+        if (result.Successful)
+        {
+            Console.WriteLine($"OK: {result.Scripts.Count()} script(s) executed.");
+            return 0;
+        }
+
+        Console.Error.WriteLine($"FAILED at {result.ErrorScript?.Name}: {result.Error}");
+        return 1;
+    }
+
+    private static int ReportDemo(DemoSeedResult result)
+    {
+        Console.WriteLine(result.Created
+            ? $"Demo tenant '{DemoData.Slug}' seeded in {result.Elapsed.ToString(@"s\.f", CultureInfo.InvariantCulture)} s: {result.Companies} companies, {result.Branches} branches, {result.Users} users, {result.Rates} exchange rates."
+            : $"Demo tenant '{DemoData.Slug}' already exists; run the 'demo' command to rebuild it.");
+        Console.WriteLine($"Sign in as {DemoData.Owner.Email} with password {DemoData.Password} (every demo user shares it).");
+        return 0;
+    }
 }

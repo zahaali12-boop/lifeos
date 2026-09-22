@@ -90,7 +90,7 @@ public sealed partial class TenantDirectory(IUnitOfWorkAccessor unitOfWork) : IT
             return Error.Conflict("tenant.slug_taken", $"'{slug}' is already in use.");
         }
 
-        var id = TenantId.New();
+        var id = request.Id is { } fixedId ? new TenantId(fixedId) : TenantId.New();
         await uow.Connection.ExecuteAsync(new CommandDefinition("""
             INSERT INTO control.tenants (id, slug, name, tier, region, status, default_language, settings)
             VALUES (@id, @slug, @name, @tier, @region, 'provisioning', @language, @settings::jsonb)
