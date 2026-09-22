@@ -12,6 +12,8 @@ using Quicker.Integration;
 using Quicker.Integration.Api;
 using Quicker.Integrity;
 using Quicker.Integrity.Api;
+using Quicker.Items;
+using Quicker.Items.Api;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
 using Quicker.Messaging;
@@ -67,6 +69,7 @@ builder.Services.AddIntegrationModule();
 builder.Services.AddCollaborationModule();
 builder.Services.AddAccountingModule();
 builder.Services.AddIntegrityModule();
+builder.Services.AddItemsModule();
 
 var app = builder.Build();
 
@@ -95,6 +98,7 @@ api.MapIntegrationEndpoints();
 api.MapCollaborationEndpoints();
 api.MapAccountingEndpoints();
 api.MapIntegrityEndpoints();
+api.MapItemsEndpoints();
 
 app.Run();
 

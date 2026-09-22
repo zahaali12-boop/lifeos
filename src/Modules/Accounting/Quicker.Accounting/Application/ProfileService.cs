@@ -17,11 +17,24 @@ namespace Quicker.Accounting.Application;
 /// template chart seeds a complete default profile so a new company posts on day one; the coverage list names
 /// the roles still unresolved.
 /// </summary>
-public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory companies, IAuditSink audit, IClock clock)
+public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory companies, IAuditSink audit, IClock clock) : IPostingGroupDirectory
 {
     private static readonly string[] Kinds = ["item", "partner_customer", "partner_supplier", "bank", "asset", "tax", "charge"];
 
     // ------------------------------------------------------------------ groups
+
+    public async Task<PostingGroupInfo?> FindAsync(Guid groupId, CancellationToken cancellationToken = default)
+    {
+        var group = await db.Set<PostingGroup>().SingleOrDefaultAsync(g => g.Id == groupId, cancellationToken);
+        return group is null ? null : new PostingGroupInfo(group.Id, group.Kind, group.Code, group.Name, group.IsActive);
+    }
+
+    async Task<IReadOnlyList<PostingGroupInfo>> IPostingGroupDirectory.ListAsync(string kind, CancellationToken cancellationToken)
+    {
+        var normalized = kind?.Trim().ToLowerInvariant() ?? string.Empty;
+        return await db.Set<PostingGroup>().Where(g => g.Kind == normalized).OrderBy(static g => g.Code)
+            .Select(static g => new PostingGroupInfo(g.Id, g.Kind, g.Code, g.Name, g.IsActive)).ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyList<PostingGroupSummary>> ListGroupsAsync(string? kind, CancellationToken cancellationToken)
     {

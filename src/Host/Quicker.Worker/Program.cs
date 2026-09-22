@@ -5,6 +5,7 @@ using Quicker.Collaboration;
 using Quicker.Identity;
 using Quicker.Integration;
 using Quicker.Integrity;
+using Quicker.Items;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
 using Quicker.Messaging;
@@ -42,6 +43,7 @@ builder.Services.AddIntegrationModule();
 builder.Services.AddCollaborationModule();
 builder.Services.AddAccountingModule();
 builder.Services.AddIntegrityModule();
+builder.Services.AddItemsModule();
 
 var app = builder.Build();
 

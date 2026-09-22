@@ -170,6 +170,18 @@ public interface IDimensionDirectory
     Task<DimensionValueInfo?> FindValueAsync(Guid valueId, CancellationToken cancellationToken = default);
 }
 
+public sealed record UomInfo(Guid Id, string Code, LocalizedText Name, string Family, int Precision, bool IsActive);
+
+/// <summary>Read access to the tenant's units of measure for the modules that measure things in them (items, stock, documents).</summary>
+public interface IUomDirectory
+{
+    Task<IReadOnlyList<UomInfo>> ListAsync(CancellationToken cancellationToken = default);
+
+    Task<UomInfo?> FindAsync(Guid uomId, CancellationToken cancellationToken = default);
+
+    Task<UomInfo?> FindByCodeAsync(string code, CancellationToken cancellationToken = default);
+}
+
 public interface IUomConversions
 {
     /// <summary>A conversion from one unit to another: direct, inverse, or through one intermediate unit of the same family.</summary>

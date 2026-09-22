@@ -14,6 +14,7 @@
     <ProjectReference Include="../../../src/Modules/Integration/Quicker.Integration.TestSupport/Quicker.Integration.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Collaboration/Quicker.Collaboration.TestSupport/Quicker.Collaboration.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Accounting/Quicker.Accounting.TestSupport/Quicker.Accounting.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Items/Quicker.Items.TestSupport/Quicker.Items.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

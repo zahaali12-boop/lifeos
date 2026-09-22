@@ -9,7 +9,7 @@ using Quicker.Organization.Persistence;
 namespace Quicker.Organization.Application;
 
 /// <summary>Units of measure and global conversions with rational factors (ADR-0005); item-specific conversions come with Items (M2).</summary>
-public sealed class UomService(OrganizationDbContext db, IClock clock) : IUomConversions
+public sealed class UomService(OrganizationDbContext db, IClock clock) : IUomConversions, IUomDirectory
 {
     private static readonly string[] Families = ["count", "weight", "volume", "length", "area", "time", "other"];
 
@@ -256,6 +256,26 @@ public sealed class UomService(OrganizationDbContext db, IClock clock) : IUomCon
 
         list.Add((to, numerator, denominator));
     }
+
+    // ------------------------------------------------------------------ IUomDirectory
+
+    async Task<IReadOnlyList<UomInfo>> IUomDirectory.ListAsync(CancellationToken cancellationToken) =>
+        (await db.Uoms.OrderBy(static u => u.Family).ThenBy(static u => u.Code).ToListAsync(cancellationToken)).Select(Info).ToList();
+
+    public async Task<UomInfo?> FindAsync(Guid uomId, CancellationToken cancellationToken = default)
+    {
+        var uom = await db.Uoms.SingleOrDefaultAsync(u => u.Id == uomId, cancellationToken);
+        return uom is null ? null : Info(uom);
+    }
+
+    public async Task<UomInfo?> FindByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var normalized = code?.Trim().ToUpperInvariant() ?? string.Empty;
+        var uom = await db.Uoms.SingleOrDefaultAsync(u => u.Code == normalized, cancellationToken);
+        return uom is null ? null : Info(uom);
+    }
+
+    private static UomInfo Info(Uom u) => new(u.Id, u.Code, u.Name, u.Family, u.Precision, u.IsActive);
 
     private static UomSummary Map(Uom u) => new(u.Id, u.Code, u.Name.Values, u.Family, u.Precision, u.IsSystem, u.IsActive);
 }

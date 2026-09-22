@@ -1,0 +1,166 @@
+using Microsoft.EntityFrameworkCore;
+using Quicker.Items.Contracts;
+using Quicker.Items.Domain;
+using Quicker.Items.Persistence;
+using Quicker.Kernel.Results;
+using Quicker.Organization.Contracts;
+
+namespace Quicker.Items.Application;
+
+/// <summary>
+/// The item directory other modules read. Units and items are memoised per unit of work: a stock document with a
+/// thousand lines resolves each item once, and the scenario-9 property test converts ten thousand times in seconds.
+/// </summary>
+public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItemDirectory
+{
+    private readonly Dictionary<Guid, ItemInfo?> _items = new();
+    private readonly Dictionary<Guid, IReadOnlyList<ItemUomInfo>> _itemUoms = new();
+    private IReadOnlyDictionary<Guid, UomInfo>? _uomsById;
+
+    public async Task<ItemInfo?> FindAsync(Guid itemId, CancellationToken cancellationToken = default)
+    {
+        if (_items.TryGetValue(itemId, out var cached))
+        {
+            return cached;
+        }
+
+        var item = await db.Items.SingleOrDefaultAsync(i => i.Id == itemId, cancellationToken);
+        var info = item is null ? null : await MapAsync(item, cancellationToken);
+        _items[itemId] = info;
+        return info;
+    }
+
+    public async Task<ItemInfo?> FindByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var normalized = code?.Trim() ?? string.Empty;
+        var item = await db.Items.SingleOrDefaultAsync(i => i.Code == normalized, cancellationToken);
+        if (item is null)
+        {
+            return null;
+        }
+
+        var info = await MapAsync(item, cancellationToken);
+        _items[item.Id] = info;
+        return info;
+    }
+
+    public async Task<ItemVariantInfo?> FindVariantAsync(Guid variantId, CancellationToken cancellationToken = default)
+    {
+        var variant = await db.Variants.SingleOrDefaultAsync(v => v.Id == variantId, cancellationToken);
+        return variant is null ? null : new ItemVariantInfo(variant.Id, variant.ItemId, variant.Sku, variant.Name, variant.IsActive);
+    }
+
+    public async Task<IReadOnlyList<ItemUomInfo>> UomsAsync(Guid itemId, CancellationToken cancellationToken = default)
+    {
+        if (_itemUoms.TryGetValue(itemId, out var cached))
+        {
+            return cached;
+        }
+
+        var baseUomId = await db.Items.Where(i => i.Id == itemId).Select(static i => (Guid?)i.BaseUomId).SingleOrDefaultAsync(cancellationToken);
+        if (baseUomId is null)
+        {
+            return [];
+        }
+
+        var byId = await UomsByIdAsync(cancellationToken);
+        var rows = await db.ItemUoms.Where(u => u.ItemId == itemId).ToListAsync(cancellationToken);
+        var list = rows.Select(u =>
+        {
+            var info = byId[u.UomId];
+            return new ItemUomInfo(u.Id, u.UomId, info.Code, info.Precision, ItemUomMath.Normalize(u.Numerator), ItemUomMath.Normalize(u.Denominator), u.UomId == baseUomId);
+        }).OrderByDescending(static u => u.IsBase).ThenBy(static u => u.UomCode, StringComparer.Ordinal).ToList();
+        _itemUoms[itemId] = list;
+        return list;
+    }
+
+    public async Task<Result<BaseQuantity>> ToBaseAsync(Guid itemId, Guid uomId, decimal quantity, CancellationToken cancellationToken = default)
+    {
+        var units = await UomsAsync(itemId, cancellationToken);
+        var baseUom = units.FirstOrDefault(static u => u.IsBase);
+        if (baseUom is null)
+        {
+            return Error.NotFound("item", itemId);
+        }
+
+        var unit = units.FirstOrDefault(u => u.UomId == uomId);
+        if (unit is null)
+        {
+            return Error.Validation("quantity.uom_not_item_uom", "The unit is not one of the item's units.").WithWhy(("itemId", itemId), ("uomId", uomId), ("itemUoms", units.Select(static u => u.UomCode)));
+        }
+
+        var converted = ItemUomMath.ToBase(quantity, unit.Numerator, unit.Denominator, baseUom.Precision);
+        if (converted.IsFailure)
+        {
+            return converted.Error!.WithWhy(("itemId", itemId), ("uom", unit.UomCode), ("baseUom", baseUom.UomCode));
+        }
+
+        return new BaseQuantity(ItemUomMath.Normalize(converted.Value), baseUom.UomId, baseUom.UomCode, quantity, unit.UomId, unit.UomCode);
+    }
+
+    public async Task<Result<decimal>> FromBaseAsync(Guid itemId, Guid uomId, decimal baseQuantity, CancellationToken cancellationToken = default)
+    {
+        var units = await UomsAsync(itemId, cancellationToken);
+        var unit = units.FirstOrDefault(u => u.UomId == uomId);
+        if (unit is null)
+        {
+            return Error.Validation("quantity.uom_not_item_uom", "The unit is not one of the item's units.").WithWhy(("itemId", itemId), ("uomId", uomId), ("itemUoms", units.Select(static u => u.UomCode)));
+        }
+
+        var converted = ItemUomMath.FromBase(baseQuantity, unit.Numerator, unit.Denominator, unit.Precision);
+        return converted.IsFailure ? converted.Error!.WithWhy(("itemId", itemId), ("uom", unit.UomCode)) : ItemUomMath.Normalize(converted.Value);
+    }
+
+    public async Task<BarcodeMatch?> FindByBarcodeAsync(string barcode, CancellationToken cancellationToken = default)
+    {
+        var value = barcode?.Trim() ?? string.Empty;
+        var match = await (from b in db.Barcodes
+                           join u in db.ItemUoms on b.ItemUomId equals u.Id
+                           join i in db.Items on u.ItemId equals i.Id
+                           where b.Barcode == value
+                           select new { b, u, i }).SingleOrDefaultAsync(cancellationToken);
+        if (match is null)
+        {
+            return null;
+        }
+
+        var byId = await UomsByIdAsync(cancellationToken);
+        return new BarcodeMatch(match.i.Id, match.i.Code, match.b.VariantId, match.u.Id, match.u.UomId, byId[match.u.UomId].Code, match.b.Barcode, match.b.Symbology);
+    }
+
+    public async Task<ItemCompanyPolicy?> CompanyPolicyAsync(Guid itemId, Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var settings = await db.CompanySettings.SingleOrDefaultAsync(s => s.ItemId == itemId && s.CompanyId == companyId, cancellationToken);
+        return settings is null ? null : new ItemCompanyPolicy(itemId, companyId, settings.CostingMethodOverride, settings.StandardCost, settings.ItemPostingGroupOverride, settings.DefaultWarehouseId, settings.AllowNegativeStock);
+    }
+
+    /// <summary>Forgets memoised items and units; the item service calls it after it changes an item.</summary>
+    public void Forget(Guid itemId)
+    {
+        _items.Remove(itemId);
+        _itemUoms.Remove(itemId);
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, UomInfo>> UomsByIdAsync(CancellationToken cancellationToken) =>
+        _uomsById ??= (await uoms.ListAsync(cancellationToken)).ToDictionary(static u => u.Id);
+
+    private async Task<ItemInfo> MapAsync(Item item, CancellationToken cancellationToken)
+    {
+        var byId = await UomsByIdAsync(cancellationToken);
+        var baseUom = byId[item.BaseUomId];
+        var costing = item.CostingMethodOverrideOrNull();
+        if (costing is null && item.CategoryId is { } categoryId)
+        {
+            costing = await db.Categories.Where(c => c.Id == categoryId).Select(static c => c.CostingMethodOverride).SingleOrDefaultAsync(cancellationToken);
+        }
+
+        return new ItemInfo(item.Id, item.Code, item.Name, item.Type, item.Tracking, item.ExpiryRequired, item.ShelfLifeDays, item.Fefo, item.BaseUomId, baseUom.Code, baseUom.Precision,
+            item.SalesUomId, item.PurchaseUomId, item.CategoryId, item.ItemPostingGroupId, item.ItemTaxGroupId, costing, item.HasVariants, item.IsActive);
+    }
+}
+
+internal static class ItemExtensions
+{
+    /// <summary>Items have no costing override of their own today; the category's applies, then the company's method (ADR-0008).</summary>
+    public static string? CostingMethodOverrideOrNull(this Item item) => null;
+}

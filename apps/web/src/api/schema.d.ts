@@ -2524,7 +2524,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** A complete chart from a template, optionally assigned to a company so it can post on day one */
+        /** A complete chart from a template, optionally assigned to a company (which then also gets its first posting profile from the chart's default accounts) so it can post on day one */
         post: operations["postAccountingChartsFromTemplate"];
         delete?: never;
         options?: never;
@@ -3268,6 +3268,556 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/integrity/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the invariant harness for the tenant (or one company) and answers with every check: balanced entries, trial balance zero, derived balances equal the lines, audit chain intact, tenant isolation, gapless numbering */
+        post: operations["postPlatformIntegrityRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Items, newest first, paged: q matches the code or a name in any language; filter=type eq 'stock' and isActive eq true and cf.season eq 'summer' */
+        get: operations["getItems"];
+        put?: never;
+        /** An item with its base unit; other units carry exact factors to the base (24/1 for a carton of 24 pieces) */
+        post: operations["postItems"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/by-code/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsByCodeByCode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/by-barcode/{barcode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The item, unit and variant a scanned barcode stands for */
+        get: operations["getItemsByBarcodeByBarcode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CSV with one row per item, units and barcodes packed (the import format) */
+        get: operations["getItemsExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upsert by code from CSV or JSON, all or nothing: the first failing row is named */
+        post: operations["postItemsImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ?expand=uoms,variants,suppliers,substitutes (all by default) */
+        get: operations["getItemsByItemId"];
+        /** Units and barcodes given here replace the item's sets; omit them to leave them alone */
+        put: operations["putItemsByItemId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exact conversion between two of the item's units through the base unit; a result that is not whole at the unit's precision is refused, never rounded */
+        get: operations["getItemsByItemIdConvert"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/uoms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Adds or replaces one unit of the item */
+        put: operations["putItemsByItemIdUoms"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/uoms/{itemUomId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteItemsByItemIdUomsByItemUomId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/barcodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** EAN-13, EAN-8 and UPC-A check digits are verified; a barcode belongs to one item in the tenant */
+        post: operations["postItemsByItemIdBarcodes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/barcodes/{barcodeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteItemsByItemIdBarcodesByBarcodeId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsByItemIdVariants"];
+        put?: never;
+        /** A variant by SKU with attribute values {COLOR: 'RED', SIZE: 'L'}; the combination is unique per item */
+        post: operations["postItemsByItemIdVariants"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/variants/{variantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putItemsByItemIdVariantsByVariantId"];
+        post?: never;
+        delete: operations["deleteItemsByItemIdVariantsByVariantId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A supplier of the item (partner id, their item code, unit, lead time, last price); one preferred supplier per item */
+        post: operations["postItemsByItemIdSuppliers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/suppliers/{supplierId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putItemsByItemIdSuppliersBySupplierId"];
+        post?: never;
+        delete: operations["deleteItemsByItemIdSuppliersBySupplierId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/company-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsByItemIdCompanySettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/company-settings/{companyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Costing method, standard cost, posting group, default warehouse and negative-stock override for one company (null = the company's policy) */
+        put: operations["putItemsByItemIdCompanySettingsByCompanyId"];
+        post?: never;
+        delete: operations["deleteItemsByItemIdCompanySettingsByCompanyId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/warehouse-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsByItemIdWarehouseSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/warehouse-settings/{warehouseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Reorder point, min/max, safety stock, lead time, default bin and cycle-count class for one warehouse */
+        put: operations["putItemsByItemIdWarehouseSettingsByWarehouseId"];
+        post?: never;
+        delete: operations["deleteItemsByItemIdWarehouseSettingsByWarehouseId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/substitutes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replaces the item's substitutes in priority order */
+        put: operations["putItemsByItemIdSubstitutes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** The item's picture: an attachment uploaded through /collaboration/attachments with entityType item */
+        put: operations["putItemsByItemIdImage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/variants/{variantId}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putItemsByItemIdVariantsByVariantIdImage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{itemId}/boms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsByItemIdBoms"];
+        put?: never;
+        /** A new version of the item's bill (kit or assembly, matching the item type); activating it retires the previous version */
+        post: operations["postItemsByItemIdBoms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/boms/{bomId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsBomsByBomId"];
+        put: operations["putItemsBomsByBomId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/boms/{bomId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postItemsBomsByBomIdActivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/boms/{bomId}/explode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every component through nested bills for a quantity of output, in base units, exact and with scrap */
+        get: operations["getItemsBomsByBomIdExplode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The category tree in path order with level and item counts */
+        get: operations["getItemsCategories"];
+        put?: never;
+        post: operations["postItemsCategories"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/categories/{categoryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsCategoriesByCategoryId"];
+        /** Renaming or moving a category rewrites the paths of its subtree; moving under a descendant is refused */
+        put: operations["putItemsCategoriesByCategoryId"];
+        post?: never;
+        delete: operations["deleteItemsCategoriesByCategoryId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsBrands"];
+        put?: never;
+        post: operations["postItemsBrands"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/brands/{brandId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putItemsBrandsByBrandId"];
+        post?: never;
+        delete: operations["deleteItemsBrandsByBrandId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/attributes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getItemsAttributes"];
+        put?: never;
+        /** An attribute (COLOR, SIZE) with its values; values are matched by code on update and cannot be removed while variants use them */
+        post: operations["postItemsAttributes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/attributes/{attributeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putItemsAttributesByAttributeId"];
+        post?: never;
+        delete: operations["deleteItemsAttributesByAttributeId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3480,6 +4030,29 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        AttributeSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            sortOrder: number | string;
+            values: components["schemas"]["AttributeValueSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AttributeValueSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            sortOrder: number | string;
+        };
         AuditActor: {
             type: string;
             /** Format: uuid */
@@ -3597,6 +4170,107 @@ export interface components {
             differences: components["schemas"]["BalanceDifference"][];
             isConsistent?: boolean;
         };
+        BarcodeMatch: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            itemUomId: string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            barcode: string;
+            symbology: string;
+        };
+        BarcodeSummary: {
+            /** Format: uuid */
+            id: string;
+            barcode: string;
+            symbology: string;
+            /** Format: uuid */
+            itemUomId: string;
+            uomCode: string;
+            /** Format: uuid */
+            variantId: null | string;
+            variantSku: null | string;
+        };
+        BomExplosion: {
+            /** Format: uuid */
+            bomId: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            /** Format: double */
+            outputQuantity: number | string;
+            requirements: components["schemas"]["BomRequirement"][];
+        };
+        BomLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            position: number | string;
+            /** Format: uuid */
+            componentItemId: string;
+            componentItemCode: string;
+            componentName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            componentVariantId: null | string;
+            componentVariantSku: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            baseQuantity: number | string;
+            baseUom: string;
+            /** Format: double */
+            scrapPct: number | string;
+        };
+        /** @description A component requirement for a quantity of output, in the component's base unit, exact before scrap and after it. */
+        BomRequirement: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            variantSku: null | string;
+            /** Format: uuid */
+            baseUomId: string;
+            baseUom: string;
+            /** Format: int32 */
+            basePrecision: number | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            quantityWithScrap: number | string;
+            /** Format: int32 */
+            depth: number | string;
+            route: string[];
+        };
+        BomSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            kind: string;
+            /** Format: int32 */
+            version: number | string;
+            /** Format: double */
+            outputQty: number | string;
+            isActive: boolean;
+            lines: components["schemas"]["BomLineSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
         BranchSummary: {
             /** Format: uuid */
             id: string;
@@ -3615,6 +4289,17 @@ export interface components {
             /** Format: uuid */
             dimensionValueId: string;
             isActive: boolean;
+        };
+        BrandSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
         };
         BusinessCalendarSummary: {
             /** Format: uuid */
@@ -3755,6 +4440,22 @@ export interface components {
             isEnabled: boolean;
             isFunctional: boolean;
         };
+        CompanySettingsSummary: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            companyId: string;
+            costingMethodOverride: null | string;
+            /** Format: double */
+            standardCost: null | number | string;
+            /** Format: uuid */
+            itemPostingGroupOverride: null | string;
+            /** Format: uuid */
+            defaultWarehouseId: null | string;
+            allowNegativeStock: null | boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         CompanySummary: {
             /** Format: uuid */
             id: string;
@@ -3796,6 +4497,25 @@ export interface components {
             chartId?: null | string;
             /** Format: uuid */
             postingProfileId?: null | string;
+        };
+        ConversionResult: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            fromUomId: string;
+            fromUom: string;
+            /** Format: double */
+            baseQuantity: number | string;
+            /** Format: uuid */
+            baseUomId: string;
+            baseUom: string;
+            /** Format: uuid */
+            toUomId: string;
+            toUom: string;
+            /** Format: double */
+            result: number | string;
         };
         /** @description The replacement of an entry (its lines as a posting request; the company is the original's) and why. */
         CorrectEntryRequest: {
@@ -4212,12 +4932,138 @@ export interface components {
             /** Format: int32 */
             total: number | string;
         };
+        /** @description A run of the harness for one tenant (optionally one company): every check with its outcome. */
+        InvariantReport: {
+            /** Format: uuid */
+            tenantId: string;
+            /** Format: uuid */
+            companyId: null | string;
+            /** Format: date-time */
+            ranAt: string;
+            checks: components["schemas"]["InvariantResult"][];
+            passed: boolean;
+            failedCodes?: null | string[];
+        };
+        /** @description One check: what it looked at, whether it holds, and the first problems it found (never more than a page). */
+        InvariantResult: {
+            code: string;
+            passed: boolean;
+            /** Format: int64 */
+            checked: number | string;
+            problems: string[];
+            summary: string;
+        };
         InviteUserRequest: {
             email: string;
             displayName: null | string;
             roleIds: string[];
             /** @default en */
             language: string;
+        };
+        ItemImportRequest: {
+            items: components["schemas"]["SaveItemRequest"][];
+        };
+        ItemImportResult: {
+            /** Format: int32 */
+            created: number | string;
+            /** Format: int32 */
+            updated: number | string;
+            /** Format: int32 */
+            total: number | string;
+        };
+        ItemSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            type: string;
+            /** Format: uuid */
+            categoryId: null | string;
+            categoryCode: null | string;
+            /** Format: uuid */
+            brandId: null | string;
+            brandCode: null | string;
+            /** Format: uuid */
+            baseUomId: string;
+            baseUom: string;
+            /** Format: int32 */
+            basePrecision: number | string;
+            /** Format: uuid */
+            salesUomId: null | string;
+            salesUom: null | string;
+            /** Format: uuid */
+            purchaseUomId: null | string;
+            purchaseUom: null | string;
+            tracking: string;
+            expiryRequired: boolean;
+            /** Format: int32 */
+            shelfLifeDays: null | number | string;
+            fefo: boolean;
+            /** Format: uuid */
+            itemPostingGroupId: null | string;
+            /** Format: uuid */
+            itemTaxGroupId: null | string;
+            /** Format: double */
+            listPrice: null | number | string;
+            listPriceCurrency: null | string;
+            /** Format: double */
+            weightKg: null | number | string;
+            /** Format: double */
+            volumeM3: null | number | string;
+            hsCode: null | string;
+            countryOfOrigin: null | string;
+            hasVariants: boolean;
+            /** Format: uuid */
+            imageAttachmentId: null | string;
+            isActive: boolean;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            updatedAt: string;
+            uoms?: null | components["schemas"]["ItemUomSummary"][];
+            variants?: null | components["schemas"]["VariantSummary"][];
+            suppliers?: null | components["schemas"]["ItemSupplierSummary"][];
+            substitutes?: null | components["schemas"]["SubstituteSummary"][];
+        };
+        ItemSupplierSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            supplierItemCode: null | string;
+            /** Format: uuid */
+            uomId: null | string;
+            uomCode: null | string;
+            /** Format: int32 */
+            leadTimeDays: null | number | string;
+            /** Format: double */
+            lastPrice: null | number | string;
+            lastPriceCurrency: null | string;
+            isPreferred: boolean;
+        };
+        ItemUomSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: int32 */
+            precision: number | string;
+            /** Format: double */
+            numerator: number | string;
+            /** Format: double */
+            denominator: number | string;
+            isBase: boolean;
+            /** Format: double */
+            weightKg: null | number | string;
+            dimensions: components["schemas"]["JsonElement"];
+            isPurchaseDefault: boolean;
+            isSalesDefault: boolean;
+            barcodes: components["schemas"]["BarcodeSummary"][];
         };
         /** @description A stored job as the runner and the UI see it. */
         JobRecord: {
@@ -4709,6 +5555,11 @@ export interface components {
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
         PageOfDeliverySummary: {
             items: components["schemas"]["DeliverySummary"][];
+            nextCursor: null | string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfItemSummary: {
+            items: components["schemas"]["ItemSummary"][];
             nextCursor: null | string;
         };
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
@@ -5207,6 +6058,71 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveAttributeRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /**
+             * Format: int32
+             * @default 0
+             */
+            sortOrder: number | string;
+            values?: null | components["schemas"]["SaveAttributeValueRequest"][];
+        };
+        SaveAttributeValueRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /**
+             * Format: int32
+             * @default 0
+             */
+            sortOrder: number | string;
+        };
+        SaveBarcodeRequest: {
+            barcode: string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** @default EAN13 */
+            symbology: string;
+            /** Format: uuid */
+            variantId?: null | string;
+            variantSku?: null | string;
+        };
+        SaveBomLineRequest: {
+            /** Format: uuid */
+            componentItemId?: null | string;
+            componentItemCode?: null | string;
+            /** Format: uuid */
+            componentVariantId?: null | string;
+            /**
+             * Format: double
+             * @default 1
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            scrapPct: number | string;
+        };
+        SaveBomRequest: {
+            kind: string;
+            lines: components["schemas"]["SaveBomLineRequest"][];
+            /**
+             * Format: double
+             * @default 1
+             */
+            outputQty: number | string;
+            /** @default true */
+            activate: boolean;
+        };
         SaveBranchRequest: {
             code: string;
             name: {
@@ -5216,6 +6132,14 @@ export interface components {
                 [key: string]: string;
             };
             taxRegistrations?: null | {
+                [key: string]: string;
+            };
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveBrandRequest: {
+            code: string;
+            name: {
                 [key: string]: string;
             };
             /** @default true */
@@ -5292,6 +6216,16 @@ export interface components {
             /** @default true */
             isActive: boolean;
             customFields?: unknown;
+        };
+        SaveCompanySettingsRequest: {
+            costingMethodOverride?: null | string;
+            /** Format: double */
+            standardCost?: null | number | string;
+            /** Format: uuid */
+            itemPostingGroupOverride?: null | string;
+            /** Format: uuid */
+            defaultWarehouseId?: null | string;
+            allowNegativeStock?: null | boolean;
         };
         SaveCustomFieldRequest: {
             entityType: string;
@@ -5410,6 +6344,93 @@ export interface components {
             name: {
                 [key: string]: string;
             };
+        };
+        SaveItemRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** @default stock */
+            type: string;
+            baseUom?: null | string;
+            /** Format: uuid */
+            baseUomId?: null | string;
+            description?: null | {
+                [key: string]: string;
+            };
+            categoryCode?: null | string;
+            /** Format: uuid */
+            categoryId?: null | string;
+            brandCode?: null | string;
+            /** Format: uuid */
+            brandId?: null | string;
+            salesUom?: null | string;
+            purchaseUom?: null | string;
+            /** @default none */
+            tracking: string;
+            /** @default false */
+            expiryRequired: boolean;
+            /** Format: int32 */
+            shelfLifeDays?: null | number | string;
+            /** @default false */
+            fefo: boolean;
+            /** Format: uuid */
+            itemPostingGroupId?: null | string;
+            itemPostingGroupCode?: null | string;
+            /** Format: uuid */
+            itemTaxGroupId?: null | string;
+            /** Format: double */
+            listPrice?: null | number | string;
+            listPriceCurrency?: null | string;
+            /** Format: double */
+            weightKg?: null | number | string;
+            /** Format: double */
+            volumeM3?: null | number | string;
+            hsCode?: null | string;
+            countryOfOrigin?: null | string;
+            /** @default true */
+            isActive: boolean;
+            customFields?: unknown;
+            uoms?: null | components["schemas"]["SaveItemUomRequest"][];
+            barcodes?: null | components["schemas"]["SaveBarcodeRequest"][];
+        };
+        SaveItemSupplierRequest: {
+            /** Format: uuid */
+            partnerId: string;
+            supplierItemCode?: null | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: int32 */
+            leadTimeDays?: null | number | string;
+            /** Format: double */
+            lastPrice?: null | number | string;
+            lastPriceCurrency?: null | string;
+            /** @default false */
+            isPreferred: boolean;
+        };
+        /** @description 1 Uom = Numerator / Denominator base units (24 pieces per carton: 24/1; 1 piece = 1/24 carton is never stored, the inverse is derived). */
+        SaveItemUomRequest: {
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /**
+             * Format: double
+             * @default 1
+             */
+            numerator: number | string;
+            /**
+             * Format: double
+             * @default 1
+             */
+            denominator: number | string;
+            /** Format: double */
+            weightKg?: null | number | string;
+            dimensions?: unknown;
+            /** @default false */
+            isPurchaseDefault: boolean;
+            /** @default false */
+            isSalesDefault: boolean;
         };
         SaveJournalRequest: {
             /** Format: date */
@@ -5573,6 +6594,9 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveSubstitutesRequest: {
+            substitutes: components["schemas"]["SubstituteRequest"][];
+        };
         SaveUomConversionRequest: {
             /** Format: uuid */
             fromUomId: string;
@@ -5600,6 +6624,17 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveVariantRequest: {
+            sku: string;
+            name?: null | {
+                [key: string]: string;
+            };
+            attributeValues?: null | {
+                [key: string]: string;
+            };
+            /** @default true */
+            isActive: boolean;
+        };
         SaveViewRequest: {
             entityType: string;
             name: string;
@@ -5608,6 +6643,21 @@ export interface components {
             shared: boolean;
             /** @default false */
             isDefault: boolean;
+        };
+        SaveWarehouseSettingsRequest: {
+            /** Format: double */
+            reorderPoint?: null | number | string;
+            /** Format: double */
+            minQty?: null | number | string;
+            /** Format: double */
+            maxQty?: null | number | string;
+            /** Format: double */
+            safetyStock?: null | number | string;
+            /** Format: int32 */
+            leadTimeDays?: null | number | string;
+            /** Format: uuid */
+            defaultBinId?: null | string;
+            cycleCountClass?: null | string;
         };
         SaveWebhookRequest: {
             name: string;
@@ -5702,6 +6752,10 @@ export interface components {
             /** @default  */
             periodKey: string;
             reason?: null | string;
+        };
+        SetImageRequest: {
+            /** Format: uuid */
+            attachmentId: null | string;
         };
         SetPeriodStateRequest: {
             /** Format: uuid */
@@ -5815,6 +6869,26 @@ export interface components {
         StepUpRequest: {
             password?: null | string;
             code?: null | string;
+        };
+        SubstituteRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /**
+             * Format: int32
+             * @default 1
+             */
+            priority: number | string;
+        };
+        SubstituteSummary: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            priority: number | string;
         };
         TemplateSummary: {
             code: string;
@@ -6010,6 +7084,53 @@ export interface components {
             digitStyle: string;
             hasMfa: boolean;
             isPlatformOperator: boolean;
+        };
+        VariantAttributeSummary: {
+            /** Format: uuid */
+            valueId: string;
+            valueCode: string;
+            valueName: {
+                [key: string]: string;
+            };
+        };
+        VariantSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            sku: string;
+            name: {
+                [key: string]: string;
+            };
+            attributeValues: {
+                [key: string]: components["schemas"]["VariantAttributeSummary"];
+            };
+            /** Format: uuid */
+            imageAttachmentId: null | string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        WarehouseSettingsSummary: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            /** Format: double */
+            reorderPoint: null | number | string;
+            /** Format: double */
+            minQty: null | number | string;
+            /** Format: double */
+            maxQty: null | number | string;
+            /** Format: double */
+            safetyStock: null | number | string;
+            /** Format: int32 */
+            leadTimeDays: null | number | string;
+            /** Format: uuid */
+            defaultBinId: null | string;
+            cycleCountClass: null | string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         WebAuthnAssertionOptionsResponse: {
             /** Format: uuid */
@@ -11922,6 +13043,1161 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DimensionBalances"];
                 };
+            };
+        };
+    };
+    postPlatformIntegrityRun: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvariantReport"];
+                };
+            };
+        };
+    };
+    getItems: {
+        parameters: {
+            query?: {
+                filter?: string;
+                q?: string;
+                limit?: number | string;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageOfItemSummary"];
+                };
+            };
+        };
+    };
+    postItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummary"];
+                };
+            };
+        };
+    };
+    getItemsByCodeByCode: {
+        parameters: {
+            query?: {
+                expand?: string;
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummary"];
+                };
+            };
+        };
+    };
+    getItemsByBarcodeByBarcode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                barcode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BarcodeMatch"];
+                };
+            };
+        };
+    };
+    getItemsExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postItemsImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemImportRequest"];
+                "text/csv": components["schemas"]["ItemImportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemImportResult"];
+                };
+            };
+        };
+    };
+    getItemsByItemId: {
+        parameters: {
+            query?: {
+                expand?: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummary"];
+                };
+            };
+        };
+    };
+    putItemsByItemId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummary"];
+                };
+            };
+        };
+    };
+    getItemsByItemIdConvert: {
+        parameters: {
+            query: {
+                quantity: number | string;
+                from?: string;
+                fromId?: string;
+                to?: string;
+                toId?: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversionResult"];
+                };
+            };
+        };
+    };
+    putItemsByItemIdUoms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemUomRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsByItemIdUomsByItemUomId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                itemUomId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postItemsByItemIdBarcodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBarcodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BarcodeSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsByItemIdBarcodesByBarcodeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                barcodeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getItemsByItemIdVariants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariantSummary"][];
+                };
+            };
+        };
+    };
+    postItemsByItemIdVariants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveVariantRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariantSummary"];
+                };
+            };
+        };
+    };
+    putItemsByItemIdVariantsByVariantId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                variantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveVariantRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariantSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsByItemIdVariantsByVariantId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                variantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postItemsByItemIdSuppliers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemSupplierRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSupplierSummary"];
+                };
+            };
+        };
+    };
+    putItemsByItemIdSuppliersBySupplierId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                supplierId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemSupplierRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSupplierSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsByItemIdSuppliersBySupplierId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                supplierId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getItemsByItemIdCompanySettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanySettingsSummary"][];
+                };
+            };
+        };
+    };
+    putItemsByItemIdCompanySettingsByCompanyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCompanySettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanySettingsSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsByItemIdCompanySettingsByCompanyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getItemsByItemIdWarehouseSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseSettingsSummary"][];
+                };
+            };
+        };
+    };
+    putItemsByItemIdWarehouseSettingsByWarehouseId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                warehouseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveWarehouseSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WarehouseSettingsSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsByItemIdWarehouseSettingsByWarehouseId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                warehouseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    putItemsByItemIdSubstitutes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSubstitutesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubstituteSummary"][];
+                };
+            };
+        };
+    };
+    putItemsByItemIdImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetImageRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummary"];
+                };
+            };
+        };
+    };
+    putItemsByItemIdVariantsByVariantIdImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+                variantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetImageRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummary"];
+                };
+            };
+        };
+    };
+    getItemsByItemIdBoms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BomSummary"][];
+                };
+            };
+        };
+    };
+    postItemsByItemIdBoms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBomRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BomSummary"];
+                };
+            };
+        };
+    };
+    getItemsBomsByBomId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bomId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BomSummary"];
+                };
+            };
+        };
+    };
+    putItemsBomsByBomId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bomId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBomRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BomSummary"];
+                };
+            };
+        };
+    };
+    postItemsBomsByBomIdActivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bomId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BomSummary"];
+                };
+            };
+        };
+    };
+    getItemsBomsByBomIdExplode: {
+        parameters: {
+            query?: {
+                quantity?: number | string;
+            };
+            header?: never;
+            path: {
+                bomId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BomExplosion"];
+                };
+            };
+        };
+    };
+    getItemsCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySummary"][];
+                };
+            };
+        };
+    };
+    postItemsCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySummary"];
+                };
+            };
+        };
+    };
+    getItemsCategoriesByCategoryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySummary"];
+                };
+            };
+        };
+    };
+    putItemsCategoriesByCategoryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySummary"];
+                };
+            };
+        };
+    };
+    deleteItemsCategoriesByCategoryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getItemsBrands: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandSummary"][];
+                };
+            };
+        };
+    };
+    postItemsBrands: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandSummary"];
+                };
+            };
+        };
+    };
+    putItemsBrandsByBrandId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                brandId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsBrandsByBrandId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                brandId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getItemsAttributes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeSummary"][];
+                };
+            };
+        };
+    };
+    postItemsAttributes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAttributeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeSummary"];
+                };
+            };
+        };
+    };
+    putItemsAttributesByAttributeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attributeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAttributeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeSummary"];
+                };
+            };
+        };
+    };
+    deleteItemsAttributesByAttributeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attributeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

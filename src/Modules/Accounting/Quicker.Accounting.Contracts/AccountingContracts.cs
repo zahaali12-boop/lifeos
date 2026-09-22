@@ -195,3 +195,13 @@ public interface IChartOfAccounts
     /// </summary>
     Task<Result<LineCheck>> CheckLineAsync(Guid accountId, CompanyId companyId, IReadOnlyDictionary<string, Guid>? dimensions, string? currency, bool manual, CancellationToken cancellationToken = default);
 }
+
+public sealed record PostingGroupInfo(Guid Id, string Kind, string Code, LocalizedText Name, bool IsActive);
+
+/// <summary>Read access to posting groups for the modules whose masters carry one (items, partners, banks, assets).</summary>
+public interface IPostingGroupDirectory
+{
+    Task<PostingGroupInfo?> FindAsync(Guid groupId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<PostingGroupInfo>> ListAsync(string kind, CancellationToken cancellationToken = default);
+}

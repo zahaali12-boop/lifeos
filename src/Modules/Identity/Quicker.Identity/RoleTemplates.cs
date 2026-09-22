@@ -25,6 +25,8 @@ public static class RoleTemplates
             ["purchasing.invoice.*", "payables.*", "partners.supplier.read", "reporting.report.run"]),
         new("warehouse_operator", LocalizedText.Bilingual("Warehouse operator", "أمين مستودع"), "Receiving, picking, transfers, counts and scanning",
             ["inventory.receipt.*", "inventory.pick.*", "inventory.transfer.*", "inventory.count.*", "inventory.item.read"]),
+        new("inventory_manager", LocalizedText.Bilingual("Inventory manager", "مدير المخزون"), "Item master, warehouses, stock, costing and counts",
+            ["inventory.*", "organization.company.read", "reporting.report.run"]),
         new("sales_rep", LocalizedText.Bilingual("Sales representative", "مندوب مبيعات"), "Customers, quotes and orders",
             ["sales.quote.*", "sales.order.*", "partners.customer.*", "inventory.item.read", "reporting.report.run"]),
         new("purchaser", LocalizedText.Bilingual("Purchaser", "مسؤول مشتريات"), "Requisitions, RFQs, purchase orders and suppliers",

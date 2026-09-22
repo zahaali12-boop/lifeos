@@ -26,7 +26,7 @@ public sealed class AuthenticationTests(ApiHostFixture host)
 
         var roles = await (await client.GetAsync("/api/v1/roles")).ReadJsonAsync();
         roles.EnumerateArray().Select(static r => r.GetProperty("code").GetString()).ShouldContain("owner");
-        roles.EnumerateArray().Count().ShouldBe(10);
+        roles.EnumerateArray().Count().ShouldBe(11);
 
         var members = await (await client.GetAsync("/api/v1/users")).ReadJsonAsync();
         var owner = members.EnumerateArray().Single();

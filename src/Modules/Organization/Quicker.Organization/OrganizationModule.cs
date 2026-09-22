@@ -41,6 +41,7 @@ public static class OrganizationModule
         services.AddScoped<IDimensionDirectory>(static sp => sp.GetRequiredService<DimensionService>());
         services.AddScoped<UomService>();
         services.AddScoped<IUomConversions>(static sp => sp.GetRequiredService<UomService>());
+        services.AddScoped<IUomDirectory>(static sp => sp.GetRequiredService<UomService>());
         services.AddScoped<BusinessCalendarService>();
         services.AddScoped<IWorkingDayCalendar>(static sp => sp.GetRequiredService<BusinessCalendarService>());
         services.AddScoped<ITenantSetupStep, OrganizationDefaults>();
