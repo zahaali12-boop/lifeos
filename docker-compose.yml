@@ -74,6 +74,32 @@ services:
       migrator:
         condition: service_completed_successfully
 
+  worker:
+    build:
+      context: .
+      dockerfile: deploy/docker/worker.Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8081
+      Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Endpoint: http://minio:9000
+      Quicker__Storage__AccessKey: quicker
+      Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__SmtpHost: mailpit
+      Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+    ports:
+      - "8081:8081"
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
   web:
     build:
       context: .

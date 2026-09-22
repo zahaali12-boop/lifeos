@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Identity.Contracts;
+using Quicker.Messaging;
 using Quicker.Organization.Application;
 using Quicker.Organization.Contracts;
 using Quicker.Organization.Persistence;
@@ -38,6 +39,7 @@ public static class OrganizationModule
         services.AddScoped<BusinessCalendarService>();
         services.AddScoped<IWorkingDayCalendar>(static sp => sp.GetRequiredService<BusinessCalendarService>());
         services.AddScoped<ITenantSetupStep, OrganizationDefaults>();
+        services.AddJobHandler<RateImportJob, ImportRatesRequest>();
         return services;
     }
 }

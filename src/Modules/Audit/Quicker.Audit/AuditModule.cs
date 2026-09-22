@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Quicker.Audit.Application;
 using Quicker.Audit.Contracts;
 using Quicker.Identity.Contracts;
+using Quicker.Messaging;
 
 namespace Quicker.Audit;
 
@@ -37,6 +38,8 @@ public static class AuditModule
         services.AddScoped<ChainAnchoring>();
         services.AddScoped<ChainVerifier>();
         services.AddSingleton<AuditChainJobs>();
+        services.AddJobHandler<AuditAnchorAllJob, AuditAnchorAllPayload>();
+        services.AddJobHandler<AuditVerifyAllJob, AuditVerifyAllPayload>();
         return services;
     }
 }

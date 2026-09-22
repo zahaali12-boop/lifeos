@@ -14,8 +14,8 @@ help: ## List targets
 up: ## Start PostgreSQL, MinIO, Mailpit; run migrations and seeds; start API and web (hot reload)
 	$(COMPOSE) up -d postgres minio mailpit
 	$(COMPOSE) run --rm migrator
-	$(COMPOSE) up -d api web
-	@echo "API: http://localhost:8080  Web: http://localhost:5173  Mail: http://localhost:8025  MinIO: http://localhost:9001"
+	$(COMPOSE) up -d api worker web
+	@echo "API: http://localhost:8080  Worker: http://localhost:8081/health/ready  Web: http://localhost:5173  Mail: http://localhost:8025  MinIO: http://localhost:9001"
 
 down: ## Stop everything (keeps data volumes)
 	$(COMPOSE) down

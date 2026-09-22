@@ -1,25 +1,21 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Quicker.Api;
 using Quicker.Audit;
-using Quicker.Audit.Api;
 using Quicker.Identity;
-using Quicker.Identity.Api;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
 using Quicker.Messaging;
+using Quicker.Messaging.Jobs;
 using Quicker.Numbering;
-using Quicker.Numbering.Api;
 using Quicker.Organization;
-using Quicker.Organization.Api;
 using Quicker.Persistence;
 using Quicker.Tenancy;
 using Quicker.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Infrastructure
+// Infrastructure: the same composition as the API host, minus the HTTP pipeline.
 builder.Services.Configure<DbOptions>(builder.Configuration.GetSection(DbOptions.SectionName));
 builder.Services.AddSingleton(static sp => sp.GetRequiredService<IOptions<DbOptions>>().Value);
 builder.Services.AddSingleton(static sp => DataSources.ForApp(sp.GetRequiredService<DbOptions>()));
@@ -29,16 +25,10 @@ builder.Services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
 builder.Services.AddSingleton<CapturingEmailSender>();
 builder.Services.AddSingleton<IEmailSender>(static sp => sp.GetRequiredService<CapturingEmailSender>());
 builder.Services.AddQuickerWebCore();
-builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi("v1");
 builder.Services.AddQuickerMessaging(builder.Configuration);
-if (builder.Configuration.GetValue<bool>("Quicker:Worker:Embedded"))
-{
-    // Single-node installs run the dispatcher, job slots and scheduler inside the API process (ADR-0010).
-    builder.Services.AddQuickerWorker();
-}
+builder.Services.AddQuickerWorker();
 
-// Modules
+// Modules: their handlers and job types.
 builder.Services.AddTenancyModule();
 builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddIdentityModule(builder.Configuration);
@@ -47,40 +37,20 @@ builder.Services.AddNumberingModule();
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseQuickerUnitOfWork("/api");
-
-app.MapOpenApi("/api/{documentName}/openapi.json");
-
-// Liveness: the process is up. Readiness: the database answers under the application role and the schema is migrated.
-app.MapGet("/health/live", static () => Results.Ok(new { status = "live" })).ExcludeFromDescription();
-app.MapGet("/health/ready", static async (NpgsqlDataSource dataSource, CancellationToken cancellationToken) =>
+app.MapGet("/health/live", static () => Results.Ok(new { status = "live" }));
+app.MapGet("/health/ready", static async (NpgsqlDataSource dataSource, JobRunner runner, CancellationToken cancellationToken) =>
 {
     try
     {
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-        var migrations = await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM ops.schemaversions");
-        return Results.Ok(new { status = "ready", migrations });
+        var queued = await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM ops.jobs WHERE state = 'queued' AND run_after <= now()");
+        var pending = await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM ops.outbox_messages WHERE published_at IS NULL AND dead_at IS NULL");
+        return Results.Ok(new { status = "ready", instance = runner.InstanceName, queuedJobs = queued, pendingMessages = pending });
     }
     catch (Exception ex) when (ex is NpgsqlException or TimeoutException)
     {
         return Results.Json(new { status = "unready", error = ex.GetType().Name }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
-}).ExcludeFromDescription();
-
-// Every /api/v1 endpoint runs inside one unit of work with the principal resolved (ADR-0009, ADR-0014).
-var api = app.MapGroup("/api/v1").AddEndpointFilter<UnitOfWorkFilter>();
-api.MapIdentityEndpoints();
-api.MapAuditEndpoints();
-api.MapOrganizationEndpoints();
-api.MapNumberingEndpoints();
-api.MapPlatformEndpoints();
+});
 
 app.Run();
-
-/// <summary>Marker for integration tests (WebApplicationFactory).</summary>
-public partial class Program
-{
-}
