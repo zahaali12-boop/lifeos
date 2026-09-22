@@ -221,6 +221,41 @@ public static class InventoryEndpoints
             .RequirePermission(InventoryPermissions.StockRead)
             .WithSummary("The serial's full history on one screen: every movement with its document, cost and counterparty, every status change");
 
+        // ------------------------------------------------------------------ counts (roadmap 3.6)
+        var counts = inventory.MapGroup("/counts");
+        counts.MapGet("/", async (Guid? companyId, Guid? warehouseId, string? status, CountService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, warehouseId, status, ct)))
+            .RequirePermission(InventoryPermissions.CountRead);
+        counts.MapPost("/", async (SaveCountRequest request, CountService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static c => $"/api/v1/inventory/counts/{c.Id}"))
+            .RequirePermission(InventoryPermissions.CountManage)
+            .WithSummary("A planned count of a warehouse (full, cycle classes, bins or items), blind or not, blocking movements or not");
+        counts.MapGet("/{countId:guid}", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(countId, ct), "count", countId))
+            .RequirePermission(InventoryPermissions.CountRead);
+        counts.MapPut("/{countId:guid}", async (Guid countId, SaveCountRequest request, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(countId, request, ct)))
+            .RequirePermission(InventoryPermissions.CountManage);
+        counts.MapPost("/{countId:guid}/freeze", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.FreezeAsync(countId, ct)))
+            .RequirePermission(InventoryPermissions.CountManage)
+            .WithSummary("Freezes the count: snapshots the expected quantities and the ledger sequence, numbers the count and opens the sheet");
+        counts.MapGet("/{countId:guid}/sheet", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.SheetAsync(countId, ct)))
+            .RequirePermission(InventoryPermissions.CountRead)
+            .WithSummary("The count sheet: one line per item, bin, lot and serial (expected quantities hidden while a blind count is open)");
+        counts.MapPost("/{countId:guid}/entries", async (Guid countId, CountEntriesRequest request, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.EnterAsync(countId, request, ct)))
+            .RequirePermission(InventoryPermissions.CountEnter)
+            .WithSummary("Counted quantities for sheet lines, or for stock found that was not on the sheet");
+        counts.MapPost("/{countId:guid}/lines/{lineId:guid}/recount", async (Guid countId, Guid lineId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.RecountAsync(countId, lineId, ct)))
+            .RequirePermission(InventoryPermissions.CountManage);
+        counts.MapPost("/{countId:guid}/review", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.ReviewAsync(countId, ct)))
+            .RequirePermission(InventoryPermissions.CountManage)
+            .WithSummary("Closes counting and computes every variance against the snapshot plus the movements since the freeze (hard scenario 11)");
+        counts.MapPut("/{countId:guid}/lines/{lineId:guid}/reason", async (Guid countId, Guid lineId, CountLineReasonRequest request, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.SetReasonAsync(countId, lineId, request, ct)))
+            .RequirePermission(InventoryPermissions.CountManage);
+        counts.MapPost("/{countId:guid}/approve", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.ApproveAsync(countId, ct)))
+            .RequirePermission(InventoryPermissions.CountApprove);
+        counts.MapPost("/{countId:guid}/post", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(countId, ct)))
+            .RequirePermission(InventoryPermissions.CountPost)
+            .WithSummary("Posts the variances as count_variance movements with their reason codes; movements since the freeze are re-read at posting");
+        counts.MapPost("/{countId:guid}/cancel", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(countId, ct)))
+            .RequirePermission(InventoryPermissions.CountManage);
+
         return inventory;
     }
 }

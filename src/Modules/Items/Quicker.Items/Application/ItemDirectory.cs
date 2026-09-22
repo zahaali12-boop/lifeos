@@ -128,6 +128,13 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         return new BarcodeMatch(match.i.Id, match.i.Code, match.b.VariantId, match.u.Id, match.u.UomId, byId[match.u.UomId].Code, match.b.Barcode, match.b.Symbology);
     }
 
+    public async Task<IReadOnlyList<Guid>> ItemsForCycleCountAsync(Guid warehouseId, IReadOnlyList<string> classes, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(classes);
+        var wanted = classes.Select(static c => c.Trim().ToUpperInvariant()).ToList();
+        return await db.WarehouseSettings.Where(s => s.WarehouseId == warehouseId && s.CycleCountClass != null && wanted.Contains(s.CycleCountClass)).Select(static s => s.ItemId).Distinct().ToListAsync(cancellationToken);
+    }
+
     public async Task<ItemCompanyPolicy?> CompanyPolicyAsync(Guid itemId, Guid companyId, CancellationToken cancellationToken = default)
     {
         var settings = await db.CompanySettings.SingleOrDefaultAsync(s => s.ItemId == itemId && s.CompanyId == companyId, cancellationToken);

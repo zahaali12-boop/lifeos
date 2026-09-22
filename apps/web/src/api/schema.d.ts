@@ -4632,6 +4632,188 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryCounts"];
+        put?: never;
+        /** A planned count of a warehouse (full, cycle classes, bins or items), blind or not, blocking movements or not */
+        post: operations["postInventoryCounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryCountsByCountId"];
+        put: operations["putInventoryCountsByCountId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Freezes the count: snapshots the expected quantities and the ledger sequence, numbers the count and opens the sheet */
+        post: operations["postInventoryCountsByCountIdFreeze"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The count sheet: one line per item, bin, lot and serial (expected quantities hidden while a blind count is open) */
+        get: operations["getInventoryCountsByCountIdSheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Counted quantities for sheet lines, or for stock found that was not on the sheet */
+        post: operations["postInventoryCountsByCountIdEntries"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/lines/{lineId}/recount": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryCountsByCountIdLinesByLineIdRecount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Closes counting and computes every variance against the snapshot plus the movements since the freeze (hard scenario 11) */
+        post: operations["postInventoryCountsByCountIdReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/lines/{lineId}/reason": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putInventoryCountsByCountIdLinesByLineIdReason"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryCountsByCountIdApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the variances as count_variance movements with their reason codes; movements since the freeze are re-read at posting */
+        post: operations["postInventoryCountsByCountIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/counts/{countId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryCountsByCountIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5562,12 +5744,134 @@ export interface components {
             applications: components["schemas"]["CostApplicationInfo"][];
             runs: components["schemas"]["CostAdjustmentRunInfo"][];
         };
+        CountEntriesRequest: {
+            entries: components["schemas"]["CountEntryRequest"][];
+        };
+        CountEntryRequest: {
+            /** Format: uuid */
+            lineId?: null | string;
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+            lotNumber?: null | string;
+            serialNumber?: null | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            countedQty: number | string;
+            note?: null | string;
+        };
         CounterSummary: {
             periodKey: string;
             /** Format: int64 */
             nextNumber: number | string;
             /** Format: int64 */
             allocated: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CountLineReasonRequest: {
+            /** Format: uuid */
+            reasonCodeId?: null | string;
+            reasonCode?: null | string;
+            note?: null | string;
+        };
+        CountLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            baseUom: string;
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            binId: null | string;
+            binCode: null | string;
+            /** Format: uuid */
+            lotId: null | string;
+            lotNumber: null | string;
+            /** Format: uuid */
+            serialId: null | string;
+            serialNumber: null | string;
+            /** Format: double */
+            expectedQty: null | number | string;
+            /** Format: double */
+            countedQty: null | number | string;
+            /** Format: double */
+            previousCountedQty: null | number | string;
+            /** Format: double */
+            movementSinceFreeze: null | number | string;
+            /** Format: double */
+            varianceQty: null | number | string;
+            /** Format: double */
+            varianceValue: null | number | string;
+            /** Format: uuid */
+            countedBy: null | string;
+            /** Format: date-time */
+            countedAt: null | string;
+            recountRequested: boolean;
+            /** Format: uuid */
+            reasonCodeId: null | string;
+            reasonCode: null | string;
+            note: null | string;
+            status: string;
+        };
+        CountSheet: {
+            count: components["schemas"]["CountSummary"];
+            lines: components["schemas"]["CountLineSummary"][];
+        };
+        CountSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            scope: string;
+            scopeFilter: components["schemas"]["JsonElement"];
+            /** Format: date */
+            postingDate: string;
+            blind: boolean;
+            blockMovements: boolean;
+            /** Format: date-time */
+            frozenAt: null | string;
+            /** Format: int64 */
+            lastSequence: null | number | string;
+            notes: null | string;
+            /** Format: int32 */
+            lineCount: number | string;
+            /** Format: int32 */
+            countedLines: number | string;
+            /** Format: int32 */
+            varianceLines: number | string;
+            /** Format: double */
+            varianceValue: number | string;
+            /** Format: uuid */
+            approvedBy: null | string;
+            /** Format: date-time */
+            approvedAt: null | string;
+            /** Format: uuid */
+            stockPostingId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            postedBy: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -7628,6 +7932,24 @@ export interface components {
             /** Format: uuid */
             defaultWarehouseId?: null | string;
             allowNegativeStock?: null | boolean;
+        };
+        SaveCountRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            /** @default full */
+            scope: string;
+            binIds?: null | string[];
+            itemIds?: null | string[];
+            cycleCountClasses?: null | string[];
+            /** Format: date */
+            postingDate?: null | string;
+            /** @default false */
+            blind: boolean;
+            /** @default false */
+            blockMovements: boolean;
+            notes?: null | string;
         };
         SaveCustomFieldRequest: {
             entityType: string;
@@ -17746,6 +18068,310 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SerialHistory"];
+                };
+            };
+        };
+    };
+    getInventoryCounts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                warehouseId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"][];
+                };
+            };
+        };
+    };
+    postInventoryCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    getInventoryCountsByCountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    putInventoryCountsByCountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdFreeze: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    getInventoryCountsByCountIdSheet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSheet"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountEntriesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSheet"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdLinesByLineIdRecount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountLineSummary"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSheet"];
+                };
+            };
+        };
+    };
+    putInventoryCountsByCountIdLinesByLineIdReason: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CountLineReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountLineSummary"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
                 };
             };
         };

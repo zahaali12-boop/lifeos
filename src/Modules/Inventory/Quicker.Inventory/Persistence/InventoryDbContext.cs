@@ -58,6 +58,12 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
 
     public DbSet<SerialEvent> SerialEvents => Set<SerialEvent>();
 
+    public DbSet<Count> Counts => Set<Count>();
+
+    public DbSet<CountSnapshot> CountSnapshots => Set<CountSnapshot>();
+
+    public DbSet<CountLine> CountLines => Set<CountLine>();
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private static readonly ValueConverter<Dictionary<string, string>, string> StringMapConverter = new(
@@ -234,6 +240,34 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
         {
             b.ToTable("inv_serial_events", "app");
             b.HasKey(static x => new { x.TenantId, x.Id });
+        });
+
+        modelBuilder.Entity<Count>(b =>
+        {
+            b.ToTable("inv_counts", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.ScopeFilter).HasColumnType("jsonb");
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.CountId });
+            b.HasAuditTrail("stock_count", static x => x.Number ?? x.Id.ToString("N"));
+        });
+
+        modelBuilder.Entity<CountSnapshot>(b =>
+        {
+            b.ToTable("inv_count_snapshots", "app");
+            b.HasKey(static x => new { x.TenantId, x.CountId, x.ItemId, x.VariantId, x.BinId, x.LotId, x.SerialId });
+            b.Property(static x => x.ExpectedQty).HasPrecision(24, 9);
+        });
+
+        modelBuilder.Entity<CountLine>(b =>
+        {
+            b.ToTable("inv_count_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.ExpectedQty).HasPrecision(24, 9);
+            b.Property(static x => x.CountedQty).HasPrecision(24, 9);
+            b.Property(static x => x.PreviousCountedQty).HasPrecision(24, 9);
+            b.Property(static x => x.MovementSinceFreeze).HasPrecision(24, 9);
+            b.Property(static x => x.VarianceQty).HasPrecision(24, 9);
+            b.Property(static x => x.VarianceValue).HasPrecision(24, 6);
         });
 
         modelBuilder.Entity<ItemCostScope>(b =>

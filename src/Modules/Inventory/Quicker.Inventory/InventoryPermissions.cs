@@ -25,6 +25,11 @@ public static class InventoryPermissions
     public const string AssemblyPost = "inventory.assembly.post";
     public const string LotManage = "inventory.lot.manage";
     public const string SerialManage = "inventory.serial.manage";
+    public const string CountRead = "inventory.count.read";
+    public const string CountManage = "inventory.count.manage";
+    public const string CountEnter = "inventory.count.enter";
+    public const string CountApprove = "inventory.count.approve";
+    public const string CountPost = "inventory.count.post";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -49,5 +54,10 @@ public static class InventoryPermissions
         new(AssemblyPost, "inventory", "Post assembly builds (consumes components, produces the assembly)"),
         new(LotManage, "inventory", "Create and edit lots, quarantine, recall and release them"),
         new(SerialManage, "inventory", "Send serials to repair and back"),
+        new(CountRead, "inventory", "Read stock counts and count sheets"),
+        new(CountManage, "inventory", "Plan, freeze, review and cancel stock counts"),
+        new(CountEnter, "inventory", "Enter counted quantities on a count sheet"),
+        new(CountApprove, "inventory", "Approve count variances"),
+        new(CountPost, "inventory", "Post count variances (moves stock and posts the journal)"),
     ];
 }

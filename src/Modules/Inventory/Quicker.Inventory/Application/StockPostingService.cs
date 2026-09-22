@@ -10,6 +10,7 @@ using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Messaging.Outbox;
+using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
 using Quicker.Persistence;
 
@@ -277,6 +278,21 @@ public sealed class StockPostingService(
         if (!warehouse.IsActive)
         {
             return Error.Conflict("stock.warehouse_inactive", "The warehouse is inactive.").WithWhy(("warehouse", warehouse.Code));
+        }
+
+        // A count that blocks movements freezes its warehouse (or its bins) until it is posted or cancelled; only the count itself posts.
+        if (line.EntryType != StockEntryTypes.CountVariance)
+        {
+            var blocking = await db.Counts.Where(c => c.WarehouseId == warehouse.Id && c.BlockMovements && (c.Status == "frozen" || c.Status == "counting" || c.Status == "review" || c.Status == "approved")).Select(static c => new { c.Id, c.Number, c.Scope, c.ScopeFilter }).ToListAsync(cancellationToken);
+            foreach (var count in blocking)
+            {
+                if (count.Scope == "bins" && line.BinId is { } lineBin && !CountService.BinsOf(count.ScopeFilter).Contains(lineBin))
+                {
+                    continue;
+                }
+
+                return Error.Conflict("stock.warehouse_counting", $"Warehouse {warehouse.Code} is being counted; movements are blocked until count {count.Number ?? DraftIdentifiers.For(count.Id)} is posted or cancelled.").WithWhy(("warehouse", warehouse.Code), ("countId", count.Id), ("count", count.Number));
+            }
         }
 
         if (warehouse.BinsEnabled)

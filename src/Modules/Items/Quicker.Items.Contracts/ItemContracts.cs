@@ -76,6 +76,9 @@ public interface IItemDirectory
     Task<BarcodeMatch?> FindByBarcodeAsync(string barcode, CancellationToken cancellationToken = default);
 
     Task<ItemCompanyPolicy?> CompanyPolicyAsync(Guid itemId, Guid companyId, CancellationToken cancellationToken = default);
+
+    /// <summary>The items whose warehouse settings put them in one of the cycle-count classes (A, B, C) for the warehouse.</summary>
+    Task<IReadOnlyList<Guid>> ItemsForCycleCountAsync(Guid warehouseId, IReadOnlyList<string> classes, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

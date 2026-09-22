@@ -40,6 +40,7 @@ public static class InventoryModule
         services.AddScoped<TrackingResolver>();
         services.AddScoped<LotService>();
         services.AddScoped<SerialService>();
+        services.AddScoped<CountService>();
         services.AddJobHandler<LotExpiryJob, LotExpiryPayload>();
         services.AddJobHandler<ReservationExpiryJob, ReservationExpiryPayload>();
         services.AddJobHandler<CostRecostJob, CostRecostPayload>();

@@ -891,3 +891,124 @@ public sealed class SerialEvent : ITenantEntity
 
     public Guid? ActorUserId { get; set; }
 }
+
+// ------------------------------------------------------------------ counts (roadmap 3.6)
+
+public sealed class Count : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string? Number { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    /// <summary>full, cycle, bins or items.</summary>
+    public string Scope { get; set; } = "full";
+
+    public string ScopeFilter { get; set; } = "{}";
+
+    public DateOnly PostingDate { get; set; }
+
+    /// <summary>A blind count hides the expected quantities on the sheet until the review.</summary>
+    public bool Blind { get; set; }
+
+    public bool BlockMovements { get; set; }
+
+    public DateTimeOffset? FrozenAt { get; set; }
+
+    /// <summary>The global ledger sequence at freeze: entries after it are movements during the count.</summary>
+    public long? LastSequence { get; set; }
+
+    public string Status { get; set; } = "planned";
+
+    public string? Notes { get; set; }
+
+    public Guid? ApprovedBy { get; set; }
+
+    public DateTimeOffset? ApprovedAt { get; set; }
+
+    public Guid? StockPostingId { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<CountLine> Lines { get; } = [];
+}
+
+public sealed class CountSnapshot : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid CountId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid VariantId { get; set; }
+
+    public Guid BinId { get; set; }
+
+    public Guid LotId { get; set; }
+
+    public Guid SerialId { get; set; }
+
+    public decimal ExpectedQty { get; set; }
+}
+
+public sealed class CountLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CountId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public Guid? LotId { get; set; }
+
+    public Guid? SerialId { get; set; }
+
+    public decimal ExpectedQty { get; set; }
+
+    public decimal? CountedQty { get; set; }
+
+    public decimal? PreviousCountedQty { get; set; }
+
+    public decimal MovementSinceFreeze { get; set; }
+
+    public decimal VarianceQty { get; set; }
+
+    public decimal VarianceValue { get; set; }
+
+    public Guid? CountedBy { get; set; }
+
+    public DateTimeOffset? CountedAt { get; set; }
+
+    public bool RecountRequested { get; set; }
+
+    public Guid? ReasonCodeId { get; set; }
+
+    public string? Note { get; set; }
+
+    /// <summary>open, counted, recount, skipped or posted.</summary>
+    public string Status { get; set; } = "open";
+}

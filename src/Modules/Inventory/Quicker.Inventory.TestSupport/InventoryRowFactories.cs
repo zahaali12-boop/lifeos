@@ -98,6 +98,14 @@ public static class InventoryRowFactories
             await c.ExecuteAsync("INSERT INTO app.inv_serial_events (tenant_id, id, serial_id, kind, to_status) VALUES (@t, @id, @serial, 'status', 'in_stock')", new { t, id, serial }, tx);
             return new RowRef("app.inv_serial_events", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.inv_counts", static async (c, tx, t) => new RowRef("app.inv_counts", $"id = '{(await CountAsync(c, tx, t)).Count}'"));
+        IsolationRegistry.Register("app.inv_count_snapshots", static async (c, tx, t) =>
+        {
+            var (count, item, _) = await CountAsync(c, tx, t);
+            await c.ExecuteAsync("INSERT INTO app.inv_count_snapshots (tenant_id, count_id, item_id, expected_qty) VALUES (@t, @count, @item, 5)", new { t, count, item }, tx);
+            return new RowRef("app.inv_count_snapshots", $"count_id = '{count}'");
+        });
+        IsolationRegistry.Register("app.inv_count_lines", static async (c, tx, t) => new RowRef("app.inv_count_lines", $"id = '{(await CountAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.inv_transfers", static async (c, tx, t) => new RowRef("app.inv_transfers", $"id = '{(await TransferAsync(c, tx, t)).Transfer}'"));
         IsolationRegistry.Register("app.inv_transfer_lines", static async (c, tx, t) => new RowRef("app.inv_transfer_lines", $"id = '{(await TransferAsync(c, tx, t)).Line}'"));
     }
@@ -225,6 +233,17 @@ public static class InventoryRowFactories
         var id = Guid.CreateVersion7();
         await c.ExecuteAsync("INSERT INTO app.inv_serials (tenant_id, id, item_id, serial_number, lot_id) VALUES (@t, @id, @item, @number, @lot)", new { t, id, item, number = Suffix(id), lot }, tx);
         return (id, item);
+    }
+
+    private static async Task<(Guid Count, Guid Item, Guid Line)> CountAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (warehouse, company) = await WarehouseAsync(c, tx, t);
+        var (item, _) = await ItemAsync(c, tx, t);
+        var count = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_counts (tenant_id, id, company_id, warehouse_id, posting_date) VALUES (@t, @count, @company, @warehouse, '2026-09-22')", new { t, count, company, warehouse }, tx);
+        await c.ExecuteAsync("INSERT INTO app.inv_count_lines (tenant_id, id, count_id, line_no, item_id, expected_qty) VALUES (@t, @line, @count, 1, @item, 5)", new { t, line, count, item }, tx);
+        return (count, item, line);
     }
 
     private static async Task<(Guid Transfer, Guid Line)> TransferAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
