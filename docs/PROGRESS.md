@@ -57,6 +57,12 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 
 - Nothing mid-slice: every M2 slice (2.1–2.7) is complete and the report is written; waiting for the founder's review.
 
+## Post-milestone fixes
+
+| Date | Item |
+|------|------|
+| 2026-09-22 | **`make demo` / `make up` never actually worked on a truly fresh PostgreSQL cluster.** `MigrationRunner.EnsureDatabaseAndRolesAsync` referenced an Npgsql parameter (`@password`) from inside a dollar-quoted `DO $$ ... $$` block; parameter placeholders are never substituted inside dollar-quoted text, so PostgreSQL parsed the literal `@password` as the `@` operator on a column, failing with `column "password" does not exist" whenever the `quicker_app` role did not already exist. Every environment this project had run in (CI's Postgres service included) happened to already have that role from an earlier run, so the broken branch was always skipped and the bug was invisible until a founder ran it on a brand-new machine. Fixed by handing the password to the session with `set_config()` (a normal parameterized statement) and reading it back with `current_setting()` inside the DO block, verified end to end including a password containing a quote. Also fixed in the same pass: an unused `using Microsoft.EntityFrameworkCore;` in `ActivityService.cs` that only fails the build on a clean checkout (incremental builds here never re-ran the analyzer on that unchanged file). Both were caught only because a real first run on a clean Windows machine hit them; worth periodically testing `make demo` against a genuinely fresh database and a genuinely fresh checkout, not just an incrementally-updated one. |
+
 ## Next
 
 1. M3 Inventory in roadmap order (`docs/ROADMAP.md`), starting with 3.1 items and units of measure, once the founder has reviewed M2 (or says to continue).
