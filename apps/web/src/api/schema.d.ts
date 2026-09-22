@@ -2511,6 +2511,77 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        AuditActor: {
+            type: string;
+            /** Format: uuid */
+            id: null | string;
+            display: string;
+        };
+        AuditAnchor: {
+            /** Format: uuid */
+            id: string;
+            chain: string;
+            /** Format: uuid */
+            tenantId: null | string;
+            /** Format: int64 */
+            seq: number | string;
+            headHash: string;
+            /** Format: date-time */
+            anchoredAt: string;
+            store: string;
+            reference: string;
+            receipt: string;
+        };
+        AuditEventDetail: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            seq: number | string;
+            /** Format: date-time */
+            occurredAt: string;
+            actor: components["schemas"]["AuditActor"];
+            actorIp: null | string;
+            userAgent: null | string;
+            requestId: null | string;
+            correlationId: null | string;
+            /** Format: uuid */
+            companyId: null | string;
+            entityType: string;
+            /** Format: uuid */
+            entityId: string;
+            entityDisplay: string;
+            action: string;
+            before: null | components["schemas"]["JsonElement"];
+            after: null | components["schemas"]["JsonElement"];
+            diff: null | components["schemas"]["JsonElement"];
+            details: null | components["schemas"]["JsonElement"];
+            reason: null | string;
+            hash: string;
+            prevHash: string;
+        };
+        AuditEventSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            seq: number | string;
+            /** Format: date-time */
+            occurredAt: string;
+            actor: components["schemas"]["AuditActor"];
+            entityType: string;
+            /** Format: uuid */
+            entityId: string;
+            entityDisplay: string;
+            action: string;
+            reason: null | string;
+            /** Format: uuid */
+            companyId: null | string;
+            requestId: null | string;
+            hasChanges: boolean;
+        };
+        AuditPageOfAuditEventSummary: {
+            items: components["schemas"]["AuditEventSummary"][];
+            nextCursor: null | string;
+        };
         BranchSummary: {
             /** Format: uuid */
             id: string;
@@ -2862,6 +2933,11 @@ export interface components {
         ForgotPasswordRequest: {
             email: string;
         };
+        /** @description A permission grant with the scopes it applies to (union of all assignments that grant it). */
+        Grant: {
+            permission: string;
+            scopes: components["schemas"]["RecordScopes"];
+        };
         /** @description What the health endpoints answer; `migrations` is the count of applied schema versions when the database answers. */
         HealthStatus: {
             status: string;
@@ -2984,6 +3060,20 @@ export interface components {
             lastLoginAt: null | string;
             assignments: components["schemas"]["AssignmentSummary"][];
         };
+        MeResponse: {
+            user: components["schemas"]["UserSummary"];
+            tenant: components["schemas"]["TenantSummary"];
+            /** Format: uuid */
+            membershipId: string;
+            isOwner: boolean;
+            permissions: string[];
+            grants: components["schemas"]["Grant"][];
+            fieldRules: components["schemas"]["FieldRule"][];
+            documentTypeRules: components["schemas"]["DocumentTypeRule"][];
+            /** Format: date-time */
+            authTime: string;
+            authMethods: string;
+        };
         MfaMethodSummary: {
             /** Format: uuid */
             id: string;
@@ -3051,6 +3141,36 @@ export interface components {
             startYear: number | string;
             /** @default open */
             status: string;
+        };
+        /** @description A stored outbox row as the dispatcher and the operator UI see it. */
+        OutboxMessage: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: int64 */
+            seq?: number | string;
+            /** Format: uuid */
+            tenantId?: null | string;
+            /** Format: date-time */
+            occurredAt?: string;
+            eventType?: string;
+            /** Format: int32 */
+            eventVersion?: number | string;
+            aggregateType?: string;
+            /** Format: uuid */
+            aggregateId?: string;
+            payload?: string;
+            correlationId?: null | string;
+            causationId?: null | string;
+            actor?: string;
+            /** Format: date-time */
+            publishedAt?: null | string;
+            /** Format: int32 */
+            attempts?: number | string;
+            /** Format: date-time */
+            nextAttemptAt?: string;
+            lastError?: null | string;
+            /** Format: date-time */
+            deadAt?: null | string;
         };
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
         PageOfActivityView: {
@@ -3155,6 +3275,16 @@ export interface components {
                 [key: string]: string;
             };
             isSystem: boolean;
+        };
+        ReadAllResult: {
+            /** Format: int32 */
+            marked: number | string;
+        };
+        /** @description Record scopes attached to a principal's grants; an empty set for a scope type means "all". */
+        RecordScopes: {
+            companyIds: string[];
+            branchIds: string[];
+            warehouseIds: string[];
         };
         RecoveryCodesResponse: {
             codes: string[];
@@ -3547,6 +3677,20 @@ export interface components {
             isActive: boolean;
             counters: components["schemas"]["CounterSummary"][];
         };
+        SessionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastUsedAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            ip: null | string;
+            userAgent: null | string;
+            amr: string;
+            isCurrent: boolean;
+        };
         /** @description Moves a counter; moving it backwards needs the reset permission and a reason and never below a number already issued. */
         SetCounterRequest: {
             /** Format: int64 */
@@ -3720,6 +3864,16 @@ export interface components {
             email: string;
             password: string;
             tenantSlug?: null | string;
+        };
+        TotpEnrollResponse: {
+            /** Format: uuid */
+            methodId: string;
+            secret: string;
+            provisioningUri: string;
+        };
+        UnreadCount: {
+            /** Format: int32 */
+            count: number | string;
         };
         UomConversionSummary: {
             /** Format: uuid */
@@ -4181,7 +4335,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
             };
         };
     };
@@ -4291,7 +4447,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["SessionSummary"][];
+                };
             };
         };
     };
@@ -4329,7 +4487,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["MfaMethodSummary"][];
+                };
             };
         };
     };
@@ -4347,7 +4507,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TotpEnrollResponse"];
+                };
             };
         };
     };
@@ -4389,7 +4551,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesResponse"];
+                };
             };
         };
     };
@@ -5091,7 +5255,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuditPageOfAuditEventSummary"];
+                };
             };
         };
     };
@@ -5132,7 +5298,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuditEventDetail"][];
+                };
             };
         };
     };
@@ -5238,7 +5406,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuditAnchor"][];
+                };
             };
         };
     };
@@ -5258,7 +5428,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ChainVerification"][];
+                };
             };
         };
     };
@@ -5288,7 +5460,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuditPageOfAuditEventSummary"];
+                };
             };
         };
     };
@@ -6082,7 +6256,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": string[];
+                };
             };
         };
     };
@@ -6879,7 +7055,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["JobRecord"][];
+                };
             };
         };
     };
@@ -6979,7 +7157,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ScheduleRecord"][];
+                };
             };
         };
     };
@@ -7045,7 +7225,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OutboxMessage"][];
+                };
             };
         };
     };
@@ -7357,7 +7539,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UnreadCount"];
+                };
             };
         };
     };
@@ -7397,7 +7581,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ReadAllResult"];
+                };
             };
         };
     };

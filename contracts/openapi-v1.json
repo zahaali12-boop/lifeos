@@ -435,7 +435,14 @@
         "operationId": "getMe",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -559,7 +566,17 @@
         "operationId": "getMeSessions",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionSummary"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -596,7 +613,17 @@
         "operationId": "getMeMfa",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MfaMethodSummary"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -609,7 +636,14 @@
         "operationId": "postMeMfaTotpEnroll",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpEnrollResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -652,7 +686,14 @@
         "operationId": "postMeMfaRecoveryCodes",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodesResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1557,7 +1598,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPageOfAuditEventSummary"
+                }
+              }
+            }
           }
         }
       }
@@ -1614,7 +1662,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEventDetail"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1787,7 +1845,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditAnchor"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1814,7 +1882,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChainVerification"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1911,7 +1989,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPageOfAuditEventSummary"
+                }
+              }
+            }
           }
         }
       }
@@ -3124,7 +3209,17 @@
         "operationId": "getOrganizationRatesProviders",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4308,7 +4403,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobRecord"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4422,7 +4527,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleRecord"
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -4518,7 +4633,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OutboxMessage"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4961,7 +5086,14 @@
         "operationId": "getCollaborationNotificationsUnreadCount",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCount"
+                }
+              }
+            }
           }
         }
       }
@@ -5005,7 +5137,14 @@
         "operationId": "postCollaborationNotificationsReadAll",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadAllResult"
+                }
+              }
+            }
           }
         }
       }
@@ -6323,6 +6462,319 @@
           }
         }
       },
+      "AuditActor": {
+        "required": [
+          "type",
+          "id",
+          "display"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "display": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditAnchor": {
+        "required": [
+          "id",
+          "chain",
+          "tenantId",
+          "seq",
+          "headHash",
+          "anchoredAt",
+          "store",
+          "reference",
+          "receipt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chain": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "seq": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "headHash": {
+            "type": "string"
+          },
+          "anchoredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "store": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "receipt": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditEventDetail": {
+        "required": [
+          "id",
+          "seq",
+          "occurredAt",
+          "actor",
+          "actorIp",
+          "userAgent",
+          "requestId",
+          "correlationId",
+          "companyId",
+          "entityType",
+          "entityId",
+          "entityDisplay",
+          "action",
+          "before",
+          "after",
+          "diff",
+          "details",
+          "reason",
+          "hash",
+          "prevHash"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "seq": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/AuditActor"
+          },
+          "actorIp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "userAgent": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requestId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityDisplay": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "before": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "after": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "diff": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "details": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hash": {
+            "type": "string"
+          },
+          "prevHash": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditEventSummary": {
+        "required": [
+          "id",
+          "seq",
+          "occurredAt",
+          "actor",
+          "entityType",
+          "entityId",
+          "entityDisplay",
+          "action",
+          "reason",
+          "companyId",
+          "requestId",
+          "hasChanges"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "seq": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/AuditActor"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityDisplay": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasChanges": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AuditPageOfAuditEventSummary": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEventSummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "BranchSummary": {
         "required": [
           "id",
@@ -7573,6 +8025,22 @@
           }
         }
       },
+      "Grant": {
+        "required": [
+          "permission",
+          "scopes"
+        ],
+        "type": "object",
+        "properties": {
+          "permission": {
+            "type": "string"
+          },
+          "scopes": {
+            "$ref": "#/components/schemas/RecordScopes"
+          }
+        },
+        "description": "A permission grant with the scopes it applies to (union of all assignments that grant it)."
+      },
       "HealthStatus": {
         "required": [
           "status",
@@ -8041,6 +8509,67 @@
           }
         }
       },
+      "MeResponse": {
+        "required": [
+          "user",
+          "tenant",
+          "membershipId",
+          "isOwner",
+          "permissions",
+          "grants",
+          "fieldRules",
+          "documentTypeRules",
+          "authTime",
+          "authMethods"
+        ],
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/TenantSummary"
+          },
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isOwner": {
+            "type": "boolean"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Grant"
+            }
+          },
+          "fieldRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldRule"
+            }
+          },
+          "documentTypeRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentTypeRule"
+            }
+          },
+          "authTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "authMethods": {
+            "type": "string"
+          }
+        }
+      },
       "MfaMethodSummary": {
         "required": [
           "id",
@@ -8280,6 +8809,103 @@
           }
         },
         "description": "Opens the fiscal year that starts in StartYear (on the calendar's start month) as `open` or `future`."
+      },
+      "OutboxMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "seq": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "tenantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "eventVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "aggregateType": {
+            "type": "string"
+          },
+          "aggregateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payload": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "causationId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "actor": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "attempts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "deadAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "A stored outbox row as the dispatcher and the operator UI see it."
       },
       "PageOfActivityView": {
         "required": [
@@ -8690,6 +9316,54 @@
             "type": "boolean"
           }
         }
+      },
+      "ReadAllResult": {
+        "required": [
+          "marked"
+        ],
+        "type": "object",
+        "properties": {
+          "marked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "RecordScopes": {
+        "required": [
+          "companyIds",
+          "branchIds",
+          "warehouseIds"
+        ],
+        "type": "object",
+        "properties": {
+          "companyIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "branchIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "warehouseIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "Record scopes attached to a principal's grants; an empty set for a scope type means \"all\"."
       },
       "RecoveryCodesResponse": {
         "required": [
@@ -9929,6 +10603,55 @@
           }
         }
       },
+      "SessionSummary": {
+        "required": [
+          "id",
+          "createdAt",
+          "lastUsedAt",
+          "expiresAt",
+          "ip",
+          "userAgent",
+          "amr",
+          "isCurrent"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ip": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "userAgent": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amr": {
+            "type": "string"
+          },
+          "isCurrent": {
+            "type": "boolean"
+          }
+        }
+      },
       "SetCounterRequest": {
         "required": [
           "nextNumber"
@@ -10488,6 +11211,42 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "TotpEnrollResponse": {
+        "required": [
+          "methodId",
+          "secret",
+          "provisioningUri"
+        ],
+        "type": "object",
+        "properties": {
+          "methodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "provisioningUri": {
+            "type": "string"
+          }
+        }
+      },
+      "UnreadCount": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },

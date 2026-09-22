@@ -49,7 +49,7 @@ public static class AuditEndpoints
         var audit = api.MapGroup("/audit").WithTags("Audit").RequireAuthorization();
 
         audit.MapGet("/events", async ([AsParameters] AuditSearchQuery query, AuditQueries queries, CancellationToken ct) =>
-            Results.Ok(await queries.SearchAsync(query.ToFilter(), ct)))
+            TypedResults.Ok(await queries.SearchAsync(query.ToFilter(), ct)))
             .RequirePermission(AuditPermissions.EventRead)
             .WithSummary("Tenant audit explorer: newest first, filter by record, actor, action, company and time");
 
@@ -60,7 +60,7 @@ public static class AuditEndpoints
         }).RequirePermission(AuditPermissions.EventRead);
 
         audit.MapGet("/records/{entityType}/{entityId:guid}", async (string entityType, Guid entityId, AuditQueries queries, CancellationToken ct) =>
-            Results.Ok(await queries.TimelineAsync(entityType, entityId, ct)))
+            TypedResults.Ok(await queries.TimelineAsync(entityType, entityId, ct)))
             .RequirePermission(AuditPermissions.EventRead)
             .WithSummary("Timeline of one record: every event with before/after values and the field-level diff");
 
@@ -101,18 +101,18 @@ public static class AuditEndpoints
           .WithSummary("Write the current chain head to the anchor store");
 
         audit.MapGet("/chain/anchors", async (int? limit, ChainAnchoring anchoring, CancellationToken ct) =>
-            Results.Ok(await anchoring.ListTenantAnchorsAsync(limit ?? 50, ct)))
+            TypedResults.Ok(await anchoring.ListTenantAnchorsAsync(limit ?? 50, ct)))
             .RequirePermission(AuditPermissions.ChainVerify);
 
         audit.MapGet("/chain/verifications", async (int? limit, ChainVerifier verifier, CancellationToken ct) =>
-            Results.Ok(await verifier.ListTenantVerificationsAsync(limit ?? 50, ct)))
+            TypedResults.Ok(await verifier.ListTenantVerificationsAsync(limit ?? 50, ct)))
             .RequirePermission(AuditPermissions.ChainVerify);
 
         // ---------------------------------------------------------------- platform chain (operators)
         var platform = audit.MapGroup("/platform").RequireOperator();
 
         platform.MapGet("/events", async ([AsParameters] AuditSearchQuery query, AuditQueries queries, CancellationToken ct) =>
-            Results.Ok(await queries.SearchPlatformAsync(query.ToFilter(), ct)))
+            TypedResults.Ok(await queries.SearchPlatformAsync(query.ToFilter(), ct)))
             .WithSummary("Events recorded outside any tenant: sign-in attempts, password resets");
 
         platform.MapGet("/chain", async (ChainAnchoring anchoring, ChainVerifier verifier, CancellationToken ct) =>

@@ -167,7 +167,7 @@ public static class OrganizationEndpoints
             ApiProblems.Ok(await service.ResolveForApiAsync(companyId, from, to, date, rateType ?? RateTypes.Spot, ct)))
             .RequirePermission(OrganizationPermissions.CompanyRead)
             .WithSummary("Resolve a rate for a date: direct, inverse, or cross through the company's functional currency");
-        rates.MapGet("/providers", (CurrencyService service) => Results.Ok(service.ProviderCodes))
+        rates.MapGet("/providers", (CurrencyService service) => TypedResults.Ok(service.ProviderCodes))
             .RequirePermission(OrganizationPermissions.CompanyRead);
         rates.MapPost("/import", async (ImportRatesRequest request, CurrencyService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.ImportAsync(request, ct)))

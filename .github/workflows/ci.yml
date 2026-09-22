@@ -98,6 +98,73 @@ jobs:
       - run: pnpm -r test
       - run: pnpm -r build
 
+  e2e:
+    name: Browser journeys (EN and AR, axe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quicker_owner
+          POSTGRES_PASSWORD: quicker
+          POSTGRES_DB: quicker
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U quicker_owner"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prepare database roles and schema
+        run: |
+          PGPASSWORD=quicker psql -h 127.0.0.1 -U quicker_owner -d postgres -v ON_ERROR_STOP=1 -c "
+            DO \$\$ BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='quicker_app') THEN
+                CREATE ROLE quicker_app LOGIN PASSWORD 'quicker' NOSUPERUSER NOBYPASSRLS;
+              END IF;
+            END \$\$;"
+          dotnet run --project src/Host/Quicker.Migrator -c Release
+        env:
+          QUICKER__DB__OWNERCONNECTION: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+          QUICKER__DB__APPPASSWORD: quicker
+      - name: Start the API
+        run: |
+          nohup dotnet run --project src/Host/Quicker.Api -c Release --no-launch-profile > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8080/health/ready && break; sleep 2; done
+          curl -sf http://127.0.0.1:8080/health/ready
+        env:
+          ASPNETCORE_URLS: http://127.0.0.1:8080
+          ASPNETCORE_ENVIRONMENT: Development
+          Quicker__Db__OwnerConnection: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+          Quicker__Db__AppConnection: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+          Quicker__Auth__PublicOrigin: http://127.0.0.1:5173
+          Quicker__Auth__ApiOrigin: http://127.0.0.1:8080
+      - run: pnpm --filter @quicker/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @quicker/web e2e
+        env:
+          CI: "1"
+          E2E_API_URL: http://127.0.0.1:8080
+      - name: API log on failure
+        if: failure()
+        run: tail -n 200 api.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/test-results
+          if-no-files-found: ignore
+
   docs:
     name: Docs diagrams parse
     runs-on: ubuntu-latest

@@ -21,6 +21,12 @@ export default tseslint.config(
       "@typescript-eslint/consistent-type-imports": "error",
       // The app talks to the API only through the generated client (src/api): no ad-hoc fetch calls.
       "no-restricted-globals": ["error", { name: "fetch", message: "Use the typed client from src/api/client.ts." }],
+      // App-code pragmatics: explicit generics document intent, TanStack Router throws redirects by design, React 19 types deprecate FormEvent in name only.
+      "@typescript-eslint/no-unnecessary-type-arguments": "off",
+      "@typescript-eslint/no-confusing-void-expression": "off",
+      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
+      "@typescript-eslint/no-deprecated": "off",
+      "@typescript-eslint/only-throw-error": "off",
     },
   },
   {
@@ -28,8 +34,12 @@ export default tseslint.config(
     rules: { "no-restricted-globals": "off" },
   },
   {
-    files: ["**/*.test.{ts,tsx}", "src/setupTests.ts"],
+    files: ["**/*.test.{ts,tsx}", "src/setupTests.ts", "e2e/**/*.ts", "playwright.config.ts"],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    files: ["e2e/**/*.ts", "playwright.config.ts"],
+    rules: { "no-restricted-globals": "off" },
   },
   {
     files: ["**/*.{js,mjs,cjs}"],

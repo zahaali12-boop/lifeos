@@ -20,6 +20,10 @@ public sealed record PreferenceInput(string Kind, bool InApp, bool Email);
 
 public sealed record PreferenceView(string Kind, bool InApp, bool Email);
 
+public sealed record UnreadCount(int Count);
+
+public sealed record ReadAllResult(int Marked);
+
 public sealed record AnnounceRequest(IReadOnlyDictionary<string, string> Title, IReadOnlyDictionary<string, string>? Body = null, string? Link = null);
 
 /// <summary>In-app notifications of the current member, channel preferences, and the notifier other modules call.</summary>
@@ -144,8 +148,8 @@ public sealed class NotificationService(CollaborationDbContext db, IUnitOfWorkAc
         return paged.IsSuccess ? paged.Value.Map(Map) : paged.Error!;
     }
 
-    public async Task<Result<int>> UnreadCountAsync(CancellationToken cancellationToken) =>
-        CurrentMembership is { } me ? await db.Notifications.CountAsync(n => n.MembershipId == me && n.ReadAt == null, cancellationToken) : NoMembership();
+    public async Task<Result<UnreadCount>> UnreadCountAsync(CancellationToken cancellationToken) =>
+        CurrentMembership is { } me ? new UnreadCount(await db.Notifications.CountAsync(n => n.MembershipId == me && n.ReadAt == null, cancellationToken)) : NoMembership();
 
     public async Task<Result<NotificationView>> MarkReadAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -165,7 +169,7 @@ public sealed class NotificationService(CollaborationDbContext db, IUnitOfWorkAc
         return Map(notification);
     }
 
-    public async Task<Result<int>> MarkAllReadAsync(CancellationToken cancellationToken)
+    public async Task<Result<ReadAllResult>> MarkAllReadAsync(CancellationToken cancellationToken)
     {
         if (CurrentMembership is not { } me)
         {
@@ -173,7 +177,7 @@ public sealed class NotificationService(CollaborationDbContext db, IUnitOfWorkAc
         }
 
         var now = clock.UtcNow;
-        return await db.Notifications.Where(n => n.MembershipId == me && n.ReadAt == null).ExecuteUpdateAsync(s => s.SetProperty(static n => n.ReadAt, now), cancellationToken);
+        return new ReadAllResult(await db.Notifications.Where(n => n.MembershipId == me && n.ReadAt == null).ExecuteUpdateAsync(s => s.SetProperty(static n => n.ReadAt, now), cancellationToken));
     }
 
     // ------------------------------------------------------------------ preferences

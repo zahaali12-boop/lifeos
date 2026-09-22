@@ -34,18 +34,19 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, Va
 }
 
 export function Button({ className, variant, size, asChild = false, loading = false, disabled, children, type, ...props }: ButtonProps) {
-  const Comp = asChild ? Slot : "button";
+  if (asChild) {
+    // Slot needs exactly one element child: the child element takes the styles and props; loading does not apply.
+    return (
+      <Slot className={cn(buttonVariants({ variant, size }), className)} {...props}>
+        {children}
+      </Slot>
+    );
+  }
   return (
-    <Comp
-      className={cn(buttonVariants({ variant, size }), className)}
-      disabled={disabled ?? loading}
-      aria-busy={loading || undefined}
-      type={asChild ? undefined : (type ?? "button")}
-      {...props}
-    >
+    <button className={cn(buttonVariants({ variant, size }), className)} disabled={disabled ?? loading} aria-busy={loading || undefined} type={type ?? "button"} {...props}>
       {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
       {children}
-    </Comp>
+    </button>
   );
 }
 

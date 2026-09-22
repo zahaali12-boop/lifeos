@@ -20,11 +20,11 @@ public static class CollaborationEndpoints
             ApiProblems.Ok(await service.ListMineAsync(unreadOnly ?? false, page, ct)))
             .WithSummary("My notifications, newest first; page with limit and the returned nextCursor");
         notifications.MapGet("/unread-count", async (NotificationService service, CancellationToken ct) =>
-            ApiProblems.From(await service.UnreadCountAsync(ct), static count => Results.Ok(new { count })));
+            ApiProblems.Ok(await service.UnreadCountAsync(ct)));
         notifications.MapPost("/{notificationId:guid}/read", async (Guid notificationId, NotificationService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.MarkReadAsync(notificationId, ct)));
         notifications.MapPost("/read-all", async (NotificationService service, CancellationToken ct) =>
-            ApiProblems.From(await service.MarkAllReadAsync(ct), static marked => Results.Ok(new { marked })));
+            ApiProblems.Ok(await service.MarkAllReadAsync(ct)));
         notifications.MapGet("/preferences", async (NotificationService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.GetPreferencesAsync(ct)));
         notifications.MapPut("/preferences", async (IReadOnlyList<PreferenceInput> preferences, NotificationService service, CancellationToken ct) =>

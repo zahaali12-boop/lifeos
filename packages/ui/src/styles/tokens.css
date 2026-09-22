@@ -60,7 +60,7 @@
   --q-surface-sunken: #eef0f3;
   --q-fg: #0f172a;
   --q-fg-muted: #475569;
-  --q-fg-subtle: #64748b;
+  --q-fg-subtle: #586679; /* 4.6:1 on the sunken surface, the darkest background small text sits on */
   --q-border: #e2e6ec;
   --q-border-strong: #cbd2dc;
   --q-accent: #1d4ed8;

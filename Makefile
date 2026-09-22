@@ -59,6 +59,9 @@ api: ## Run the API with hot reload against the local database
 web: ## Run the web app dev server
 	pnpm --filter @quicker/web dev
 
+e2e: ## Playwright journeys in EN and AR with axe (needs the API on 8080: make api)
+	E2E_API_URL=http://127.0.0.1:8080 pnpm --filter @quicker/web e2e
+
 api-contract: ## Rebuild the API (regenerates contracts/openapi-v1.json) and the typed web client
 	dotnet build src/Host/Quicker.Api/Quicker.Api.csproj -c Release
 	pnpm --filter @quicker/web generate:api

@@ -98,7 +98,7 @@ public static class IdentityEndpoints
             var p = current.Required;
             var tenant = (await tenants.FindByIdAsync(p.TenantId, ct))!;
             var permissions = p.IsOwner ? ["*"] : p.Grants.Select(static g => g.Permission).Distinct(StringComparer.Ordinal).OrderBy(static k => k, StringComparer.Ordinal).ToList();
-            return Results.Ok(new MeResponse(
+            return TypedResults.Ok(new MeResponse(
                 new UserSummary(p.UserId.Value, p.Email, p.DisplayName, p.Language, string.Empty, string.Empty, p.AuthMethods.Contains("mfa", StringComparison.Ordinal), p.IsPlatformOperator),
                 AuthService.Summary(tenant), p.MembershipId.Value, p.IsOwner, permissions, p.Grants, p.FieldRules, p.DocumentTypeRules, p.AuthTime, p.AuthMethods));
         }).WithSummary("Who am I, with effective permissions");
@@ -123,22 +123,22 @@ public static class IdentityEndpoints
             .WithSummary("Re-prove identity for sensitive actions");
 
         me.MapGet("/sessions", async (HttpContext http, CurrentPrincipal current, AuthService service, CancellationToken ct) =>
-            Results.Ok(await service.ListSessionsAsync(current.Required.UserId.Value, SessionId(http) ?? Guid.Empty, ct)));
+            TypedResults.Ok(await service.ListSessionsAsync(current.Required.UserId.Value, SessionId(http) ?? Guid.Empty, ct)));
 
         me.MapDelete("/sessions/{sessionId:guid}", async (Guid sessionId, CurrentPrincipal current, AuthService service, CancellationToken ct) =>
             ApiProblems.NoContent(await service.RevokeSessionAsync(current.Required.UserId.Value, sessionId, ct)));
 
         me.MapGet("/mfa", async (CurrentPrincipal current, AccountService accounts, CancellationToken ct) =>
-            Results.Ok(await accounts.ListMfaMethodsAsync(current.Required.UserId.Value, ct)));
+            TypedResults.Ok(await accounts.ListMfaMethodsAsync(current.Required.UserId.Value, ct)));
 
         me.MapPost("/mfa/totp/enroll", async (CurrentPrincipal current, AccountService accounts, CancellationToken ct) =>
-            Results.Ok(await accounts.StartTotpAsync(current.Required.UserId.Value, ct)));
+            TypedResults.Ok(await accounts.StartTotpAsync(current.Required.UserId.Value, ct)));
 
         me.MapPost("/mfa/totp/confirm", async (TotpConfirmRequest request, CurrentPrincipal current, AccountService accounts, CancellationToken ct) =>
             ApiProblems.Ok(await accounts.ConfirmTotpAsync(current.Required.UserId.Value, request, ct)));
 
         me.MapPost("/mfa/recovery-codes", async (CurrentPrincipal current, AccountService accounts, CancellationToken ct) =>
-            Results.Ok(await accounts.RegenerateRecoveryCodesAsync(current.Required.UserId.Value, ct))).RequireRecentAuth();
+            TypedResults.Ok(await accounts.RegenerateRecoveryCodesAsync(current.Required.UserId.Value, ct))).RequireRecentAuth();
 
         me.MapDelete("/mfa/{methodId:guid}", async (Guid methodId, CurrentPrincipal current, AccountService accounts, ITenantDirectory tenants, CancellationToken ct) =>
         {

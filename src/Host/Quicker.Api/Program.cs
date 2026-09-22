@@ -41,6 +41,13 @@ builder.Services.AddQuickerMessaging(builder.Configuration);
 builder.Services.AddQuickerIdempotency(builder.Configuration);
 builder.Services.AddQuickerRateLimiting(builder.Configuration);
 builder.Services.AddQuickerResponseShaping();
+
+// The web app is served from its own origin in development (Vite) and may be in production (CDN); ETag and the
+// idempotency/rate-limit headers are exposed so the typed client can read them.
+var allowedOrigins = (builder.Configuration["Quicker:Api:AllowedOrigins"] ?? builder.Configuration["Quicker:Auth:PublicOrigin"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+    policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("ETag", "Idempotent-Replayed", "Retry-After", "Location")));
 if (builder.Configuration.GetValue<bool>("Quicker:Worker:Embedded"))
 {
     // Single-node installs run the dispatcher, job slots and scheduler inside the API process (ADR-0010).
@@ -59,6 +66,7 @@ builder.Services.AddCollaborationModule();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

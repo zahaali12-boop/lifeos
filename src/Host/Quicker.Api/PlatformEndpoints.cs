@@ -16,7 +16,7 @@ public static class PlatformEndpoints
 
         var jobs = platform.MapGroup("/jobs");
         jobs.MapGet("/", async (string? state, string? type, int? limit, bool? allTenants, CurrentPrincipal current, JobAdmin admin, CancellationToken ct) =>
-            Results.Ok(await admin.ListAsync(current.Required.TenantId.Value, allTenants == true && current.Required.IsPlatformOperator, state, type, limit ?? 100, ct)))
+            TypedResults.Ok(await admin.ListAsync(current.Required.TenantId.Value, allTenants == true && current.Required.IsPlatformOperator, state, type, limit ?? 100, ct)))
             .RequirePermission(PlatformPermissions.JobRead);
         jobs.MapGet("/types", (JobAdmin admin) => Results.Ok(admin.JobTypes.OrderBy(static t => t, StringComparer.Ordinal)))
             .RequirePermission(PlatformPermissions.JobRead);
@@ -32,7 +32,7 @@ public static class PlatformEndpoints
 
         var schedules = platform.MapGroup("/schedules");
         schedules.MapGet("/", async (bool? allTenants, CurrentPrincipal current, Scheduler scheduler, CancellationToken ct) =>
-            Results.Ok(await scheduler.ListAsync(current.Required.TenantId.Value, allTenants == true && current.Required.IsPlatformOperator, ct)))
+            TypedResults.Ok(await scheduler.ListAsync(current.Required.TenantId.Value, allTenants == true && current.Required.IsPlatformOperator, ct)))
             .RequirePermission(PlatformPermissions.ScheduleRead);
         schedules.MapPut("/", async (SaveScheduleRequest request, CurrentPrincipal current, Scheduler scheduler, JobAdmin admin, CancellationToken ct) =>
             ApiProblems.Ok(await scheduler.SaveAsync(current.Required.TenantId.Value, request, admin.JobTypes, ct)))
@@ -45,7 +45,7 @@ public static class PlatformEndpoints
         // ---------------------------------------------------------------- operators
         var ops = platform.MapGroup("/ops").RequireOperator();
         ops.MapGet("/outbox", async (string? state, Guid? tenantId, int? limit, OutboxAdmin outbox, CancellationToken ct) =>
-            Results.Ok(await outbox.ListAsync(state ?? "dead", tenantId, limit ?? 100, ct)))
+            TypedResults.Ok(await outbox.ListAsync(state ?? "dead", tenantId, limit ?? 100, ct)))
             .WithSummary("Outbox messages by state: dead (default), pending, published, all");
         ops.MapPost("/outbox/{messageId:guid}/retry", async (Guid messageId, OutboxAdmin outbox, CancellationToken ct) =>
             await outbox.RetryAsync(messageId, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("outbox.not_dead", "Only dead-lettered messages can be retried.")));
