@@ -23,6 +23,7 @@
     <ProjectReference Include="../../Modules/Numbering/Quicker.Numbering/Quicker.Numbering.csproj" />
     <ProjectReference Include="../../Modules/Integration/Quicker.Integration/Quicker.Integration.csproj" />
     <ProjectReference Include="../../Modules/Collaboration/Quicker.Collaboration/Quicker.Collaboration.csproj" />
+    <ProjectReference Include="../../Modules/Accounting/Quicker.Accounting/Quicker.Accounting.csproj" />
   </ItemGroup>
 
   <ItemGroup>

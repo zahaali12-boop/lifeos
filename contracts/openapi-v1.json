@@ -6000,6 +6000,784 @@
           }
         }
       }
+    },
+    "/api/v1/accounting/chart-templates": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "The chart templates a company can start from: IFRS for SMEs, GCC (VAT and Zakat), Iraq (mapped to the Unified Accounting System)",
+        "operationId": "getAccountingChartTemplates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/account-categories": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingAccountCategories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategorySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/account-categories/{code}": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "putAccountingAccountCategoriesByCode",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategorySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/statutory-charts": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingStatutoryCharts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatutoryChartSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/charts": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingCharts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChartSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "An empty chart (accounts are added one by one or imported); accountCodeFormat uses # digit, A letter, ? either",
+        "operationId": "postAccountingCharts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveChartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/charts/from-template": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "A complete chart from a template, optionally assigned to a company so it can post on day one",
+        "operationId": "postAccountingChartsFromTemplate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FromTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/charts/{chartId}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "?expand=accounts includes the whole tree in code order with level and path",
+        "operationId": "getAccountingChartsByChartId",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "putAccountingChartsByChartId",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveChartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/charts/{chartId}/accounts": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingChartsByChartIdAccounts",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccountSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Parent by parentId or parentCode (a header of the same type); control accounts name their subledger",
+        "operationId": "postAccountingChartsByChartIdAccounts",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/charts/{chartId}/export": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "CSV with one row per account (the import format)",
+        "operationId": "getAccountingChartsByChartIdExport",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/charts/{chartId}/import": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Upsert accounts by code from CSV (the export format) or JSON; parents may come after children; all or nothing",
+        "operationId": "postAccountingChartsByChartIdImport",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/charts/{chartId}/mappings/{statutoryChartCode}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Every postable account with its statutory code (null = unmapped)",
+        "operationId": "getAccountingChartsByChartIdMappingsByStatutoryChartCode",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "statutoryChartCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MappingSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "putAccountingChartsByChartIdMappingsByStatutoryChartCode",
+        "parameters": [
+          {
+            "name": "chartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "statutoryChartCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MappingRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MappingSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/accounts/{accountId}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingAccountsByAccountId",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "putAccountingAccountsByAccountId",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/accounts/{accountId}/dimension-rules": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingAccountsByAccountIdDimensionRules",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DimensionRuleSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Replaces the account's rules: required, optional (with an optional default value) or blocked per dimension",
+        "operationId": "putAccountingAccountsByAccountIdDimensionRules",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DimensionRuleRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DimensionRuleSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/accounts/{accountId}/check": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Would a line on this account be accepted for the company? Returns the dimensions with defaults applied, or the problem the posting engine would raise",
+        "operationId": "postAccountingAccountsByAccountIdCheck",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckLineResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/settings": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingCompaniesByCompanyIdSettings",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyAccountingSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/chart": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "The chart the company posts to: shared or dedicated to it; null detaches",
+        "operationId": "putAccountingCompaniesByCompanyIdChart",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignChartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyAccountingSettings"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6022,6 +6800,138 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "AccountSummary": {
+        "required": [
+          "id",
+          "chartId",
+          "parentId",
+          "parentCode",
+          "code",
+          "name",
+          "type",
+          "subtype",
+          "categoryCode",
+          "isHeader",
+          "isControl",
+          "subledgerType",
+          "currencyRestriction",
+          "allowManualPosting",
+          "revalueFx",
+          "cashFlowCategory",
+          "defaultRole",
+          "companyId",
+          "isActive",
+          "level",
+          "path",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chartId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "parentCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "subtype": {
+            "type": "string"
+          },
+          "categoryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isHeader": {
+            "type": "boolean"
+          },
+          "isControl": {
+            "type": "boolean"
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currencyRestriction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "allowManualPosting": {
+            "type": "boolean"
+          },
+          "revalueFx": {
+            "type": "boolean"
+          },
+          "cashFlowCategory": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultRole": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "path": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -6359,6 +7269,21 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "AssignChartRequest": {
+        "required": [
+          "chartId"
+        ],
+        "type": "object",
+        "properties": {
+          "chartId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -6910,6 +7835,46 @@
           }
         }
       },
+      "CategorySummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "statement",
+          "sortOrder",
+          "isSystem"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "statement": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "isSystem": {
+            "type": "boolean"
+          }
+        }
+      },
       "ChainVerification": {
         "required": [
           "id",
@@ -7023,6 +7988,131 @@
           }
         }
       },
+      "ChartSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "templateCode",
+          "accountCodeFormat",
+          "companyId",
+          "isActive",
+          "accountCount",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "templateCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountCodeFormat": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "accountCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accounts": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AccountSummary"
+            }
+          }
+        }
+      },
+      "CheckLineRequest": {
+        "required": [
+          "companyId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "manual": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "CheckLineResult": {
+        "required": [
+          "accountId",
+          "accountCode",
+          "dimensions"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "CommentView": {
         "required": [
           "id",
@@ -7091,6 +8181,45 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "CompanyAccountingSettings": {
+        "required": [
+          "companyId",
+          "companyCode",
+          "chartId",
+          "chartCode",
+          "postingProfileId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyCode": {
+            "type": "string"
+          },
+          "chartId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "chartCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postingProfileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -7297,6 +8426,13 @@
             "items": {
               "$ref": "#/components/schemas/BranchSummary"
             }
+          },
+          "chartId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -7653,6 +8789,56 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "DimensionRuleRequest": {
+        "required": [
+          "dimensionCode",
+          "rule"
+        ],
+        "type": "object",
+        "properties": {
+          "dimensionCode": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          },
+          "defaultValueId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "DimensionRuleSummary": {
+        "required": [
+          "dimensionId",
+          "dimensionCode",
+          "rule",
+          "defaultValueId"
+        ],
+        "type": "object",
+        "properties": {
+          "dimensionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dimensionCode": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          },
+          "defaultValueId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -8063,6 +9249,41 @@
           }
         }
       },
+      "FromTemplateRequest": {
+        "required": [
+          "templateCode",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "templateCode": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shared": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "Grant": {
         "required": [
           "permission",
@@ -8262,6 +9483,63 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ImportRequest": {
+        "required": [
+          "accounts"
+        ],
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveAccountRequest"
+            }
+          }
+        }
+      },
+      "ImportResult": {
+        "required": [
+          "created",
+          "updated",
+          "unchanged",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updated": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unchanged": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -8526,6 +9804,61 @@
           "allSessions": {
             "type": "boolean",
             "default": false
+          }
+        }
+      },
+      "MappingRequest": {
+        "required": [
+          "accountCode",
+          "statutoryCode"
+        ],
+        "type": "object",
+        "properties": {
+          "accountCode": {
+            "type": "string"
+          },
+          "statutoryCode": {
+            "type": "string"
+          }
+        }
+      },
+      "MappingSummary": {
+        "required": [
+          "accountId",
+          "accountCode",
+          "accountName",
+          "statutoryCode",
+          "statutoryName"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "statutoryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "statutoryName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
@@ -9567,6 +10900,102 @@
           }
         }
       },
+      "SaveAccountRequest": {
+        "required": [
+          "code",
+          "name",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "parentCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "subtype": {
+            "type": "string",
+            "default": ""
+          },
+          "categoryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isHeader": {
+            "type": "boolean",
+            "default": false
+          },
+          "isControl": {
+            "type": "boolean",
+            "default": false
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currencyRestriction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "allowManualPosting": {
+            "type": "boolean",
+            "default": true
+          },
+          "revalueFx": {
+            "type": "boolean",
+            "default": false
+          },
+          "cashFlowCategory": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultRole": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveBranchRequest": {
         "required": [
           "code",
@@ -9634,6 +11063,66 @@
               ],
               "format": "int32"
             }
+          }
+        }
+      },
+      "SaveCategoryRequest": {
+        "required": [
+          "name",
+          "statement"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "statement": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          }
+        }
+      },
+      "SaveChartRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "accountCodeFormat": {
+            "type": "string",
+            "default": ""
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -11081,6 +12570,62 @@
           }
         }
       },
+      "StatutoryAccount": {
+        "required": [
+          "code",
+          "level",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "StatutoryChartSummary": {
+        "required": [
+          "code",
+          "name",
+          "notes",
+          "accounts"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatutoryAccount"
+            }
+          }
+        }
+      },
       "StepUpRequest": {
         "type": "object",
         "properties": {
@@ -11091,6 +12636,54 @@
             ]
           },
           "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "TemplateSummary": {
+        "required": [
+          "code",
+          "name",
+          "description",
+          "accounts",
+          "roles",
+          "statutoryChartCode"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "accounts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "statutoryChartCode": {
             "type": [
               "null",
               "string"
@@ -11675,6 +13268,9 @@
     },
     {
       "name": "Collaboration"
+    },
+    {
+      "name": "Accounting"
     }
   ]
 }

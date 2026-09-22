@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Quicker.Accounting;
 using Quicker.Audit;
 using Quicker.Collaboration;
 using Quicker.Identity;
@@ -38,6 +39,7 @@ builder.Services.AddOrganizationModule(builder.Configuration);
 builder.Services.AddNumberingModule();
 builder.Services.AddIntegrationModule();
 builder.Services.AddCollaborationModule();
+builder.Services.AddAccountingModule();
 
 var app = builder.Build();
 

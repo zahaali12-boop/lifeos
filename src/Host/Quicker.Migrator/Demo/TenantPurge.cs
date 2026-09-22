@@ -20,6 +20,8 @@ internal static class TenantPurge
         await connection.ExecuteAsync(new CommandDefinition(
             "SELECT set_config('app.tenant_id', @tenant, true), set_config('app.maintenance', 'on', true)",
             new { tenant = tenantId.ToString() }, transaction, cancellationToken: cancellationToken));
+        // Deferrable constraints (the company/chart pair) are checked at commit, when every row of the tenant is gone.
+        await connection.ExecuteAsync(new CommandDefinition("SET CONSTRAINTS ALL DEFERRED", transaction: transaction, cancellationToken: cancellationToken));
 
         var tables = (await connection.QueryAsync<(string Schema, string Table)>(new CommandDefinition("""
             SELECT n.nspname, c.relname
@@ -37,7 +39,7 @@ internal static class TenantPurge
         var edges = (await connection.QueryAsync<(string Child, string Parent)>(new CommandDefinition("""
             SELECT conrelid::regclass::text, confrelid::regclass::text
             FROM pg_constraint
-            WHERE contype = 'f' AND conrelid <> confrelid
+            WHERE contype = 'f' AND conrelid <> confrelid AND NOT condeferrable
             """, transaction: transaction, cancellationToken: cancellationToken)))
             .Where(e => tables.Contains(e.Child) && tables.Contains(e.Parent))
             .ToList();
@@ -46,8 +48,9 @@ internal static class TenantPurge
         var remaining = new HashSet<string>(tables, StringComparer.Ordinal);
         while (remaining.Count > 0)
         {
-            // A table can go once no remaining table still references it. A cycle would leave nothing deletable;
-            // then delete the rest in name order and let PostgreSQL report the constraint.
+            // A table can go once no remaining table still references it through an immediate constraint. A cycle of
+            // immediate constraints would leave nothing deletable; then delete the rest in name order and let
+            // PostgreSQL report the constraint (cycles are declared deferrable instead, see V0010).
             var deletable = remaining.Where(t => !edges.Any(e => e.Parent == t && remaining.Contains(e.Child))).Order(StringComparer.Ordinal).ToList();
             if (deletable.Count == 0)
             {

@@ -35,11 +35,22 @@ public sealed class ObservabilityTests(ApiHostFixture host)
 
         (await owner.GetAsync("/api/v1/organization/companies")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        Activity request;
-        lock (activities)
+        // The request activity stops after the response has been handed to the client, so give it a moment to land.
+        Activity? request = null;
+        for (var attempt = 0; attempt < 50 && request is null; attempt++)
         {
-            request = activities.Single(a => a.OperationName == "Microsoft.AspNetCore.Hosting.HttpRequestIn" && a.GetTagItem(Telemetry.TenantTag) is string tenant && tenant == ws.TenantId.ToString());
+            lock (activities)
+            {
+                request = activities.SingleOrDefault(a => a.OperationName == "Microsoft.AspNetCore.Hosting.HttpRequestIn" && a.GetTagItem(Telemetry.TenantTag) is string tenant && tenant == ws.TenantId.ToString());
+            }
+
+            if (request is null)
+            {
+                await Task.Delay(100, TestContext.Current.CancellationToken);
+            }
         }
+
+        request.ShouldNotBeNull("the request span carries the tenant tag");
 
         request.GetTagItem(Telemetry.UserTag).ShouldBe(ws.UserId.ToString());
         request.GetTagItem(Telemetry.MembershipTag).ShouldBe(ws.MembershipId.ToString());

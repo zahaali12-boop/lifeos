@@ -15,6 +15,7 @@ internal static class RowFactoryRegistration
         Quicker.Identity.TestSupport.IdentityRowFactories.RegisterAll();
         Quicker.Audit.TestSupport.AuditRowFactories.RegisterAll();
         Quicker.Organization.TestSupport.OrganizationRowFactories.RegisterAll();
+        Quicker.Accounting.TestSupport.AccountingRowFactories.RegisterAll();
         Quicker.Numbering.TestSupport.NumberingRowFactories.RegisterAll();
         Quicker.Integration.TestSupport.IntegrationRowFactories.RegisterAll();
         Quicker.Collaboration.TestSupport.CollaborationRowFactories.RegisterAll();

@@ -24,13 +24,17 @@ public sealed record CompanyInfo(
     string BankRevaluationMode,
     Guid FiscalCalendarId,
     Guid BusinessCalendarId,
-    bool IsActive);
+    bool IsActive,
+    Guid? ChartId = null);
 
 public sealed record BranchInfo(BranchId Id, CompanyId CompanyId, string Code, LocalizedText Name, Guid DimensionValueId, bool IsActive);
 
 public interface ICompanyDirectory
 {
     Task<CompanyInfo?> FindAsync(CompanyId id, CancellationToken cancellationToken = default);
+
+    /// <summary>Sets the chart of accounts a company posts to (accounting validates the chart first); null detaches it.</summary>
+    Task<Result> AssignChartAsync(CompanyId id, Guid? chartId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<CompanyInfo>> ListAsync(CancellationToken cancellationToken = default);
 
@@ -118,6 +122,21 @@ public interface IDimensionSets
 {
     /// <summary>Validates every value against its dimension and returns the set id, creating the set when it is new.</summary>
     Task<Result<Guid>> GetOrCreateAsync(IReadOnlyDictionary<string, Guid> valuesByDimensionCode, CancellationToken cancellationToken = default);
+
+    /// <summary>The values of a set by dimension code, or null when the set does not exist in this tenant.</summary>
+    Task<IReadOnlyDictionary<string, Guid>?> GetAsync(Guid setId, CancellationToken cancellationToken = default);
+}
+
+public sealed record DimensionInfo(Guid Id, string Code, LocalizedText Name, bool IsActive);
+
+public sealed record DimensionValueInfo(Guid Id, Guid DimensionId, string Code, LocalizedText Name, bool IsActive);
+
+/// <summary>Read access to the dimension master for modules that attach rules to dimensions (account dimension rules, budgets).</summary>
+public interface IDimensionDirectory
+{
+    Task<IReadOnlyList<DimensionInfo>> ListAsync(CancellationToken cancellationToken = default);
+
+    Task<DimensionValueInfo?> FindValueAsync(Guid valueId, CancellationToken cancellationToken = default);
 }
 
 public interface IUomConversions

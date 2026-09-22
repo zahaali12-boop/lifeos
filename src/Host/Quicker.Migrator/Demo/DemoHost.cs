@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Quicker.Accounting;
 using Quicker.Audit;
 using Quicker.Collaboration;
 using Quicker.Identity;
@@ -63,6 +64,7 @@ internal static class DemoHost
         services.AddNumberingModule();
         services.AddIntegrationModule();
         services.AddCollaborationModule();
+        services.AddAccountingModule();
         return builder.Build();
     }
 }

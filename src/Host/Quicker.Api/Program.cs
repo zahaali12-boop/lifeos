@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Options;
+using Quicker.Accounting;
+using Quicker.Accounting.Api;
 using Quicker.Api;
 using Quicker.Audit;
 using Quicker.Audit.Api;
@@ -61,6 +63,7 @@ builder.Services.AddOrganizationModule(builder.Configuration);
 builder.Services.AddNumberingModule();
 builder.Services.AddIntegrationModule();
 builder.Services.AddCollaborationModule();
+builder.Services.AddAccountingModule();
 
 var app = builder.Build();
 
@@ -87,6 +90,7 @@ api.MapNumberingEndpoints();
 api.MapPlatformEndpoints();
 api.MapIntegrationEndpoints();
 api.MapCollaborationEndpoints();
+api.MapAccountingEndpoints();
 
 app.Run();
 

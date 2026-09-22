@@ -13,7 +13,7 @@ using Quicker.Persistence;
 namespace Quicker.Organization.Application;
 
 /// <summary>Dimensions, hierarchical values, and deduplicated dimension sets.</summary>
-public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, IClock clock) : IDimensionSets
+public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, IClock clock) : IDimensionSets, IDimensionDirectory
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -278,6 +278,15 @@ public sealed class DimensionService(OrganizationDbContext db, IUnitOfWorkAccess
             """, new { tenant = uow.Context.TenantId.Value, id = Guid.CreateVersion7(), hash, values = JsonSerializer.Serialize(normalized, Json) }, uow.Transaction);
         return id;
     }
+
+    public async Task<IReadOnlyDictionary<string, Guid>?> GetAsync(Guid setId, CancellationToken cancellationToken = default) =>
+        await db.DimensionSets.Where(s => s.Id == setId).Select(static s => s.Values).SingleOrDefaultAsync(cancellationToken);
+
+    async Task<IReadOnlyList<DimensionInfo>> IDimensionDirectory.ListAsync(CancellationToken cancellationToken) =>
+        await db.Dimensions.OrderBy(static d => d.SortOrder).ThenBy(static d => d.Code).Select(static d => new DimensionInfo(d.Id, d.Code, d.Name, d.IsActive)).ToListAsync(cancellationToken);
+
+    public async Task<DimensionValueInfo?> FindValueAsync(Guid valueId, CancellationToken cancellationToken = default) =>
+        await db.DimensionValues.Where(v => v.Id == valueId).Select(static v => new DimensionValueInfo(v.Id, v.DimensionId, v.Code, v.Name, v.IsActive)).SingleOrDefaultAsync(cancellationToken);
 
     /// <summary>SHA-256 of "CODE=valueId" lines sorted by code: the same combination always hashes the same.</summary>
     public static byte[] Hash(IReadOnlyDictionary<string, Guid> normalized) =>
