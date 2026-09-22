@@ -6,7 +6,7 @@ The single place a new session reads first (after `CLAUDE.md`). Keep it current:
 
 **Phase 0 (Blueprint): approved by the founder on 2026-09-22 (defaults accepted for Q1–Q8).**
 
-**M1 Foundations: complete** (report: `docs/reports/M1-founder-report.md`). **M2 Core accounting: in progress** (see `docs/ROADMAP.md`). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
+**M1 Foundations: complete** (report: `docs/reports/M1-founder-report.md`). **M2 Core accounting: complete** (report: `docs/reports/M2-founder-report.md`), paused for the founder's review before M3 Inventory (see `docs/ROADMAP.md`). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
 
 Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.5), `claude/efficient-request-ajd9zy` (slice 1.6 onwards, built on top of it). Default branch: `main`.
 
@@ -55,12 +55,12 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 
 ## In progress
 
-- Nothing mid-slice: every M2 slice (2.1–2.7) is complete; the end-of-M2 report is the next commit.
+- Nothing mid-slice: every M2 slice (2.1–2.7) is complete and the report is written; waiting for the founder's review.
 
 ## Next
 
-1. The end-of-M2 report to the founder (`docs/reports/M2-founder-report.md`), then pause for review.
-2. M3 Inventory core in roadmap order (`docs/ROADMAP.md`), starting with 3.1 items and units, once the founder has reviewed M2.
+1. M3 Inventory in roadmap order (`docs/ROADMAP.md`), starting with 3.1 items and units of measure, once the founder has reviewed M2 (or says to continue).
+2. Open founder question Q9 (Iraq statutory code list) can be answered at any time; nothing built depends on it.
 
 ## Known gaps and interim pieces (explicit, per the working rules)
 
