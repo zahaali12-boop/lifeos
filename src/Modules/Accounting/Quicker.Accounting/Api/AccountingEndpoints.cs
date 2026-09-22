@@ -121,6 +121,7 @@ public static class AccountingEndpoints
             .WithSummary("The chart the company posts to: shared or dedicated to it; null detaches");
 
         accounting.MapPostingEndpoints();
+        accounting.MapJournalEndpoints();
         return api;
     }
 

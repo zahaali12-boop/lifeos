@@ -3,6 +3,7 @@ using Quicker.Accounting.Application;
 using Quicker.Accounting.Contracts;
 using Quicker.Accounting.Persistence;
 using Quicker.Identity.Contracts;
+using Quicker.Messaging;
 using Quicker.Persistence.EntityFramework;
 
 namespace Quicker.Accounting;
@@ -20,6 +21,11 @@ public static class AccountingModule
         services.AddScoped<PostingService>();
         services.AddScoped<IPostingService>(static sp => sp.GetRequiredService<PostingService>());
         services.AddScoped<JournalService>();
+        services.AddScoped<ManualJournalService>();
+        services.AddScoped<RecurringService>();
+        services.AddScoped<DeferralService>();
+        services.AddScoped<AccountingRoutines>();
+        services.AddJobHandler<AccountingDailyJob, AccountingDailyPayload>();
         return services;
     }
 }

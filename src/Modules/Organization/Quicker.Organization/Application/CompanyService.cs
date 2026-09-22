@@ -16,7 +16,7 @@ using Quicker.Web;
 namespace Quicker.Organization.Application;
 
 /// <summary>Companies, branches (with their BRANCH dimension value), enabled currencies and settings.</summary>
-public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, FiscalCalendarService calendars, IAuditSink audit, ICustomFieldValidator customFields, IClock clock) : ICompanyDirectory
+public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, FiscalCalendarService calendars, IAuditSink audit, ICustomFieldValidator customFields, IClock clock) : ICompanyDirectory, ICompanySettings
 {
     private static readonly string[] CostingMethods = ["fifo", "average", "standard"];
     private static readonly string[] CostingScopes = ["company", "warehouse"];
@@ -470,6 +470,14 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry("company", company.Id, company.Code, AuditActions.Updated, Before: new { chartId = before }, After: new { chartId }), cancellationToken);
         return Result.Success();
+    }
+
+    public async Task<JsonElement?> GetAsync(Guid? companyId, string key, CancellationToken cancellationToken = default)
+    {
+        var normalized = key?.Trim() ?? string.Empty;
+        var rows = await db.Settings.Where(s => s.Key == normalized && (s.CompanyId == null || s.CompanyId == companyId)).ToListAsync(cancellationToken);
+        var row = rows.FirstOrDefault(s => s.CompanyId != null) ?? rows.FirstOrDefault();
+        return row is null ? null : JsonDocument.Parse(row.ValueJson).RootElement.Clone();
     }
 
     public async Task<Result> AssignPostingProfileAsync(CompanyId id, Guid? profileId, CancellationToken cancellationToken = default)

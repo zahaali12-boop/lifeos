@@ -189,7 +189,7 @@ public sealed class PostingService(
         return await ToResultAsync(entry.Value, replayed: false, cancellationToken);
     }
 
-    public async Task<Result<PostingResult>> ReverseAsync(Guid entryId, DateOnly? reversalDate, string reason, CancellationToken cancellationToken = default)
+    public async Task<Result<PostingResult>> ReverseAsync(Guid entryId, DateOnly? reversalDate, string reason, bool automatic = false, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -261,7 +261,7 @@ public sealed class PostingService(
         var tc = (await companies.FindCurrencyAsync(original.CurrencyTc, cancellationToken))!.Value;
         var request = new PostingRequest(company.Id, original.SourceModule, original.SourceDocumentType, original.SourceDocumentId, date, original.CurrencyTc, [],
             original.SourceDocumentNumber, date, LocalizedText.Bilingual($"Reversal of {original.Number}: {reason.Trim()}", $"عكس القيد {original.Number}: {reason.Trim()}"), null, original.RateType, IsManual: original.IsManual);
-        var entry = await WriteEntryAsync(request, company, period.Value, tc, company.FunctionalCurrency, company.ReportingCurrency, original.RateType, original.RateTcFc, original.RateFcRc, original.PostingProfileId, mirrored, isReversal: true, cancellationToken);
+        var entry = await WriteEntryAsync(request, company, period.Value, tc, company.FunctionalCurrency, company.ReportingCurrency, original.RateType, original.RateTcFc, original.RateFcRc, original.PostingProfileId, mirrored, isReversal: true, cancellationToken, isAutoReversal: automatic);
         if (entry.IsFailure)
         {
             return entry.Error!;
@@ -269,6 +269,11 @@ public sealed class PostingService(
 
         var now = clock.UtcNow;
         db.Set<EntryLink>().Add(new EntryLink { FromEntryId = entry.Value.Id, ToEntryId = original.Id, Relation = EntryRelations.Reverses, Reason = reason.Trim(), CreatedBy = principal.Principal?.UserId.Value, CreatedAt = now });
+        if (automatic)
+        {
+            db.Set<EntryLink>().Add(new EntryLink { FromEntryId = entry.Value.Id, ToEntryId = original.Id, Relation = EntryRelations.AutoReversalOf, Reason = reason.Trim(), CreatedBy = principal.Principal?.UserId.Value, CreatedAt = now });
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry("journal_entry", original.Id, original.Number, AuditActions.Reversed, After: new { reversalEntryId = entry.Value.Id, reversalNumber = entry.Value.Number, date, reason = reason.Trim() }), cancellationToken);
         await outbox.PublishAsync(new JournalEntryPosted(entry.Value.Id, company.Id.Value, entry.Value.Number, entry.Value.PostingDate, entry.Value.SourceModule, entry.Value.SourceDocumentType, entry.Value.SourceDocumentId, true, original.Id), cancellationToken);
@@ -360,7 +365,8 @@ public sealed class PostingService(
             dimensions[BranchDimension] = branch.DimensionValueId;
         }
 
-        var check = await chart.CheckLineAsync(accountId, company.Id, dimensions, tc.Code, request.IsManual, cancellationToken);
+        // A manual journal may touch a control account only when the line names the subledger item it adjusts (POSTING_RULES §8).
+        var check = await chart.CheckLineAsync(accountId, company.Id, dimensions, tc.Code, request.IsManual && line.SubledgerRef is null, cancellationToken);
         if (check.IsFailure)
         {
             return check.Error!.WithWhy(("line", lineNo));
@@ -421,7 +427,7 @@ public sealed class PostingService(
         return new ResolvedLine(line, check.Value.Account, rule.Value.RuleId, 0m, fc, rc, null, null, IsRounding: true);
     }
 
-    private async Task<Result<JournalEntry>> WriteEntryAsync(PostingRequest request, CompanyInfo company, PeriodState period, Currency tc, Currency fc, Currency? rc, string rateType, decimal rateTcFc, decimal? rateFcRc, Guid? profileId, List<ResolvedLine> lines, bool isReversal, CancellationToken cancellationToken)
+    private async Task<Result<JournalEntry>> WriteEntryAsync(PostingRequest request, CompanyInfo company, PeriodState period, Currency tc, Currency fc, Currency? rc, string rateType, decimal rateTcFc, decimal? rateFcRc, Guid? profileId, List<ResolvedLine> lines, bool isReversal, CancellationToken cancellationToken, bool isAutoReversal = false)
     {
         var uow = unitOfWork.Current;
         await uow.Connection.ExecuteAsync(new CommandDefinition("SELECT app.gl_ensure_partition(@day)", new { day = request.PostingDate }, uow.Transaction, cancellationToken: cancellationToken));
@@ -455,6 +461,7 @@ public sealed class PostingService(
             SourceDocumentNumber = request.SourceDocumentNumber,
             Description = request.Description ?? new LocalizedText(),
             IsReversal = isReversal,
+            IsAutoReversal = isAutoReversal,
             AutoReverseOn = request.AutoReverseOn,
             IsClosingEntry = request.IsClosingEntry,
             IsOpeningEntry = request.IsOpeningEntry,

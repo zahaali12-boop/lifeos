@@ -78,7 +78,7 @@ public static class PostingEndpoints
             ApiProblems.Found(await service.GetEntryAsync(entryId, ct), "journal_entry", entryId))
             .RequirePermission(AccountingPermissions.JournalRead);
         entries.MapPost("/{entryId:guid}/reverse", async (Guid entryId, ReverseRequest request, IPostingService service, CancellationToken ct) =>
-            ApiProblems.Created(await service.ReverseAsync(entryId, request.ReversalDate, request.Reason, ct), static r => $"/api/v1/accounting/journal-entries/{r.EntryId}"))
+            ApiProblems.Created(await service.ReverseAsync(entryId, request.ReversalDate, request.Reason, cancellationToken: ct), static r => $"/api/v1/accounting/journal-entries/{r.EntryId}"))
             .RequirePermission(AccountingPermissions.JournalReverse)
             .WithSummary("The mirror entry on the original date when its period is open, else on the first open period; both entries are linked");
 

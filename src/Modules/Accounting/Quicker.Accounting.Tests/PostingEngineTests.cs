@@ -131,9 +131,10 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AP", Guid.NewGuid()), Line("Revenue", -100m)]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.subledger_type_mismatch");
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AR", Guid.NewGuid()), Line("Revenue", -100m, "AR", Guid.NewGuid())]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.subledger_unexpected");
 
-        // Documents post by role; naming an account is for manual journals, and a control account refuses manual lines.
+        // Documents post by role; naming an account is for manual journals, and a control account takes a manual line only with its subledger item.
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("Cogs", 100m, accountId: setup.Accounts["6100"]), Line("Revenue", -100m)]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.explicit_account_not_allowed");
-        (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AR", Guid.NewGuid(), accountId: setup.Accounts["1210"]), Line("Revenue", -100m)], isManual: true), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("account.manual_posting_blocked");
+        (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, accountId: setup.Accounts["1210"]), Line("Revenue", -100m)], isManual: true), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("account.manual_posting_blocked");
+        (await owner.PostAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AR", Guid.NewGuid(), accountId: setup.Accounts["1210"]), Line("Revenue", -100m)], isManual: true))).GetProperty("lines").EnumerateArray().First().GetProperty("subledgerType").GetString().ShouldBe("AR", "a manual line on a control account passes when it names the subledger item it adjusts");
 
         // A required dimension: the account's rule decides, whichever way the line came in (roadmap 2.1 acceptance).
         var (_, costCentre) = await owner.DimensionValueAsync("COST_CENTER", "CC-1");

@@ -134,6 +134,12 @@ public interface IDimensionSets
     Task<IReadOnlyDictionary<string, Guid>?> GetAsync(Guid setId, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Reads tenant and company settings (a company value overrides the tenant value for the same key).</summary>
+public interface ICompanySettings
+{
+    Task<System.Text.Json.JsonElement?> GetAsync(Guid? companyId, string key, CancellationToken cancellationToken = default);
+}
+
 public sealed record DimensionInfo(Guid Id, string Code, LocalizedText Name, bool IsActive);
 
 public sealed record DimensionValueInfo(Guid Id, Guid DimensionId, string Code, LocalizedText Name, bool IsActive);

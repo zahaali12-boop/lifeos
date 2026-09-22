@@ -11,6 +11,9 @@ public static class AccountingPermissions
     public const string JournalRead = "accounting.journal.read";
     public const string JournalPost = "accounting.journal.post";
     public const string JournalReverse = "accounting.journal.reverse";
+    public const string JournalManage = "accounting.journal.manage";
+    public const string JournalApprove = "accounting.journal.approve";
+    public const string RoutinesRun = "accounting.routine.run";
     public const string PostInSoftClosed = "accounting.period.post_in_soft_closed";
     public const string BalanceRebuild = "accounting.balance.rebuild";
 
@@ -23,6 +26,9 @@ public static class AccountingPermissions
         new(JournalRead, "accounting", "Read journal entries, lines and balances"),
         new(JournalPost, "accounting", "Post journal entries through the engine"),
         new(JournalReverse, "accounting", "Reverse a posted journal entry (reason required, audited)", IsSensitive: true),
+        new(JournalManage, "accounting", "Create, edit, submit, cancel and import manual journals, recurring templates and deferral schedules"),
+        new(JournalApprove, "accounting", "Approve or reject submitted journals", IsSensitive: true),
+        new(RoutinesRun, "accounting", "Run the daily accounting routines now (auto-reversals, recurring journals, deferrals)", IsSensitive: true),
         new(PostInSoftClosed, "accounting", "Post into a soft-closed period"),
         new(BalanceRebuild, "accounting", "Rebuild the derived balances from the journal lines", IsSensitive: true),
     ];

@@ -6142,6 +6142,45 @@
         }
       }
     },
+    "/api/v1/accounting/routines/run": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Runs the daily routines now for the tenant (or one company): automatic reversals, recurring journals, deferral postings; what waited says why",
+        "operationId": "postAccountingRoutinesRun",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutineRunResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/accounting/charts": {
       "get": {
         "tags": [
@@ -7396,6 +7435,816 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PostingResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/journals": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingCompaniesByCompanyIdJournals",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "A draft journal: kind manual|opening|accrual|reversing|allocation, lines by account code with debit or credit; accruals name their auto-reversal date",
+        "operationId": "postAccountingCompaniesByCompanyIdJournals",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveJournalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/journals/import": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Drafts from a batch: JSON journals or CSV rows grouped by journal_ref (columns: journal_ref, posting_date, currency, account_code, debit, credit, description); all or nothing",
+        "operationId": "postAccountingCompaniesByCompanyIdJournalsImport",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JournalImportRequest"
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "$ref": "#/components/schemas/JournalImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalImportResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/recurring-templates": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingCompaniesByCompanyIdRecurringTemplates",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecurringTemplateSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Cron in the company's time zone; amountMode fixed (amounts), percentage (shares of a base amount) or variable (accounts only, always reviewed)",
+        "operationId": "postAccountingCompaniesByCompanyIdRecurringTemplates",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecurringTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringTemplateSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/deferrals": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingCompaniesByCompanyIdDeferrals",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeferralScheduleSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "A prepayment, accrual or deferred revenue schedule over N fiscal periods (straight line or daily), amortised to the minor unit",
+        "operationId": "postAccountingCompaniesByCompanyIdDeferrals",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDeferralRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeferralScheduleSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/deferrals/preview": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "postAccountingCompaniesByCompanyIdDeferralsPreview",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDeferralRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeferralPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journals/{journalId}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingJournalsByJournalId",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "putAccountingJournalsByJournalId",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveJournalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journals/{journalId}/submit": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Balanced drafts move to pending_approval when the company setting accounting.journals.approval is \"required\", else straight to approved",
+        "operationId": "postAccountingJournalsByJournalIdSubmit",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journals/{journalId}/approve": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "By someone other than the submitter",
+        "operationId": "postAccountingJournalsByJournalIdApprove",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journals/{journalId}/reject": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "postAccountingJournalsByJournalIdReject",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectJournalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journals/{journalId}/cancel": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "postAccountingJournalsByJournalIdCancel",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journals/{journalId}/post": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Posts through the engine; the journal keeps its number and the entry id",
+        "operationId": "postAccountingJournalsByJournalIdPost",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/recurring-templates/{templateId}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingRecurringTemplatesByTemplateId",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringTemplateSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "putAccountingRecurringTemplatesByTemplateId",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecurringTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringTemplateSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/recurring-templates/{templateId}/generate": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Generates the journal of the next due run (or the given date) and posts it unless the template requires review",
+        "operationId": "postAccountingRecurringTemplatesByTemplateIdGenerate",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GenerateRecurringRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/deferrals/{scheduleId}": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "getAccountingDeferralsByScheduleId",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeferralScheduleSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/deferrals/{scheduleId}/post-due": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Posts the planned lines due on or before the date (today in the company's time zone by default)",
+        "operationId": "postAccountingDeferralsByScheduleIdPostDue",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoutineOutcome"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/deferrals/{scheduleId}/cancel": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "postAccountingDeferralsByScheduleIdCancel",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeferralScheduleSummary"
                 }
               }
             }
@@ -9494,6 +10343,208 @@
           }
         }
       },
+      "DeferralLineSummary": {
+        "required": [
+          "sequence",
+          "fiscalPeriodId",
+          "postingDate",
+          "amount",
+          "status",
+          "journalEntryId"
+        ],
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fiscalPeriodId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "DeferralPreview": {
+        "required": [
+          "lines",
+          "totalAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeferralLineSummary"
+            }
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "DeferralScheduleSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "kind",
+          "sourceDocumentType",
+          "sourceLineId",
+          "balanceAccountId",
+          "balanceAccountCode",
+          "targetAccountId",
+          "targetAccountCode",
+          "startsOn",
+          "periods",
+          "method",
+          "totalAmount",
+          "currency",
+          "dimensions",
+          "description",
+          "status",
+          "postedAmount",
+          "remainingAmount",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "balanceAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "balanceAccountCode": {
+            "type": "string"
+          },
+          "targetAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetAccountCode": {
+            "type": "string"
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "periods": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "method": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "postedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remainingAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeferralLineSummary"
+            }
+          }
+        }
+      },
       "DeliverySummary": {
         "required": [
           "id",
@@ -10112,6 +11163,27 @@
           "shared": {
             "type": "boolean",
             "default": true
+          }
+        }
+      },
+      "GenerateRecurringRequest": {
+        "type": "object",
+        "properties": {
+          "runDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "baseAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -10752,6 +11824,133 @@
           }
         }
       },
+      "JournalImportRequest": {
+        "required": [
+          "journals"
+        ],
+        "type": "object",
+        "properties": {
+          "journals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveJournalRequest"
+            }
+          }
+        }
+      },
+      "JournalImportResult": {
+        "required": [
+          "created",
+          "journalIds"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "journalIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "JournalLineRequest": {
+        "type": "object",
+        "properties": {
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "accountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subledgerRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "JournalLineSummary": {
         "required": [
           "id",
@@ -10913,6 +12112,115 @@
           }
         }
       },
+      "JournalLineSummaryView": {
+        "required": [
+          "id",
+          "lineNo",
+          "accountId",
+          "accountCode",
+          "accountName",
+          "debit",
+          "credit",
+          "dimensions",
+          "partnerId",
+          "subledgerType",
+          "subledgerRef",
+          "taxCodeId",
+          "description",
+          "dueDate"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subledgerRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "JsonElement": { },
       "LinkRequest": {
         "required": [
@@ -11012,6 +12320,211 @@
           "allSessions": {
             "type": "boolean",
             "default": false
+          }
+        }
+      },
+      "ManualJournalSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "kind",
+          "postingDate",
+          "documentDate",
+          "currency",
+          "rateType",
+          "rateOverride",
+          "rateOverrideReason",
+          "branchId",
+          "description",
+          "reference",
+          "status",
+          "autoReverse",
+          "autoReverseOn",
+          "templateId",
+          "journalEntryId",
+          "customFields",
+          "totalDebit",
+          "totalCredit",
+          "submittedBy",
+          "submittedAt",
+          "approvedBy",
+          "approvedAt",
+          "rejectionReason",
+          "postedBy",
+          "postedAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rateType": {
+            "type": "string"
+          },
+          "rateOverride": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rateOverrideReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "autoReverse": {
+            "type": "boolean"
+          },
+          "autoReverseOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "templateId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "totalDebit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalCredit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "submittedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "submittedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "approvedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "approvedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "rejectionReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/JournalLineSummaryView"
+            }
           }
         }
       },
@@ -11575,6 +13088,28 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/JournalEntrySummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
+      "PageOfManualJournalSummary": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualJournalSummary"
             }
           },
           "nextCursor": {
@@ -12806,6 +14341,164 @@
           }
         }
       },
+      "RecurringLineRequest": {
+        "required": [
+          "accountCode"
+        ],
+        "type": "object",
+        "properties": {
+          "accountCode": {
+            "type": "string"
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A template line: amounts in fixed mode, percentages of the base amount in percentage mode (debit or credit side), accounts only in variable mode."
+      },
+      "RecurringTemplateSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "cron",
+          "timeZone",
+          "nextRunOn",
+          "endsOn",
+          "amountMode",
+          "baseAmount",
+          "currency",
+          "lines",
+          "description",
+          "requiresReview",
+          "autoReverse",
+          "isActive",
+          "lastGeneratedOn",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cron": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "nextRunOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "endsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "amountMode": {
+            "type": "string"
+          },
+          "baseAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecurringLineRequest"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "requiresReview": {
+            "type": "boolean"
+          },
+          "autoReverse": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lastGeneratedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "RefreshRequest": {
         "required": [
           "refreshToken"
@@ -12813,6 +14506,17 @@
         "type": "object",
         "properties": {
           "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "RejectJournalRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
             "type": "string"
           }
         }
@@ -12939,6 +14643,87 @@
             }
           }
         }
+      },
+      "RoutineOutcome": {
+        "required": [
+          "targetId",
+          "outcome",
+          "producedId",
+          "producedNumber",
+          "problem"
+        ],
+        "type": "object",
+        "properties": {
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "producedId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "producedNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One item the routine handled: what it targeted, what it produced, or why it waited."
+      },
+      "RoutineRunResult": {
+        "required": [
+          "companyId",
+          "asOf",
+          "autoReversals",
+          "recurringJournals",
+          "deferralPostings"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "autoReversals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutineOutcome"
+            }
+          },
+          "recurringJournals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutineOutcome"
+            }
+          },
+          "deferralPostings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutineOutcome"
+            }
+          }
+        },
+        "description": "What one run of the daily routines did for a company (or a tenant when Guid? RoutineRunResult.CompanyId is null)."
       },
       "SaveAccountRequest": {
         "required": [
@@ -13355,6 +15140,88 @@
           }
         }
       },
+      "SaveDeferralRequest": {
+        "required": [
+          "kind",
+          "balanceAccountCode",
+          "targetAccountCode",
+          "startsOn",
+          "periods",
+          "totalAmount",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "balanceAccountCode": {
+            "type": "string"
+          },
+          "targetAccountCode": {
+            "type": "string"
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "periods": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "default": "straight_line"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "sourceDocumentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "SaveDimensionRequest": {
         "required": [
           "code",
@@ -13549,6 +15416,93 @@
           }
         }
       },
+      "SaveJournalRequest": {
+        "required": [
+          "postingDate",
+          "currency",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JournalLineRequest"
+            }
+          },
+          "kind": {
+            "type": "string",
+            "default": "manual"
+          },
+          "documentDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "rateType": {
+            "type": "string",
+            "default": "spot"
+          },
+          "rateOverride": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rateOverrideReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "autoReverse": {
+            "type": "boolean",
+            "default": false
+          },
+          "autoReverseOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "customFields": { }
+        }
+      },
       "SavePostingGroupRequest": {
         "required": [
           "kind",
@@ -13654,6 +15608,87 @@
             "additionalProperties": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SaveRecurringTemplateRequest": {
+        "required": [
+          "code",
+          "name",
+          "cron",
+          "currency",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cron": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecurringLineRequest"
+            }
+          },
+          "amountMode": {
+            "type": "string",
+            "default": "fixed"
+          },
+          "baseAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "startsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "endsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "requiresReview": {
+            "type": "boolean",
+            "default": true
+          },
+          "autoReverse": {
+            "type": "boolean",
+            "default": false
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
           }
         }
       },

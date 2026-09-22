@@ -35,7 +35,7 @@ public static class AccountCsv
     public static IReadOnlyList<SaveAccountRequest> Read(string csv)
     {
         ArgumentNullException.ThrowIfNull(csv);
-        var rows = ParseRows(csv);
+        var rows = Rows(csv);
         if (rows.Count == 0)
         {
             return [];
@@ -103,8 +103,10 @@ public static class AccountCsv
         return value.IndexOfAny([',', '"', '\n', '\r']) >= 0 ? "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"" : value;
     }
 
-    private static List<List<string>> ParseRows(string text)
+    /// <summary>RFC 4180 rows of a CSV text (quotes, doubled quotes, CRLF).</summary>
+    public static List<List<string>> Rows(string text)
     {
+        ArgumentNullException.ThrowIfNull(text);
         var rows = new List<List<string>>();
         var row = new List<string>();
         var field = new StringBuilder();

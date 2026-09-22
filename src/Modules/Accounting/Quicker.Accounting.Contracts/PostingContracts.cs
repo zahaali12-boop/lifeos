@@ -119,7 +119,7 @@ public interface IPostingService
     /// Posts the mirror entry (sides swapped, all three currencies copied) on the original date when its period is open
     /// for the actor, otherwise on the first day of the first open period, and links both entries (ADR-0026).
     /// </summary>
-    Task<Result<PostingResult>> ReverseAsync(Guid entryId, DateOnly? reversalDate, string reason, CancellationToken cancellationToken = default);
+    Task<Result<PostingResult>> ReverseAsync(Guid entryId, DateOnly? reversalDate, string reason, bool automatic = false, CancellationToken cancellationToken = default);
 }
 
 public sealed record JournalEntryPosted(

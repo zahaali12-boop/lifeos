@@ -182,7 +182,8 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
             Code = normalized,
             Name = request.Name is { Count: > 0 } ? Validation.Name(request.Name, "posting_profile").Value : LocalizedText.Bilingual("Default posting profile", "ملف الترحيل الافتراضي"),
             Version = version + 1,
-            ValidFrom = request.ValidFrom ?? clock.TodayIn(company.TimeZone),
+            // A company's first version covers its whole history (opening balances, back-dated go-live entries); later versions start today unless dated.
+            ValidFrom = request.ValidFrom ?? (version == 0 ? DateOnly.MinValue : clock.TodayIn(company.TimeZone)),
             Status = "draft",
             CreatedAt = now,
             UpdatedAt = now,

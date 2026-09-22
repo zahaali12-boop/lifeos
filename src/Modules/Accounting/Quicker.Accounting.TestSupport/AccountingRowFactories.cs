@@ -59,6 +59,28 @@ public static class AccountingRowFactories
             await c.ExecuteAsync("INSERT INTO app.gl_entry_links (tenant_id, from_entry_id, to_entry_id, relation) VALUES (@t, @from, @to, 'corrects')", new { t, from, to }, tx);
             return new RowRef("app.gl_entry_links", $"from_entry_id = '{from}'");
         });
+        IsolationRegistry.Register("app.gl_manual_journals", static async (c, tx, t) => new RowRef("app.gl_manual_journals", $"id = '{(await JournalAsync(c, tx, t)).Journal}'"));
+        IsolationRegistry.Register("app.gl_manual_journal_lines", static async (c, tx, t) =>
+        {
+            var (journal, account) = await JournalAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.gl_manual_journal_lines (tenant_id, id, journal_id, line_no, account_id, debit) VALUES (@t, @id, @journal, 1, @account, 1)", new { t, id, journal, account }, tx);
+            return new RowRef("app.gl_manual_journal_lines", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.gl_recurring_templates", static async (c, tx, t) =>
+        {
+            var (company, _) = await CompanyAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.gl_recurring_templates (tenant_id, id, company_id, code, name_i18n, cron, time_zone, currency) VALUES (@t, @id, @company, @code, '{}', '0 0 1 * *', 'Asia/Baghdad', 'IQD')", new { t, id, company, code = "R" + id.ToString("N")[^8..].ToUpperInvariant() }, tx);
+            return new RowRef("app.gl_recurring_templates", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.gl_deferral_schedules", static async (c, tx, t) => new RowRef("app.gl_deferral_schedules", $"id = '{await DeferralAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.gl_deferral_lines", static async (c, tx, t) =>
+        {
+            var schedule = await DeferralAsync(c, tx, t);
+            await c.ExecuteAsync("INSERT INTO app.gl_deferral_lines (tenant_id, schedule_id, sequence, posting_date, amount) VALUES (@t, @schedule, 1, '2026-01-31', 1)", new { t, schedule }, tx);
+            return new RowRef("app.gl_deferral_lines", $"schedule_id = '{schedule}'");
+        });
         IsolationRegistry.Register("app.gl_balances", static async (c, tx, t) =>
         {
             var (_, company, period, account, _) = await EntryAsync(c, tx, t);
@@ -78,6 +100,24 @@ public static class AccountingRowFactories
             VALUES (@t, @id, @code, '{"en":"Probe"}', 'IQ', 'IQD', @fiscal, @business, 'Asia/Baghdad')
             """, new { t, id = company, code = "A" + company.ToString("N")[^8..].ToUpperInvariant(), fiscal, business }, tx);
         return (company, fiscal);
+    }
+
+    private static async Task<(Guid Journal, Guid Account)> JournalAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (company, _) = await CompanyAsync(c, tx, t);
+        var (account, _) = await AccountAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.gl_manual_journals (tenant_id, id, company_id, posting_date, document_date, currency) VALUES (@t, @id, @company, '2026-01-15', '2026-01-15', 'IQD')", new { t, id, company }, tx);
+        return (id, account);
+    }
+
+    private static async Task<Guid> DeferralAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (company, _) = await CompanyAsync(c, tx, t);
+        var (account, _) = await AccountAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.gl_deferral_schedules (tenant_id, id, company_id, kind, balance_account_id, target_account_id, starts_on, periods, total_amount, currency) VALUES (@t, @id, @company, 'prepayment', @account, @account, '2026-01-01', 1, 1, 'IQD')", new { t, id, company, account }, tx);
+        return id;
     }
 
     private static async Task<(Guid Profile, Guid Company)> ProfileAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

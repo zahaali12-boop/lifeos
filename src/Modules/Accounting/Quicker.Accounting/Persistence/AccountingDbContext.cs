@@ -1,4 +1,7 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Quicker.Accounting.Domain;
 using Quicker.Persistence;
 using Quicker.Persistence.EntityFramework;
@@ -26,6 +29,23 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
     public DbSet<JournalLine> Lines => Set<JournalLine>();
 
     public DbSet<EntryLink> Links => Set<EntryLink>();
+
+    public DbSet<ManualJournal> Journals => Set<ManualJournal>();
+
+    public DbSet<RecurringTemplate> RecurringTemplates => Set<RecurringTemplate>();
+
+    public DbSet<DeferralSchedule> Deferrals => Set<DeferralSchedule>();
+
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    private static readonly ValueConverter<Dictionary<string, Guid>, string> GuidMapConverter = new(
+        static v => JsonSerializer.Serialize(v, Json),
+        static s => JsonSerializer.Deserialize<Dictionary<string, Guid>>(s, Json) ?? new Dictionary<string, Guid>(StringComparer.Ordinal));
+
+    private static readonly ValueComparer<Dictionary<string, Guid>> GuidMapComparer = new(
+        static (a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
+        static v => JsonSerializer.Serialize(v, Json).GetHashCode(StringComparison.Ordinal),
+        static v => new Dictionary<string, Guid>(v, StringComparer.Ordinal));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,6 +134,50 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         {
             b.ToTable("gl_entry_links", "app");
             b.HasKey(static l => new { l.TenantId, l.FromEntryId, l.ToEntryId, l.Relation });
+        });
+
+        modelBuilder.Entity<ManualJournal>(b =>
+        {
+            b.ToTable("gl_manual_journals", "app");
+            b.HasKey(static j => new { j.TenantId, j.Id });
+            b.Property(static j => j.Description).HasColumnName("description_i18n");
+            b.Property(static j => j.CustomFields).HasColumnType("jsonb");
+            b.HasMany(static j => j.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.JournalId });
+            b.HasAuditTrail("manual_journal", static j => j.Number ?? j.Id.ToString());
+        });
+
+        modelBuilder.Entity<ManualJournalLine>(b =>
+        {
+            b.ToTable("gl_manual_journal_lines", "app");
+            b.HasKey(static l => new { l.TenantId, l.Id });
+            b.Property(static l => l.Description).HasColumnName("description_i18n");
+            b.Property(static l => l.Dimensions).HasConversion(GuidMapConverter, GuidMapComparer).HasColumnType("jsonb");
+            b.HasOne<Account>().WithMany().HasForeignKey(static l => new { l.TenantId, l.AccountId });
+        });
+
+        modelBuilder.Entity<RecurringTemplate>(b =>
+        {
+            b.ToTable("gl_recurring_templates", "app");
+            b.HasKey(static t => new { t.TenantId, t.Id });
+            b.Property(static t => t.Name).HasColumnName("name_i18n");
+            b.Property(static t => t.Description).HasColumnName("description_i18n");
+            b.Property(static t => t.Lines).HasColumnType("jsonb");
+            b.HasAuditTrail("gl_recurring_template", static t => t.Code);
+        });
+
+        modelBuilder.Entity<DeferralSchedule>(b =>
+        {
+            b.ToTable("gl_deferral_schedules", "app");
+            b.HasKey(static s => new { s.TenantId, s.Id });
+            b.Property(static s => s.Description).HasColumnName("description_i18n");
+            b.Property(static s => s.Dimensions).HasConversion(GuidMapConverter, GuidMapComparer).HasColumnType("jsonb");
+            b.HasMany(static s => s.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.ScheduleId });
+        });
+
+        modelBuilder.Entity<DeferralLine>(b =>
+        {
+            b.ToTable("gl_deferral_lines", "app");
+            b.HasKey(static l => new { l.TenantId, l.ScheduleId, l.Sequence });
         });
 
         base.OnModelCreating(modelBuilder);
