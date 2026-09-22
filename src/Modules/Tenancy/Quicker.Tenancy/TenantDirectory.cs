@@ -53,6 +53,14 @@ public sealed partial class TenantDirectory(IUnitOfWorkAccessor unitOfWork) : IT
         return row is null ? null : Map(row);
     }
 
+    public async Task<IReadOnlyList<TenantInfo>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var uow = unitOfWork.Current;
+        var rows = await uow.Connection.QueryAsync<TenantRow>(new CommandDefinition(
+            $"SELECT {SelectColumns} FROM control.tenants ORDER BY created_at", transaction: uow.Transaction, cancellationToken: cancellationToken));
+        return rows.Select(Map).ToList();
+    }
+
     public async Task BumpPermissionsEpochAsync(TenantId id, CancellationToken cancellationToken = default)
     {
         var uow = unitOfWork.Current;

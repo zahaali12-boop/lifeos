@@ -1,7 +1,6 @@
 using Fido2NetLib;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -9,7 +8,7 @@ using Quicker.Identity.Application;
 using Quicker.Identity.Persistence;
 using Quicker.Identity.Security;
 using Quicker.Kernel.Time;
-using Quicker.Persistence;
+using Quicker.Persistence.EntityFramework;
 using Quicker.Web;
 
 namespace Quicker.Identity;
@@ -57,11 +56,7 @@ public static class IdentityModule
             sp.GetRequiredService<AuthOptions>().BreachedPasswordCheck ? sp.GetRequiredService<HibpBreachedPasswordChecker>() : new NoBreachCheck());
         services.AddScoped<PasswordPolicy>();
 
-        services.AddDbContext<IdentityDbContext>(static (sp, options) =>
-        {
-            var uow = sp.GetRequiredService<IUnitOfWorkAccessor>().Current;
-            options.UseNpgsql(uow.Connection);
-        });
+        services.AddModuleDbContext<IdentityDbContext>();
 
         services.AddScoped<AuthService>();
         services.AddScoped<AccountService>();

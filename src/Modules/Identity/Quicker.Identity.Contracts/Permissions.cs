@@ -88,7 +88,6 @@ public static class IdentityPermissions
     public const string SsoManage = "identity.sso.manage";
     public const string SodManage = "identity.sod.manage";
     public const string SodRead = "identity.sod.read";
-    public const string AuditRead = "identity.audit.read";
     public const string TenantSettingsManage = "identity.tenant.manage";
 
     public static readonly PermissionDefinition[] All =
@@ -103,7 +102,6 @@ public static class IdentityPermissions
         new(SsoManage, "identity", "Configure single sign-on connections", IsSensitive: true),
         new(SodManage, "identity", "Maintain segregation-of-duties rules and exceptions", IsSensitive: true),
         new(SodRead, "identity", "View the segregation-of-duties report"),
-        new(AuditRead, "identity", "Read the audit log"),
         new(TenantSettingsManage, "identity", "Change tenant security policy", IsSensitive: true),
     ];
 }

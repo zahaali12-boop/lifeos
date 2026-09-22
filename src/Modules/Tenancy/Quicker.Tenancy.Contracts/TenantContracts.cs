@@ -35,6 +35,9 @@ public interface ITenantDirectory
 
     Task<TenantInfo?> FindByIdAsync(TenantId id, CancellationToken cancellationToken = default);
 
+    /// <summary>All tenants in the catalogue (control plane; for platform jobs that visit every tenant).</summary>
+    Task<IReadOnlyList<TenantInfo>> ListAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Increments the tenant's permissions epoch so cached principals are recomputed on the next request.</summary>
     Task BumpPermissionsEpochAsync(TenantId id, CancellationToken cancellationToken = default);
 }

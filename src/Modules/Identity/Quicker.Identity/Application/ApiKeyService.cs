@@ -65,8 +65,7 @@ public sealed class ApiKeyService(IdentityDbContext db, IAuditSink audit, IClock
             CreatedAt = clock.UtcNow,
         };
         db.ApiKeys.Add(entity);
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("api_key", entity.Id, entity.Name, AuditActions.Created, After: new { entity.Name, entity.Prefix, entity.Scopes, entity.ExpiresAt }), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken); // captured as "created"; the key hash is redacted
         return new ApiKeyCreatedResponse(entity.Id, entity.Name, key, entity.Prefix, entity.ExpiresAt);
     }
 
@@ -86,7 +85,7 @@ public sealed class ApiKeyService(IdentityDbContext db, IAuditSink audit, IClock
 
         key.RevokedAt ??= clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("api_key", key.Id, key.Name, "revoked"), cancellationToken);
+        await audit.RecordAsync(new AuditEntry("api_key", key.Id, key.Name, AuditActions.Revoked), cancellationToken); // inherits the captured diff
         return Result.Success();
     }
 

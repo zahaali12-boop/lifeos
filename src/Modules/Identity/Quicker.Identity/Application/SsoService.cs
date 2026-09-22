@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
-using Quicker.Audit.Contracts;
 using Quicker.Identity.Domain;
 using Quicker.Identity.Persistence;
 using Quicker.Identity.Security;
@@ -32,7 +31,6 @@ public sealed class SsoService(
     SecretProtector protector,
     AuthOptions options,
     IHttpClientFactory httpClientFactory,
-    IAuditSink audit,
     IClock clock)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -91,8 +89,7 @@ public sealed class SsoService(
         connection.GroupRoleMap = JsonSerializer.Serialize(request.GroupRoleMap ?? new Dictionary<string, Guid>(StringComparer.Ordinal), Json);
         connection.IsActive = request.IsActive;
         connection.UpdatedAt = clock.UtcNow;
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("sso_connection", connection.Id, connection.Code, id is null ? AuditActions.Created : AuditActions.Updated, After: Map(connection)), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken); // captured as created/updated; the client secret is redacted
         return Map(connection);
     }
 
@@ -105,8 +102,7 @@ public sealed class SsoService(
         }
 
         db.SsoConnections.Remove(connection);
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("sso_connection", connection.Id, connection.Code, "deleted"), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken); // captured as "deleted"
         return Result.Success();
     }
 
@@ -273,7 +269,7 @@ public sealed class SsoService(
         }
 
         // Group → role mapping applies inside the tenant.
-        await unitOfWork.Current.SwitchTenantAsync(tenant.Id, new UserId(user.Id), new MembershipId(membership.Id), cancellationToken);
+        await unitOfWork.Current.SwitchTenantAsync(tenant.Id, new UserId(user.Id), new MembershipId(membership.Id), user.Email, cancellationToken);
         if (connection.GroupClaim is { } groupClaim)
         {
             var map = JsonSerializer.Deserialize<Dictionary<string, Guid>>(connection.GroupRoleMap, Json) ?? new Dictionary<string, Guid>(StringComparer.Ordinal);

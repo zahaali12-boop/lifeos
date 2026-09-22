@@ -28,6 +28,9 @@ public sealed class ApiFixture : IAsyncDisposable
 
     public HttpClient Client { get; private set; } = null!;
 
+    /// <summary>Directory of this host's audit anchor file store (one per fixture, removed on dispose).</summary>
+    public string AnchorDirectory { get; } = Path.Combine(Path.GetTempPath(), "quicker-tests", "anchors-" + Guid.NewGuid().ToString("N")[..12]);
+
     public IServiceProvider Services => _factory!.Services;
 
     public static async Task<ApiFixture> StartAsync()
@@ -41,6 +44,7 @@ public sealed class ApiFixture : IAsyncDisposable
             builder.UseSetting("Quicker:Db:OwnerConnection", fixture.Db.OwnerConnectionString);
             builder.UseSetting("Quicker:Auth:PublicOrigin", "http://localhost");
             builder.UseSetting("Quicker:Auth:ApiOrigin", "http://localhost");
+            builder.UseSetting("Quicker:Audit:Anchoring:Path", fixture.AnchorDirectory);
             builder.UseSetting("Logging:LogLevel:Default", "Warning");
             builder.ConfigureServices(services =>
             {
@@ -95,6 +99,15 @@ public sealed class ApiFixture : IAsyncDisposable
         if (Db is not null)
         {
             await Db.DisposeAsync();
+        }
+
+        try
+        {
+            Directory.Delete(AnchorDirectory, recursive: true);
+        }
+        catch (IOException)
+        {
+            // best effort: temp directory
         }
     }
 }

@@ -29,7 +29,7 @@ public static class RoleTemplates
             ["purchasing.requisition.*", "purchasing.rfq.*", "purchasing.order.*", "partners.supplier.*", "inventory.item.read"]),
         new("approver", LocalizedText.Bilingual("Approver", "معتمد"), "Approves documents routed by workflow", ["workflow.request.approve", "workflow.request.read"]),
         new("auditor", LocalizedText.Bilingual("Auditor", "مدقق"), "Read-only access to books, documents and the audit log",
-            ["accounting.ledger.read", "accounting.journal.read", "reporting.*", "identity.audit.read", "identity.user.read", "identity.role.read", "identity.sod.read"]),
+            ["accounting.ledger.read", "accounting.journal.read", "reporting.*", "audit.event.read", "audit.event.export", "audit.chain.verify", "identity.user.read", "identity.role.read", "identity.sod.read"]),
     ];
 
     public static RoleTemplate? Find(string code) => All.FirstOrDefault(t => string.Equals(t.Code, code, StringComparison.Ordinal));

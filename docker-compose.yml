@@ -62,8 +62,12 @@ services:
       Quicker__Storage__SecretKey: quickerquicker
       Quicker__Email__SmtpHost: mailpit
       Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
     ports:
       - "8080:8080"
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,3 +91,4 @@ services:
 volumes:
   pgdata:
   miniodata:
+  auditanchors:

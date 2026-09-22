@@ -259,6 +259,8 @@ erDiagram
 ```mermaid
 erDiagram
   aud_chain_heads ||--o{ aud_events : "chains"
+  aud_chain_heads ||--o{ aud_anchors : "anchored by"
+  aud_chain_heads ||--o{ aud_verifications : "verified by"
   cf_definitions ||--o{ cf_options : "offers"
   col_comments ||--o{ col_comments : "replies to"
   col_attachments ||--o{ col_attachments : "replaced by"
@@ -266,10 +268,13 @@ erDiagram
 
   aud_events {
     uuid id PK
-    timestamptz occurred_at
-    text actor_type "user | api_key | system"
+    bigint seq "1..n per tenant, assigned by the chaining trigger"
+    timestamptz occurred_at "partition key, monthly"
+    text actor_type "user | api_key | system | anonymous"
     uuid actor_id
+    text actor_display
     inet actor_ip
+    text user_agent
     text request_id
     text correlation_id
     uuid company_id
@@ -279,16 +284,42 @@ erDiagram
     text action
     jsonb before
     jsonb after
-    jsonb diff
+    jsonb diff "field: old, new"
+    jsonb details
     text reason
     bytea prev_hash
-    bytea hash
+    bytea hash "sha256(prev_hash || canonical)"
   }
   aud_chain_heads {
     uuid tenant_id PK
+    bigint seq
     bytea head_hash
-    bigint length
+    timestamptz updated_at
+  }
+  aud_anchors {
+    uuid id PK
+    text chain "tenant | platform (control schema)"
+    uuid tenant_id
+    bigint seq
+    bytea head_hash
     timestamptz anchored_at
+    text store "file | object-lock (M1.8)"
+    text reference
+    text receipt
+  }
+  aud_verifications {
+    uuid id PK
+    text chain "tenant | platform (control schema)"
+    uuid tenant_id
+    timestamptz verified_at
+    bigint from_seq
+    bigint to_seq
+    text status "ok | empty | broken | truncated | anchor_mismatch"
+    bigint first_broken_seq
+    text message
+    bigint anchor_seq
+    bool anchor_matched
+    int duration_ms
   }
   num_series {
     uuid id PK

@@ -30,6 +30,12 @@ public sealed record TenantContext(
 
     public const string ActorAnonymous = "anonymous";
 
+    /// <summary>Network address of the client, when the context comes from an HTTP request (audit only).</summary>
+    public string? ClientIp { get; init; }
+
+    /// <summary>User agent of the client, when the context comes from an HTTP request (audit only).</summary>
+    public string? UserAgent { get; init; }
+
     public bool IsAnonymous => TenantId.Value == Guid.Empty;
 }
 

@@ -56,9 +56,8 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
         var role = new Role { Id = Guid.CreateVersion7(), Code = code, Name = new LocalizedText(request.Name), Description = request.Description.Trim(), IsActive = request.IsActive, CreatedAt = now, UpdatedAt = now };
         Apply(role, request);
         db.Roles.Add(role);
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken); // the audit capture records "created" with the full snapshot
         await tenants.BumpPermissionsEpochAsync(new TenantId(TenantId), cancellationToken);
-        await audit.RecordAsync(new AuditEntry("role", role.Id, role.Code, AuditActions.Created, After: Map(role)), cancellationToken);
         return Map(role);
     }
 
@@ -125,8 +124,7 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
         }
 
         db.Roles.Remove(role);
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("role", role.Id, role.Code, "deleted", Before: Map(role)), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken); // captured as "deleted" with the last snapshot
         return Result.Success();
     }
 
@@ -358,8 +356,7 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
         rule.Severity = request.Severity;
         rule.Rationale = new LocalizedText(request.Rationale);
         rule.IsActive = request.IsActive;
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("sod_rule", rule.Id, $"{rule.PermissionA} × {rule.PermissionB}", id is null ? AuditActions.Created : AuditActions.Updated, After: request), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken); // captured as created/updated with the field diff
         return new SodRuleSummary(rule.Id, rule.PermissionA, rule.PermissionB, rule.Severity, rule.Rationale.Values, rule.IsSystem, rule.IsActive);
     }
 

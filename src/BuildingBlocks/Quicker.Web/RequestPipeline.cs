@@ -54,6 +54,13 @@ public sealed class UnitOfWorkMiddleware(IUnitOfWorkFactory factory, ITenantCont
             tenant = TenantContext.Anonymous(requestId, language);
         }
 
+        var userAgent = context.Request.Headers.UserAgent.FirstOrDefault();
+        tenant = tenant with
+        {
+            ClientIp = context.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = userAgent is { Length: > 512 } ? userAgent[..512] : userAgent,
+        };
+
         await using var unitOfWork = await factory.BeginAsync(tenant, cancellationToken: context.RequestAborted);
         accessor.Set(unitOfWork);
         using var scope = tenantContext.Use(tenant);
@@ -69,6 +76,9 @@ public sealed class UnitOfWorkMiddleware(IUnitOfWorkFactory factory, ITenantCont
                 await context.Response.WriteAsJsonAsync(new { type = "https://docs.quicker.app/errors/auth.invalid_session", title = "Authentication required", status = 401, code = "auth.invalid_session" }, context.RequestAborted);
                 return;
             }
+
+            // Name the actor for the audit log (the token only carries ids).
+            await unitOfWork.SwitchTenantAsync(tenant.TenantId, tenant.UserId, tenant.MembershipId, current.Principal.Email, context.RequestAborted);
         }
 
         await next(context);
@@ -179,6 +189,26 @@ public sealed class RequireRecentAuthFilter : IEndpointFilter
     }
 }
 
+/// <summary>Requires a platform operator (support staff); 403 for ordinary members, including owners.</summary>
+public sealed class RequireOperatorFilter : IEndpointFilter
+{
+    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        var current = context.HttpContext.RequestServices.GetRequiredService<CurrentPrincipal>();
+        if (current.Principal is null)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Authentication required", extensions: new Dictionary<string, object?>(StringComparer.Ordinal) { ["code"] = "auth.required" });
+        }
+
+        if (!current.Principal.IsPlatformOperator)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status403Forbidden, title: "Forbidden", detail: "This action is reserved for platform operators.", extensions: new Dictionary<string, object?>(StringComparer.Ordinal) { ["code"] = "auth.operator_required" });
+        }
+
+        return await next(context);
+    }
+}
+
 /// <summary>Decides whether the principal's authentication is recent enough for sensitive actions (tenant policy).</summary>
 public interface IStepUpPolicy
 {
@@ -198,6 +228,13 @@ public static class EndpointConventions
     {
         ArgumentNullException.ThrowIfNull(builder);
         builder.AddEndpointFilter(new RequireRecentAuthFilter());
+        return builder;
+    }
+
+    public static TBuilder RequireOperator<TBuilder>(this TBuilder builder) where TBuilder : IEndpointConventionBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        builder.AddEndpointFilter(new RequireOperatorFilter());
         return builder;
     }
 

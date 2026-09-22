@@ -10,6 +10,7 @@ internal static class RowFactoryRegistration
     internal static void Register()
     {
         Quicker.Identity.TestSupport.IdentityRowFactories.RegisterAll();
+        Quicker.Audit.TestSupport.AuditRowFactories.RegisterAll();
     }
 #pragma warning restore CA2255
 }

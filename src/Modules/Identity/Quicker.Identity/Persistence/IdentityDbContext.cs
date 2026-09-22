@@ -31,6 +31,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Audit trails (ADR-0015): profile-level entities are captured field by field; secrets are redacted and the
+        // counters the identity services maintain (lockout, last login) are covered by their explicit events instead.
         modelBuilder.Entity<User>(b =>
         {
             b.ToTable("users", "control");
@@ -38,6 +40,12 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             b.Property(static u => u.Email).IsRequired();
             b.HasMany(static u => u.MfaMethods).WithOne().HasForeignKey(static m => m.UserId);
             b.HasMany(static u => u.Memberships).WithOne(static m => m.User).HasForeignKey(static m => m.UserId);
+            b.HasAuditTrail("user", static u => u.Email);
+            b.Property(static u => u.PasswordHash).AuditIgnore();
+            b.Property(static u => u.PasswordUpdatedAt).AuditIgnore();
+            b.Property(static u => u.FailedLoginCount).AuditIgnore();
+            b.Property(static u => u.LockedUntil).AuditIgnore();
+            b.Property(static u => u.LastLoginAt).AuditIgnore();
         });
 
         modelBuilder.Entity<MfaMethod>(b =>
@@ -51,6 +59,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             b.ToTable("tenant_memberships", "control");
             b.HasKey(static m => m.Id);
             b.HasIndex(static m => new { m.TenantId, m.UserId }).IsUnique();
+            b.HasAuditTrail("membership", static m => m.User?.Email ?? m.UserId.ToString());
         });
 
         modelBuilder.Entity<Session>(b =>
@@ -71,6 +80,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             b.ToTable("sso_connections", "control");
             b.HasKey(static c => c.Id);
             b.Property(static c => c.GroupRoleMap).HasColumnType("jsonb");
+            b.HasAuditTrail("sso_connection", static c => c.Code);
+            b.Property(static c => c.ClientSecretEnc).AuditRedact();
         });
 
         modelBuilder.Entity<Role>(b =>
@@ -81,6 +92,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             b.HasMany(static r => r.Permissions).WithOne().HasForeignKey(static p => new { p.TenantId, p.RoleId });
             b.HasMany(static r => r.FieldRules).WithOne().HasForeignKey(static f => new { f.TenantId, f.RoleId });
             b.HasMany(static r => r.DocumentTypeRules).WithOne().HasForeignKey(static d => new { d.TenantId, d.RoleId });
+            b.HasAuditTrail("role", static r => r.Code);
         });
 
         modelBuilder.Entity<RolePermission>(b =>
@@ -120,6 +132,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
             b.ToTable("idn_sod_rules", "app");
             b.HasKey(static r => new { r.TenantId, r.Id });
             b.Property(static r => r.Rationale).HasColumnName("rationale_i18n");
+            b.HasAuditTrail("sod_rule", static r => $"{r.PermissionA} × {r.PermissionB}");
         });
 
         modelBuilder.Entity<SodException>(b =>
@@ -132,6 +145,9 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
         {
             b.ToTable("idn_api_keys", "app");
             b.HasKey(static k => new { k.TenantId, k.Id });
+            b.HasAuditTrail("api_key", static k => k.Name);
+            b.Property(static k => k.KeyHash).AuditRedact();
+            b.Property(static k => k.LastUsedAt).AuditIgnore();
         });
 
         base.OnModelCreating(modelBuilder);

@@ -73,7 +73,7 @@ public sealed class SsoTests(ApiHostFixture host)
         using var ssoUser = Api.ClientFor(tokens.GetProperty("accessToken").GetString()!);
         var me = await (await ssoUser.GetAsync("/api/v1/me")).ReadJsonAsync();
         me.GetProperty("authMethods").GetString().ShouldBe("sso");
-        me.GetProperty("permissions").EnumerateArray().Select(static p => p.GetString()).ShouldContain("identity.audit.read");
+        me.GetProperty("permissions").EnumerateArray().Select(static p => p.GetString()).ShouldContain("audit.event.read");
         (await ssoUser.GetAsync("/api/v1/roles")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 

@@ -393,7 +393,7 @@ public sealed class AuthService(
         await db.SaveChangesAsync(cancellationToken);
 
         // Switch the unit of work to the tenant so the login audit event lands in the tenant's chain.
-        await unitOfWork.Current.SwitchTenantAsync(new TenantId(tenant.Id.Value), new UserId(user.Id), new MembershipId(membership.Id), cancellationToken);
+        await unitOfWork.Current.SwitchTenantAsync(new TenantId(tenant.Id.Value), new UserId(user.Id), new MembershipId(membership.Id), user.Email, cancellationToken);
         await audit.RecordAsync(new AuditEntry("user", user.Id, user.Email, AuditActions.Login, Details: new Dictionary<string, object?>(StringComparer.Ordinal) { ["amr"] = amr, ["ip"] = client.Ip?.ToString() }), cancellationToken);
         return BuildTokens(user, membership, tenant, session, refreshToken);
     }

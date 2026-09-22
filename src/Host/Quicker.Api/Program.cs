@@ -1,8 +1,8 @@
 using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Quicker.Api;
-using Quicker.Audit.Contracts;
+using Quicker.Audit;
+using Quicker.Audit.Api;
 using Quicker.Identity;
 using Quicker.Identity.Api;
 using Quicker.Kernel.Tenancy;
@@ -23,13 +23,13 @@ builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
 builder.Services.AddSingleton<CapturingEmailSender>();
 builder.Services.AddSingleton<IEmailSender>(static sp => sp.GetRequiredService<CapturingEmailSender>());
-builder.Services.AddScoped<IAuditSink, LoggingAuditSink>(); // replaced by the hash-chained sink in M1.5
 builder.Services.AddQuickerWebCore();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi("v1");
 
 // Modules
 builder.Services.AddTenancyModule();
+builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddIdentityModule(builder.Configuration);
 
 var app = builder.Build();
@@ -60,6 +60,7 @@ app.MapGet("/health/ready", static async (NpgsqlDataSource dataSource, Cancellat
 // Every /api/v1 endpoint runs inside one unit of work with the principal resolved (ADR-0009, ADR-0014).
 var api = app.MapGroup("/api/v1").AddEndpointFilter<UnitOfWorkFilter>();
 api.MapIdentityEndpoints();
+api.MapAuditEndpoints();
 
 app.Run();
 

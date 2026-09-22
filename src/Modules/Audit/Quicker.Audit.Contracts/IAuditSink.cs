@@ -5,11 +5,14 @@ public static class AuditActions
 {
     public const string Created = "created";
     public const string Updated = "updated";
+    public const string Deleted = "deleted";
     public const string StateChanged = "state_changed";
     public const string Posted = "posted";
     public const string Reversed = "reversed";
     public const string Approved = "approved";
     public const string Rejected = "rejected";
+    public const string Revoked = "revoked";
+    public const string Invited = "invited";
     public const string Override = "override";
     public const string Login = "login";
     public const string LoginFailed = "login_failed";
@@ -25,7 +28,10 @@ public static class AuditActions
 
 /// <summary>
 /// One audit event: who did what to which record, with before/after values and a reason when policy requires one.
-/// Written inside the caller's unit of work so it commits with the change it describes.
+/// Written inside the caller's unit of work so it commits with the change it describes. Row changes tracked by EF
+/// are captured automatically for audited entities; an explicit entry for the same record in the same unit of work
+/// takes precedence and inherits the captured before/after/diff, so services record the business action (posted,
+/// revoked, invited) and never lose the field-level change.
 /// </summary>
 public sealed record AuditEntry(
     string EntityType,

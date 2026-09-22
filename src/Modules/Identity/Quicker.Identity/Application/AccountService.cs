@@ -88,7 +88,7 @@ public sealed class AccountService(
         await db.SaveChangesAsync(cancellationToken);
 
         // From here on we act inside the new tenant: default roles, SoD rules, owner assignment, audit.
-        await unitOfWork.Current.SwitchTenantAsync(tenant.Id, new UserId(user.Id), new MembershipId(membership.Id), cancellationToken);
+        await unitOfWork.Current.SwitchTenantAsync(tenant.Id, new UserId(user.Id), new MembershipId(membership.Id), user.Email, cancellationToken);
         var ownerRole = await roles.SeedDefaultsAsync(cancellationToken);
         var assigned = await roles.AssignAsync(membership.Id, new AssignRoleRequest(ownerRole.Id, AcknowledgeWarnings: true), user.Id, cancellationToken);
         if (assigned.IsFailure)
@@ -311,8 +311,7 @@ public sealed class AccountService(
             user.DigitStyle = digits;
         }
 
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("user", user.Id, user.Email, AuditActions.Updated, Before: before, After: new { user.DisplayName, user.Locale, user.TimeZone, user.DigitStyle }), cancellationToken);
+        await db.SaveChangesAsync(cancellationToken); // captured as "updated" with the field diff
         return AuthService.Summary(user);
     }
 

@@ -80,7 +80,17 @@ public sealed class TenantIsolationTests(DatabaseFixture fixture) : IClassFixtur
         await using (connB)
         {
             (await connB.ExecuteScalarAsync<long>($"SELECT count(*) FROM {table} WHERE {rowA.Predicate}", transaction: txB)).ShouldBe(0L, $"{table}: B can see A's row");
-            (await connB.ExecuteAsync($"DELETE FROM {table} WHERE {rowA.Predicate}", transaction: txB)).ShouldBe(0, $"{table}: B deleted A's row");
+
+            // Append-only tables revoke DELETE from the application role altogether (42501), which is stricter still.
+            await connB.ExecuteAsync("SAVEPOINT delete_probe", transaction: txB);
+            try
+            {
+                (await connB.ExecuteAsync($"DELETE FROM {table} WHERE {rowA.Predicate}", transaction: txB)).ShouldBe(0, $"{table}: B deleted A's row");
+            }
+            catch (PostgresException ex) when (string.Equals(ex.SqlState, "42501", StringComparison.Ordinal))
+            {
+                await connB.ExecuteAsync("ROLLBACK TO SAVEPOINT delete_probe", transaction: txB);
+            }
 
             var leak = await Should.ThrowAsync<PostgresException>(async () => await factory(connB, txB, tenantA.Value));
             leak.SqlState.ShouldBe("42501", $"{table}: B inserted a row for A (expected RLS WITH CHECK violation)");
