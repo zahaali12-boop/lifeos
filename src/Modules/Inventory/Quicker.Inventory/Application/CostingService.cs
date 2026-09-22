@@ -81,7 +81,8 @@ public sealed class CostingService(
 
         public decimal RemainingValue { get; set; }
 
-        public decimal UnitCost => Quantity == 0m ? 0m : Value / Quantity;
+        /// <summary>What is left is worth what is left: a revaluation after a partial issue changes the remaining units only.</summary>
+        public decimal UnitCost => RemainingQuantity == 0m ? 0m : RemainingValue / RemainingQuantity;
     }
 
     private sealed class LayerRow
@@ -99,6 +100,8 @@ public sealed class CostingService(
         public decimal AppliedValue { get; set; }
 
         public decimal Value { get; set; }
+
+        public decimal Revalued { get; set; }
     }
 
     private sealed class PairRow
@@ -182,6 +185,9 @@ public sealed class CostingService(
 
         public required decimal? SettingStandard { get; init; }
 
+        /// <summary>For a component scope of an assembly: the posting group of the assembly item its consumption offsets (set per entry before valuation).</summary>
+        public Guid? OutputPostingGroupId { get; set; }
+
         public decimal? StandardOn(DateOnly date)
         {
             var version = Standards.Where(v => v.EffectiveFrom <= date).MaxBy(static v => v.EffectiveFrom);
@@ -218,8 +224,8 @@ public sealed class CostingService(
                 continue;
             }
 
-            // The destination scope of a transfer is valued after the source scope, so the carried cost is known.
-            scopes.Add((scope, entry.EntryType == StockEntryTypes.TransferIn));
+            // The destination scope of a transfer and the output of an assembly are valued after the source scopes, so the carried cost is known.
+            scopes.Add((scope, entry.EntryType is StockEntryTypes.TransferIn or StockEntryTypes.AssemblyOutput));
         }
 
         foreach (var (scope, _) in scopes.OrderBy(static s => s.AfterPair).ThenBy(static s => s.Scope.LockOrder, StringComparer.Ordinal))
@@ -708,8 +714,15 @@ public sealed class CostingService(
                 }
 
                 var current = existing.Where(static v => IsInventoryRole(v.AccountRole)).Sum(static v => v.Amount);
-                var offsetRole = OffsetRoleFor(entry.EntryType);
+                var offsetRole = entry.OffsetRoleOverride ?? OffsetRoleFor(entry.EntryType);
                 var offsetRef = OffsetRefFor(entry.EntryType, entry);
+                if (entry.EntryType == StockEntryTypes.AssemblyConsumption)
+                {
+                    // Components offset the assembly item's stock: its subledger item and posting group.
+                    var output = await OutputOfAsync(entry.SourceDocumentId, cancellationToken);
+                    method.OutputPostingGroupId = output?.PostingGroupId;
+                    offsetRef = output?.ItemId ?? entry.SourceDocumentId;
+                }
                 var accountRole = await InventoryRoleForAsync(entry.WarehouseId, cancellationToken);
                 if (entry.Quantity > 0m)
                 {
@@ -720,6 +733,14 @@ public sealed class CostingService(
                     if (entry.EntryType == StockEntryTypes.TransferIn && entry.TransferPairId is { } pairId)
                     {
                         amount = context.PairAmounts.TryGetValue(pairId, out var paired) ? paired : await PairedOutAmountAsync(pairId, entry.Id, cancellationToken);
+                        carried = true;
+                    }
+                    else if (entry.EntryType == StockEntryTypes.AssemblyOutput && entry.EnteredUnitCost is null)
+                    {
+                        // The assembly is worth what its components cost (POSTING_RULES §4): the consumption rows are flushed before this scope walks.
+                        var consumed = await ConsumedAmountAsync(entry.SourceDocumentId, cancellationToken);
+                        var outputs = await OutputQuantityAsync(entry.SourceDocumentId, cancellationToken);
+                        amount = outputs == 0m ? 0m : method.Rounding.Round(consumed * quantity / outputs, method.Currency.MinorUnits);
                         carried = true;
                     }
                     else if (entry.EnteredUnitCost is { } enteredUnitCost)
@@ -887,6 +908,10 @@ public sealed class CostingService(
                         context.PairAmounts[pair] = total;
                         await EnqueuePairedInAsync(context, scope, pair, entry.Id, total, cancellationToken);
                     }
+                    else if (entry.EntryType == StockEntryTypes.AssemblyConsumption)
+                    {
+                        await EnqueueAssemblyOutputAsync(context, scope, entry.SourceDocumentId, cancellationToken);
+                    }
 
                     runningQuantity -= quantity;
                     runningValue += newAmount;
@@ -1042,8 +1067,9 @@ public sealed class CostingService(
             foreach (var value in group)
             {
                 var keys = new PostingKeys(DocumentType: documentType, ItemPostingGroupId: value.ItemPostingGroupId, WarehouseId: value.WarehouseId);
-                Accumulate(lines, value.AccountRole, value.Amount, keys, value.ItemId, value.OffsetRef);
-                Accumulate(lines, value.OffsetRole, -value.Amount, keys, value.ItemId, value.OffsetRef);
+                var offsetKeys = value.OffsetPostingGroupId is null ? keys : keys with { ItemPostingGroupId = value.OffsetPostingGroupId };
+                Accumulate(lines, value.AccountRole, value.Amount, keys, value.ItemId, null);
+                Accumulate(lines, value.OffsetRole, -value.Amount, offsetKeys, value.ItemId, value.OffsetRef);
             }
 
             var postingLines = lines.Values.Where(static l => l.Amount != 0m).Select(static l => l.Line with { Amount = l.Amount }).ToList();
@@ -1073,6 +1099,7 @@ public sealed class CostingService(
         return Result.Success();
     }
 
+    /// <summary>One journal line per role, keys and subledger item; the account side references the entry's item, the offset side its counterpart (the receipt, the assembly, the transit item) when it has one.</summary>
     private static void Accumulate(Dictionary<string, (PostingLine Line, decimal Amount)> lines, string role, decimal amount, PostingKeys keys, Guid itemId, Guid? offsetRef)
     {
         string? subledgerType = null;
@@ -1080,7 +1107,7 @@ public sealed class CostingService(
         if (AccountRoles.ControlSubledgers.TryGetValue(role, out var subledger))
         {
             subledgerType = subledger;
-            subledgerRef = subledger == SubledgerTypes.Inventory ? itemId : offsetRef ?? itemId;
+            subledgerRef = offsetRef ?? itemId;
         }
 
         var key = string.Join('|', role, keys.ItemPostingGroupId, keys.WarehouseId, subledgerType, subledgerRef);
@@ -1156,6 +1183,7 @@ public sealed class CostingService(
 
     private StockValueEntry NewValueEntry(StockLedgerEntry entry, Method method, string valueType, decimal valuedQuantity, decimal actual, decimal expected, string accountRole, string offsetRole, Guid? offsetRef, DateOnly glDate, Dictionary<string, object?> reason, Guid? adjusts, Guid? runId) => new()
     {
+        OffsetPostingGroupId = entry.EntryType == StockEntryTypes.AssemblyConsumption ? method.OutputPostingGroupId : null,
         Id = Guid.CreateVersion7(),
         SleId = entry.Id,
         CompanyId = entry.CompanyId,
@@ -1299,6 +1327,221 @@ public sealed class CostingService(
         }
     }
 
+    /// <summary>Σ cost of the consumption entries of an assembly document already on the books (positive).</summary>
+    private async Task<decimal> ConsumedAmountAsync(Guid assemblyId, CancellationToken cancellationToken)
+    {
+        var uow = unitOfWork.Current;
+        var amount = await uow.Connection.ExecuteScalarAsync<decimal?>(new CommandDefinition("""
+            SELECT sum(v.cost_amount_actual + v.cost_amount_expected)
+            FROM app.inv_stock_value_entries v JOIN app.inv_stock_ledger_entries e ON e.tenant_id = v.tenant_id AND e.id = v.sle_id
+            WHERE e.source_document_id = @doc AND e.entry_type = 'assembly_consumption' AND v.account_role IN ('Inventory', 'InventoryInTransit')
+            """, new { doc = assemblyId }, uow.Transaction, cancellationToken: cancellationToken));
+        return -(amount ?? 0m);
+    }
+
+    private async Task<decimal> OutputQuantityAsync(Guid assemblyId, CancellationToken cancellationToken) =>
+        await db.Entries.Where(e => e.SourceDocumentId == assemblyId && e.EntryType == StockEntryTypes.AssemblyOutput).SumAsync(static e => e.Quantity, cancellationToken);
+
+    private async Task<(Guid ItemId, Guid? PostingGroupId)?> OutputOfAsync(Guid assemblyId, CancellationToken cancellationToken)
+    {
+        var output = await db.Entries.Where(e => e.SourceDocumentId == assemblyId && e.EntryType == StockEntryTypes.AssemblyOutput).Select(static e => new { e.ItemId, e.CompanyId }).FirstOrDefaultAsync(cancellationToken);
+        if (output is null)
+        {
+            return null;
+        }
+
+        var policy = await items.CompanyPolicyAsync(output.ItemId, output.CompanyId, cancellationToken);
+        return (output.ItemId, policy?.ItemPostingGroupOverride ?? (await items.FindAsync(output.ItemId, cancellationToken))?.ItemPostingGroupId);
+    }
+
+    /// <summary>When a component's consumption cost changes, the assembly it built is re-valued from its own date.</summary>
+    private async Task EnqueueAssemblyOutputAsync(RunContext context, ScopeKey scope, Guid assemblyId, CancellationToken cancellationToken)
+    {
+        var output = await db.Entries.Where(e => e.SourceDocumentId == assemblyId && e.EntryType == StockEntryTypes.AssemblyOutput).Select(static e => new { e.CompanyId, e.ItemId, e.WarehouseId, e.PostingDate }).FirstOrDefaultAsync(cancellationToken);
+        if (output is null)
+        {
+            return;
+        }
+
+        var company = context.Companies[scope.CompanyId];
+        var target = new ScopeKey(output.CompanyId, output.ItemId, company.CostingScope == "warehouse" ? output.WarehouseId : None);
+        if (target != scope)
+        {
+            context.Pending.Enqueue((target, output.PostingDate));
+        }
+    }
+
+    // ------------------------------------------------------------------ revaluation documents
+
+    /// <summary>
+    /// Revalues the stock on hand of an item in one scope at a date to a new unit cost (an NRV write-down or a manual
+    /// revaluation, POSTING_RULES §4): under FIFO the difference is spread over the open layers by remaining quantity
+    /// (each layer gets its own <c>revaluation</c> row, so later issues carry it), otherwise it is one row on the
+    /// scope; then everything after the date is re-applied. Returns the amount posted (negative for a write-down).
+    /// </summary>
+    public async Task<Result<(decimal Quantity, decimal CurrentUnitCost, decimal Amount, Guid? RunId)>> RevalueAsync(Guid companyId, Guid itemId, Guid? warehouseId, DateOnly date, decimal newUnitCost, string documentType, Guid documentId, string? note, bool capAtCost, CancellationToken cancellationToken)
+    {
+        var company = await companies.FindAsync(new CompanyId(companyId), cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", companyId);
+        }
+
+        var scope = new ScopeKey(companyId, itemId, company.CostingScope == "warehouse" ? warehouseId ?? None : None);
+        if (company.CostingScope == "warehouse" && warehouseId is null)
+        {
+            return Error.Validation("revaluation.warehouse_required", "The company costs per warehouse; the line names the warehouse.").WithWhy(("itemId", itemId));
+        }
+
+        var context = new RunContext
+        {
+            Trigger = new Trigger("revaluation", documentType, documentId, null, note),
+            InBackground = false,
+            DocumentType = documentType,
+            DocumentId = documentId,
+        };
+        context.Companies[companyId] = company;
+        await LockScopeAsync(scope, cancellationToken);
+        var method = await MethodAsync(context, scope, cancellationToken);
+        var bucket = await db.ItemCosts.Where(c => c.CompanyId == scope.CompanyId && c.ItemId == scope.ItemId && c.WarehouseId == scope.WarehouseId && c.ValuationDate <= date)
+            .OrderByDescending(static c => c.ValuationDate).FirstOrDefaultAsync(cancellationToken);
+        var quantity = bucket?.Quantity ?? 0m;
+        var value = bucket?.Value ?? 0m;
+        if (quantity <= 0m)
+        {
+            return Error.Validation("revaluation.nothing_on_hand", "There is no stock on hand to revalue at that date.").WithWhy(("itemId", itemId), ("date", date));
+        }
+
+        var currentUnitCost = value / quantity;
+        var glDate = await GlDateAsync(context, company, date, cancellationToken);
+        var reason = new Dictionary<string, object?>(StringComparer.Ordinal) { ["kind"] = "revaluation", ["trigger"] = new { documentType, documentId }, ["previousUnitCost"] = currentUnitCost, ["newUnitCost"] = newUnitCost, ["quantityOnHand"] = quantity, ["note"] = note };
+        var offset = AccountRoles.InventoryWriteDown;
+        decimal delta;
+        if (method.Costing == CostingMethods.Fifo)
+        {
+            var uow = unitOfWork.Current;
+            var layers = (await uow.Connection.QueryAsync<LayerRow>(new CommandDefinition("""
+                SELECT e.id, e.posting_date, e.sequence, e.quantity,
+                       coalesce((SELECT sum(a.quantity) FROM app.inv_item_applications a JOIN app.inv_stock_ledger_entries o ON o.tenant_id = a.tenant_id AND o.id = a.outbound_sle_id
+                                 WHERE a.tenant_id = e.tenant_id AND a.inbound_sle_id = e.id AND a.superseded_by IS NULL AND o.posting_date <= @date), 0) AS applied,
+                       coalesce((SELECT sum(a.cost_amount) FROM app.inv_item_applications a JOIN app.inv_stock_ledger_entries o ON o.tenant_id = a.tenant_id AND o.id = a.outbound_sle_id
+                                 WHERE a.tenant_id = e.tenant_id AND a.inbound_sle_id = e.id AND a.superseded_by IS NULL AND o.posting_date <= @date), 0) AS applied_value,
+                       coalesce((SELECT sum(v.cost_amount_actual + v.cost_amount_expected) FROM app.inv_stock_value_entries v WHERE v.tenant_id = e.tenant_id AND v.sle_id = e.id AND v.account_role IN ('Inventory', 'InventoryInTransit')), 0) AS value,
+                       coalesce((SELECT sum(v.cost_amount_actual) FROM app.inv_stock_value_entries v WHERE v.tenant_id = e.tenant_id AND v.sle_id = e.id AND v.value_type = 'revaluation'), 0) AS revalued
+                FROM app.inv_stock_ledger_entries e
+                WHERE e.company_id = @company AND e.item_id = @item AND e.ownership = 'own' AND e.quantity > 0 AND e.posting_date <= @date
+                  AND (@warehouse::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.warehouse_id = @warehouse)
+                ORDER BY e.posting_date, e.sequence
+                """, new { company = scope.CompanyId, item = scope.ItemId, warehouse = scope.WarehouseId, date }, uow.Transaction, cancellationToken: cancellationToken)))
+                .Select(static r => (r.Id, Remaining: r.Quantity - r.Applied, RemainingValue: r.Value - r.AppliedValue, OriginalUnitCost: r.Quantity == 0m ? 0m : (r.Value - r.Revalued) / r.Quantity)).Where(static l => l.Remaining > 0m).ToList();
+            // Every open layer is brought to the new unit value (never above its own original cost when the IAS 2 cap applies), not a pro-rata of one delta.
+            delta = 0m;
+            for (var i = 0; i < layers.Count; i++)
+            {
+                var target = capAtCost && newUnitCost > layers[i].OriginalUnitCost ? layers[i].OriginalUnitCost : newUnitCost;
+                var share = method.Rounding.Round(layers[i].Remaining * target, method.Currency.MinorUnits) - layers[i].RemainingValue;
+                delta += share;
+                if (share == 0m)
+                {
+                    continue;
+                }
+
+                var layerEntry = await db.Entries.SingleAsync(e => e.Id == layers[i].Id, cancellationToken);
+                var row = NewValueEntry(layerEntry, method, ValueEntryTypes.Revaluation, layers[i].Remaining, share, 0m, await InventoryRoleForAsync(layerEntry.WarehouseId, cancellationToken), offset, null, glDate, reason, null, null);
+                row.ValuationDate = date;
+                row.SourceDocumentType = documentType;
+                row.SourceDocumentId = documentId;
+                context.PendingValueEntries.Add(row);
+            }
+        }
+        else
+        {
+            if (capAtCost)
+            {
+                // IAS 2: a reversal never lifts the value above the original cost; in a pool that is the average before write-downs still attached to what is on hand.
+                var original = await OriginalCostAsync(scope, date, cancellationToken);
+                if (original is { } cap && newUnitCost > cap)
+                {
+                    newUnitCost = cap;
+                }
+            }
+
+            delta = method.Rounding.Round(quantity * newUnitCost, method.Currency.MinorUnits) - value;
+            var warehouse = scope.WarehouseId == None ? await FirstWarehouseAsync(scope, cancellationToken) : scope.WarehouseId;
+            if (warehouse is null)
+            {
+                return Error.Validation("revaluation.nothing_on_hand", "There is no stock on hand to revalue at that date.").WithWhy(("itemId", itemId), ("date", date));
+            }
+
+            if (delta == 0m)
+            {
+                return (quantity, currentUnitCost, 0m, null);
+            }
+
+            context.PendingValueEntries.Add(new StockValueEntry
+            {
+                Id = Guid.CreateVersion7(),
+                SleId = null,
+                CompanyId = companyId,
+                ItemId = itemId,
+                WarehouseId = warehouse.Value,
+                PostingDate = glDate,
+                ValuationDate = date,
+                ValueType = ValueEntryTypes.Revaluation,
+                ValuedQuantity = quantity,
+                UnitCost = newUnitCost - currentUnitCost,
+                CostAmountActual = delta,
+                Currency = method.Currency.Code,
+                AccountRole = AccountRoles.Inventory,
+                OffsetRole = offset,
+                ItemPostingGroupId = method.PostingGroupId,
+                SourceDocumentType = documentType,
+                SourceDocumentId = documentId,
+                Reason = reason,
+                CreatedBy = principal.Principal?.UserId.Value,
+                CreatedAt = clock.UtcNow,
+            });
+        }
+
+        if (delta == 0m)
+        {
+            return (quantity, currentUnitCost, 0m, null);
+        }
+
+        context.Pending.Enqueue((scope, date));
+        var drained = await DrainAsync(context, cancellationToken);
+        if (drained.IsFailure)
+        {
+            return drained.Error!;
+        }
+
+        await CompleteAsync(context, cancellationToken);
+        return (quantity, currentUnitCost, delta, context.Run?.Id);
+    }
+
+    /// <summary>
+    /// The IAS 2 ceiling for a reversal in a cost pool: the current unit cost plus the write-down still attached to each
+    /// unit on hand (each earlier revaluation spread over the quantity it applied to; issues carried their share out).
+    /// </summary>
+    private async Task<decimal?> OriginalCostAsync(ScopeKey scope, DateOnly date, CancellationToken cancellationToken)
+    {
+        var uow = unitOfWork.Current;
+        var attached = await uow.Connection.ExecuteScalarAsync<decimal?>(new CommandDefinition("""
+            SELECT sum(v.cost_amount_actual / nullif(v.valued_quantity, 0))
+            FROM app.inv_stock_value_entries v
+            WHERE v.company_id = @company AND v.item_id = @item AND v.valuation_date <= @date AND v.value_type = 'revaluation' AND v.sle_id IS NULL
+              AND (@warehouse::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR v.warehouse_id = @warehouse)
+            """, new { company = scope.CompanyId, item = scope.ItemId, warehouse = scope.WarehouseId, date }, uow.Transaction, cancellationToken: cancellationToken));
+        var bucket = await db.ItemCosts.Where(c => c.CompanyId == scope.CompanyId && c.ItemId == scope.ItemId && c.WarehouseId == scope.WarehouseId && c.ValuationDate <= date)
+            .OrderByDescending(static c => c.ValuationDate).FirstOrDefaultAsync(cancellationToken);
+        if (bucket is null || bucket.Quantity <= 0m)
+        {
+            return null;
+        }
+
+        return bucket.Value / bucket.Quantity - (attached ?? 0m);
+    }
+
     private async Task<Guid?> FirstWarehouseAsync(ScopeKey scope, CancellationToken cancellationToken)
     {
         var fromEntries = await db.Entries.Where(e => e.CompanyId == scope.CompanyId && e.ItemId == scope.ItemId).OrderBy(static e => e.Sequence).Select(static e => (Guid?)e.WarehouseId).FirstOrDefaultAsync(cancellationToken);
@@ -1348,7 +1591,7 @@ public sealed class CostingService(
     {
         StockEntryTypes.PurchaseReceipt or StockEntryTypes.PurchaseReturn or StockEntryTypes.DropShip => entry.SourceDocumentId,
         StockEntryTypes.TransferOut or StockEntryTypes.TransferIn => entry.ItemId,
-        StockEntryTypes.AssemblyConsumption or StockEntryTypes.AssemblyOutput => entry.SourceDocumentId,
+        StockEntryTypes.AssemblyOutput => entry.ItemId,
         _ => null,
     };
 

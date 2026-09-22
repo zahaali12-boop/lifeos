@@ -36,6 +36,8 @@ public sealed class TransferService(
 {
     public const string DocumentType = "stock_transfer";
 
+    public static readonly IReadOnlyList<string> TransferKinds = ["two_step", "one_step"];
+
     public async Task<IReadOnlyList<TransferSummary>> ListAsync(Guid? companyId, string? status, Guid? warehouseId, CancellationToken cancellationToken)
     {
         var query = db.Transfers.Include(static t => t.Lines).AsQueryable();
@@ -167,10 +169,22 @@ public sealed class TransferService(
             return scope.Error!;
         }
 
-        var transit = await TransitWarehouseAsync(transfer, cancellationToken);
-        if (transit.IsFailure)
+        var oneStep = transfer.Kind == "one_step";
+        Guid intoWarehouse;
+        if (oneStep)
         {
-            return transit.Error!;
+            intoWarehouse = transfer.ToWarehouseId;
+        }
+        else
+        {
+            var transit = await TransitWarehouseAsync(transfer, cancellationToken);
+            if (transit.IsFailure)
+            {
+                return transit.Error!;
+            }
+
+            intoWarehouse = transit.Value.Id;
+            transfer.TransitWarehouseId = transit.Value.Id;
         }
 
         var company = (await companies.FindAsync(new CompanyId(transfer.CompanyId), cancellationToken))!;
@@ -192,8 +206,12 @@ public sealed class TransferService(
 
             var pair = Guid.CreateVersion7();
             lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferOut, quantity, transfer.FromWarehouseId, line.UomId, line.VariantId, line.FromBinId, SourceLineId: line.Id, TransferPairId: pair));
-            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferIn, quantity, transit.Value.Id, line.UomId, line.VariantId, null, SourceLineId: line.Id, TransferPairId: pair));
+            lines.Add(new StockLine(line.ItemId, StockEntryTypes.TransferIn, quantity, intoWarehouse, line.UomId, line.VariantId, oneStep ? line.ToBinId : null, SourceLineId: line.Id, TransferPairId: pair));
             line.QtyShipped = quantity;
+            if (oneStep)
+            {
+                line.QtyReceived = quantity;
+            }
         }
 
         if (lines.Count == 0)
@@ -224,13 +242,18 @@ public sealed class TransferService(
             transfer.Number = allocated.Value.Text;
         }
 
-        transfer.TransitWarehouseId = transit.Value.Id;
         transfer.ShipDate = date;
         transfer.ShipPostingId = posted.Value.PostingId;
-        transfer.Status = "shipped";
+        transfer.Status = oneStep ? "received" : "shipped";
+        if (oneStep)
+        {
+            transfer.ReceiveDate = date;
+            transfer.ReceivePostingId = posted.Value.PostingId;
+        }
+
         transfer.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("stock_transfer", transfer.Id, transfer.Number, "shipped", After: new { date, postingId = posted.Value.PostingId, lines = transfer.Lines.Select(static l => new { l.LineNo, shipped = l.QtyShipped }) }, CompanyId: transfer.CompanyId), cancellationToken);
+        await audit.RecordAsync(new AuditEntry("stock_transfer", transfer.Id, transfer.Number, oneStep ? "received" : "shipped", After: new { date, kind = transfer.Kind, postingId = posted.Value.PostingId, lines = transfer.Lines.Select(static l => new { l.LineNo, shipped = l.QtyShipped }) }, CompanyId: transfer.CompanyId), cancellationToken);
         return await MapAsync(transfer, cancellationToken);
     }
 
@@ -264,13 +287,33 @@ public sealed class TransferService(
 
         var requested = request.Lines?.ToDictionary(static l => l.LineId) ?? new Dictionary<Guid, TransferQuantityRequest>();
         var lines = new List<StockLine>();
+        var shortages = new List<StockLine>();
         foreach (var line in transfer.Lines.OrderBy(static l => l.LineNo))
         {
-            var outstanding = line.QtyShipped - line.QtyReceived;
+            var outstanding = line.QtyShipped - line.QtyReceived - line.QtyShortage;
             var quantity = requested.TryGetValue(line.Id, out var r) ? r.Quantity : outstanding;
-            if (quantity < 0m || quantity > outstanding)
+            var shortage = r?.Shortage ?? 0m;
+            if (quantity < 0m || shortage < 0m || quantity + shortage > outstanding)
             {
-                return Error.Validation("transfer.receive_quantity_invalid", "A line receives between nothing and what is still in transit.").WithWhy(("lineNo", line.LineNo), ("outstanding", outstanding), ("quantity", quantity));
+                return Error.Validation("transfer.receive_quantity_invalid", "A line receives (and writes off) between nothing and what is still in transit.").WithWhy(("lineNo", line.LineNo), ("outstanding", outstanding), ("quantity", quantity), ("shortage", shortage));
+            }
+
+            if (shortage > 0m)
+            {
+                var reasonCode = r!.ShortageReasonCode?.Trim().ToUpperInvariant();
+                var reason = r.ShortageReasonCodeId is { } rid ? await db.ReasonCodes.SingleOrDefaultAsync(x => x.Id == rid, cancellationToken) : reasonCode is null ? null : await db.ReasonCodes.SingleOrDefaultAsync(x => x.Code == reasonCode, cancellationToken);
+                if (reason is null || !reason.IsActive || reason.AppliesTo != "shortage")
+                {
+                    return Error.Validation("transfer.shortage_reason_required", "A shortage names an active reason code that applies to shortages.").WithWhy(("lineNo", line.LineNo), ("shortage", shortage), ("reasonCode", r.ShortageReasonCode ?? r.ShortageReasonCodeId?.ToString()));
+                }
+
+                if (reason.RequiresNote && string.IsNullOrWhiteSpace(r.ShortageNote))
+                {
+                    return Error.Validation("transfer.shortage_note_required", "This reason code requires a note.").WithWhy(("lineNo", line.LineNo), ("reasonCode", reason.Code));
+                }
+
+                shortages.Add(new StockLine(line.ItemId, StockEntryTypes.NegativeAdjustment, shortage, transfer.TransitWarehouseId!.Value, line.UomId, line.VariantId, null, SourceLineId: line.Id, OffsetRoleOverride: reason.AccountRoleOverride));
+                line.QtyShortage += shortage;
             }
 
             if (quantity == 0m)
@@ -286,24 +329,40 @@ public sealed class TransferService(
             line.ToBinId = toBin;
         }
 
-        if (lines.Count == 0)
+        if (lines.Count == 0 && shortages.Count == 0)
         {
             return Error.Validation("transfer.nothing_to_receive", "Nothing is left in transit for this transfer.");
         }
 
         var receipts = await db.Postings.CountAsync(p => p.SourceDocumentType == DocumentType && p.SourceDocumentId == transfer.Id, cancellationToken);
-        var posted = await posting.PostAsync(new StockPostingRequest(transfer.CompanyId, date, DocumentType, transfer.Id, lines, $"{DocumentType}:{transfer.Id:N}:receive:{receipts}"), cancellationToken);
-        if (posted.IsFailure)
+        if (lines.Count > 0)
         {
-            return posted.Error!;
+            var posted = await posting.PostAsync(new StockPostingRequest(transfer.CompanyId, date, DocumentType, transfer.Id, lines, $"{DocumentType}:{transfer.Id:N}:receive:{receipts}"), cancellationToken);
+            if (posted.IsFailure)
+            {
+                return posted.Error!;
+            }
+
+            transfer.ReceivePostingId = posted.Value.PostingId;
+        }
+
+        if (shortages.Count > 0)
+        {
+            // What never arrived leaves transit as a write-off with its reason (POSTING_RULES §4: shortages become adjustments with reason).
+            var writtenOff = await posting.PostAsync(new StockPostingRequest(transfer.CompanyId, date, DocumentType, transfer.Id, shortages, $"{DocumentType}:{transfer.Id:N}:shortage:{receipts}"), cancellationToken);
+            if (writtenOff.IsFailure)
+            {
+                return writtenOff.Error!;
+            }
+
+            transfer.ShortagePostingIds = [.. transfer.ShortagePostingIds, writtenOff.Value.PostingId];
         }
 
         transfer.ReceiveDate = date;
-        transfer.ReceivePostingId = posted.Value.PostingId;
-        transfer.Status = transfer.Lines.All(static l => l.QtyReceived >= l.QtyShipped) ? "received" : "partially_received";
+        transfer.Status = transfer.Lines.All(static l => l.QtyReceived + l.QtyShortage >= l.QtyShipped) ? "received" : "partially_received";
         transfer.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("stock_transfer", transfer.Id, transfer.Number ?? transfer.Id.ToString("N"), "received", After: new { date, postingId = posted.Value.PostingId, status = transfer.Status, lines = transfer.Lines.Select(static l => new { l.LineNo, received = l.QtyReceived }) }, CompanyId: transfer.CompanyId), cancellationToken);
+        await audit.RecordAsync(new AuditEntry("stock_transfer", transfer.Id, transfer.Number ?? transfer.Id.ToString("N"), "received", After: new { date, postingId = transfer.ReceivePostingId, shortagePostingIds = transfer.ShortagePostingIds, status = transfer.Status, lines = transfer.Lines.Select(static l => new { l.LineNo, received = l.QtyReceived, shortage = l.QtyShortage }) }, CompanyId: transfer.CompanyId), cancellationToken);
         return await MapAsync(transfer, cancellationToken);
     }
 
@@ -334,6 +393,12 @@ public sealed class TransferService(
             {
                 return Error.Validation($"transfer.{role}_warehouse_invalid", "A transfer does not start or end in an in-transit warehouse.").WithWhy(("warehouse", warehouse.Code));
             }
+        }
+
+        var kind = Validation.OneOf(request.Kind, "transfer.kind", TransferKinds);
+        if (kind.IsFailure)
+        {
+            return kind.Error!;
         }
 
         if (request.TransitWarehouseId is { } transitId)
@@ -417,6 +482,7 @@ public sealed class TransferService(
             lines.Add(new TransferLine { Id = Guid.CreateVersion7(), TransferId = transfer.Id, LineNo = ++lineNo, ItemId = item.Id, VariantId = line.VariantId, QtyRequested = line.Quantity, UomId = unit.UomId, FromBinId = line.FromBinId, ToBinId = line.ToBinId });
         }
 
+        transfer.Kind = kind.Value;
         transfer.FromWarehouseId = request.FromWarehouseId;
         transfer.ToWarehouseId = request.ToWarehouseId;
         transfer.TransitWarehouseId = request.TransitWarehouseId;
@@ -462,11 +528,11 @@ public sealed class TransferService(
             var unit = units.First(u => u.UomId == l.UomId);
             var variant = l.VariantId is { } v ? await items.FindVariantAsync(v, cancellationToken) : null;
             var baseQuantity = ItemUomMath.ToBase(l.QtyRequested, unit.Numerator, unit.Denominator, item.BasePrecision);
-            lines.Add(new TransferLineSummary(l.Id, l.LineNo, item.Id, item.Code, item.Name.Values, l.VariantId, variant?.Sku, ItemUomMath.Normalize(l.QtyRequested), ItemUomMath.Normalize(l.QtyShipped), ItemUomMath.Normalize(l.QtyReceived),
+            lines.Add(new TransferLineSummary(l.Id, l.LineNo, item.Id, item.Code, item.Name.Values, l.VariantId, variant?.Sku, ItemUomMath.Normalize(l.QtyRequested), ItemUomMath.Normalize(l.QtyShipped), ItemUomMath.Normalize(l.QtyReceived), ItemUomMath.Normalize(l.QtyShortage),
                 l.UomId, unit.UomCode, baseQuantity.IsSuccess ? ItemUomMath.Normalize(baseQuantity.Value) : 0m, item.BaseUomCode, l.FromBinId, l.ToBinId));
         }
 
-        return new TransferSummary(t.Id, t.CompanyId, t.Number ?? DraftIdentifiers.For(t.Id), t.Status, t.FromWarehouseId, codes[t.FromWarehouseId], t.ToWarehouseId, codes[t.ToWarehouseId], t.TransitWarehouseId, t.TransitWarehouseId is { } tw ? codes.GetValueOrDefault(tw) : null,
-            t.ShipDate, t.ReceiveDate, t.ShipPostingId, t.ReceivePostingId, t.Reference, t.Notes, JsonDocument.Parse(t.CustomFields).RootElement.Clone(), lines, t.UpdatedAt);
+        return new TransferSummary(t.Id, t.CompanyId, t.Number ?? DraftIdentifiers.For(t.Id), t.Status, t.Kind, t.FromWarehouseId, codes[t.FromWarehouseId], t.ToWarehouseId, codes[t.ToWarehouseId], t.TransitWarehouseId, t.TransitWarehouseId is { } tw ? codes.GetValueOrDefault(tw) : null,
+            t.ShipDate, t.ReceiveDate, t.ShipPostingId, t.ReceivePostingId, t.ShortagePostingIds, t.Reference, t.Notes, JsonDocument.Parse(t.CustomFields).RootElement.Clone(), lines, t.UpdatedAt);
     }
 }

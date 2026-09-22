@@ -13,7 +13,7 @@ namespace Quicker.Items.Application;
 /// versioned per item with one active version, lines in any unit of the component converted exactly to its base
 /// unit, no cycles through nested bills, and a multi-level explosion that shows every requirement with its route.
 /// </summary>
-public sealed class BomService(ItemsDbContext db, IUomDirectory uoms, IClock clock)
+public sealed class BomService(ItemsDbContext db, IUomDirectory uoms, IClock clock) : IBomDirectory
 {
     private IReadOnlyDictionary<Guid, UomInfo>? _uomsById;
 
@@ -327,6 +327,36 @@ public sealed class BomService(ItemsDbContext db, IUomDirectory uoms, IClock clo
         }
 
         return Result.Success();
+    }
+
+    public async Task<Result<BomBuildInfo?>> BuildAsync(Guid itemId, decimal outputQuantity, CancellationToken cancellationToken = default)
+    {
+        if (outputQuantity <= 0m)
+        {
+            return Error.Validation("bom.quantity_invalid", "The quantity to build must be positive.");
+        }
+
+        var bom = await db.Boms.Include(static b => b.Lines).SingleOrDefaultAsync(b => b.ItemId == itemId && b.IsActive && b.Kind == "assembly", cancellationToken);
+        if (bom is null)
+        {
+            return Result<BomBuildInfo?>.Success(null);
+        }
+
+        var item = await db.Items.SingleAsync(i => i.Id == bom.ItemId, cancellationToken);
+        var byId = await UomsByIdAsync(cancellationToken);
+        var multiple = outputQuantity / bom.OutputQty;
+        var components = new List<BomComponentInfo>();
+        foreach (var line in bom.Lines.OrderBy(static l => l.Position))
+        {
+            var component = await db.Items.Include(static i => i.Uoms).SingleAsync(i => i.Id == line.ComponentItemId, cancellationToken);
+            var uom = component.Uoms.First(u => u.UomId == line.UomId);
+            var baseUom = byId[component.BaseUomId];
+            var baseQuantity = line.Quantity * uom.Numerator / uom.Denominator * multiple;
+            var withScrap = baseQuantity * (1m + line.ScrapPct / 100m);
+            components.Add(new BomComponentInfo(component.Id, component.Code, line.ComponentVariantId, baseUom.Id, baseUom.Code, ItemUomMath.Normalize(baseQuantity), ItemUomMath.Normalize(withScrap), line.Position));
+        }
+
+        return new BomBuildInfo(bom.Id, item.Id, item.Code, bom.Version, outputQuantity, components);
     }
 
     private async Task<IReadOnlyDictionary<Guid, UomInfo>> UomsByIdAsync(CancellationToken cancellationToken) =>

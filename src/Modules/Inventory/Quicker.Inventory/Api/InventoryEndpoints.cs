@@ -123,6 +123,69 @@ public static class InventoryEndpoints
             .RequirePermission(InventoryPermissions.CostingManage)
             .WithSummary("Settles an inbound entry's expected cost with the invoiced one, or adds a landed cost to it, and re-applies everything it fed (hard scenarios 1 and 2)");
 
+        // ------------------------------------------------------------------ reason codes, adjustments, revaluations, assemblies (roadmap 3.4)
+        var reasons = inventory.MapGroup("/reason-codes");
+        reasons.MapGet("/", async (string? appliesTo, bool? includeInactive, ReasonCodeService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(appliesTo, includeInactive ?? false, ct)))
+            .RequirePermission(InventoryPermissions.StockRead);
+        reasons.MapPost("/", async (SaveReasonCodeRequest request, ReasonCodeService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static r => $"/api/v1/inventory/reason-codes/{r.Id}"))
+            .RequirePermission(InventoryPermissions.ReasonCodeManage)
+            .WithSummary("A reason code for adjustments, scrap, counts, returns or transfer shortages; it may redirect the movement to another expense account and require a note");
+        reasons.MapPut("/{reasonId:guid}", async (Guid reasonId, SaveReasonCodeRequest request, ReasonCodeService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(reasonId, request, ct)))
+            .RequirePermission(InventoryPermissions.ReasonCodeManage);
+
+        var adjustments = inventory.MapGroup("/adjustments");
+        adjustments.MapGet("/", async (Guid? companyId, string? status, string? kind, Guid? warehouseId, AdjustmentService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, kind, warehouseId, ct)))
+            .RequirePermission(InventoryPermissions.AdjustmentRead);
+        adjustments.MapPost("/", async (SaveAdjustmentRequest request, AdjustmentService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static a => $"/api/v1/inventory/adjustments/{a.Id}"))
+            .RequirePermission(InventoryPermissions.AdjustmentManage)
+            .WithSummary("A draft adjustment (positive, negative, scrap or opening) with a reason code per line; submit posts it, or sends it for approval when the company requires one");
+        adjustments.MapGet("/{adjustmentId:guid}", async (Guid adjustmentId, AdjustmentService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(adjustmentId, ct), "adjustment", adjustmentId))
+            .RequirePermission(InventoryPermissions.AdjustmentRead);
+        adjustments.MapPut("/{adjustmentId:guid}", async (Guid adjustmentId, SaveAdjustmentRequest request, AdjustmentService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(adjustmentId, request, ct)))
+            .RequirePermission(InventoryPermissions.AdjustmentManage);
+        adjustments.MapPost("/{adjustmentId:guid}/submit", async (Guid adjustmentId, AdjustmentService service, CancellationToken ct) => ApiProblems.Ok(await service.SubmitAsync(adjustmentId, ct)))
+            .RequirePermission(InventoryPermissions.AdjustmentManage)
+            .WithSummary("Posts the adjustment, or leaves it pending approval when the company setting inventory.adjustments.approval is 'required'");
+        adjustments.MapPost("/{adjustmentId:guid}/approve", async (Guid adjustmentId, AdjustmentService service, CancellationToken ct) => ApiProblems.Ok(await service.ApproveAsync(adjustmentId, ct)))
+            .RequirePermission(InventoryPermissions.AdjustmentApprove)
+            .WithSummary("Approves and posts; the submitter cannot approve their own adjustment");
+        adjustments.MapPost("/{adjustmentId:guid}/reject", async (Guid adjustmentId, RejectRequest request, AdjustmentService service, CancellationToken ct) => ApiProblems.Ok(await service.RejectAsync(adjustmentId, request, ct)))
+            .RequirePermission(InventoryPermissions.AdjustmentApprove);
+        adjustments.MapPost("/{adjustmentId:guid}/cancel", async (Guid adjustmentId, AdjustmentService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(adjustmentId, ct)))
+            .RequirePermission(InventoryPermissions.AdjustmentManage);
+
+        var revaluations = inventory.MapGroup("/revaluations");
+        revaluations.MapGet("/", async (Guid? companyId, string? status, RevaluationService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
+            .RequirePermission(InventoryPermissions.CostingRead);
+        revaluations.MapPost("/", async (SaveRevaluationRequest request, RevaluationService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static r => $"/api/v1/inventory/revaluations/{r.Id}"))
+            .RequirePermission(InventoryPermissions.CostingManage)
+            .WithSummary("A draft NRV write-down (IAS 2; a reversal never lifts the value above cost) or manual revaluation of the stock on hand per item at a date");
+        revaluations.MapGet("/{revaluationId:guid}", async (Guid revaluationId, RevaluationService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(revaluationId, ct), "revaluation", revaluationId))
+            .RequirePermission(InventoryPermissions.CostingRead);
+        revaluations.MapPut("/{revaluationId:guid}", async (Guid revaluationId, SaveRevaluationRequest request, RevaluationService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(revaluationId, request, ct)))
+            .RequirePermission(InventoryPermissions.CostingManage);
+        revaluations.MapPost("/{revaluationId:guid}/post", async (Guid revaluationId, RevaluationService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(revaluationId, ct)))
+            .RequirePermission(InventoryPermissions.CostingManage)
+            .WithSummary("Posts the revaluation through the costing engine (Inventory against InventoryWriteDown) and re-applies later movements");
+        revaluations.MapPost("/{revaluationId:guid}/cancel", async (Guid revaluationId, RevaluationService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(revaluationId, ct)))
+            .RequirePermission(InventoryPermissions.CostingManage);
+
+        var assemblies = inventory.MapGroup("/assemblies");
+        assemblies.MapGet("/", async (Guid? companyId, string? status, AssemblyService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
+            .RequirePermission(InventoryPermissions.AssemblyRead);
+        assemblies.MapPost("/", async (SaveAssemblyRequest request, AssemblyService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static a => $"/api/v1/inventory/assemblies/{a.Id}"))
+            .RequirePermission(InventoryPermissions.AssemblyManage)
+            .WithSummary("A draft assembly build; without lines, the item's active bill of material decides what is consumed");
+        assemblies.MapGet("/{assemblyId:guid}", async (Guid assemblyId, AssemblyService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(assemblyId, ct), "assembly", assemblyId))
+            .RequirePermission(InventoryPermissions.AssemblyRead);
+        assemblies.MapPut("/{assemblyId:guid}", async (Guid assemblyId, SaveAssemblyRequest request, AssemblyService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(assemblyId, request, ct)))
+            .RequirePermission(InventoryPermissions.AssemblyManage);
+        assemblies.MapPost("/{assemblyId:guid}/post", async (Guid assemblyId, AssemblyService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(assemblyId, ct)))
+            .RequirePermission(InventoryPermissions.AssemblyPost)
+            .WithSummary("Consumes the components and produces the assembly in one posting; the output is valued at what the components cost");
+        assemblies.MapPost("/{assemblyId:guid}/cancel", async (Guid assemblyId, AssemblyService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(assemblyId, ct)))
+            .RequirePermission(InventoryPermissions.AssemblyManage);
+
         return inventory;
     }
 }

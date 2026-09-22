@@ -20,6 +20,7 @@ public static class ItemsModule
         services.AddScoped<MasterDataService>();
         services.AddScoped<ItemService>();
         services.AddScoped<BomService>();
+        services.AddScoped<IBomDirectory>(static sp => sp.GetRequiredService<BomService>());
         services.AddScoped<ItemDirectory>();
         services.AddScoped<IItemDirectory>(static sp => sp.GetRequiredService<ItemDirectory>());
         return services;

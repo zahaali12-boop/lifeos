@@ -145,6 +145,9 @@ public sealed class StockLedgerEntry : ITenantEntity
     /// <summary>For a return: the entry it reverses at its exact cost.</summary>
     public Guid? AppliesToSleId { get; set; }
 
+    /// <summary>The account role the movement offsets when the document (a reason code) names one.</summary>
+    public string? OffsetRoleOverride { get; set; }
+
     public Guid? TransferPairId { get; set; }
 
     public Guid? ReservationId { get; set; }
@@ -254,6 +257,11 @@ public sealed class Transfer : ITenantEntity
 
     public Guid? ReceivePostingId { get; set; }
 
+    /// <summary><c>two_step</c> through the in-transit warehouse, or <c>one_step</c> straight into the destination.</summary>
+    public string Kind { get; set; } = "two_step";
+
+    public List<Guid> ShortagePostingIds { get; set; } = [];
+
     public string? Reference { get; set; }
 
     public string? Notes { get; set; }
@@ -296,6 +304,9 @@ public sealed class TransferLine : ITenantEntity
     public Guid? ToBinId { get; set; }
 
     public string Tracking { get; set; } = "{}";
+
+    /// <summary>Shipped quantity that never arrived, written off on receipt with a reason code.</summary>
+    public decimal QtyShortage { get; set; }
 }
 
 // ------------------------------------------------------------------ costing (ADR-0008, value side)
@@ -360,6 +371,9 @@ public sealed class StockValueEntry : ITenantEntity
 
     /// <summary>The subledger item of the offset when it is a control account (the receipt for GRNI, the counterpart item for Inventory).</summary>
     public Guid? OffsetRef { get; set; }
+
+    /// <summary>The item posting group of the offset when it belongs to another item (an assembly's components offset the assembly's stock).</summary>
+    public Guid? OffsetPostingGroupId { get; set; }
 
     public Guid? ItemPostingGroupId { get; set; }
 
@@ -503,4 +517,252 @@ public sealed class StandardCostVersion : ITenantEntity
     public Guid? ApprovedBy { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
+}
+
+// ------------------------------------------------------------------ documents (roadmap 3.4)
+
+public sealed class ReasonCode : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string Code { get; set; } = string.Empty;
+
+    public LocalizedText Name { get; set; } = new();
+
+    /// <summary>adjustment, count, return, scrap, write_off or shortage.</summary>
+    public string AppliesTo { get; set; } = "adjustment";
+
+    /// <summary>The account role the movement offsets instead of the type's default (POSTING_RULES §4, "reason codes may override").</summary>
+    public string? AccountRoleOverride { get; set; }
+
+    public bool RequiresNote { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+public sealed class Adjustment : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string? Number { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    /// <summary>positive, negative, scrap or opening.</summary>
+    public string Kind { get; set; } = "positive";
+
+    public string Status { get; set; } = "draft";
+
+    public string? Reference { get; set; }
+
+    public string? Notes { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public Guid? StockPostingId { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? SubmittedBy { get; set; }
+
+    public DateTimeOffset? SubmittedAt { get; set; }
+
+    public Guid? ApprovedBy { get; set; }
+
+    public DateTimeOffset? ApprovedAt { get; set; }
+
+    public string? RejectionReason { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<AdjustmentLine> Lines { get; } = [];
+}
+
+public sealed class AdjustmentLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid AdjustmentId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public Guid? LotId { get; set; }
+
+    public Guid? SerialId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid UomId { get; set; }
+
+    /// <summary>Per entered unit, functional currency; null values a positive line at the current cost.</summary>
+    public decimal? UnitCost { get; set; }
+
+    public Guid ReasonCodeId { get; set; }
+
+    public string? Note { get; set; }
+}
+
+public sealed class Revaluation : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string? Number { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    /// <summary>nrv_writedown or manual.</summary>
+    public string Kind { get; set; } = "manual";
+
+    public string Status { get; set; } = "draft";
+
+    public string? Reference { get; set; }
+
+    public string? Notes { get; set; }
+
+    public List<Guid> RunIds { get; set; } = [];
+
+    public Guid? PostedBy { get; set; }
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<RevaluationLine> Lines { get; } = [];
+}
+
+public sealed class RevaluationLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid RevaluationId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? WarehouseId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public decimal CurrentUnitCost { get; set; }
+
+    public decimal NewUnitCost { get; set; }
+
+    public decimal Amount { get; set; }
+
+    public string? Note { get; set; }
+}
+
+public sealed class Assembly : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string? Number { get; set; }
+
+    public Guid? BomId { get; set; }
+
+    public Guid OutputItemId { get; set; }
+
+    public Guid? OutputVariantId { get; set; }
+
+    public decimal OutputQty { get; set; }
+
+    public Guid OutputUomId { get; set; }
+
+    public Guid? OutputBinId { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    public string? Reference { get; set; }
+
+    public string? Notes { get; set; }
+
+    public Guid? StockPostingId { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<AssemblyLine> Lines { get; } = [];
+}
+
+public sealed class AssemblyLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid AssemblyId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ComponentItemId { get; set; }
+
+    public Guid? ComponentVariantId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid UomId { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public Guid? LotId { get; set; }
+
+    public Guid? SerialId { get; set; }
+
+    public string Tracking { get; set; } = "{}";
 }

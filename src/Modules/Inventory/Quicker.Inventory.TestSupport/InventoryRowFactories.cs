@@ -82,6 +82,13 @@ public static class InventoryRowFactories
             await c.ExecuteAsync("INSERT INTO app.inv_standard_cost_versions (tenant_id, id, company_id, item_id, standard_cost, effective_from) VALUES (@t, @id, @company, @item, 2.5, '2026-09-22')", new { t, id, company, item }, tx);
             return new RowRef("app.inv_standard_cost_versions", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.inv_reason_codes", static async (c, tx, t) => new RowRef("app.inv_reason_codes", $"id = '{await ReasonAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.inv_adjustments", static async (c, tx, t) => new RowRef("app.inv_adjustments", $"id = '{(await AdjustmentAsync(c, tx, t)).Adjustment}'"));
+        IsolationRegistry.Register("app.inv_adjustment_lines", static async (c, tx, t) => new RowRef("app.inv_adjustment_lines", $"id = '{(await AdjustmentAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.inv_revaluations", static async (c, tx, t) => new RowRef("app.inv_revaluations", $"id = '{(await RevaluationAsync(c, tx, t)).Revaluation}'"));
+        IsolationRegistry.Register("app.inv_revaluation_lines", static async (c, tx, t) => new RowRef("app.inv_revaluation_lines", $"id = '{(await RevaluationAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.inv_assemblies", static async (c, tx, t) => new RowRef("app.inv_assemblies", $"id = '{(await AssemblyAsync(c, tx, t)).Assembly}'"));
+        IsolationRegistry.Register("app.inv_assembly_lines", static async (c, tx, t) => new RowRef("app.inv_assembly_lines", $"id = '{(await AssemblyAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.inv_transfers", static async (c, tx, t) => new RowRef("app.inv_transfers", $"id = '{(await TransferAsync(c, tx, t)).Transfer}'"));
         IsolationRegistry.Register("app.inv_transfer_lines", static async (c, tx, t) => new RowRef("app.inv_transfer_lines", $"id = '{(await TransferAsync(c, tx, t)).Line}'"));
     }
@@ -151,6 +158,48 @@ public static class InventoryRowFactories
             VALUES (@t, @value, @entry, @company, @item, @warehouse, '2026-09-22', '2026-09-22', 'direct_cost', 5, 2, 10, 'IQD', 'Inventory', 'OpeningBalanceEquity', 'probe', @doc)
             """, new { t, value, entry, company, item, warehouse, doc }, tx);
         return (value, entry, company, item);
+    }
+
+    private static async Task<Guid> ReasonAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_reason_codes (tenant_id, id, code, name_i18n, applies_to) VALUES (@t, @id, @code, '{}', 'adjustment')", new { t, id, code = Suffix(id) }, tx);
+        return id;
+    }
+
+    private static async Task<(Guid Adjustment, Guid Line)> AdjustmentAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (warehouse, company) = await WarehouseAsync(c, tx, t);
+        var (item, uom) = await ItemAsync(c, tx, t);
+        var reason = await ReasonAsync(c, tx, t);
+        var adjustment = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_adjustments (tenant_id, id, company_id, warehouse_id, posting_date, kind) VALUES (@t, @adjustment, @company, @warehouse, '2026-09-22', 'positive')", new { t, adjustment, company, warehouse }, tx);
+        await c.ExecuteAsync("INSERT INTO app.inv_adjustment_lines (tenant_id, id, adjustment_id, line_no, item_id, quantity, uom_id, reason_code_id) VALUES (@t, @line, @adjustment, 1, @item, 1, @uom, @reason)", new { t, line, adjustment, item, uom, reason }, tx);
+        return (adjustment, line);
+    }
+
+    private static async Task<(Guid Revaluation, Guid Line)> RevaluationAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var company = await CompanyAsync(c, tx, t);
+        var (item, _) = await ItemAsync(c, tx, t);
+        var revaluation = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_revaluations (tenant_id, id, company_id, posting_date, kind) VALUES (@t, @revaluation, @company, '2026-09-22', 'manual')", new { t, revaluation, company }, tx);
+        await c.ExecuteAsync("INSERT INTO app.inv_revaluation_lines (tenant_id, id, revaluation_id, line_no, item_id, new_unit_cost) VALUES (@t, @line, @revaluation, 1, @item, 2)", new { t, line, revaluation, item }, tx);
+        return (revaluation, line);
+    }
+
+    private static async Task<(Guid Assembly, Guid Line)> AssemblyAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (warehouse, company) = await WarehouseAsync(c, tx, t);
+        var (item, uom) = await ItemAsync(c, tx, t);
+        var (component, componentUom) = await ItemAsync(c, tx, t);
+        var assembly = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_assemblies (tenant_id, id, company_id, output_item_id, output_qty, output_uom_id, warehouse_id, posting_date) VALUES (@t, @assembly, @company, @item, 1, @uom, @warehouse, '2026-09-22')", new { t, assembly, company, item, uom, warehouse }, tx);
+        await c.ExecuteAsync("INSERT INTO app.inv_assembly_lines (tenant_id, id, assembly_id, line_no, component_item_id, quantity, uom_id) VALUES (@t, @line, @assembly, 1, @component, 2, @componentUom)", new { t, line, assembly, component, componentUom }, tx);
+        return (assembly, line);
     }
 
     private static async Task<(Guid Transfer, Guid Line)> TransferAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

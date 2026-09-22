@@ -38,6 +38,20 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
 
     public DbSet<StandardCostVersion> StandardCosts => Set<StandardCostVersion>();
 
+    public DbSet<ReasonCode> ReasonCodes => Set<ReasonCode>();
+
+    public DbSet<Adjustment> Adjustments => Set<Adjustment>();
+
+    public DbSet<AdjustmentLine> AdjustmentLines => Set<AdjustmentLine>();
+
+    public DbSet<Revaluation> Revaluations => Set<Revaluation>();
+
+    public DbSet<RevaluationLine> RevaluationLines => Set<RevaluationLine>();
+
+    public DbSet<Assembly> Assemblies => Set<Assembly>();
+
+    public DbSet<AssemblyLine> AssemblyLines => Set<AssemblyLine>();
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private static readonly ValueConverter<Dictionary<string, string>, string> StringMapConverter = new(
@@ -130,6 +144,67 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             b.Property(static x => x.QtyRequested).HasPrecision(24, 9);
             b.Property(static x => x.QtyShipped).HasPrecision(24, 9);
             b.Property(static x => x.QtyReceived).HasPrecision(24, 9);
+            b.Property(static x => x.QtyShortage).HasPrecision(24, 9);
+            b.Property(static x => x.Tracking).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<ReasonCode>(b =>
+        {
+            b.ToTable("inv_reason_codes", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Name).HasColumnName("name_i18n");
+            b.HasAuditTrail("reason_code", static x => x.Code);
+        });
+
+        modelBuilder.Entity<Adjustment>(b =>
+        {
+            b.ToTable("inv_adjustments", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.AdjustmentId });
+            b.HasAuditTrail("stock_adjustment", static x => x.Number ?? x.Id.ToString("N"));
+        });
+
+        modelBuilder.Entity<AdjustmentLine>(b =>
+        {
+            b.ToTable("inv_adjustment_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Quantity).HasPrecision(24, 9);
+            b.Property(static x => x.UnitCost).HasPrecision(24, 10);
+        });
+
+        modelBuilder.Entity<Revaluation>(b =>
+        {
+            b.ToTable("inv_revaluations", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.RevaluationId });
+            b.HasAuditTrail("stock_revaluation", static x => x.Number ?? x.Id.ToString("N"));
+        });
+
+        modelBuilder.Entity<RevaluationLine>(b =>
+        {
+            b.ToTable("inv_revaluation_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Quantity).HasPrecision(24, 9);
+            b.Property(static x => x.CurrentUnitCost).HasPrecision(24, 10);
+            b.Property(static x => x.NewUnitCost).HasPrecision(24, 10);
+            b.Property(static x => x.Amount).HasPrecision(24, 6);
+        });
+
+        modelBuilder.Entity<Assembly>(b =>
+        {
+            b.ToTable("inv_assemblies", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.OutputQty).HasPrecision(24, 9);
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.AssemblyId });
+            b.HasAuditTrail("stock_assembly", static x => x.Number ?? x.Id.ToString("N"));
+        });
+
+        modelBuilder.Entity<AssemblyLine>(b =>
+        {
+            b.ToTable("inv_assembly_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Quantity).HasPrecision(24, 9);
             b.Property(static x => x.Tracking).HasColumnType("jsonb");
         });
 

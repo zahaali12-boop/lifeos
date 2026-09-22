@@ -11848,6 +11848,809 @@
           }
         }
       }
+    },
+    "/api/v1/inventory/reason-codes": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryReasonCodes",
+        "parameters": [
+          {
+            "name": "appliesTo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReasonCodeSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "A reason code for adjustments, scrap, counts, returns or transfer shortages; it may redirect the movement to another expense account and require a note",
+        "operationId": "postInventoryReasonCodes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReasonCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasonCodeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/reason-codes/{reasonId}": {
+      "put": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "putInventoryReasonCodesByReasonId",
+        "parameters": [
+          {
+            "name": "reasonId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReasonCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasonCodeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/adjustments": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryAdjustments",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdjustmentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "A draft adjustment (positive, negative, scrap or opening) with a reason code per line; submit posts it, or sends it for approval when the company requires one",
+        "operationId": "postInventoryAdjustments",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAdjustmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/adjustments/{adjustmentId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryAdjustmentsByAdjustmentId",
+        "parameters": [
+          {
+            "name": "adjustmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "putInventoryAdjustmentsByAdjustmentId",
+        "parameters": [
+          {
+            "name": "adjustmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAdjustmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/adjustments/{adjustmentId}/submit": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Posts the adjustment, or leaves it pending approval when the company setting inventory.adjustments.approval is 'required'",
+        "operationId": "postInventoryAdjustmentsByAdjustmentIdSubmit",
+        "parameters": [
+          {
+            "name": "adjustmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/adjustments/{adjustmentId}/approve": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Approves and posts; the submitter cannot approve their own adjustment",
+        "operationId": "postInventoryAdjustmentsByAdjustmentIdApprove",
+        "parameters": [
+          {
+            "name": "adjustmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/adjustments/{adjustmentId}/reject": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "postInventoryAdjustmentsByAdjustmentIdReject",
+        "parameters": [
+          {
+            "name": "adjustmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/adjustments/{adjustmentId}/cancel": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "postInventoryAdjustmentsByAdjustmentIdCancel",
+        "parameters": [
+          {
+            "name": "adjustmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/revaluations": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryRevaluations",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RevaluationSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "A draft NRV write-down (IAS 2; a reversal never lifts the value above cost) or manual revaluation of the stock on hand per item at a date",
+        "operationId": "postInventoryRevaluations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRevaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevaluationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/revaluations/{revaluationId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryRevaluationsByRevaluationId",
+        "parameters": [
+          {
+            "name": "revaluationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevaluationSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "putInventoryRevaluationsByRevaluationId",
+        "parameters": [
+          {
+            "name": "revaluationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRevaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevaluationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/revaluations/{revaluationId}/post": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Posts the revaluation through the costing engine (Inventory against InventoryWriteDown) and re-applies later movements",
+        "operationId": "postInventoryRevaluationsByRevaluationIdPost",
+        "parameters": [
+          {
+            "name": "revaluationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevaluationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/revaluations/{revaluationId}/cancel": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "postInventoryRevaluationsByRevaluationIdCancel",
+        "parameters": [
+          {
+            "name": "revaluationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevaluationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assemblies": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryAssemblies",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssemblySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "A draft assembly build; without lines, the item's active bill of material decides what is consumed",
+        "operationId": "postInventoryAssemblies",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssemblyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssemblySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assemblies/{assemblyId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "getInventoryAssembliesByAssemblyId",
+        "parameters": [
+          {
+            "name": "assemblyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssemblySummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "putInventoryAssembliesByAssemblyId",
+        "parameters": [
+          {
+            "name": "assemblyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssemblyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssemblySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assemblies/{assemblyId}/post": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Consumes the components and produces the assembly in one posting; the output is valued at what the components cost",
+        "operationId": "postInventoryAssembliesByAssemblyIdPost",
+        "parameters": [
+          {
+            "name": "assemblyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssemblySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/assemblies/{assemblyId}/cancel": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "operationId": "postInventoryAssembliesByAssemblyIdCancel",
+        "parameters": [
+          {
+            "name": "assemblyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssemblySummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12198,6 +13001,257 @@
           }
         }
       },
+      "AdjustmentLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "variantId",
+          "binId",
+          "quantity",
+          "uomId",
+          "uomCode",
+          "unitCost",
+          "reasonCodeId",
+          "reasonCode",
+          "note",
+          "costAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "unitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reasonCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "costAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "AdjustmentSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "kind",
+          "status",
+          "warehouseId",
+          "warehouseCode",
+          "postingDate",
+          "reference",
+          "notes",
+          "customFields",
+          "stockPostingId",
+          "journalEntryId",
+          "submittedBy",
+          "submittedAt",
+          "approvedBy",
+          "approvedAt",
+          "rejectionReason",
+          "postedBy",
+          "postedAt",
+          "lines",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "stockPostingId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "submittedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "submittedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "approvedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "approvedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "rejectionReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdjustmentLineSummary"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AllocatedNumber": {
         "required": [
           "seriesId",
@@ -12445,6 +13499,252 @@
               "null",
               "string"
             ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AssemblyLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "variantId",
+          "quantity",
+          "uomId",
+          "uomCode",
+          "binId",
+          "costAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "costAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "AssemblySummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "status",
+          "bomId",
+          "outputItemId",
+          "outputItemCode",
+          "outputItemName",
+          "outputVariantId",
+          "outputQuantity",
+          "outputUomId",
+          "outputUomCode",
+          "outputBinId",
+          "warehouseId",
+          "warehouseCode",
+          "postingDate",
+          "reference",
+          "notes",
+          "stockPostingId",
+          "journalEntryId",
+          "outputCost",
+          "postedBy",
+          "postedAt",
+          "lines",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "bomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "outputItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outputItemCode": {
+            "type": "string"
+          },
+          "outputItemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "outputVariantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "outputQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "outputUomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outputUomCode": {
+            "type": "string"
+          },
+          "outputBinId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "stockPostingId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "outputCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "postedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssemblyLineSummary"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
             "format": "date-time"
           }
         }
@@ -20082,6 +21382,53 @@
           }
         }
       },
+      "ReasonCodeSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "appliesTo",
+          "accountRoleOverride",
+          "requiresNote",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "appliesTo": {
+            "type": "string"
+          },
+          "accountRoleOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requiresNote": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "RebuildResult": {
         "required": [
           "companyId",
@@ -20352,6 +21699,17 @@
         }
       },
       "RejectJournalRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "RejectRequest": {
         "required": [
           "reason"
         ],
@@ -20650,6 +22008,187 @@
           }
         }
       },
+      "RevaluationLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "warehouseId",
+          "quantity",
+          "currentUnitCost",
+          "newUnitCost",
+          "amount",
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currentUnitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "newUnitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RevaluationSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "kind",
+          "status",
+          "postingDate",
+          "reference",
+          "notes",
+          "runIds",
+          "postedBy",
+          "postedAt",
+          "lines",
+          "totalAmount",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "runIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "postedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevaluationLineSummary"
+            }
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ReverseRequest": {
         "required": [
           "reason"
@@ -20905,6 +22444,284 @@
           "isActive": {
             "type": "boolean",
             "default": true
+          }
+        }
+      },
+      "SaveAdjustmentLineRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "uom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "unitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reasonCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reasonCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SaveAdjustmentRequest": {
+        "required": [
+          "companyId",
+          "warehouseId",
+          "kind",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveAdjustmentLineRequest"
+            }
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": { }
+        }
+      },
+      "SaveAssemblyLineRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "uom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "SaveAssemblyRequest": {
+        "required": [
+          "companyId",
+          "warehouseId",
+          "outputQuantity"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outputQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "outputItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "outputItemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outputUom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outputUomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "outputVariantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "outputBinId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SaveAssemblyLineRequest"
+            }
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -22290,6 +24107,42 @@
           }
         }
       },
+      "SaveReasonCodeRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "appliesTo": {
+            "type": "string",
+            "default": "adjustment"
+          },
+          "accountRoleOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requiresNote": {
+            "type": "boolean",
+            "default": false
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveRecurringTemplateRequest": {
         "required": [
           "code",
@@ -22368,6 +24221,88 @@
           "isActive": {
             "type": "boolean",
             "default": true
+          }
+        }
+      },
+      "SaveRevaluationLineRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "newUnitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SaveRevaluationRequest": {
+        "required": [
+          "companyId",
+          "kind",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveRevaluationLineRequest"
+            }
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -22745,7 +24680,11 @@
               "string"
             ]
           },
-          "customFields": { }
+          "customFields": { },
+          "kind": {
+            "type": "string",
+            "default": "two_step"
+          }
         }
       },
       "SaveUomConversionRequest": {
@@ -24909,6 +26848,7 @@
           "qtyRequested",
           "qtyShipped",
           "qtyReceived",
+          "qtyShortage",
           "uomId",
           "uomCode",
           "baseQtyRequested",
@@ -24980,6 +26920,14 @@
             ],
             "format": "double"
           },
+          "qtyShortage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "uomId": {
             "type": "string",
             "format": "uuid"
@@ -25039,9 +26987,37 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "shortage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "shortageReasonCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shortageReasonCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shortageNote": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding."
+        "description": "A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. On a\nreceipt, Shortage is what shipped but never arrived: it is written off from transit with the reason code."
       },
       "TransferSummary": {
         "required": [
@@ -25049,6 +27025,7 @@
           "companyId",
           "number",
           "status",
+          "kind",
           "fromWarehouseId",
           "fromWarehouseCode",
           "toWarehouseId",
@@ -25059,6 +27036,7 @@
           "receiveDate",
           "shipPostingId",
           "receivePostingId",
+          "shortagePostingIds",
           "reference",
           "notes",
           "customFields",
@@ -25079,6 +27057,9 @@
             "type": "string"
           },
           "status": {
+            "type": "string"
+          },
+          "kind": {
             "type": "string"
           },
           "fromWarehouseId": {
@@ -25135,6 +27116,13 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "shortagePostingIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           "reference": {
             "type": [

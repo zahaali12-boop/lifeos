@@ -4202,6 +4202,270 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/reason-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryReasonCodes"];
+        put?: never;
+        /** A reason code for adjustments, scrap, counts, returns or transfer shortages; it may redirect the movement to another expense account and require a note */
+        post: operations["postInventoryReasonCodes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/reason-codes/{reasonId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putInventoryReasonCodesByReasonId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryAdjustments"];
+        put?: never;
+        /** A draft adjustment (positive, negative, scrap or opening) with a reason code per line; submit posts it, or sends it for approval when the company requires one */
+        post: operations["postInventoryAdjustments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/adjustments/{adjustmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryAdjustmentsByAdjustmentId"];
+        put: operations["putInventoryAdjustmentsByAdjustmentId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/adjustments/{adjustmentId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the adjustment, or leaves it pending approval when the company setting inventory.adjustments.approval is 'required' */
+        post: operations["postInventoryAdjustmentsByAdjustmentIdSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/adjustments/{adjustmentId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approves and posts; the submitter cannot approve their own adjustment */
+        post: operations["postInventoryAdjustmentsByAdjustmentIdApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/adjustments/{adjustmentId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryAdjustmentsByAdjustmentIdReject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/adjustments/{adjustmentId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryAdjustmentsByAdjustmentIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/revaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryRevaluations"];
+        put?: never;
+        /** A draft NRV write-down (IAS 2; a reversal never lifts the value above cost) or manual revaluation of the stock on hand per item at a date */
+        post: operations["postInventoryRevaluations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/revaluations/{revaluationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryRevaluationsByRevaluationId"];
+        put: operations["putInventoryRevaluationsByRevaluationId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/revaluations/{revaluationId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the revaluation through the costing engine (Inventory against InventoryWriteDown) and re-applies later movements */
+        post: operations["postInventoryRevaluationsByRevaluationIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/revaluations/{revaluationId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryRevaluationsByRevaluationIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/assemblies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryAssemblies"];
+        put?: never;
+        /** A draft assembly build; without lines, the item's active bill of material decides what is consumed */
+        post: operations["postInventoryAssemblies"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/assemblies/{assemblyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInventoryAssembliesByAssemblyId"];
+        put: operations["putInventoryAssembliesByAssemblyId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/assemblies/{assemblyId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Consumes the components and produces the assembly in one posting; the output is valued at what the components cost */
+        post: operations["postInventoryAssembliesByAssemblyIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/assemblies/{assemblyId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postInventoryAssembliesByAssemblyIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4297,6 +4561,72 @@ export interface components {
             /** Format: uuid */
             parentId?: null | string;
         };
+        AdjustmentLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            binId: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            unitCost: null | number | string;
+            /** Format: uuid */
+            reasonCodeId: string;
+            reasonCode: string;
+            note: null | string;
+            /** Format: double */
+            costAmount: null | number | string;
+        };
+        AdjustmentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            kind: string;
+            status: string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            /** Format: date */
+            postingDate: string;
+            reference: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: uuid */
+            stockPostingId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            submittedBy: null | string;
+            /** Format: date-time */
+            submittedAt: null | string;
+            /** Format: uuid */
+            approvedBy: null | string;
+            /** Format: date-time */
+            approvedAt: null | string;
+            rejectionReason: null | string;
+            /** Format: uuid */
+            postedBy: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
+            lines: components["schemas"]["AdjustmentLineSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
         /** @description An allocated number: the series that issued it, its sequence within the reset period, and the rendered text. */
         AllocatedNumber: {
             /** Format: uuid */
@@ -4370,6 +4700,74 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             revokedAt: null | string;
+        };
+        AssemblyLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: uuid */
+            binId: null | string;
+            /** Format: double */
+            costAmount: null | number | string;
+        };
+        AssemblySummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            bomId: null | string;
+            /** Format: uuid */
+            outputItemId: string;
+            outputItemCode: string;
+            outputItemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            outputVariantId: null | string;
+            /** Format: double */
+            outputQuantity: number | string;
+            /** Format: uuid */
+            outputUomId: string;
+            outputUomCode: string;
+            /** Format: uuid */
+            outputBinId: null | string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            /** Format: date */
+            postingDate: string;
+            reference: null | string;
+            notes: null | string;
+            /** Format: uuid */
+            stockPostingId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: double */
+            outputCost: null | number | string;
+            /** Format: uuid */
+            postedBy: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
+            lines: components["schemas"]["AssemblyLineSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
         };
         AssignChartRequest: {
             /** Format: uuid */
@@ -6404,6 +6802,20 @@ export interface components {
             /** Format: int32 */
             marked: number | string;
         };
+        ReasonCodeSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            appliesTo: string;
+            accountRoleOverride: null | string;
+            requiresNote: boolean;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         RebuildResult: {
             /** Format: uuid */
             companyId: null | string;
@@ -6481,6 +6893,9 @@ export interface components {
             refreshToken: string;
         };
         RejectJournalRequest: {
+            reason: string;
+        };
+        RejectRequest: {
             reason: string;
         };
         ReleaseReservationRequest: {
@@ -6564,6 +6979,52 @@ export interface components {
             token: string;
             password: string;
         };
+        RevaluationLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            currentUnitCost: number | string;
+            /** Format: double */
+            newUnitCost: number | string;
+            /** Format: double */
+            amount: number | string;
+            note: null | string;
+        };
+        RevaluationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            kind: string;
+            status: string;
+            /** Format: date */
+            postingDate: string;
+            reference: null | string;
+            notes: null | string;
+            runIds: string[];
+            /** Format: uuid */
+            postedBy: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
+            lines: components["schemas"]["RevaluationLineSummary"][];
+            /** Format: double */
+            totalAmount: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         ReverseRequest: {
             reason: string;
             /** Format: date */
@@ -6632,6 +7093,82 @@ export interface components {
             companyId?: null | string;
             /** @default true */
             isActive: boolean;
+        };
+        SaveAdjustmentLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+            /** Format: double */
+            unitCost?: null | number | string;
+            /** Format: uuid */
+            reasonCodeId?: null | string;
+            reasonCode?: null | string;
+            note?: null | string;
+        };
+        SaveAdjustmentRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            kind: string;
+            lines: components["schemas"]["SaveAdjustmentLineRequest"][];
+            /** Format: date */
+            postingDate?: null | string;
+            reference?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
+        };
+        SaveAssemblyLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+        };
+        SaveAssemblyRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            /** Format: double */
+            outputQuantity: number | string;
+            /** Format: uuid */
+            outputItemId?: null | string;
+            outputItemCode?: null | string;
+            outputUom?: null | string;
+            /** Format: uuid */
+            outputUomId?: null | string;
+            /** Format: uuid */
+            outputVariantId?: null | string;
+            /** Format: uuid */
+            outputBinId?: null | string;
+            lines?: null | components["schemas"]["SaveAssemblyLineRequest"][];
+            /** Format: date */
+            postingDate?: null | string;
+            reference?: null | string;
+            notes?: null | string;
         };
         SaveAttributeRequest: {
             code: string;
@@ -7080,6 +7617,19 @@ export interface components {
                 [key: string]: string;
             };
         };
+        SaveReasonCodeRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** @default adjustment */
+            appliesTo: string;
+            accountRoleOverride?: null | string;
+            /** @default false */
+            requiresNote: boolean;
+            /** @default true */
+            isActive: boolean;
+        };
         SaveRecurringTemplateRequest: {
             code: string;
             name: {
@@ -7105,6 +7655,29 @@ export interface components {
             autoReverse: boolean;
             /** @default true */
             isActive: boolean;
+        };
+        SaveRevaluationLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            newUnitCost: number | string;
+            note?: null | string;
+        };
+        SaveRevaluationRequest: {
+            /** Format: uuid */
+            companyId: string;
+            kind: string;
+            lines: components["schemas"]["SaveRevaluationLineRequest"][];
+            /** Format: date */
+            postingDate?: null | string;
+            reference?: null | string;
+            notes?: null | string;
         };
         SaveRoleRequest: {
             code: string;
@@ -7217,6 +7790,8 @@ export interface components {
             reference?: null | string;
             notes?: null | string;
             customFields?: unknown;
+            /** @default two_step */
+            kind: string;
         };
         SaveUomConversionRequest: {
             /** Format: uuid */
@@ -7873,6 +8448,8 @@ export interface components {
             qtyShipped: number | string;
             /** Format: double */
             qtyReceived: number | string;
+            /** Format: double */
+            qtyShortage: number | string;
             /** Format: uuid */
             uomId: string;
             uomCode: string;
@@ -7884,7 +8461,10 @@ export interface components {
             /** Format: uuid */
             toBinId: null | string;
         };
-        /** @description A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. */
+        /**
+         * @description A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. On a
+         *     receipt, Shortage is what shipped but never arrived: it is written off from transit with the reason code.
+         */
         TransferQuantityRequest: {
             /** Format: uuid */
             lineId: string;
@@ -7892,6 +8472,15 @@ export interface components {
             quantity: number | string;
             /** Format: uuid */
             toBinId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            shortage: number | string;
+            /** Format: uuid */
+            shortageReasonCodeId?: null | string;
+            shortageReasonCode?: null | string;
+            shortageNote?: null | string;
         };
         TransferSummary: {
             /** Format: uuid */
@@ -7900,6 +8489,7 @@ export interface components {
             companyId: string;
             number: string;
             status: string;
+            kind: string;
             /** Format: uuid */
             fromWarehouseId: string;
             fromWarehouseCode: string;
@@ -7917,6 +8507,7 @@ export interface components {
             shipPostingId: null | string;
             /** Format: uuid */
             receivePostingId: null | string;
+            shortagePostingIds: string[];
             reference: null | string;
             notes: null | string;
             customFields: components["schemas"]["JsonElement"];
@@ -15954,6 +16545,546 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InboundCostAdjustmentResult"];
+                };
+            };
+        };
+    };
+    getInventoryReasonCodes: {
+        parameters: {
+            query?: {
+                appliesTo?: string;
+                includeInactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReasonCodeSummary"][];
+                };
+            };
+        };
+    };
+    postInventoryReasonCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReasonCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReasonCodeSummary"];
+                };
+            };
+        };
+    };
+    putInventoryReasonCodesByReasonId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reasonId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReasonCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReasonCodeSummary"];
+                };
+            };
+        };
+    };
+    getInventoryAdjustments: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                kind?: string;
+                warehouseId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"][];
+                };
+            };
+        };
+    };
+    postInventoryAdjustments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAdjustmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"];
+                };
+            };
+        };
+    };
+    getInventoryAdjustmentsByAdjustmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"];
+                };
+            };
+        };
+    };
+    putInventoryAdjustmentsByAdjustmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAdjustmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"];
+                };
+            };
+        };
+    };
+    postInventoryAdjustmentsByAdjustmentIdSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"];
+                };
+            };
+        };
+    };
+    postInventoryAdjustmentsByAdjustmentIdApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"];
+                };
+            };
+        };
+    };
+    postInventoryAdjustmentsByAdjustmentIdReject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"];
+                };
+            };
+        };
+    };
+    postInventoryAdjustmentsByAdjustmentIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustmentSummary"];
+                };
+            };
+        };
+    };
+    getInventoryRevaluations: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevaluationSummary"][];
+                };
+            };
+        };
+    };
+    postInventoryRevaluations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRevaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevaluationSummary"];
+                };
+            };
+        };
+    };
+    getInventoryRevaluationsByRevaluationId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revaluationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevaluationSummary"];
+                };
+            };
+        };
+    };
+    putInventoryRevaluationsByRevaluationId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revaluationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRevaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevaluationSummary"];
+                };
+            };
+        };
+    };
+    postInventoryRevaluationsByRevaluationIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revaluationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevaluationSummary"];
+                };
+            };
+        };
+    };
+    postInventoryRevaluationsByRevaluationIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                revaluationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevaluationSummary"];
+                };
+            };
+        };
+    };
+    getInventoryAssemblies: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblySummary"][];
+                };
+            };
+        };
+    };
+    postInventoryAssemblies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssemblyRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblySummary"];
+                };
+            };
+        };
+    };
+    getInventoryAssembliesByAssemblyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assemblyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblySummary"];
+                };
+            };
+        };
+    };
+    putInventoryAssembliesByAssemblyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assemblyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssemblyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblySummary"];
+                };
+            };
+        };
+    };
+    postInventoryAssembliesByAssemblyIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assemblyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblySummary"];
+                };
+            };
+        };
+    };
+    postInventoryAssembliesByAssemblyIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assemblyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblySummary"];
                 };
             };
         };

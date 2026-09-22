@@ -54,7 +54,8 @@ public sealed record StockLine(
     Guid? OwnerPartnerId = null,
     decimal? UnitCost = null,
     bool CostIsExpected = false,
-    Guid? AppliesToSleId = null);
+    Guid? AppliesToSleId = null,
+    string? OffsetRoleOverride = null);
 
 public sealed record StockPostingRequest(
     Guid CompanyId,

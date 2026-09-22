@@ -41,6 +41,18 @@ public sealed record BarcodeMatch(Guid ItemId, string ItemCode, Guid? VariantId,
 /// <summary>The item's settings for one company, each null when the company's own policy applies.</summary>
 public sealed record ItemCompanyPolicy(Guid ItemId, Guid CompanyId, string? CostingMethodOverride, decimal? StandardCost, Guid? ItemPostingGroupOverride, Guid? DefaultWarehouseId, bool? AllowNegativeStock);
 
+/// <summary>One direct component of an assembly's active bill, for a given output quantity, in the component's base unit (exact) with the scrap allowance.</summary>
+public sealed record BomComponentInfo(Guid ComponentItemId, string ComponentCode, Guid? ComponentVariantId, Guid BaseUomId, string BaseUomCode, decimal Quantity, decimal QuantityWithScrap, int Position);
+
+/// <summary>The active assembly bill of an item and what building a quantity of it consumes (direct components only; sub-assemblies are built separately).</summary>
+public sealed record BomBuildInfo(Guid BomId, Guid ItemId, string ItemCode, int Version, decimal OutputQuantity, IReadOnlyList<BomComponentInfo> Components);
+
+public interface IBomDirectory
+{
+    /// <summary>The components to build <paramref name="outputQuantity"/> (base unit) of the item from its active assembly bill, or null when the item has none.</summary>
+    Task<Result<BomBuildInfo?>> BuildAsync(Guid itemId, decimal outputQuantity, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Read access to the item master for the modules that move, buy, sell and cost items.</summary>
 public interface IItemDirectory
 {

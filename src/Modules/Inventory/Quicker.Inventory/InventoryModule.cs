@@ -17,6 +17,7 @@ public static class InventoryModule
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(InventoryPermissions.All);
         CustomFieldHosts.Register(new CustomFieldHost("stock_transfer", "app.inv_transfers", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost("stock_adjustment", "app.inv_adjustments", "custom_fields"));
         services.AddModuleDbContext<InventoryDbContext>();
         services.AddScoped<WarehouseService>();
         services.AddScoped<IWarehouseDirectory>(static sp => sp.GetRequiredService<WarehouseService>());
@@ -30,6 +31,10 @@ public static class InventoryModule
         services.AddScoped<CostingService>();
         services.AddScoped<IInventoryCosting>(static sp => sp.GetRequiredService<CostingService>());
         services.AddScoped<CostInquiryService>();
+        services.AddScoped<ReasonCodeService>();
+        services.AddScoped<AdjustmentService>();
+        services.AddScoped<RevaluationService>();
+        services.AddScoped<AssemblyService>();
         services.AddJobHandler<ReservationExpiryJob, ReservationExpiryPayload>();
         services.AddJobHandler<CostRecostJob, CostRecostPayload>();
         return services;

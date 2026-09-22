@@ -131,7 +131,8 @@ public sealed record SaveTransferRequest(
     Guid? TransitWarehouseId = null,
     string? Reference = null,
     string? Notes = null,
-    JsonElement? CustomFields = null);
+    JsonElement? CustomFields = null,
+    string Kind = "two_step");
 
 public sealed record SaveTransferLineRequest(
     Guid? ItemId = null,
@@ -147,14 +148,18 @@ public sealed record ShipTransferRequest(DateOnly? ShipDate = null, IReadOnlyLis
 
 public sealed record ReceiveTransferRequest(DateOnly? ReceiveDate = null, IReadOnlyList<TransferQuantityRequest>? Lines = null);
 
-/// <summary>A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding.</summary>
-public sealed record TransferQuantityRequest(Guid LineId, decimal Quantity, Guid? ToBinId = null);
+/// <summary>
+/// A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. On a
+/// receipt, <paramref name="Shortage"/> is what shipped but never arrived: it is written off from transit with the reason code.
+/// </summary>
+public sealed record TransferQuantityRequest(Guid LineId, decimal Quantity, Guid? ToBinId = null, decimal Shortage = 0m, Guid? ShortageReasonCodeId = null, string? ShortageReasonCode = null, string? ShortageNote = null);
 
 public sealed record TransferSummary(
     Guid Id,
     Guid CompanyId,
     string Number,
     string Status,
+    string Kind,
     Guid FromWarehouseId,
     string FromWarehouseCode,
     Guid ToWarehouseId,
@@ -165,6 +170,7 @@ public sealed record TransferSummary(
     DateOnly? ReceiveDate,
     Guid? ShipPostingId,
     Guid? ReceivePostingId,
+    IReadOnlyList<Guid> ShortagePostingIds,
     string? Reference,
     string? Notes,
     JsonElement CustomFields,
@@ -182,6 +188,7 @@ public sealed record TransferLineSummary(
     decimal QtyRequested,
     decimal QtyShipped,
     decimal QtyReceived,
+    decimal QtyShortage,
     Guid UomId,
     string UomCode,
     decimal BaseQtyRequested,

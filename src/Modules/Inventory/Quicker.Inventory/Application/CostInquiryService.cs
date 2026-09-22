@@ -117,7 +117,7 @@ public sealed class CostInquiryService(InventoryDbContext db, IUnitOfWorkAccesso
             FROM app.inv_item_applications a
             JOIN app.inv_stock_ledger_entries c ON c.tenant_id = a.tenant_id AND c.id = CASE WHEN a.outbound_sle_id = @id THEN a.inbound_sle_id ELSE a.outbound_sle_id END
             WHERE a.outbound_sle_id = @id OR a.inbound_sle_id = @id
-            ORDER BY a.applied_at, a.id
+            ORDER BY a.applied_at, c.posting_date, c.sequence, a.id
             """, new { id = sleId }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
         var runIds = values.Where(static v => v.AdjustmentRunId is not null).Select(static v => v.AdjustmentRunId!.Value)
             .Concat(applications.Where(static a => a.RunId is not null).Select(static a => a.RunId!.Value))

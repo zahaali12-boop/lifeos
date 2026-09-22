@@ -177,6 +177,7 @@ public sealed class StockPostingService(
                 EnteredUnitCost = line.Source.UnitCost,
                 CostIsExpected = line.Source.CostIsExpected,
                 AppliesToSleId = line.Source.AppliesToSleId,
+                OffsetRoleOverride = line.Source.OffsetRoleOverride,
                 TransferPairId = line.Source.TransferPairId,
                 ReservationId = line.Reservation?.Id,
                 PostedBy = posting.PostedBy,
