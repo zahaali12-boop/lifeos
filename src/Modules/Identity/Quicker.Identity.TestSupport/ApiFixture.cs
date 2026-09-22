@@ -40,6 +40,7 @@ public sealed class ApiFixture : IAsyncDisposable
         fixture.Db = await TestDatabase.CreateAsync();
         fixture._factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            builder.UseSetting("Quicker:Api:RateLimit:Enabled", "false"); // budgets are exercised by their own tests; suites hammer the API from one address
             configure?.Invoke(builder);
             builder.UseEnvironment("Development");
             builder.UseSetting("Quicker:Db:AppConnection", fixture.Db.AppConnectionString);

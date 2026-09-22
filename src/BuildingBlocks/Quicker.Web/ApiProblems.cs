@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Quicker.Kernel.Results;
 
@@ -10,7 +11,7 @@ namespace Quicker.Web;
 /// </summary>
 public static class ApiProblems
 {
-    public static IResult From(Error error)
+    public static ProblemHttpResult From(Error error)
     {
         ArgumentNullException.ThrowIfNull(error);
         var status = StatusFor(error.Kind);
@@ -20,13 +21,34 @@ public static class ApiProblems
             extensions["why"] = error.Why;
         }
 
-        return Results.Problem(
+        return TypedResults.Problem(
             detail: error.Message,
             statusCode: status,
             title: TitleFor(status),
             type: $"https://docs.quicker.app/errors/{error.Code}",
             extensions: extensions);
     }
+
+    // Typed variants: the union return types carry the success schema into the OpenAPI contract (slice 1.9).
+
+    public static Results<Ok<T>, ProblemHttpResult> Ok<T>(Result<T> result) => result.IsSuccess ? TypedResults.Ok(result.Value) : From(result.Error!);
+
+    public static Results<Created<T>, ProblemHttpResult> Created<T>(Result<T> result, Func<T, string> location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+        return result.IsSuccess ? TypedResults.Created(location(result.Value), result.Value) : From(result.Error!);
+    }
+
+    public static Results<Accepted<T>, ProblemHttpResult> Accepted<T>(Result<T> result, Func<T, string?> location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+        return result.IsSuccess ? TypedResults.Accepted(location(result.Value), result.Value) : From(result.Error!);
+    }
+
+    public static Results<NoContent, ProblemHttpResult> NoContent(Result result) => result.IsSuccess ? TypedResults.NoContent() : From(result.Error!);
+
+    /// <summary>200 with the value, or the standard 404 problem when it is null.</summary>
+    public static Results<Ok<T>, ProblemHttpResult> Found<T>(T? value, string entity, object id) where T : class => value is null ? From(Error.NotFound(entity, id)) : TypedResults.Ok(value);
 
     public static IResult From<T>(Result<T> result, Func<T, IResult> onSuccess)
     {

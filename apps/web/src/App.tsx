@@ -1,36 +1,38 @@
 import { useEffect, useState } from "react";
+import { createApiClient } from "./api/client";
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
-
-interface Readiness {
-  status: string;
-  migrations?: number;
-}
+const api = createApiClient({ baseUrl: import.meta.env.VITE_API_BASE_URL });
 
 /**
- * Bootstrap shell for slice 1.1: proves the toolchain end to end (build, lint, test, API reachability).
- * The real application shell, design system, i18n and RTL arrive in slice 1.10.
+ * Bootstrap shell for slice 1.1: proves the toolchain end to end (build, lint, test, API reachability) through the
+ * generated, typed API client (slice 1.9). The real application shell, design system, i18n and RTL arrive in 1.10.
  */
 export function App() {
-  const [readiness, setReadiness] = useState<Readiness | null>(null);
+  const [status, setStatus] = useState<string>("checking");
 
   useEffect(() => {
-    const controller = new AbortController();
-    fetch(`${apiBaseUrl}/health/ready`, { signal: controller.signal })
-      .then(async (response) => (await response.json()) as Readiness)
-      .then(setReadiness)
+    let active = true;
+    api
+      .GET("/health/ready")
+      .then(({ data, error }) => {
+        if (active) {
+          setStatus(data?.status ?? error?.status ?? "unready");
+        }
+      })
       .catch(() => {
-        setReadiness({ status: "unreachable" });
+        if (active) {
+          setStatus("unreachable");
+        }
       });
     return () => {
-      controller.abort();
+      active = false;
     };
   }, []);
 
   return (
     <main>
       <h1>Quicker</h1>
-      <p data-testid="api-status">API: {readiness?.status ?? "checking"}</p>
+      <p data-testid="api-status">API: {status}</p>
     </main>
   );
 }

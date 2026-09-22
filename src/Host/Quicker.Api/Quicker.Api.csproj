@@ -3,10 +3,18 @@
   <PropertyGroup>
     <Description>Quicker ERP HTTP API host (composition root).</Description>
     <UserSecretsId>quicker-api</UserSecretsId>
+    <!-- The OpenAPI contract is generated at build into contracts/ and committed; CI fails when it drifts or breaks (slice 1.9). -->
+    <OpenApiDocumentsDirectory>$(RepoRoot)contracts</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
+    <OpenApiGenerateDocumentsOptions>--file-name openapi-v1</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Dapper" />
     <ProjectReference Include="../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />

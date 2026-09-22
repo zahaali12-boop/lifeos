@@ -68,6 +68,9 @@ jobs:
       - name: Build (warnings as errors, analyzers)
         run: dotnet build Quicker.sln --no-restore --configuration Release
 
+      - name: API contract is committed (contracts/openapi-v1.json is generated at build)
+        run: git diff --exit-code -- contracts/
+
       - name: Test
         run: dotnet test --solution Quicker.sln --no-build --configuration Release
 
@@ -83,6 +86,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Typed client matches the committed contract
+        run: pnpm --filter @quicker/web generate:api && git diff --exit-code -- apps/web/src/api/schema.d.ts
+      - name: API contract has no breaking change against main
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git show origin/main:contracts/openapi-v1.json > /tmp/base-contract.json 2>/dev/null || rm -f /tmp/base-contract.json
+          pnpm --filter @quicker/tools check-api-contract /tmp/base-contract.json contracts/openapi-v1.json
       - run: pnpm -r lint
       - run: pnpm -r typecheck
       - run: pnpm -r test

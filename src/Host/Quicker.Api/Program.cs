@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using Quicker.Api;
@@ -35,9 +36,10 @@ builder.Services.AddQuickerEmail(builder.Configuration);
 builder.Services.AddQuickerStorage(builder.Configuration);
 builder.Services.AddQuickerWebCore();
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi("v1");
+builder.Services.AddOpenApi("v1", static options => options.AddOperationTransformer<OperationIdTransformer>());
 builder.Services.AddQuickerMessaging(builder.Configuration);
 builder.Services.AddQuickerIdempotency(builder.Configuration);
+builder.Services.AddQuickerRateLimiting(builder.Configuration);
 if (builder.Configuration.GetValue<bool>("Quicker:Worker:Embedded"))
 {
     // Single-node installs run the dispatcher, job slots and scheduler inside the API process (ADR-0010).
@@ -58,29 +60,30 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseQuickerUnitOfWork("/api");
 app.UseQuickerIdempotency("/api");
 
 app.MapOpenApi("/api/{documentName}/openapi.json");
 
 // Liveness: the process is up. Readiness: the database answers under the application role and the schema is migrated.
-app.MapGet("/health/live", static () => Results.Ok(new { status = "live" })).ExcludeFromDescription();
-app.MapGet("/health/ready", static async (NpgsqlDataSource dataSource, CancellationToken cancellationToken) =>
+app.MapGet("/health/live", static () => Results.Ok(new HealthStatus("live", null))).WithTags("Health").WithSummary("The process is up");
+app.MapGet("/health/ready", static async Task<Results<Ok<HealthStatus>, JsonHttpResult<HealthStatus>>> (NpgsqlDataSource dataSource, CancellationToken cancellationToken) =>
 {
     try
     {
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
         var migrations = await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM ops.schemaversions");
-        return Results.Ok(new { status = "ready", migrations });
+        return TypedResults.Ok(new HealthStatus("ready", migrations));
     }
     catch (Exception ex) when (ex is NpgsqlException or TimeoutException)
     {
-        return Results.Json(new { status = "unready", error = ex.GetType().Name }, statusCode: StatusCodes.Status503ServiceUnavailable);
+        return TypedResults.Json(new HealthStatus("unready", null, ex.GetType().Name), statusCode: StatusCodes.Status503ServiceUnavailable);
     }
-}).ExcludeFromDescription();
+}).WithTags("Health").WithSummary("The database answers under the application role and the schema is migrated").Produces<HealthStatus>(StatusCodes.Status503ServiceUnavailable);
 
 // Every /api/v1 endpoint runs inside one unit of work with the principal resolved (ADR-0009, ADR-0014).
-var api = app.MapGroup("/api/v1").AddEndpointFilter<UnitOfWorkFilter>();
+var api = app.MapGroup("/api/v1").AddEndpointFilter<UnitOfWorkFilter>().RequireQuickerRateLimit();
 api.MapIdentityEndpoints();
 api.MapAuditEndpoints();
 api.MapOrganizationEndpoints();

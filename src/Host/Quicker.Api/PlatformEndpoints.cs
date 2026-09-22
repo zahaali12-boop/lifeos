@@ -21,7 +21,7 @@ public static class PlatformEndpoints
         jobs.MapGet("/types", (JobAdmin admin) => Results.Ok(admin.JobTypes.OrderBy(static t => t, StringComparer.Ordinal)))
             .RequirePermission(PlatformPermissions.JobRead);
         jobs.MapGet("/{jobId:guid}", async (Guid jobId, CurrentPrincipal current, JobAdmin admin, CancellationToken ct) =>
-            await admin.GetAsync(jobId, current.Required.TenantId.Value, current.Required.IsPlatformOperator, ct) is { } job ? Results.Ok(job) : ApiProblems.From(Error.NotFound("job", jobId)))
+            ApiProblems.Found(await admin.GetAsync(jobId, current.Required.TenantId.Value, current.Required.IsPlatformOperator, ct), "job", jobId))
             .RequirePermission(PlatformPermissions.JobRead);
         jobs.MapPost("/{jobId:guid}/retry", async (Guid jobId, CurrentPrincipal current, JobAdmin admin, CancellationToken ct) =>
             await admin.RetryAsync(jobId, current.Required.TenantId.Value, current.Required.IsPlatformOperator, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("job.not_retryable", "Only failed or dead jobs can be retried.")))
@@ -35,7 +35,7 @@ public static class PlatformEndpoints
             Results.Ok(await scheduler.ListAsync(current.Required.TenantId.Value, allTenants == true && current.Required.IsPlatformOperator, ct)))
             .RequirePermission(PlatformPermissions.ScheduleRead);
         schedules.MapPut("/", async (SaveScheduleRequest request, CurrentPrincipal current, Scheduler scheduler, JobAdmin admin, CancellationToken ct) =>
-            ApiProblems.From(await scheduler.SaveAsync(current.Required.TenantId.Value, request, admin.JobTypes, ct), static s => Results.Ok(s)))
+            ApiProblems.Ok(await scheduler.SaveAsync(current.Required.TenantId.Value, request, admin.JobTypes, ct)))
             .RequirePermission(PlatformPermissions.ScheduleManage)
             .WithSummary("Create or replace a tenant schedule by code: cron (five fields), time zone, job type and payload");
         schedules.MapDelete("/{scheduleId:guid}", async (Guid scheduleId, CurrentPrincipal current, Scheduler scheduler, CancellationToken ct) =>
@@ -50,7 +50,7 @@ public static class PlatformEndpoints
         ops.MapPost("/outbox/{messageId:guid}/retry", async (Guid messageId, OutboxAdmin outbox, CancellationToken ct) =>
             await outbox.RetryAsync(messageId, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("outbox.not_dead", "Only dead-lettered messages can be retried.")));
         ops.MapPut("/schedules", async (SaveScheduleRequest request, Scheduler scheduler, JobAdmin admin, CancellationToken ct) =>
-            ApiProblems.From(await scheduler.SaveAsync(null, request, admin.JobTypes, ct), static s => Results.Ok(s)))
+            ApiProblems.Ok(await scheduler.SaveAsync(null, request, admin.JobTypes, ct)))
             .WithSummary("Create or replace a platform-wide schedule (no tenant)");
 
         return api;

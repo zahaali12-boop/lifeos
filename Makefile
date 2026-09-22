@@ -59,6 +59,10 @@ api: ## Run the API with hot reload against the local database
 web: ## Run the web app dev server
 	pnpm --filter @quicker/web dev
 
+api-contract: ## Rebuild the API (regenerates contracts/openapi-v1.json) and the typed web client
+	dotnet build src/Host/Quicker.Api/Quicker.Api.csproj -c Release
+	pnpm --filter @quicker/web generate:api
+
 clean: ## Remove build outputs
 	dotnet clean Quicker.sln >/dev/null
 	rm -rf apps/*/dist packages/*/dist

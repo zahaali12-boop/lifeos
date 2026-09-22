@@ -4,7 +4,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "coverage"] },
+  { ignores: ["dist", "coverage", "src/api/schema.d.ts"] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
@@ -19,7 +19,13 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "@typescript-eslint/no-unnecessary-condition": "error",
       "@typescript-eslint/consistent-type-imports": "error",
+      // The app talks to the API only through the generated client (src/api): no ad-hoc fetch calls.
+      "no-restricted-globals": ["error", { name: "fetch", message: "Use the typed client from src/api/client.ts." }],
     },
+  },
+  {
+    files: ["src/api/**/*.ts", "**/*.test.{ts,tsx}", "src/setupTests.ts"],
+    rules: { "no-restricted-globals": "off" },
   },
   {
     files: ["**/*.test.{ts,tsx}", "src/setupTests.ts"],

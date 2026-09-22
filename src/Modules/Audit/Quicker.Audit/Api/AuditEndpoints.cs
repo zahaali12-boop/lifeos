@@ -89,7 +89,7 @@ public static class AuditEndpoints
             .RequirePermission(AuditPermissions.ChainVerify)
             .WithSummary("Chain head, last anchor and last verification of this tenant");
 
-        audit.MapPost("/chain/verify", async (ChainVerifier verifier, CancellationToken ct) => Results.Ok(await verifier.VerifyTenantAsync(ct)))
+        audit.MapPost("/chain/verify", async (ChainVerifier verifier, CancellationToken ct) => TypedResults.Ok(await verifier.VerifyTenantAsync(ct)))
             .RequirePermission(AuditPermissions.ChainVerify)
             .WithSummary("Recompute the whole chain and compare it with the head and the newest anchor");
 
@@ -121,7 +121,7 @@ public static class AuditEndpoints
                 First(await anchoring.ListPlatformAnchorsAsync(1, ct)),
                 First(await verifier.ListPlatformVerificationsAsync(1, ct)))));
 
-        platform.MapPost("/chain/verify", async (ChainVerifier verifier, CancellationToken ct) => Results.Ok(await verifier.VerifyPlatformAsync(ct)));
+        platform.MapPost("/chain/verify", async (ChainVerifier verifier, CancellationToken ct) => TypedResults.Ok(await verifier.VerifyPlatformAsync(ct)));
 
         platform.MapPost("/chain/anchor", async (ChainAnchoring anchoring, CancellationToken ct) =>
         {
