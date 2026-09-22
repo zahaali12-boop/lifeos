@@ -32,7 +32,8 @@ public sealed class AccountService(
     IEmailSender email,
     AuthOptions options,
     IAuditSink audit,
-    IClock clock)
+    IClock clock,
+    IEnumerable<ITenantSetupStep> setupSteps)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -94,6 +95,11 @@ public sealed class AccountService(
         if (assigned.IsFailure)
         {
             throw new InvalidOperationException($"Owner role assignment failed during sign-up: {assigned.Error!.Code}");
+        }
+
+        foreach (var step in setupSteps)
+        {
+            await step.SetUpAsync(tenant.Id, request.Language, cancellationToken);
         }
 
         await provisioner.ActivateAsync(tenant.Id, cancellationToken);

@@ -8,7 +8,7 @@ The single place a new session reads first (after `CLAUDE.md`). Keep it current:
 
 **M1 Foundations: in progress** (see `docs/ROADMAP.md`). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
 
-Branch: `claude/quicker-erp-founding-arch-4cq18i` (all Phase 0 work). Default branch: `main`.
+Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.5), `claude/efficient-request-ajd9zy` (slice 1.6 onwards, built on top of it). Default branch: `main`.
 
 ## Done
 
@@ -32,16 +32,17 @@ Branch: `claude/quicker-erp-founding-arch-4cq18i` (all Phase 0 work). Default br
 | 1.3 Kernel | done | `Quicker.Kernel`: `Money`, `Currency`, `RoundingPolicy` (half-away/half-even, cash increments, largest-remainder allocation), `ExchangeRate`, `Quantity`/`UomConversion` (rational factors), typed ids (UUIDv7), `IClock`/`FakeClock`, `Result`/`Error` with `why`, `LocalizedText`, `AmountInWords` (EN + Arabic agreement rules), `TenantContext`. `Quicker.Analyzers`: QK0001 no floating point, QK0002 no ad-hoc rounding, QK0003 no ambient clock, applied to every production project. 48 tests incl. property tests. |
 | 1.4 Tenancy and identity | done | Modules `Quicker.Tenancy` (catalogue, security policy, provisioning) and `Quicker.Identity` (users, memberships, sessions, roles, permissions, scopes, field and document-type rules, SoD, API keys, SSO). Migration `V0002__identity.sql`. Built-in auth: Argon2id passwords with policy and optional HIBP check, lockout, tenant selection, TOTP + recovery codes, WebAuthn registration/assertion (Fido2), rotating refresh tokens with reuse detection, step-up, password reset, invitations, OIDC authorization-code flow with PKCE and JIT provisioning + group→role mapping. Request pipeline: unit of work per request (middleware) with commit-on-success filter and an explicit `CommitOnFailure` for security bookkeeping; principal resolution cached by permissions epoch; `RequirePermission` and `RequireRecentAuth` endpoint filters; problem details by `ErrorKind`. Tests: 19 API-level tests (sign-up, lockout, refresh reuse, MFA, step-up, reset, invitations, SoD, API keys, cross-tenant 404s, tenant selection, full OIDC flow against an in-process fake provider) plus row factories so the schema suite covers all 9 new tenant tables. |
 | 1.5 Audit log | done | Module `Quicker.Audit` and migration `V0003__audit.sql`: per-tenant hash chains in `app.aud_events` (monthly partitions, RLS, append-only; `seq`, `prev_hash` and `hash` assigned by a SECURITY DEFINER trigger under the tenant's head lock, canonical form rendered by `app.aud_canonical`), a platform chain in `control` for events recorded outside any tenant, `control.aud_anchors` and `control.aud_verifications`. EF `SaveChangesInterceptor` captures every insert/update/delete of entities annotated `HasAuditTrail` (Identity: user, membership, role, SoD rule, API key, SSO connection) with before/after/diff, redaction by annotation and by name; the sink buffers per unit of work and writes at commit; explicit events win over captured ones and inherit their diff; anonymous-then-tenant requests carry their events into the tenant. Verifier recomputes every link and checks head and anchor (`ok`/`empty`/`broken`/`truncated`/`anchor_mismatch`); file anchor store (hash-linked JSON lines); `AuditChainJobs` anchors and verifies every tenant. API: record timeline, explorer (keyset paging, filters), event detail, audited JSON-lines export, chain status/verify/anchor, operator-only platform chain. `IUnitOfWork.BeforeCommit` hook and `AddModuleDbContext` (interceptors) in the building blocks. Tests: 24 (row and anchor-file tampering, tail removal and head rewrite detected; every identity mutation produces an event with before/after; secrets absent from exports; platform chain operator-only; app role cannot alter events or heads; all-tenant jobs), and the isolation suite covers the two new tenant tables. |
-| 1.6–1.12 | next | in roadmap order |
+| 1.6 Organization | done | Module `Quicker.Organization` (+ `.Contracts`, `.TestSupport`, `.Tests`), migration `V0004__organization.sql` (17 tenant tables, `control.currencies`), seed `S0001__currencies.sql` (168 ISO 4217 currencies, EN/AR names). Companies (functional/reporting currency, time zone, costing, rounding and policy settings; functional currency immutable), branches with their auto-created `BRANCH` dimension value, company currencies (display decimals, cash rounding), typed settings per tenant and per company. Fiscal calendars with 12 or 13 periods, years opened explicitly or automatically for a new company, `FY2026/27` codes, per-company per-module period states (open / soft_closed / hard_closed / never_opened) with the reopen override (reason, recent auth, audited) and the `(company, date, module)` resolver. Rate types (system + `official`/`market`), effective-dated rates with correction reasons, resolution direct → inverse → cross through the functional currency, provider import (ECB daily/90-day XML, Open Exchange Rates latest/historical) that never overwrites manual rates and is audited. Dimensions (hierarchical, validity, company scope), dimension sets deduplicated by SHA-256 hash (race-free `ON CONFLICT`), units of measure with rational conversions resolved directly, inversely or through one intermediate unit. Business calendars (working days + holidays) with due-date and working-day arithmetic. Contracts for later modules: `ICompanyDirectory`, `IFiscalPeriodResolver`, `IExchangeRateResolver`, `IWorkingDayCalendar`, `IDimensionSets`, `IUomConversions`. `ITenantSetupStep` (Tenancy contracts) lets modules seed tenant defaults at sign-up; Organization seeds calendars, dimensions, rate types and units. Tests: 17 (July fiscal year with 13 periods and date resolution, period states and reopen audit, defaults at sign-up, branch → dimension value, company currencies and settings, direct/inverse/cross rates incl. the Iraq official/market case, corrections with reasons, ECB and OXR import against a local stub, due dates skipping Friday/Saturday and holidays, dimension sets, unit conversions, provider parsers) plus row factories so the isolation suite covers all 17 tables. |
+| 1.7–1.12 | next | in roadmap order |
 
 ## In progress
 
-- M1 slice 1.6 Organization (next up).
+- M1 slice 1.7 (next up).
 
 ## Next
 
-1. M1 slice 1.6: companies, branches, fiscal calendars, currencies and rate types, dimensions, units of measure (see `docs/ROADMAP.md`).
-2. M1 slices 1.7–1.12 in roadmap order.
+1. M1 slice 1.7 in roadmap order (see `docs/ROADMAP.md`); it adds the `gl_charts` and posting-profile foreign keys that `org_companies.chart_id` / `posting_profile_id` are waiting for.
+2. M1 slices 1.8–1.12 in roadmap order.
 
 ## Known gaps and interim pieces (explicit, per the working rules)
 
@@ -51,17 +52,30 @@ Branch: `claude/quicker-erp-founding-arch-4cq18i` (all Phase 0 work). Default br
 - **WebAuthn ceremonies are not covered by automated tests.** Registration/assertion options, storage and verification are implemented with Fido2NetLib, but no test generates a real authenticator attestation; a browser check is scheduled with the web shell in 1.10.
 - **Worker host and Compose service** arrive with the outbox in 1.8.
 - **Rate limiting, idempotency keys, cursor pagination and the filter language** are slice 1.9.
+- **Central Bank of Iraq rate adapter is not implemented.** The roadmap lists ECB, Open Exchange Rates and a CBI adapter; the first two ship (parsers covered by tests, import covered end to end against a local stub). The CBI page has no stable machine-readable feed I could verify from this environment, so the adapter is deferred rather than shipped untested; Iraq's official and market rates are entered manually or through a rate type an integration fills. Neither live feed has been called from this environment (no egress); the first production import should be watched.
+- **Scheduled rate import** (daily provider fetch) lands with the scheduler in 1.8; today import is an API call (`POST /api/v1/organization/rates/import`).
+- **Fiscal year closing** (`status = closed`, closing entry, reopening a year) belongs to the Closing module (ADR-0026 year-end); today years are `future` or `open`, and period states are the only lock.
+- **Company `chart_id` and `posting_profile_id`** are plain nullable columns until Accounting (1.7) creates the tables they reference.
+- **Organization has no UI yet** (the web shell is 1.10); every capability is exposed on `/api/v1/organization` with OpenAPI summaries.
 
 ## How to run what exists
 
 ```
 # prerequisites: .NET 10 SDK, Node 22 + pnpm, PostgreSQL 16+ (or Docker for `make up`)
 make migrate            # applies db/migrations and db/repeatable to the local database
-make test-dotnet        # 101 tests: kernel, schema contract, RLS isolation, append-only, migration replay, identity API, audit API and chain integrity
+make test-dotnet        # 118 tests: kernel, schema contract, RLS isolation, append-only, migration replay, identity API, audit API and chain integrity, organization API
 pnpm install && pnpm --filter @quicker/web test && pnpm --filter @quicker/tools check-diagrams
 make api                # http://localhost:8080/health/ready and /api/v1/openapi.json
 # sign up a workspace: POST /api/v1/auth/signup {tenantName, slug, ownerEmail, ownerName, password}
 # audit: GET /api/v1/audit/events, GET /api/v1/audit/records/{type}/{id}, POST /api/v1/audit/chain/verify, POST /api/v1/audit/chain/anchor
+# organization: POST /api/v1/organization/companies {code, legalName:{en,ar}, country, functionalCurrency, timeZone, fiscalCalendarId?}
+#   GET  /api/v1/organization/companies/{id}/periods/resolve?date=2026-09-22&module=GL
+#   PUT  /api/v1/organization/periods/{periodId}/states {companyId, modules:["GL"], state:"hard_closed"}; POST .../reopen {companyId, modules, reason}
+#   POST /api/v1/organization/rates {rateType:"spot", fromCurrency:"USD", toCurrency:"IQD", validFrom:"2026-09-01", rate:1310}
+#   GET  /api/v1/organization/rates/resolve?companyId=&from=EUR&to=IQD&date=2026-09-20  (direct | inverse | cross)
+#   POST /api/v1/organization/rates/import {provider:"ecb"|"openexchangerates"}
+#   GET  /api/v1/organization/companies/{id}/working-days?from=2026-09-24&days=1  (due date: Thursday + 1 → Sunday in Iraq)
+#   POST /api/v1/organization/dimension-sets {values:{COST_CENTER: valueId, PROJECT: valueId}}; GET /api/v1/organization/uom-conversions/convert?from=&to=&value=
 ```
 
 ## Open issues and decisions pending

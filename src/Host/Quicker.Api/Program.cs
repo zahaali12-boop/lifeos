@@ -8,6 +8,8 @@ using Quicker.Identity.Api;
 using Quicker.Kernel.Tenancy;
 using Quicker.Kernel.Time;
 using Quicker.Messaging;
+using Quicker.Organization;
+using Quicker.Organization.Api;
 using Quicker.Persistence;
 using Quicker.Tenancy;
 using Quicker.Web;
@@ -31,6 +33,7 @@ builder.Services.AddOpenApi("v1");
 builder.Services.AddTenancyModule();
 builder.Services.AddAuditModule(builder.Configuration);
 builder.Services.AddIdentityModule(builder.Configuration);
+builder.Services.AddOrganizationModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -61,6 +64,7 @@ app.MapGet("/health/ready", static async (NpgsqlDataSource dataSource, Cancellat
 var api = app.MapGroup("/api/v1").AddEndpointFilter<UnitOfWorkFilter>();
 api.MapIdentityEndpoints();
 api.MapAuditEndpoints();
+api.MapOrganizationEndpoints();
 
 app.Run();
 

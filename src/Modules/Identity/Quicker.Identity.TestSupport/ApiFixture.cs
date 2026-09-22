@@ -33,12 +33,14 @@ public sealed class ApiFixture : IAsyncDisposable
 
     public IServiceProvider Services => _factory!.Services;
 
-    public static async Task<ApiFixture> StartAsync()
+    /// <param name="configure">Extra host settings a module's tests need (provider URLs, feature options).</param>
+    public static async Task<ApiFixture> StartAsync(Action<IWebHostBuilder>? configure = null)
     {
         var fixture = new ApiFixture();
         fixture.Db = await TestDatabase.CreateAsync();
         fixture._factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            configure?.Invoke(builder);
             builder.UseEnvironment("Development");
             builder.UseSetting("Quicker:Db:AppConnection", fixture.Db.AppConnectionString);
             builder.UseSetting("Quicker:Db:OwnerConnection", fixture.Db.OwnerConnectionString);

@@ -44,6 +44,15 @@ public interface ITenantDirectory
 
 public sealed record ProvisionTenantRequest(string Slug, string Name, string DefaultLanguage, string Region = "me", string Tier = "shared");
 
+/// <summary>
+/// Module hook run once for every new tenant, inside the sign-up unit of work after the tenant session is switched,
+/// so modules seed their defaults (system dimensions, rate types, units, calendars) without Identity knowing them.
+/// </summary>
+public interface ITenantSetupStep
+{
+    Task SetUpAsync(TenantId tenantId, string defaultLanguage, CancellationToken cancellationToken);
+}
+
 public interface ITenantProvisioner
 {
     /// <summary>Creates the tenant row (status provisioning) inside the caller's unit of work; Identity then adds the owner.</summary>
