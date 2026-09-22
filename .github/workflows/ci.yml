@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  QUICKER_TEST_CONNECTION: Host=127.0.0.1;Port=5432;Database=postgres;Username=quicker_owner;Password=quicker
+
+jobs:
+  dotnet:
+    name: .NET build, analyzers, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quicker_owner
+          POSTGRES_PASSWORD: quicker
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U quicker_owner"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Prepare database roles
+        run: |
+          PGPASSWORD=quicker psql -h 127.0.0.1 -U quicker_owner -d postgres -v ON_ERROR_STOP=1 -c "
+            DO \$\$ BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='quicker_app') THEN
+                CREATE ROLE quicker_app LOGIN PASSWORD 'quicker' NOSUPERUSER NOBYPASSRLS;
+              END IF;
+            END \$\$;"
+
+      - name: Restore
+        run: dotnet restore Quicker.sln
+
+      - name: Format check
+        run: dotnet format Quicker.sln --verify-no-changes --no-restore
+
+      - name: Build (warnings as errors, analyzers)
+        run: dotnet build Quicker.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --solution Quicker.sln --no-build --configuration Release
+
+  web:
+    name: Web lint, type check, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
+      - run: pnpm -r build
+
+  docs:
+    name: Docs diagrams parse
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @quicker/tools check-diagrams docs

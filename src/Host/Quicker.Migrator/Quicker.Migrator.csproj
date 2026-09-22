@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>Runs versioned and repeatable SQL migrations and reference seeds (ADR-0003).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dbup-postgresql" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(RepoRoot)db/migrations/**/*.sql" LogicalName="migrations.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(RepoRoot)db/repeatable/**/*.sql" LogicalName="repeatable.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(RepoRoot)db/seed/**/*.sql" LogicalName="seed.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

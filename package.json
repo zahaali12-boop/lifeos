@@ -1,0 +1,12 @@
+{
+  "name": "quicker-monorepo",
+  "private": true,
+  "description": "Quicker ERP: web app, design system, API client and tooling",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check-diagrams": "pnpm --filter @quicker/tools check-diagrams docs"
+  }
+}

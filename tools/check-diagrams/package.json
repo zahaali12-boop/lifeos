@@ -1,0 +1,19 @@
+{
+  "name": "@quicker/tools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Repository tooling: Mermaid diagram validation for the docs",
+  "scripts": {
+    "check-diagrams": "node check-diagrams.mjs",
+    "lint": "echo skip",
+    "typecheck": "echo skip",
+    "test": "echo skip",
+    "build": "echo skip",
+    "format": "echo skip"
+  },
+  "dependencies": {
+    "jsdom": "^26.1.0",
+    "mermaid": "^11.9.0"
+  }
+}

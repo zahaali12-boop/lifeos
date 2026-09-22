@@ -23,14 +23,33 @@ Branch: `claude/quicker-erp-founding-arch-4cq18i` (all Phase 0 work). Default br
 | 2026-09-22 | `docs/ROADMAP.md`: M1–M10 as vertical slices with acceptance criteria and the hard scenarios each proves; launch gate; deferred list. |
 | 2026-09-22 | `docs/GLOSSARY.md`, `README.md`, `CLAUDE.md`. |
 
+### M1 slices
+
+| Slice | Status | Notes |
+|-------|--------|-------|
+| 1.1 Repository and toolchain | done | `Quicker.sln` with central package versions and analyzers, `Makefile`, `docker-compose.yml`, GitHub Actions CI (`.github/workflows/ci.yml`), devcontainer, pnpm workspace, `apps/web` bootstrap (Vite/React/TS, ESLint typed, Vitest), `tools/check-diagrams`, Dockerfiles for migrator/api/web. The worker host and its Compose service arrive with the outbox in 1.8. |
+| 1.2 Database foundation | done | `db/migrations/V0001__foundation.sql` (schemas, extensions, tenant catalogue, default privileges), `db/repeatable/R__0001_app_functions.sql` (RLS/append-only/updated_at procedures, contract views), `Quicker.Migrator` (DbUp: versioned + repeatable + seed, role bootstrap), `Quicker.Persistence` (data sources, unit of work with SET LOCAL tenant session, Dapper conventions), `Quicker.Testing` (database-per-test-class from a migrated template; `IsolationRegistry` forces a row factory per tenant table), tests: schema contract, RLS isolation, append-only, migration replay, no floating-point columns, composite tenant FKs. |
+| 1.3 Kernel | done | `Quicker.Kernel`: `Money`, `Currency`, `RoundingPolicy` (half-away/half-even, cash increments, largest-remainder allocation), `ExchangeRate`, `Quantity`/`UomConversion` (rational factors), typed ids (UUIDv7), `IClock`/`FakeClock`, `Result`/`Error` with `why`, `LocalizedText`, `AmountInWords` (EN + Arabic agreement rules), `TenantContext`. `Quicker.Analyzers`: QK0001 no floating point, QK0002 no ad-hoc rounding, QK0003 no ambient clock, applied to every production project. 48 tests incl. property tests. |
+| 1.4–1.12 | next | in roadmap order |
+
 ## In progress
 
-- M1 slice 1.1 Repository and toolchain: legacy Life OS app moved to `legacy/lifeos/` (Q2 default), ADRs marked accepted.
+- M1 slice 1.4 Tenancy and identity (next up).
 
 ## Next
 
-1. M1 slice 1.1: .NET solution, kernel, migrator, API host skeleton, web app skeleton, Compose, Makefile, CI.
-2. M1 slices 1.2–1.12 in roadmap order.
+1. M1 slice 1.4: control-plane users and memberships, built-in auth (Argon2id, TOTP, WebAuthn), OIDC federation, sessions, API keys, roles/permissions/scopes/field rules/document-type rules/SoD, effective permissions.
+2. M1 slices 1.5–1.12 in roadmap order.
+
+## How to run what exists
+
+```
+# prerequisites: .NET 10 SDK, Node 22 + pnpm, PostgreSQL 16+ (or Docker for `make up`)
+make migrate            # applies db/migrations and db/repeatable to the local database
+make test-dotnet        # 58 tests: kernel, schema contract, RLS isolation, append-only, migration replay
+pnpm install && pnpm --filter @quicker/web test && pnpm --filter @quicker/tools check-diagrams
+make api                # http://localhost:8080/health/ready and /api/v1/openapi.json
+```
 
 ## Open issues and decisions pending
 
