@@ -93,6 +93,9 @@ public sealed record PostJournalRequest(
 
 public sealed record ReverseRequest(string Reason, DateOnly? ReversalDate = null);
 
+/// <summary>The replacement of an entry (its lines as a posting request; the company is the original's) and why.</summary>
+public sealed record CorrectEntryRequest(string Reason, PostJournalRequest Replacement);
+
 public sealed record JournalLineSummary(
     Guid Id,
     int LineNo,

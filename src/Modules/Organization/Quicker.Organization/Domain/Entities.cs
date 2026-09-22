@@ -435,3 +435,27 @@ public sealed class Setting : ITenantEntity
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+/// <summary>Allow-posting-from/to dates of a company for everyone (role null) or for one role (ADR-0026).</summary>
+public sealed class PostingWindow : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? RoleId { get; set; }
+
+    public DateOnly? AllowFrom { get; set; }
+
+    public DateOnly? AllowTo { get; set; }
+
+    public string? Reason { get; set; }
+
+    public Guid? ChangedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}

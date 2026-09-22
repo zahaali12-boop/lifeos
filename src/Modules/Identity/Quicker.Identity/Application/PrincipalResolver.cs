@@ -26,7 +26,7 @@ namespace Quicker.Identity.Application;
 /// </summary>
 public sealed class PrincipalResolver(IdentityDbContext db, RoleService roles, ITenantDirectory tenants, IMemoryCache cache, IClock clock) : IPrincipalResolver, IStepUpPolicy
 {
-    private sealed record CachedGrants(IReadOnlyList<Grant> Grants, IReadOnlyList<FieldRule> FieldRules, IReadOnlyList<DocumentTypeRule> DocumentTypeRules);
+    private sealed record CachedGrants(IReadOnlyList<Grant> Grants, IReadOnlyList<FieldRule> FieldRules, IReadOnlyList<DocumentTypeRule> DocumentTypeRules, IReadOnlyList<Guid> RoleIds);
 
     public async Task<Principal?> ResolveAsync(HttpContext httpContext, CancellationToken cancellationToken)
     {
@@ -90,9 +90,9 @@ public sealed class PrincipalResolver(IdentityDbContext db, RoleService roles, I
         var cached = await cache.GetOrCreateAsync(cacheKey, async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
-            var (grants, fieldRules, documentRules) = await roles.EffectiveAsync(membershipId, cancellationToken);
-            return new CachedGrants(grants, fieldRules, documentRules);
-        }) ?? new CachedGrants([], [], []);
+            var (grants, fieldRules, documentRules, roleIds) = await roles.EffectiveAsync(membershipId, cancellationToken);
+            return new CachedGrants(grants, fieldRules, documentRules, roleIds);
+        }) ?? new CachedGrants([], [], [], []);
 
         var grants = cached.Grants;
         if (kind == "api_key")
@@ -113,7 +113,7 @@ public sealed class PrincipalResolver(IdentityDbContext db, RoleService roles, I
             membership.User.Email, membership.User.DisplayName, membership.User.Locale,
             isOwner, membership.User.IsPlatformOperator,
             kind == "api_key" ? TenantContext.ActorApiKey : TenantContext.ActorUser,
-            grants, cached.FieldRules, cached.DocumentTypeRules, authTime, amr);
+            grants, cached.FieldRules, cached.DocumentTypeRules, authTime, amr, cached.RoleIds);
     }
 
     public async Task<bool> IsRecentAsync(Principal principal, CancellationToken cancellationToken)

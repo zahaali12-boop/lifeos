@@ -140,6 +140,24 @@ public interface ICompanySettings
     Task<System.Text.Json.JsonElement?> GetAsync(Guid? companyId, string key, CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// A company's "allow posting from/to" dates (ADR-0026): for everyone (<see cref="RoleId"/> null) or for one role.
+/// Either bound may be open.
+/// </summary>
+public sealed record PostingWindowInfo(Guid CompanyId, Guid? RoleId, DateOnly? AllowFrom, DateOnly? AllowTo)
+{
+    public bool Allows(DateOnly date) => (AllowFrom is null || date >= AllowFrom) && (AllowTo is null || date <= AllowTo);
+}
+
+public interface IPostingWindows
+{
+    /// <summary>
+    /// The window that applies to an actor holding the roles: the widest of the role windows when any role has one,
+    /// else the company's window for everyone, else null (no restriction beyond the period states).
+    /// </summary>
+    Task<PostingWindowInfo?> EffectiveAsync(CompanyId companyId, IReadOnlyCollection<Guid> roleIds, CancellationToken cancellationToken = default);
+}
+
 public sealed record DimensionInfo(Guid Id, string Code, LocalizedText Name, bool IsActive);
 
 public sealed record DimensionValueInfo(Guid Id, Guid DimensionId, string Code, LocalizedText Name, bool IsActive);

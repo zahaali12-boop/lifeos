@@ -21,6 +21,8 @@ Posted records are immutable; posting into a closed period is blocked and correc
 
 Additional company-level "allow posting from/to" dates restrict backdating for specific roles.
 
+*Implementation note (M2.4):* windows live in `org_posting_windows`, one for everyone and any number per role; a person is held to the widest of their roles' windows, else the company's; system actors are exempt. The engine refuses with `posting.outside_window` after the period state check. Corrections are `IPostingService.CorrectAsync` (reversal plus replacement in one transaction, linked `reverses` and `corrects`) and, for manual journals, a correction draft that runs it when posted (ASSUMPTIONS A-091).
+
 ### Blocking and correcting
 
 * The posting engine resolves the fiscal period for `(company, posting_date, module)` and refuses if the state forbids the actor; the error carries the period, its state and who can reopen it.

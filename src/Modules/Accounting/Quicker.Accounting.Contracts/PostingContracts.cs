@@ -120,7 +120,16 @@ public interface IPostingService
     /// for the actor, otherwise on the first day of the first open period, and links both entries (ADR-0026).
     /// </summary>
     Task<Result<PostingResult>> ReverseAsync(Guid entryId, DateOnly? reversalDate, string reason, bool automatic = false, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The correction policy (ADR-0026, scenario 7): reverses the entry into the first open period on or after its
+    /// date and posts the replacement there (or on the replacement's own later date), linking the replacement to the
+    /// original as its correction. The replacement posts in the original's company.
+    /// </summary>
+    Task<Result<CorrectionResult>> CorrectAsync(Guid entryId, PostingRequest replacement, string reason, CancellationToken cancellationToken = default);
 }
+
+public sealed record CorrectionResult(PostingResult Reversal, PostingResult Replacement);
 
 public sealed record JournalEntryPosted(
     Guid AggregateId,

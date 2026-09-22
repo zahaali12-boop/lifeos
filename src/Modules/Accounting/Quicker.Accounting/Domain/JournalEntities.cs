@@ -65,6 +65,12 @@ public sealed class ManualJournal : ITenantEntity
 
     public Guid? JournalEntryId { get; set; }
 
+    public Guid? CorrectsJournalId { get; set; }
+
+    public Guid? CorrectedByJournalId { get; set; }
+
+    public string? CorrectionReason { get; set; }
+
     public string CustomFields { get; set; } = "{}";
 
     public Guid? SubmittedBy { get; set; }

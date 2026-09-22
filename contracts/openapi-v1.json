@@ -2548,6 +2548,87 @@
         }
       }
     },
+    "/api/v1/organization/companies/{companyId}/posting-windows": {
+      "get": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "The company's allow-posting-from/to windows: one for everyone (roleId null) and any per role",
+        "operationId": "getOrganizationCompaniesByCompanyIdPostingWindows",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostingWindowSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Replaces the windows; the posting engine refuses a posting date outside the actor's effective window (the widest of their roles' windows, else the company's)",
+        "operationId": "putOrganizationCompaniesByCompanyIdPostingWindows",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PostingWindowRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PostingWindowSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/organization/companies/{companyId}/working-days": {
       "get": {
         "tags": [
@@ -7442,6 +7523,48 @@
         }
       }
     },
+    "/api/v1/accounting/journal-entries/{entryId}/correct": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Reverses the entry into the first open period and posts the replacement there (or on its own later date); the replacement is linked to the original as its correction",
+        "operationId": "postAccountingJournalEntriesByEntryIdCorrect",
+        "parameters": [
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectEntryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/accounting/companies/{companyId}/journals": {
       "get": {
         "tags": [
@@ -7986,6 +8109,48 @@
         "responses": {
           "200": {
             "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualJournalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/journals/{journalId}/correct": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "A correction draft of a posted journal: its lines copied, dated in the first open period on or after the original; posting it reverses the original there and posts the replacement, both linked (ADR-0026)",
+        "operationId": "postAccountingJournalsByJournalIdCorrect",
+        "parameters": [
+          {
+            "name": "journalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectJournalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
@@ -10088,6 +10253,48 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "CorrectEntryRequest": {
+        "required": [
+          "reason",
+          "replacement"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "replacement": {
+            "$ref": "#/components/schemas/PostJournalRequest"
+          }
+        },
+        "description": "The replacement of an entry (its lines as a posting request; the company is the original's) and why."
+      },
+      "CorrectionResult": {
+        "required": [
+          "reversal",
+          "replacement"
+        ],
+        "type": "object",
+        "properties": {
+          "reversal": {
+            "$ref": "#/components/schemas/PostingResult"
+          },
+          "replacement": {
+            "$ref": "#/components/schemas/PostingResult"
+          }
+        }
+      },
+      "CorrectJournalRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
           }
         }
       },
@@ -12525,6 +12732,26 @@
             "items": {
               "$ref": "#/components/schemas/JournalLineSummaryView"
             }
+          },
+          "correctsJournalId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "correctedByJournalId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "correctionReason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -13753,6 +13980,105 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "PostingWindowRequest": {
+        "required": [
+          "roleId",
+          "allowFrom",
+          "allowTo"
+        ],
+        "type": "object",
+        "properties": {
+          "roleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "allowFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "allowTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One allow-posting window: for everyone when RoleId is null, else for that role; at least one bound."
+      },
+      "PostingWindowSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "roleId",
+          "allowFrom",
+          "allowTo",
+          "reason",
+          "changedBy",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "allowFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "allowTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "changedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

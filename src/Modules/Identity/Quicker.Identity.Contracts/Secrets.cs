@@ -19,3 +19,11 @@ public interface IMemberDirectory
 
     Task<IReadOnlyList<MemberInfo>> ListActiveAsync(CancellationToken cancellationToken = default);
 }
+
+/// <summary>A role of the current tenant as other modules reference it (posting windows, approval routes).</summary>
+public sealed record RoleInfo(Guid Id, string Code, bool IsActive);
+
+public interface IRoleDirectory
+{
+    Task<RoleInfo?> FindRoleAsync(Guid roleId, CancellationToken cancellationToken = default);
+}

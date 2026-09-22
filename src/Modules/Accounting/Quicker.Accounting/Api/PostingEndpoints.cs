@@ -81,6 +81,10 @@ public static class PostingEndpoints
             ApiProblems.Created(await service.ReverseAsync(entryId, request.ReversalDate, request.Reason, cancellationToken: ct), static r => $"/api/v1/accounting/journal-entries/{r.EntryId}"))
             .RequirePermission(AccountingPermissions.JournalReverse)
             .WithSummary("The mirror entry on the original date when its period is open, else on the first open period; both entries are linked");
+        entries.MapPost("/{entryId:guid}/correct", async (Guid entryId, CorrectEntryRequest request, IPostingService service, CancellationToken ct) =>
+            ApiProblems.Created(await service.CorrectAsync(entryId, ToRequest(request.Replacement), request.Reason, ct), static r => $"/api/v1/accounting/journal-entries/{r.Replacement.EntryId}"))
+            .RequirePermission(AccountingPermissions.JournalReverse)
+            .WithSummary("Reverses the entry into the first open period and posts the replacement there (or on its own later date); the replacement is linked to the original as its correction");
 
         return accounting;
     }

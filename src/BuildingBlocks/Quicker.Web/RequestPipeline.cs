@@ -141,8 +141,11 @@ public sealed class UnitOfWorkFilter(IUnitOfWorkAccessor accessor) : IEndpointFi
         return result;
     }
 
+    // A typed union (Results<Ok<T>, ProblemHttpResult>) carries no status itself: look at the result it wraps,
+    // otherwise a refused request would commit what the service wrote before it refused.
     private static bool IsSuccess(object? result) => result switch
     {
+        INestedHttpResult nested => IsSuccess(nested.Result),
         IStatusCodeHttpResult { StatusCode: { } status } => status < 400,
         _ => true,
     };

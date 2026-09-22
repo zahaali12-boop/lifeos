@@ -101,6 +101,11 @@ public sealed record PeriodStateSummary(Guid PeriodId, Guid CompanyId, string Mo
 
 public sealed record PeriodResolution(Guid PeriodId, Guid FiscalYearId, string FiscalYearCode, int Number, DateOnly StartsOn, DateOnly EndsOn, string YearStatus, string Module, string State);
 
+/// <summary>One allow-posting window: for everyone when <paramref name="RoleId"/> is null, else for that role; at least one bound.</summary>
+public sealed record PostingWindowRequest(Guid? RoleId, DateOnly? AllowFrom, DateOnly? AllowTo, string? Reason = null);
+
+public sealed record PostingWindowSummary(Guid Id, Guid CompanyId, Guid? RoleId, DateOnly? AllowFrom, DateOnly? AllowTo, string? Reason, Guid? ChangedBy, DateTimeOffset UpdatedAt);
+
 // ------------------------------------------------------------------ currencies and rates
 
 public sealed record CurrencySummary(string Code, string NumericCode, int MinorUnits, string Symbol, IReadOnlyDictionary<string, string> Name, bool IsActive);

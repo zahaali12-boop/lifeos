@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Quicker.Audit.Contracts;
+using Quicker.Identity.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
@@ -11,7 +12,7 @@ using Quicker.Persistence;
 namespace Quicker.Organization.Application;
 
 /// <summary>Fiscal calendars, years with 12 or 13 periods, and per-company per-module period states (ADR-0011, ADR-0026).</summary>
-public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, IAuditSink audit, IClock clock) : IFiscalPeriodResolver
+public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, IRoleDirectory roles, IAuditSink audit, IClock clock) : IFiscalPeriodResolver, IPostingWindows
 {
     private static readonly string[] SettableStates = [PeriodStates.Open, PeriodStates.SoftClosed, PeriodStates.HardClosed];
 
@@ -315,6 +316,98 @@ public sealed class FiscalCalendarService(OrganizationDbContext db, IUnitOfWorkA
         "closed" => PeriodStates.HardClosed,
         _ => PeriodStates.NeverOpened,
     };
+
+    // ------------------------------------------------------------------ posting windows (ADR-0026)
+
+    public async Task<Result<IReadOnlyList<PostingWindowSummary>>> ListWindowsAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        if (!await db.Companies.AnyAsync(c => c.Id == companyId, cancellationToken))
+        {
+            return Error.NotFound("company", companyId);
+        }
+
+        var rows = await db.PostingWindows.Where(w => w.CompanyId == companyId).OrderBy(static w => w.RoleId == null ? 0 : 1).ThenBy(static w => w.CreatedAt).ToListAsync(cancellationToken);
+        return rows.Select(MapWindow).ToList();
+    }
+
+    /// <summary>Replaces the company's windows: at most one for everyone and one per role, each with at least one bound.</summary>
+    public async Task<Result<IReadOnlyList<PostingWindowSummary>>> ReplaceWindowsAsync(Guid companyId, IReadOnlyList<PostingWindowRequest> requests, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(requests);
+        if (!await db.Companies.AnyAsync(c => c.Id == companyId, cancellationToken))
+        {
+            return Error.NotFound("company", companyId);
+        }
+
+        var seen = new HashSet<Guid?>();
+        for (var i = 0; i < requests.Count; i++)
+        {
+            var request = requests[i];
+            if (request.AllowFrom is null && request.AllowTo is null)
+            {
+                return Error.Validation("posting_window.bounds_required", $"Window {i + 1}: give an allow-from date, an allow-to date or both.").WithWhy(("window", i + 1));
+            }
+
+            if (request.AllowFrom is { } from && request.AllowTo is { } to && from > to)
+            {
+                return Error.Validation("posting_window.bounds_inverted", $"Window {i + 1}: allow-from {from:yyyy-MM-dd} is after allow-to {to:yyyy-MM-dd}.").WithWhy(("window", i + 1), ("allowFrom", from), ("allowTo", to));
+            }
+
+            if (!seen.Add(request.RoleId))
+            {
+                return Error.Validation("posting_window.duplicate", $"Window {i + 1}: {(request.RoleId is null ? "everyone" : "the role")} already has a window in this request.").WithWhy(("window", i + 1), ("roleId", request.RoleId));
+            }
+
+            if (request.RoleId is { } roleId && await roles.FindRoleAsync(roleId, cancellationToken) is null)
+            {
+                return Error.NotFound("role", roleId).WithWhy(("window", i + 1));
+            }
+        }
+
+        var existing = await db.PostingWindows.Where(w => w.CompanyId == companyId).ToListAsync(cancellationToken);
+        var before = existing.Select(MapWindow).ToList();
+        db.PostingWindows.RemoveRange(existing);
+        var now = clock.UtcNow;
+        foreach (var request in requests)
+        {
+            db.PostingWindows.Add(new PostingWindow
+            {
+                Id = Guid.CreateVersion7(),
+                CompanyId = companyId,
+                RoleId = request.RoleId,
+                AllowFrom = request.AllowFrom,
+                AllowTo = request.AllowTo,
+                Reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim(),
+                ChangedBy = ActorUserId,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        var after = await ListWindowsAsync(companyId, cancellationToken);
+        await audit.RecordAsync(new AuditEntry("company", companyId, "posting windows", AuditActions.Updated, Before: new { windows = before }, After: new { windows = after.Value }, CompanyId: companyId), cancellationToken);
+        return after;
+    }
+
+    public async Task<PostingWindowInfo?> EffectiveAsync(CompanyId companyId, IReadOnlyCollection<Guid> roleIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(roleIds);
+        var rows = await db.PostingWindows.AsNoTracking().Where(w => w.CompanyId == companyId.Value && (w.RoleId == null || roleIds.Contains(w.RoleId.Value))).ToListAsync(cancellationToken);
+        var byRole = rows.Where(static w => w.RoleId != null).ToList();
+        if (byRole.Count > 0)
+        {
+            // The widest of the actor's role windows: an open bound on any role opens that side.
+            var from = byRole.Exists(static w => w.AllowFrom == null) ? null : byRole.Min(static w => w.AllowFrom);
+            var to = byRole.Exists(static w => w.AllowTo == null) ? null : byRole.Max(static w => w.AllowTo);
+            return new PostingWindowInfo(companyId.Value, byRole.Count == 1 ? byRole[0].RoleId : null, from, to);
+        }
+
+        var everyone = rows.Find(static w => w.RoleId == null);
+        return everyone is null ? null : new PostingWindowInfo(companyId.Value, null, everyone.AllowFrom, everyone.AllowTo);
+    }
+
+    private static PostingWindowSummary MapWindow(PostingWindow w) => new(w.Id, w.CompanyId, w.RoleId, w.AllowFrom, w.AllowTo, w.Reason, w.ChangedBy, w.UpdatedAt);
 
     // ------------------------------------------------------------------ resolver (contract)
 

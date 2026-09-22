@@ -13,7 +13,7 @@ using Quicker.Tenancy.Contracts;
 namespace Quicker.Identity.Application;
 
 /// <summary>Roles, permission grants, field and document-type rules, assignments with scopes, members, SoD checks.</summary>
-public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOfWork, ITenantDirectory tenants, IAuditSink audit, IClock clock)
+public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOfWork, ITenantDirectory tenants, IAuditSink audit, IClock clock) : IRoleDirectory
 {
     private Guid TenantId => unitOfWork.Current.Context.TenantId.Value;
 
@@ -285,7 +285,7 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
 
     // ------------------------------------------------------------------ effective grants
 
-    public async Task<(IReadOnlyList<Grant> Grants, IReadOnlyList<FieldRule> FieldRules, IReadOnlyList<DocumentTypeRule> DocumentTypeRules)> EffectiveAsync(Guid membershipId, CancellationToken cancellationToken)
+    public async Task<(IReadOnlyList<Grant> Grants, IReadOnlyList<FieldRule> FieldRules, IReadOnlyList<DocumentTypeRule> DocumentTypeRules, IReadOnlyList<Guid> RoleIds)> EffectiveAsync(Guid membershipId, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         var assignments = await db.Assignments
@@ -299,8 +299,14 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
         var grants = new List<Grant>();
         var fieldRules = new List<FieldRule>();
         var documentRules = new List<DocumentTypeRule>();
+        var roleIds = new List<Guid>();
         foreach (var assignment in assignments.Where(a => a.IsValidOn(today)))
         {
+            if (!roleIds.Contains(assignment.RoleId))
+            {
+                roleIds.Add(assignment.RoleId);
+            }
+
             var scopes = new RecordScopes(
                 assignment.Scopes.Where(static s => s.ScopeType == "company").Select(static s => s.ScopeId).ToHashSet(),
                 assignment.Scopes.Where(static s => s.ScopeType == "branch").Select(static s => s.ScopeId).ToHashSet(),
@@ -310,7 +316,13 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
             documentRules.AddRange(assignment.Role.DocumentTypeRules.Select(static d => new DocumentTypeRule(d.DocumentType, d.Action, d.Allowed)));
         }
 
-        return (grants, fieldRules, documentRules);
+        return (grants, fieldRules, documentRules, roleIds);
+    }
+
+    public async Task<RoleInfo?> FindRoleAsync(Guid roleId, CancellationToken cancellationToken = default)
+    {
+        var role = await db.Roles.AsNoTracking().SingleOrDefaultAsync(r => r.Id == roleId, cancellationToken);
+        return role is null ? null : new RoleInfo(role.Id, role.Code, role.IsActive);
     }
 
     private async Task<IReadOnlyList<Grant>> GrantsOfMembershipAsync(Guid membershipId, CancellationToken cancellationToken) => (await EffectiveAsync(membershipId, cancellationToken)).Grants;

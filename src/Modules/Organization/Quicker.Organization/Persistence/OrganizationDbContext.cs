@@ -20,6 +20,8 @@ public sealed class OrganizationDbContext(DbContextOptions<OrganizationDbContext
 
     public DbSet<PeriodModuleState> PeriodStates => Set<PeriodModuleState>();
 
+    public DbSet<PostingWindow> PostingWindows => Set<PostingWindow>();
+
     public DbSet<BusinessCalendar> BusinessCalendars => Set<BusinessCalendar>();
 
     public DbSet<Holiday> Holidays => Set<Holiday>();
@@ -106,6 +108,13 @@ public sealed class OrganizationDbContext(DbContextOptions<OrganizationDbContext
             b.HasKey(static s => new { s.TenantId, s.PeriodId, s.CompanyId, s.Module });
             b.HasOne<FiscalPeriod>().WithMany().HasForeignKey(static s => new { s.TenantId, s.PeriodId });
             b.HasOne<Company>().WithMany().HasForeignKey(static s => new { s.TenantId, s.CompanyId });
+        });
+
+        modelBuilder.Entity<PostingWindow>(b =>
+        {
+            b.ToTable("org_posting_windows", "app");
+            b.HasKey(static w => new { w.TenantId, w.Id });
+            b.HasOne<Company>().WithMany().HasForeignKey(static w => new { w.TenantId, w.CompanyId });
         });
 
         modelBuilder.Entity<BusinessCalendar>(b =>

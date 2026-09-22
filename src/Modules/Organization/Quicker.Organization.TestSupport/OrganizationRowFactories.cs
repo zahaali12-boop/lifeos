@@ -53,6 +53,13 @@ public static class OrganizationRowFactories
             await c.ExecuteAsync("INSERT INTO app.org_period_module_states (tenant_id, period_id, company_id, module, state) VALUES (@t, @period, @company, 'GL', 'open')", new { t, period, company }, tx);
             return new RowRef("app.org_period_module_states", $"period_id = '{period}'");
         });
+        IsolationRegistry.Register("app.org_posting_windows", static async (c, tx, t) =>
+        {
+            var company = await CompanyAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.org_posting_windows (tenant_id, id, company_id, allow_from) VALUES (@t, @id, @company, '2026-01-01')", new { t, id, company }, tx);
+            return Row("app.org_posting_windows", id);
+        });
         IsolationRegistry.Register("app.org_company_currencies", static async (c, tx, t) =>
         {
             var company = await CompanyAsync(c, tx, t);

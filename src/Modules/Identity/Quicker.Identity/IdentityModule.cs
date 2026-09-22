@@ -64,6 +64,7 @@ public static class IdentityModule
         services.AddScoped<AccountService>();
         services.AddScoped<WebAuthnService>();
         services.AddScoped<RoleService>();
+        services.AddScoped<Quicker.Identity.Contracts.IRoleDirectory>(static sp => sp.GetRequiredService<RoleService>());
         services.AddScoped<ApiKeyService>();
         services.AddScoped<SsoService>();
         services.AddScoped<PrincipalResolver>();

@@ -77,9 +77,14 @@ public sealed record ManualJournalSummary(
     Guid? PostedBy,
     DateTimeOffset? PostedAt,
     DateTimeOffset UpdatedAt,
-    IReadOnlyList<JournalLineSummaryView>? Lines = null);
+    IReadOnlyList<JournalLineSummaryView>? Lines = null,
+    Guid? CorrectsJournalId = null,
+    Guid? CorrectedByJournalId = null,
+    string? CorrectionReason = null);
 
 public sealed record RejectJournalRequest(string Reason);
+
+public sealed record CorrectJournalRequest(string Reason);
 
 public sealed record JournalImportRequest(IReadOnlyList<SaveJournalRequest> Journals);
 

@@ -26,6 +26,7 @@ namespace Quicker.Accounting.Application;
 public sealed class ManualJournalService(
     AccountingDbContext db,
     ICompanyDirectory companies,
+    IFiscalPeriodResolver periods,
     IPostingService posting,
     INumberAllocator numbering,
     ICompanySettings settings,
@@ -426,23 +427,143 @@ public sealed class ManualJournalService(
             number = allocated.Value.Text;
         }
 
-        var posted = await posting.PostAsync(new PostingRequest(company.Id, "accounting", EntityType, journal.Id, journal.PostingDate, journal.Currency, lines, number, journal.DocumentDate,
+        var request = new PostingRequest(company.Id, "accounting", EntityType, journal.Id, journal.PostingDate, journal.Currency, lines, number, journal.DocumentDate,
             journal.Description, journal.BranchId is { } branch ? new BranchId(branch) : null, journal.RateType, journal.RateOverride, journal.RateOverrideReason, "manual_journal:" + journal.Id.ToString("N"),
-            IsManual: true, IsOpeningEntry: journal.Kind == JournalKinds.Opening, AutoReverseOn: journal.AutoReverse ? journal.AutoReverseOn : null), cancellationToken);
-        if (posted.IsFailure)
+            IsManual: true, IsOpeningEntry: journal.Kind == JournalKinds.Opening, AutoReverseOn: journal.AutoReverse ? journal.AutoReverseOn : null);
+        var now = clock.UtcNow;
+        PostingResult entry;
+        if (journal.CorrectsJournalId is { } correctsId)
         {
-            return posted.Error!;
+            // A correction: the original is reversed into the first open period and the replacement posted there (ADR-0026).
+            var original = await db.Set<ManualJournal>().SingleAsync(j => j.Id == correctsId, cancellationToken);
+            if (original.CorrectedByJournalId is not null || original.JournalEntryId is null)
+            {
+                return Error.Conflict("journal.already_corrected", $"Journal {Number(original)} was already corrected.").WithWhy(("correctedByJournalId", original.CorrectedByJournalId));
+            }
+
+            var corrected = await posting.CorrectAsync(original.JournalEntryId.Value, request, journal.CorrectionReason ?? "Correction", cancellationToken);
+            if (corrected.IsFailure)
+            {
+                return corrected.Error!;
+            }
+
+            entry = corrected.Value.Replacement;
+            journal.PostingDate = entry.PostingDate;
+            original.CorrectedByJournalId = journal.Id;
+            original.UpdatedAt = now;
+            await audit.RecordAsync(new AuditEntry(EntityType, original.Id, Number(original), "corrected", After: new { correctedByJournalId = journal.Id, reversalEntryId = corrected.Value.Reversal.EntryId, replacementEntryId = entry.EntryId, reason = journal.CorrectionReason }), cancellationToken);
+        }
+        else
+        {
+            var posted = await posting.PostAsync(request, cancellationToken);
+            if (posted.IsFailure)
+            {
+                return posted.Error!;
+            }
+
+            entry = posted.Value;
         }
 
-        var now = clock.UtcNow;
         journal.Number = number;
-        journal.JournalEntryId = posted.Value.EntryId;
+        journal.JournalEntryId = entry.EntryId;
         journal.Status = JournalStatuses.Posted;
         journal.PostedBy = principal.Principal?.UserId.Value;
         journal.PostedAt = now;
         journal.UpdatedAt = now;
         await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry(EntityType, journal.Id, number, AuditActions.Posted, After: new { entryId = posted.Value.EntryId, entryNumber = posted.Value.Number, journal.PostingDate }), cancellationToken);
+        await audit.RecordAsync(new AuditEntry(EntityType, journal.Id, number, AuditActions.Posted, After: new { entryId = entry.EntryId, entryNumber = entry.Number, journal.PostingDate, correctsJournalId = journal.CorrectsJournalId }), cancellationToken);
+        return (await GetAsync(journal.Id, cancellationToken))!;
+    }
+
+    /// <summary>
+    /// A correction draft for a posted journal (ADR-0026, scenario 7): its lines copied, dated in the first open period on or
+    /// after the original date. Posting the draft reverses the original there and posts the replacement, both journals linked.
+    /// </summary>
+    public async Task<Result<ManualJournalSummary>> CorrectAsync(Guid journalId, string reason, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return Error.Validation("journal.reason_required", "A correction needs a reason.");
+        }
+
+        var original = await LoadAsync(journalId, cancellationToken);
+        if (original is null)
+        {
+            return Error.NotFound(EntityType, journalId);
+        }
+
+        if (original.Status != JournalStatuses.Posted || original.JournalEntryId is null)
+        {
+            return Error.Conflict("journal.not_posted", "Only a posted journal is corrected; a draft is edited.").WithWhy(("status", original.Status));
+        }
+
+        if (original.CorrectedByJournalId is { } by)
+        {
+            return Error.Conflict("journal.already_corrected", $"Journal {Number(original)} was already corrected.").WithWhy(("correctedByJournalId", by));
+        }
+
+        if (await db.Set<EntryLink>().AnyAsync(l => l.ToEntryId == original.JournalEntryId && l.Relation == EntryRelations.Reverses, cancellationToken))
+        {
+            return Error.Conflict("journal.already_reversed", $"The entry of journal {Number(original)} was already reversed; post a new journal instead.");
+        }
+
+        var company = (await companies.FindAsync(new CompanyId(original.CompanyId), cancellationToken))!;
+        var open = await periods.FirstOpenPeriodAsync(company.Id, original.PostingDate, PostingModules.GeneralLedger, cancellationToken);
+        if (open.IsFailure)
+        {
+            return open.Error!;
+        }
+
+        var date = open.Value.StartsOn > original.PostingDate ? open.Value.StartsOn : original.PostingDate;
+        var keepsReversal = original.AutoReverse && original.AutoReverseOn > date;
+        var now = clock.UtcNow;
+        var trimmed = reason.Trim();
+        var journal = new ManualJournal
+        {
+            Id = Guid.CreateVersion7(),
+            CompanyId = original.CompanyId,
+            Kind = original.Kind,
+            PostingDate = date,
+            DocumentDate = original.DocumentDate,
+            Currency = original.Currency,
+            RateType = original.RateType,
+            RateOverride = original.RateOverride,
+            RateOverrideReason = original.RateOverrideReason,
+            BranchId = original.BranchId,
+            Description = LocalizedText.Bilingual($"Correction of {Number(original)}: {trimmed}", $"تصحيح القيد {Number(original)}: {trimmed}"),
+            Reference = original.Reference,
+            AutoReverse = keepsReversal,
+            AutoReverseOn = keepsReversal ? original.AutoReverseOn : null,
+            CustomFields = original.CustomFields,
+            CorrectsJournalId = original.Id,
+            CorrectionReason = trimmed,
+            CreatedBy = principal.Principal?.UserId.Value,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        foreach (var line in original.Lines.OrderBy(static l => l.LineNo))
+        {
+            journal.Lines.Add(new ManualJournalLine
+            {
+                Id = Guid.CreateVersion7(),
+                JournalId = journal.Id,
+                LineNo = line.LineNo,
+                AccountId = line.AccountId,
+                Debit = line.Debit,
+                Credit = line.Credit,
+                Dimensions = new Dictionary<string, Guid>(line.Dimensions, StringComparer.Ordinal),
+                PartnerId = line.PartnerId,
+                SubledgerType = line.SubledgerType,
+                SubledgerRef = line.SubledgerRef,
+                TaxCodeId = line.TaxCodeId,
+                Description = new LocalizedText(line.Description.Values),
+                DueDate = line.DueDate,
+            });
+        }
+
+        db.Set<ManualJournal>().Add(journal);
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(EntityType, journal.Id, Number(journal), AuditActions.Created, After: new { correctsJournalId = original.Id, correctsNumber = Number(original), journal.PostingDate, reason = trimmed }), cancellationToken);
         return (await GetAsync(journal.Id, cancellationToken))!;
     }
 
@@ -507,6 +628,6 @@ public sealed class ManualJournalService(
         }).ToList();
         return new ManualJournalSummary(j.Id, j.CompanyId, Number(j), j.Kind, j.PostingDate, j.DocumentDate, j.Currency, j.RateType, j.RateOverride, j.RateOverrideReason, j.BranchId, j.Description.Values, j.Reference,
             j.Status, j.AutoReverse, j.AutoReverseOn, j.TemplateId, j.JournalEntryId, JsonDocument.Parse(j.CustomFields).RootElement.Clone(), j.Lines.Sum(static l => l.Debit), j.Lines.Sum(static l => l.Credit),
-            j.SubmittedBy, j.SubmittedAt, j.ApprovedBy, j.ApprovedAt, j.RejectionReason, j.PostedBy, j.PostedAt, j.UpdatedAt, lines);
+            j.SubmittedBy, j.SubmittedAt, j.ApprovedBy, j.ApprovedAt, j.RejectionReason, j.PostedBy, j.PostedAt, j.UpdatedAt, lines, j.CorrectsJournalId, j.CorrectedByJournalId, j.CorrectionReason);
     }
 }

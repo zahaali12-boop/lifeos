@@ -27,6 +27,7 @@ public sealed class PostingService(
     IUnitOfWorkAccessor unitOfWork,
     ICompanyDirectory companies,
     IFiscalPeriodResolver periods,
+    IPostingWindows windows,
     IExchangeRateResolver rates,
     IDimensionSets dimensionSets,
     IChartOfAccounts chart,
@@ -280,6 +281,45 @@ public sealed class PostingService(
         return await ToResultAsync(entry.Value, replayed: false, cancellationToken);
     }
 
+    public async Task<Result<CorrectionResult>> CorrectAsync(Guid entryId, PostingRequest replacement, string reason, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(replacement);
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return Error.Validation("correction.reason_required", "A correction needs a reason.");
+        }
+
+        var original = await db.Set<JournalEntry>().AsNoTracking().SingleOrDefaultAsync(e => e.Id == entryId, cancellationToken);
+        if (original is null)
+        {
+            return Error.NotFound("journal_entry", entryId);
+        }
+
+        var correctedBy = await db.Set<EntryLink>().Where(l => l.ToEntryId == entryId && l.Relation == EntryRelations.Corrects).Select(static l => (Guid?)l.FromEntryId).FirstOrDefaultAsync(cancellationToken);
+        if (correctedBy is { } existing)
+        {
+            return Error.Conflict("correction.already_corrected", $"Entry {original.Number} was already corrected.").WithWhy(("correctedByEntryId", existing));
+        }
+
+        var reversal = await ReverseAsync(entryId, null, reason, automatic: false, cancellationToken);
+        if (reversal.IsFailure)
+        {
+            return reversal.Error!;
+        }
+
+        var date = replacement.PostingDate < reversal.Value.PostingDate ? reversal.Value.PostingDate : replacement.PostingDate;
+        var posted = await PostAsync(replacement with { CompanyId = new CompanyId(original.CompanyId), PostingDate = date }, cancellationToken);
+        if (posted.IsFailure)
+        {
+            return posted.Error!;
+        }
+
+        db.Set<EntryLink>().Add(new EntryLink { FromEntryId = posted.Value.EntryId, ToEntryId = original.Id, Relation = EntryRelations.Corrects, Reason = reason.Trim(), CreatedBy = principal.Principal?.UserId.Value, CreatedAt = clock.UtcNow });
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry("journal_entry", original.Id, original.Number, "corrected", After: new { reversalEntryId = reversal.Value.EntryId, replacementEntryId = posted.Value.EntryId, replacementNumber = posted.Value.Number, date, reason = reason.Trim() }), cancellationToken);
+        return new CorrectionResult(reversal.Value, posted.Value);
+    }
+
     // ------------------------------------------------------------------ steps
 
     private async Task<Result<PeriodState>> PeriodForAsync(CompanyInfo company, DateOnly date, CancellationToken cancellationToken)
@@ -294,6 +334,17 @@ public sealed class PostingService(
         var mayPostInSoftClosed = principal.Principal?.Has(AccountingPermissions.PostInSoftClosed) ?? true;
         if (state.AllowsPosting(mayPostInSoftClosed))
         {
+            // Allow-posting-from/to per role (ADR-0026): people are held to their window, system actors are not.
+            if (principal.Principal is { } actor)
+            {
+                var window = await windows.EffectiveAsync(company.Id, actor.Roles, cancellationToken);
+                if (window is not null && !window.Allows(date))
+                {
+                    return Error.Conflict("posting.outside_window", $"Posting dated {date:yyyy-MM-dd} is outside the allowed window of company {company.Code} ({Bound(window.AllowFrom)} to {Bound(window.AllowTo)}).")
+                        .WithWhy(("company", company.Code), ("date", date), ("allowFrom", window.AllowFrom), ("allowTo", window.AllowTo), ("roleId", window.RoleId), ("requiredPermission", "accounting.period.manage"));
+                }
+            }
+
             return state;
         }
 
@@ -302,6 +353,8 @@ public sealed class PostingService(
             .WithWhy(("company", company.Code), ("date", date), ("periodId", state.Period.PeriodId), ("period", state.Period.Number), ("fiscalYear", state.Period.FiscalYearCode), ("state", state.State),
                 ("requiredPermission", state.State == PeriodStates.SoftClosed ? AccountingPermissions.PostInSoftClosed : "accounting.period.reopen"));
     }
+
+    private static string Bound(DateOnly? bound) => bound is { } d ? d.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) : "open";
 
     private async Task<Result<decimal>> RateAsync(CompanyInfo company, Currency from, Currency to, DateOnly date, string rateType, decimal? overrideRate, CancellationToken cancellationToken)
     {

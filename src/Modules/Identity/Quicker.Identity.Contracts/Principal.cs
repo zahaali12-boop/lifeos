@@ -43,8 +43,12 @@ public sealed record Principal(
     IReadOnlyList<FieldRule> FieldRules,
     IReadOnlyList<DocumentTypeRule> DocumentTypeRules,
     DateTimeOffset AuthTime,
-    string AuthMethods)
+    string AuthMethods,
+    IReadOnlyList<Guid>? RoleIds = null)
 {
+    /// <summary>The active roles the grants came from (empty for owners without assignments and for API keys narrowed by scope).</summary>
+    public IReadOnlyList<Guid> Roles => RoleIds ?? [];
+
     public bool Has(string permission) =>
         IsOwner || Grants.Any(g => PermissionCatalog.Covers(g.Permission, permission));
 

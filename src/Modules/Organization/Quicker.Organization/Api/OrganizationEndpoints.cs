@@ -92,6 +92,15 @@ public static class OrganizationEndpoints
             .RequirePermission(OrganizationPermissions.CompanyRead)
             .WithSummary("The fiscal period a posting date falls in and the module's state in it");
 
+        companies.MapGet("/{companyId:guid}/posting-windows", async (Guid companyId, FiscalCalendarService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.ListWindowsAsync(companyId, ct)))
+            .RequirePermission(OrganizationPermissions.CompanyRead)
+            .WithSummary("The company's allow-posting-from/to windows: one for everyone (roleId null) and any per role");
+        companies.MapPut("/{companyId:guid}/posting-windows", async (Guid companyId, IReadOnlyList<PostingWindowRequest> request, FiscalCalendarService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.ReplaceWindowsAsync(companyId, request, ct)))
+            .RequirePermission(OrganizationPermissions.PeriodManage)
+            .WithSummary("Replaces the windows; the posting engine refuses a posting date outside the actor's effective window (the widest of their roles' windows, else the company's)");
+
         companies.MapGet("/{companyId:guid}/working-days", async (Guid companyId, DateOnly from, int days, string? mode, BusinessCalendarService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.ComputeForCompanyAsync(companyId, from, days, mode ?? "calendar", ct)))
             .RequirePermission(OrganizationPermissions.CompanyRead)

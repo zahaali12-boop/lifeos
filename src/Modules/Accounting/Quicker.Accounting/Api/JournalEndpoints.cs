@@ -92,6 +92,10 @@ public static class JournalEndpoints
         journals.MapPost("/{journalId:guid}/cancel", async (Guid journalId, ManualJournalService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.CancelAsync(journalId, ct)))
             .RequirePermission(AccountingPermissions.JournalManage);
+        journals.MapPost("/{journalId:guid}/correct", async (Guid journalId, CorrectJournalRequest request, ManualJournalService service, CancellationToken ct) =>
+            ApiProblems.Created(await service.CorrectAsync(journalId, request.Reason, ct), static j => $"/api/v1/accounting/journals/{j.Id}"))
+            .RequirePermission(AccountingPermissions.JournalManage)
+            .WithSummary("A correction draft of a posted journal: its lines copied, dated in the first open period on or after the original; posting it reverses the original there and posts the replacement, both linked (ADR-0026)");
         journals.MapPost("/{journalId:guid}/post", async (Guid journalId, ManualJournalService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.PostAsync(journalId, ct)))
             .RequirePermission(AccountingPermissions.JournalPost)
