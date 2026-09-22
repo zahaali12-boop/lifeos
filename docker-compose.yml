@@ -57,9 +57,11 @@ services:
       ASPNETCORE_URLS: http://0.0.0.0:8080
       Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
       Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
       Quicker__Storage__Endpoint: http://minio:9000
       Quicker__Storage__AccessKey: quicker
       Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
       Quicker__Email__SmtpHost: mailpit
       Quicker__Email__SmtpPort: "1025"
       Quicker__Audit__Anchoring__Store: file
@@ -83,9 +85,11 @@ services:
       ASPNETCORE_URLS: http://0.0.0.0:8081
       Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
       Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
       Quicker__Storage__Endpoint: http://minio:9000
       Quicker__Storage__AccessKey: quicker
       Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
       Quicker__Email__SmtpHost: mailpit
       Quicker__Email__SmtpPort: "1025"
       Quicker__Audit__Anchoring__Store: file

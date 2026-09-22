@@ -15,9 +15,12 @@ public sealed class AuditOptions
 
 public sealed class AnchoringOptions
 {
-    /// <summary>Anchor store: <c>file</c> (append-only local file, hash-linked). The object-lock store ships with the storage client in M1.8.</summary>
+    /// <summary>Anchor store: <c>file</c> (append-only local file, hash-linked) or <c>object_lock</c> (immutable objects in the configured object storage, S3 object lock in production).</summary>
     public string Store { get; set; } = "file";
 
     /// <summary>Directory of the file store.</summary>
     public string Path { get; set; } = ".data/audit-anchors";
+
+    /// <summary>How long an object-lock anchor is retained (compliance mode: nobody can shorten it).</summary>
+    public int RetentionDays { get; set; } = 3650;
 }

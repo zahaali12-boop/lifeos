@@ -4,6 +4,8 @@ using Npgsql;
 using Quicker.Api;
 using Quicker.Audit;
 using Quicker.Audit.Api;
+using Quicker.Collaboration;
+using Quicker.Collaboration.Api;
 using Quicker.Identity;
 using Quicker.Identity.Api;
 using Quicker.Integration;
@@ -16,6 +18,7 @@ using Quicker.Numbering.Api;
 using Quicker.Organization;
 using Quicker.Organization.Api;
 using Quicker.Persistence;
+using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
 
@@ -28,8 +31,8 @@ builder.Services.AddSingleton(static sp => DataSources.ForApp(sp.GetRequiredServ
 builder.Services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
-builder.Services.AddSingleton<CapturingEmailSender>();
-builder.Services.AddSingleton<IEmailSender>(static sp => sp.GetRequiredService<CapturingEmailSender>());
+builder.Services.AddQuickerEmail(builder.Configuration);
+builder.Services.AddQuickerStorage(builder.Configuration);
 builder.Services.AddQuickerWebCore();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi("v1");
@@ -48,6 +51,7 @@ builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddOrganizationModule(builder.Configuration);
 builder.Services.AddNumberingModule();
 builder.Services.AddIntegrationModule();
+builder.Services.AddCollaborationModule();
 
 var app = builder.Build();
 
@@ -83,6 +87,7 @@ api.MapOrganizationEndpoints();
 api.MapNumberingEndpoints();
 api.MapPlatformEndpoints();
 api.MapIntegrationEndpoints();
+api.MapCollaborationEndpoints();
 
 app.Run();
 

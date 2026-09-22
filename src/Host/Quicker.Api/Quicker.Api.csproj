@@ -13,12 +13,14 @@
     <ProjectReference Include="../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Quicker.Messaging/Quicker.Messaging.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Storage/Quicker.Storage.csproj" />
     <ProjectReference Include="../../Modules/Audit/Quicker.Audit/Quicker.Audit.csproj" />
     <ProjectReference Include="../../Modules/Tenancy/Quicker.Tenancy/Quicker.Tenancy.csproj" />
     <ProjectReference Include="../../Modules/Identity/Quicker.Identity/Quicker.Identity.csproj" />
     <ProjectReference Include="../../Modules/Organization/Quicker.Organization/Quicker.Organization.csproj" />
     <ProjectReference Include="../../Modules/Numbering/Quicker.Numbering/Quicker.Numbering.csproj" />
     <ProjectReference Include="../../Modules/Integration/Quicker.Integration/Quicker.Integration.csproj" />
+    <ProjectReference Include="../../Modules/Collaboration/Quicker.Collaboration/Quicker.Collaboration.csproj" />
   </ItemGroup>
 
 </Project>

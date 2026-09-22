@@ -5,7 +5,9 @@ using Microsoft.Extensions.Options;
 using Quicker.Audit.Application;
 using Quicker.Audit.Contracts;
 using Quicker.Identity.Contracts;
+using Quicker.Kernel.Time;
 using Quicker.Messaging;
+using Quicker.Storage;
 
 namespace Quicker.Audit;
 
@@ -25,7 +27,8 @@ public static class AuditModule
             return anchoring.Store switch
             {
                 "file" => new FileAuditAnchorStore(anchoring.Path),
-                _ => throw new InvalidOperationException($"Unknown audit anchor store '{anchoring.Store}'. Supported: file."),
+                "object_lock" => new ObjectLockAuditAnchorStore(sp.GetRequiredService<IObjectStorage>(), sp.GetRequiredService<IClock>(), anchoring.RetentionDays),
+                _ => throw new InvalidOperationException($"Unknown audit anchor store '{anchoring.Store}'. Supported: file, object_lock."),
             };
         });
 

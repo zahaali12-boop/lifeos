@@ -2,6 +2,7 @@ using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using Quicker.Audit;
+using Quicker.Collaboration;
 using Quicker.Identity;
 using Quicker.Integration;
 using Quicker.Kernel.Tenancy;
@@ -11,6 +12,7 @@ using Quicker.Messaging.Jobs;
 using Quicker.Numbering;
 using Quicker.Organization;
 using Quicker.Persistence;
+using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
 
@@ -23,8 +25,8 @@ builder.Services.AddSingleton(static sp => DataSources.ForApp(sp.GetRequiredServ
 builder.Services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
 builder.Services.AddSingleton<IClock>(SystemClock.Instance);
 builder.Services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
-builder.Services.AddSingleton<CapturingEmailSender>();
-builder.Services.AddSingleton<IEmailSender>(static sp => sp.GetRequiredService<CapturingEmailSender>());
+builder.Services.AddQuickerEmail(builder.Configuration);
+builder.Services.AddQuickerStorage(builder.Configuration);
 builder.Services.AddQuickerWebCore();
 builder.Services.AddQuickerMessaging(builder.Configuration);
 builder.Services.AddQuickerWorker();
@@ -36,6 +38,7 @@ builder.Services.AddIdentityModule(builder.Configuration);
 builder.Services.AddOrganizationModule(builder.Configuration);
 builder.Services.AddNumberingModule();
 builder.Services.AddIntegrationModule();
+builder.Services.AddCollaborationModule();
 
 var app = builder.Build();
 
