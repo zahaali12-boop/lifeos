@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using Quicker.Collaboration.Contracts;
 using Quicker.Collaboration.Domain;
 using Quicker.Collaboration.Persistence;
