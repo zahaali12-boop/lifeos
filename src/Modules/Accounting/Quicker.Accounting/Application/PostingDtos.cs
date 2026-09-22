@@ -91,6 +91,9 @@ public sealed record PostJournalRequest(
     bool IsClosingEntry = false,
     DateOnly? AutoReverseOn = null);
 
+/// <summary>Journal browser filters beyond the dates and source type: number prefix (entry or source document), an account on any line, manual only, a minimum total, free text over the descriptions and numbers.</summary>
+public sealed record JournalBrowserFilter(string? Number = null, Guid? AccountId = null, bool? IsManual = null, decimal? MinAmount = null, string? Text = null);
+
 public sealed record ReverseRequest(string Reason, DateOnly? ReversalDate = null);
 
 /// <summary>The replacement of an entry (its lines as a posting request; the company is the original's) and why.</summary>

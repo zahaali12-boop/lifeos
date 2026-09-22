@@ -39,9 +39,10 @@ public static class PostingEndpoints
             ApiProblems.Created(await service.CreateFromChartAsync(companyId, request, ct), static p => $"/api/v1/accounting/posting-profiles/{p.Id}"))
             .RequirePermission(AccountingPermissions.ProfileManage)
             .WithSummary("An active profile with one default rule per role from the chart's default accounts; unresolvedRoles lists what the chart does not name");
-        company.MapGet("/journal-entries", async (Guid companyId, DateOnly? from, DateOnly? to, string? sourceDocumentType, int? limit, string? cursor, JournalService service, CancellationToken ct) =>
-            ApiProblems.Ok(await service.ListEntriesAsync(companyId, from, to, sourceDocumentType, new PageRequest(limit, cursor), ct)))
-            .RequirePermission(AccountingPermissions.JournalRead);
+        company.MapGet("/journal-entries", async (Guid companyId, DateOnly? from, DateOnly? to, string? sourceDocumentType, string? number, Guid? accountId, bool? isManual, decimal? minAmount, string? text, int? limit, string? cursor, JournalService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.ListEntriesAsync(companyId, from, to, sourceDocumentType, new PageRequest(limit, cursor), ct, new JournalBrowserFilter(number, accountId, isManual, minAmount, text))))
+            .RequirePermission(AccountingPermissions.JournalRead)
+            .WithSummary("The journal browser: newest first, filtered by dates, source document type, number prefix, an account on any line, manual only, a minimum total and free text over descriptions and numbers");
         company.MapGet("/balances", async (Guid companyId, Guid? periodId, Guid? accountId, JournalService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.BalancesAsync(companyId, periodId, accountId, ct)))
             .RequirePermission(AccountingPermissions.JournalRead)

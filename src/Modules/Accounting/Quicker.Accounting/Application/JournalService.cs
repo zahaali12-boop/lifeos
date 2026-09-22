@@ -30,7 +30,7 @@ public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor u
         return Map(entry, links, accounts);
     }
 
-    public async Task<Result<Page<JournalEntrySummary>>> ListEntriesAsync(Guid companyId, DateOnly? from, DateOnly? to, string? sourceDocumentType, PageRequest page, CancellationToken cancellationToken)
+    public async Task<Result<Page<JournalEntrySummary>>> ListEntriesAsync(Guid companyId, DateOnly? from, DateOnly? to, string? sourceDocumentType, PageRequest page, CancellationToken cancellationToken, JournalBrowserFilter? filter = null)
     {
         if (await companies.FindAsync(new CompanyId(companyId), cancellationToken) is null)
         {
@@ -38,6 +38,43 @@ public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor u
         }
 
         var query = db.Set<JournalEntry>().Include(static e => e.Lines).Where(e => e.CompanyId == companyId);
+        if (filter is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(filter.Number))
+            {
+                var pattern = filter.Number.Trim() + "%";
+                query = query.Where(e => EF.Functions.ILike(e.Number, pattern) || (e.SourceDocumentNumber != null && EF.Functions.ILike(e.SourceDocumentNumber, pattern)));
+            }
+
+            if (filter.AccountId is { } account)
+            {
+                query = query.Where(e => e.Lines.Any(l => l.AccountId == account));
+            }
+
+            if (filter.IsManual is { } manual)
+            {
+                query = query.Where(e => e.IsManual == manual);
+            }
+
+            if (filter.MinAmount is { } min)
+            {
+                query = query.Where(e => e.Lines.Sum(l => l.DebitTc) >= min);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Text))
+            {
+                // The description is bilingual jsonb: the matching ids come from SQL, then the query narrows to them (capped; the reporting schema of M7 indexes text).
+                var uow = unitOfWork.Current;
+                var like = "%" + filter.Text.Trim() + "%";
+                var ids = (await uow.Connection.QueryAsync<Guid>(new CommandDefinition("""
+                    SELECT id FROM app.gl_journal_entries
+                    WHERE company_id = @company AND (description_i18n->>'en' ILIKE @like OR description_i18n->>'ar' ILIKE @like OR number ILIKE @like OR source_document_number ILIKE @like)
+                    ORDER BY id DESC LIMIT 10000
+                    """, new { company = companyId, like }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+                query = query.Where(e => ids.Contains(e.Id));
+            }
+        }
+
         if (from is { } f)
         {
             query = query.Where(e => e.PostingDate >= f);

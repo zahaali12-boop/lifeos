@@ -25,6 +25,7 @@ public static class AccountingModule
         services.AddScoped<RecurringService>();
         services.AddScoped<DeferralService>();
         services.AddScoped<AccountingRoutines>();
+        services.AddScoped<InquiryService>();
         services.AddJobHandler<AccountingDailyJob, AccountingDailyPayload>();
         return services;
     }

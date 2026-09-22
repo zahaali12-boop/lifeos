@@ -7159,6 +7159,7 @@
         "tags": [
           "Accounting"
         ],
+        "summary": "The journal browser: newest first, filtered by dates, source document type, number prefix, an account on any line, manual only, a minimum total and free text over descriptions and numbers",
         "operationId": "getAccountingCompaniesByCompanyIdJournalEntries",
         "parameters": [
           {
@@ -7188,6 +7189,47 @@
           },
           {
             "name": "sourceDocumentType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "isManual",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "minAmount",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          {
+            "name": "text",
             "in": "query",
             "schema": {
               "type": "string"
@@ -8416,6 +8458,278 @@
           }
         }
       }
+    },
+    "/api/v1/accounting/companies/{companyId}/reports/trial-balance": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=DIMENSION, dimension filters d.CODE=valueId, format=csv|xlsx; every row carries its ledger drill parameters",
+        "operationId": "getAccountingCompaniesByCompanyIdReportsTrialBalance",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "compareAsOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "basis",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeClosing",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrialBalance"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/reports/ledger": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Account ledger (accountId or accountCode) from a date to a date with opening, running balance and the source document of every line (sourceLink where the platform knows the document); paged by limit/cursor; format=csv|xlsx exports up to 10,000 lines",
+        "operationId": "getAccountingCompaniesByCompanyIdReportsLedger",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accountCode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "basis",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeClosing",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLedger"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/companies/{companyId}/reports/dimension-balances": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Balances per value of one dimension (lines without the dimension are the row without a value), optionally for one account type or account; the same window and filter parameters as the trial balance",
+        "operationId": "getAccountingCompaniesByCompanyIdReportsDimensionBalances",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "dimension",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "accountType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "basis",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeClosing",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DimensionBalances"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8434,6 +8748,113 @@
             "type": "string"
           },
           "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AccountLedger": {
+        "required": [
+          "companyId",
+          "accountId",
+          "accountCode",
+          "accountName",
+          "currency",
+          "basis",
+          "from",
+          "to",
+          "filters",
+          "opening",
+          "debit",
+          "credit",
+          "closing",
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "currency": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "filters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "opening": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closing": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LedgerItem"
+            }
+          },
+          "nextCursor": {
             "type": [
               "null",
               "string"
@@ -10856,6 +11277,137 @@
           }
         }
       },
+      "DimensionBalanceRow": {
+        "required": [
+          "valueId",
+          "valueCode",
+          "valueName",
+          "opening",
+          "debit",
+          "credit",
+          "closing"
+        ],
+        "type": "object",
+        "properties": {
+          "valueId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "valueCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "valueName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "opening": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closing": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "DimensionBalances": {
+        "required": [
+          "companyId",
+          "dimension",
+          "currency",
+          "basis",
+          "asOf",
+          "from",
+          "accountType",
+          "accountId",
+          "rows",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "accountType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DimensionBalanceRow"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TrialBalanceAmounts"
+          }
+        }
+      },
       "DimensionRuleRequest": {
         "required": [
           "dimensionCode",
@@ -12429,6 +12981,201 @@
         }
       },
       "JsonElement": { },
+      "LedgerDrill": {
+        "required": [
+          "accountId",
+          "from",
+          "to",
+          "dimensions"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "What a figure drills to: the ledger of the account over the same window with the same dimension filters."
+      },
+      "LedgerItem": {
+        "required": [
+          "lineId",
+          "entryId",
+          "entryNumber",
+          "postingDate",
+          "documentDate",
+          "sourceModule",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "sourceDocumentNumber",
+          "sourceLink",
+          "description",
+          "currencyTc",
+          "debitTc",
+          "creditTc",
+          "debit",
+          "credit",
+          "balance",
+          "dimensions",
+          "branchId",
+          "partnerId",
+          "subledgerType",
+          "subledgerRef",
+          "isReversal",
+          "isRounding"
+        ],
+        "type": "object",
+        "properties": {
+          "lineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entryNumber": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sourceModule": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceDocumentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceLink": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "currencyTc": {
+            "type": "string"
+          },
+          "debitTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "balance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "subledgerType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subledgerRef": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isReversal": {
+            "type": "boolean"
+          },
+          "isRounding": {
+            "type": "boolean"
+          }
+        }
+      },
       "LinkRequest": {
         "required": [
           "from",
@@ -17348,6 +18095,250 @@
           },
           "provisioningUri": {
             "type": "string"
+          }
+        }
+      },
+      "TrialBalance": {
+        "required": [
+          "companyId",
+          "currency",
+          "basis",
+          "asOf",
+          "from",
+          "compareAsOf",
+          "compareFrom",
+          "groupBy",
+          "filters",
+          "includeClosing",
+          "rows",
+          "totals",
+          "compareTotals",
+          "balanced"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "compareAsOf": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "compareFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "groupBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "filters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "includeClosing": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrialBalanceRow"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TrialBalanceAmounts"
+          },
+          "compareTotals": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrialBalanceAmounts"
+              }
+            ]
+          },
+          "balanced": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TrialBalanceAmounts": {
+        "required": [
+          "opening",
+          "debit",
+          "credit",
+          "closing"
+        ],
+        "type": "object",
+        "properties": {
+          "opening": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closing": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "TrialBalanceRow": {
+        "required": [
+          "accountId",
+          "accountCode",
+          "accountName",
+          "accountType",
+          "isControl",
+          "dimensionValueId",
+          "dimensionValueCode",
+          "dimensionValueName",
+          "opening",
+          "debit",
+          "credit",
+          "closing",
+          "compare",
+          "drill"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountCode": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "isControl": {
+            "type": "boolean"
+          },
+          "dimensionValueId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensionValueCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dimensionValueName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "opening": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closing": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "compare": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrialBalanceAmounts"
+              }
+            ]
+          },
+          "drill": {
+            "$ref": "#/components/schemas/LedgerDrill"
           }
         }
       },

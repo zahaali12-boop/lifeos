@@ -122,6 +122,7 @@ public static class AccountingEndpoints
 
         accounting.MapPostingEndpoints();
         accounting.MapJournalEndpoints();
+        accounting.MapInquiryEndpoints();
         return api;
     }
 

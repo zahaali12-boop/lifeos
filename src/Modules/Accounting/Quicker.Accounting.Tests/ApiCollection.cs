@@ -71,6 +71,14 @@ internal static class AccountingApi
         return (json.GetProperty("code").GetString()!, json);
     }
 
+    public static async Task<(string Code, JsonElement Problem)> GetErrorAsync(this HttpClient client, string path, HttpStatusCode expected)
+    {
+        var response = await client.GetAsync(new Uri(path, UriKind.Relative));
+        var json = await response.ReadJsonAsync();
+        response.StatusCode.ShouldBe(expected, json.ToString());
+        return (json.GetProperty("code").GetString()!, json);
+    }
+
     public static async Task<(string Code, JsonElement Problem)> PutErrorAsync(this HttpClient client, string path, object body, HttpStatusCode expected)
     {
         var response = await client.PutAsJsonAsync(path, body, Json);
