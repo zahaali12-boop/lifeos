@@ -43,7 +43,11 @@ builder.Services.AddQuickerEmail(builder.Configuration);
 builder.Services.AddQuickerStorage(builder.Configuration);
 builder.Services.AddQuickerWebCore();
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi("v1", static options => options.AddOperationTransformer<OperationIdTransformer>());
+builder.Services.AddOpenApi("v1", static options =>
+{
+    options.AddOperationTransformer<OperationIdTransformer>();
+    options.CreateSchemaReferenceId = SchemaReferenceIds.Create;
+});
 builder.Services.AddQuickerMessaging(builder.Configuration);
 builder.Services.AddQuickerIdempotency(builder.Configuration);
 builder.Services.AddQuickerRateLimiting(builder.Configuration);

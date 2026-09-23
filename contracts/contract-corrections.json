@@ -1,0 +1,92 @@
+[
+  {
+    "change": "response property removed: GET /api/v1/items/categories 200 $[].statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories 200 $[].sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories 200 $[].isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: POST /api/v1/items/categories 201 $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: POST /api/v1/items/categories 201 $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: POST /api/v1/items/categories 201 $.isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "new required request property: POST /api/v1/items/categories $.code",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: POST /api/v1/items/categories $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: POST /api/v1/items/categories $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories/{categoryId} 200 $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories/{categoryId} 200 $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories/{categoryId} 200 $.isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: PUT /api/v1/items/categories/{categoryId} 200 $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: PUT /api/v1/items/categories/{categoryId} 200 $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: PUT /api/v1/items/categories/{categoryId} 200 $.isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "new required request property: PUT /api/v1/items/categories/{categoryId} $.code",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: PUT /api/v1/items/categories/{categoryId} $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: PUT /api/v1/items/categories/{categoryId} $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  }
+]

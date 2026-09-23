@@ -10,7 +10,7 @@ namespace Quicker.Items.Application;
 /// <summary>Item categories as a tree with a materialised path, so a subtree is one prefix query and a move rewrites its paths.</summary>
 public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory postingGroups, IClock clock)
 {
-    public async Task<IReadOnlyList<CategorySummary>> ListAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ItemCategorySummary>> ListAsync(CancellationToken cancellationToken)
     {
         var categories = await db.Categories.OrderBy(static c => c.Path).ToListAsync(cancellationToken);
         var counts = await db.Items.Where(static i => i.CategoryId != null).GroupBy(static i => i.CategoryId!.Value)
@@ -19,7 +19,7 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
         return categories.Select(c => Map(c, c.ParentId is { } p && byId.TryGetValue(p, out var parent) ? parent.Code : null, counts.GetValueOrDefault(c.Id))).ToList();
     }
 
-    public async Task<CategorySummary?> GetAsync(Guid categoryId, CancellationToken cancellationToken)
+    public async Task<ItemCategorySummary?> GetAsync(Guid categoryId, CancellationToken cancellationToken)
     {
         var category = await db.Categories.SingleOrDefaultAsync(c => c.Id == categoryId, cancellationToken);
         if (category is null)
@@ -32,7 +32,7 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
         return Map(category, parentCode, count);
     }
 
-    public async Task<Result<CategorySummary>> CreateAsync(SaveCategoryRequest request, CancellationToken cancellationToken)
+    public async Task<Result<ItemCategorySummary>> CreateAsync(SaveItemCategoryRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var validated = await ValidateAsync(request, null, cancellationToken);
@@ -55,7 +55,7 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
         return Map(category, parent?.Code, 0);
     }
 
-    public async Task<Result<CategorySummary>> UpdateAsync(Guid categoryId, SaveCategoryRequest request, CancellationToken cancellationToken)
+    public async Task<Result<ItemCategorySummary>> UpdateAsync(Guid categoryId, SaveItemCategoryRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var category = await db.Categories.SingleOrDefaultAsync(c => c.Id == categoryId, cancellationToken);
@@ -121,7 +121,7 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
         return Result.Success();
     }
 
-    private async Task<Result<(string Code, ItemCategory? Parent)>> ValidateAsync(SaveCategoryRequest request, ItemCategory? existing, CancellationToken cancellationToken)
+    private async Task<Result<(string Code, ItemCategory? Parent)>> ValidateAsync(SaveItemCategoryRequest request, ItemCategory? existing, CancellationToken cancellationToken)
     {
         var code = Validation.UpperCode(request.Code, "category");
         if (code.IsFailure)
@@ -171,7 +171,7 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
         return (code.Value, parent);
     }
 
-    private static void Apply(ItemCategory category, SaveCategoryRequest request, ItemCategory? parent)
+    private static void Apply(ItemCategory category, SaveItemCategoryRequest request, ItemCategory? parent)
     {
         category.Name = Validation.Name(request.Name, "category").Value;
         category.ParentId = parent?.Id;
@@ -183,6 +183,6 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
         category.IsActive = request.IsActive;
     }
 
-    private static CategorySummary Map(ItemCategory c, string? parentCode, int itemCount) =>
+    private static ItemCategorySummary Map(ItemCategory c, string? parentCode, int itemCount) =>
         new(c.Id, c.ParentId, parentCode, c.Code, c.Name.Values, c.Path, c.Level, c.CostingMethodOverride, c.ItemPostingGroupId, c.ItemTaxGroupId, c.IsActive, itemCount, c.UpdatedAt);
 }

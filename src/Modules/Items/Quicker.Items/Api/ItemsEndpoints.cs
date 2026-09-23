@@ -165,12 +165,12 @@ public static class ItemsEndpoints
         categories.MapGet("/", async (CategoryService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(ct)))
             .RequirePermission(ItemsPermissions.ItemRead)
             .WithSummary("The category tree in path order with level and item counts");
-        categories.MapPost("/", async (SaveCategoryRequest request, CategoryService service, CancellationToken ct) =>
+        categories.MapPost("/", async (SaveItemCategoryRequest request, CategoryService service, CancellationToken ct) =>
             ApiProblems.Created(await service.CreateAsync(request, ct), static c => $"/api/v1/items/categories/{c.Id}"))
             .RequirePermission(ItemsPermissions.ItemManage);
         categories.MapGet("/{categoryId:guid}", async (Guid categoryId, CategoryService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(categoryId, ct), "category", categoryId))
             .RequirePermission(ItemsPermissions.ItemRead);
-        categories.MapPut("/{categoryId:guid}", async (Guid categoryId, SaveCategoryRequest request, CategoryService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(categoryId, request, ct)))
+        categories.MapPut("/{categoryId:guid}", async (Guid categoryId, SaveItemCategoryRequest request, CategoryService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(categoryId, request, ct)))
             .RequirePermission(ItemsPermissions.ItemManage)
             .WithSummary("Renaming or moving a category rewrites the paths of its subtree; moving under a descendant is refused");
         categories.MapDelete("/{categoryId:guid}", async (Guid categoryId, CategoryService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(categoryId, ct)))

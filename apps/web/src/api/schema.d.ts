@@ -6440,6 +6440,30 @@ export interface components {
             /** @default en */
             language: string;
         };
+        ItemCategorySummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            parentId: null | string;
+            parentCode: null | string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            path: string;
+            /** Format: int32 */
+            level: number | string;
+            costingMethodOverride: null | string;
+            /** Format: uuid */
+            itemPostingGroupId: null | string;
+            /** Format: uuid */
+            itemTaxGroupId: null | string;
+            isActive: boolean;
+            /** Format: int32 */
+            itemCount: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         ItemImportRequest: {
             items: components["schemas"]["SaveItemRequest"][];
         };
@@ -8246,6 +8270,22 @@ export interface components {
             name: {
                 [key: string]: string;
             };
+        };
+        SaveItemCategoryRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            parentId?: null | string;
+            parentCode?: null | string;
+            costingMethodOverride?: null | string;
+            /** Format: uuid */
+            itemPostingGroupId?: null | string;
+            /** Format: uuid */
+            itemTaxGroupId?: null | string;
+            /** @default true */
+            isActive: boolean;
         };
         SaveItemRequest: {
             code: string;
@@ -16391,7 +16431,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CategorySummary"][];
+                    "application/json": components["schemas"]["ItemCategorySummary"][];
                 };
             };
         };
@@ -16405,7 +16445,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SaveCategoryRequest"];
+                "application/json": components["schemas"]["SaveItemCategoryRequest"];
             };
         };
         responses: {
@@ -16415,7 +16455,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CategorySummary"];
+                    "application/json": components["schemas"]["ItemCategorySummary"];
                 };
             };
         };
@@ -16437,7 +16477,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CategorySummary"];
+                    "application/json": components["schemas"]["ItemCategorySummary"];
                 };
             };
         };
@@ -16453,7 +16493,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SaveCategoryRequest"];
+                "application/json": components["schemas"]["SaveItemCategoryRequest"];
             };
         };
         responses: {
@@ -16463,7 +16503,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CategorySummary"];
+                    "application/json": components["schemas"]["ItemCategorySummary"];
                 };
             };
         };

@@ -1,4 +1,4 @@
-import { Bell, BookMarked, BookOpen, Building2, CalendarRange, ClipboardList, Coins, Layers, LayoutDashboard, ListChecks, NotebookPen, Scale, ScanLine, ShieldCheck, SlidersHorizontal, Users, Webhook, type LucideIcon } from "lucide-react";
+import { ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, Hammer, Layers, LayoutDashboard, ListChecks, NotebookPen, Package, Scale, ScanLine, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -21,6 +21,16 @@ export const navigation: NavigationItem[] = [
   { to: "/accounting/ledger", label: "nav.ledger", icon: BookMarked, shortcut: "g l", permission: "accounting.journal.read" },
   { to: "/accounting/journal-entries", label: "nav.journalEntries", icon: Layers, shortcut: "g e", permission: "accounting.journal.read" },
   { to: "/accounting/periods", label: "nav.periods", icon: CalendarRange, shortcut: "g p", permission: "organization.company.read" },
+  { to: "/inventory/items", label: "nav.items", icon: Package, shortcut: "g i", permission: "inventory.item.read" },
+  { to: "/inventory/warehouses", label: "nav.warehouses", icon: Warehouse, shortcut: "g b", permission: "inventory.warehouse.read" },
+  { to: "/inventory/stock", label: "nav.stock", icon: Boxes, shortcut: "g k", permission: "inventory.stock.read" },
+  { to: "/inventory/adjustments", label: "nav.adjustments", icon: Diff, shortcut: "g x", permission: "inventory.adjustment.read" },
+  { to: "/inventory/transfers", label: "nav.transfers", icon: ArrowRightLeft, shortcut: "g v", permission: "inventory.transfer.read" },
+  { to: "/inventory/assemblies", label: "nav.assemblies", icon: Hammer, shortcut: "g y", permission: "inventory.assembly.read" },
+  { to: "/inventory/tracking", label: "nav.tracking", icon: Barcode, shortcut: "g z", permission: "inventory.stock.read" },
+  { to: "/inventory/counts", label: "nav.counts", icon: ClipboardCheck, shortcut: "g q", permission: "inventory.count.read" },
+  { to: "/inventory/replenishment", label: "nav.replenishment", icon: ShoppingCart, shortcut: "g g", permission: "inventory.replenishment.read" },
+  { to: "/inventory/valuation", label: "nav.valuation", icon: Calculator, shortcut: "g 9", permission: "inventory.costing.read" },
   { to: "/m", label: "nav.mobile", icon: ScanLine, shortcut: "g s", permission: "inventory.count.enter" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },
   { to: "/roles", label: "nav.roles", icon: ShieldCheck, shortcut: "g o", permission: "identity.role.read" },

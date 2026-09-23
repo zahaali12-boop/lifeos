@@ -14,7 +14,6 @@ using Quicker.Kernel.Results;
 using Quicker.Organization.Application;
 using Quicker.Organization.Persistence;
 using Quicker.Persistence;
-using ItemCategoryRequest = Quicker.Items.Application.SaveCategoryRequest;
 
 namespace Quicker.Migrator.Demo;
 
@@ -169,7 +168,7 @@ internal static class DemoStock
         // Master data the items hang from: categories, brands, attributes, posting groups, reason codes.
         foreach (var (code, parent, name) in Categories)
         {
-            Require(await categories.CreateAsync(new ItemCategoryRequest(code, Bilingual(name), ParentCode: parent), cancellationToken));
+            Require(await categories.CreateAsync(new SaveItemCategoryRequest(code, Bilingual(name), ParentCode: parent), cancellationToken));
         }
 
         foreach (var brand in Brands)

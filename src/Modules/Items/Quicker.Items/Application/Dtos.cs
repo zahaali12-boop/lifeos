@@ -8,7 +8,7 @@ public sealed record SaveBrandRequest(string Code, IReadOnlyDictionary<string, s
 
 public sealed record BrandSummary(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, bool IsActive, DateTimeOffset UpdatedAt);
 
-public sealed record SaveCategoryRequest(
+public sealed record SaveItemCategoryRequest(
     string Code,
     IReadOnlyDictionary<string, string> Name,
     Guid? ParentId = null,
@@ -18,7 +18,7 @@ public sealed record SaveCategoryRequest(
     Guid? ItemTaxGroupId = null,
     bool IsActive = true);
 
-public sealed record CategorySummary(
+public sealed record ItemCategorySummary(
     Guid Id,
     Guid? ParentId,
     string? ParentCode,

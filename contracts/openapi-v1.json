@@ -10150,7 +10150,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CategorySummary"
+                    "$ref": "#/components/schemas/ItemCategorySummary"
                   }
                 }
               }
@@ -10167,7 +10167,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SaveCategoryRequest"
+                "$ref": "#/components/schemas/SaveItemCategoryRequest"
               }
             }
           },
@@ -10179,7 +10179,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CategorySummary"
+                  "$ref": "#/components/schemas/ItemCategorySummary"
                 }
               }
             }
@@ -10210,7 +10210,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CategorySummary"
+                  "$ref": "#/components/schemas/ItemCategorySummary"
                 }
               }
             }
@@ -10238,7 +10238,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SaveCategoryRequest"
+                "$ref": "#/components/schemas/SaveItemCategoryRequest"
               }
             }
           },
@@ -10250,7 +10250,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CategorySummary"
+                  "$ref": "#/components/schemas/ItemCategorySummary"
                 }
               }
             }
@@ -19559,6 +19559,98 @@
           }
         }
       },
+      "ItemCategorySummary": {
+        "required": [
+          "id",
+          "parentId",
+          "parentCode",
+          "code",
+          "name",
+          "path",
+          "level",
+          "costingMethodOverride",
+          "itemPostingGroupId",
+          "itemTaxGroupId",
+          "isActive",
+          "itemCount",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "parentCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "path": {
+            "type": "string"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "costingMethodOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ItemImportRequest": {
         "required": [
           "items"
@@ -26147,6 +26239,61 @@
             "additionalProperties": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SaveItemCategoryRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "parentCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "costingMethodOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemPostingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
           }
         }
       },

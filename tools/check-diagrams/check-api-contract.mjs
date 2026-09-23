@@ -8,8 +8,13 @@
  * a response status, an enum value, or when it adds a required request property or makes a response property
  * nullable-only. Additions are fine. Exit 0 with a summary otherwise; exit 0 with a note when the base is missing
  * (first contract ever).
+ *
+ * Corrections (ADR-0012): when the published document misdescribed the server (two types once shared one schema
+ * name), the corrected contract lists each removed line, verbatim, with its reason in contract-corrections.json next
+ * to the head document; exactly those lines are accepted, everything else still fails.
  */
 import { readFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 const [basePath, headPath] = process.argv.slice(2);
 if (!basePath || !headPath) {
@@ -127,9 +132,17 @@ for (const [path, baseItem] of Object.entries(base.paths ?? {})) {
 }
 for (const path of Object.keys(head.paths ?? {})) if (!base.paths?.[path]) additions.push(`path added: ${path}`);
 
-if (breaking.length > 0) {
-  console.error(`API contract: ${breaking.length} breaking change(s)\n  - ${breaking.join("\n  - ")}`);
-  console.error("\nBreaking changes need a new API version or a deprecation window (docs/adr: contract policy).");
+const correctionsPath = join(dirname(headPath), "contract-corrections.json");
+const corrections = existsSync(correctionsPath) ? JSON.parse(readFileSync(correctionsPath, "utf8")) : [];
+const acknowledged = new Set(corrections.map((c) => c.change));
+const remaining = breaking.filter((b) => !acknowledged.has(b));
+const stale = corrections.filter((c) => !breaking.includes(c.change));
+if (stale.length > 0) {
+  console.log(`API contract: ${stale.length} recorded correction(s) no longer apply and can be removed from ${correctionsPath}:\n  - ${stale.map((c) => c.change).join("\n  - ")}`);
+}
+if (remaining.length > 0) {
+  console.error(`API contract: ${remaining.length} breaking change(s)\n  - ${remaining.join("\n  - ")}`);
+  console.error("\nBreaking changes need a new API version or a deprecation window (docs/adr: contract policy); a correction of a misdescribed schema is recorded in contract-corrections.json with its reason.");
   process.exit(1);
 }
-console.log(`API contract: compatible (${additions.length} addition(s)).`);
+console.log(`API contract: compatible (${additions.length} addition(s)${breaking.length > 0 ? `, ${breaking.length} recorded correction(s)` : ""}).`);

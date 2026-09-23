@@ -19,6 +19,16 @@ import { JournalsPage } from "./accounting/JournalsPage";
 import { LedgerPage } from "./accounting/LedgerPage";
 import { PeriodsPage } from "./accounting/PeriodsPage";
 import { TrialBalancePage } from "./accounting/TrialBalancePage";
+import { AdjustmentsPage } from "./inventory/AdjustmentsPage";
+import { AssembliesPage } from "./inventory/AssembliesPage";
+import { CountsPage } from "./inventory/CountsPage";
+import { ItemsPage } from "./inventory/ItemsPage";
+import { ReplenishmentPage } from "./inventory/ReplenishmentPage";
+import { StockPage } from "./inventory/StockPage";
+import { TrackingPage } from "./inventory/TrackingPage";
+import { TransfersPage } from "./inventory/TransfersPage";
+import { ValuationPage } from "./inventory/ValuationPage";
+import { WarehousesPage } from "./inventory/WarehousesPage";
 import { MobileCountPage } from "./mobile/MobileCountPage";
 import { MobileHomePage } from "./mobile/MobileHomePage";
 import { MobileQueuePage } from "./mobile/MobileQueuePage";
@@ -61,6 +71,16 @@ const trialBalanceRoute = createRoute({ getParentRoute: () => shellRoute, path: 
 const ledgerRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/ledger", component: LedgerPage, validateSearch: searchRecord });
 const journalEntriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/journal-entries", component: JournalBrowserPage, validateSearch: searchRecord });
 const periodsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/periods", component: PeriodsPage });
+const itemsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/items", component: ItemsPage, validateSearch: searchRecord });
+const warehousesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/warehouses", component: WarehousesPage, validateSearch: searchRecord });
+const stockRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/stock", component: StockPage });
+const adjustmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/adjustments", component: AdjustmentsPage, validateSearch: searchRecord });
+const transfersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/transfers", component: TransfersPage, validateSearch: searchRecord });
+const assembliesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/assemblies", component: AssembliesPage, validateSearch: searchRecord });
+const trackingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/tracking", component: TrackingPage, validateSearch: searchRecord });
+const countsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/counts", component: CountsPage, validateSearch: searchRecord });
+const replenishmentRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/replenishment", component: ReplenishmentPage, validateSearch: searchRecord });
+const valuationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/valuation", component: ValuationPage });
 
 // The scanner (roadmap 3.8): its own thumb-first shell, the same session.
 const mobileRoute = createRoute({
@@ -81,7 +101,11 @@ const mobileQueueRoute = createRoute({ getParentRoute: () => mobileRoute, path: 
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
-  shellRoute.addChildren([dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute, chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute]),
+  shellRoute.addChildren([
+    dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
+    chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute,
+    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute,
+  ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute]),
 ]);
 
