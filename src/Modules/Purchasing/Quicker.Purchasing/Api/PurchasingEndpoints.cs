@@ -141,6 +141,12 @@ public static class PurchasingEndpoints
         invoices.MapGet("/open-items", async (Guid companyId, Guid? partnerId, string? status, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.OpenItemsAsync(companyId, partnerId, status, ct)))
             .RequirePermission(PurchasingPermissions.InvoiceRead)
             .WithSummary("Payable open items of a company, optionally one supplier or one status.");
+        invoices.MapPost("/open-items/apply", async (ApplyCreditRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.ApplyCreditAsync(request, ct)))
+            .RequirePermission(PurchasingPermissions.InvoicePost)
+            .WithSummary("Applies a posted debit note to one of the supplier's invoice open items; a rate difference is booked as realised FX.");
+        invoices.MapGet("/settlements", async (Guid companyId, Guid? openItemId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.SettlementsAsync(companyId, openItemId, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceRead)
+            .WithSummary("Settlements between payable open items (credit applications), optionally those touching one item.");
         invoices.MapPost("/", async (SaveInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static i => $"/api/v1/purchasing/invoices/{i.Id}"))
             .RequirePermission(PurchasingPermissions.InvoiceManage)
             .WithSummary("Drafts a supplier invoice: lines against receipt lines, service order lines or expense accounts.");
@@ -159,6 +165,29 @@ public static class PurchasingEndpoints
         invoices.MapPost("/{invoiceId:guid}/reverse", async (Guid invoiceId, ReverseInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(invoiceId, request, ct)))
             .RequirePermission(PurchasingPermissions.InvoicePost)
             .WithSummary("Reverses a posted invoice as a whole.");
+
+        var returns = purchasing.MapGroup("/returns");
+        returns.MapGet("/", async (Guid? companyId, string? status, Guid? receiptId, ReturnService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, receiptId, ct)))
+            .RequirePermission(PurchasingPermissions.ReturnRead)
+            .WithSummary("Supplier returns of a company, optionally by status or receipt.");
+        returns.MapGet("/returnable", async (Guid companyId, Guid? receiptId, Guid? partnerId, ReturnService service, CancellationToken ct) => TypedResults.Ok(await service.ReturnableAsync(companyId, receiptId, partnerId, ct)))
+            .RequirePermission(PurchasingPermissions.ReturnRead)
+            .WithSummary("Posted receipt lines with a quantity still on hand that can go back to the supplier.");
+        returns.MapPost("/", async (SaveReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static r => $"/api/v1/purchasing/returns/{r.Id}"))
+            .RequirePermission(PurchasingPermissions.ReturnManage)
+            .WithSummary("Drafts a return to the supplier against one posted receipt.");
+        returns.MapGet("/{returnId:guid}", async (Guid returnId, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(returnId, ct)))
+            .RequirePermission(PurchasingPermissions.ReturnRead);
+        returns.MapPut("/{returnId:guid}", async (Guid returnId, SaveReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(returnId, request, ct)))
+            .RequirePermission(PurchasingPermissions.ReturnManage);
+        returns.MapDelete("/{returnId:guid}", async (Guid returnId, ReturnService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(returnId, ct)))
+            .RequirePermission(PurchasingPermissions.ReturnManage);
+        returns.MapPost("/{returnId:guid}/post", async (Guid returnId, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(returnId, ct)))
+            .RequirePermission(PurchasingPermissions.ReturnPost)
+            .WithSummary("Posts the return: stock out at the receipt's exact cost, GRNI relieved with the return as reference.");
+        returns.MapPost("/{returnId:guid}/reverse", async (Guid returnId, ReverseReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(returnId, request, ct)))
+            .RequirePermission(PurchasingPermissions.ReturnPost)
+            .WithSummary("Reverses a posted return that has not been credited: the goods come back at the same cost.");
 
         var chargeTypes = purchasing.MapGroup("/charge-types");
         chargeTypes.MapGet("/", async (LandedCostService service, CancellationToken ct) => TypedResults.Ok(await service.ChargeTypesAsync(ct)))

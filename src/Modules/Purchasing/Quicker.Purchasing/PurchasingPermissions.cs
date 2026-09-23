@@ -23,6 +23,9 @@ public static class PurchasingPermissions
     public const string LandedCostRead = "purchasing.landed_cost.read";
     public const string LandedCostManage = "purchasing.landed_cost.manage";
     public const string LandedCostPost = "purchasing.landed_cost.post";
+    public const string ReturnRead = "purchasing.return.read";
+    public const string ReturnManage = "purchasing.return.manage";
+    public const string ReturnPost = "purchasing.return.post";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -44,5 +47,8 @@ public static class PurchasingPermissions
         new(LandedCostRead, "purchasing", "Read landed-cost documents, charge types and allocations"),
         new(LandedCostManage, "purchasing", "Create, edit and delete draft landed-cost documents and maintain charge types"),
         new(LandedCostPost, "purchasing", "Post landed-cost documents onto stock and reverse them"),
+        new(ReturnRead, "purchasing", "Read supplier returns"),
+        new(ReturnManage, "purchasing", "Create, edit and delete draft supplier returns"),
+        new(ReturnPost, "purchasing", "Post supplier returns out of stock and reverse them"),
     ];
 }

@@ -190,6 +190,45 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await expectAccessible(page);
   await closeDialog(page);
 
+  // Two of the eight tea go back at their landed cost (1 530 each); the supplier's debit note credits them at the order price and is applied to the invoice.
+  await nav(page, "Supplier returns");
+  await expect(page.getByText("No returns yet")).toBeVisible();
+  await page.getByTestId("new-return").click();
+  await page.getByTestId("return-receipt").selectOption({ index: 1 });
+  await page.getByTestId("return-qty-0").fill("2");
+  await page.getByTestId("return-rma").fill("RMA-1");
+  await expectAccessible(page);
+  await page.getByTestId("save-return").click();
+  await expect(page.getByTestId("return-detail")).toBeVisible();
+  await page.getByTestId("post-return").click();
+  await expect(page.getByTestId("return-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await expect(page.getByTestId("return-value")).toContainText("3,060");
+  await expectAccessible(page);
+  await closeDialog(page);
+
+  await nav(page, "Supplier invoices");
+  await page.getByTestId("new-invoice").click();
+  await page.getByTestId("invoice-supplier").selectOption({ label: "ALPHA · Alpha Supplies" });
+  await page.getByTestId("invoice-kind").selectOption("debit_note");
+  await page.getByTestId("invoice-reference").fill("CN-1");
+  await page.getByTestId("add-invoicable-TEA-return").click();
+  await expect(page.getByTestId("invoice-line")).toHaveCount(1);
+  await page.getByTestId("save-invoice").click();
+  await expect(page.getByTestId("invoice-detail")).toBeVisible();
+  await expect(page.getByTestId("invoice-total")).toContainText("3,000");
+  await page.getByTestId("submit-invoice").click();
+  await expect(page.getByTestId("invoice-detail").getByTestId("doc-status").first()).toContainText("Approved");
+  await page.getByTestId("post-invoice").click();
+  await expect(page.getByTestId("invoice-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await page.getByTestId("tab-payables").click();
+  await page.getByTestId("start-apply-credit").click();
+  await page.getByTestId("credit-target").selectOption({ index: 1 });
+  await expectAccessible(page);
+  await page.getByTestId("confirm-apply-credit").click();
+  await expect(page.getByTestId("settlement-row")).toHaveCount(1);
+  await expect(page.getByTestId("open-item-remaining")).toContainText("0");
+  await closeDialog(page);
+
   // An RFQ to both suppliers, two quotes, compared: the cheaper one ranks first.
   await nav(page, "Requests for quotation");
   await page.getByTestId("new-rfq").click();

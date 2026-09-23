@@ -699,6 +699,9 @@ public sealed class InvoiceLine : ITenantEntity
     /// <summary>For a charge line: the landed-cost charge the invoice settles.</summary>
     public Guid? LandedCostChargeId { get; set; }
 
+    /// <summary>For a return line of a debit note: the supplier-return line it credits.</summary>
+    public Guid? ReturnLineId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 }
 
@@ -923,6 +926,146 @@ public sealed class LandedCostAllocation : ITenantEntity
     public decimal SoldPortionFc { get; set; }
 
     public Guid? AdjustmentRunId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>Goods sent back to the supplier from one receipt, out of stock at the exact cost they came in at, GRNI as the offset until the debit note credits them.</summary>
+public sealed class SupplierReturn : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? BranchId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public Guid ReceiptId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    public string Currency { get; set; } = string.Empty;
+
+    public string? Reason { get; set; }
+
+    public string? SupplierRma { get; set; }
+
+    public decimal TotalCostFc { get; set; }
+
+    public Guid? StockPostingId { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalPostingId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public string? Notes { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<SupplierReturnLine> Lines { get; } = [];
+}
+
+public sealed class SupplierReturnLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ReturnId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ReceiptLineId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid UomId { get; set; }
+
+    public decimal QuantityBase { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public string? LotNumber { get; set; }
+
+    public string SerialNumbers { get; set; } = "[]";
+
+    public string? Reason { get; set; }
+
+    /// <summary>What the stock engine took out, at the receipt's exact cost, in the company's currency (positive).</summary>
+    public decimal CostAmountFc { get; set; }
+
+    public decimal CreditedAmountFc { get; set; }
+
+    public decimal QtyCredited { get; set; }
+
+    public Guid? SleId { get; set; }
+
+    public string SleIds { get; set; } = "[]";
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A credit applied to an invoice (a debit note now; advances and payments from 4.7), with the realized FX when the two were booked at different rates.</summary>
+public sealed class ApSettlement : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid SettlingItemId { get; set; }
+
+    public Guid SettledItemId { get; set; }
+
+    public DateOnly SettlementDate { get; set; }
+
+    public string Kind { get; set; } = "credit_application";
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal AmountTc { get; set; }
+
+    public decimal AmountFcSettledItem { get; set; }
+
+    public decimal AmountFcSettlingItem { get; set; }
+
+    public decimal FxGainLossFc { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversesSettlementId { get; set; }
+
+    public Guid? CreatedBy { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }

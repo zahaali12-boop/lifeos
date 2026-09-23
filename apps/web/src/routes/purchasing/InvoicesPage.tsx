@@ -22,6 +22,7 @@ interface InvoiceLineForm {
   receiptLineId: string;
   orderLineId: string;
   landedCostChargeId: string;
+  returnLineId: string;
   label: string;
   quantity: string;
   unitPrice: string;
@@ -52,6 +53,7 @@ export function InvoicesPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [tab, setTab] = useState("lines");
   const [reversal, setReversal] = useState<string | null>(null);
+  const [credit, setCredit] = useState<{ invoiceItemId: string; amount: string } | null>(null);
   const suppliers = useSuppliers(companyId);
 
   const list = useQuery({
@@ -69,8 +71,18 @@ export function InvoicesPage() {
     enabled: Boolean(openId),
     queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/invoices/{invoiceId}", { params: { path: { invoiceId: openId ?? "" } } })),
   });
+  const supplierItems = useQuery({
+    queryKey: ["open-items", companyId, detail.data?.partnerId ?? ""],
+    enabled: Boolean(companyId) && detail.data?.kind === "debit_note" && detail.data.status === "posted",
+    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/invoices/open-items", { params: { query: { companyId, partnerId: detail.data?.partnerId ?? "", status: "open" } } })),
+  });
+  const settlements = useQuery({
+    queryKey: ["settlements", companyId, openId],
+    enabled: Boolean(companyId) && detail.data?.status === "posted" && detail.data.openItems.length > 0,
+    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/invoices/settlements", { params: { query: { companyId, openItemId: detail.data?.openItems[0]?.id ?? "" } } })),
+  });
   const refresh = async (): Promise<void> => {
-    await Promise.all([["invoices"], ["invoice"], ["invoicable"], ["orders"], ["order"], ["receipts"], ["receipt"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    await Promise.all([["invoices"], ["invoice"], ["invoicable"], ["orders"], ["order"], ["receipts"], ["receipt"], ["returns"], ["return"], ["open-items"], ["settlements"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
@@ -84,7 +96,7 @@ export function InvoicesPage() {
         documentDate: f.documentDate || null,
         currency: f.currency || null,
         applyWht: f.applyWht,
-        lines: f.lines.filter((l) => num(l.quantity) > 0).map((l) => ({ kind: l.kind, quantity: num(l.quantity), unitPrice: num(l.unitPrice), receiptLineId: l.receiptLineId || null, orderLineId: l.orderLineId || null, landedCostChargeId: l.landedCostChargeId || null, description: l.description || null, discountPct: 0 })),
+        lines: f.lines.filter((l) => num(l.quantity) > 0).map((l) => ({ kind: l.kind, quantity: num(l.quantity), unitPrice: num(l.unitPrice), receiptLineId: l.receiptLineId || null, orderLineId: l.orderLineId || null, landedCostChargeId: l.landedCostChargeId || null, returnLineId: l.returnLineId || null, description: l.description || null, discountPct: 0 })),
       };
       return f.id ? unwrap(await api.PUT("/api/v1/purchasing/invoices/{invoiceId}", { params: { path: { invoiceId: f.id } }, body })) : unwrap(await api.POST("/api/v1/purchasing/invoices", { body }));
     },
@@ -105,10 +117,17 @@ export function InvoicesPage() {
     onError: fail,
   });
 
+  const apply = useMutation({
+    mutationFn: async (input: { creditItemId: string; invoiceItemId: string; amount: number }) => unwrap(await api.POST("/api/v1/purchasing/invoices/open-items/apply", { body: input })),
+    onSuccess: async () => { setProblem(null); setCredit(null); await refresh(); },
+    onError: fail,
+  });
+
   const columns = useMemo<ColumnDef<Invoice, unknown>[]>(
     () => [
       { id: "number", accessorKey: "number", header: t("purchasing.number"), size: 140, cell: ({ row }) => <span dir="ltr">{row.original.number}</span> },
       { id: "status", accessorKey: "status", header: t("common.status"), size: 130, cell: ({ row }) => <PurchaseStatus status={row.original.status} /> },
+      { id: "kind", accessorKey: "kind", header: t("purchasing.kind"), size: 110, cell: ({ row }) => t(`purchasing.kinds.${row.original.kind}`) },
       { id: "supplier", accessorKey: "partnerCode", header: t("partners.supplier"), size: 190, cell: ({ row }) => <span dir="auto">{row.original.partnerCode} · {localized(row.original.partnerName)}</span> },
       { id: "reference", accessorKey: "supplierInvoiceNumber", header: t("purchasing.supplierReference"), size: 130, cell: ({ row }) => <span dir="ltr">{row.original.supplierInvoiceNumber ?? ""}</span> },
       { id: "date", accessorKey: "documentDate", header: t("purchasing.documentDate"), size: 110, cell: ({ row }) => <span dir="ltr">{formatDate(row.original.documentDate)}</span> },
@@ -122,16 +141,17 @@ export function InvoicesPage() {
   const openNew = (): void => { setProblem(null); setForm({ id: null, kind: "invoice", partnerId: "", supplierInvoiceNumber: "", documentDate: today(), currency: "", applyWht: true, lines: [] }); };
   const openEdit = (i: Invoice): void => {
     setProblem(null);
-    setForm({ id: i.id, kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", landedCostChargeId: l.landedCostChargeId ?? "", label: l.kind === "expense" ? "" : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "" })) });
+    setForm({ id: i.id, kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", landedCostChargeId: l.landedCostChargeId ?? "", returnLineId: l.returnLineId ?? "", label: l.kind === "expense" ? "" : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "" })) });
   };
   const addInvoicable = (line: Invoicable): void => {
-    if (!form || form.lines.some((l) => (line.kind === "receipt" ? l.receiptLineId === line.receiptLineId : line.kind === "charge" ? l.landedCostChargeId === line.landedCostChargeId : l.kind === "order" && l.orderLineId === line.orderLineId))) {
+    if (!form || form.lines.some((l) => (line.kind === "receipt" ? l.receiptLineId === line.receiptLineId : line.kind === "charge" ? l.landedCostChargeId === line.landedCostChargeId : line.kind === "return" ? l.returnLineId === line.returnLineId : l.kind === "order" && l.orderLineId === line.orderLineId))) {
       return;
     }
-    const label = line.kind === "charge" ? `${line.landedCostNumber ?? ""} · ${line.itemCode}` : `${line.itemCode} · ${line.receiptNumber ?? line.orderNumber ?? ""}`;
-    setForm({ ...form, currency: form.currency || line.currency, lines: [...form.lines, { kind: line.kind, receiptLineId: line.receiptLineId ?? "", orderLineId: line.orderLineId ?? "", landedCostChargeId: line.landedCostChargeId ?? "", label, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "" }] });
+    const label = line.kind === "charge" ? `${line.landedCostNumber ?? ""} · ${line.itemCode}` : `${line.itemCode} · ${line.returnNumber ?? line.receiptNumber ?? line.orderNumber ?? ""}`;
+    setForm({ ...form, currency: form.currency || line.currency, lines: [...form.lines, { kind: line.kind, receiptLineId: line.kind === "return" ? "" : (line.receiptLineId ?? ""), orderLineId: line.orderLineId ?? "", landedCostChargeId: line.landedCostChargeId ?? "", returnLineId: line.returnLineId ?? "", label, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "" }] });
   };
-  const addExpense = (): void => { if (form) { setForm({ ...form, lines: [...form.lines, { kind: "expense", receiptLineId: "", orderLineId: "", landedCostChargeId: "", label: "", quantity: "1", unitPrice: "", description: "" }] }); } };
+  const addExpense = (): void => { if (form) { setForm({ ...form, lines: [...form.lines, { kind: "expense", receiptLineId: "", orderLineId: "", landedCostChargeId: "", returnLineId: "", label: "", quantity: "1", unitPrice: "", description: "" }] }); } };
+  const offered = (invoicable.data ?? []).filter((line) => (form?.kind === "debit_note" ? line.kind === "return" : line.kind !== "return"));
   const patchLine = (index: number, change: Partial<InvoiceLineForm>): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, ...change } : l)) }); } };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
   const i = detail.data;
@@ -180,9 +200,10 @@ export function InvoicesPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("purchasing.kind")}>
-                  <SelectField value={form.kind} onChange={(e) => { setForm({ ...form, kind: e.target.value, lines: e.target.value === "expense" ? form.lines.filter((l) => l.kind === "expense") : form.lines }); }} data-testid="invoice-kind">
+                  <SelectField value={form.kind} onChange={(e) => { setForm({ ...form, kind: e.target.value, lines: e.target.value === "expense" ? form.lines.filter((l) => l.kind === "expense") : e.target.value === "debit_note" ? form.lines.filter((l) => l.kind === "expense" || l.kind === "return") : form.lines.filter((l) => l.kind !== "return") }); }} data-testid="invoice-kind">
                     <option value="invoice">{t("purchasing.kinds.invoice")}</option>
                     <option value="expense">{t("purchasing.kinds.expense")}</option>
+                    <option value="debit_note">{t("purchasing.kinds.debit_note")}</option>
                   </SelectField>
                 </Field>
                 <Field label={t("purchasing.supplierReference")}>
@@ -199,18 +220,18 @@ export function InvoicesPage() {
                   {t("purchasing.applyWht")}
                 </label>
               </div>
-              {form.kind === "invoice" && form.partnerId ? (
+              {form.kind !== "expense" && form.partnerId ? (
                 <div className="flex flex-col gap-2 rounded-md border border-border p-3" data-testid="invoicable">
                   <h3 className="text-sm font-semibold">{t("purchasing.invoicable")}</h3>
-                  {(invoicable.data ?? []).length === 0 ? <p className="text-xs text-fg-muted">{t("purchasing.nothingInvoicable")}</p> : (
+                  {offered.length === 0 ? <p className="text-xs text-fg-muted">{t("purchasing.nothingInvoicable")}</p> : (
                     <ul className="flex flex-col gap-1 text-sm">
-                      {(invoicable.data ?? []).map((line) => (
-                        <li key={line.receiptLineId ?? line.landedCostChargeId ?? line.orderLineId} className="flex flex-wrap items-center gap-3">
-                          <Badge tone={line.kind === "receipt" ? "info" : line.kind === "charge" ? "warning" : "neutral"}>{t(`purchasing.lineKinds.${line.kind}`)}</Badge>
-                          <span dir="ltr">{line.receiptNumber ?? line.landedCostNumber ?? line.orderNumber}</span>
+                      {offered.map((line) => (
+                        <li key={line.returnLineId ?? line.receiptLineId ?? line.landedCostChargeId ?? line.orderLineId} className="flex flex-wrap items-center gap-3">
+                          <Badge tone={line.kind === "receipt" ? "info" : line.kind === "charge" || line.kind === "return" ? "warning" : "neutral"}>{t(`purchasing.lineKinds.${line.kind}`)}</Badge>
+                          <span dir="ltr">{line.returnNumber ?? line.receiptNumber ?? line.landedCostNumber ?? line.orderNumber}</span>
                           <span dir="auto">{line.itemCode} · {localized(line.itemName)}</span>
                           <span className="tabular" dir="ltr">{formatNumber(line.remaining, { maximumFractionDigits: 3 })} {line.uomCode} × {formatNumber(line.unitPrice, { maximumFractionDigits: 4 })} {line.currency}</span>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => { addInvoicable(line); }} data-testid={`add-invoicable-${line.itemCode}${line.kind === "charge" ? "-charge" : ""}`}>{t("purchasing.addLine")}</Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => { addInvoicable(line); }} data-testid={`add-invoicable-${line.itemCode}${line.kind === "charge" ? "-charge" : line.kind === "return" ? "-return" : ""}`}>{t("purchasing.addLine")}</Button>
                         </li>
                       ))}
                     </ul>
@@ -298,7 +319,7 @@ export function InvoicesPage() {
                       <TableRow key={l.id} data-testid="invoice-line-row">
                         <TableCell>{String(l.lineNo)}</TableCell>
                         <TableCell>{t(`purchasing.lineKinds.${l.kind}`)}</TableCell>
-                        <TableCell dir="auto">{l.kind === "expense" ? `${l.description ?? ""} (${l.accountRole ?? ""})` : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.receiptNumber ?? l.orderNumber ?? ""}`}</TableCell>
+                        <TableCell dir="auto">{l.kind === "expense" ? `${l.description ?? ""} (${l.accountRole ?? ""})` : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatNumber(l.quantity, { maximumFractionDigits: 3 })} {l.uomCode ?? ""}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatNumber(l.unitPrice, { maximumFractionDigits: 4 })}</TableCell>
                         <TableCell className="tabular" dir="ltr">{l.expectedUnitPrice === null ? "" : `${formatNumber(l.expectedUnitPrice, { maximumFractionDigits: 4 })}${l.priceVariancePct === null ? "" : ` (${formatNumber(l.priceVariancePct, { maximumFractionDigits: 2 })}%)`}`}</TableCell>
@@ -339,13 +360,67 @@ export function InvoicesPage() {
                           <TableCell>{String(o.instalment)}</TableCell>
                           <TableCell dir="ltr">{formatDate(o.dueDate)}</TableCell>
                           <TableCell className="tabular" dir="ltr">{formatMoney(o.originalTc, o.currency)}</TableCell>
-                          <TableCell className="tabular" dir="ltr">{formatMoney(o.remainingTc, o.currency)}</TableCell>
+                          <TableCell className="tabular" dir="ltr" data-testid="open-item-remaining">{formatMoney(o.remainingTc, o.currency)}</TableCell>
                           <TableCell><PurchaseStatus status={o.status} /></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 )
+              ) : null}
+              {tab === "payables" && i.kind === "debit_note" && i.status === "posted" && i.openItems[0]?.status === "open" ? (
+                <div className="flex flex-col gap-3 rounded-md border border-border p-3" data-testid="apply-credit">
+                  <h3 className="text-sm font-semibold">{t("purchasing.applyCredit")}</h3>
+                  <p className="text-xs text-fg-muted">{t("purchasing.applyCreditHelp")}</p>
+                  {credit ? (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <Field label={t("purchasing.appliedTo")} required>
+                        <SelectField value={credit.invoiceItemId} onChange={(e) => { setCredit({ ...credit, invoiceItemId: e.target.value }); }} data-testid="credit-target">
+                          <option value="">—</option>
+                          {(supplierItems.data ?? []).filter((o) => o.kind !== "debit_note" && o.currency === i.currency).map((o) => (
+                            <option key={o.id} value={o.id}>{o.documentNumber} · {formatMoney(o.remainingTc, o.currency)}</option>
+                          ))}
+                        </SelectField>
+                      </Field>
+                      <Field label={t("purchasing.creditAmount")} required>
+                        <TextField inputMode="decimal" value={credit.amount} onChange={(e) => { setCredit({ ...credit, amount: e.target.value }); }} dir="ltr" data-testid="credit-amount" />
+                      </Field>
+                      <div className="flex items-end gap-2">
+                        <Button type="button" variant="secondary" onClick={() => { setCredit(null); }}>{t("common.cancel")}</Button>
+                        <Button type="button" onClick={() => { const item = i.openItems[0]; if (item) { apply.mutate({ creditItemId: item.id, invoiceItemId: credit.invoiceItemId, amount: num(credit.amount) }); } }} loading={apply.isPending} disabled={!credit.invoiceItemId || num(credit.amount) <= 0} data-testid="confirm-apply-credit">{t("purchasing.applyCredit")}</Button>
+                      </div>
+                    </div>
+                  ) : <Button type="button" variant="secondary" onClick={() => { setCredit({ invoiceItemId: "", amount: String(Math.abs(Number(i.openItems[0]?.remainingTc ?? 0))) }); }} data-testid="start-apply-credit">{t("purchasing.applyCredit")}</Button>}
+                </div>
+              ) : null}
+              {tab === "payables" && i.status === "posted" ? (
+                <div className="flex flex-col gap-2" data-testid="settlements">
+                  <h3 className="text-sm font-semibold">{t("purchasing.settlements")}</h3>
+                  {(settlements.data ?? []).length === 0 ? <p className="text-xs text-fg-muted">{t("purchasing.noSettlements")}</p> : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t("purchasing.postingDate")}</TableHead>
+                          <TableHead>{t("purchasing.kind")}</TableHead>
+                          <TableHead>{t("purchasing.appliedTo")}</TableHead>
+                          <TableHead>{t("purchasing.amount")}</TableHead>
+                          <TableHead>{t("purchasing.fxGainLoss")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(settlements.data ?? []).map((st) => (
+                          <TableRow key={st.id} data-testid="settlement-row">
+                            <TableCell dir="ltr">{formatDate(st.settlementDate)}</TableCell>
+                            <TableCell>{st.kind}</TableCell>
+                            <TableCell dir="ltr">{st.settlingDocumentNumber} → {st.settledDocumentNumber}</TableCell>
+                            <TableCell className="tabular" dir="ltr">{formatMoney(st.amountTc, st.currency)}</TableCell>
+                            <TableCell className="tabular" dir="ltr">{formatMoney(st.fxGainLossFc, i.functionalCurrency)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
               ) : null}
               {reversal !== null ? (
                 <Field label={t("purchasing.reversalReason")} required>

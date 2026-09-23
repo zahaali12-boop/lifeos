@@ -23,6 +23,7 @@ public static class PurchasingModule
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Receipt, "app.pur_receipts", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Invoice, "app.pur_invoices", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.LandedCost, "app.pur_landed_cost_docs", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Return, "app.pur_returns", "custom_fields"));
         services.AddModuleDbContext<PurchasingDbContext>();
         services.AddScoped<RequisitionService>();
         services.AddScoped<RfqService>();
@@ -31,6 +32,7 @@ public static class PurchasingModule
         services.AddScoped<ReceiptService>();
         services.AddScoped<InvoiceService>();
         services.AddScoped<LandedCostService>();
+        services.AddScoped<ReturnService>();
         services.AddScoped<ITenantSetupStep, PurchasingDefaults>();
         services.AddScoped<IPurchaseReceiptDirectory>(static sp => sp.GetRequiredService<ReceiptService>());
         services.AddScoped<PurchasingSupply>();

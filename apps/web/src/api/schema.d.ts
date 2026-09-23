@@ -6224,6 +6224,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/invoices/open-items/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Applies a posted debit note to one of the supplier's invoice open items; a rate difference is booked as realised FX. */
+        post: operations["postPurchasingInvoicesOpenItemsApply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/invoices/settlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Settlements between payable open items (credit applications), optionally those touching one item. */
+        get: operations["getPurchasingInvoicesSettlements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/invoices/{invoiceId}": {
         parameters: {
             query?: never;
@@ -6285,6 +6319,91 @@ export interface paths {
         put?: never;
         /** Reverses a posted invoice as a whole. */
         post: operations["postPurchasingInvoicesByInvoiceIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Supplier returns of a company, optionally by status or receipt. */
+        get: operations["getPurchasingReturns"];
+        put?: never;
+        /** Drafts a return to the supplier against one posted receipt. */
+        post: operations["postPurchasingReturns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/returns/returnable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Posted receipt lines with a quantity still on hand that can go back to the supplier. */
+        get: operations["getPurchasingReturnsReturnable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/returns/{returnId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingReturnsByReturnId"];
+        put: operations["putPurchasingReturnsByReturnId"];
+        post?: never;
+        delete: operations["deletePurchasingReturnsByReturnId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/returns/{returnId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the return: stock out at the receipt's exact cost, GRNI relieved with the return as reference. */
+        post: operations["postPurchasingReturnsByReturnIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/returns/{returnId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted return that has not been credited: the goods come back at the same cost. */
+        post: operations["postPurchasingReturnsByReturnIdReverse"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6701,6 +6820,16 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             revokedAt: null | string;
+        };
+        ApplyCreditRequest: {
+            /** Format: uuid */
+            creditItemId: string;
+            /** Format: uuid */
+            invoiceItemId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: date */
+            settlementDate?: null | string;
         };
         /** @description Who approves: named members, or every active holder of a role (scoped to the document's company unless told otherwise). */
         ApproverSpecRequest: {
@@ -8287,6 +8416,9 @@ export interface components {
             /** Format: uuid */
             landedCostChargeId?: null | string;
             landedCostNumber?: null | string;
+            /** Format: uuid */
+            returnLineId?: null | string;
+            returnNumber?: null | string;
         };
         InvoiceLineSummary: {
             /** Format: uuid */
@@ -8334,6 +8466,9 @@ export interface components {
             /** Format: uuid */
             landedCostChargeId?: null | string;
             landedCostNumber?: null | string;
+            /** Format: uuid */
+            returnLineId?: null | string;
+            returnNumber?: null | string;
         };
         InvoiceSummary: {
             /** Format: uuid */
@@ -10408,6 +10543,115 @@ export interface components {
             token: string;
             password: string;
         };
+        /** @description A posted receipt line with something left to return, and what has already gone back. */
+        ReturnableLine: {
+            /** Format: uuid */
+            receiptId: string;
+            receiptNumber: string;
+            /** Format: uuid */
+            receiptLineId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            tracking: string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            received: number | string;
+            /** Format: double */
+            returned: number | string;
+            /** Format: double */
+            remaining: number | string;
+            lotNumber: null | string;
+            serialNumbers: string[];
+            /** Format: date */
+            postingDate: string;
+            /** Format: uuid */
+            warehouseId: string;
+        };
+        ReturnLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            receiptLineId: string;
+            /** Format: int32 */
+            receiptLineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: uuid */
+            binId: null | string;
+            lotNumber: null | string;
+            serialNumbers: string[];
+            reason: null | string;
+            /** Format: double */
+            costAmountFc: number | string;
+            /** Format: double */
+            creditedAmountFc: number | string;
+            /** Format: double */
+            qtyCredited: number | string;
+            /** Format: uuid */
+            sleId: null | string;
+        };
+        ReturnSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            receiptId: string;
+            receiptNumber: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: null | string;
+            /** Format: date */
+            postingDate: string;
+            currency: string;
+            functionalCurrency: string;
+            reason: null | string;
+            supplierRma: null | string;
+            /** Format: double */
+            totalCostFc: number | string;
+            /** Format: uuid */
+            stockPostingId: null | string;
+            reversalReason: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            lines: components["schemas"]["ReturnLineSummary"][];
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         RevaluationLineSummary: {
             /** Format: uuid */
             id: string;
@@ -10470,6 +10714,11 @@ export interface components {
             reversalDate?: null | string;
         };
         ReverseRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
+        ReverseReturnRequest: {
             reason: string;
             /** Format: date */
             reversalDate?: null | string;
@@ -11156,6 +11405,8 @@ export interface components {
             dimensionSetId?: null | string;
             /** Format: uuid */
             landedCostChargeId?: null | string;
+            /** Format: uuid */
+            returnLineId?: null | string;
         };
         SaveInvoiceRequest: {
             /** Format: uuid */
@@ -11641,6 +11892,31 @@ export interface components {
             departmentValueId?: null | string;
             /** Format: uuid */
             branchId?: null | string;
+            customFields?: unknown;
+        };
+        SaveReturnLineRequest: {
+            /** Format: uuid */
+            receiptLineId: string;
+            /** Format: double */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+            lotNumber?: null | string;
+            serialNumbers?: null | string[];
+            reason?: null | string;
+        };
+        SaveReturnRequest: {
+            /** Format: uuid */
+            receiptId: string;
+            lines: components["schemas"]["SaveReturnLineRequest"][];
+            /** Format: date */
+            postingDate?: null | string;
+            reason?: null | string;
+            supplierRma?: null | string;
+            notes?: null | string;
             customFields?: unknown;
         };
         SaveRevaluationLineRequest: {
@@ -12205,6 +12481,32 @@ export interface components {
             updatedBy: null | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        SettlementSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            settlingItemId: string;
+            settlingDocumentNumber: string;
+            /** Format: uuid */
+            settledItemId: string;
+            settledDocumentNumber: string;
+            /** Format: date */
+            settlementDate: string;
+            kind: string;
+            currency: string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            amountFcSettledItem: number | string;
+            /** Format: double */
+            amountFcSettlingItem: number | string;
+            /** Format: double */
+            fxGainLossFc: number | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: date-time */
+            createdAt: string;
         };
         ShipTransferRequest: {
             /** Format: date */
@@ -24682,6 +24984,53 @@ export interface operations {
             };
         };
     };
+    postPurchasingInvoicesOpenItemsApply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyCreditRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingInvoicesSettlements: {
+        parameters: {
+            query: {
+                companyId: string;
+                openItemId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementSummary"][];
+                };
+            };
+        };
+    };
     getPurchasingInvoicesByInvoiceId: {
         parameters: {
             query?: never;
@@ -24816,6 +25165,194 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingReturns: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                receiptId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingReturns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingReturnsReturnable: {
+        parameters: {
+            query: {
+                companyId: string;
+                receiptId?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnableLine"][];
+                };
+            };
+        };
+    };
+    getPurchasingReturnsByReturnId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingReturnsByReturnId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnSummary"];
+                };
+            };
+        };
+    };
+    deletePurchasingReturnsByReturnId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPurchasingReturnsByReturnIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingReturnsByReturnIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnSummary"];
                 };
             };
         };

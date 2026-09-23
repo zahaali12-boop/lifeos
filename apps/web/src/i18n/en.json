@@ -27,6 +27,7 @@
   },
   "nav": {
     "landedCosts": "Landed costs",
+    "returns": "Supplier returns",
     "invoices": "Supplier invoices",
     "receipts": "Goods receipts",
     "dashboard": "Dashboard",
@@ -1145,6 +1146,29 @@
     "emptyTermsDescription": "Create the first entry."
   },
   "purchasing": {
+    "returnsDescription": "Goods sent back to the supplier from a posted receipt at the exact cost they came in with; GRNI carries the return until the supplier's debit note credits it; reversible while nothing has been credited.",
+    "newReturn": "New return",
+    "editReturn": "Edit return",
+    "emptyReturns": "No returns yet",
+    "emptyReturnsDescription": "Send back quantities of a posted receipt.",
+    "postReturn": "Post return",
+    "supplierRma": "Supplier RMA",
+    "returnReason": "Reason",
+    "costValue": "Cost value",
+    "credited": "Credited",
+    "received": "Received",
+    "returnedSoFar": "Returned so far",
+    "returnNow": "Return now",
+    "nothingReturnable": "Nothing of this receipt is left to return.",
+    "chooseReceipt": "Choose a posted receipt to see its lines.",
+    "warehouse": "Warehouse",
+    "applyCredit": "Apply credit",
+    "applyCreditHelp": "Settle an open invoice of the same supplier with this debit note.",
+    "creditAmount": "Amount to apply",
+    "settlements": "Settlements",
+    "noSettlements": "Nothing applied yet.",
+    "fxGainLoss": "FX difference",
+    "appliedTo": "Applied to",
     "landedCostsDescription": "Freight, customs, duties, insurance and handling allocated to posted receipts by value, weight, volume or quantity: what is still on hand takes its share, what was already sold goes to cost of sales; estimates sit on the clearing account until the charge invoices settle them.",
     "newLandedCost": "New landed cost",
     "editLandedCost": "Edit landed cost",
@@ -1190,6 +1214,8 @@
     "kinds": {
       "invoice": "Invoice",
       "expense": "Expense"
+,
+      "debit_note": "Debit note"
     },
     "applyWht": "Withhold tax at invoice (supplier's code)",
     "invoicable": "Open for invoicing",
@@ -1200,6 +1226,8 @@
       "receipt": "Receipt",
       "order": "Service",
       "expense": "Expense"
+,
+      "return": "Return"
     },
     "matchStatuses": {
       "matched": "Matched",

@@ -42,15 +42,17 @@ public sealed class InvoiceService(
     IPostingService posting,
     IWorkflowEngine workflow,
     LandedCostService landedCosts,
+    ReturnService returns,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
 {
     public const string DocumentType = PurchaseDocumentTypes.Invoice;
 
-    public static readonly IReadOnlyList<string> Kinds = ["invoice", "expense"];
+    /// <summary>invoice and expense are payables; a debit_note is the supplier's credit for returned goods (or a credit on expenses) and books the other way round.</summary>
+    public static readonly IReadOnlyList<string> Kinds = ["invoice", "expense", "debit_note"];
 
-    public static readonly IReadOnlyList<string> LineKinds = ["receipt", "order", "expense", "charge"];
+    public static readonly IReadOnlyList<string> LineKinds = ["receipt", "order", "expense", "charge", "return"];
 
     public static readonly IReadOnlyList<string> BlockKinds = ["price_variance", "qty_variance", "duplicate_suspect"];
 
@@ -120,7 +122,146 @@ public sealed class InvoiceService(
         }
 
         result.AddRange(await landedCosts.OpenChargesAsync(companyId, partnerId, cancellationToken));
+        result.AddRange(await returns.CreditableAsync(companyId, partnerId, cancellationToken));
         return result;
+    }
+
+    public async Task<IReadOnlyList<SettlementSummary>> SettlementsAsync(Guid companyId, Guid? openItemId, CancellationToken cancellationToken)
+    {
+        var query = db.Settlements.AsNoTracking().Where(s => s.CompanyId == companyId);
+        if (openItemId is { } o)
+        {
+            query = query.Where(s => s.SettlingItemId == o || s.SettledItemId == o);
+        }
+
+        var rows = await query.OrderByDescending(static s => s.SettlementDate).ThenByDescending(static s => s.CreatedAt).Take(500).ToListAsync(cancellationToken);
+        var itemIds = rows.Select(static s => s.SettlingItemId).Concat(rows.Select(static s => s.SettledItemId)).Distinct().ToList();
+        var numbers = await db.OpenItems.AsNoTracking().Where(i => itemIds.Contains(i.Id)).ToDictionaryAsync(static i => i.Id, static i => i.DocumentNumber, cancellationToken);
+        return rows.Select(s => new SettlementSummary(s.Id, s.SettlingItemId, numbers.GetValueOrDefault(s.SettlingItemId, string.Empty), s.SettledItemId, numbers.GetValueOrDefault(s.SettledItemId, string.Empty), s.SettlementDate, s.Kind, s.Currency, s.AmountTc, s.AmountFcSettledItem, s.AmountFcSettlingItem, s.FxGainLossFc, s.JournalEntryId, s.CreatedAt)).ToList();
+    }
+
+    /// <summary>
+    /// Applies a posted debit note's credit to one of the same supplier's payable open items (POSTING_RULES "Credit application"):
+    /// both items are settled by the amount in the transaction currency; where the two were booked at different rates the
+    /// difference in the company's currency is realised FX, booked Dr/Cr AP (the subledger reference of each item) against
+    /// FX gain or loss, so the payables control account keeps matching the open items.
+    /// </summary>
+    public async Task<Result<SettlementSummary>> ApplyCreditAsync(ApplyCreditRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.Amount <= 0m)
+        {
+            return Error.Validation("settlement.amount_invalid", "The amount applied is positive.").WithWhy(("amount", request.Amount));
+        }
+
+        var credit = await db.OpenItems.SingleOrDefaultAsync(i => i.Id == request.CreditItemId, cancellationToken);
+        var payable = await db.OpenItems.SingleOrDefaultAsync(i => i.Id == request.InvoiceItemId, cancellationToken);
+        if (credit is null || payable is null)
+        {
+            return Error.NotFound("open_item", credit is null ? request.CreditItemId : request.InvoiceItemId);
+        }
+
+        if (credit.Kind != "debit_note" || payable.Kind == "debit_note")
+        {
+            return Error.Validation("settlement.kinds_invalid", "A debit note is applied to an invoice open item.").WithWhy(("creditKind", credit.Kind), ("invoiceKind", payable.Kind));
+        }
+
+        if (credit.CompanyId != payable.CompanyId || credit.PartnerId != payable.PartnerId)
+        {
+            return Error.Validation("settlement.partner_mismatch", "Both items belong to the same supplier and company.");
+        }
+
+        if (!string.Equals(credit.Currency, payable.Currency, StringComparison.Ordinal))
+        {
+            return Error.Validation("settlement.currency_mismatch", "A credit is applied in its own currency.").WithWhy(("creditCurrency", credit.Currency), ("invoiceCurrency", payable.Currency));
+        }
+
+        if (credit.Status != "open" || payable.Status != "open")
+        {
+            return Error.Conflict("settlement.item_closed", "Only open items are settled.").WithWhy(("creditStatus", credit.Status), ("invoiceStatus", payable.Status));
+        }
+
+        if (payable.PaymentBlocked)
+        {
+            return Error.Conflict("settlement.item_blocked", "The invoice is blocked for settlement.").WithWhy(("reason", payable.BlockReason));
+        }
+
+        var available = -credit.RemainingTc;
+        if (request.Amount > available || request.Amount > payable.RemainingTc)
+        {
+            return Error.Validation("settlement.amount_exceeds", "The amount exceeds what is open on one of the items.").WithWhy(("amount", request.Amount), ("creditRemaining", available), ("invoiceRemaining", payable.RemainingTc));
+        }
+
+        var company = await companies.FindAsync(new CompanyId(payable.CompanyId), cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", payable.CompanyId);
+        }
+
+        var settlementDate = request.SettlementDate ?? clock.TodayIn(company.TimeZone);
+        if (settlementDate < payable.PostingDate || settlementDate < credit.PostingDate)
+        {
+            return Error.Validation("settlement.date_before_items", "A settlement is not dated before the items it settles.").WithWhy(("settlementDate", settlementDate), ("invoiceDate", payable.PostingDate), ("creditDate", credit.PostingDate));
+        }
+
+        var fullPayable = request.Amount == payable.RemainingTc;
+        var fullCredit = request.Amount == available;
+        var payableFc = fullPayable ? payable.RemainingFc : Shared.Round(request.Amount * payable.BookedRate, company.FunctionalCurrency);
+        var creditFc = fullCredit ? -credit.RemainingFc : Shared.Round(request.Amount * credit.BookedRate, company.FunctionalCurrency);
+        var fx = payableFc - creditFc;
+        var settlement = new ApSettlement
+        {
+            Id = Guid.CreateVersion7(),
+            CompanyId = payable.CompanyId,
+            SettlingItemId = credit.Id,
+            SettledItemId = payable.Id,
+            SettlementDate = settlementDate,
+            Kind = "credit_application",
+            Currency = payable.Currency,
+            AmountTc = request.Amount,
+            AmountFcSettledItem = payableFc,
+            AmountFcSettlingItem = creditFc,
+            FxGainLossFc = fx,
+            CreatedBy = principal.Principal?.MembershipId.Value,
+            CreatedAt = clock.UtcNow,
+        };
+        if (fx != 0m)
+        {
+            // In the company's currency: the payable is relieved at its booked value, the credit at its own; the difference is realised gain (+) or loss (−).
+            var supplier = await partners.FindSupplierAsync(payable.CompanyId, payable.PartnerId, cancellationToken);
+            var lines = new List<PostingLine>
+            {
+                new(AccountRoles.AP, payableFc, new PostingKeys("ap_settlement", PartnerPostingGroupId: supplier?.PostingGroupId), SubledgerType: SubledgerTypes.Payables, SubledgerRef: payable.DocumentId, PartnerId: payable.PartnerId),
+                new(AccountRoles.AP, -creditFc, new PostingKeys("ap_settlement", PartnerPostingGroupId: supplier?.PostingGroupId), SubledgerType: SubledgerTypes.Payables, SubledgerRef: credit.DocumentId, PartnerId: payable.PartnerId),
+                new(fx > 0m ? AccountRoles.FxGainRealized : AccountRoles.FxLossRealized, -fx, new PostingKeys("ap_settlement"), PartnerId: payable.PartnerId),
+            };
+            var description = LocalizedText.Bilingual($"Credit {credit.DocumentNumber} applied to {payable.DocumentNumber}", $"تطبيق إشعار {credit.DocumentNumber} على {payable.DocumentNumber}");
+            var posted = await posting.PostAsync(new PostingRequest(company.Id, "purchasing", "ap_settlement", settlement.Id, settlementDate, company.FunctionalCurrency.Code, lines, $"{credit.DocumentNumber}→{payable.DocumentNumber}", settlementDate, description,
+                payable.BranchId is { } b ? new BranchId(b) : null, RateTypes.Spot, null, null, $"ap_settlement:{settlement.Id}"), cancellationToken);
+            if (posted.IsFailure)
+            {
+                return posted.Error!;
+            }
+
+            settlement.JournalEntryId = posted.Value.EntryId;
+        }
+
+        Settle(payable, request.Amount, payableFc);
+        Settle(credit, -request.Amount, -creditFc);
+        db.Settlements.Add(settlement);
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry("ap_settlement", settlement.Id, $"{credit.DocumentNumber}→{payable.DocumentNumber}", AuditActions.Posted, After: new { settlement.AmountTc, settlement.Currency, settlement.FxGainLossFc, creditRemaining = credit.RemainingTc, invoiceRemaining = payable.RemainingTc }, CompanyId: payable.CompanyId), cancellationToken);
+        return new SettlementSummary(settlement.Id, credit.Id, credit.DocumentNumber, payable.Id, payable.DocumentNumber, settlement.SettlementDate, settlement.Kind, settlement.Currency, settlement.AmountTc, settlement.AmountFcSettledItem, settlement.AmountFcSettlingItem, settlement.FxGainLossFc, settlement.JournalEntryId, settlement.CreatedAt);
+    }
+
+    private void Settle(ApOpenItem item, decimal amountTc, decimal amountFc)
+    {
+        item.SettledTc += amountTc;
+        item.SettledFc += amountFc;
+        item.RemainingTc -= amountTc;
+        item.RemainingFc -= amountFc;
+        item.Status = item.RemainingTc == 0m ? "settled" : "open";
+        item.UpdatedAt = clock.UtcNow;
     }
 
     public async Task<IReadOnlyList<OpenItemSummary>> OpenItemsAsync(Guid companyId, Guid? partnerId, string? status, CancellationToken cancellationToken)
@@ -389,6 +530,19 @@ public sealed class InvoiceService(
         var receipts = await db.Receipts.Where(r => receiptIds.Contains(r.Id)).ToDictionaryAsync(static r => r.Id, cancellationToken);
         var orderLineIds = invoice.Lines.Where(static l => l.OrderLineId is not null).Select(static l => l.OrderLineId!.Value).Distinct().ToList();
         var orderLines = await db.OrderLines.Where(l => orderLineIds.Contains(l.Id)).ToDictionaryAsync(static l => l.Id, cancellationToken);
+        var returnLineIds = invoice.Lines.Where(static l => l.ReturnLineId is not null).Select(static l => l.ReturnLineId!.Value).ToList();
+        var returnLines = await db.ReturnLines.Where(l => returnLineIds.Contains(l.Id)).ToDictionaryAsync(static l => l.Id, cancellationToken);
+        var returnIds = returnLines.Values.Select(static l => l.ReturnId).Distinct().ToList();
+        var supplierReturns = await db.Returns.Where(r => returnIds.Contains(r.Id)).ToDictionaryAsync(static r => r.Id, cancellationToken);
+        var sign = invoice.Kind == "debit_note" ? -1m : 1m;
+        var sameCurrency = string.Equals(invoice.Currency, company.FunctionalCurrency.Code, StringComparison.Ordinal);
+        var currency = await Shared.CurrencyAsync(companies, invoice.Currency, company.FunctionalCurrency.Code, "invoice", cancellationToken);
+        if (currency.IsFailure)
+        {
+            return currency.Error!;
+        }
+
+        var returnCostFc = new Dictionary<Guid, decimal>();
 
         // 1. The costing engine settles each receipt entry at the invoice price (in the company's currency, per received unit).
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "receipt"))
@@ -437,15 +591,37 @@ public sealed class InvoiceService(
                         break;
                     }
 
+                case "return":
+                    {
+                        // The return relieved GRNI at the goods' cost with the return as subledger reference; the supplier's credit clears that
+                        // cost and what it credits above or below it is a purchase price variance (the goods are gone, nothing is left to re-price).
+                        var returnLine = returnLines[line.ReturnLineId!.Value];
+                        var ret = supplierReturns[returnLine.ReturnId];
+                        var item = await items.FindAsync(returnLine.ItemId, cancellationToken);
+                        var remainingQty = returnLine.Quantity - returnLine.QtyCredited - invoice.Lines.Where(l => l.ReturnLineId == returnLine.Id && l.LineNo < line.LineNo).Sum(static l => l.Quantity);
+                        var remainingCostFc = returnLine.CostAmountFc - returnLine.CreditedAmountFc - returnCostFc.Where(kv => invoice.Lines.Single(l => l.Id == kv.Key).ReturnLineId == returnLine.Id).Sum(static kv => kv.Value);
+                        var costShareFc = remainingQty <= 0m ? 0m : line.Quantity >= remainingQty ? remainingCostFc : Shared.Round(remainingCostFc * line.Quantity / remainingQty, company.FunctionalCurrency);
+                        var costTc = sameCurrency ? costShareFc : Shared.Round(costShareFc / rate.Value, currency.Value);
+                        returnCostFc[line.Id] = costShareFc;
+                        postingLines.Add(new PostingLine(AccountRoles.GRNI, -costTc, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: ret.WarehouseId), SubledgerType: SubledgerTypes.GoodsReceivedNotInvoiced, SubledgerRef: ret.Id, PartnerId: invoice.PartnerId));
+                        var variance = line.NetAmount - costTc;
+                        if (variance != 0m)
+                        {
+                            postingLines.Add(new PostingLine(AccountRoles.PurchasePriceVariance, -variance, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: ret.WarehouseId), PartnerId: invoice.PartnerId, Description: LocalizedText.Bilingual($"Return {ret.Number} credited at {line.UnitPrice:0.##} against cost", $"إشعار على المرتجع {ret.Number} بسعر {line.UnitPrice:0.##} مقابل الكلفة")));
+                        }
+
+                        break;
+                    }
+
                 default:
-                    postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
+                    postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, sign * line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
                     break;
             }
         }
 
         if (invoice.TotalTax > 0m)
         {
-            postingLines.Add(new PostingLine(AccountRoles.InputTax, invoice.TotalTax, new PostingKeys(DocumentType), PartnerId: invoice.PartnerId));
+            postingLines.Add(new PostingLine(AccountRoles.InputTax, sign * invoice.TotalTax, new PostingKeys(DocumentType), PartnerId: invoice.PartnerId));
         }
 
         if (invoice.TotalWht > 0m)
@@ -453,9 +629,11 @@ public sealed class InvoiceService(
             postingLines.Add(new PostingLine(AccountRoles.WhtPayable, -invoice.TotalWht, new PostingKeys(DocumentType), PartnerId: invoice.PartnerId));
         }
 
-        postingLines.Add(new PostingLine(AccountRoles.AP, -invoice.TotalPayable, new PostingKeys(DocumentType, PartnerPostingGroupId: supplier?.PostingGroupId), SubledgerType: SubledgerTypes.Payables, SubledgerRef: invoice.Id, PartnerId: invoice.PartnerId, DueDate: invoice.DueDate));
-        var description = LocalizedText.Bilingual($"Supplier invoice {invoice.Number}" + (invoice.SupplierInvoiceNumber is null ? string.Empty : $" ({invoice.SupplierInvoiceNumber})"), $"فاتورة مورد {invoice.Number}" + (invoice.SupplierInvoiceNumber is null ? string.Empty : $" ({invoice.SupplierInvoiceNumber})"));
-        var sameCurrency = string.Equals(invoice.Currency, company.FunctionalCurrency.Code, StringComparison.Ordinal);
+        postingLines.Add(new PostingLine(AccountRoles.AP, -sign * invoice.TotalPayable, new PostingKeys(DocumentType, PartnerPostingGroupId: supplier?.PostingGroupId), SubledgerType: SubledgerTypes.Payables, SubledgerRef: invoice.Id, PartnerId: invoice.PartnerId, DueDate: invoice.DueDate));
+        var reference = invoice.SupplierInvoiceNumber is null ? string.Empty : $" ({invoice.SupplierInvoiceNumber})";
+        var description = invoice.Kind == "debit_note"
+            ? LocalizedText.Bilingual($"Supplier debit note {invoice.Number}{reference}", $"إشعار مدين للمورد {invoice.Number}{reference}")
+            : LocalizedText.Bilingual($"Supplier invoice {invoice.Number}{reference}", $"فاتورة مورد {invoice.Number}{reference}");
         var posted = await posting.PostAsync(new PostingRequest(company.Id, "purchasing", DocumentType, invoice.Id, invoice.PostingDate, invoice.Currency, postingLines, invoice.Number, invoice.DocumentDate, description,
             invoice.BranchId is { } b ? new BranchId(b) : null, RateTypes.Spot, sameCurrency ? null : rate.Value, sameCurrency ? null : "Invoice rate", $"purchase_invoice:{invoice.Id}"), cancellationToken);
         if (posted.IsFailure)
@@ -490,6 +668,22 @@ public sealed class InvoiceService(
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "expense"))
         {
             line.NetAmountFc = Shared.Round(line.NetAmount * rate.Value, company.FunctionalCurrency);
+        }
+
+        // Return lines: what the supplier credited, allocated from the GRNI credits actually booked per return.
+        foreach (var group in invoice.Lines.Where(static l => l.Kind == "return").GroupBy(l => returnLines[l.ReturnLineId!.Value].ReturnId))
+        {
+            var bookedFc = posted.Value.Lines.Where(l => l.SubledgerType == SubledgerTypes.GoodsReceivedNotInvoiced && l.SubledgerRef == group.Key).Sum(static l => l.CreditFc - l.DebitFc);
+            var lines = group.ToList();
+            var weights = lines.Select(l => returnCostFc.GetValueOrDefault(l.Id)).ToList();
+            var shares = weights.Sum() == 0m ? lines.Select(_ => new Money(0m, company.FunctionalCurrency)).ToList() : RoundingPolicy.Default.Allocate(new Money(bookedFc, company.FunctionalCurrency), weights);
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var returnLine = returnLines[lines[i].ReturnLineId!.Value];
+                lines[i].NetAmountFc = Shared.Round(lines[i].NetAmount * rate.Value, company.FunctionalCurrency);
+                returnLine.QtyCredited += lines[i].Quantity;
+                returnLine.CreditedAmountFc += shares[i].Amount;
+            }
         }
 
         // Charge lines settle their landed-cost estimates at what was booked on the clearing account; a difference lands on the same receipt lines.
@@ -541,7 +735,7 @@ public sealed class InvoiceService(
                 Id = Guid.CreateVersion7(),
                 CompanyId = invoice.CompanyId,
                 PartnerId = invoice.PartnerId,
-                Kind = "invoice",
+                Kind = invoice.Kind == "debit_note" ? "debit_note" : "invoice",
                 DocumentType = DocumentType,
                 DocumentId = invoice.Id,
                 DocumentNumber = invoice.Number,
@@ -553,11 +747,11 @@ public sealed class InvoiceService(
                 DiscountDate = instalment.DiscountUntil,
                 DiscountPct = instalment.DiscountPct,
                 Currency = invoice.Currency,
-                OriginalTc = instalment.Amount,
-                OriginalFc = Shared.Round(instalment.Amount * rate.Value, company.FunctionalCurrency),
+                OriginalTc = sign * instalment.Amount,
+                OriginalFc = sign * Shared.Round(instalment.Amount * rate.Value, company.FunctionalCurrency),
                 BookedRate = rate.Value,
-                RemainingTc = instalment.Amount,
-                RemainingFc = Shared.Round(instalment.Amount * rate.Value, company.FunctionalCurrency),
+                RemainingTc = sign * instalment.Amount,
+                RemainingFc = sign * Shared.Round(instalment.Amount * rate.Value, company.FunctionalCurrency),
                 JournalEntryId = posted.Value.EntryId,
                 BranchId = invoice.BranchId,
                 Status = "open",
@@ -639,6 +833,15 @@ public sealed class InvoiceService(
             orderLines[line.OrderLineId!.Value].QtyInvoiced -= line.Quantity;
         }
 
+        var returnLineIds = invoice.Lines.Where(static l => l.ReturnLineId is not null).Select(static l => l.ReturnLineId!.Value).ToList();
+        var returnLines = await db.ReturnLines.Where(l => returnLineIds.Contains(l.Id)).ToDictionaryAsync(static l => l.Id, cancellationToken);
+        foreach (var line in invoice.Lines.Where(static l => l.Kind == "return"))
+        {
+            var returnLine = returnLines[line.ReturnLineId!.Value];
+            returnLine.QtyCredited -= line.Quantity;
+            returnLine.CreditedAmountFc -= line.NetAmountFc;
+        }
+
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "charge"))
         {
             var unsettled = await landedCosts.SettleChargeAsync(line.LandedCostChargeId!.Value, line.Id, 0m, reversed.Value.PostingDate, $"Charge invoice {invoice.Number} reversed: {reason}", -1, cancellationToken);
@@ -699,7 +902,7 @@ public sealed class InvoiceService(
     {
         if (!Kinds.Contains(request.Kind, StringComparer.Ordinal))
         {
-            return Error.Validation("invoice.kind_invalid", "The kind is invoice or expense.").WithWhy(("kind", request.Kind));
+            return Error.Validation("invoice.kind_invalid", "The kind is invoice, expense or debit_note.").WithWhy(("kind", request.Kind));
         }
 
         if (request.Lines is null || request.Lines.Count == 0)
@@ -739,7 +942,8 @@ public sealed class InvoiceService(
             return rate.Error!;
         }
 
-        var whtCodeId = request.ApplyWht ? request.WhtCodeId ?? supplier.WhtCodeId : null;
+        // A debit note carries no withholding: the tax was withheld on the invoice it credits and is settled with the authority as withheld.
+        var whtCodeId = request.ApplyWht && request.Kind != "debit_note" ? request.WhtCodeId ?? supplier.WhtCodeId : null;
         WhtCodeInfo? wht = null;
         if (whtCodeId is { } w)
         {
@@ -763,6 +967,16 @@ public sealed class InvoiceService(
             if (request.Kind == "expense" && l.Kind != "expense")
             {
                 return Error.Validation("invoice.expense_lines_only", "An expense invoice carries expense lines only.").WithWhy(("lineNo", lineNo));
+            }
+
+            if (request.Kind == "debit_note" && l.Kind is not ("return" or "expense"))
+            {
+                return Error.Validation("invoice.debit_note_lines_only", "A debit note credits returned goods or expense accounts only.").WithWhy(("lineNo", lineNo), ("kind", l.Kind));
+            }
+
+            if (request.Kind != "debit_note" && l.Kind == "return")
+            {
+                return Error.Validation("invoice.return_needs_debit_note", "Returned goods are credited on a debit note.").WithWhy(("lineNo", lineNo));
             }
 
             if (l.Quantity <= 0m || l.UnitPrice < 0m || l.DiscountPct is < 0m or > 100m)
@@ -878,6 +1092,44 @@ public sealed class InvoiceService(
                         break;
                     }
 
+                case "return":
+                    {
+                        if (l.ReturnLineId is null)
+                        {
+                            return Error.Validation("invoice.return_line_required", "A return line names the return line it credits.").WithWhy(("lineNo", lineNo));
+                        }
+
+                        var returnLine = await db.ReturnLines.AsNoTracking().SingleOrDefaultAsync(x => x.Id == l.ReturnLineId, cancellationToken);
+                        var ret = returnLine is null ? null : await db.Returns.AsNoTracking().SingleOrDefaultAsync(r => r.Id == returnLine.ReturnId, cancellationToken);
+                        if (returnLine is null || ret is null || ret.CompanyId != request.CompanyId || ret.PartnerId != request.PartnerId)
+                        {
+                            return Error.Validation("invoice.return_line_unknown", "The return line does not belong to this supplier and company.").WithWhy(("lineNo", lineNo), ("returnLineId", l.ReturnLineId));
+                        }
+
+                        if (ret.Status != "posted")
+                        {
+                            return Error.Conflict("invoice.return_not_posted", "Only posted returns are credited.").WithWhy(("lineNo", lineNo), ("return", ret.Number), ("status", ret.Status));
+                        }
+
+                        if (!string.Equals(ret.Currency, currency.Value.Code, StringComparison.Ordinal))
+                        {
+                            return Error.Validation("invoice.currency_mismatch", "A matched line is invoiced in the order's currency.").WithWhy(("lineNo", lineNo), ("orderCurrency", ret.Currency), ("invoiceCurrency", currency.Value.Code));
+                        }
+
+                        var creditable = returnLine.Quantity - returnLine.QtyCredited + lines.Where(x => x.ReturnLineId == returnLine.Id).Sum(static x => -x.Quantity);
+                        if (l.Quantity > creditable)
+                        {
+                            return Error.Validation("invoice.return_over_credited", "More is credited than was returned.").WithWhy(("lineNo", lineNo), ("return", ret.Number), ("creditable", creditable), ("quantity", l.Quantity));
+                        }
+
+                        var receiptLine = await db.ReceiptLines.AsNoTracking().SingleAsync(x => x.Id == returnLine.ReceiptLineId, cancellationToken);
+                        line.ReturnLineId = returnLine.Id;
+                        line.ItemId = returnLine.ItemId;
+                        line.UomId = returnLine.UomId;
+                        line.ExpectedUnitPrice = receiptLine.UnitPrice;
+                        break;
+                    }
+
                 default:
                     {
                         var role = Shared.Trim(l.AccountRole) ?? AccountRoles.PurchaseExpense;
@@ -949,7 +1201,8 @@ public sealed class InvoiceService(
 
     private async Task<Result<IReadOnlyList<Instalment>>> InstalmentsAsync(Invoice invoice, CancellationToken cancellationToken)
     {
-        if (invoice.PaymentTermsId is not { } termsId)
+        // A debit note is due at once: it is applied to invoices or refunded, never scheduled.
+        if (invoice.PaymentTermsId is not { } termsId || invoice.Kind == "debit_note")
         {
             return new List<Instalment> { new(invoice.DocumentDate, invoice.TotalPayable, null, 0m) };
         }
@@ -974,7 +1227,7 @@ public sealed class InvoiceService(
         {
             line.PriceVariancePct = null;
             line.QtyVariance = null;
-            if (line.Kind is "expense" or "charge")
+            if (line.Kind is "expense" or "charge" or "return")
             {
                 continue;
             }
@@ -1011,7 +1264,7 @@ public sealed class InvoiceService(
             details.Add(new { lineNo = line.LineNo, kind = line.Kind, expectedUnitPrice = expected, unitPrice = actual, priceVariancePct, priceVarianceAmount, remaining, quantity = line.Quantity, qtyVariance = line.QtyVariance, qtyAllowed, priceBreach = linePriceBreach, qtyBreach = lineQtyBreach });
         }
 
-        var matchedNet = invoice.Lines.Where(static l => l.Kind is not ("expense" or "charge")).Sum(static l => l.NetAmount);
+        var matchedNet = invoice.Lines.Where(static l => l.Kind is not ("expense" or "charge" or "return")).Sum(static l => l.NetAmount);
         result.PriceVariancePct = RoundingPolicy.Default.Round(matchedNet == 0m ? 0m : result.PriceVarianceAmount / (matchedNet - result.PriceVarianceAmount == 0m ? 1m : matchedNet - result.PriceVarianceAmount) * 100m, 6);
         var reference = invoice.SupplierInvoiceNumber is { } given ? given.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) : null;
         var duplicate = reference is not null
@@ -1086,12 +1339,15 @@ public sealed class InvoiceService(
         var orderNumbers = orderLineIds.Count == 0 ? new Dictionary<Guid, string>() : await (from l in db.OrderLines.AsNoTracking() join o in db.Orders.AsNoTracking() on new { l.TenantId, Id = l.OrderId } equals new { o.TenantId, o.Id } where orderLineIds.Contains(l.Id) select new { l.Id, o.Number }).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
         var chargeIds = i.Lines.Where(static l => l.LandedCostChargeId is not null).Select(static l => l.LandedCostChargeId!.Value).ToList();
         var chargeDocs = chargeIds.Count == 0 ? new Dictionary<Guid, string>() : await (from c in db.LandedCostCharges.AsNoTracking() join d in db.LandedCosts.AsNoTracking() on new { c.TenantId, Id = c.LandedCostId } equals new { d.TenantId, d.Id } where chargeIds.Contains(c.Id) select new { c.Id, d.Number }).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
+        var returnLineIds = i.Lines.Where(static l => l.ReturnLineId is not null).Select(static l => l.ReturnLineId!.Value).ToList();
+        var returnNumbers = returnLineIds.Count == 0 ? new Dictionary<Guid, string>() : await (from l in db.ReturnLines.AsNoTracking() join r in db.Returns.AsNoTracking() on new { l.TenantId, Id = l.ReturnId } equals new { r.TenantId, r.Id } where returnLineIds.Contains(l.Id) select new { l.Id, r.Number }).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
         var lines = new List<InvoiceLineSummary>(i.Lines.Count);
         foreach (var l in i.Lines.OrderBy(static l => l.LineNo))
         {
             var (item, uom) = l.ItemId is { } itemId && l.UomId is { } uomId ? await ItemAsync(itemId, uomId, cancellationToken) : (null, null);
             lines.Add(new InvoiceLineSummary(l.Id, l.LineNo, l.Kind, l.ReceiptLineId, l.ReceiptLineId is { } rl ? receiptNumbers.GetValueOrDefault(rl) : null, l.OrderLineId, l.OrderLineId is { } ol ? orderNumbers.GetValueOrDefault(ol) : null, l.ItemId, item?.Code, item?.Name.Values, l.AccountRole, l.Description,
-                l.Quantity, l.UomId, uom?.UomCode, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.WhtAmount, l.ExpectedUnitPrice, l.PriceVariancePct, l.QtyVariance, l.DimensionSetId, l.LandedCostChargeId, l.LandedCostChargeId is { } ch ? chargeDocs.GetValueOrDefault(ch) : null));
+                l.Quantity, l.UomId, uom?.UomCode, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.WhtAmount, l.ExpectedUnitPrice, l.PriceVariancePct, l.QtyVariance, l.DimensionSetId, l.LandedCostChargeId, l.LandedCostChargeId is { } ch ? chargeDocs.GetValueOrDefault(ch) : null,
+                l.ReturnLineId, l.ReturnLineId is { } rt ? returnNumbers.GetValueOrDefault(rt) : null));
         }
 
         var matches = (await db.MatchResults.AsNoTracking().Where(m => m.InvoiceId == i.Id).OrderByDescending(static m => m.MatchedAt).ToListAsync(cancellationToken))

@@ -259,17 +259,31 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
         var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
             "SELECT count(*) FROM app.pur_receipts WHERE status IN ('posted', 'reversed') AND (@company::uuid IS NULL OR company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
         var mismatches = (await uow.Connection.QueryAsync<GrniMismatch>(new CommandDefinition("""
-            WITH booked AS (
-              SELECT l.company_id, l.subledger_ref AS receipt_id, sum(l.credit_fc - l.debit_fc) AS booked
+            WITH refs AS (
+              -- GRNI is referenced by the receipt (receipt and invoice lines) or by a return of it (return and debit-note lines).
+              SELECT tenant_id, id AS ref, id AS receipt_id FROM app.pur_receipts
+              UNION ALL
+              SELECT tenant_id, id AS ref, receipt_id FROM app.pur_returns
+            ), booked AS (
+              SELECT l.company_id, x.receipt_id, sum(l.credit_fc - l.debit_fc) AS booked
               FROM app.gl_journal_lines l
-              JOIN app.pur_receipts pr ON pr.tenant_id = l.tenant_id AND pr.id = l.subledger_ref
+              JOIN refs x ON x.tenant_id = l.tenant_id AND x.ref = l.subledger_ref
               WHERE l.subledger_type = 'GRNI' AND (@company::uuid IS NULL OR l.company_id = @company)
               GROUP BY 1, 2
+            ), credited AS (
+              SELECT t.receipt_id, sum(tl.credited_amount_fc) AS credited
+              FROM app.pur_returns t
+              JOIN app.pur_return_lines tl ON tl.tenant_id = t.tenant_id AND tl.return_id = t.id
+              WHERE t.status = 'posted'
+              GROUP BY 1
             ), expected AS (
+              -- What is still owed on the receipt: received at expected cost, less what invoices settled, less what went back,
+              -- plus what the supplier credited for the returned goods (that credit cleared the return's relief of GRNI).
               SELECT r.company_id, r.id AS receipt_id, r.number,
-                     CASE WHEN r.status = 'posted' THEN coalesce(sum(rl.expected_cost_amount - rl.invoiced_cost_amount - rl.returned_cost_amount), 0) ELSE 0 END AS uninvoiced
+                     CASE WHEN r.status = 'posted' THEN coalesce(sum(rl.expected_cost_amount - rl.invoiced_cost_amount - rl.returned_cost_amount), 0) + coalesce(max(c.credited), 0) ELSE 0 END AS uninvoiced
               FROM app.pur_receipts r
               LEFT JOIN app.pur_receipt_lines rl ON rl.tenant_id = r.tenant_id AND rl.receipt_id = r.id
+              LEFT JOIN credited c ON c.receipt_id = r.id
               WHERE r.status IN ('posted', 'reversed') AND (@company::uuid IS NULL OR r.company_id = @company)
               GROUP BY 1, 2, 3, r.status
             ), keys AS (
@@ -284,7 +298,7 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             LIMIT @limit
             """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
         var problems = mismatches.Select(m => $"company {m.CompanyId} receipt {m.Number ?? m.ReceiptId.ToString()}: GRNI lines {N(m.Booked)}, uninvoiced receipt value {N(m.Uninvoiced)}").ToList();
-        return Result(InvariantCodes.GrniMatchesReceipts, checkedCount, problems, $"{checkedCount} receipt(s), GRNI equal to the uninvoiced receipt value for every one");
+        return Result(InvariantCodes.GrniMatchesReceipts, checkedCount, problems, $"{checkedCount} receipt(s), GRNI equal to the uninvoiced receipt value (net of returns and their credits) for every one");
     }
 
     private static InvariantResult Result(string code, long checkedCount, IReadOnlyList<string> problems, string summary) =>

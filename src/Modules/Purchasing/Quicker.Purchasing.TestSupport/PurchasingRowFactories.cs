@@ -55,6 +55,23 @@ public static class PurchasingRowFactories
             await c.ExecuteAsync("INSERT INTO app.ap_open_items (tenant_id, id, company_id, partner_id, kind, document_type, document_id, document_number, posting_date, document_date, due_date, currency, original_tc, original_fc, remaining_tc, remaining_fc) VALUES (@t, @id, @company, @partner, 'invoice', 'purchase_invoice', @invoice, @number, '2026-09-22', '2026-09-22', '2026-10-22', 'IQD', 10, 10, 10, 10)", new { t, id, company, partner, invoice, number = Suffix(id) }, tx);
             return new RowRef("app.ap_open_items", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.pur_returns", static async (c, tx, t) => new RowRef("app.pur_returns", $"id = '{(await ReturnAsync(c, tx, t)).Doc}'"));
+        IsolationRegistry.Register("app.pur_return_lines", static async (c, tx, t) => new RowRef("app.pur_return_lines", $"id = '{(await ReturnAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.ap_settlements", static async (c, tx, t) =>
+        {
+            var (invoice, _, company) = await InvoiceAsync(c, tx, t);
+            var partner = await c.ExecuteScalarAsync<Guid>("SELECT partner_id FROM app.pur_invoices WHERE tenant_id = @t AND id = @invoice", new { t, invoice }, tx);
+            var settling = Guid.CreateVersion7();
+            var settled = Guid.CreateVersion7();
+            foreach (var (item, kind, amount) in new[] { (settling, "debit_note", -10m), (settled, "invoice", 10m) })
+            {
+                await c.ExecuteAsync("INSERT INTO app.ap_open_items (tenant_id, id, company_id, partner_id, kind, document_type, document_id, document_number, posting_date, document_date, due_date, currency, original_tc, original_fc, remaining_tc, remaining_fc) VALUES (@t, @id, @company, @partner, @kind, 'purchase_invoice', @invoice, @number, '2026-09-22', '2026-09-22', '2026-10-22', 'IQD', @amount, @amount, @amount, @amount)", new { t, id = item, company, partner, kind, invoice, number = Suffix(item), amount }, tx);
+            }
+
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ap_settlements (tenant_id, id, company_id, settling_item_id, settled_item_id, settlement_date, kind, currency, amount_tc, amount_fc_settled_item, amount_fc_settling_item) VALUES (@t, @id, @company, @settling, @settled, '2026-09-22', 'credit_application', 'IQD', 1, 1, 1)", new { t, id, company, settling, settled }, tx);
+            return new RowRef("app.ap_settlements", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.pur_charge_types", static async (c, tx, t) => new RowRef("app.pur_charge_types", $"id = '{await ChargeTypeAsync(c, tx, t)}'"));
         IsolationRegistry.Register("app.pur_landed_cost_docs", static async (c, tx, t) => new RowRef("app.pur_landed_cost_docs", $"id = '{(await LandedCostAsync(c, tx, t)).Doc}'"));
         IsolationRegistry.Register("app.pur_landed_cost_charges", static async (c, tx, t) => new RowRef("app.pur_landed_cost_charges", $"id = '{(await LandedCostAsync(c, tx, t)).Charge}'"));
@@ -143,6 +160,17 @@ public static class PurchasingRowFactories
         await c.ExecuteAsync("INSERT INTO app.pur_invoices (tenant_id, id, company_id, number, partner_id, document_date, posting_date, currency) VALUES (@t, @id, @company, @number, @partner, '2026-09-22', '2026-09-22', 'IQD')", new { t, id, company, number = Suffix(id), partner }, tx);
         await c.ExecuteAsync("INSERT INTO app.pur_invoice_lines (tenant_id, id, invoice_id, line_no, kind, account_role, description, quantity, unit_price) VALUES (@t, @line, @id, 1, 'expense', 'PurchaseExpense', 'Probe', 1, 10)", new { t, line, id }, tx);
         return (id, line, company);
+    }
+
+    private static async Task<(Guid Doc, Guid Line)> ReturnAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (receipt, receiptLine) = await ReceiptAsync(c, tx, t);
+        var row = await c.QuerySingleAsync<(Guid Company, Guid Partner, Guid Warehouse, Guid Item, Guid Uom)>("SELECT r.company_id, r.partner_id, r.warehouse_id, l.item_id, l.uom_id FROM app.pur_receipt_lines l JOIN app.pur_receipts r ON r.tenant_id = l.tenant_id AND r.id = l.receipt_id WHERE l.tenant_id = @t AND l.id = @line", new { t, line = receiptLine }, tx);
+        var id = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.pur_returns (tenant_id, id, company_id, number, receipt_id, partner_id, warehouse_id, posting_date, currency) VALUES (@t, @id, @company, @number, @receipt, @partner, @warehouse, '2026-09-22', 'IQD')", new { t, id, row.Company, number = Suffix(id), receipt, row.Partner, row.Warehouse }, tx);
+        await c.ExecuteAsync("INSERT INTO app.pur_return_lines (tenant_id, id, return_id, line_no, receipt_line_id, item_id, quantity, uom_id, quantity_base) VALUES (@t, @line, @id, 1, @receiptLine, @item, 1, @uom, 1)", new { t, line, id, receiptLine, row.Item, row.Uom }, tx);
+        return (id, line);
     }
 
     private static async Task<Guid> ChargeTypeAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
