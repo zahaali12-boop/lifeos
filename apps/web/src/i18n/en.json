@@ -945,7 +945,9 @@
       "reapplied": "Re-applied",
       "adjusted": "Adjusted",
       "emptyTitle": "Nothing valued",
-      "emptyDescription": "No stock is valued for these filters at this date."
+      "emptyDescription": "No stock is valued for these filters at this date.",
+      "triggerKinds": { "stock_posting": "Back-dated movement", "invoice": "Invoice price", "landed_cost": "Landed cost", "revaluation": "Revaluation", "standard_cost": "Standard cost change", "inquiry": "Inquiry" },
+      "sourceDocuments": { "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "purchase_return": "Supplier return", "landed_cost": "Landed-cost document", "inventory_adjustment": "Adjustment", "inventory_transfer": "Transfer", "inventory_count": "Count", "inventory_revaluation": "Revaluation", "standard_cost": "Standard cost", "demo_opening": "Opening stock" }
     }
   },
   "workflow": {

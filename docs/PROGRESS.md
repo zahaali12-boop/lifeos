@@ -6,7 +6,7 @@ The single place a new session reads first (after `CLAUDE.md`). Keep it current:
 
 **Phase 0 (Blueprint): approved by the founder on 2026-09-22 (defaults accepted for Q1–Q8).**
 
-**M1 Foundations: complete** (report: `docs/reports/M1-founder-report.md`). **M2 Core accounting: complete** (report: `docs/reports/M2-founder-report.md`). **M3 Inventory: complete** (report: `docs/reports/M3-founder-report.md`). **M4 Procure to pay: complete** (slices 4.1–4.9; the founder report is next). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
+**M1 Foundations: complete** (report: `docs/reports/M1-founder-report.md`). **M2 Core accounting: complete** (report: `docs/reports/M2-founder-report.md`). **M3 Inventory: complete** (report: `docs/reports/M3-founder-report.md`). **M4 Procure to pay: complete** (report: `docs/reports/M4-founder-report.md`; paused for the founder's review). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
 
 Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.5), `claude/efficient-request-ajd9zy` (slice 1.6 onwards, built on top of it). Default branch: `main`.
 
@@ -86,7 +86,7 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 
 ## In progress
 
-- Nothing mid-slice: M4 is complete (4.9 was the last slice); the M4 founder report is next.
+- Nothing mid-slice: M4 is complete and reported; paused for the founder's review.
 
 ## Post-milestone fixes
 
@@ -100,10 +100,14 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 | 2026-09-23 | **Warning badges failed WCAG AA contrast** (4.42:1 for `--q-warning` #a16207 on its soft background) once a grid showed two "Partly settled" badges under axe; the token is now #854d0e (6.9:1), which also lifts the warning button's white text. |
 | 2026-09-23 | **Stock balances ordered non-deterministically for serials created in the same instant.** `GET /api/v1/inventory/stock/balances` ordered rows by lot and serial ids (UUIDv7: same-millisecond ids fall in random order), which showed up as a serial-history test failing only under load. Rows now order by lot number and serial number. Found while running the whole suite with the e2e in parallel during 4.4. |
 | 2026-09-23 | **A second company could not number receipts, supplier invoices, returns, landed costs, payments or payment proposals.** Those six services ensured their default numbering series with a bare code (`GRN`, `PI`, `RTN`, `LC`, `PAY`, `PP`), but series codes are unique in the tenant, so the first company took the code and every other company was left with no series (`series.none_applicable` on its first document). Every test used a single company, so it went unseen until the demo seed v4 ran procure-to-pay in all three demo companies. `EnsureDefaultSeriesAsync` now appends the company code (`GRN-IQT`), as orders, RFQs and journals already did; document numbers are unchanged (`GRN-2026-00001`), and series already created keep working because the lookup is by document type and company. Regression test: `A_default_series_is_ensured_for_every_company_of_the_tenant_not_only_the_first`. |
+| 2026-09-23 | **Cost adjustment runs showed a raw item id and raw trigger codes** on the valuation screen (found on the M3 screenshot review). Listed runs now carry the item code (`CostAdjustmentRunInfo.ItemCode`, additive) and the trigger and source document read as words in English and Arabic (`inventory.valuation.triggerKinds`, `.sourceDocuments`). |
+| 2026-09-23 | **Lots past their expiry date showed "Active"** until the daily `inventory.lots.expire` job ran (it had not in a freshly seeded demo). The stock rules already block such a lot by date; the lots screen and lot detail now show it as expired by date the same way, and the demo seed runs the expiry sweep before it commits, as the daily job would have. |
+| 2026-09-23 | **The demo's replenishment planner had nothing to suggest**: the v3 seed set every reorder point at the bottom of the family's opening range, so almost no row started below it (the code comment claimed the opposite). The reorder point now sits a third of the way into the range and the seed runs the planner once per company, so the screen opens on suggestions; the demo test asserts more than 50 open suggestions. |
+| 2026-09-23 | **The demo's transfer and count screens were empty.** `DemoOperations` adds, in the trading company, a Basra-to-Erbil transfer received two days after shipping, a second one in transit, a posted count of the Basra beverages with one counting difference and its reason, and a frozen full count of Erbil waiting for the counters (A-115). |
 
 ## Next
 
-1. The M4 founder report (`docs/reports/M4-founder-report.md`), then pause for review. M5 (order to cash) is reserved for the design-heavy pass per item 2.
+1. Founder review of M4 (`docs/reports/M4-founder-report.md`). M5 (order to cash) is reserved for the design-heavy pass per item 2; routine additive work continues on request.
 2. **Division of work (founder decision, 2026-09-23):** until further notice the routine, additive slices (reports and inquiries, demo seeds, screens over existing services, fixes) are built without changing the foundations laid so far (posting engine, costing, payables and banking settlement mechanics, invariants). The design-heavy work is reserved for a later, more capable pass: the order-to-cash design (M5: sales documents, pricing engine, receivables with realised FX), tax engine and returns, FX revaluation with auto-reversal (6.5), financial statements and the layout engine (6.10), consolidation and intercompany (M6), and any change to ADRs 0006/0017/0031.
 2. Open founder question Q9 (Iraq statutory code list) can be answered at any time; nothing built depends on it.
 

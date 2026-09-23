@@ -292,7 +292,8 @@ public sealed record CostAdjustmentRunInfo(
     Guid? JobId,
     string? Error,
     DateTimeOffset StartedAt,
-    DateTimeOffset? CompletedAt);
+    DateTimeOffset? CompletedAt,
+    string? ItemCode = null);
 
 public sealed record InboundCostAdjustmentResult(IReadOnlyList<StockValueEntryInfo> ValueEntries, Guid? JournalEntryId, CostAdjustmentRunInfo? Run);
 

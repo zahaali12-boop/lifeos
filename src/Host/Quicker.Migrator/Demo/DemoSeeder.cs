@@ -9,6 +9,7 @@ using Quicker.Identity.Domain;
 using Quicker.Identity.Persistence;
 using Quicker.Identity.Security;
 using Quicker.Integrity.Contracts;
+using Quicker.Inventory.Application;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Tenancy;
@@ -207,6 +208,18 @@ public static class DemoSeeder
 
         // A year of buying (roadmap 4.9): order history for prices, and the live month's procure-to-pay through the posting engine.
         var purchasing = await DemoPurchasing.SeedAsync(services, createdCompanies, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
+
+        // The live month in the warehouse: transfers (one received, one in transit) and counts (one posted, one frozen).
+        await DemoOperations.SeedAsync(services, createdCompanies, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
+
+        // What the daily expiry job would already have done: lots past their expiry date are marked expired and held.
+        await services.GetRequiredService<LotService>().ExpireAsync(clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
+
+        // One planner run per company, so the replenishment screen opens on suggestions that explain themselves.
+        foreach (var (_, company) in createdCompanies)
+        {
+            Require(await services.GetRequiredService<ReplenishmentService>().RunAsync(company.Id, null, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken));
+        }
 
         await services.GetRequiredService<IAuditSink>().RecordAsync(new AuditEntry("tenant", tenant.Id.Value, DemoData.Slug, "seeded",
             After: new { companies = DemoData.Companies.Count, branches, users = DemoData.Users.Count, rates = series.Count, journals = books.Journals, entries = books.Entries, warehouses = stock.Warehouses, items = stock.Items, variants = stock.Variants, lots = stock.Lots, serials = stock.Serials, stockLines = stock.StockLines, purchaseOrders = purchasing.Orders, supplierInvoices = purchasing.Invoices, supplierPayments = purchasing.Payments }), cancellationToken);

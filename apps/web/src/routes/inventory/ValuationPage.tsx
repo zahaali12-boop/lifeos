@@ -104,8 +104,8 @@ export function ValuationPage() {
             {(runs.data?.items ?? []).map((r) => (
               <TableRow key={r.id}>
                 <TableCell>{formatDateTime(r.startedAt)}</TableCell>
-                <TableCell>{r.triggerKind} · {r.triggerDocumentType}</TableCell>
-                <TableCell dir="ltr">{r.itemId}</TableCell>
+                <TableCell>{t(`inventory.valuation.triggerKinds.${r.triggerKind}`, { defaultValue: r.triggerKind })} · {t(`inventory.valuation.sourceDocuments.${r.triggerDocumentType}`, { defaultValue: r.triggerDocumentType })}</TableCell>
+                <TableCell dir="ltr">{r.itemCode ?? r.itemId}</TableCell>
                 <TableNumberCell>{String(r.entriesWalked)}</TableNumberCell>
                 <TableNumberCell>{String(r.entriesReapplied)}</TableNumberCell>
                 <TableNumberCell><Amount value={r.amountAdjusted} /></TableNumberCell>

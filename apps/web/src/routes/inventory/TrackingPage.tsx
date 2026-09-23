@@ -10,10 +10,16 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, formatDateTime } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { today } from "../accounting/shared";
 import { DocStatus, KeyValues, Qty, Tabs, findItemByCode } from "./shared";
 
 type Lot = components["schemas"]["LotInfo"];
 type Serial = components["schemas"]["SerialInfo"];
+
+/** An active lot past its expiry date is expired already (stock rules block it by date); the daily job only records it. */
+function lotStatus(lot: Lot): string {
+  return lot.status === "active" && lot.expiresOn && lot.expiresOn < today() ? "expired" : lot.status;
+}
 
 const lotStatuses = ["active", "quarantine", "recalled", "expired", "consumed"];
 const serialStatuses = ["in_stock", "in_transit", "sold", "returned", "in_repair", "scrapped", "consumed", "consigned"];
@@ -86,7 +92,7 @@ export function TrackingPage() {
       { id: "mfg", accessorKey: "manufacturedOn", header: t("inventory.tracking.manufactured"), size: 120, cell: ({ row }) => formatDate(row.original.manufacturedOn) },
       { id: "exp", accessorKey: "expiresOn", header: t("inventory.expiresOn"), size: 120, cell: ({ row }) => formatDate(row.original.expiresOn) },
       { id: "supplierLot", accessorKey: "supplierLot", header: t("inventory.tracking.supplierLot"), size: 130 },
-      { id: "status", accessorKey: "status", header: t("common.status"), size: 120, cell: ({ row }) => <DocStatus status={row.original.status} /> },
+      { id: "status", accessorKey: "status", header: t("common.status"), size: 120, cell: ({ row }) => <DocStatus status={lotStatus(row.original)} /> },
     ],
     [t],
   );
@@ -140,7 +146,7 @@ export function TrackingPage() {
           {lotDetail ? (
             <div className="flex flex-col gap-4" data-testid="lot-detail">
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <DocStatus status={lotDetail.lot.status} />
+                <DocStatus status={lotStatus(lotDetail.lot)} />
                 {lotDetail.lot.expiresOn ? <span className="text-fg-muted">{t("inventory.expiresOn")}: {formatDate(lotDetail.lot.expiresOn)}</span> : null}
                 {lotDetail.lot.statusReason ? <span className="text-fg-muted">{lotDetail.lot.statusReason}</span> : null}
                 {lotDetail.lot.recallReference ? <span className="text-danger">{t("inventory.tracking.recall")}: {lotDetail.lot.recallReference}</span> : null}

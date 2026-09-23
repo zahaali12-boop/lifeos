@@ -157,7 +157,12 @@ public sealed class CostInquiryService(InventoryDbContext db, IUnitOfWorkAccesso
             return result.Error!;
         }
 
-        return new Page<CostAdjustmentRunInfo>(result.Value.Items.Select(CostingService.Map).ToList(), result.Value.NextCursor);
+        // The item code for display (the list is read by people, not only by the engine).
+        var itemIds = result.Value.Items.Select(static r => r.ItemId).Distinct().ToArray();
+        var uow = unitOfWork.Current;
+        var codes = (await uow.Connection.QueryAsync<(Guid Id, string Code)>(new CommandDefinition(
+            "SELECT id, code FROM app.itm_items WHERE id = ANY(@itemIds)", new { itemIds }, uow.Transaction, cancellationToken: cancellationToken))).ToDictionary(static c => c.Id, static c => c.Code);
+        return new Page<CostAdjustmentRunInfo>(result.Value.Items.Select(r => CostingService.Map(r) with { ItemCode = codes.GetValueOrDefault(r.ItemId) }).ToList(), result.Value.NextCursor);
     }
 
     public async Task<Result<CostAdjustmentRunInfo>> RunAsync(Guid runId, CancellationToken cancellationToken)

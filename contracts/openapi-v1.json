@@ -24405,6 +24405,12 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

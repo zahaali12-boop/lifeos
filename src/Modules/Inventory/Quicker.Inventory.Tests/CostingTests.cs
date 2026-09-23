@@ -133,6 +133,7 @@ public sealed class CostingTests(ApiHostFixture host)
         var runs = await s.Owner.GetOkAsync($"/api/v1/inventory/costing/runs?companyId={s.CompanyId}&itemId={item}");
         runs.GetProperty("items").GetArrayLength().ShouldBeGreaterThanOrEqualTo(2);
         runs.GetProperty("items").EnumerateArray().ShouldAllBe(static r => r.GetProperty("status").GetString() == "completed");
+        runs.GetProperty("items").EnumerateArray().ShouldAllBe(static r => !string.IsNullOrEmpty(r.GetProperty("itemCode").GetString()), "listed runs name the item for people to read");
         await s.Owner.AssertInvariantsAsync();
     }
 

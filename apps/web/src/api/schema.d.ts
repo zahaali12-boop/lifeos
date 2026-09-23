@@ -8141,6 +8141,7 @@ export interface components {
             startedAt: string;
             /** Format: date-time */
             completedAt: null | string;
+            itemCode?: null | string;
         };
         CostApplicationInfo: {
             /** Format: uuid */

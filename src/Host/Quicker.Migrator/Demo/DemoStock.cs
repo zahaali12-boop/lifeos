@@ -355,7 +355,8 @@ internal static class DemoStock
                     // Planning parameters and a cycle-count class for a quarter of the stocked items, so the planner and the counts have work.
                     if (t == 0 && DemoIds.Draw("planning", ordinal, 100) < 25)
                     {
-                        var reorder = Math.Max(1, family.MinQty);
+                        // A third of the way into the family's opening range, so about a third of the planned rows start below it.
+                        var reorder = Math.Max(1, family.MinQty + ((family.MaxQty - family.MinQty) / 3));
                         Require(await items.SaveWarehouseSettingsAsync(item.Id, warehouse.Id, new SaveWarehouseSettingsRequest(
                             ReorderPoint: reorder,
                             MinQty: Math.Max(1, reorder / 2),
