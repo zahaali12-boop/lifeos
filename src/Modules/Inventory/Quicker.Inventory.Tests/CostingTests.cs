@@ -305,4 +305,23 @@ public sealed class CostingTests(ApiHostFixture host)
         while (cursor is not null);
         return costs;
     }
+
+    [Fact]
+    public async Task A_document_with_more_distinct_items_than_the_old_walk_guard_is_valued_in_one_posting()
+    {
+        var s = await SetUpAsync("average");
+        var lines = new List<StockLine>();
+        for (var i = 0; i < 210; i++)
+        {
+            lines.Add(new StockLine(await ItemAsync(s, $"BULK-{i:000}"), StockEntryTypes.PurchaseReceipt, 10m, s.Main, UnitCost: 1m + i));
+        }
+
+        var posted = await host.PostStockAsync(s.Ws.TenantId, new StockPostingRequest(s.CompanyId, D(3), "bulk_receipt", Guid.CreateVersion7(), lines));
+        posted.Entries.Count.ShouldBe(210);
+        posted.JournalEntryId.ShouldNotBeNull("every scope of a large document is valued and booked in the same posting");
+        var total = Enumerable.Range(0, 210).Sum(static i => (1m + i) * 10m);
+        (await ValuationAsync(s, D(3))).GetProperty("totalValue").GetDecimal().ShouldBe(total);
+        (await InventoryBookedAsync(s, D(3))).ShouldBe(total);
+        await s.Owner.AssertInvariantsAsync();
+    }
 }

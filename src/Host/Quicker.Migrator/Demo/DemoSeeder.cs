@@ -21,7 +21,7 @@ using Quicker.Tenancy.Contracts;
 
 namespace Quicker.Migrator.Demo;
 
-public sealed record DemoSeedResult(Guid TenantId, bool Created, TimeSpan Elapsed, int Companies, int Branches, int Users, int Rates, int Journals = 0, int Entries = 0, int PeriodsClosed = 0);
+public sealed record DemoSeedResult(Guid TenantId, bool Created, TimeSpan Elapsed, int Companies, int Branches, int Users, int Rates, int Journals = 0, int Entries = 0, int PeriodsClosed = 0, int Warehouses = 0, int Items = 0, int Variants = 0, int Lots = 0, int Serials = 0, int StockLines = 0);
 
 /// <summary>
 /// Builds the demo tenant in one transaction through the modules' own services (ADR-0029). With
@@ -131,6 +131,7 @@ public static class DemoSeeder
                 company.Country,
                 company.FunctionalCurrency,
                 company.TimeZone,
+                CostingMethod: company.CostingMethod,
                 TradeName: Bilingual(company.TradeEn, company.TradeAr),
                 ReportingCurrency: company.ReportingCurrency,
                 RegistrationNumbers: new Dictionary<string, string>(StringComparer.Ordinal) { ["tax_id"] = company.TaxId, ["commercial_registration"] = company.Registration },
@@ -201,10 +202,13 @@ public static class DemoSeeder
         // The books (roadmap 2.7): charts, dimensions, a year of journals, routines, period control; the harness must pass.
         var books = await DemoBooks.SeedAsync(services, createdCompanies, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
 
+        // The item master and the stock (roadmap 3.9): 5,000 items, eight stocked warehouses, opening stock through the posting engine; the harness must pass again.
+        var stock = await DemoStock.SeedAsync(services, createdCompanies, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
+
         await services.GetRequiredService<IAuditSink>().RecordAsync(new AuditEntry("tenant", tenant.Id.Value, DemoData.Slug, "seeded",
-            After: new { companies = DemoData.Companies.Count, branches, users = DemoData.Users.Count, rates = series.Count, journals = books.Journals, entries = books.Entries }), cancellationToken);
+            After: new { companies = DemoData.Companies.Count, branches, users = DemoData.Users.Count, rates = series.Count, journals = books.Journals, entries = books.Entries, warehouses = stock.Warehouses, items = stock.Items, variants = stock.Variants, lots = stock.Lots, serials = stock.Serials, stockLines = stock.StockLines }), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
-        return new DemoSeedResult(tenant.Id.Value, Created: true, stopwatch.Elapsed, DemoData.Companies.Count, branches, DemoData.Users.Count, series.Count, books.Journals, books.Entries, books.PeriodsClosed);
+        return new DemoSeedResult(tenant.Id.Value, Created: true, stopwatch.Elapsed, DemoData.Companies.Count, branches, DemoData.Users.Count, series.Count, books.Journals, books.Entries, books.PeriodsClosed, stock.Warehouses, stock.Items, stock.Variants, stock.Lots, stock.Serials, stock.StockLines);
     }
 
     /// <summary>Runs the invariant harness over the demo tenant as the system actor (tests and operators: the seeded books must hold).</summary>

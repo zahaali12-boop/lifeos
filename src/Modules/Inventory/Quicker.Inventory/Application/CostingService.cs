@@ -55,6 +55,9 @@ public sealed class CostingService(
 
     private static readonly Guid None = Guid.Empty;
 
+    /// <summary>How often one scope may be re-walked in a single run before the run is judged not to settle.</summary>
+    private const int MaxWalksPerScope = 50;
+
     private static readonly string[] AdjustmentKinds = ["invoice", "landed_cost"];
 
     /// <summary>A cost scope: the company, the item and the warehouse when the company costs per warehouse (nil otherwise).</summary>
@@ -579,15 +582,21 @@ public sealed class CostingService(
 
     // ------------------------------------------------------------------ the walk
 
-    /// <summary>Walks every pending (scope, from date) until none is left; transfers enqueue their destination scopes.</summary>
+    /// <summary>
+    /// Walks every pending (scope, from date) until none is left; transfers enqueue their destination scopes. A document
+    /// may touch thousands of scopes once each; what must not happen is one scope re-queuing itself without settling,
+    /// so the guard bounds the walks of a single scope, not the number of scopes.
+    /// </summary>
     private async Task<Result> DrainAsync(RunContext context, CancellationToken cancellationToken)
     {
-        var guard = 0;
+        var walksByScope = new Dictionary<ScopeKey, int>();
         while (context.Pending.TryDequeue(out var next))
         {
-            if (++guard > 200)
+            var walks = walksByScope.GetValueOrDefault(next.Scope) + 1;
+            walksByScope[next.Scope] = walks;
+            if (walks > MaxWalksPerScope)
             {
-                return Error.Conflict("costing.reapplication_diverged", "The re-application did not settle after 200 scope walks; the run was abandoned.").WithWhy(("scope", next.Scope.LockOrder), ("fromDate", next.From));
+                return Error.Conflict("costing.reapplication_diverged", $"The re-application of one scope did not settle after {MaxWalksPerScope} walks; the run was abandoned.").WithWhy(("scope", next.Scope.LockOrder), ("fromDate", next.From));
             }
 
             var walked = await WalkAsync(context, next.Scope, next.From, cancellationToken);

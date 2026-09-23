@@ -6,12 +6,13 @@ using Quicker.Migrator.Demo;
 namespace Quicker.Demo.Tests;
 
 /// <summary>
-/// Roadmap 1.12: the seeder builds the demo tenant on a migrated database in under a minute, leaves it alone
-/// on a plain run, and rebuilds it from scratch with the same identifiers when asked to reseed.
+/// Roadmap 1.12 and 3.9: the seeder builds the demo tenant on a migrated database (the books of v2 and the 5,000
+/// items with opening stock of v3, every unit costed and booked, ASSUMPTIONS A-104: under ten minutes), leaves it
+/// alone on a plain run, and rebuilds it from scratch with the same identifiers when asked to reseed.
 /// </summary>
 public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<DatabaseFixture>
 {
-    private static readonly TimeSpan Budget = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan Budget = TimeSpan.FromMinutes(10);
 
     [Fact]
     public async Task Seeds_the_demo_tenant_then_keeps_it_then_rebuilds_it()
@@ -96,6 +97,26 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_journal_entries WHERE tenant_id = @t AND is_auto_reversal", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(30, "the utility accruals of the closed months reversed on their date");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.org_period_module_states WHERE tenant_id = @t AND state = 'hard_closed'", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(27);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_manual_journals WHERE tenant_id = @t AND corrects_journal_id IS NOT NULL AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(1, "scenario 7 lives in the demo");
+        // The item master and the stock (roadmap 3.9): 5,000 items over 22 families with variants, lots and serials; eight stocked warehouses; opening stock costed and booked.
+        (first.Warehouses, first.Items).ShouldBe((11, 5000), "eight stocked warehouses and one in transit per company");
+        first.Variants.ShouldBeGreaterThan(500, "apparel carries size and colour variants");
+        first.Lots.ShouldBeGreaterThan(500, "fresh food and pharmacy are lot-tracked");
+        first.Serials.ShouldBeGreaterThan(500, "electronics are serialised");
+        first.StockLines.ShouldBeGreaterThan(3000);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_items WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(5000);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_item_variants WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(first.Variants);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_item_barcodes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThan(5000, "every item has a barcode, a third also a carton barcode");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_items WHERE tenant_id = @t AND tracking <> 'none'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(1500);
+        (await db.ExecuteScalarAsync<int>("SELECT count(DISTINCT warehouse_id) FROM app.inv_stock_balances WHERE tenant_id = @t AND on_hand > 0", new { t = DemoData.TenantId })).ShouldBe(8, "opening stock across eight warehouses");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_warehouses WHERE tenant_id = @t AND kind = 'in_transit'", new { t = DemoData.TenantId })).ShouldBe(3);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_bins WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3 * 48);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_lots WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThan(500);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_serials WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(first.Serials);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_ledger_entries WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(first.StockLines);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_value_entries WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(first.StockLines, "every opening unit is valued");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_journal_lines WHERE tenant_id = @t AND subledger_type = 'INV'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(0, "the opening stock is booked");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_reason_codes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(7);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_item_warehouse_settings WHERE tenant_id = @t AND reorder_point IS NOT NULL", new { t = DemoData.TenantId })).ShouldBeGreaterThan(500, "a quarter of the stocked items carry planning parameters");
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Count.ShouldBe(8);
@@ -117,6 +138,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         third.Rates.ShouldBe(first.Rates);
         third.Journals.ShouldBe(first.Journals, "the books are deterministic for the same day");
         third.Entries.ShouldBe(first.Entries);
+        (third.Items, third.Variants, third.Lots, third.Serials, third.StockLines).ShouldBe((first.Items, first.Variants, first.Lots, first.Serials, first.StockLines), "the item master and the stock are deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

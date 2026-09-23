@@ -71,7 +71,7 @@ Goal: items and units, warehouses and bins, the stock ledger and costing engine,
 | 3.6 Counts | Count sessions with freeze snapshots, count sheets, mobile counting, recounts, variance review and approval, posting with reason codes. | Scenario 11 test: movements posted during the count are reconciled against the snapshot. |
 | 3.7 Replenishment | Reorder point, min/max, safety stock, lead times, purchase suggestions with explanation. | Suggestion explains its arithmetic. |
 | 3.8 Mobile scanning v1 | PWA route group with camera scanning (BarcodeDetector, ZXing fallback), offline scan queue; flows: counts and transfers. | Playwright mobile viewport test; scanning a bin then an item records a count line. |
-| 3.9 Demo seed v3 | 5,000 items with variants, lots and serials; opening stock across eight warehouses. | |
+| 3.9 Demo seed v3 | 5,000 items with variants, lots and serials; opening stock across eight warehouses. | Demo test: 5,000 items, eight stocked warehouses, every opening unit costed and booked, invariant harness green, a reseed reproduces the same counts. |
 
 Hard scenarios proven: **4** (adjustments/transfers path), **9**, **11**, **15** (inventory part); scenario 1's re-application mechanism is tested with adjustment documents and proven end-to-end in M4.
 

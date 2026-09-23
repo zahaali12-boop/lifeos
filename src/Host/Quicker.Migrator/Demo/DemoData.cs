@@ -19,7 +19,8 @@ public sealed record DemoCompany(
     string Street,
     string City,
     IReadOnlyList<DemoBranch> Branches,
-    IReadOnlyList<DemoCurrency> Currencies);
+    IReadOnlyList<DemoCurrency> Currencies,
+    string CostingMethod = "average");
 
 /// <summary>A demo person: mailbox name, display name, default role, UI locale and digits; <c>CompanyScope</c> narrows the role to one company (code).</summary>
 public sealed record DemoUser(string Local, string DisplayName, string Role, string Locale = "en", string DigitStyle = "western", string? CompanyScope = null)
@@ -63,7 +64,8 @@ public static class DemoData
             "USI", "Tigris Import LLC", "شركة دجلة للاستيراد ذ.م.م", "Tigris Import", "دجلة للاستيراد",
             "IQ", "USD", "IQD", BaghdadTimeZone, "IQ-400500600", "CR-BGD-51907", "Al-Mansour, Free Zone Road 3", "Baghdad",
             [new("BGD", "Baghdad warehouse and office", "بغداد – المخزن والمكتب", "Baghdad", "بغداد")],
-            [new("USD", 2, 0m), new("IQD", 0, 250m), new("EUR", 2, 0m)]),
+            [new("USD", 2, 0m), new("IQD", 0, 250m), new("EUR", 2, 0m)],
+            CostingMethod: "fifo"),
         new(
             "AEG", "Gulf Gate General Trading LLC", "بوابة الخليج للتجارة العامة ذ.م.م", "Gulf Gate", "بوابة الخليج",
             "AE", "AED", "USD", "Asia/Dubai", "100987654300003", "DED-1234567", "Jebel Ali Free Zone, LB 12", "Dubai",
