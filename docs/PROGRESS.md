@@ -6,7 +6,7 @@ The single place a new session reads first (after `CLAUDE.md`). Keep it current:
 
 **Phase 0 (Blueprint): approved by the founder on 2026-09-22 (defaults accepted for Q1–Q8).**
 
-**M1 Foundations: complete** (report: `docs/reports/M1-founder-report.md`). **M2 Core accounting: complete** (report: `docs/reports/M2-founder-report.md`). **M3 Inventory: in progress** (the founder asked to continue through M3 and onward; see `docs/ROADMAP.md`). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
+**M1 Foundations: complete** (report: `docs/reports/M1-founder-report.md`). **M2 Core accounting: complete** (report: `docs/reports/M2-founder-report.md`). **M3 Inventory: complete** (report: `docs/reports/M3-founder-report.md`). **M4 Procure to pay: next** (the founder asked to continue through the milestones; see `docs/ROADMAP.md`). Development environment note: this session runs on Ubuntu 24.04 with .NET 10.0.112 SDK (apt), Node 22 + pnpm, a local PostgreSQL 16 cluster and Docker (image pulls from Docker Hub are blocked by the egress policy, so tests use the `QUICKER_TEST_CONNECTION` override instead of Testcontainers here; CI uses a postgres:17 service container).
 
 Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.5), `claude/efficient-request-ajd9zy` (slice 1.6 onwards, built on top of it). Default branch: `main`.
 
@@ -70,7 +70,7 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 
 ## In progress
 
-- Nothing mid-slice: M3 slices 3.1 to 3.9 and the M3 web pass are complete; the M3 founder report is next.
+- Nothing mid-slice: M3 is complete and reported; M4 slice 4.0 (workflow core) is next.
 
 ## Post-milestone fixes
 
@@ -80,7 +80,7 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 
 ## Next
 
-1. The M3 founder report (`docs/reports/M3-founder-report.md`), then M4 procure-to-pay per the roadmap.
+1. M4 slice 4.0: workflow core (definitions, rules with the safe expression grammar, steps, approver resolution, requests, actions, blocks and overrides, notifications, the approvals inbox), then 4.1 supplier master and onward per the roadmap.
 2. Open founder question Q9 (Iraq statutory code list) can be answered at any time; nothing built depends on it.
 
 ## Known gaps and interim pieces (explicit, per the working rules)
