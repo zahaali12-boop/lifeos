@@ -57,6 +57,14 @@ test("English: an invoice paid in part, the remainder on account applied, the re
   await expect(page.getByTestId("supplier-detail")).toBeVisible();
   await closeDialog(page);
 
+  // The command palette finds the supplier by code and opens it.
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("dialog").getByPlaceholder(/Search/).fill("ALPHA");
+  await expect(page.getByRole("dialog")).toContainText("Alpha Supplies");
+  await page.getByRole("option", { name: /ALPHA/ }).click();
+  await expect(page.getByTestId("supplier-detail")).toBeVisible();
+  await closeDialog(page);
+
   // An expense invoice of 10 000 posted.
   await nav(page, "Supplier invoices");
   await page.getByTestId("new-invoice").click();

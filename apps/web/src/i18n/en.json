@@ -102,7 +102,7 @@
     "title": "Command palette",
     "placeholder": "Search companies, go somewhere, or run an action…",
     "empty": "Nothing matches.",
-    "groups": {
+    "groups": { "items": "Items", "suppliers": "Suppliers",
       "companies": "Companies",
       "navigation": "Go to",
       "actions": "Actions",

@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogTitle } from "@quicker/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
-import { Building2, Megaphone, Plus, Search } from "lucide-react";
+import { Building2, Handshake, Megaphone, Package, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
@@ -46,7 +46,7 @@ function allowed(permissions: ReadonlySet<string>, permission?: string): boolean
   return !permission || permissions.has("*") || permissions.has(permission);
 }
 
-/** Ctrl/⌘+K: navigation, actions, recent records and a global search over companies (more entities join as they land). */
+/** Ctrl/⌘+K: navigation, actions, recent records and a global search over companies, items and suppliers (more entities join as they land). */
 export function CommandPalette({ open, onOpenChange, permissions }: CommandPaletteProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -65,6 +65,20 @@ export function CommandPalette({ open, onOpenChange, permissions }: CommandPalet
       return unwrap(await api.GET("/api/v1/organization/companies", { params: { query: { filter: `code like '${escaped}'` } } }));
     },
   });
+
+  const term = query.trim();
+  const items = useQuery({
+    queryKey: ["palette", "items", term],
+    enabled: open && term.length >= 2 && allowed(permissions, "inventory.item.read"),
+    queryFn: async () => unwrap(await api.GET("/api/v1/items", { params: { query: { q: term, limit: 6 } } })),
+  });
+  const suppliers = useQuery({
+    queryKey: ["palette", "suppliers", term],
+    enabled: open && term.length >= 2 && allowed(permissions, "partners.supplier.read"),
+    queryFn: async () => unwrap(await api.GET("/api/v1/partners", { params: { query: { q: term, role: "supplier", limit: 6 } } })),
+  });
+  const groupClass = "[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-fg-muted";
+  const itemClass = "flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm data-[selected=true]:bg-surface-sunken";
 
   const go = (to: string): void => {
     onOpenChange(false);
@@ -89,6 +103,28 @@ export function CommandPalette({ open, onOpenChange, permissions }: CommandPalet
                     <Building2 className="size-4 text-fg-subtle" aria-hidden="true" />
                     <span className="font-medium">{company.code}</span>
                     <span className="text-fg-muted">{localized(company.legalName)}</span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            ) : null}
+            {items.data && items.data.items.length > 0 ? (
+              <Command.Group heading={t("palette.groups.items")} className={groupClass}>
+                {items.data.items.map((item) => (
+                  <Command.Item key={item.id} value={`item ${item.code} ${localized(item.name)} ${term}`} onSelect={() => { go(`/inventory/items?open=${item.id}`); }} className={itemClass}>
+                    <Package className="size-4 text-fg-subtle" aria-hidden="true" />
+                    <span className="font-medium" dir="ltr">{item.code}</span>
+                    <span className="text-fg-muted">{localized(item.name)}</span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            ) : null}
+            {suppliers.data && suppliers.data.items.length > 0 ? (
+              <Command.Group heading={t("palette.groups.suppliers")} className={groupClass}>
+                {suppliers.data.items.map((partner) => (
+                  <Command.Item key={partner.id} value={`supplier ${partner.code} ${localized(partner.legalName)} ${term}`} onSelect={() => { go(`/purchasing/suppliers?open=${partner.id}`); }} className={itemClass}>
+                    <Handshake className="size-4 text-fg-subtle" aria-hidden="true" />
+                    <span className="font-medium" dir="ltr">{partner.code}</span>
+                    <span className="text-fg-muted">{localized(partner.legalName)}</span>
                   </Command.Item>
                 ))}
               </Command.Group>
