@@ -37,6 +37,8 @@ async function supplier(page: Page, code: string, name: string, email: string): 
 }
 
 test("English: requisition to purchase order, a change order, a send, a receipt, an invoice and a landed cost, an RFQ compared and a blanket agreement", async ({ page }) => {
+  // Ten documents and twenty accessibility scans: about 45 s alone, over a minute beside the other journeys.
+  test.setTimeout(120_000);
   const slug = `pur-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
   await page.goto("/signup");

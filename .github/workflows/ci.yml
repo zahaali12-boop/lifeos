@@ -34,7 +34,7 @@ jobs:
           POSTGRES_DB: postgres
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U quicker_owner"
+          --health-cmd "pg_isready -U quicker_owner -d postgres"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
@@ -47,8 +47,9 @@ jobs:
 
       - name: Start MinIO (S3 provider tests)
         run: |
-          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio server /data
+          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:9000/minio/health/live && break; sleep 1; done
+          curl -sf http://127.0.0.1:9000/minio/health/live
 
       - name: Prepare database roles
         run: |
@@ -111,7 +112,7 @@ jobs:
           POSTGRES_DB: quicker
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U quicker_owner"
+          --health-cmd "pg_isready -U quicker_owner -d postgres"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
@@ -150,6 +151,9 @@ jobs:
           Quicker__Db__AppConnection: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
           Quicker__Auth__PublicOrigin: http://127.0.0.1:5173
           Quicker__Auth__ApiOrigin: http://127.0.0.1:8080
+          # No separate worker process here: the API runs the dispatcher itself, as on a single-node install, so the
+          # events the demo seed wrote are published and readiness reflects a draining outbox.
+          Quicker__Worker__Embedded: "true"
       - run: pnpm --filter @quicker/web exec playwright install --with-deps chromium
       - run: pnpm --filter @quicker/web e2e
         env:
