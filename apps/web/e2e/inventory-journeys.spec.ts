@@ -78,6 +78,32 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await expect(page.getByTestId("item-detail")).toBeVisible();
   await expect(page.getByRole("dialog")).toContainText("Water 1.5L");
   await expectAccessible(page);
+
+  // The item's own units, a barcode (a wrong check digit is refused first) and its planning in MAIN.
+  await page.getByTestId("add-unit").click();
+  await page.getByTestId("unit-uom").selectOption("CTN");
+  await page.getByTestId("unit-numerator").fill("24");
+  await page.getByTestId("save-unit").click();
+  await expect(page.getByTestId("unit-row")).toHaveCount(2);
+  await expect(page.getByTestId("item-units")).toContainText("1 CTN = 24 PCS");
+  await page.getByTestId("add-barcode").click();
+  await page.getByTestId("barcode-value").fill("4006381333932");
+  await page.getByTestId("barcode-uom").selectOption("CTN");
+  await page.getByTestId("save-barcode").click();
+  await expect(page.getByTestId("item-units").getByRole("alert")).toBeVisible();
+  await page.getByTestId("barcode-value").fill("4006381333931");
+  await page.getByTestId("save-barcode").click();
+  await expect(page.getByTestId("barcode-chip")).toContainText("4006381333931");
+  await expectAccessible(page);
+  await page.getByTestId("item-tab-planning").click();
+  await page.getByTestId("add-planning").click();
+  await page.getByTestId("planning-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("planning-reorder").fill("50");
+  await page.getByTestId("planning-max").fill("200");
+  await page.getByTestId("save-planning").click();
+  await expect(page.getByTestId("planning-row")).toHaveCount(1);
+  await expect(page.getByTestId("planning-row")).toContainText("MAIN");
+  await expectAccessible(page);
   await closeDialog(page);
 
   // Reason codes, then a positive adjustment of 100 at 250 posted straight away (no approval configured).

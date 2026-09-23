@@ -1,4 +1,4 @@
-import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
+import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Input } from "@quicker/ui";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -12,7 +12,8 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { rememberRecent } from "../../shell/CommandPalette";
 import { Amount } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
-import { DocStatus, Qty, type Item } from "./shared";
+import { ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEditor } from "./ItemEditors";
+import { DocStatus, Tabs, type Item } from "./shared";
 
 interface ItemForm {
   code: string;
@@ -65,6 +66,7 @@ export function ItemsPage() {
   const [masterOpen, setMasterOpen] = useState(false);
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const openId = search.open;
+  const [detailTab, setDetailTab] = useState("units");
 
   const items = useInfiniteQuery({
     queryKey: ["items", query],
@@ -179,7 +181,7 @@ export function ItemsPage() {
       ) : null}
 
       <Dialog open={Boolean(openId) && !editing} onOpenChange={(isOpen) => { if (!isOpen) { open(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-3xl">
+        <DialogContent closeLabel={t("common.close")} className="max-h-[90vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold" dir="auto">
               {detail ? `${detail.code} · ${localized(detail.name)}` : t("common.loading")}
@@ -200,55 +202,27 @@ export function ItemsPage() {
                   </span>
                 ) : null}
               </div>
-              <section>
-                <h3 className="mb-1 text-sm font-semibold">{t("inventory.items.units")}</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("inventory.items.unit")}</TableHead>
-                      <TableHead>{t("inventory.items.factor")}</TableHead>
-                      <TableHead>{t("inventory.items.barcodes")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(detail.uoms ?? []).map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell>
-                          {u.uomCode} {u.isBase ? <Badge tone="accent">{t("inventory.items.base")}</Badge> : null}
-                        </TableCell>
-                        <TableCell>
-                          <Qty value={u.numerator} /> / <Qty value={u.denominator} />
-                        </TableCell>
-                        <TableCell dir="ltr">{u.barcodes.map((b) => b.barcode).join(", ")}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </section>
-              {(detail.variants ?? []).length > 0 ? (
-                <section>
-                  <h3 className="mb-1 text-sm font-semibold">{t("inventory.items.variants")}</h3>
-                  <ul className="flex flex-wrap gap-2 text-sm">
-                    {(detail.variants ?? []).map((v) => (
-                      <li key={v.id} className="rounded-md border border-border px-2 py-1">
-                        <span dir="ltr">{v.sku}</span> <span className="text-fg-muted">{localized(v.name)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ) : null}
-              {(detail.suppliers ?? []).length > 0 ? (
-                <section>
-                  <h3 className="mb-1 text-sm font-semibold">{t("inventory.items.suppliers")}</h3>
-                  <ul className="text-sm">
-                    {(detail.suppliers ?? []).map((s) => (
-                      <li key={s.id}>
-                        <span dir="ltr">{s.supplierItemCode ?? s.partnerId}</span> · {t("inventory.items.leadTime", { days: Number(s.leadTimeDays ?? 0) })}
-                        {s.isPreferred ? <Badge tone="accent" className="ms-2">{t("inventory.items.preferred")}</Badge> : null}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+              <Tabs
+                value={detailTab}
+                onChange={setDetailTab}
+                tabs={[
+                  { id: "units", label: t("itemEditor.tabs.units"), testId: "item-tab-units" },
+                  { id: "suppliers", label: t("itemEditor.tabs.suppliers"), testId: "item-tab-suppliers" },
+                  { id: "planning", label: t("itemEditor.tabs.planning"), testId: "item-tab-planning" },
+                  ...((detail.variants ?? []).length > 0 ? [{ id: "variants", label: t("inventory.items.variants"), testId: "item-tab-variants" }] : []),
+                ]}
+              />
+              {detailTab === "units" ? <ItemUnitsEditor item={detail} /> : null}
+              {detailTab === "suppliers" ? <ItemSuppliersEditor item={detail} /> : null}
+              {detailTab === "planning" ? <ItemPlanningEditor item={detail} /> : null}
+              {detailTab === "variants" ? (
+                <ul className="flex flex-wrap gap-2 text-sm">
+                  {(detail.variants ?? []).map((v) => (
+                    <li key={v.id} className="rounded-md border border-border px-2 py-1">
+                      <span dir="ltr">{v.sku}</span> <span className="text-fg-muted">{localized(v.name)}</span>
+                    </li>
+                  ))}
+                </ul>
               ) : null}
               <DialogFooter>
                 <Button variant="secondary" onClick={() => { setProblem(null); setEditing({ id: detail.id, form: toForm(detail) }); }} data-testid="edit-item">

@@ -78,6 +78,21 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await supplier(page, "ALPHA", "Alpha Supplies", "alpha@example.test");
   await supplier(page, "BETA", "Beta Trading", "beta@example.test");
 
+  // TEA is bought from ALPHA: the supplier's code for it, a lead time and a last price, marked preferred.
+  await nav(page, "Items");
+  await page.getByRole("grid").getByText("TEA", { exact: true }).dblclick();
+  await page.getByTestId("item-tab-suppliers").click();
+  await page.getByTestId("add-supplier").click();
+  await page.getByTestId("supplier-partner").selectOption({ label: "ALPHA · Alpha Supplies" });
+  await page.getByTestId("supplier-item-code").fill("ALP-TEA-01");
+  await page.getByTestId("supplier-lead-time").fill("7");
+  await page.getByTestId("supplier-price").fill("950");
+  await page.getByTestId("save-supplier-link").click();
+  await expect(page.getByTestId("supplier-row")).toContainText("ALP-TEA-01");
+  await expect(page.getByTestId("supplier-row")).toContainText("Preferred");
+  await expectAccessible(page);
+  await closeDialog(page);
+
   // A requisition: submitted, approved at once, turned into an order for the suggested supplier.
   await nav(page, "Requisitions");
   await expect(page.getByText("No requisitions yet")).toBeVisible();
