@@ -20,6 +20,7 @@ using Quicker.Persistence;
 using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
+using Quicker.Workflow;
 
 namespace Quicker.Migrator.Demo;
 
@@ -71,6 +72,7 @@ internal static class DemoHost
         services.AddIntegrityModule();
         services.AddItemsModule();
         services.AddInventoryModule();
+        services.AddWorkflowModule();
         return builder.Build();
     }
 }

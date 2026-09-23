@@ -8,6 +8,7 @@ using Quicker.Inventory.Contracts;
 using Quicker.Inventory.Persistence;
 using Quicker.Messaging;
 using Quicker.Persistence.EntityFramework;
+using Quicker.Workflow.Contracts;
 
 namespace Quicker.Inventory;
 
@@ -36,6 +37,7 @@ public static class InventoryModule
         services.AddScoped<CostInquiryService>();
         services.AddScoped<ReasonCodeService>();
         services.AddScoped<AdjustmentService>();
+        services.AddScoped<IWorkflowSubjectProvider, AdjustmentWorkflowSubject>();
         services.AddScoped<RevaluationService>();
         services.AddScoped<AssemblyService>();
         services.AddScoped<TrackingResolver>();

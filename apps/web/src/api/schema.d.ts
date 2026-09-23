@@ -4913,6 +4913,302 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workflow/catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The entity types modules register for approval, their fields for rules, the block kinds they raise, the triggers and the functions of the expression grammar */
+        get: operations["getWorkflowCatalogue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/expressions/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Parses and type-checks a condition against an entity type's fields */
+        post: operations["postWorkflowExpressionsValidate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkflowBlocks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkflowOverrides"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkflowDefinitions"];
+        put?: never;
+        /** A draft definition: entity type, trigger, ordered rules with conditions in the safe expression grammar, and the steps each rule requires */
+        post: operations["postWorkflowDefinitions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/definitions/{definitionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkflowDefinitionsByDefinitionId"];
+        /** Edits a draft in place; an active definition gets a new draft version in its lineage */
+        put: operations["putWorkflowDefinitionsByDefinitionId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/definitions/{definitionId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activates a draft and retires the version active for the same entity type, trigger and block kind */
+        post: operations["postWorkflowDefinitionsByDefinitionIdActivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/definitions/{definitionId}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postWorkflowDefinitionsByDefinitionIdRetire"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The approvals inbox: the requests the caller may decide (default), or every request with filters for readers */
+        get: operations["getWorkflowRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests/{requestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A request with its evaluation (which rule, which values), steps, approvers, history, block and override */
+        get: operations["getWorkflowRequestsByRequestId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests/{requestId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postWorkflowRequestsByRequestIdApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests/{requestId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postWorkflowRequestsByRequestIdReject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests/{requestId}/request-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postWorkflowRequestsByRequestIdRequestChanges"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests/{requestId}/delegate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postWorkflowRequestsByRequestIdDelegate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests/{requestId}/comment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postWorkflowRequestsByRequestIdComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/requests/{requestId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postWorkflowRequestsByRequestIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/delegations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkflowDelegations"];
+        put?: never;
+        /** One member acts for another between two dates, for every definition or one; managers may delegate for others */
+        post: operations["postWorkflowDelegations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/delegations/{delegationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteWorkflowDelegationsByDelegationId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4989,6 +5285,9 @@ export interface components {
             path: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ActionRequest: {
+            comment?: null | string;
         };
         ActivityView: {
             /** Format: uuid */
@@ -5158,6 +5457,13 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             revokedAt: null | string;
+        };
+        /** @description Who approves: named members, or every active holder of a role (scoped to the document's company unless told otherwise). */
+        ApproverSpecRequest: {
+            membershipIds?: null | string[];
+            roleCode?: null | string;
+            /** @default true */
+            scopeToCompany: boolean;
         };
         AssemblyLineSummary: {
             /** Format: uuid */
@@ -5452,6 +5758,23 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        BlockSummary: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            entityType: string;
+            /** Format: uuid */
+            entityId: string;
+            /** Format: uuid */
+            companyId: null | string;
+            display: string;
+            why: components["schemas"]["JsonElement"];
+            status: string;
+            /** Format: uuid */
+            requestId: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         BomExplosion: {
             /** Format: uuid */
             bomId: string;
@@ -5567,6 +5890,24 @@ export interface components {
             workingDays: (number | string)[];
             isSystem: boolean;
             holidays: components["schemas"]["HolidaySummary"][];
+        };
+        CancelRequest: {
+            reason: string;
+        };
+        CatalogueEntry: {
+            entityType: string;
+            label: {
+                [key: string]: string;
+            };
+            fields: components["schemas"]["CatalogueField"][];
+            blockKinds: string[];
+        };
+        CatalogueField: {
+            name: string;
+            type: string;
+            label: {
+                [key: string]: string;
+            };
         };
         CategorySummary: {
             /** Format: uuid */
@@ -6094,6 +6435,54 @@ export interface components {
             remainingAmount: number | string;
             lines: components["schemas"]["DeferralLineSummary"][];
         };
+        DefinitionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            lineageId: string;
+            entityType: string;
+            trigger: string;
+            blockKind: null | string;
+            name: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            version: number | string;
+            status: string;
+            reapprovalPolicy: string;
+            /** Format: int32 */
+            overrideValidHours: number | string;
+            /** Format: date-time */
+            activatedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+            rules: components["schemas"]["RuleSummary"][];
+        };
+        DelegateRequest: {
+            /** Format: uuid */
+            toMembershipId: string;
+            comment?: null | string;
+        };
+        DelegationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            fromMembershipId: string;
+            /** Format: uuid */
+            toMembershipId: string;
+            /** Format: uuid */
+            definitionId: null | string;
+            /** Format: date */
+            validFrom: string;
+            /** Format: date */
+            validTo: string;
+            reason: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         DeliverySummary: {
             /** Format: uuid */
             id: string;
@@ -6249,6 +6638,13 @@ export interface components {
             toEntryId: string;
             relation: string;
             reason: string;
+        };
+        ExpressionValidation: {
+            valid: boolean;
+            message: null | string;
+            /** Format: int32 */
+            position: null | number | string;
+            fields: string[];
         };
         FefoSuggestion: {
             /** Format: uuid */
@@ -7135,6 +7531,22 @@ export interface components {
             /** Format: date-time */
             deadAt?: null | string;
         };
+        OverrideSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            blockId: string;
+            /** Format: uuid */
+            requestId: string;
+            /** Format: uuid */
+            approvedBy: null | string;
+            reason: string;
+            /** Format: date-time */
+            expiresAt: string;
+            consumed: boolean;
+            /** Format: date-time */
+            consumedAt: null | string;
+        };
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
         PageOfActivityView: {
             items: components["schemas"]["ActivityView"][];
@@ -7682,6 +8094,87 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        RequestActionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            stepNo: null | number | string;
+            /** Format: uuid */
+            actor: null | string;
+            actorName: null | string;
+            /** Format: uuid */
+            onBehalfOf: null | string;
+            action: string;
+            comment: null | string;
+            channel: string;
+            /** Format: date-time */
+            actedAt: string;
+        };
+        RequestDetail: {
+            request: components["schemas"]["RequestSummary"];
+            evaluation: components["schemas"]["JsonElement"];
+            subject: components["schemas"]["JsonElement"];
+            steps: components["schemas"]["RequestStepSummary"][];
+            actions: components["schemas"]["RequestActionSummary"][];
+            block: null | components["schemas"]["BlockSummary"];
+            override: null | components["schemas"]["OverrideSummary"];
+        };
+        RequestStepSummary: {
+            /** Format: int32 */
+            stepNo: number | string;
+            name: {
+                [key: string]: string;
+            };
+            mode: string;
+            /** Format: int32 */
+            quorum: null | number | string;
+            approvers: string[];
+            approverNames: string[];
+            approvedBy: string[];
+            status: string;
+            /** Format: date-time */
+            dueAt: null | string;
+            /** Format: date-time */
+            escalatedAt: null | string;
+            allowDelegate: boolean;
+            requireComment: boolean;
+        };
+        RequestSummary: {
+            /** Format: uuid */
+            id: string;
+            entityType: string;
+            /** Format: uuid */
+            entityId: string;
+            /** Format: uuid */
+            companyId: null | string;
+            display: string;
+            status: string;
+            /** Format: int32 */
+            currentStepNo: null | number | string;
+            /** Format: uuid */
+            requestedBy: null | string;
+            requestedByName: null | string;
+            ruleName: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            dueAt: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: null | string;
+            /** Format: uuid */
+            decidedBy: null | string;
+            decisionAction: null | string;
+            decisionComment: null | string;
+            /** Format: uuid */
+            definitionId: string;
+            /** Format: int32 */
+            definitionVersion: number | string;
+            /** Format: uuid */
+            blockId: null | string;
+            canAct: boolean;
+        };
         ReservationInfo: {
             /** Format: uuid */
             id: string;
@@ -7837,6 +8330,17 @@ export interface components {
             autoReversals: components["schemas"]["RoutineOutcome"][];
             recurringJournals: components["schemas"]["RoutineOutcome"][];
             deferralPostings: components["schemas"]["RoutineOutcome"][];
+        };
+        RuleSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            sortOrder: number | string;
+            name: {
+                [key: string]: string;
+            };
+            condition: string;
+            steps: components["schemas"]["StepSummary"][];
         };
         SaveAccountRequest: {
             code: string;
@@ -8200,6 +8704,38 @@ export interface components {
             /** Format: uuid */
             sourceLineId?: null | string;
         };
+        SaveDefinitionRequest: {
+            entityType: string;
+            trigger: string;
+            name: {
+                [key: string]: string;
+            };
+            rules: components["schemas"]["SaveRuleRequest"][];
+            blockKind?: null | string;
+            description?: null | {
+                [key: string]: string;
+            };
+            /** @default reset */
+            reapprovalPolicy: string;
+            /**
+             * Format: int32
+             * @default 168
+             */
+            overrideValidHours: number | string;
+        };
+        SaveDelegationRequest: {
+            /** Format: uuid */
+            toMembershipId: string;
+            /** Format: date */
+            validFrom: string;
+            /** Format: date */
+            validTo: string;
+            /** Format: uuid */
+            definitionId?: null | string;
+            reason?: null | string;
+            /** Format: uuid */
+            fromMembershipId?: null | string;
+        };
         SaveDimensionRequest: {
             code: string;
             name: {
@@ -8521,6 +9057,13 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveRuleRequest: {
+            name: {
+                [key: string]: string;
+            };
+            condition: string;
+            steps: components["schemas"]["SaveStepRequest"][];
+        };
         SaveScheduleRequest: {
             code: string;
             jobType: string;
@@ -8584,6 +9127,26 @@ export interface components {
             };
             /** @default true */
             isActive: boolean;
+        };
+        SaveStepRequest: {
+            name: {
+                [key: string]: string;
+            };
+            approverKind: string;
+            approvers: components["schemas"]["ApproverSpecRequest"];
+            /** @default any */
+            mode: string;
+            /** Format: int32 */
+            quorum?: null | number | string;
+            /** Format: int32 */
+            timeoutHours?: null | number | string;
+            escalation?: null | components["schemas"]["ApproverSpecRequest"];
+            /** @default true */
+            allowDelegate: boolean;
+            /** @default false */
+            requireComment: boolean;
+            /** @default false */
+            requireStepUp: boolean;
         };
         SaveSubstitutesRequest: {
             substitutes: components["schemas"]["SubstituteRequest"][];
@@ -9012,6 +9575,26 @@ export interface components {
             };
             notes: string;
             accounts: components["schemas"]["StatutoryAccount"][];
+        };
+        StepSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            sortOrder: number | string;
+            name: {
+                [key: string]: string;
+            };
+            approverKind: string;
+            approvers: components["schemas"]["ApproverSpecRequest"];
+            mode: string;
+            /** Format: int32 */
+            quorum: null | number | string;
+            /** Format: int32 */
+            timeoutHours: null | number | string;
+            escalation: null | components["schemas"]["ApproverSpecRequest"];
+            allowDelegate: boolean;
+            requireComment: boolean;
+            requireStepUp: boolean;
         };
         StepUpRequest: {
             password?: null | string;
@@ -9533,6 +10116,12 @@ export interface components {
             hasMfa: boolean;
             isPlatformOperator: boolean;
         };
+        /** @description For the on_block trigger the fields come from the block's values, so unknown names are allowed. */
+        ValidateExpressionRequest: {
+            entityType: string;
+            expression: string;
+            trigger?: null | string;
+        };
         ValuationReport: {
             /** Format: uuid */
             companyId: string;
@@ -9671,6 +10260,11 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        WorkflowCatalogue: {
+            subjects: components["schemas"]["CatalogueEntry"][];
+            triggers: string[];
+            functions: string[];
         };
         WorkingDayComputation: {
             /** Format: date */
@@ -18736,6 +19330,504 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ReplenishmentSuggestionSummary"];
                 };
+            };
+        };
+    };
+    getWorkflowCatalogue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowCatalogue"];
+                };
+            };
+        };
+    };
+    postWorkflowExpressionsValidate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValidateExpressionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpressionValidation"];
+                };
+            };
+        };
+    };
+    getWorkflowBlocks: {
+        parameters: {
+            query?: {
+                entityType?: string;
+                entityId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockSummary"][];
+                };
+            };
+        };
+    };
+    getWorkflowOverrides: {
+        parameters: {
+            query?: {
+                blockId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverrideSummary"][];
+                };
+            };
+        };
+    };
+    getWorkflowDefinitions: {
+        parameters: {
+            query?: {
+                entityType?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefinitionSummary"][];
+                };
+            };
+        };
+    };
+    postWorkflowDefinitions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefinitionSummary"];
+                };
+            };
+        };
+    };
+    getWorkflowDefinitionsByDefinitionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                definitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefinitionSummary"];
+                };
+            };
+        };
+    };
+    putWorkflowDefinitionsByDefinitionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                definitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefinitionSummary"];
+                };
+            };
+        };
+    };
+    postWorkflowDefinitionsByDefinitionIdActivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                definitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefinitionSummary"];
+                };
+            };
+        };
+    };
+    postWorkflowDefinitionsByDefinitionIdRetire: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                definitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefinitionSummary"];
+                };
+            };
+        };
+    };
+    getWorkflowRequests: {
+        parameters: {
+            query?: {
+                mine?: boolean;
+                status?: string;
+                entityType?: string;
+                entityId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestSummary"][];
+                };
+            };
+        };
+    };
+    getWorkflowRequestsByRequestId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestDetail"];
+                };
+            };
+        };
+    };
+    postWorkflowRequestsByRequestIdApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["ActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestDetail"];
+                };
+            };
+        };
+    };
+    postWorkflowRequestsByRequestIdReject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestDetail"];
+                };
+            };
+        };
+    };
+    postWorkflowRequestsByRequestIdRequestChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestDetail"];
+                };
+            };
+        };
+    };
+    postWorkflowRequestsByRequestIdDelegate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DelegateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestDetail"];
+                };
+            };
+        };
+    };
+    postWorkflowRequestsByRequestIdComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestDetail"];
+                };
+            };
+        };
+    };
+    postWorkflowRequestsByRequestIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestDetail"];
+                };
+            };
+        };
+    };
+    getWorkflowDelegations: {
+        parameters: {
+            query?: {
+                all?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DelegationSummary"][];
+                };
+            };
+        };
+    };
+    postWorkflowDelegations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDelegationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DelegationSummary"];
+                };
+            };
+        };
+    };
+    deleteWorkflowDelegationsByDelegationId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                delegationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

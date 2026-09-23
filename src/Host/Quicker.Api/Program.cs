@@ -28,6 +28,8 @@ using Quicker.Persistence;
 using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
+using Quicker.Workflow;
+using Quicker.Workflow.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddQuickerObservability("quicker-api");
@@ -77,6 +79,7 @@ builder.Services.AddAccountingModule();
 builder.Services.AddIntegrityModule();
 builder.Services.AddItemsModule();
 builder.Services.AddInventoryModule();
+builder.Services.AddWorkflowModule();
 
 var app = builder.Build();
 
@@ -107,6 +110,7 @@ api.MapAccountingEndpoints();
 api.MapIntegrityEndpoints();
 api.MapItemsEndpoints();
 api.MapInventoryEndpoints();
+api.MapWorkflowEndpoints();
 
 app.Run();
 

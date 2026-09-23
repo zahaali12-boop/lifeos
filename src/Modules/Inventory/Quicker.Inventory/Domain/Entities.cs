@@ -592,6 +592,9 @@ public sealed class Adjustment : ITenantEntity
 
     public string? RejectionReason { get; set; }
 
+    /// <summary>The workflow request that decides this adjustment while it is pending approval (ADR-0020).</summary>
+    public Guid? ApprovalRequestId { get; set; }
+
     public Guid? PostedBy { get; set; }
 
     public DateTimeOffset? PostedAt { get; set; }

@@ -325,6 +325,39 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
         return role is null ? null : new RoleInfo(role.Id, role.Code, role.IsActive);
     }
 
+    public async Task<RoleInfo?> FindRoleByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var normalized = (code ?? string.Empty).Trim().ToLowerInvariant();
+        var role = await db.Roles.AsNoTracking().SingleOrDefaultAsync(r => r.Code == normalized, cancellationToken);
+        return role is null ? null : new RoleInfo(role.Id, role.Code, role.IsActive);
+    }
+
+    public async Task<IReadOnlyList<MembershipId>> MembersInRoleAsync(Guid roleId, Guid? companyId, CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var assignments = await db.Assignments.AsNoTracking()
+            .Include(static a => a.Scopes)
+            .Where(a => a.RoleId == roleId && a.Role.IsActive)
+            .ToListAsync(cancellationToken);
+        var membershipIds = assignments
+            .Where(a => a.IsValidOn(today))
+            .Where(a => companyId is null || a.Scopes.All(static s => s.ScopeType != "company") || a.Scopes.Any(s => s.ScopeType == "company" && s.ScopeId == companyId))
+            .Select(static a => a.MembershipId)
+            .Distinct()
+            .ToList();
+        if (membershipIds.Count == 0)
+        {
+            return [];
+        }
+
+        var active = await db.Memberships.AsNoTracking()
+            .Where(m => membershipIds.Contains(m.Id) && m.Status == "active")
+            .OrderBy(static m => m.Id)
+            .Select(static m => m.Id)
+            .ToListAsync(cancellationToken);
+        return active.Select(static id => new MembershipId(id)).ToList();
+    }
+
     private async Task<IReadOnlyList<Grant>> GrantsOfMembershipAsync(Guid membershipId, CancellationToken cancellationToken) => (await EffectiveAsync(membershipId, cancellationToken)).Grants;
 
     // ------------------------------------------------------------------ segregation of duties

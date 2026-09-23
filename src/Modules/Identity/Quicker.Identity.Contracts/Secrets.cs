@@ -26,4 +26,9 @@ public sealed record RoleInfo(Guid Id, string Code, bool IsActive);
 public interface IRoleDirectory
 {
     Task<RoleInfo?> FindRoleAsync(Guid roleId, CancellationToken cancellationToken = default);
+
+    Task<RoleInfo?> FindRoleByCodeAsync(string code, CancellationToken cancellationToken = default);
+
+    /// <summary>The active members holding the role today; when a company is given, only assignments scoped to it or unscoped.</summary>
+    Task<IReadOnlyList<MembershipId>> MembersInRoleAsync(Guid roleId, Guid? companyId, CancellationToken cancellationToken = default);
 }

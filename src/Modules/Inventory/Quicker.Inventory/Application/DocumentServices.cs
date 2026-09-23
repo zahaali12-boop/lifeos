@@ -7,11 +7,13 @@ using Quicker.Inventory.Contracts;
 using Quicker.Inventory.Domain;
 using Quicker.Inventory.Persistence;
 using Quicker.Items.Contracts;
+using Quicker.Kernel.Amounts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
+using Quicker.Workflow.Contracts;
 
 namespace Quicker.Inventory.Application;
 
@@ -194,6 +196,8 @@ public sealed class AdjustmentService(
     IWarehouseDirectory warehouses,
     INumberAllocator numbering,
     ICustomFieldValidator customFields,
+    IWorkflowEngine workflow,
+    IInventoryCosting costing,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
@@ -298,11 +302,15 @@ public sealed class AdjustmentService(
 
         adjustment.Status = "draft";
         adjustment.RejectionReason = null;
+        adjustment.ApprovalRequestId = null;
         await db.SaveChangesAsync(cancellationToken);
         return await MapAsync(adjustment, cancellationToken);
     }
 
-    /// <summary>Submits for approval when the company requires it, otherwise posts straight away.</summary>
+    /// <summary>
+    /// Submits: an active workflow definition for stock adjustments decides (auto-approved posts at once, a matching rule
+    /// opens a request); without one, the company setting requires a manual approval or the adjustment posts straight away.
+    /// </summary>
     public async Task<Result<AdjustmentSummary>> SubmitAsync(Guid id, CancellationToken cancellationToken)
     {
         var adjustment = await db.Adjustments.Include(static a => a.Lines).SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
@@ -322,18 +330,73 @@ public sealed class AdjustmentService(
             return scope.Error!;
         }
 
+        adjustment.SubmittedBy = principal.Principal?.UserId.Value;
+        adjustment.SubmittedAt = clock.UtcNow;
+        if (await workflow.HasActiveDefinitionAsync(DocumentType, WorkflowTriggers.OnSubmit, null, cancellationToken))
+        {
+            var outcome = await workflow.SubmitAsync(await SubjectAsync(adjustment, cancellationToken), WorkflowTriggers.OnSubmit, cancellationToken);
+            if (outcome.IsFailure)
+            {
+                return outcome.Error!;
+            }
+
+            if (outcome.Value.Status == WorkflowOutcomes.AutoApproved)
+            {
+                return await PostAsync(adjustment, cancellationToken);
+            }
+
+            adjustment.Status = "pending_approval";
+            adjustment.ApprovalRequestId = outcome.Value.RequestId;
+            adjustment.UpdatedAt = clock.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            await audit.RecordAsync(new AuditEntry(DocumentType, adjustment.Id, Number(adjustment), AuditActions.StateChanged, After: new { status = adjustment.Status, approvalRequestId = adjustment.ApprovalRequestId, rule = outcome.Value.RuleName?.Values }, CompanyId: adjustment.CompanyId), cancellationToken);
+            return await MapAsync(adjustment, cancellationToken);
+        }
+
         if (!await ApprovalRequiredAsync(adjustment.CompanyId, cancellationToken))
         {
             return await PostAsync(adjustment, cancellationToken);
         }
 
         adjustment.Status = "pending_approval";
-        adjustment.SubmittedBy = principal.Principal?.UserId.Value;
-        adjustment.SubmittedAt = clock.UtcNow;
         adjustment.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry(DocumentType, adjustment.Id, Number(adjustment), AuditActions.StateChanged, After: new { status = adjustment.Status }, CompanyId: adjustment.CompanyId), cancellationToken);
         return await MapAsync(adjustment, cancellationToken);
+    }
+
+    /// <summary>The workflow's decision on a pending adjustment (ADR-0020): an approval posts it under the approver's name, a rejection sends it back with the reason, a cancelled request returns it to draft.</summary>
+    public async Task<Result> DecideAsync(WorkflowDecision decision, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(decision);
+        var adjustment = await db.Adjustments.Include(static a => a.Lines).SingleOrDefaultAsync(a => a.Id == decision.EntityId, cancellationToken);
+        if (adjustment is null)
+        {
+            return Error.NotFound("adjustment", decision.EntityId);
+        }
+
+        if (adjustment.Status != "pending_approval" || adjustment.ApprovalRequestId != decision.RequestId)
+        {
+            return Error.Conflict("adjustment.not_pending", "The adjustment is no longer awaiting this approval request.").WithWhy(("status", adjustment.Status), ("approvalRequestId", adjustment.ApprovalRequestId));
+        }
+
+        if (decision.Status == WorkflowDecisions.Approved)
+        {
+            adjustment.ApprovedBy = principal.Principal?.UserId.Value;
+            adjustment.ApprovedAt = clock.UtcNow;
+            await audit.RecordAsync(new AuditEntry(DocumentType, adjustment.Id, Number(adjustment), AuditActions.Approved, After: new { approvalRequestId = decision.RequestId }, Reason: decision.Comment, CompanyId: adjustment.CompanyId), cancellationToken);
+            var posted = await PostCoreAsync(adjustment, cancellationToken);
+            return posted.IsFailure ? posted.Error! : Result.Success();
+        }
+
+        var rejected = decision.Status == WorkflowDecisions.Rejected;
+        adjustment.Status = rejected ? "rejected" : "draft";
+        adjustment.RejectionReason = rejected ? decision.Comment ?? "Not approved." : null;
+        adjustment.ApprovalRequestId = null;
+        adjustment.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, adjustment.Id, Number(adjustment), rejected ? AuditActions.Rejected : AuditActions.StateChanged, After: new { status = adjustment.Status, reason = adjustment.RejectionReason, decision = decision.Action }, CompanyId: adjustment.CompanyId), cancellationToken);
+        return Result.Success();
     }
 
     public async Task<Result<AdjustmentSummary>> ApproveAsync(Guid id, CancellationToken cancellationToken)
@@ -347,6 +410,11 @@ public sealed class AdjustmentService(
         if (adjustment.Status != "pending_approval")
         {
             return Error.Conflict("adjustment.not_pending", "Only an adjustment awaiting approval is approved.").WithWhy(("status", adjustment.Status));
+        }
+
+        if (adjustment.ApprovalRequestId is { } approvalRequestId)
+        {
+            return Error.Conflict("adjustment.decided_by_workflow", "This adjustment is decided through its approval request.").WithWhy(("approvalRequestId", approvalRequestId));
         }
 
         var actor = principal.Principal?.UserId.Value;
@@ -375,6 +443,11 @@ public sealed class AdjustmentService(
             return Error.Conflict("adjustment.not_pending", "Only an adjustment awaiting approval is rejected.").WithWhy(("status", adjustment.Status));
         }
 
+        if (adjustment.ApprovalRequestId is { } approvalRequestId)
+        {
+            return Error.Conflict("adjustment.decided_by_workflow", "This adjustment is decided through its approval request.").WithWhy(("approvalRequestId", approvalRequestId));
+        }
+
         if (string.IsNullOrWhiteSpace(request.Reason))
         {
             return Error.Validation("adjustment.rejection_reason_required", "A rejection gives its reason.");
@@ -401,6 +474,17 @@ public sealed class AdjustmentService(
             return Error.Conflict("adjustment.not_cancellable", "A posted adjustment is corrected by another adjustment, not cancelled.").WithWhy(("status", adjustment.Status));
         }
 
+        if (adjustment.ApprovalRequestId is not null)
+        {
+            var withdrawn = await workflow.CancelAsync(DocumentType, adjustment.Id, "The adjustment was cancelled.", cancellationToken);
+            if (withdrawn.IsFailure)
+            {
+                return withdrawn.Error!;
+            }
+
+            adjustment.ApprovalRequestId = null;
+        }
+
         adjustment.Status = "cancelled";
         adjustment.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
@@ -416,6 +500,12 @@ public sealed class AdjustmentService(
             return scope.Error!;
         }
 
+        return await PostCoreAsync(adjustment, cancellationToken);
+    }
+
+    /// <summary>Posts without the caller's post permission: the workflow's approval is the authority (A-106).</summary>
+    private async Task<Result<AdjustmentSummary>> PostCoreAsync(Adjustment adjustment, CancellationToken cancellationToken)
+    {
         var company = (await companies.FindAsync(new CompanyId(adjustment.CompanyId), cancellationToken))!;
         var reasons = await db.ReasonCodes.Where(r => adjustment.Lines.Select(static l => l.ReasonCodeId).Contains(r.Id)).ToDictionaryAsync(static r => r.Id, cancellationToken);
         var entryType = adjustment.Kind switch
@@ -572,6 +662,46 @@ public sealed class AdjustmentService(
             ExpiresOn = line.ExpiresOn,
             SerialNumbers = line.SerialNumbers?.Select(static n => n.Trim()).Where(static n => n.Length > 0).ToList() ?? [],
         };
+    }
+
+    /// <summary>
+    /// The adjustment as a workflow rule sees it: kind, warehouse, line count, total quantity in base units, the amount at
+    /// stake in the functional currency (entered cost, else the current cost of the item in the warehouse) and the reference.
+    /// </summary>
+    internal async Task<WorkflowSubject> SubjectAsync(Adjustment adjustment, CancellationToken cancellationToken)
+    {
+        var company = (await companies.FindAsync(new CompanyId(adjustment.CompanyId), cancellationToken))!;
+        var warehouse = await warehouses.FindAsync(adjustment.WarehouseId, cancellationToken);
+        var amount = 0m;
+        var quantity = 0m;
+        foreach (var line in adjustment.Lines)
+        {
+            var unit = (await items.UomsAsync(line.ItemId, cancellationToken)).First(u => u.UomId == line.UomId);
+            var baseQuantity = unit.Denominator == 0m ? line.Quantity : line.Quantity * unit.Numerator / unit.Denominator;
+            quantity += Math.Abs(baseQuantity);
+            if (line.UnitCost is { } enteredCost)
+            {
+                amount += Math.Abs(line.Quantity * enteredCost);
+            }
+            else
+            {
+                var cost = await costing.CostAsync(adjustment.CompanyId, line.ItemId, adjustment.WarehouseId, adjustment.PostingDate, cancellationToken);
+                amount += Math.Abs(baseQuantity * (cost?.AverageUnitCost ?? 0m));
+            }
+        }
+
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["kind"] = adjustment.Kind,
+            ["warehouseCode"] = warehouse?.Code,
+            ["lineCount"] = adjustment.Lines.Count,
+            ["quantity"] = quantity,
+            ["amount"] = RoundingPolicy.Default.Round(amount, company.FunctionalCurrency.MinorUnits),
+            ["currency"] = company.FunctionalCurrency.Code,
+            ["reference"] = adjustment.Reference,
+            ["postingDate"] = adjustment.PostingDate,
+        };
+        return new WorkflowSubject(DocumentType, adjustment.Id, adjustment.CompanyId, $"{Number(adjustment)} · {adjustment.Kind} · {warehouse?.Code}", values);
     }
 
     private async Task<bool> ApprovalRequiredAsync(Guid companyId, CancellationToken cancellationToken)

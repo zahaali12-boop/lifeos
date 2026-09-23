@@ -13870,6 +13870,764 @@
           }
         }
       }
+    },
+    "/api/v1/workflow/catalogue": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "The entity types modules register for approval, their fields for rules, the block kinds they raise, the triggers and the functions of the expression grammar",
+        "operationId": "getWorkflowCatalogue",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowCatalogue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/expressions/validate": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "Parses and type-checks a condition against an entity type's fields",
+        "operationId": "postWorkflowExpressionsValidate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateExpressionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpressionValidation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/blocks": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "getWorkflowBlocks",
+        "parameters": [
+          {
+            "name": "entityType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlockSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/overrides": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "getWorkflowOverrides",
+        "parameters": [
+          {
+            "name": "blockId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OverrideSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/definitions": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "getWorkflowDefinitions",
+        "parameters": [
+          {
+            "name": "entityType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DefinitionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "A draft definition: entity type, trigger, ordered rules with conditions in the safe expression grammar, and the steps each rule requires",
+        "operationId": "postWorkflowDefinitions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDefinitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/definitions/{definitionId}": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "getWorkflowDefinitionsByDefinitionId",
+        "parameters": [
+          {
+            "name": "definitionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "Edits a draft in place; an active definition gets a new draft version in its lineage",
+        "operationId": "putWorkflowDefinitionsByDefinitionId",
+        "parameters": [
+          {
+            "name": "definitionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDefinitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/definitions/{definitionId}/activate": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "Activates a draft and retires the version active for the same entity type, trigger and block kind",
+        "operationId": "postWorkflowDefinitionsByDefinitionIdActivate",
+        "parameters": [
+          {
+            "name": "definitionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/definitions/{definitionId}/retire": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "postWorkflowDefinitionsByDefinitionIdRetire",
+        "parameters": [
+          {
+            "name": "definitionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "The approvals inbox: the requests the caller may decide (default), or every request with filters for readers",
+        "operationId": "getWorkflowRequests",
+        "parameters": [
+          {
+            "name": "mine",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RequestSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests/{requestId}": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "A request with its evaluation (which rule, which values), steps, approvers, history, block and override",
+        "operationId": "getWorkflowRequestsByRequestId",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests/{requestId}/approve": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "postWorkflowRequestsByRequestIdApprove",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ActionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests/{requestId}/reject": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "postWorkflowRequestsByRequestIdReject",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests/{requestId}/request-changes": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "postWorkflowRequestsByRequestIdRequestChanges",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests/{requestId}/delegate": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "postWorkflowRequestsByRequestIdDelegate",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelegateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests/{requestId}/comment": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "postWorkflowRequestsByRequestIdComment",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/requests/{requestId}/cancel": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "postWorkflowRequestsByRequestIdCancel",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/delegations": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "getWorkflowDelegations",
+        "parameters": [
+          {
+            "name": "all",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DelegationSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "summary": "One member acts for another between two dates, for every definition or one; managers may delegate for others",
+        "operationId": "postWorkflowDelegations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDelegationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow/delegations/{delegationId}": {
+      "delete": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "deleteWorkflowDelegationsByDelegationId",
+        "parameters": [
+          {
+            "name": "delegationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -14158,6 +14916,17 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ActionRequest": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -14770,6 +15539,32 @@
             "format": "date-time"
           }
         }
+      },
+      "ApproverSpecRequest": {
+        "type": "object",
+        "properties": {
+          "membershipIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "roleCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "scopeToCompany": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "description": "Who approves: named members, or every active holder of a role (scoped to the document's company unless told otherwise)."
       },
       "AssemblyLineSummary": {
         "required": [
@@ -15888,6 +16683,64 @@
           }
         }
       },
+      "BlockSummary": {
+        "required": [
+          "id",
+          "kind",
+          "entityType",
+          "entityId",
+          "companyId",
+          "display",
+          "why",
+          "status",
+          "requestId",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "display": {
+            "type": "string"
+          },
+          "why": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "status": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "BomExplosion": {
         "required": [
           "bomId",
@@ -16292,6 +17145,71 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HolidaySummary"
+            }
+          }
+        }
+      },
+      "CancelRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CatalogueEntry": {
+        "required": [
+          "entityType",
+          "label",
+          "fields",
+          "blockKinds"
+        ],
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogueField"
+            }
+          },
+          "blockKinds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CatalogueField": {
+        "required": [
+          "name",
+          "type",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
             }
           }
         }
@@ -18266,6 +19184,168 @@
           }
         }
       },
+      "DefinitionSummary": {
+        "required": [
+          "id",
+          "lineageId",
+          "entityType",
+          "trigger",
+          "blockKind",
+          "name",
+          "description",
+          "version",
+          "status",
+          "reapprovalPolicy",
+          "overrideValidHours",
+          "activatedAt",
+          "updatedAt",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "blockKind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reapprovalPolicy": {
+            "type": "string"
+          },
+          "overrideValidHours": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "activatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleSummary"
+            }
+          }
+        }
+      },
+      "DelegateRequest": {
+        "required": [
+          "toMembershipId"
+        ],
+        "type": "object",
+        "properties": {
+          "toMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DelegationSummary": {
+        "required": [
+          "id",
+          "fromMembershipId",
+          "toMembershipId",
+          "definitionId",
+          "validFrom",
+          "validTo",
+          "reason",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "definitionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "DeliverySummary": {
         "required": [
           "id",
@@ -18832,6 +19912,41 @@
           },
           "reason": {
             "type": "string"
+          }
+        }
+      },
+      "ExpressionValidation": {
+        "required": [
+          "valid",
+          "message",
+          "position",
+          "fields"
+        ],
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "position": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -22225,6 +23340,57 @@
         },
         "description": "A stored outbox row as the dispatcher and the operator UI see it."
       },
+      "OverrideSummary": {
+        "required": [
+          "id",
+          "blockId",
+          "requestId",
+          "approvedBy",
+          "reason",
+          "expiresAt",
+          "consumed",
+          "consumedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "blockId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "approvedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consumed": {
+            "type": "boolean"
+          },
+          "consumedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
       "PageOfActivityView": {
         "required": [
           "items",
@@ -24263,6 +25429,352 @@
           }
         }
       },
+      "RequestActionSummary": {
+        "required": [
+          "id",
+          "stepNo",
+          "actor",
+          "actorName",
+          "onBehalfOf",
+          "action",
+          "comment",
+          "channel",
+          "actedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stepNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "actor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "actorName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "onBehalfOf": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "actedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RequestDetail": {
+        "required": [
+          "request",
+          "evaluation",
+          "subject",
+          "steps",
+          "actions",
+          "block",
+          "override"
+        ],
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/RequestSummary"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestStepSummary"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestActionSummary"
+            }
+          },
+          "block": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BlockSummary"
+              }
+            ]
+          },
+          "override": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OverrideSummary"
+              }
+            ]
+          }
+        }
+      },
+      "RequestStepSummary": {
+        "required": [
+          "stepNo",
+          "name",
+          "mode",
+          "quorum",
+          "approvers",
+          "approverNames",
+          "approvedBy",
+          "status",
+          "dueAt",
+          "escalatedAt",
+          "allowDelegate",
+          "requireComment"
+        ],
+        "type": "object",
+        "properties": {
+          "stepNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "mode": {
+            "type": "string"
+          },
+          "quorum": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "approvers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "approverNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "approvedBy": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "dueAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "escalatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "allowDelegate": {
+            "type": "boolean"
+          },
+          "requireComment": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RequestSummary": {
+        "required": [
+          "id",
+          "entityType",
+          "entityId",
+          "companyId",
+          "display",
+          "status",
+          "currentStepNo",
+          "requestedBy",
+          "requestedByName",
+          "ruleName",
+          "dueAt",
+          "createdAt",
+          "decidedAt",
+          "decidedBy",
+          "decisionAction",
+          "decisionComment",
+          "definitionId",
+          "definitionVersion",
+          "blockId",
+          "canAct"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "display": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "currentStepNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "requestedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "requestedByName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ruleName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dueAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "decidedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "decisionAction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "decisionComment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "definitionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "definitionVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "blockId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "canAct": {
+            "type": "boolean"
+          }
+        }
+      },
       "ReservationInfo": {
         "required": [
           "id",
@@ -24855,6 +26367,45 @@
           }
         },
         "description": "What one run of the daily routines did for a company (or a tenant when Guid? RoutineRunResult.CompanyId is null)."
+      },
+      "RuleSummary": {
+        "required": [
+          "id",
+          "sortOrder",
+          "name",
+          "condition",
+          "steps"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "condition": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepSummary"
+            }
+          }
+        }
       },
       "SaveAccountRequest": {
         "required": [
@@ -26048,6 +27599,105 @@
           }
         }
       },
+      "SaveDefinitionRequest": {
+        "required": [
+          "entityType",
+          "trigger",
+          "name",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveRuleRequest"
+            }
+          },
+          "blockKind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "reapprovalPolicy": {
+            "type": "string",
+            "default": "reset"
+          },
+          "overrideValidHours": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 168
+          }
+        }
+      },
+      "SaveDelegationRequest": {
+        "required": [
+          "toMembershipId",
+          "validFrom",
+          "validTo"
+        ],
+        "type": "object",
+        "properties": {
+          "toMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date"
+          },
+          "definitionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fromMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "SaveDimensionRequest": {
         "required": [
           "code",
@@ -27091,6 +28741,31 @@
           }
         }
       },
+      "SaveRuleRequest": {
+        "required": [
+          "name",
+          "condition",
+          "steps"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "condition": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveStepRequest"
+            }
+          }
+        }
+      },
       "SaveScheduleRequest": {
         "required": [
           "code",
@@ -27290,6 +28965,72 @@
           "isActive": {
             "type": "boolean",
             "default": true
+          }
+        }
+      },
+      "SaveStepRequest": {
+        "required": [
+          "name",
+          "approverKind",
+          "approvers"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "approverKind": {
+            "type": "string"
+          },
+          "approvers": {
+            "$ref": "#/components/schemas/ApproverSpecRequest"
+          },
+          "mode": {
+            "type": "string",
+            "default": "any"
+          },
+          "quorum": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "timeoutHours": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "escalation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApproverSpecRequest"
+              }
+            ]
+          },
+          "allowDelegate": {
+            "type": "boolean",
+            "default": true
+          },
+          "requireComment": {
+            "type": "boolean",
+            "default": false
+          },
+          "requireStepUp": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -28793,6 +30534,89 @@
             "items": {
               "$ref": "#/components/schemas/StatutoryAccount"
             }
+          }
+        }
+      },
+      "StepSummary": {
+        "required": [
+          "id",
+          "sortOrder",
+          "name",
+          "approverKind",
+          "approvers",
+          "mode",
+          "quorum",
+          "timeoutHours",
+          "escalation",
+          "allowDelegate",
+          "requireComment",
+          "requireStepUp"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "approverKind": {
+            "type": "string"
+          },
+          "approvers": {
+            "$ref": "#/components/schemas/ApproverSpecRequest"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "quorum": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "timeoutHours": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "escalation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApproverSpecRequest"
+              }
+            ]
+          },
+          "allowDelegate": {
+            "type": "boolean"
+          },
+          "requireComment": {
+            "type": "boolean"
+          },
+          "requireStepUp": {
+            "type": "boolean"
           }
         }
       },
@@ -30668,6 +32492,28 @@
           }
         }
       },
+      "ValidateExpressionRequest": {
+        "required": [
+          "entityType",
+          "expression"
+        ],
+        "type": "object",
+        "properties": {
+          "entityType": {
+            "type": "string"
+          },
+          "expression": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "For the on_block trigger the fields come from the block's values, so unknown names are allowed."
+      },
       "ValuationReport": {
         "required": [
           "companyId",
@@ -31155,6 +33001,34 @@
           }
         }
       },
+      "WorkflowCatalogue": {
+        "required": [
+          "subjects",
+          "triggers",
+          "functions"
+        ],
+        "type": "object",
+        "properties": {
+          "subjects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogueEntry"
+            }
+          },
+          "triggers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "functions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "WorkingDayComputation": {
         "required": [
           "from",
@@ -31248,6 +33122,9 @@
     },
     {
       "name": "Inventory"
+    },
+    {
+      "name": "Workflow"
     }
   ]
 }

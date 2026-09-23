@@ -17,6 +17,7 @@ using Quicker.Persistence;
 using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
+using Quicker.Workflow;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddQuickerObservability("quicker-worker");
@@ -46,6 +47,7 @@ builder.Services.AddAccountingModule();
 builder.Services.AddIntegrityModule();
 builder.Services.AddItemsModule();
 builder.Services.AddInventoryModule();
+builder.Services.AddWorkflowModule();
 
 var app = builder.Build();
 
