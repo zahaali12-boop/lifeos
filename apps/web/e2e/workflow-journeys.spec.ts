@@ -35,7 +35,8 @@ test("English: an approval definition checked and activated, an adjustment route
   await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
   await page.getByLabel(/^Password/).fill(password);
   await page.getByRole("button", { name: "Create workspace" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+  // Signing up provisions a whole workspace, slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
 
   // A company with a chart, a warehouse, an item and a reason code, so an adjustment can be submitted.
   await nav(page, "Companies");

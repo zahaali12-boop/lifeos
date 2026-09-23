@@ -17,6 +17,9 @@ namespace Quicker.Testing;
 /// </summary>
 public sealed class TestDatabase : IAsyncDisposable
 {
+    /// <summary>Advisory lock key serialising template builds across test processes ("QKTMPL" in ASCII).</summary>
+    private const long TemplateBuildLock = 0x514B544D504C;
+
     private static readonly SemaphoreSlim TemplateLock = new(1, 1);
     private static readonly SemaphoreSlim CloneLock = new(1, 1);
     private static string? _templateName;
@@ -124,26 +127,19 @@ public sealed class TestDatabase : IAsyncDisposable
             await using (var admin = new NpgsqlConnection(ownerBase))
             {
                 await admin.OpenAsync(cancellationToken);
-                var exists = await admin.ExecuteScalarAsync<int?>("SELECT 1 FROM pg_database WHERE datname = @n", new { n = templateName });
-                if (exists is null)
+
+                // Every test project is its own process on the same cluster. One builds the template while the others
+                // wait on this lock, and the template counts as built only once it is marked a template (the last
+                // step): otherwise a process could clone it half-migrated or unseeded, and a build that died half-way
+                // (a cancelled run) would be cloned forever.
+                await admin.ExecuteAsync(new CommandDefinition("SELECT pg_advisory_lock(@key)", new { key = TemplateBuildLock }, cancellationToken: cancellationToken));
+                try
                 {
-                    await admin.ExecuteAsync($"CREATE DATABASE \"{templateName}\"");
-                    var templateOwner = new NpgsqlConnectionStringBuilder(ownerBase) { Database = templateName, Pooling = false }.ConnectionString;
-                    var runner = new MigrationRunner(templateOwner, new NoOpUpgradeLog());
-                    await runner.EnsureDatabaseAndRolesAsync("quicker", cancellationToken);
-                    var migrated = runner.Migrate();
-                    if (!migrated.Successful)
-                    {
-                        throw new InvalidOperationException($"Template migration failed at {migrated.ErrorScript?.Name}: {migrated.Error}");
-                    }
-
-                    var seeded = runner.Seed();
-                    if (!seeded.Successful)
-                    {
-                        throw new InvalidOperationException($"Template seed failed at {seeded.ErrorScript?.Name}: {seeded.Error}");
-                    }
-
-                    await admin.ExecuteAsync($"UPDATE pg_database SET datistemplate = true WHERE datname = @n", new { n = templateName });
+                    await BuildTemplateAsync(admin, ownerBase, templateName, cancellationToken);
+                }
+                finally
+                {
+                    await admin.ExecuteAsync("SELECT pg_advisory_unlock(@key)", new { key = TemplateBuildLock });
                 }
             }
 
@@ -155,6 +151,38 @@ public sealed class TestDatabase : IAsyncDisposable
         {
             TemplateLock.Release();
         }
+    }
+
+    private static async Task BuildTemplateAsync(NpgsqlConnection admin, string ownerBase, string templateName, CancellationToken cancellationToken)
+    {
+        var built = await admin.ExecuteScalarAsync<bool?>(new CommandDefinition("SELECT datistemplate FROM pg_database WHERE datname = @n", new { n = templateName }, cancellationToken: cancellationToken));
+        if (built is true)
+        {
+            return;
+        }
+
+        if (built is false)
+        {
+            await admin.ExecuteAsync($"DROP DATABASE IF EXISTS \"{templateName}\" WITH (FORCE)");
+        }
+
+        await admin.ExecuteAsync($"CREATE DATABASE \"{templateName}\"");
+        var templateOwner = new NpgsqlConnectionStringBuilder(ownerBase) { Database = templateName, Pooling = false }.ConnectionString;
+        var runner = new MigrationRunner(templateOwner, new NoOpUpgradeLog());
+        await runner.EnsureDatabaseAndRolesAsync("quicker", cancellationToken);
+        var migrated = runner.Migrate();
+        if (!migrated.Successful)
+        {
+            throw new InvalidOperationException($"Template migration failed at {migrated.ErrorScript?.Name}: {migrated.Error}");
+        }
+
+        var seeded = runner.Seed();
+        if (!seeded.Successful)
+        {
+            throw new InvalidOperationException($"Template seed failed at {seeded.ErrorScript?.Name}: {seeded.Error}");
+        }
+
+        await admin.ExecuteAsync($"UPDATE pg_database SET datistemplate = true WHERE datname = @n", new { n = templateName });
     }
 
     private static async Task<string> StartContainerAsync(CancellationToken cancellationToken)

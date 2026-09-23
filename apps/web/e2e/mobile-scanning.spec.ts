@@ -31,7 +31,8 @@ test("a count is scanned bin by bin, synced online, queued offline and replayed 
   await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
   await page.getByLabel(/^Password/).fill(password);
   await page.getByRole("button", { name: "Create workspace" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+  // Signing up provisions a whole workspace, slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
 
   // The desktop set-up (company, warehouse with bins, an item with a barcode, a frozen count) through the API with the session's token.
   const token = await page.evaluate(() => (JSON.parse(window.localStorage.getItem("quicker.session") ?? "{}") as { accessToken?: string }).accessToken);
@@ -122,7 +123,8 @@ test("goods are received at the dock against an open purchase order and posted i
   await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
   await page.getByLabel(/^Password/).fill(password);
   await page.getByRole("button", { name: "Create workspace" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+  // Signing up provisions a whole workspace, slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
 
   // The desktop set-up (a company with a chart, a warehouse, an item, a supplier and an approved order) through the API.
   const token = await page.evaluate(() => (JSON.parse(window.localStorage.getItem("quicker.session") ?? "{}") as { accessToken?: string }).accessToken);

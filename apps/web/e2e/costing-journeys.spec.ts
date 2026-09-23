@@ -37,7 +37,8 @@ test("English: a standard-cost company, a first standard before stock, stock at 
   await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
   await page.getByLabel(/^Password/).fill(password);
   await page.getByRole("button", { name: "Create workspace" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+  // Signing up provisions a whole workspace, slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
 
   // A company on standard cost; the costing policy is locked once it exists.
   await nav(page, "Companies");

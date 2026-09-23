@@ -25,6 +25,8 @@ async function closeDialog(page: Page): Promise<void> {
 }
 
 test("English: warehouses with bins, an item, a posted adjustment, stock, a transfer, a count with a reasoned variance, and the valuation", async ({ page }) => {
+  // A long journey (the inventory screens end to end, fifteen accessibility scans): under a minute alone, more on a shared CI runner.
+  test.setTimeout(120_000);
   const slug = `inv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
   await page.goto("/signup");
@@ -34,7 +36,8 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
   await page.getByLabel(/^Password/).fill(password);
   await page.getByRole("button", { name: "Create workspace" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+  // Signing up provisions a whole workspace, slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
 
   // A company with a chart, so stock can be valued and booked.
   await nav(page, "Companies");

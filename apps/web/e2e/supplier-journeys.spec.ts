@@ -35,7 +35,8 @@ test("English: purchasing settings, then a supplier with terms, contact, encrypt
   await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
   await page.getByLabel(/^Password/).fill(password);
   await page.getByRole("button", { name: "Create workspace" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+  // Signing up provisions a whole workspace, slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
 
   await nav(page, "Companies");
   await page.getByTestId("new-company").click();
