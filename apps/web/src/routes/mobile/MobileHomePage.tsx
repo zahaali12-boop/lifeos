@@ -1,7 +1,7 @@
 import { Button, Field } from "@quicker/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowRightLeft, ClipboardCheck, RefreshCw } from "lucide-react";
+import { ArrowRightLeft, ClipboardCheck, PackageCheck, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { SelectField } from "../common";
@@ -60,6 +60,12 @@ export function MobileHomePage() {
           <Link to="/m/transfer" aria-disabled={!ready}>
             <ArrowRightLeft aria-hidden="true" />
             {t("mobile.home.startTransfer")}
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" size="lg" className="h-14 justify-start gap-3 text-base">
+          <Link to="/m/receive" aria-disabled={!ready} data-testid="start-receive">
+            <PackageCheck aria-hidden="true" />
+            {t("mobile.home.startReceive")}
           </Link>
         </Button>
         <Button asChild variant="secondary" size="lg" className="h-14 justify-start gap-3 text-base">

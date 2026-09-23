@@ -108,6 +108,29 @@ public static class PurchasingEndpoints
             .RequirePermission(PurchasingPermissions.OrderManage)
             .WithSummary("Closes short: what was not received is cancelled and the open commitments released");
 
+        var receipts = purchasing.MapGroup("/receipts");
+        receipts.MapGet("/", async (Guid? companyId, string? status, Guid? orderId, ReceiptService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, orderId, ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptRead)
+            .WithSummary("Goods receipts of a company, optionally by status or order.");
+        receipts.MapGet("/receivable", async (Guid companyId, Guid? orderId, Guid? partnerId, ReceiptService service, CancellationToken ct) => TypedResults.Ok(await service.ReceivableAsync(companyId, orderId, partnerId, ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptRead)
+            .WithSummary("Open order lines that can be received, with what the supplier's tolerance still allows.");
+        receipts.MapPost("/", async (SaveReceiptRequest request, ReceiptService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static r => $"/api/v1/purchasing/receipts/{r.Id}"))
+            .RequirePermission(PurchasingPermissions.ReceiptManage)
+            .WithSummary("Drafts a goods receipt against one purchase order's open lines.");
+        receipts.MapGet("/{receiptId:guid}", async (Guid receiptId, ReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(receiptId, ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptRead);
+        receipts.MapPut("/{receiptId:guid}", async (Guid receiptId, SaveReceiptRequest request, ReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(receiptId, request, ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptManage);
+        receipts.MapDelete("/{receiptId:guid}", async (Guid receiptId, ReceiptService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(receiptId, ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptManage);
+        receipts.MapPost("/{receiptId:guid}/post", async (Guid receiptId, ReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(receiptId, ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptPost)
+            .WithSummary("Posts the receipt: stock in at the expected cost against GRNI, the order's received quantities updated.");
+        receipts.MapPost("/{receiptId:guid}/reverse", async (Guid receiptId, ReverseReceiptRequest request, ReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(receiptId, request, ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptPost)
+            .WithSummary("Reverses a posted receipt as a whole at its exact cost.");
+
         return api;
     }
 }

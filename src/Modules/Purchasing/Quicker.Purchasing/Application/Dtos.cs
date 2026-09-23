@@ -112,3 +112,18 @@ public sealed record PurchaseOrderSummary(
     IReadOnlyList<PurchaseOrderRevisionSummary> Revisions,
     IReadOnlyList<CommitmentSummary> Commitments,
     DateTimeOffset UpdatedAt);
+
+// ------------------------------------------------------------------ goods receipts
+
+public sealed record SaveReceiptLineRequest(Guid OrderLineId, decimal Quantity, string? Uom = null, Guid? UomId = null, Guid? BinId = null, string? LotNumber = null, DateOnly? ExpiresOn = null, IReadOnlyList<string>? SerialNumbers = null);
+
+public sealed record SaveReceiptRequest(Guid OrderId, IReadOnlyList<SaveReceiptLineRequest> Lines, Guid? WarehouseId = null, DateOnly? PostingDate = null, string? SupplierDeliveryNote = null, string? Notes = null, Guid? BranchId = null, JsonElement? CustomFields = null);
+
+public sealed record ReverseReceiptRequest(string Reason, DateOnly? ReversalDate = null);
+
+public sealed record ReceiptLineSummary(Guid Id, int LineNo, Guid OrderLineId, int OrderLineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? VariantId, decimal Quantity, Guid UomId, string UomCode, decimal QuantityBase, decimal QtyInOrderUom, Guid? BinId, string? LotNumber, DateOnly? ExpiresOn, IReadOnlyList<string> SerialNumbers, decimal UnitPrice, decimal ExpectedUnitCost, decimal ExpectedCostAmount, decimal QtyInvoiced, decimal QtyReturned, Guid? SleId);
+
+public sealed record ReceiptSummary(Guid Id, Guid CompanyId, string Number, string Status, Guid OrderId, string OrderNumber, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, Guid WarehouseId, string? WarehouseCode, DateOnly PostingDate, string? SupplierDeliveryNote, string Currency, decimal ExchangeRate, string FunctionalCurrency, decimal TotalExpectedCost, Guid? StockPostingId, Guid? JournalEntryId, string? ReversalReason, DateTimeOffset? ReversedAt, string? Notes, JsonElement CustomFields, IReadOnlyList<ReceiptLineSummary> Lines, DateTimeOffset? PostedAt, DateTimeOffset UpdatedAt);
+
+/// <summary>An open order line as the receiving screen sees it: what was ordered, what arrived so far and what the tolerance still allows.</summary>
+public sealed record ReceivableLine(Guid OrderId, string OrderNumber, Guid OrderLineId, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, string Tracking, Guid UomId, string UomCode, decimal Ordered, decimal Received, decimal Cancelled, decimal Remaining, decimal MaxReceivable, DateOnly? ExpectedDate, Guid? WarehouseId);

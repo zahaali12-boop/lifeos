@@ -19,11 +19,14 @@ public static class PurchasingModule
         PermissionCatalog.Register(PurchasingPermissions.All);
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Requisition, "app.pur_requisitions", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Order, "app.pur_orders", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Receipt, "app.pur_receipts", "custom_fields"));
         services.AddModuleDbContext<PurchasingDbContext>();
         services.AddScoped<RequisitionService>();
         services.AddScoped<RfqService>();
         services.AddScoped<BlanketAgreementService>();
         services.AddScoped<PurchaseOrderService>();
+        services.AddScoped<ReceiptService>();
+        services.AddScoped<IPurchaseReceiptDirectory>(static sp => sp.GetRequiredService<ReceiptService>());
         services.AddScoped<PurchasingSupply>();
         services.AddScoped<IPurchaseOrderDirectory>(static sp => sp.GetRequiredService<PurchasingSupply>());
         // The planner's incoming supply: purchase orders replace the inventory module's empty default.

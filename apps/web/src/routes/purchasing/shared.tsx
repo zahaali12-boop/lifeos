@@ -70,7 +70,7 @@ export function useAgreements(companyId: string) {
 const tones: Record<string, "neutral" | "info" | "success" | "warning" | "danger"> = {
   draft: "neutral", pending_approval: "warning", approved: "success", ordered: "success", sent: "info", active: "success", awarded: "success",
   partially_received: "info", received: "success", closed: "neutral", rejected: "danger", cancelled: "neutral", invited: "neutral", responded: "info", declined: "danger",
-  open: "info", consumed: "neutral", released: "neutral",
+  open: "info", consumed: "neutral", released: "neutral", posted: "success", reversed: "danger",
 };
 
 export function PurchaseStatus({ status }: { status: string }) {

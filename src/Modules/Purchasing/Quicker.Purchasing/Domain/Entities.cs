@@ -438,3 +438,118 @@ public sealed class Commitment : ITenantEntity
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+/// <summary>A goods receipt against one purchase order: drafted, posted through the stock engine at the expected cost with GRNI as the offset, reversed as a whole.</summary>
+public sealed class Receipt : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? BranchId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public Guid OrderId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public string? SupplierDeliveryNote { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal ExchangeRate { get; set; } = 1m;
+
+    public decimal TotalExpectedCost { get; set; }
+
+    public Guid? StockPostingId { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalPostingId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public string? Notes { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<ReceiptLine> Lines { get; } = [];
+}
+
+public sealed class ReceiptLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ReceiptId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid OrderLineId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid UomId { get; set; }
+
+    public decimal QuantityBase { get; set; }
+
+    /// <summary>The received quantity expressed in the order line's unit, what the order's received quantity counts.</summary>
+    public decimal QtyInOrderUom { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public string? LotNumber { get; set; }
+
+    public DateOnly? ExpiresOn { get; set; }
+
+    public string SerialNumbers { get; set; } = "[]";
+
+    /// <summary>The order line's price after its discount, per order unit, in the order currency.</summary>
+    public decimal UnitPrice { get; set; }
+
+    /// <summary>The expected cost per received unit in the company's currency (order price at the receipt-date rate).</summary>
+    public decimal ExpectedUnitCost { get; set; }
+
+    /// <summary>What the stock engine booked on Inventory / GRNI for this line, in the company's currency.</summary>
+    public decimal ExpectedCostAmount { get; set; }
+
+    public decimal InvoicedCostAmount { get; set; }
+
+    public decimal ReturnedCostAmount { get; set; }
+
+    public decimal QtyInvoiced { get; set; }
+
+    public decimal QtyReturned { get; set; }
+
+    public Guid? SleId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}

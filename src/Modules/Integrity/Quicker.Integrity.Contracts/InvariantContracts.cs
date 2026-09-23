@@ -27,7 +27,10 @@ public static class InvariantCodes
     /// <summary>Per company and per item, the stock value entries sum to the inventory control accounts' journal lines (roadmap 3.3, hard scenario 15).</summary>
     public const string InventoryMatchesGl = "inventory_matches_gl";
 
-    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl];
+    /// <summary>Per company and per goods receipt, the GRNI control account's lines net to the receipt's uninvoiced, unreturned expected cost (roadmap 4.3: GRNI equals uninvoiced receipts).</summary>
+    public const string GrniMatchesReceipts = "grni_matches_receipts";
+
+    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts];
 }
 
 /// <summary>One check: what it looked at, whether it holds, and the first problems it found (never more than a page).</summary>

@@ -36,7 +36,7 @@ async function supplier(page: Page, code: string, name: string, email: string): 
   await closeDialog(page);
 }
 
-test("English: requisition to purchase order, a change order and a send, an RFQ compared and a blanket agreement", async ({ page }) => {
+test("English: requisition to purchase order, a change order, a send and a receipt, an RFQ compared and a blanket agreement", async ({ page }) => {
   const slug = `pur-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
   await page.goto("/signup");
@@ -54,8 +54,11 @@ test("English: requisition to purchase order, a change order and a send, an RFQ 
   await page.getByLabel(/Legal name \(English\)/).fill("Purchasing Co.");
   await page.getByTestId("save-company").click();
   await expect(page.getByRole("grid")).toContainText("PUR");
+  await nav(page, "Chart of accounts");
+  await page.getByTestId("create-chart").click();
+  await expect(page.getByTestId("account-row").first()).toBeVisible();
 
-  // An item to buy and two suppliers registered for the company.
+  // An item to buy, a warehouse to receive into and two suppliers registered for the company.
   await nav(page, "Items");
   await page.getByTestId("new-item").click();
   await page.getByTestId("item-code").fill("TEA");
@@ -63,6 +66,13 @@ test("English: requisition to purchase order, a change order and a send, an RFQ 
   await page.getByTestId("item-name-ar").fill("شاي");
   await page.getByTestId("save-item").click();
   await expect(page.getByTestId("item-detail")).toBeVisible();
+  await closeDialog(page);
+  await nav(page, "Warehouses");
+  await page.getByTestId("new-warehouse").click();
+  await page.getByTestId("warehouse-code").fill("MAIN");
+  await page.getByTestId("warehouse-name-en").fill("Main warehouse");
+  await page.getByTestId("save-warehouse").click();
+  await expect(page.getByTestId("warehouse-detail")).toBeVisible();
   await closeDialog(page);
   await nav(page, "Suppliers");
   await supplier(page, "ALPHA", "Alpha Supplies", "alpha@example.test");
@@ -116,6 +126,27 @@ test("English: requisition to purchase order, a change order and a send, an RFQ 
   await expect(page.getByTestId("revision-row")).toHaveCount(1);
   await expect(page.getByTestId("revision-row")).toContainText("Two more cartons");
   await closeDialog(page);
+
+  // A goods receipt against the order: 8 of 12 arrive, posted into stock at the expected cost.
+  await nav(page, "Goods receipts");
+  await expect(page.getByText("No goods receipts yet")).toBeVisible();
+  await page.getByTestId("new-receipt").click();
+  await page.getByTestId("receipt-order").selectOption({ index: 1 });
+  await expect(page.getByTestId("receipt-line")).toHaveCount(1);
+  await expect(page.getByTestId("receipt-warehouse")).not.toHaveValue("");
+  await page.getByTestId("receive-qty-0").fill("8");
+  await page.getByTestId("receipt-delivery-note").fill("DN-1001");
+  await expectAccessible(page);
+  await page.getByTestId("save-receipt").click();
+  await expect(page.getByTestId("receipt-detail")).toBeVisible();
+  await expect(page.getByTestId("receipt-detail")).toContainText("GRN-");
+  await expect(page.getByTestId("receipt-value")).toContainText("12,000");
+  await page.getByTestId("post-receipt").click();
+  await expect(page.getByTestId("receipt-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await expectAccessible(page);
+  await closeDialog(page);
+  await nav(page, "Purchase orders");
+  await expect(page.getByRole("grid")).toContainText("Partially received");
 
   // An RFQ to both suppliers, two quotes, compared: the cheaper one ranks first.
   await nav(page, "Requests for quotation");

@@ -111,3 +111,53 @@ test("a count is scanned bin by bin, synced online, queued offline and replayed 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("الجرد");
   await expectAccessible(page);
 });
+
+test("goods are received at the dock against an open purchase order and posted into the operator's warehouse", async ({ page }) => {
+  const slug = `rcv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
+  await page.goto("/signup");
+  await page.getByLabel(/Workspace name/).fill("Receiving " + slug);
+  await page.getByLabel(/^Slug/).fill(slug);
+  await page.getByLabel(/Your name/).fill("Owner");
+  await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
+  await page.getByLabel(/^Password/).fill(password);
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+
+  // The desktop set-up (a company with a chart, a warehouse, an item, a supplier and an approved order) through the API.
+  const token = await page.evaluate(() => (JSON.parse(window.localStorage.getItem("quicker.session") ?? "{}") as { accessToken?: string }).accessToken);
+  expect(token).toBeTruthy();
+  const call = async <T>(method: "GET" | "POST" | "PUT", path: string, data?: unknown): Promise<T> => {
+    const response = await page.request.fetch(apiUrl + path, { method, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, ...(data === undefined ? {} : { data }) });
+    expect(response.ok(), `${method} ${path}: ${response.status()} ${await response.text()}`).toBeTruthy();
+    return (await response.json()) as T;
+  };
+  const company = await call<{ id: string }>("POST", "/api/v1/organization/companies", { code: "RCV", legalName: { en: "Receiving Co.", ar: "شركة الاستلام" }, country: "IQ", functionalCurrency: "IQD", timeZone: "Asia/Baghdad" });
+  await call("POST", "/api/v1/accounting/charts/from-template", { templateCode: "IFRS_SME", code: "MAIN", companyId: company.id });
+  const warehouse = await call<{ id: string }>("POST", "/api/v1/inventory/warehouses", { companyId: company.id, code: "MAIN", name: { en: "Main", ar: "الرئيسي" } });
+  const item = await call<{ id: string }>("POST", "/api/v1/items", { code: "TEA", name: { en: "Tea", ar: "شاي" }, baseUom: "PCS" });
+  const supplier = await call<{ id: string }>("POST", "/api/v1/partners", { code: "ALPHA", legalName: { en: "Alpha Supplies", ar: "ألفا" }, isSupplier: true });
+  await call("PUT", `/api/v1/partners/${supplier.id}/supplier-accounts/${company.id}`, { currency: "IQD", leadTimeDays: 3 });
+  const order = await call<{ id: string; number: string }>("POST", "/api/v1/purchasing/orders", { companyId: company.id, partnerId: supplier.id, warehouseId: warehouse.id, lines: [{ itemId: item.id, quantity: 12, uom: "PCS", unitPrice: 1500, discountPct: 0 }] });
+  await call("POST", `/api/v1/purchasing/orders/${order.id}/submit`);
+
+  // Home, then receiving: the order's open line, 8 typed, posted at once.
+  await page.goto("/m");
+  await page.getByTestId("scan-company").selectOption(company.id);
+  await page.getByTestId("scan-warehouse").selectOption(warehouse.id);
+  await page.getByTestId("start-receive").click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Receive goods");
+  await page.getByTestId("receive-order").selectOption({ label: order.number });
+  await expect(page.getByTestId("receive-lines")).toContainText("TEA");
+  await expect(page.getByTestId("receive-lines")).toContainText("12 PCS remaining");
+  await page.getByTestId("mobile-receive-qty-0").fill("8");
+  await page.getByTestId("receive-note").fill("DN-55");
+  await expectAccessible(page);
+  await page.getByTestId("receive-post").click();
+  await expect(page.getByTestId("receive-done")).toContainText("GRN-");
+  await expect(page.getByTestId("receive-lines")).toContainText("4 PCS remaining");
+  const posted = await call<{ status: string; lines: { qtyReceived: number | string; status: string }[] }>("GET", `/api/v1/purchasing/orders/${order.id}`);
+  expect(posted.status).toBe("partially_received");
+  expect(String(posted.lines[0]?.qtyReceived)).toBe("8");
+});
+

@@ -6087,6 +6087,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Goods receipts of a company, optionally by status or order. */
+        get: operations["getPurchasingReceipts"];
+        put?: never;
+        /** Drafts a goods receipt against one purchase order's open lines. */
+        post: operations["postPurchasingReceipts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/receipts/receivable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open order lines that can be received, with what the supplier's tolerance still allows. */
+        get: operations["getPurchasingReceiptsReceivable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/receipts/{receiptId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingReceiptsByReceiptId"];
+        put: operations["putPurchasingReceiptsByReceiptId"];
+        post?: never;
+        delete: operations["deletePurchasingReceiptsByReceiptId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/receipts/{receiptId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the receipt: stock in at the expected cost against GRNI, the order's received quantities updated. */
+        post: operations["postPurchasingReceiptsByReceiptIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/receipts/{receiptId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted receipt as a whole at its exact cost. */
+        post: operations["postPurchasingReceiptsByReceiptIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9267,6 +9352,128 @@ export interface components {
             /** Format: int32 */
             rowsAfter: number | string;
         };
+        ReceiptLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: int32 */
+            orderLineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: double */
+            qtyInOrderUom: number | string;
+            /** Format: uuid */
+            binId: null | string;
+            lotNumber: null | string;
+            /** Format: date */
+            expiresOn: null | string;
+            serialNumbers: string[];
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            expectedUnitCost: number | string;
+            /** Format: double */
+            expectedCostAmount: number | string;
+            /** Format: double */
+            qtyInvoiced: number | string;
+            /** Format: double */
+            qtyReturned: number | string;
+            /** Format: uuid */
+            sleId: null | string;
+        };
+        ReceiptSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            orderId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: null | string;
+            /** Format: date */
+            postingDate: string;
+            supplierDeliveryNote: null | string;
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            functionalCurrency: string;
+            /** Format: double */
+            totalExpectedCost: number | string;
+            /** Format: uuid */
+            stockPostingId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            reversalReason: null | string;
+            /** Format: date-time */
+            reversedAt: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            lines: components["schemas"]["ReceiptLineSummary"][];
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description An open order line as the receiving screen sees it: what was ordered, what arrived so far and what the tolerance still allows. */
+        ReceivableLine: {
+            /** Format: uuid */
+            orderId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            tracking: string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            ordered: number | string;
+            /** Format: double */
+            received: number | string;
+            /** Format: double */
+            cancelled: number | string;
+            /** Format: double */
+            remaining: number | string;
+            /** Format: double */
+            maxReceivable: number | string;
+            /** Format: date */
+            expectedDate: null | string;
+            /** Format: uuid */
+            warehouseId: null | string;
+        };
         ReceiveTransferRequest: {
             /** Format: date */
             receiveDate?: null | string;
@@ -9679,6 +9886,11 @@ export interface components {
             totalAmount: number | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ReverseReceiptRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
         };
         ReverseRequest: {
             reason: string;
@@ -10683,6 +10895,35 @@ export interface components {
             requiresNote: boolean;
             /** @default true */
             isActive: boolean;
+        };
+        SaveReceiptLineRequest: {
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: double */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+            lotNumber?: null | string;
+            /** Format: date */
+            expiresOn?: null | string;
+            serialNumbers?: null | string[];
+        };
+        SaveReceiptRequest: {
+            /** Format: uuid */
+            orderId: string;
+            lines: components["schemas"]["SaveReceiptLineRequest"][];
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: date */
+            postingDate?: null | string;
+            supplierDeliveryNote?: null | string;
+            notes?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            customFields?: unknown;
         };
         SaveRecurringTemplateRequest: {
             code: string;
@@ -23497,6 +23738,194 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingReceipts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                orderId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingReceipts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingReceiptsReceivable: {
+        parameters: {
+            query: {
+                companyId: string;
+                orderId?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableLine"][];
+                };
+            };
+        };
+    };
+    getPurchasingReceiptsByReceiptId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingReceiptsByReceiptId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptSummary"];
+                };
+            };
+        };
+    };
+    deletePurchasingReceiptsByReceiptId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPurchasingReceiptsByReceiptIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingReceiptsByReceiptIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptSummary"];
                 };
             };
         };

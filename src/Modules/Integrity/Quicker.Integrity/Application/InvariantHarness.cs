@@ -40,6 +40,7 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             await GaplessNumberingAsync(uow, companyId, cancellationToken),
             await StockBalancesMatchLedgerAsync(uow, companyId, cancellationToken),
             await InventoryMatchesGlAsync(uow, companyId, cancellationToken),
+            await GrniMatchesReceiptsAsync(uow, companyId, cancellationToken),
         };
         return new InvariantReport(uow.Context.TenantId.Value, companyId, clock.UtcNow, checks, checks.TrueForAll(static c => c.Passed));
     }
@@ -243,6 +244,46 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
         var problems = mismatches.Select(m => $"company {m.CompanyId} item {m.ItemId}: value entries {N(m.Valued)}, inventory accounts {N(m.Booked)}").ToList();
         return Result(InvariantCodes.InventoryMatchesGl, checkedCount, problems, $"{checkedCount} item(s) valued, every one equal to its inventory account lines");
+    }
+
+    private sealed record GrniMismatch(Guid CompanyId, Guid ReceiptId, string? Number, decimal Booked, decimal Uninvoiced);
+
+    /// <summary>
+    /// Per company and goods receipt, Σ (credit − debit) in functional currency of the journal lines on the GRNI subledger
+    /// that reference the receipt equals Σ over its lines of the expected cost booked less what invoices and returns have
+    /// settled; a reversed receipt nets to zero on both sides. Receipts are the only writers of the GRNI subledger until
+    /// invoices (4.4), so every GRNI line is checked, in both directions.
+    /// </summary>
+    private static async Task<InvariantResult> GrniMatchesReceiptsAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(*) FROM app.pur_receipts WHERE status IN ('posted', 'reversed') AND (@company::uuid IS NULL OR company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<GrniMismatch>(new CommandDefinition("""
+            WITH booked AS (
+              SELECT l.company_id, l.subledger_ref AS receipt_id, sum(l.credit_fc - l.debit_fc) AS booked
+              FROM app.gl_journal_lines l
+              WHERE l.subledger_type = 'GRNI' AND l.subledger_ref IS NOT NULL AND (@company::uuid IS NULL OR l.company_id = @company)
+              GROUP BY 1, 2
+            ), expected AS (
+              SELECT r.company_id, r.id AS receipt_id, r.number,
+                     CASE WHEN r.status = 'posted' THEN coalesce(sum(rl.expected_cost_amount - rl.invoiced_cost_amount - rl.returned_cost_amount), 0) ELSE 0 END AS uninvoiced
+              FROM app.pur_receipts r
+              LEFT JOIN app.pur_receipt_lines rl ON rl.tenant_id = r.tenant_id AND rl.receipt_id = r.id
+              WHERE r.status IN ('posted', 'reversed') AND (@company::uuid IS NULL OR r.company_id = @company)
+              GROUP BY 1, 2, 3, r.status
+            ), keys AS (
+              SELECT company_id, receipt_id FROM booked UNION SELECT company_id, receipt_id FROM expected
+            )
+            SELECT k.company_id, k.receipt_id, e.number, coalesce(b.booked, 0) AS booked, coalesce(e.uninvoiced, 0) AS uninvoiced
+            FROM keys k
+            LEFT JOIN booked b ON b.company_id = k.company_id AND b.receipt_id = k.receipt_id
+            LEFT JOIN expected e ON e.company_id = k.company_id AND e.receipt_id = k.receipt_id
+            WHERE coalesce(b.booked, 0) <> coalesce(e.uninvoiced, 0)
+            ORDER BY k.company_id, k.receipt_id
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"company {m.CompanyId} receipt {m.Number ?? m.ReceiptId.ToString()}: GRNI lines {N(m.Booked)}, uninvoiced receipt value {N(m.Uninvoiced)}").ToList();
+        return Result(InvariantCodes.GrniMatchesReceipts, checkedCount, problems, $"{checkedCount} receipt(s), GRNI equal to the uninvoiced receipt value for every one");
     }
 
     private static InvariantResult Result(string code, long checkedCount, IReadOnlyList<string> problems, string summary) =>

@@ -17283,6 +17283,301 @@
           }
         }
       }
+    },
+    "/api/v1/purchasing/receipts": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Goods receipts of a company, optionally by status or order.",
+        "operationId": "getPurchasingReceipts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceiptSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Drafts a goods receipt against one purchase order's open lines.",
+        "operationId": "postPurchasingReceipts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/receipts/receivable": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Open order lines that can be received, with what the supplier's tolerance still allows.",
+        "operationId": "getPurchasingReceiptsReceivable",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "orderId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceivableLine"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/receipts/{receiptId}": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "getPurchasingReceiptsByReceiptId",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "putPurchasingReceiptsByReceiptId",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "deletePurchasingReceiptsByReceiptId",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/receipts/{receiptId}/post": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Posts the receipt: stock in at the expected cost against GRNI, the order's received quantities updated.",
+        "operationId": "postPurchasingReceiptsByReceiptIdPost",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/receipts/{receiptId}/reverse": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Reverses a posted receipt as a whole at its exact cost.",
+        "operationId": "postPurchasingReceiptsByReceiptIdReverse",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -29294,6 +29589,467 @@
           }
         }
       },
+      "ReceiptLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "orderLineId",
+          "orderLineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "variantId",
+          "quantity",
+          "uomId",
+          "uomCode",
+          "quantityBase",
+          "qtyInOrderUom",
+          "binId",
+          "lotNumber",
+          "expiresOn",
+          "serialNumbers",
+          "unitPrice",
+          "expectedUnitCost",
+          "expectedCostAmount",
+          "qtyInvoiced",
+          "qtyReturned",
+          "sleId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "orderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderLineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "quantityBase": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyInOrderUom": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expectedUnitCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expectedCostAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyInvoiced": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyReturned": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "sleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "ReceiptSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "status",
+          "orderId",
+          "orderNumber",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "warehouseId",
+          "warehouseCode",
+          "postingDate",
+          "supplierDeliveryNote",
+          "currency",
+          "exchangeRate",
+          "functionalCurrency",
+          "totalExpectedCost",
+          "stockPostingId",
+          "journalEntryId",
+          "reversalReason",
+          "reversedAt",
+          "notes",
+          "customFields",
+          "lines",
+          "postedAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "supplierDeliveryNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "totalExpectedCost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "stockPostingId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reversedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiptLineSummary"
+            }
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReceivableLine": {
+        "required": [
+          "orderId",
+          "orderNumber",
+          "orderLineId",
+          "lineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "tracking",
+          "uomId",
+          "uomCode",
+          "ordered",
+          "received",
+          "cancelled",
+          "remaining",
+          "maxReceivable",
+          "expectedDate",
+          "warehouseId"
+        ],
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "orderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "tracking": {
+            "type": "string"
+          },
+          "uomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "ordered": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "received": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cancelled": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remaining": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "maxReceivable": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expectedDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "An open order line as the receiving screen sees it: what was ordered, what arrived so far and what the tolerance still allows."
+      },
       "ReceiveTransferRequest": {
         "type": "object",
         "properties": {
@@ -30867,6 +31623,24 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ReverseReceiptRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -34172,6 +34946,122 @@
             "type": "boolean",
             "default": true
           }
+        }
+      },
+      "SaveReceiptLineRequest": {
+        "required": [
+          "orderLineId",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "orderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "serialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SaveReceiptRequest": {
+        "required": [
+          "orderId",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveReceiptLineRequest"
+            }
+          },
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "supplierDeliveryNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customFields": { }
         }
       },
       "SaveRecurringTemplateRequest": {

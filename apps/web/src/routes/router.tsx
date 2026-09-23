@@ -32,6 +32,7 @@ import { WarehousesPage } from "./inventory/WarehousesPage";
 import { AgreementsPage } from "./purchasing/AgreementsPage";
 import { PurchaseOrdersPage } from "./purchasing/PurchaseOrdersPage";
 import { PurchasingSettingsPage } from "./purchasing/PurchasingSettingsPage";
+import { ReceiptsPage } from "./purchasing/ReceiptsPage";
 import { RequisitionsPage } from "./purchasing/RequisitionsPage";
 import { RfqsPage } from "./purchasing/RfqsPage";
 import { SuppliersPage } from "./purchasing/SuppliersPage";
@@ -42,6 +43,7 @@ import { MobileHomePage } from "./mobile/MobileHomePage";
 import { MobileQueuePage } from "./mobile/MobileQueuePage";
 import { MobileShell } from "./mobile/MobileShell";
 import { MobileTransferPage } from "./mobile/MobileTransferPage";
+import { MobileReceivePage } from "./mobile/MobileReceivePage";
 
 /** Typed routes (ADR-0013): anonymous auth screens, the shell whose children require a session, and the mobile scanner under /m. */
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
@@ -95,6 +97,7 @@ const requisitionsRoute = createRoute({ getParentRoute: () => shellRoute, path: 
 const rfqsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/rfqs", component: RfqsPage, validateSearch: searchRecord });
 const purchaseOrdersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/orders", component: PurchaseOrdersPage, validateSearch: searchRecord });
 const agreementsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/agreements", component: AgreementsPage, validateSearch: searchRecord });
+const receiptsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/receipts", component: ReceiptsPage, validateSearch: searchRecord });
 const approvalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/approvals", component: ApprovalsPage, validateSearch: searchRecord });
 const workflowsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/workflows", component: WorkflowsPage, validateSearch: searchRecord });
 
@@ -113,6 +116,7 @@ const mobileHomeRoute = createRoute({ getParentRoute: () => mobileRoute, path: "
 const mobileCountRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/count", component: MobileCountPage });
 const mobileTransferRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/transfer", component: MobileTransferPage });
 const mobileQueueRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/queue", component: MobileQueuePage });
+const mobileReceiveRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/receive", component: MobileReceivePage });
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -121,9 +125,9 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute,
   ]),
-  mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute]),
+  mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });

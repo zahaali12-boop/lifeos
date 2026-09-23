@@ -14,6 +14,9 @@ public static class PurchasingPermissions
     public const string OrderRead = "purchasing.order.read";
     public const string OrderManage = "purchasing.order.manage";
     public const string OrderSend = "purchasing.order.send";
+    public const string ReceiptRead = "purchasing.receipt.read";
+    public const string ReceiptManage = "purchasing.receipt.manage";
+    public const string ReceiptPost = "purchasing.receipt.post";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -26,5 +29,8 @@ public static class PurchasingPermissions
         new(OrderRead, "purchasing", "Read purchase orders, their revisions and commitments"),
         new(OrderManage, "purchasing", "Create, edit, submit, change and cancel purchase orders"),
         new(OrderSend, "purchasing", "Send an approved purchase order to the supplier"),
+        new(ReceiptRead, "purchasing", "Read goods receipts"),
+        new(ReceiptManage, "purchasing", "Create, edit and delete draft goods receipts"),
+        new(ReceiptPost, "purchasing", "Post goods receipts into stock and reverse them"),
     ];
 }

@@ -483,14 +483,14 @@ public sealed class PurchaseOrderService(
             return Error.NotFound("purchase_order", id);
         }
 
+        if (order.Lines.Any(static l => l.QtyReceived > 0m || l.QtyInvoiced > 0m))
+        {
+            return Error.Conflict("order.change_after_receipt", "An order with receipts or invoices is closed short and reordered rather than changed.").WithWhy(("status", order.Status));
+        }
+
         if (order.Status is not ("approved" or "sent"))
         {
             return Error.Conflict("order.not_changeable", "Only an approved or sent order takes a change order; drafts are edited, received orders are closed.").WithWhy(("status", order.Status));
-        }
-
-        if (order.Lines.Any(static l => l.QtyReceived > 0m || l.QtyInvoiced > 0m))
-        {
-            return Error.Conflict("order.change_after_receipt", "An order with receipts or invoices is closed short and reordered rather than changed.");
         }
 
         if (string.IsNullOrWhiteSpace(request.Reason))

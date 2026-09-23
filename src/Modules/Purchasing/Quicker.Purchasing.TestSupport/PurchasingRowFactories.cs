@@ -36,6 +36,8 @@ public static class PurchasingRowFactories
             await c.ExecuteAsync("INSERT INTO app.pur_order_revisions (tenant_id, id, order_id, revision, snapshot) VALUES (@t, @id, @order, 0, '{}')", new { t, id, order }, tx);
             return new RowRef("app.pur_order_revisions", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.pur_receipts", static async (c, tx, t) => new RowRef("app.pur_receipts", $"id = '{(await ReceiptAsync(c, tx, t)).Receipt}'"));
+        IsolationRegistry.Register("app.pur_receipt_lines", static async (c, tx, t) => new RowRef("app.pur_receipt_lines", $"id = '{(await ReceiptAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.pur_commitments", static async (c, tx, t) =>
         {
             var (order, line, company) = await OrderAsync(c, tx, t);
@@ -98,6 +100,17 @@ public static class PurchasingRowFactories
         await c.ExecuteAsync("INSERT INTO app.pur_orders (tenant_id, id, company_id, number, partner_id, currency, order_date) VALUES (@t, @id, @company, @number, @partner, 'IQD', '2026-09-22')", new { t, id, company, number = Suffix(id), partner }, tx);
         await c.ExecuteAsync("INSERT INTO app.pur_order_lines (tenant_id, id, order_id, line_no, item_id, quantity, uom_id, quantity_base, unit_price) VALUES (@t, @line, @id, 1, @item, 1, @uom, 1, 10)", new { t, line, id, item = Guid.CreateVersion7(), uom = Guid.CreateVersion7() }, tx);
         return (id, line, company);
+    }
+
+    private static async Task<(Guid Receipt, Guid Line)> ReceiptAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (order, orderLine, company) = await OrderAsync(c, tx, t);
+        var partner = await c.ExecuteScalarAsync<Guid>("SELECT partner_id FROM app.pur_orders WHERE tenant_id = @t AND id = @order", new { t, order }, tx);
+        var id = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.pur_receipts (tenant_id, id, company_id, number, order_id, partner_id, warehouse_id, posting_date, currency) VALUES (@t, @id, @company, @number, @order, @partner, @warehouse, '2026-09-22', 'IQD')", new { t, id, company, number = Suffix(id), order, partner, warehouse = Guid.CreateVersion7() }, tx);
+        await c.ExecuteAsync("INSERT INTO app.pur_receipt_lines (tenant_id, id, receipt_id, line_no, order_line_id, item_id, quantity, uom_id, quantity_base, qty_in_order_uom) VALUES (@t, @line, @id, 1, @orderLine, @item, 1, @uom, 1, 1)", new { t, line, id, orderLine, item = Guid.CreateVersion7(), uom = Guid.CreateVersion7() }, tx);
+        return (id, line);
     }
 
     private static async Task<Guid> PartnerAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

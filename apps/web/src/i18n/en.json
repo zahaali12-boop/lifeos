@@ -26,6 +26,7 @@
     "company": "Companies"
   },
   "nav": {
+    "receipts": "Goods receipts",
     "dashboard": "Dashboard",
     "companies": "Companies",
     "rates": "Exchange rates",
@@ -492,6 +493,19 @@
     "allowTo": "Allow to"
   },
   "mobile": {
+    "receive": {
+      "title": "Receive goods",
+      "description": "Pick the order, scan or type what arrived, post it into this warehouse.",
+      "offline": "Receiving posts straight away and needs a connection.",
+      "chooseOrder": "Choose an order",
+      "scan": "Scan an item",
+      "scanHint": "Each scan adds one to the line.",
+      "notOnOrder": "{code} is not on this order.",
+      "nothingEntered": "Enter a quantity on at least one line.",
+      "remaining": "{remaining} {uom} remaining",
+      "done": "Posted as {number}.",
+      "post": "Post receipt"
+    },
     "title": "Scanner",
     "online": "Online",
     "offline": "Offline",
@@ -506,6 +520,7 @@
       "queue": "Queue"
     },
     "home": {
+      "startReceive": "Receive goods",
       "title": "Scanning",
       "description": "Pick where you are working. Counts and transfers are captured here and sync as soon as the network allows.",
       "company": "Company",
@@ -1127,12 +1142,39 @@
     "emptyTerms": "Nothing here yet",
     "emptyTermsDescription": "Create the first entry."
   },
-  "purchasing":   {
+  "purchasing": {
+    "receiptsDescription": "Goods received against purchase orders: within the supplier's tolerance, into stock at the expected cost with GRNI as the offset, reversed as a whole when they were wrong.",
+    "newReceipt": "New goods receipt",
+    "editReceipt": "Edit goods receipt",
+    "emptyReceipts": "No goods receipts yet",
+    "emptyReceiptsDescription": "Receive the open lines of an approved order.",
+    "postingDate": "Posting date",
+    "deliveryNote": "Supplier delivery note",
+    "expectedValue": "Expected value",
+    "receiveInto": "Receive into",
+    "ordered": "Ordered",
+    "receivedSoFar": "Received so far",
+    "maxReceivable": "Max receivable",
+    "receiveNow": "Receive now",
+    "lot": "Lot",
+    "expiresOn": "Expires on",
+    "serials": "Serial numbers",
+    "serialsHelp": "space or comma separated",
+    "nothingReceivable": "Nothing left to receive on this order.",
+    "chooseOrder": "Choose an order to see its open lines.",
+    "expectedUnitCost": "Expected unit cost",
+    "reversalReason": "Reason for the reversal",
+    "deleteDraft": "Delete draft",
+    "postReceipt": "Post receipt",
+    "reverse": "Reverse",
+    "reverseNow": "Reverse now",
     "requisitionsDescription": "What departments need: lines with an item, a quantity, an estimate and a suggested supplier, approved through the workflow, then ordered per supplier.",
     "rfqsDescription": "Lines sent to invited suppliers for pricing; quotes recorded, compared by landed price in the company's currency then lead time, and one awarded into a purchase order.",
     "ordersDescription": "Purchase orders in the supplier's currency: submitted through the workflow, sent by email, changed through revisions that keep the previous version, cancelled or closed.",
     "agreementsDescription": "Blanket agreements: agreed quantities and prices per item for a period; purchase orders release against them and never past the cap.",
     "statuses": {
+      "posted": "Posted",
+      "reversed": "Reversed",
       "draft": "Draft",
       "pending_approval": "Pending approval",
       "approved": "Approved",

@@ -33,6 +33,10 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
 
     public DbSet<Commitment> Commitments => Set<Commitment>();
 
+    public DbSet<Receipt> Receipts => Set<Receipt>();
+
+    public DbSet<ReceiptLine> ReceiptLines => Set<ReceiptLine>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Requisition>(b =>
@@ -162,6 +166,36 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.AmountRc).HasPrecision(24, 6);
             b.Property(static x => x.ConsumedRc).HasPrecision(24, 6);
             b.HasOne<PurchaseOrder>().WithMany().HasForeignKey(static x => new { x.TenantId, x.OrderId });
+        });
+
+        modelBuilder.Entity<Receipt>(b =>
+        {
+            b.ToTable("pur_receipts", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.ExchangeRate).HasPrecision(24, 12);
+            b.Property(static x => x.TotalExpectedCost).HasPrecision(24, 6);
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.ReceiptId });
+            b.HasOne<PurchaseOrder>().WithMany().HasForeignKey(static x => new { x.TenantId, x.OrderId });
+            b.HasAuditTrail("purchase_receipt", static x => x.Number);
+        });
+
+        modelBuilder.Entity<ReceiptLine>(b =>
+        {
+            b.ToTable("pur_receipt_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Quantity).HasPrecision(24, 9);
+            b.Property(static x => x.QuantityBase).HasPrecision(24, 9);
+            b.Property(static x => x.QtyInOrderUom).HasPrecision(24, 9);
+            b.Property(static x => x.SerialNumbers).HasColumnType("jsonb");
+            b.Property(static x => x.UnitPrice).HasPrecision(24, 6);
+            b.Property(static x => x.ExpectedUnitCost).HasPrecision(24, 9);
+            b.Property(static x => x.ExpectedCostAmount).HasPrecision(24, 6);
+            b.Property(static x => x.InvoicedCostAmount).HasPrecision(24, 6);
+            b.Property(static x => x.ReturnedCostAmount).HasPrecision(24, 6);
+            b.Property(static x => x.QtyInvoiced).HasPrecision(24, 9);
+            b.Property(static x => x.QtyReturned).HasPrecision(24, 9);
+            b.HasOne<PurchaseOrderLine>().WithMany().HasForeignKey(static x => new { x.TenantId, x.OrderLineId });
         });
 
         base.OnModelCreating(modelBuilder);
