@@ -26,6 +26,7 @@
     "company": "Companies"
   },
   "nav": {
+    "invoices": "Supplier invoices",
     "receipts": "Goods receipts",
     "dashboard": "Dashboard",
     "companies": "Companies",
@@ -1143,6 +1144,51 @@
     "emptyTermsDescription": "Create the first entry."
   },
   "purchasing": {
+    "invoicesDescription": "Supplier invoices matched to receipts (three-way) and to service lines (two-way) or entered as expenses: breaches beyond the supplier's tolerances are blocked until an override, approval follows the workflow, posting settles GRNI, re-prices the stock, withholds tax and opens the payables.",
+    "newInvoice": "New supplier invoice",
+    "editInvoice": "Edit supplier invoice",
+    "emptyInvoices": "No supplier invoices yet",
+    "emptyInvoicesDescription": "Enter the supplier's invoice against its receipts, its service lines or as an expense.",
+    "supplierReference": "Supplier's invoice no.",
+    "documentDate": "Invoice date",
+    "dueDate": "Due",
+    "payable": "Payable",
+    "kind": "Kind",
+    "kinds": {
+      "invoice": "Invoice",
+      "expense": "Expense"
+    },
+    "applyWht": "Withhold tax at invoice (supplier's code)",
+    "invoicable": "Open for invoicing",
+    "nothingInvoicable": "Nothing left to invoice for this supplier.",
+    "addExpenseLine": "Add expense line",
+    "lineKinds": {
+      "receipt": "Receipt",
+      "order": "Service",
+      "expense": "Expense"
+    },
+    "matchStatuses": {
+      "matched": "Matched",
+      "price_variance": "Price variance",
+      "qty_variance": "Quantity variance",
+      "no_receipt": "No receipt",
+      "duplicate_suspect": "Duplicate suspect"
+    },
+    "withheld": "Withheld",
+    "match": "Match",
+    "payables": "Payables",
+    "expectedPrice": "Expected price",
+    "priceTolerance": "Price tolerance",
+    "qtyTolerance": "Quantity tolerance",
+    "priceVariance": "Price variance",
+    "qtyVarianceLabel": "Quantity over",
+    "override": "Override",
+    "matchedAt": "Matched at",
+    "notMatchedYet": "Not matched yet; submit the invoice.",
+    "noPayables": "No payables until the invoice is posted.",
+    "instalment": "Instalment",
+    "remaining": "Remaining",
+    "postInvoice": "Post invoice",
     "receiptsDescription": "Goods received against purchase orders: within the supplier's tolerance, into stock at the expected cost with GRNI as the offset, reversed as a whole when they were wrong.",
     "newReceipt": "New goods receipt",
     "editReceipt": "Edit goods receipt",
@@ -1173,6 +1219,9 @@
     "ordersDescription": "Purchase orders in the supplier's currency: submitted through the workflow, sent by email, changed through revisions that keep the previous version, cancelled or closed.",
     "agreementsDescription": "Blanket agreements: agreed quantities and prices per item for a period; purchase orders release against them and never past the cap.",
     "statuses": {
+      "blocked": "Blocked",
+      "partially_settled": "Partly settled",
+      "settled": "Settled",
       "posted": "Posted",
       "reversed": "Reversed",
       "draft": "Draft",

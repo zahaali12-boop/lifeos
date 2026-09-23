@@ -68,6 +68,9 @@ public static class AccountRoles
     public const string GRNI = "GRNI";
     public const string LandedCostClearing = "LandedCostClearing";
     public const string Cogs = "Cogs";
+
+    /// <summary>Purchases of services and expense items that never enter stock, invoiced by suppliers (roadmap 4.4).</summary>
+    public const string PurchaseExpense = "PurchaseExpense";
     public const string Revenue = "Revenue";
     public const string SalesReturns = "SalesReturns";
     public const string DiscountGiven = "DiscountGiven";
@@ -123,7 +126,7 @@ public static class AccountRoles
 
     public static readonly IReadOnlyList<string> All =
     [
-        AR, AP, Inventory, InventoryInTransit, InventoryConsignedOut, GRNI, LandedCostClearing, Cogs, Revenue, SalesReturns,
+        AR, AP, Inventory, InventoryInTransit, InventoryConsignedOut, GRNI, LandedCostClearing, Cogs, PurchaseExpense, Revenue, SalesReturns,
         DiscountGiven, DiscountTaken, OutputTax, InputTax, WhtPayable, WhtReceivable, Bank, Cash, PettyCash, ChequesUnderCollection,
         PdcReceivable, PdcPayable, BankCharges, InterestIncome, InterestExpense, FxGainRealized, FxLossRealized, FxUnrealized,
         CustomerDeposits, SupplierAdvances, UnbilledRevenue, InventoryAdjustment, CountVariance, Scrap, InventoryWriteDown,

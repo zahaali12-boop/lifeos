@@ -10,6 +10,8 @@ public static class PurchaseDocumentTypes
     public const string Order = "purchase_order";
 
     public const string Receipt = "purchase_receipt";
+
+    public const string Invoice = "purchase_invoice";
 }
 
 /// <summary>An open purchase order line as receipts (4.3) and invoices (4.4) see it: quantities in the entered unit and in the base unit, the price in the order's currency.</summary>

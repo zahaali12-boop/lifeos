@@ -36,7 +36,7 @@ async function supplier(page: Page, code: string, name: string, email: string): 
   await closeDialog(page);
 }
 
-test("English: requisition to purchase order, a change order, a send and a receipt, an RFQ compared and a blanket agreement", async ({ page }) => {
+test("English: requisition to purchase order, a change order, a send, a receipt and an invoice, an RFQ compared and a blanket agreement", async ({ page }) => {
   const slug = `pur-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
   await page.goto("/signup");
@@ -147,6 +147,29 @@ test("English: requisition to purchase order, a change order, a send and a recei
   await closeDialog(page);
   await nav(page, "Purchase orders");
   await expect(page.getByRole("grid")).toContainText("Partially received");
+
+  // The supplier's invoice for the 8 received, at the order price: matched, approved at once, posted with one payable.
+  await nav(page, "Supplier invoices");
+  await expect(page.getByText("No supplier invoices yet")).toBeVisible();
+  await page.getByTestId("new-invoice").click();
+  await page.getByTestId("invoice-supplier").selectOption({ label: "ALPHA · Alpha Supplies" });
+  await page.getByTestId("invoice-reference").fill("A-1001");
+  await page.getByTestId("add-invoicable-TEA").click();
+  await expect(page.getByTestId("invoice-line")).toHaveCount(1);
+  await expectAccessible(page);
+  await page.getByTestId("save-invoice").click();
+  await expect(page.getByTestId("invoice-detail")).toBeVisible();
+  await expect(page.getByTestId("invoice-total")).toContainText("12,000");
+  await page.getByTestId("submit-invoice").click();
+  await expect(page.getByTestId("invoice-detail").getByTestId("doc-status").first()).toContainText("Approved");
+  await page.getByTestId("tab-match").click();
+  await expect(page.getByTestId("match-status")).toContainText("Matched");
+  await page.getByTestId("post-invoice").click();
+  await expect(page.getByTestId("invoice-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await page.getByTestId("tab-payables").click();
+  await expect(page.getByTestId("open-item-row")).toHaveCount(1);
+  await expectAccessible(page);
+  await closeDialog(page);
 
   // An RFQ to both suppliers, two quotes, compared: the cheaper one ranks first.
   await nav(page, "Requests for quotation");

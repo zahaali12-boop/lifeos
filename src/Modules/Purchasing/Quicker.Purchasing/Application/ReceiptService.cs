@@ -259,6 +259,7 @@ public sealed class ReceiptService(
             {
                 // Serialised items post one entry per unit; the line's booked cost is their sum and its ledger reference the first.
                 line.SleId = own[0].Id;
+                line.SleIds = JsonSerializer.Serialize(own.Select(static e => e.Id).ToList(), Shared.Json);
                 line.ExpectedCostAmount = own.Sum(static e => e.CostAmount);
             }
         }

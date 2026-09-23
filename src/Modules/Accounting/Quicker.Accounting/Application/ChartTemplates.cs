@@ -190,6 +190,7 @@ public static class ChartTemplates
             A("6120", "6000", "Utilities", "الخدمات (كهرباء وماء)", expense, "opex", "operating_expenses"),
             A("6130", "6000", "Marketing and advertising", "التسويق والإعلان", expense, "opex", "operating_expenses"),
             A("6140", "6000", "Travel and transport", "السفر والتنقل", expense, "opex", "operating_expenses"),
+            A("6155", "6000", "Purchased services and supplies", "خدمات ومستلزمات مشتراة", expense, "opex", "operating_expenses", AccountRoles.PurchaseExpense),
             A("6150", "6000", "Office supplies", "اللوازم المكتبية", expense, "opex", "operating_expenses"),
             A("6160", "6000", "Professional fees", "الأتعاب المهنية", expense, "opex", "operating_expenses"),
             A("6170", "6000", "Insurance", "التأمين", expense, "opex", "operating_expenses"),

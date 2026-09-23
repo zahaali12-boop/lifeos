@@ -37,6 +37,14 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
 
     public DbSet<ReceiptLine> ReceiptLines => Set<ReceiptLine>();
 
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+
+    public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+
+    public DbSet<MatchResult> MatchResults => Set<MatchResult>();
+
+    public DbSet<ApOpenItem> OpenItems => Set<ApOpenItem>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Requisition>(b =>
@@ -195,7 +203,66 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.ReturnedCostAmount).HasPrecision(24, 6);
             b.Property(static x => x.QtyInvoiced).HasPrecision(24, 9);
             b.Property(static x => x.QtyReturned).HasPrecision(24, 9);
+            b.Property(static x => x.SleIds).HasColumnType("jsonb");
             b.HasOne<PurchaseOrderLine>().WithMany().HasForeignKey(static x => new { x.TenantId, x.OrderLineId });
+        });
+
+        modelBuilder.Entity<Invoice>(b =>
+        {
+            b.ToTable("pur_invoices", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.ExchangeRate).HasPrecision(24, 12);
+            b.Property(static x => x.TotalNet).HasPrecision(24, 6);
+            b.Property(static x => x.TotalTax).HasPrecision(24, 6);
+            b.Property(static x => x.TotalWht).HasPrecision(24, 6);
+            b.Property(static x => x.TotalGross).HasPrecision(24, 6);
+            b.Property(static x => x.TotalPayable).HasPrecision(24, 6);
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.InvoiceId });
+            b.HasAuditTrail("purchase_invoice", static x => x.Number);
+        });
+
+        modelBuilder.Entity<InvoiceLine>(b =>
+        {
+            b.ToTable("pur_invoice_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Quantity).HasPrecision(24, 9);
+            b.Property(static x => x.UnitPrice).HasPrecision(24, 6);
+            b.Property(static x => x.DiscountPct).HasPrecision(9, 6);
+            b.Property(static x => x.NetAmount).HasPrecision(24, 6);
+            b.Property(static x => x.TaxAmount).HasPrecision(24, 6);
+            b.Property(static x => x.WhtAmount).HasPrecision(24, 6);
+            b.Property(static x => x.NetAmountFc).HasPrecision(24, 6);
+            b.Property(static x => x.ExpectedUnitPrice).HasPrecision(24, 6);
+            b.Property(static x => x.PriceVariancePct).HasPrecision(12, 6);
+            b.Property(static x => x.QtyVariance).HasPrecision(24, 9);
+        });
+
+        modelBuilder.Entity<MatchResult>(b =>
+        {
+            b.ToTable("pur_match_results", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.PriceTolerancePct).HasPrecision(9, 6);
+            b.Property(static x => x.QtyTolerancePct).HasPrecision(9, 6);
+            b.Property(static x => x.PriceVarianceAmount).HasPrecision(24, 6);
+            b.Property(static x => x.PriceVariancePct).HasPrecision(12, 6);
+            b.Property(static x => x.QtyVariance).HasPrecision(24, 9);
+            b.Property(static x => x.Details).HasColumnType("jsonb");
+            b.HasOne<Invoice>().WithMany().HasForeignKey(static x => new { x.TenantId, x.InvoiceId });
+        });
+
+        modelBuilder.Entity<ApOpenItem>(b =>
+        {
+            b.ToTable("ap_open_items", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.DiscountPct).HasPrecision(9, 6);
+            b.Property(static x => x.OriginalTc).HasPrecision(24, 6);
+            b.Property(static x => x.OriginalFc).HasPrecision(24, 6);
+            b.Property(static x => x.BookedRate).HasPrecision(24, 12);
+            b.Property(static x => x.SettledTc).HasPrecision(24, 6);
+            b.Property(static x => x.SettledFc).HasPrecision(24, 6);
+            b.Property(static x => x.RemainingTc).HasPrecision(24, 6);
+            b.Property(static x => x.RemainingFc).HasPrecision(24, 6);
         });
 
         base.OnModelCreating(modelBuilder);

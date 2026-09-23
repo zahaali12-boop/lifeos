@@ -551,5 +551,243 @@ public sealed class ReceiptLine : ITenantEntity
 
     public Guid? SleId { get; set; }
 
+    /// <summary>Every stock entry the line posted (one per unit for serialised items), as a JSON array of ids.</summary>
+    public string SleIds { get; set; } = "[]";
+
     public DateTimeOffset CreatedAt { get; set; }
 }
+
+/// <summary>A supplier invoice: matched to receipts (three-way), to order lines for services (two-way) or free expense lines; posted against GRNI and AP.</summary>
+public sealed class Invoice : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? BranchId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public string Kind { get; set; } = "invoice";
+
+    public Guid PartnerId { get; set; }
+
+    public string? SupplierInvoiceNumber { get; set; }
+
+    public DateOnly DocumentDate { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public DateOnly? DueDate { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal ExchangeRate { get; set; } = 1m;
+
+    public Guid? PaymentTermsId { get; set; }
+
+    public Guid? WhtCodeId { get; set; }
+
+    public decimal TotalNet { get; set; }
+
+    public decimal TotalTax { get; set; }
+
+    public decimal TotalWht { get; set; }
+
+    public decimal TotalGross { get; set; }
+
+    public decimal TotalPayable { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    public string? BlockKind { get; set; }
+
+    public string? BlockReason { get; set; }
+
+    public Guid? BlockId { get; set; }
+
+    public Guid? ApprovalRequestId { get; set; }
+
+    public string? RejectionReason { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalEntryId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public string? Notes { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset? SubmittedAt { get; set; }
+
+    public Guid? SubmittedBy { get; set; }
+
+    public DateTimeOffset? ApprovedAt { get; set; }
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<InvoiceLine> Lines { get; } = [];
+}
+
+public sealed class InvoiceLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid InvoiceId { get; set; }
+
+    public int LineNo { get; set; }
+
+    /// <summary>receipt (three-way), order (two-way, services) or expense (free line on an account role).</summary>
+    public string Kind { get; set; } = "receipt";
+
+    public Guid? ReceiptLineId { get; set; }
+
+    public Guid? OrderLineId { get; set; }
+
+    public Guid? ItemId { get; set; }
+
+    public string? AccountRole { get; set; }
+
+    public string? Description { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid? UomId { get; set; }
+
+    public decimal UnitPrice { get; set; }
+
+    public decimal DiscountPct { get; set; }
+
+    public Guid? TaxCodeId { get; set; }
+
+    public decimal NetAmount { get; set; }
+
+    public decimal TaxAmount { get; set; }
+
+    public decimal WhtAmount { get; set; }
+
+    public decimal NetAmountFc { get; set; }
+
+    /// <summary>The order price after its discount the line is matched against, per unit.</summary>
+    public decimal? ExpectedUnitPrice { get; set; }
+
+    public decimal? PriceVariancePct { get; set; }
+
+    public decimal? QtyVariance { get; set; }
+
+    public Guid? DimensionSetId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class MatchResult : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid InvoiceId { get; set; }
+
+    public string Status { get; set; } = "matched";
+
+    public decimal PriceTolerancePct { get; set; }
+
+    public decimal QtyTolerancePct { get; set; }
+
+    public decimal PriceVarianceAmount { get; set; }
+
+    public decimal PriceVariancePct { get; set; }
+
+    public decimal QtyVariance { get; set; }
+
+    public string Details { get; set; } = "[]";
+
+    public Guid? OverrideId { get; set; }
+
+    public DateTimeOffset MatchedAt { get; set; }
+}
+
+/// <summary>What the company owes a supplier from one document (one row per payment-terms instalment), settled by payments and credits (4.6–4.7).</summary>
+public sealed class ApOpenItem : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public string Kind { get; set; } = "invoice";
+
+    public string DocumentType { get; set; } = string.Empty;
+
+    public Guid DocumentId { get; set; }
+
+    public string DocumentNumber { get; set; } = string.Empty;
+
+    public int Instalment { get; set; } = 1;
+
+    public string? SupplierReference { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public DateOnly DocumentDate { get; set; }
+
+    public DateOnly DueDate { get; set; }
+
+    public DateOnly? DiscountDate { get; set; }
+
+    public decimal DiscountPct { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal OriginalTc { get; set; }
+
+    public decimal OriginalFc { get; set; }
+
+    public decimal BookedRate { get; set; } = 1m;
+
+    public decimal SettledTc { get; set; }
+
+    public decimal SettledFc { get; set; }
+
+    public decimal RemainingTc { get; set; }
+
+    public decimal RemainingFc { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public bool PaymentBlocked { get; set; }
+
+    public string? BlockReason { get; set; }
+
+    public Guid? BranchId { get; set; }
+
+    public Guid? DimensionSetId { get; set; }
+
+    public string Status { get; set; } = "open";
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+

@@ -251,8 +251,8 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
     /// <summary>
     /// Per company and goods receipt, Σ (credit − debit) in functional currency of the journal lines on the GRNI subledger
     /// that reference the receipt equals Σ over its lines of the expected cost booked less what invoices and returns have
-    /// settled; a reversed receipt nets to zero on both sides. Receipts are the only writers of the GRNI subledger until
-    /// invoices (4.4), so every GRNI line is checked, in both directions.
+    /// settled; a reversed receipt nets to zero on both sides. Only GRNI lines whose subledger item is a purchasing receipt
+    /// are checked (the stock engine also takes direct purchase receipts from other callers); the check runs in both directions.
     /// </summary>
     private static async Task<InvariantResult> GrniMatchesReceiptsAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
     {
@@ -262,7 +262,8 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             WITH booked AS (
               SELECT l.company_id, l.subledger_ref AS receipt_id, sum(l.credit_fc - l.debit_fc) AS booked
               FROM app.gl_journal_lines l
-              WHERE l.subledger_type = 'GRNI' AND l.subledger_ref IS NOT NULL AND (@company::uuid IS NULL OR l.company_id = @company)
+              JOIN app.pur_receipts pr ON pr.tenant_id = l.tenant_id AND pr.id = l.subledger_ref
+              WHERE l.subledger_type = 'GRNI' AND (@company::uuid IS NULL OR l.company_id = @company)
               GROUP BY 1, 2
             ), expected AS (
               SELECT r.company_id, r.id AS receipt_id, r.number,

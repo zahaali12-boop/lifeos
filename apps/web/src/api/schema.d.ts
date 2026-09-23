@@ -6172,6 +6172,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Supplier invoices of a company, optionally by status or supplier. */
+        get: operations["getPurchasingInvoices"];
+        put?: never;
+        /** Drafts a supplier invoice: lines against receipt lines, service order lines or expense accounts. */
+        post: operations["postPurchasingInvoices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/invoices/invoicable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the supplier can still invoice: uninvoiced receipt lines and open service lines of its orders. */
+        get: operations["getPurchasingInvoicesInvoicable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/invoices/open-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Payable open items of a company, optionally one supplier or one status. */
+        get: operations["getPurchasingInvoicesOpenItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/invoices/{invoiceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingInvoicesByInvoiceId"];
+        put: operations["putPurchasingInvoicesByInvoiceId"];
+        post?: never;
+        delete: operations["deletePurchasingInvoicesByInvoiceId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/invoices/{invoiceId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Matches the invoice; a breach beyond tolerance blocks it until an override, otherwise the workflow decides or it is approved at once. */
+        post: operations["postPurchasingInvoicesByInvoiceIdSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/invoices/{invoiceId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts an approved invoice: receipts re-priced, GRNI settled, AP opened, commitments consumed. */
+        post: operations["postPurchasingInvoicesByInvoiceIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/invoices/{invoiceId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted invoice as a whole. */
+        post: operations["postPurchasingInvoicesByInvoiceIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -7970,6 +8089,149 @@ export interface components {
             /** @default en */
             language: string;
         };
+        /** @description What can still be invoiced for a supplier: posted receipt lines with an uninvoiced quantity and open service lines of orders. */
+        InvoicableLine: {
+            kind: string;
+            /** Format: uuid */
+            receiptLineId: null | string;
+            receiptNumber: null | string;
+            /** Format: uuid */
+            orderLineId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            orderId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            qtyInvoiced: number | string;
+            /** Format: double */
+            remaining: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            currency: string;
+            /** Format: date */
+            postingDate: null | string;
+        };
+        InvoiceLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            kind: string;
+            /** Format: uuid */
+            receiptLineId: null | string;
+            receiptNumber: null | string;
+            /** Format: uuid */
+            orderLineId: null | string;
+            orderNumber: null | string;
+            /** Format: uuid */
+            itemId: null | string;
+            itemCode: null | string;
+            itemName: null | {
+                [key: string]: string;
+            };
+            accountRole: null | string;
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: null | string;
+            uomCode: null | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            /** Format: double */
+            whtAmount: number | string;
+            /** Format: double */
+            expectedUnitPrice: null | number | string;
+            /** Format: double */
+            priceVariancePct: null | number | string;
+            /** Format: double */
+            qtyVariance: null | number | string;
+            /** Format: uuid */
+            dimensionSetId: null | string;
+        };
+        InvoiceSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            kind: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            supplierInvoiceNumber: null | string;
+            /** Format: date */
+            documentDate: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            dueDate: null | string;
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            functionalCurrency: string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            paymentTermsCode: null | string;
+            /** Format: uuid */
+            whtCodeId: null | string;
+            whtCode: null | string;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalTax: number | string;
+            /** Format: double */
+            totalWht: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            /** Format: double */
+            totalPayable: number | string;
+            blockKind: null | string;
+            blockReason: null | string;
+            /** Format: uuid */
+            blockId: null | string;
+            /** Format: uuid */
+            approvalRequestId: null | string;
+            rejectionReason: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            reversalReason: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            lines: components["schemas"]["InvoiceLineSummary"][];
+            matches: components["schemas"]["MatchResultSummary"][];
+            openItems: components["schemas"]["OpenItemSummary"][];
+            /** Format: date-time */
+            submittedAt: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         ItemCategorySummary: {
             /** Format: uuid */
             id: string;
@@ -8539,6 +8801,26 @@ export interface components {
                 [key: string]: string;
             };
         };
+        MatchResultSummary: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+            /** Format: double */
+            priceTolerancePct: number | string;
+            /** Format: double */
+            qtyTolerancePct: number | string;
+            /** Format: double */
+            priceVarianceAmount: number | string;
+            /** Format: double */
+            priceVariancePct: number | string;
+            /** Format: double */
+            qtyVariance: number | string;
+            details: components["schemas"]["JsonElement"];
+            /** Format: uuid */
+            overrideId: null | string;
+            /** Format: date-time */
+            matchedAt: string;
+        };
         MemberSummary: {
             /** Format: uuid */
             membershipId: string;
@@ -8633,6 +8915,39 @@ export interface components {
             /** Format: int32 */
             startYear: number | string;
             /** @default open */
+            status: string;
+        };
+        OpenItemSummary: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            documentNumber: string;
+            /** Format: int32 */
+            instalment: number | string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: date */
+            discountDate: null | string;
+            /** Format: double */
+            discountPct: number | string;
+            currency: string;
+            /** Format: double */
+            originalTc: number | string;
+            /** Format: double */
+            originalFc: number | string;
+            /** Format: double */
+            settledTc: number | string;
+            /** Format: double */
+            remainingTc: number | string;
+            /** Format: double */
+            remainingFc: number | string;
+            paymentBlocked: boolean;
+            blockReason: null | string;
             status: string;
         };
         OrdersCreated: {
@@ -9887,6 +10202,11 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        ReverseInvoiceRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         ReverseReceiptRequest: {
             reason: string;
             /** Format: date */
@@ -10546,6 +10866,52 @@ export interface components {
             name: {
                 [key: string]: string;
             };
+        };
+        /** @description A line: against a posted receipt line (three-way), an order line without a receipt (services, two-way) or a free expense line on an account role; quantity and price in the invoice currency. */
+        SaveInvoiceLineRequest: {
+            kind: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: uuid */
+            receiptLineId?: null | string;
+            /** Format: uuid */
+            orderLineId?: null | string;
+            accountRole?: null | string;
+            description?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            discountPct: number | string;
+            /** Format: uuid */
+            dimensionSetId?: null | string;
+        };
+        SaveInvoiceRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            lines: components["schemas"]["SaveInvoiceLineRequest"][];
+            /** @default invoice */
+            kind: string;
+            supplierInvoiceNumber?: null | string;
+            /** Format: date */
+            documentDate?: null | string;
+            /** Format: date */
+            postingDate?: null | string;
+            currency?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: uuid */
+            whtCodeId?: null | string;
+            /** @default true */
+            applyWht: boolean;
+            notes?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            customFields?: unknown;
         };
         SaveItemCategoryRequest: {
             code: string;
@@ -23926,6 +24292,239 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReceiptSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingInvoices: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingInvoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingInvoicesInvoicable: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoicableLine"][];
+                };
+            };
+        };
+    };
+    getPurchasingInvoicesOpenItems: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenItemSummary"][];
+                };
+            };
+        };
+    };
+    getPurchasingInvoicesByInvoiceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingInvoicesByInvoiceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummary"];
+                };
+            };
+        };
+    };
+    deletePurchasingInvoicesByInvoiceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPurchasingInvoicesByInvoiceIdSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingInvoicesByInvoiceIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingInvoicesByInvoiceIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceSummary"];
                 };
             };
         };

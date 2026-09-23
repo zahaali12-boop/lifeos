@@ -165,7 +165,7 @@ public sealed class StockInquiryService(IUnitOfWorkAccessor unitOfWork, Reservat
             LEFT JOIN app.inv_serials sr ON sr.tenant_id = b.tenant_id AND sr.id = b.serial_id
             WHERE b.company_id = @company AND (@item::uuid IS NULL OR b.item_id = @item) AND (@warehouse::uuid IS NULL OR b.warehouse_id = @warehouse)
               AND (@includeZero OR b.on_hand <> 0 OR b.reserved <> 0)
-            ORDER BY i.code, w.code, bn.code NULLS FIRST, b.lot_id, b.serial_id
+            ORDER BY i.code, w.code, bn.code NULLS FIRST, lt.lot_number NULLS FIRST, sr.serial_number NULLS FIRST
             """, new { company = companyId, item = itemId, warehouse = warehouseId, includeZero }, uow.Transaction, cancellationToken: cancellationToken));
         return rows.Select(static r => new StockBalanceRow(r.CompanyId, r.ItemId, r.ItemCode, Parse(r.ItemName), r.VariantId == Guid.Empty ? null : r.VariantId, r.VariantSku, r.WarehouseId, r.WarehouseCode,
             r.BinId == Guid.Empty ? null : r.BinId, r.BinCode, r.LotId == Guid.Empty ? null : r.LotId, r.SerialId == Guid.Empty ? null : r.SerialId, r.BaseUom,

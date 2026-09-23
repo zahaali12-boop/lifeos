@@ -17,6 +17,9 @@ public static class PurchasingPermissions
     public const string ReceiptRead = "purchasing.receipt.read";
     public const string ReceiptManage = "purchasing.receipt.manage";
     public const string ReceiptPost = "purchasing.receipt.post";
+    public const string InvoiceRead = "purchasing.invoice.read";
+    public const string InvoiceManage = "purchasing.invoice.manage";
+    public const string InvoicePost = "purchasing.invoice.post";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -32,5 +35,8 @@ public static class PurchasingPermissions
         new(ReceiptRead, "purchasing", "Read goods receipts"),
         new(ReceiptManage, "purchasing", "Create, edit and delete draft goods receipts"),
         new(ReceiptPost, "purchasing", "Post goods receipts into stock and reverse them"),
+        new(InvoiceRead, "purchasing", "Read supplier invoices, their match results and the payables they created"),
+        new(InvoiceManage, "purchasing", "Create, edit, submit and delete draft supplier invoices"),
+        new(InvoicePost, "purchasing", "Post supplier invoices into the books and reverse them"),
     ];
 }

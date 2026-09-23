@@ -38,6 +38,23 @@ public static class PurchasingRowFactories
         });
         IsolationRegistry.Register("app.pur_receipts", static async (c, tx, t) => new RowRef("app.pur_receipts", $"id = '{(await ReceiptAsync(c, tx, t)).Receipt}'"));
         IsolationRegistry.Register("app.pur_receipt_lines", static async (c, tx, t) => new RowRef("app.pur_receipt_lines", $"id = '{(await ReceiptAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.pur_invoices", static async (c, tx, t) => new RowRef("app.pur_invoices", $"id = '{(await InvoiceAsync(c, tx, t)).Invoice}'"));
+        IsolationRegistry.Register("app.pur_invoice_lines", static async (c, tx, t) => new RowRef("app.pur_invoice_lines", $"id = '{(await InvoiceAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.pur_match_results", static async (c, tx, t) =>
+        {
+            var (invoice, _, _) = await InvoiceAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.pur_match_results (tenant_id, id, invoice_id, status) VALUES (@t, @id, @invoice, 'matched')", new { t, id, invoice }, tx);
+            return new RowRef("app.pur_match_results", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.ap_open_items", static async (c, tx, t) =>
+        {
+            var (invoice, _, company) = await InvoiceAsync(c, tx, t);
+            var partner = await c.ExecuteScalarAsync<Guid>("SELECT partner_id FROM app.pur_invoices WHERE tenant_id = @t AND id = @invoice", new { t, invoice }, tx);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ap_open_items (tenant_id, id, company_id, partner_id, kind, document_type, document_id, document_number, posting_date, document_date, due_date, currency, original_tc, original_fc, remaining_tc, remaining_fc) VALUES (@t, @id, @company, @partner, 'invoice', 'purchase_invoice', @invoice, @number, '2026-09-22', '2026-09-22', '2026-10-22', 'IQD', 10, 10, 10, 10)", new { t, id, company, partner, invoice, number = Suffix(id) }, tx);
+            return new RowRef("app.ap_open_items", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.pur_commitments", static async (c, tx, t) =>
         {
             var (order, line, company) = await OrderAsync(c, tx, t);
@@ -111,6 +128,17 @@ public static class PurchasingRowFactories
         await c.ExecuteAsync("INSERT INTO app.pur_receipts (tenant_id, id, company_id, number, order_id, partner_id, warehouse_id, posting_date, currency) VALUES (@t, @id, @company, @number, @order, @partner, @warehouse, '2026-09-22', 'IQD')", new { t, id, company, number = Suffix(id), order, partner, warehouse = Guid.CreateVersion7() }, tx);
         await c.ExecuteAsync("INSERT INTO app.pur_receipt_lines (tenant_id, id, receipt_id, line_no, order_line_id, item_id, quantity, uom_id, quantity_base, qty_in_order_uom) VALUES (@t, @line, @id, 1, @orderLine, @item, 1, @uom, 1, 1)", new { t, line, id, orderLine, item = Guid.CreateVersion7(), uom = Guid.CreateVersion7() }, tx);
         return (id, line);
+    }
+
+    private static async Task<(Guid Invoice, Guid Line, Guid Company)> InvoiceAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var company = await CompanyAsync(c, tx, t);
+        var partner = await PartnerAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.pur_invoices (tenant_id, id, company_id, number, partner_id, document_date, posting_date, currency) VALUES (@t, @id, @company, @number, @partner, '2026-09-22', '2026-09-22', 'IQD')", new { t, id, company, number = Suffix(id), partner }, tx);
+        await c.ExecuteAsync("INSERT INTO app.pur_invoice_lines (tenant_id, id, invoice_id, line_no, kind, account_role, description, quantity, unit_price) VALUES (@t, @line, @id, 1, 'expense', 'PurchaseExpense', 'Probe', 1, 10)", new { t, line, id }, tx);
+        return (id, line, company);
     }
 
     private static async Task<Guid> PartnerAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

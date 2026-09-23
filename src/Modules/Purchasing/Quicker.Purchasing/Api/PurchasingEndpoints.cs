@@ -131,6 +131,35 @@ public static class PurchasingEndpoints
             .RequirePermission(PurchasingPermissions.ReceiptPost)
             .WithSummary("Reverses a posted receipt as a whole at its exact cost.");
 
+        var invoices = purchasing.MapGroup("/invoices");
+        invoices.MapGet("/", async (Guid? companyId, string? status, Guid? partnerId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, partnerId, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceRead)
+            .WithSummary("Supplier invoices of a company, optionally by status or supplier.");
+        invoices.MapGet("/invoicable", async (Guid companyId, Guid partnerId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.InvoicableAsync(companyId, partnerId, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceRead)
+            .WithSummary("What the supplier can still invoice: uninvoiced receipt lines and open service lines of its orders.");
+        invoices.MapGet("/open-items", async (Guid companyId, Guid? partnerId, string? status, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.OpenItemsAsync(companyId, partnerId, status, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceRead)
+            .WithSummary("Payable open items of a company, optionally one supplier or one status.");
+        invoices.MapPost("/", async (SaveInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static i => $"/api/v1/purchasing/invoices/{i.Id}"))
+            .RequirePermission(PurchasingPermissions.InvoiceManage)
+            .WithSummary("Drafts a supplier invoice: lines against receipt lines, service order lines or expense accounts.");
+        invoices.MapGet("/{invoiceId:guid}", async (Guid invoiceId, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(invoiceId, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceRead);
+        invoices.MapPut("/{invoiceId:guid}", async (Guid invoiceId, SaveInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(invoiceId, request, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceManage);
+        invoices.MapDelete("/{invoiceId:guid}", async (Guid invoiceId, InvoiceService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(invoiceId, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceManage);
+        invoices.MapPost("/{invoiceId:guid}/submit", async (Guid invoiceId, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.SubmitAsync(invoiceId, ct)))
+            .RequirePermission(PurchasingPermissions.InvoiceManage)
+            .WithSummary("Matches the invoice; a breach beyond tolerance blocks it until an override, otherwise the workflow decides or it is approved at once.");
+        invoices.MapPost("/{invoiceId:guid}/post", async (Guid invoiceId, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(invoiceId, ct)))
+            .RequirePermission(PurchasingPermissions.InvoicePost)
+            .WithSummary("Posts an approved invoice: receipts re-priced, GRNI settled, AP opened, commitments consumed.");
+        invoices.MapPost("/{invoiceId:guid}/reverse", async (Guid invoiceId, ReverseInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(invoiceId, request, ct)))
+            .RequirePermission(PurchasingPermissions.InvoicePost)
+            .WithSummary("Reverses a posted invoice as a whole.");
+
         return api;
     }
 }

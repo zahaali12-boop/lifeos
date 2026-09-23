@@ -78,28 +78,36 @@ public sealed class WorkflowEngine(
         }
 
         var existing = await db.Blocks.SingleOrDefaultAsync(b => b.Kind == block.Kind && b.EntityType == block.EntityType && b.EntityId == block.EntityId && (b.Status == "open" || b.Status == "pending"), cancellationToken);
-        if (existing is not null)
+        if (existing is { Status: BlockStatuses.Pending })
         {
             return new BlockOutcome(existing.Id, existing.Status, existing.RequestId);
         }
 
-        var row = new Block
+        // An open block that nothing routed is raised again with the current facts: a definition activated since then routes it now.
+        var row = existing ?? new Block
         {
             Id = Guid.CreateVersion7(),
             Kind = block.Kind,
             EntityType = block.EntityType,
             EntityId = block.EntityId,
             CompanyId = block.CompanyId,
-            Display = block.Display,
-            Why = JsonSerializer.Serialize(block.Why, Json),
             Status = BlockStatuses.Open,
             RaisedBy = block.RequestedBy ?? Me,
             CreatedAt = clock.UtcNow,
-            UpdatedAt = clock.UtcNow,
         };
-        db.Blocks.Add(row);
+        row.Display = block.Display;
+        row.Why = JsonSerializer.Serialize(block.Why, Json);
+        row.UpdatedAt = clock.UtcNow;
+        if (existing is null)
+        {
+            db.Blocks.Add(row);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("workflow_block", row.Id, row.Display, AuditActions.Created, After: new { row.Kind, row.EntityType, row.EntityId, why = block.Why }, CompanyId: row.CompanyId), cancellationToken);
+        if (existing is null)
+        {
+            await audit.RecordAsync(new AuditEntry("workflow_block", row.Id, row.Display, AuditActions.Created, After: new { row.Kind, row.EntityType, row.EntityId, why = block.Why }, CompanyId: row.CompanyId), cancellationToken);
+        }
 
         var definition = await ActiveDefinitionAsync(block.EntityType, WorkflowTriggers.OnBlock, block.Kind, cancellationToken);
         if (definition is null)

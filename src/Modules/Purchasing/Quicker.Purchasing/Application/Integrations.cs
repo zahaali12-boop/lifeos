@@ -68,6 +68,37 @@ public sealed class PurchaseOrderWorkflowSubject(PurchaseOrderService orders) : 
     public Task<Result> OnDecidedAsync(WorkflowDecision decision, CancellationToken cancellationToken = default) => orders.DecideAsync(decision, cancellationToken);
 }
 
+/// <summary>Supplier invoices as the workflow engine sees them: approval by amount, and the match blocks (price, quantity, duplicate) an override clears (ADR-0020).</summary>
+public sealed class InvoiceWorkflowSubject(InvoiceService invoices) : IWorkflowSubjectProvider
+{
+    public string EntityType => PurchaseDocumentTypes.Invoice;
+
+    public LocalizedText Label { get; } = LocalizedText.Bilingual("Supplier invoice", "فاتورة مورد");
+
+    public IReadOnlyList<WorkflowField> Fields { get; } =
+    [
+        new("amount", WorkflowFieldTypes.Number, LocalizedText.Bilingual("Invoice total", "إجمالي الفاتورة")),
+        new("currency", WorkflowFieldTypes.Text, LocalizedText.Bilingual("Currency", "العملة")),
+        new("amountRc", WorkflowFieldTypes.Number, LocalizedText.Bilingual("Invoice total in the company's currency", "إجمالي الفاتورة بعملة الشركة")),
+        new("supplierCode", WorkflowFieldTypes.Text, LocalizedText.Bilingual("Supplier code", "رمز المورد")),
+        new("kind", WorkflowFieldTypes.Text, LocalizedText.Bilingual("Kind (invoice, expense)", "النوع (فاتورة، مصروف)")),
+        new("matchStatus", WorkflowFieldTypes.Text, LocalizedText.Bilingual("Match status", "حالة المطابقة")),
+        new("hasVariance", WorkflowFieldTypes.Boolean, LocalizedText.Bilingual("Has a variance beyond tolerance", "فيها فرق يتجاوز التسامح")),
+        new("hasOverride", WorkflowFieldTypes.Boolean, LocalizedText.Bilingual("Cleared by an override", "أُجيزت بتجاوز")),
+        new("lineCount", WorkflowFieldTypes.Number, LocalizedText.Bilingual("Number of lines", "عدد البنود")),
+    ];
+
+    public IReadOnlyList<string> BlockKinds => InvoiceService.BlockKinds;
+
+    public async Task<WorkflowSubject?> LoadAsync(Guid entityId, CancellationToken cancellationToken = default)
+    {
+        var invoice = await invoices.LoadAsync(entityId, cancellationToken);
+        return invoice is null ? null : await invoices.SubjectAsync(invoice, null, cancellationToken);
+    }
+
+    public Task<Result> OnDecidedAsync(WorkflowDecision decision, CancellationToken cancellationToken = default) => invoices.DecideAsync(decision, cancellationToken);
+}
+
 /// <summary>Open purchase order lines as incoming supply for the replenishment planner (roadmap 3.7 contract).</summary>
 public sealed class PurchasingSupply(PurchasingDbContext db) : IIncomingSupply, IPurchaseOrderDirectory
 {
