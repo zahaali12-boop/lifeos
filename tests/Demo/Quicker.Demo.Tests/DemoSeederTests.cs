@@ -1,7 +1,7 @@
 using Dapper;
 using Npgsql;
-using Quicker.Integrity.Contracts;
 using Quicker.Identity.Security;
+using Quicker.Integrity.Contracts;
 using Quicker.Migrator.Demo;
 
 namespace Quicker.Demo.Tests;
