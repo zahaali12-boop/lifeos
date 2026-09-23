@@ -5398,6 +5398,35 @@
         ],
         "summary": "Upload a file for a record (multipart/form-data: entityType, entityId, file)",
         "operationId": "postCollaborationAttachments",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "entityType",
+                  "entityId",
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "entityType": {
+                    "type": "string"
+                  },
+                  "entityId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "description": "The multipart form an upload sends, declared so the contract shows its parts (the endpoint reads the form itself)."
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "201": {
             "description": "Created",
@@ -6551,7 +6580,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

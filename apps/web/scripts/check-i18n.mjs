@@ -22,7 +22,8 @@ const english = new Map(flatten(en));
 const arabic = new Map(flatten(ar));
 const missing = [...english.keys()].filter((key) => !arabic.has(key) || String(arabic.get(key)).trim() === "");
 const stale = [...arabic.keys()].filter((key) => !english.has(key));
-const doubled = [...english, ...arabic].filter(([, value]) => /\{\{/.test(String(value))).map(([key]) => key);
+// i18next-style {{name}}; ICU may legitimately open a plural branch with a placeholder ("one {{count} item}").
+const doubled = [...english, ...arabic].filter(([, value]) => /\{\{\s*\w+\s*\}\}/.test(String(value))).map(([key]) => key);
 
 if (missing.length > 0 || stale.length > 0 || doubled.length > 0) {
   if (missing.length > 0) console.error(`Missing or empty Arabic translations (${missing.length}):\n  - ${missing.join("\n  - ")}`);

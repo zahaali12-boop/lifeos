@@ -58,6 +58,7 @@ public static class CollaborationEndpoints
             await using var content = file.OpenReadStream();
             return ApiProblems.Created(await service.UploadAsync(form["entityType"].ToString(), entityId, file.FileName, file.ContentType, content, ct), static a => $"/api/v1/collaboration/attachments/{a.Id}");
         }).RequirePermission(CollaborationPermissions.AttachmentManage)
+          .WithMetadata(new MultipartFormMetadata(typeof(AttachmentUploadForm)))
           .WithSummary("Upload a file for a record (multipart/form-data: entityType, entityId, file)");
         attachments.MapGet("/", async (string? entityType, Guid entityId, AttachmentService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.ListAsync(entityType, entityId, ct)))
@@ -77,3 +78,6 @@ public static class CollaborationEndpoints
         return api;
     }
 }
+
+/// <summary>The multipart form an upload sends, declared so the contract shows its parts (the endpoint reads the form itself).</summary>
+public sealed record AttachmentUploadForm(string EntityType, Guid EntityId, IFormFile File);

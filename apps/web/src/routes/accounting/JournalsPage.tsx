@@ -10,7 +10,9 @@ import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
+import { AttachmentsPanel } from "../AttachmentsPanel";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { JournalImportDialog } from "./JournalImport";
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
 
 type Journal = components["schemas"]["ManualJournalSummary"];
@@ -81,6 +83,7 @@ export function JournalsPage() {
   const company = companies.data?.find((c) => c.id === companyId);
   const [status, setStatus] = useState("");
   const [editing, setEditing] = useState<{ id: string | null; form: JournalForm } | null>(null);
+  const [importing, setImporting] = useState(false);
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const openId = search.open;
@@ -185,10 +188,15 @@ export function JournalsPage() {
         title={t("accounting.journals")}
         description={t("accounting.journalsDescription")}
         actions={
-          <Button onClick={() => { setProblem(null); setEditing({ id: null, form: emptyForm(company?.functionalCurrency ?? "IQD") }); }} disabled={!companyId} data-testid="new-journal">
-            <Plus aria-hidden="true" />
-            {t("accounting.newJournal")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => { setImporting(true); }} disabled={!companyId} data-testid="import-journals-open">
+              {t("journalImport.open")}
+            </Button>
+            <Button onClick={() => { setProblem(null); setEditing({ id: null, form: emptyForm(company?.functionalCurrency ?? "IQD") }); }} disabled={!companyId} data-testid="new-journal">
+              <Plus aria-hidden="true" />
+              {t("accounting.newJournal")}
+            </Button>
+          </div>
         }
       />
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
@@ -267,6 +275,7 @@ export function JournalsPage() {
                   </TableRow>
                 </TableBody>
               </Table>
+              <AttachmentsPanel entityType="journal" entityId={detail.id} />
               <FormError message={problem?.message ?? null} />
               {detail.status === "pending_approval" || detail.status === "posted" ? (
                 <Field label={t("common.reason")}>
@@ -407,6 +416,7 @@ export function JournalsPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+      <JournalImportDialog companyId={companyId} open={importing} onOpenChange={setImporting} />
     </>
   );
 }

@@ -62,6 +62,7 @@ public static class AccountingEndpoints
             .WithSummary("Parent by parentId or parentCode (a header of the same type); control accounts name their subledger");
         charts.MapGet("/{chartId:guid}/export", async (Guid chartId, ChartService service, CancellationToken ct) =>
             ApiProblems.From(await service.ExportCsvAsync(chartId, ct), static csv => Results.Text(csv, "text/csv; charset=utf-8")))
+            .Produces<string>(StatusCodes.Status200OK, "text/csv")
             .RequirePermission(AccountingPermissions.ChartRead)
             .WithSummary("CSV with one row per account (the import format)");
         charts.MapPost("/{chartId:guid}/import", async (Guid chartId, HttpRequest http, ChartService service, CancellationToken ct) =>

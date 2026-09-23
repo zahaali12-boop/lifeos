@@ -9,6 +9,7 @@ import type { components } from "../../api/schema";
 import { localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { ExportChartButton, ImportChartDialog, StatutoryMappingDialog } from "./ChartTools";
 import { CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
 
 type Account = components["schemas"]["AccountSummary"];
@@ -84,6 +85,7 @@ export function ChartPage() {
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [template, setTemplate] = useState("IFRS_SME");
   const [ruleDraft, setRuleDraft] = useState({ dimensionCode: "", rule: "required" });
+  const [tool, setTool] = useState<"import" | "mapping" | null>(null);
 
   const templates = useQuery({ queryKey: ["chart-templates"], queryFn: async () => unwrap(await api.GET("/api/v1/accounting/chart-templates")) });
   const chart = useQuery({
@@ -155,10 +157,19 @@ export function ChartPage() {
         description={t("accounting.chartDescription")}
         actions={
           chartId ? (
-            <Button onClick={() => { setProblem(null); setEditing({ id: null, form: { ...emptyAccount, parentCode: selected?.isHeader ? selected.code : "", type: selected?.type ?? "asset" } }); }} data-testid="new-account">
-              <Plus aria-hidden="true" />
-              {t("accounting.newAccount")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <ExportChartButton chartId={chartId} fileName={`chart-${company?.code ?? "company"}.csv`} />
+              <Button variant="secondary" onClick={() => { setTool("import"); }} data-testid="import-chart-open">
+                {t("chartTools.import")}
+              </Button>
+              <Button variant="secondary" onClick={() => { setTool("mapping"); }} data-testid="statutory-mapping-open">
+                {t("chartTools.mapping")}
+              </Button>
+              <Button onClick={() => { setProblem(null); setEditing({ id: null, form: { ...emptyAccount, parentCode: selected?.isHeader ? selected.code : "", type: selected?.type ?? "asset" } }); }} data-testid="new-account">
+                <Plus aria-hidden="true" />
+                {t("accounting.newAccount")}
+              </Button>
+            </div>
           ) : null
         }
       />
@@ -379,6 +390,8 @@ export function ChartPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+      {chartId ? <ImportChartDialog chartId={chartId} open={tool === "import"} onOpenChange={(isOpen) => { setTool(isOpen ? "import" : null); }} /> : null}
+      {chartId ? <StatutoryMappingDialog chartId={chartId} open={tool === "mapping"} onOpenChange={(isOpen) => { setTool(isOpen ? "mapping" : null); }} /> : null}
     </>
   );
 }

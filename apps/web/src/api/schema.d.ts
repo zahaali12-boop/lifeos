@@ -18218,7 +18218,17 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    entityType: string;
+                    /** Format: uuid */
+                    entityId: string;
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
         responses: {
             /** @description Created */
             201: {
@@ -19019,7 +19029,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "text/csv": string;
+                };
             };
         };
     };

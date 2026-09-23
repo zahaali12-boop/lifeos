@@ -652,6 +652,41 @@
     "useCode": "Use an authenticator code instead",
     "usePassword": "Use your password instead"
   },
+  "chartTools": {
+    "export": "Export CSV",
+    "import": "Import CSV",
+    "mapping": "Statutory mapping",
+    "importTitle": "Import accounts",
+    "importHint": "Accounts are matched by code: new codes are created and existing ones updated. Use the export's columns; parents may come after their children. If one row is wrong nothing is imported and the reason is shown.",
+    "file": "CSV file",
+    "orPaste": "Or paste the rows",
+    "imported": "{created} created, {updated} updated, {unchanged} unchanged of {total} rows.",
+    "mappingTitle": "Statutory mapping",
+    "mappingHint": "Map each postable account to an account of the statutory chart used for statutory reporting. Only the rows you change are saved; choosing \"not mapped\" removes a mapping.",
+    "statutoryChart": "Statutory chart",
+    "onlyUnmapped": "Only accounts not mapped yet",
+    "unmapped": "{count, plural, =0 {Every account is mapped} one {# account not mapped} other {# accounts not mapped}}",
+    "account": "Account",
+    "statutoryAccount": "Statutory account",
+    "notMapped": "Not mapped",
+    "saveMappings": "{count, plural, =0 {Save} one {Save # change} other {Save # changes}}"
+  },
+  "journalImport": {
+    "open": "Import CSV",
+    "title": "Import journals",
+    "hint": "One row per journal line; rows with the same journal_ref form one journal. Every journal is created as a draft to review, submit and post as usual. If one row is wrong nothing is imported and the reason is shown.",
+    "required": "Required columns:",
+    "optional": "Optional columns:",
+    "created": "{count, plural, one {{formatted} draft journal created.} other {{formatted} draft journals created.}}"
+  },
+  "attachments": {
+    "title": "{count, plural, =0 {Attachments} other {Attachments (#)}}",
+    "add": "Attach a file",
+    "uploading": "Uploading…",
+    "none": "No files attached.",
+    "download": "Download {name}",
+    "remove": "Remove {name}"
+  },
   "numbering": {
     "description": "Which series numbers which documents of a company: the template, the counters per period and the gapless audit. A document takes the most specific active series (branch, then fiscal year, then the default).",
     "new": "New series",

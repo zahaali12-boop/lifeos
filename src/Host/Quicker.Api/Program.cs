@@ -56,6 +56,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi("v1", static options =>
 {
     options.AddOperationTransformer<OperationIdTransformer>();
+    options.AddOperationTransformer<MultipartFormTransformer>();
     options.CreateSchemaReferenceId = SchemaReferenceIds.Create;
 });
 builder.Services.AddQuickerMessaging(builder.Configuration);
