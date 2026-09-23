@@ -34,7 +34,8 @@ async function signup(page: Page, language: "en" | "ar"): Promise<void> {
   await page.getByLabel(language === "en" ? /^Email/ : /البريد/).fill(`owner-${slug}@example.test`);
   await page.getByLabel(language === "en" ? /^Password/ : /كلمة المرور/).fill(password);
   await page.getByRole("button", { name: language === "en" ? "Create workspace" : "إنشاء مساحة عمل" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(language === "en" ? "Welcome" : "أهلاً");
+  // Signing up provisions a whole workspace (charts, roles, calendars, units), slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(language === "en" ? "Welcome" : "أهلاً", { timeout: 20_000 });
 }
 
 async function createCompany(page: Page): Promise<void> {

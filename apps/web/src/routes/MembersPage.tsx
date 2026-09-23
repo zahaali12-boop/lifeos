@@ -11,6 +11,7 @@ import { currentLanguage } from "../i18n";
 import { formatDateTime, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, PageHeader, TextField } from "./common";
+import { MemberDialog } from "./MemberAssignments";
 
 type Member = components["schemas"]["MemberSummary"];
 
@@ -20,6 +21,7 @@ export function MembersPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", displayName: "", roleIds: [] as string[] });
   const [problem, setProblem] = useState<FormProblem | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const members = useQuery({ queryKey: ["members"], queryFn: async () => unwrap(await api.GET("/api/v1/users")) });
   const roles = useQuery({ queryKey: ["roles"], queryFn: async () => unwrap(await api.GET("/api/v1/roles")) });
@@ -78,6 +80,7 @@ export function MembersPage() {
         data={members.data ?? []}
         rowKey={(row) => row.membershipId}
         selectable
+        onOpen={(row) => { setOpenId(row.membershipId); }}
         loading={members.isPending}
         emptyTitle={t("members.emptyTitle")}
         bulkActions={(selected, clear) => (
@@ -91,6 +94,7 @@ export function MembersPage() {
           </>
         )}
       />
+      <MemberDialog member={members.data?.find((m) => m.membershipId === openId) ?? null} roles={roles.data ?? []} onClose={() => { setOpenId(null); }} />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent closeLabel={t("common.close")}>
           <form onSubmit={submit} className="flex flex-col gap-4">
