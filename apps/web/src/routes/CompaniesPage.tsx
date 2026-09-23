@@ -27,7 +27,7 @@ interface CompanyForm {
   timeZone: string;
   isActive: boolean;
   customFields: Record<string, unknown>;
-  /** Policies the form does not expose yet (company settings screen, M2); kept from the record so an edit never resets them. */
+  /** The company's policies: the ones in policyFields are edited here; calendars, trade name, registrations and address are kept from the record so an edit never resets them. */
   policies: Policies;
 }
 
@@ -48,6 +48,20 @@ interface Policies {
 }
 
 const defaultPolicies: Policies = { defaultLanguage: "en", costingMethod: "average", costingScope: "company", revenueRecognitionPoint: "invoice", taxRoundingMode: "line", roundingMode: "half_away", negativeStockPolicy: "block", bankRevaluationMode: "permanent", fiscalCalendarId: null, businessCalendarId: null, tradeName: null, registrationNumbers: null, address: null };
+
+type PolicyKey = "costingMethod" | "costingScope" | "negativeStockPolicy" | "revenueRecognitionPoint" | "taxRoundingMode" | "roundingMode" | "bankRevaluationMode" | "defaultLanguage";
+
+/** The company policies an admin sets; costing is chosen when the company is created (changing it later re-values history, which needs a controlled procedure). */
+const policyFields: { key: PolicyKey; values: string[]; locked: boolean }[] = [
+  { key: "costingMethod", values: ["average", "fifo", "standard"], locked: true },
+  { key: "costingScope", values: ["company", "warehouse"], locked: true },
+  { key: "negativeStockPolicy", values: ["block", "approve", "allow"], locked: false },
+  { key: "revenueRecognitionPoint", values: ["invoice", "shipment"], locked: false },
+  { key: "taxRoundingMode", values: ["line", "document"], locked: false },
+  { key: "roundingMode", values: ["half_away", "half_even"], locked: false },
+  { key: "bankRevaluationMode", values: ["permanent", "reversing"], locked: false },
+  { key: "defaultLanguage", values: ["en", "ar"], locked: false },
+];
 
 const empty: CompanyForm = { code: "", legalNameEn: "", legalNameAr: "", country: "IQ", functionalCurrency: "IQD", reportingCurrency: "", timeZone: "Asia/Baghdad", isActive: true, customFields: {}, policies: defaultPolicies };
 
@@ -280,6 +294,20 @@ export function CompaniesPage() {
                   {t("common.active")}
                 </label>
               </div>
+              <fieldset className="grid gap-4 rounded-md border border-border p-4 sm:grid-cols-2" data-testid="company-policies">
+                <legend className="px-1 text-sm font-medium">{t("companies.policies.title")}</legend>
+                {policyFields.map(({ key, values, locked }) => (
+                  <Field key={key} label={t(`companies.policies.${key}`)} error={problem?.fields[key]} description={locked && isEdit ? t("companies.policies.lockedHint") : t(`companies.policies.hints.${key}`)}>
+                    <SelectField value={form.policies[key]} onChange={(e) => { setForm({ policies: { ...form.policies, [key]: e.target.value } }); }} disabled={locked && isEdit} name={key} data-testid={`policy-${key}`}>
+                      {values.map((value) => (
+                        <option key={value} value={value}>
+                          {t(`companies.policies.values.${key}.${value}`)}
+                        </option>
+                      ))}
+                    </SelectField>
+                  </Field>
+                ))}
+              </fieldset>
               {(fields.data ?? []).filter((f) => f.active).length > 0 ? (
                 <fieldset className="grid gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
                   <legend className="px-1 text-sm font-medium">{t("customFields.title")}</legend>

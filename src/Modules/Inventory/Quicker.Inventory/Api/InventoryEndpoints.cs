@@ -95,6 +95,7 @@ public static class InventoryEndpoints
         var costing = inventory.MapGroup("/costing");
         costing.MapGet("/item-cost", async (Guid companyId, Guid itemId, Guid? warehouseId, DateOnly? asOf, CostingService service, CancellationToken ct) =>
             await service.CostAsync(companyId, itemId, warehouseId, asOf, ct) is { } cost ? Results.Ok(cost) : ApiProblems.From(Kernel.Results.Error.NotFound("item", itemId)))
+            .Produces<ItemCostInfo>()
             .RequirePermission(InventoryPermissions.CostingRead)
             .WithSummary("The item's cost in its cost scope at a date: running quantity, value and average, the last and the standard cost, and whether a re-application is pending");
         costing.MapGet("/valuation", async (Guid companyId, DateOnly? asOf, Guid? warehouseId, Guid? itemId, bool? includeZero, CostInquiryService service, IClock clock, CancellationToken ct) =>
@@ -116,7 +117,7 @@ public static class InventoryEndpoints
         costing.MapGet("/standard-costs", async (Guid companyId, Guid itemId, CostInquiryService service, CancellationToken ct) => TypedResults.Ok(await service.StandardCostsAsync(companyId, itemId, ct)))
             .RequirePermission(InventoryPermissions.CostingRead);
         costing.MapPost("/standard-costs", async (SetStandardCostRequest request, CostingService service, CancellationToken ct) =>
-            ApiProblems.Created((await service.SetStandardCostAsync(request.CompanyId, request.ItemId, request.StandardCost, request.EffectiveFrom, request.Reason, ct)).Map(CostInquiryService.Map), static v => $"/api/v1/inventory/costing/standard-costs?companyId={v.CompanyId}&itemId={v.ItemId}"))
+            ApiProblems.Created(await service.SetStandardCostAsync(request.CompanyId, request.ItemId, request.StandardCost, request.EffectiveFrom, request.Reason, ct), static v => $"/api/v1/inventory/costing/standard-costs?companyId={v.CompanyId}&itemId={v.ItemId}"))
             .RequirePermission(InventoryPermissions.CostingManage)
             .WithSummary("A new standard cost version from a date; under standard costing the stock on hand is revalued and later movements re-applied");
         costing.MapPost("/inbound-adjustments", async (InboundCostAdjustmentRequest request, CostingService service, CancellationToken ct) => ApiProblems.Ok(await service.AdjustInboundCostAsync(request, ct)))

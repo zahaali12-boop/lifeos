@@ -394,7 +394,7 @@ public sealed class CostingService(
 
     // ------------------------------------------------------------------ standard costs
 
-    public async Task<Result<StandardCostVersion>> SetStandardCostAsync(Guid companyId, Guid itemId, decimal standardCost, DateOnly effectiveFrom, string? reason, CancellationToken cancellationToken)
+    public async Task<Result<StandardCostVersionInfo>> SetStandardCostAsync(Guid companyId, Guid itemId, decimal standardCost, DateOnly effectiveFrom, string? reason, CancellationToken cancellationToken)
     {
         if (standardCost < 0m)
         {
@@ -499,14 +499,11 @@ public sealed class CostingService(
             return drained.Error!;
         }
 
-        if (context.Run is not null)
-        {
-            version.RevaluationRunId = context.Run.Id;
-        }
-
+        // The version row is append-only: the run it started is named in the answer and found through the run's trigger, never written back.
+        var runId = context.Run?.Id;
         await CompleteAsync(context, cancellationToken);
-        await audit.RecordAsync(new AuditEntry("standard_cost", version.Id, $"{item.Code}@{effectiveFrom:yyyy-MM-dd}", AuditActions.Created, After: new { company = company.Code, item = item.Code, standardCost, effectiveFrom, reason = version.Reason, revaluationRunId = version.RevaluationRunId }, CompanyId: companyId), cancellationToken);
-        return version;
+        await audit.RecordAsync(new AuditEntry("standard_cost", version.Id, $"{item.Code}@{effectiveFrom:yyyy-MM-dd}", AuditActions.Created, After: new { company = company.Code, item = item.Code, standardCost, effectiveFrom, reason = version.Reason, revaluationRunId = runId }, CompanyId: companyId), cancellationToken);
+        return CostInquiryService.Map(version) with { RevaluationRunId = runId };
     }
 
     // ------------------------------------------------------------------ background continuation

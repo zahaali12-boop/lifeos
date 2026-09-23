@@ -9036,6 +9036,32 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        /** @description The cost of an item in one cost scope at a date: the running quantity, value and average, the last and the standard cost. */
+        ItemCostInfo: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            costingMethod: string;
+            costingScope: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            value: number | string;
+            /** Format: double */
+            averageUnitCost: number | string;
+            /** Format: double */
+            lastCost: number | string;
+            /** Format: double */
+            standardCost: null | number | string;
+            /** Format: double */
+            expectedUnitCost: number | string;
+            valuationPending: boolean;
+        };
         ItemImportRequest: {
             items: components["schemas"]["SaveItemRequest"][];
         };
@@ -21945,7 +21971,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ItemCostInfo"];
+                };
             };
         };
     };

@@ -12,7 +12,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { rememberRecent } from "../../shell/CommandPalette";
 import { Amount } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
-import { ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEditor } from "./ItemEditors";
+import { ItemCostingEditor, ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEditor } from "./ItemEditors";
 import { DocStatus, Tabs, type Item } from "./shared";
 
 interface ItemForm {
@@ -209,12 +209,14 @@ export function ItemsPage() {
                   { id: "units", label: t("itemEditor.tabs.units"), testId: "item-tab-units" },
                   { id: "suppliers", label: t("itemEditor.tabs.suppliers"), testId: "item-tab-suppliers" },
                   { id: "planning", label: t("itemEditor.tabs.planning"), testId: "item-tab-planning" },
+                  { id: "costing", label: t("itemEditor.tabs.costing"), testId: "item-tab-costing" },
                   ...((detail.variants ?? []).length > 0 ? [{ id: "variants", label: t("inventory.items.variants"), testId: "item-tab-variants" }] : []),
                 ]}
               />
               {detailTab === "units" ? <ItemUnitsEditor item={detail} /> : null}
               {detailTab === "suppliers" ? <ItemSuppliersEditor item={detail} /> : null}
               {detailTab === "planning" ? <ItemPlanningEditor item={detail} /> : null}
+              {detailTab === "costing" ? <ItemCostingEditor item={detail} /> : null}
               {detailTab === "variants" ? (
                 <ul className="flex flex-wrap gap-2 text-sm">
                   {(detail.variants ?? []).map((v) => (

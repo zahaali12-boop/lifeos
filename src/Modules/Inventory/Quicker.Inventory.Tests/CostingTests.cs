@@ -138,6 +138,27 @@ public sealed class CostingTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task A_new_standard_on_a_day_that_already_has_movements_re_applies_them_and_names_its_run()
+    {
+        // Standard versions are append-only: the run a new standard starts is found through the run's trigger, never
+        // written back onto the version (the application role may not update the row).
+        var s = await SetUpAsync("standard");
+        var bolt = await ItemAsync(s, "BOLT");
+        await s.Owner.PostAsync("/api/v1/inventory/costing/standard-costs", new { companyId = s.CompanyId, itemId = bolt, standardCost = 100m, effectiveFrom = "2026-01-01" });
+        (await PostAsync(s, bolt, StockEntryTypes.PurchaseReceipt, 10m, D(5), unitCost: 100m)).Entries[0].CostAmount.ShouldBe(1000m);
+
+        var version = await s.Owner.PostAsync("/api/v1/inventory/costing/standard-costs", new { companyId = s.CompanyId, itemId = bolt, standardCost = 120m, effectiveFrom = "2026-09-05", reason = "Annual review" });
+        version.GetProperty("standardCost").GetDecimal().ShouldBe(120m);
+        version.GetProperty("revaluationRunId").GetGuid().ShouldNotBe(Guid.Empty);
+        (await ValuationAsync(s, D(5), bolt)).GetProperty("totalValue").GetDecimal().ShouldBe(1200m);
+        var versions = (await s.Owner.GetOkAsync($"/api/v1/inventory/costing/standard-costs?companyId={s.CompanyId}&itemId={bolt}")).EnumerateArray().ToList();
+        versions.Count.ShouldBe(2);
+        versions[0].GetProperty("revaluationRunId").GetGuid().ShouldBe(version.GetProperty("revaluationRunId").GetGuid());
+        versions[1].GetProperty("revaluationRunId").ValueKind.ShouldBe(JsonValueKind.Null, "the first standard had nothing to re-apply");
+        await s.Owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
     public async Task Average_costs_by_day_and_standard_cost_posts_variances_and_revalues_on_a_new_standard()
     {
         var s = await SetUpAsync("average");

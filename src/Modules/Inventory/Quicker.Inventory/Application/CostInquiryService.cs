@@ -171,8 +171,13 @@ public sealed class CostInquiryService(InventoryDbContext db, IUnitOfWorkAccesso
         return run is null ? Error.NotFound("cost_adjustment_run", runId) : CostingService.Map(run);
     }
 
-    public async Task<IReadOnlyList<StandardCostVersionInfo>> StandardCostsAsync(Guid companyId, Guid itemId, CancellationToken cancellationToken) =>
-        (await db.StandardCosts.Where(v => v.CompanyId == companyId && v.ItemId == itemId).OrderByDescending(static v => v.EffectiveFrom).ToListAsync(cancellationToken)).Select(Map).ToList();
+    public async Task<IReadOnlyList<StandardCostVersionInfo>> StandardCostsAsync(Guid companyId, Guid itemId, CancellationToken cancellationToken)
+    {
+        var versions = await db.StandardCosts.Where(v => v.CompanyId == companyId && v.ItemId == itemId).OrderByDescending(static v => v.EffectiveFrom).ToListAsync(cancellationToken);
+        var ids = versions.Select(static v => v.Id).ToList();
+        var runs = await db.CostRuns.Where(r => r.TriggerDocumentType == "standard_cost" && ids.Contains(r.TriggerDocumentId)).Select(static r => new { r.TriggerDocumentId, r.Id }).ToListAsync(cancellationToken);
+        return versions.Select(v => Map(v) with { RevaluationRunId = v.RevaluationRunId ?? runs.Where(r => r.TriggerDocumentId == v.Id).Select(static r => (Guid?)r.Id).FirstOrDefault() }).ToList();
+    }
 
     public static StandardCostVersionInfo Map(StandardCostVersion v) => new(v.Id, v.CompanyId, v.ItemId, v.StandardCost, v.EffectiveFrom, v.Reason, v.RevaluationRunId, v.ApprovedBy, v.CreatedAt);
 

@@ -7,8 +7,9 @@ import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Amount, useCompanies } from "../accounting/shared";
+import { Amount, today, useCompanies } from "../accounting/shared";
 import { Field, FormError, SelectField, TextField } from "../common";
+import { ItemCostPanel } from "./ItemCostDialog";
 import { Qty, type Item } from "./shared";
 
 type ItemUom = components["schemas"]["ItemUomSummary"];
@@ -526,6 +527,106 @@ export function ItemPlanningEditor({ item }: { item: Item }) {
           </div>
         </form>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * How the item is costed in each company (roadmap 3.3): an override of the company's costing method (only while the
+ * item has no stock there, since a change would re-value history), a default warehouse, the negative-stock exception,
+ * and the cost panel with the standard-cost versions and a new standard.
+ */
+export function ItemCostingEditor({ item }: { item: Item }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const companies = useCompanies();
+  const [companyId, setCompanyId] = useState("");
+  const [form, setForm] = useState<{ costingMethodOverride: string; defaultWarehouseId: string; allowNegativeStock: string } | null>(null);
+  const [problem, setProblem] = useState<FormProblem | null>(null);
+  const activeCompany = companyId || (companies.data?.[0]?.id ?? "");
+  const settings = useQuery({
+    queryKey: ["item-company-settings", item.id],
+    queryFn: async () => unwrap(await api.GET("/api/v1/items/{itemId}/company-settings", { params: { path: { itemId: item.id } } })),
+  });
+  const warehouses = useQuery({
+    queryKey: ["warehouses", activeCompany],
+    enabled: Boolean(activeCompany),
+    queryFn: async () => unwrap(await api.GET("/api/v1/inventory/warehouses", { params: { query: { companyId: activeCompany } } })),
+  });
+  const cost = useQuery({
+    queryKey: ["item-cost", activeCompany, item.id, null, today()],
+    enabled: Boolean(activeCompany),
+    queryFn: async () => unwrap(await api.GET("/api/v1/inventory/costing/item-cost", { params: { query: { companyId: activeCompany, itemId: item.id, asOf: today() } } })),
+  });
+  const current = settings.data?.find((s) => s.companyId === activeCompany);
+  const hasStock = Number(cost.data?.quantity ?? 0) !== 0 || Number(cost.data?.value ?? 0) !== 0;
+  const values = form ?? { costingMethodOverride: current?.costingMethodOverride ?? "", defaultWarehouseId: current?.defaultWarehouseId ?? "", allowNegativeStock: current?.allowNegativeStock === null || current?.allowNegativeStock === undefined ? "" : String(current.allowNegativeStock) };
+  const save = useMutation({
+    mutationFn: async () => {
+      await api.PUT("/api/v1/items/{itemId}/company-settings/{companyId}", { params: { path: { itemId: item.id, companyId: activeCompany } }, body: { costingMethodOverride: values.costingMethodOverride || null, standardCost: current?.standardCost ?? null, itemPostingGroupOverride: current?.itemPostingGroupOverride ?? null, defaultWarehouseId: values.defaultWarehouseId || null, allowNegativeStock: values.allowNegativeStock === "" ? null : values.allowNegativeStock === "true" } }).then(unwrap);
+    },
+    onSuccess: async () => {
+      setForm(null);
+      setProblem(null);
+      await queryClient.invalidateQueries({ queryKey: ["item-company-settings", item.id] });
+      await queryClient.invalidateQueries({ queryKey: ["item-cost"] });
+    },
+    onError: (error) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },
+  });
+  const submit = (event: FormEvent): void => { event.preventDefault(); save.mutate(); };
+
+  return (
+    <div className="flex flex-col gap-4" data-testid="item-costing">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t("itemEditor.company")}>
+          <SelectField value={activeCompany} onChange={(e) => { setCompanyId(e.target.value); setForm(null); }} data-testid="costing-company">
+            {(companies.data ?? []).map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.code} · {localized(c.legalName)}
+              </option>
+            ))}
+          </SelectField>
+        </Field>
+      </div>
+      <form onSubmit={submit} className="flex flex-col gap-3 rounded-md border border-border p-3">
+        <h4 className="text-sm font-semibold">{t("itemEditor.companySettings")}</h4>
+        <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label={t("itemEditor.costingOverride")} description={hasStock ? t("itemEditor.costingLocked") : t("itemEditor.costingOverrideHint")} error={problem?.fields.costingMethodOverride}>
+            <SelectField value={values.costingMethodOverride} onChange={(e) => { setForm({ ...values, costingMethodOverride: e.target.value }); }} disabled={hasStock} data-testid="costing-override">
+              <option value="">{t("itemEditor.companyMethod")}</option>
+              {["average", "fifo", "standard"].map((m) => (
+                <option key={m} value={m}>
+                  {t(`itemCost.methods.${m}`)}
+                </option>
+              ))}
+            </SelectField>
+          </Field>
+          <Field label={t("itemEditor.defaultWarehouse")}>
+            <SelectField value={values.defaultWarehouseId} onChange={(e) => { setForm({ ...values, defaultWarehouseId: e.target.value }); }}>
+              <option value="">—</option>
+              {(warehouses.data ?? []).filter((w) => w.kind !== "in_transit").map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.code} · {localized(w.name)}
+                </option>
+              ))}
+            </SelectField>
+          </Field>
+          <Field label={t("itemEditor.negativeStock")}>
+            <SelectField value={values.allowNegativeStock} onChange={(e) => { setForm({ ...values, allowNegativeStock: e.target.value }); }}>
+              <option value="">{t("itemEditor.companyPolicy")}</option>
+              <option value="true">{t("itemEditor.allowNegative")}</option>
+              <option value="false">{t("itemEditor.refuseNegative")}</option>
+            </SelectField>
+          </Field>
+        </div>
+        <div>
+          <Button type="submit" size="sm" loading={save.isPending} data-testid="save-costing-settings">
+            {t("itemEditor.saveSettings")}
+          </Button>
+        </div>
+      </form>
+      {activeCompany ? <ItemCostPanel companyId={activeCompany} itemId={item.id} warehouseId={null} asOf={today()} /> : null}
     </div>
   );
 }

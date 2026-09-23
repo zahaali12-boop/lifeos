@@ -9,6 +9,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, formatDateTime, localized } from "../../lib/format";
 import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, TextField } from "../common";
+import { ItemCostDialog, type ItemCostTarget } from "./ItemCostDialog";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 
 type Row = components["schemas"]["ValuationRow"];
@@ -22,6 +23,7 @@ export function ValuationPage() {
   const [warehouseId, setWarehouseId] = useState("");
   const [asOf, setAsOf] = useState(today());
   const [includeZero, setIncludeZero] = useState(false);
+  const [costOf, setCostOf] = useState<ItemCostTarget | null>(null);
 
   const report = useQuery({
     queryKey: ["valuation", companyId, warehouseId, asOf, includeZero],
@@ -84,7 +86,8 @@ export function ValuationPage() {
         </div>
       ) : null}
       <FormError message={report.isError ? t("accounting.loadFailed") : null} />
-      <DataGrid<Row> label="nav.valuation" columns={columns} data={report.data?.lines ?? []} rowKey={(row) => `${row.itemId}:${row.warehouseId}`} loading={report.isPending && Boolean(companyId)} emptyTitle={t("inventory.valuation.emptyTitle")} emptyDescription={t("inventory.valuation.emptyDescription")} height={420} />
+      <p className="mb-2 text-sm text-fg-muted">{t("itemCost.openHint")}</p>
+      <DataGrid<Row> label="nav.valuation" columns={columns} data={report.data?.lines ?? []} rowKey={(row) => `${row.itemId}:${row.warehouseId}`} onOpen={(row) => { setCostOf({ itemId: row.itemId, itemCode: row.itemCode, warehouseId: row.warehouseId, warehouseCode: row.warehouseCode }); }} loading={report.isPending && Boolean(companyId)} emptyTitle={t("inventory.valuation.emptyTitle")} emptyDescription={t("inventory.valuation.emptyDescription")} height={420} />
       <section className="mt-6">
         <h2 className="mb-2 text-base font-semibold">{t("inventory.valuation.runs")}</h2>
         <Table>
@@ -122,6 +125,7 @@ export function ValuationPage() {
           </TableBody>
         </Table>
       </section>
+      <ItemCostDialog companyId={companyId} asOf={asOf} target={costOf} onClose={() => { setCostOf(null); }} />
     </>
   );
 }
