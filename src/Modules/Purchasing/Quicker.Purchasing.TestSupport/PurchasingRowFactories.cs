@@ -49,6 +49,13 @@ public static class PurchasingRowFactories
         });
         IsolationRegistry.Register("app.pur_returns", static async (c, tx, t) => new RowRef("app.pur_returns", $"id = '{(await ReturnAsync(c, tx, t)).Doc}'"));
         IsolationRegistry.Register("app.pur_return_lines", static async (c, tx, t) => new RowRef("app.pur_return_lines", $"id = '{(await ReturnAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.pur_scoring_settings", static async (c, tx, t) =>
+        {
+            var company = await CompanyAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.pur_scoring_settings (tenant_id, id, company_id) VALUES (@t, @id, @company)", new { t, id, company }, tx);
+            return new RowRef("app.pur_scoring_settings", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.pur_charge_types", static async (c, tx, t) => new RowRef("app.pur_charge_types", $"id = '{await ChargeTypeAsync(c, tx, t)}'"));
         IsolationRegistry.Register("app.pur_landed_cost_docs", static async (c, tx, t) => new RowRef("app.pur_landed_cost_docs", $"id = '{(await LandedCostAsync(c, tx, t)).Doc}'"));
         IsolationRegistry.Register("app.pur_landed_cost_charges", static async (c, tx, t) => new RowRef("app.pur_landed_cost_charges", $"id = '{(await LandedCostAsync(c, tx, t)).Charge}'"));

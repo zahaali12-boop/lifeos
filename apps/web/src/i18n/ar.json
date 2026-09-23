@@ -28,6 +28,7 @@
   "nav": {
     "landedCosts": "تكاليف الوصول",
     "returns": "مرتجعات الموردين",
+    "supplierIntelligence": "تحليلات الموردين",
     "payables": "الذمم الدائنة",
     "paymentProposals": "مقترحات الدفع",
     "bankAccounts": "الحسابات البنكية والنقدية",
@@ -1254,6 +1255,43 @@
     "payNow": "الدفع الآن",
     "cash": "النقد المدفوع",
     "postPayment": "ترحيل الدفعة"
+  },
+  "intelligence": {
+    "description": "أداء الموردين من المستندات كما هي: بطاقة تقييم بأوزان قابلة للضبط، والأيام من الطلب إلى الاستلام، والأسعار المدفوعة والمعروضة.",
+    "scorecard": "بطاقة التقييم",
+    "leadTimes": "مدد التوريد",
+    "priceHistory": "سجل الأسعار",
+    "window": "من {from} إلى {to}",
+    "nothingToScore": "لا استلامات أو فواتير في هذه الفترة.",
+    "onTime": "في الموعد",
+    "quantity": "الكمية المحتفظ بها",
+    "price": "السعر ضمن التسامح",
+    "invoices": "مطابقة من المرة الأولى",
+    "score": "الدرجة",
+    "grade": "التصنيف",
+    "settings": "إعدادات التقييم",
+    "onTimeWeight": "وزن الالتزام بالموعد",
+    "quantityWeight": "وزن الكمية",
+    "priceWeight": "وزن السعر",
+    "invoiceWeight": "وزن الفواتير",
+    "toleranceDays": "أيام التأخير المقبولة",
+    "lookbackMonths": "فترة المراجعة (بالأشهر)",
+    "nothingReceived": "لم يُستلم شيء بعد.",
+    "stated": "الأيام المعلنة",
+    "receipts": "بنود الاستلام",
+    "average": "المتوسط",
+    "median": "الوسيط",
+    "range": "المدى",
+    "noPrices": "لا أسعار بعد.",
+    "points": "الأسعار",
+    "last": "الأخير",
+    "source": "المصدر",
+    "unitPrice": "سعر الوحدة",
+    "sources": {
+      "order": "أمر شراء",
+      "invoice": "فاتورة",
+      "quote": "عرض سعر"
+    }
   },
   "purchasing": {
     "settlementKinds": {

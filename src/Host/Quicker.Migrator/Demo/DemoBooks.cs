@@ -1,3 +1,4 @@
+using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Accounting.Application;
 using Quicker.Accounting.Persistence;
@@ -8,6 +9,7 @@ using Quicker.Kernel.Results;
 using Quicker.Organization.Application;
 using Quicker.Organization.Contracts;
 using Quicker.Payables.Contracts;
+using Quicker.Persistence;
 
 namespace Quicker.Migrator.Demo;
 
@@ -75,6 +77,16 @@ internal static class DemoBooks
         var harness = services.GetRequiredService<IInvariantHarness>();
         var accounting = services.GetRequiredService<AccountingDbContext>();
         var payables = services.GetRequiredService<IPayables>();
+        // The v2 books name their suppliers by fixed ids; the payables subledger (4.7) keeps open items per partner, so
+        // those suppliers become real partner records with the same ids (idempotent, like the rest of the seed).
+        var unitOfWork = services.GetRequiredService<IUnitOfWorkAccessor>().Current;
+        foreach (var supplier in Suppliers)
+        {
+            await unitOfWork.Connection.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO app.ptr_partners (tenant_id, id, code, legal_name_i18n, is_supplier) VALUES (@tenant, @id, @code, @name::jsonb, true) ON CONFLICT (tenant_id, id) DO NOTHING",
+                new { tenant = unitOfWork.Context.TenantId.Value, id = supplier.Ref, code = "SUP-" + supplier.Key[5..].ToUpperInvariant(), name = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>(StringComparer.Ordinal) { ["en"] = supplier.En, ["ar"] = supplier.Ar }) },
+                unitOfWork.Transaction, cancellationToken: cancellationToken));
+        }
 
         var windowStart = new DateOnly(today.Year, today.Month, 1).AddMonths(-11);
         var previousMonthStart = new DateOnly(today.Year, today.Month, 1).AddMonths(-1);

@@ -229,6 +229,17 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await expect(page.getByTestId("open-item-remaining")).toContainText("0");
   await closeDialog(page);
 
+  // Supplier intelligence: Alpha is scored from its receipt, invoice and return; its lead time and prices are listed.
+  await nav(page, "Supplier intelligence");
+  await expect(page.getByTestId("scorecard-row").first()).toContainText("ALPHA");
+  await expect(page.getByTestId("grade").first()).toBeVisible();
+  await expectAccessible(page);
+  await page.getByTestId("tab-lead-times").click();
+  await expect(page.getByTestId("lead-time-row").first()).toContainText("ALPHA");
+  await page.getByTestId("tab-prices").click();
+  await expect(page.getByTestId("price-summary-row").first()).toContainText("TEA");
+  await expectAccessible(page);
+
   // An RFQ to both suppliers, two quotes, compared: the cheaper one ranks first.
   await nav(page, "Requests for quotation");
   await page.getByTestId("new-rfq").click();

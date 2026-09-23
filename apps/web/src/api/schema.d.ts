@@ -6710,6 +6710,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/intelligence/price-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prices paid and quoted per item and supplier: order, invoice and quote points with their value in the company's currency, and a summary per item and supplier. */
+        get: operations["getPurchasingIntelligencePriceHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/intelligence/lead-times": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Days from order to receipt per supplier (average, median, minimum, maximum) against the supplier's stated lead time, and the share received by the expected date. */
+        get: operations["getPurchasingIntelligenceLeadTimes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/intelligence/scorecard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Supplier scorecard over the look-back window: on time, quantity kept (not returned), price within tolerance and invoices matched first time, weighted into a score and a grade. */
+        get: operations["getPurchasingIntelligenceScorecard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/intelligence/scoring-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingIntelligenceScoringSettings"];
+        put: operations["putPurchasingIntelligenceScoringSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/charge-types": {
         parameters: {
             query?: never;
@@ -9362,6 +9429,28 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        LeadTimeRow: {
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            statedLeadTimeDays: number | string;
+            /** Format: int32 */
+            receipts: number | string;
+            /** Format: double */
+            averageDays: number | string;
+            /** Format: double */
+            medianDays: number | string;
+            /** Format: int32 */
+            minDays: number | string;
+            /** Format: int32 */
+            maxDays: number | string;
+            /** Format: double */
+            onTimePct: null | number | string;
+        };
         /** @description What a figure drills to: the ledger of the account over the same window with the same dimension filters. */
         LedgerDrill: {
             /** Format: uuid */
@@ -10328,6 +10417,48 @@ export interface components {
             kind: string;
             inApp: boolean;
             email: boolean;
+        };
+        PriceHistory: {
+            functionalCurrency: string;
+            points: components["schemas"]["PricePoint"][];
+            summary: components["schemas"]["PriceSummaryRow"][];
+        };
+        PricePoint: {
+            /** Format: date */
+            date: string;
+            source: string;
+            documentNumber: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            /** Format: double */
+            unitPrice: number | string;
+            currency: string;
+            /** Format: double */
+            unitPriceFc: null | number | string;
+        };
+        PriceSummaryRow: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            /** Format: int32 */
+            points: number | string;
+            /** Format: date */
+            lastDate: string;
+            /** Format: double */
+            lastPriceFc: number | string;
+            /** Format: double */
+            minPriceFc: number | string;
+            /** Format: double */
+            maxPriceFc: number | string;
+            /** Format: double */
+            averagePriceFc: number | string;
         };
         ProposalLineChange: {
             /** Format: uuid */
@@ -12689,6 +12820,28 @@ export interface components {
             /** @default true */
             enabled: boolean;
         };
+        SaveScoringSettingsRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: double */
+            onTimeWeight: number | string;
+            /** Format: double */
+            quantityWeight: number | string;
+            /** Format: double */
+            priceWeight: number | string;
+            /** Format: double */
+            invoiceWeight: number | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            onTimeToleranceDays: number | string;
+            /**
+             * Format: int32
+             * @default 12
+             */
+            lookbackMonths: number | string;
+        };
         SaveSeriesRequest: {
             code: string;
             documentType: string;
@@ -13006,6 +13159,56 @@ export interface components {
             scopeType: string;
             /** Format: uuid */
             scopeId: string;
+        };
+        Scorecard: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: date */
+            from: string;
+            settings: components["schemas"]["ScoringSettingsSummary"];
+            rows: components["schemas"]["ScorecardRow"][];
+        };
+        ScorecardRow: {
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            receiptLines: number | string;
+            /** Format: int32 */
+            invoices: number | string;
+            /** Format: double */
+            onTimePct: null | number | string;
+            /** Format: double */
+            quantityPct: null | number | string;
+            /** Format: double */
+            pricePct: null | number | string;
+            /** Format: double */
+            invoicePct: null | number | string;
+            /** Format: double */
+            score: null | number | string;
+            grade: null | string;
+        };
+        ScoringSettingsSummary: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: double */
+            onTimeWeight: number | string;
+            /** Format: double */
+            quantityWeight: number | string;
+            /** Format: double */
+            priceWeight: number | string;
+            /** Format: double */
+            invoiceWeight: number | string;
+            /** Format: int32 */
+            onTimeToleranceDays: number | string;
+            /** Format: int32 */
+            lookbackMonths: number | string;
+            isDefault: boolean;
         };
         SelectTenantRequest: {
             challengeToken: string;
@@ -26653,6 +26856,126 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReturnSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingIntelligencePriceHistory: {
+        parameters: {
+            query: {
+                companyId: string;
+                itemId?: string;
+                partnerId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceHistory"];
+                };
+            };
+        };
+    };
+    getPurchasingIntelligenceLeadTimes: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadTimeRow"][];
+                };
+            };
+        };
+    };
+    getPurchasingIntelligenceScorecard: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Scorecard"];
+                };
+            };
+        };
+    };
+    getPurchasingIntelligenceScoringSettings: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoringSettingsSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingIntelligenceScoringSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveScoringSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoringSettingsSummary"];
                 };
             };
         };

@@ -28,6 +28,7 @@
   "nav": {
     "landedCosts": "Landed costs",
     "returns": "Supplier returns",
+    "supplierIntelligence": "Supplier intelligence",
     "payables": "Payables",
     "paymentProposals": "Payment proposals",
     "bankAccounts": "Bank & cash accounts",
@@ -1254,6 +1255,43 @@
     "payNow": "Pay now",
     "cash": "Cash paid",
     "postPayment": "Post payment"
+  },
+  "intelligence": {
+    "description": "How suppliers perform, from the documents as they stand: a scorecard with configurable weights, the days from order to receipt, and the prices paid and quoted.",
+    "scorecard": "Scorecard",
+    "leadTimes": "Lead times",
+    "priceHistory": "Price history",
+    "window": "From {from} to {to}",
+    "nothingToScore": "No receipts or invoices in this window.",
+    "onTime": "On time",
+    "quantity": "Quantity kept",
+    "price": "Price within tolerance",
+    "invoices": "Matched first time",
+    "score": "Score",
+    "grade": "Grade",
+    "settings": "Scoring settings",
+    "onTimeWeight": "On-time weight",
+    "quantityWeight": "Quantity weight",
+    "priceWeight": "Price weight",
+    "invoiceWeight": "Invoice weight",
+    "toleranceDays": "Days late still on time",
+    "lookbackMonths": "Look-back (months)",
+    "nothingReceived": "Nothing received yet.",
+    "stated": "Stated days",
+    "receipts": "Receipt lines",
+    "average": "Average",
+    "median": "Median",
+    "range": "Range",
+    "noPrices": "No prices yet.",
+    "points": "Prices",
+    "last": "Last",
+    "source": "Source",
+    "unitPrice": "Unit price",
+    "sources": {
+      "order": "Order",
+      "invoice": "Invoice",
+      "quote": "Quote"
+    }
   },
   "purchasing": {
     "settlementKinds": {

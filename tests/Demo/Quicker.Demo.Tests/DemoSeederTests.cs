@@ -1,5 +1,6 @@
 using Dapper;
 using Npgsql;
+using Quicker.Integrity.Contracts;
 using Quicker.Identity.Security;
 using Quicker.Migrator.Demo;
 
@@ -119,7 +120,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_item_warehouse_settings WHERE tenant_id = @t AND reorder_point IS NOT NULL", new { t = DemoData.TenantId })).ShouldBeGreaterThan(500, "a quarter of the stocked items carry planning parameters");
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
-        verified.Checks.Count.ShouldBe(8);
+        verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
 
         // A plain run (make up) leaves the tenant as it is: same company ids, nothing added.
         var companyIds = companies.Select(static c => c.Id).ToList();

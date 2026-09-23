@@ -53,6 +53,8 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
 
     public DbSet<SupplierReturn> Returns => Set<SupplierReturn>();
 
+    public DbSet<ScoringSettings> ScoringSettings => Set<ScoringSettings>();
+
     public DbSet<SupplierReturnLine> ReturnLines => Set<SupplierReturnLine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -329,6 +331,17 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.CreditedAmountFc).HasPrecision(24, 6);
             b.Property(static x => x.QtyCredited).HasPrecision(24, 9);
             b.HasOne<ReceiptLine>().WithMany().HasForeignKey(static x => new { x.TenantId, x.ReceiptLineId });
+        });
+
+        modelBuilder.Entity<ScoringSettings>(b =>
+        {
+            b.ToTable("pur_scoring_settings", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.OnTimeWeight).HasPrecision(5, 2);
+            b.Property(static x => x.QuantityWeight).HasPrecision(5, 2);
+            b.Property(static x => x.PriceWeight).HasPrecision(5, 2);
+            b.Property(static x => x.InvoiceWeight).HasPrecision(5, 2);
+            b.HasAuditTrail("scoring_settings", static x => x.CompanyId.ToString());
         });
 
         base.OnModelCreating(modelBuilder);

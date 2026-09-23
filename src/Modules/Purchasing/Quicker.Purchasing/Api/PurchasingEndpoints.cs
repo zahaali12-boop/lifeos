@@ -180,6 +180,21 @@ public static class PurchasingEndpoints
             .RequirePermission(PurchasingPermissions.ReturnPost)
             .WithSummary("Reverses a posted return that has not been credited: the goods come back at the same cost.");
 
+        var intelligence = purchasing.MapGroup("/intelligence");
+        intelligence.MapGet("/price-history", async (Guid companyId, Guid? itemId, Guid? partnerId, DateOnly? from, DateOnly? to, SupplierIntelligenceService service, CancellationToken ct) => TypedResults.Ok(await service.PriceHistoryAsync(companyId, itemId, partnerId, from, to, ct)))
+            .RequirePermission(PurchasingPermissions.IntelligenceRead)
+            .WithSummary("Prices paid and quoted per item and supplier: order, invoice and quote points with their value in the company's currency, and a summary per item and supplier.");
+        intelligence.MapGet("/lead-times", async (Guid companyId, Guid? partnerId, DateOnly? from, DateOnly? to, SupplierIntelligenceService service, CancellationToken ct) => TypedResults.Ok(await service.LeadTimesAsync(companyId, partnerId, from, to, ct)))
+            .RequirePermission(PurchasingPermissions.IntelligenceRead)
+            .WithSummary("Days from order to receipt per supplier (average, median, minimum, maximum) against the supplier's stated lead time, and the share received by the expected date.");
+        intelligence.MapGet("/scorecard", async (Guid companyId, DateOnly? asOf, SupplierIntelligenceService service, CancellationToken ct) => ApiProblems.Ok(await service.ScorecardAsync(companyId, asOf, ct)))
+            .RequirePermission(PurchasingPermissions.IntelligenceRead)
+            .WithSummary("Supplier scorecard over the look-back window: on time, quantity kept (not returned), price within tolerance and invoices matched first time, weighted into a score and a grade.");
+        intelligence.MapGet("/scoring-settings", async (Guid companyId, SupplierIntelligenceService service, CancellationToken ct) => ApiProblems.Ok(await service.SettingsAsync(companyId, ct)))
+            .RequirePermission(PurchasingPermissions.IntelligenceRead);
+        intelligence.MapPut("/scoring-settings", async (SaveScoringSettingsRequest request, SupplierIntelligenceService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveSettingsAsync(request, ct)))
+            .RequirePermission(PurchasingPermissions.IntelligenceManage);
+
         var chargeTypes = purchasing.MapGroup("/charge-types");
         chargeTypes.MapGet("/", async (LandedCostService service, CancellationToken ct) => TypedResults.Ok(await service.ChargeTypesAsync(ct)))
             .RequirePermission(PurchasingPermissions.LandedCostRead);

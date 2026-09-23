@@ -26,6 +26,8 @@ public static class PurchasingPermissions
     public const string ReturnRead = "purchasing.return.read";
     public const string ReturnManage = "purchasing.return.manage";
     public const string ReturnPost = "purchasing.return.post";
+    public const string IntelligenceRead = "purchasing.intelligence.read";
+    public const string IntelligenceManage = "purchasing.intelligence.manage";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -50,5 +52,7 @@ public static class PurchasingPermissions
         new(ReturnRead, "purchasing", "Read supplier returns"),
         new(ReturnManage, "purchasing", "Create, edit and delete draft supplier returns"),
         new(ReturnPost, "purchasing", "Post supplier returns out of stock and reverse them"),
+        new(IntelligenceRead, "purchasing", "Read supplier price history, lead-time statistics and scorecards"),
+        new(IntelligenceManage, "purchasing", "Set the supplier scoring weights, on-time tolerance and look-back window"),
     ];
 }

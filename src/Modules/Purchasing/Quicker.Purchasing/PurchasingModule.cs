@@ -33,6 +33,7 @@ public static class PurchasingModule
         services.AddScoped<InvoiceService>();
         services.AddScoped<LandedCostService>();
         services.AddScoped<ReturnService>();
+        services.AddScoped<SupplierIntelligenceService>();
         services.AddScoped<ITenantSetupStep, PurchasingDefaults>();
         services.AddScoped<IPurchaseReceiptDirectory>(static sp => sp.GetRequiredService<ReceiptService>());
         services.AddScoped<PurchasingSupply>();
