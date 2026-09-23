@@ -17,6 +17,9 @@ public static class RecordEndpoints
         comments.MapGet("/", async (string? entityType, Guid entityId, CommentService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.ListAsync(entityType, entityId, ct)))
             .RequirePermission(CollaborationPermissions.CommentRead);
+        comments.MapGet("/mentionable", async (CommentService service, CancellationToken ct) => TypedResults.Ok(await service.MentionableAsync(ct)))
+            .RequirePermission(CollaborationPermissions.CommentWrite)
+            .WithSummary("Members a comment can mention: the active members by name, for anyone who comments");
         comments.MapPost("/", async (AddCommentRequest request, CommentService service, CancellationToken ct) =>
             ApiProblems.Created(await service.AddAsync(request, ct), static c => $"/api/v1/collaboration/comments/{c.Id}"))
             .RequirePermission(CollaborationPermissions.CommentWrite)

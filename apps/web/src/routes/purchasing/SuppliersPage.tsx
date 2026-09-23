@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, Tabs, useCompanyContext } from "../inventory/shared";
 import { HoldBadge, num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, useSupplierPostingGroups, useWhtCodes } from "./shared";
+import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type SupplierAccount = components["schemas"]["SupplierAccountSummary"];
 
@@ -408,10 +409,14 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
                 { id: "addresses", label: t("partners.addresses"), testId: "tab-addresses" },
                 { id: "bank", label: t("partners.bankAccounts"), testId: "tab-bank" },
                 { id: "tax", label: t("partners.taxRegistrations"), testId: "tab-tax" },
+                { id: "discussion", label: t("comments.tab"), testId: "tab-discussion" },
+                { id: "history", label: t("history.tab"), testId: "tab-history" },
               ]}
               value={tab}
               onChange={setTab}
             />
+            {tab === "discussion" ? <RecordDiscussion entityType="partner" entityId={partner.id} /> : null}
+            {tab === "history" ? <RecordHistory entityType="partner" entityId={partner.id} /> : null}
             <FormError message={problem?.message ?? null} />
             {tab === "account" ? (
               <form onSubmit={submit(() => { saveAccount.mutate(form); })} className="flex flex-col gap-4">

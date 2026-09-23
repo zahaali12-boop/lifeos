@@ -23,6 +23,13 @@ public sealed class CommentTests(ApiHostFixture host)
         using var clerk = Api.ClientFor(clerkToken);
         var invoiceId = Guid.NewGuid();
 
+        // Whom the clerk can mention: every active member by name, without the member list's permission or emails.
+        (await clerk.GetAsync("/api/v1/users")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        var mentionable = (await (await clerk.GetAsync("/api/v1/collaboration/comments/mentionable")).ReadJsonAsync()).EnumerateArray().ToList();
+        mentionable.Select(static m => m.GetProperty("membershipId").GetGuid()).ShouldBe([ws.MembershipId, clerkMembership], ignoreOrder: true);
+        mentionable.Single(m => m.GetProperty("membershipId").GetGuid() == clerkMembership).GetProperty("displayName").GetString().ShouldBe("clerk");
+        mentionable.Any(static m => m.TryGetProperty("email", out _)).ShouldBeFalse();
+
         // An attachment and a comment mentioning the owner.
         using var form = new MultipartFormDataContent { { new StringContent("sales_invoice"), "entityType" }, { new StringContent(invoiceId.ToString()), "entityId" } };
         var file = new ByteArrayContent([1, 2, 3]);

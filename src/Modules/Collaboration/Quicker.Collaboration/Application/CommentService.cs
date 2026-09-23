@@ -17,6 +17,9 @@ public sealed record EditCommentRequest(string Body, IReadOnlyList<Guid>? Mentio
 
 public sealed record CommentView(Guid Id, string EntityType, Guid EntityId, Guid AuthorMembershipId, string AuthorName, string Body, IReadOnlyList<Guid> Mentions, Guid? ParentId, DateTimeOffset CreatedAt, DateTimeOffset? EditedAt, DateTimeOffset? DeletedAt);
 
+/// <summary>A member a comment can mention: the name only, so commenting does not reveal the workspace's email addresses.</summary>
+public sealed record MentionableMember(Guid MembershipId, string DisplayName);
+
 /// <summary>Comments on records with @mentions: each comment is an activity, and every mentioned member is notified.</summary>
 public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, ICurrentPrincipal principal, IMemberDirectory members, IActivityLog activities, INotifier notifier, IClock clock)
 {
@@ -37,6 +40,13 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
         var names = await NamesAsync(rows.Select(static c => c.AuthorMembershipId), cancellationToken);
         return rows.Select(c => Map(c, names)).ToList();
     }
+
+    /// <summary>The active members, by name: whom a comment can mention (the member list itself needs <c>identity.user.read</c>).</summary>
+    public async Task<IReadOnlyList<MentionableMember>> MentionableAsync(CancellationToken cancellationToken) =>
+        (await members.ListActiveAsync(cancellationToken))
+            .OrderBy(static m => m.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+            .Select(static m => new MentionableMember(m.MembershipId.Value, m.DisplayName))
+            .ToList();
 
     public async Task<Result<CommentView>> AddAsync(AddCommentRequest request, CancellationToken cancellationToken)
     {

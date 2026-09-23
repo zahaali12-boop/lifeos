@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { ItemCostingEditor, ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEditor } from "./ItemEditors";
 import { ItemAttributesEditor, ItemBomEditor, ItemImage, ItemSubstitutesEditor, ItemVariantsEditor } from "./ItemStructure";
 import { DocStatus, Tabs, type Item } from "./shared";
+import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 interface ItemForm {
   code: string;
@@ -215,8 +216,12 @@ export function ItemsPage() {
                   ...(detail.type === "kit" || detail.type === "assembly" ? [{ id: "bom", label: t("itemStructure.tabs.bom"), testId: "item-tab-bom" }] : []),
                   { id: "variants", label: t("inventory.items.variants"), testId: "item-tab-variants" },
                   { id: "substitutes", label: t("itemStructure.tabs.substitutes"), testId: "item-tab-substitutes" },
+                  { id: "discussion", label: t("comments.tab"), testId: "item-tab-discussion" },
+                  { id: "history", label: t("history.tab"), testId: "item-tab-history" },
                 ]}
               />
+              {detailTab === "discussion" ? <RecordDiscussion entityType="item" entityId={detail.id} /> : null}
+              {detailTab === "history" ? <RecordHistory entityType="item" entityId={detail.id} /> : null}
               {detailTab === "units" ? <ItemUnitsEditor item={detail} /> : null}
               {detailTab === "suppliers" ? <ItemSuppliersEditor item={detail} /> : null}
               {detailTab === "planning" ? <ItemPlanningEditor item={detail} /> : null}

@@ -823,6 +823,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** One audit event with its request context, before/after values, field-level diff and chain hashes */
         get: operations["getAuditEventsById"];
         put?: never;
         post?: never;
@@ -2243,6 +2244,23 @@ export interface paths {
         put?: never;
         /** Comment on a record; mentioned members are notified */
         post: operations["postCollaborationComments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/collaboration/comments/mentionable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Members a comment can mention: the active members by name, for anyone who comments */
+        get: operations["getCollaborationCommentsMentionable"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -9747,6 +9765,12 @@ export interface components {
             lastLoginAt: null | string;
             assignments: components["schemas"]["AssignmentSummary"][];
         };
+        /** @description A member a comment can mention: the name only, so commenting does not reveal the workspace's email addresses. */
+        MentionableMember: {
+            /** Format: uuid */
+            membershipId: string;
+            displayName: string;
+        };
         MeResponse: {
             user: components["schemas"]["UserSummary"];
             tenant: components["schemas"]["TenantSummary"];
@@ -15762,7 +15786,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["AuditEventDetail"];
+                };
             };
         };
     };
@@ -18346,6 +18372,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CommentView"];
+                };
+            };
+        };
+    };
+    getCollaborationCommentsMentionable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MentionableMember"][];
                 };
             };
         };

@@ -13,6 +13,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useChargeTypes, useSuppliers } from "./shared";
+import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type LandedCost = components["schemas"]["LandedCostSummary"];
 
@@ -339,7 +340,9 @@ export function LandedCostsPage() {
                 [t("purchasing.toCogs"), <span key="cogs" data-testid="landed-cost-sold">{formatMoney(d.soldPortionFc, d.functionalCurrency)}</span>],
                 ...(d.reversalReason ? [[t("purchasing.reversalReason"), d.reversalReason] as [string, string]] : []),
               ]} />
-              <Tabs tabs={[{ id: "allocations", label: t("purchasing.allocationReport"), testId: "tab-allocations" }, { id: "charges", label: t("purchasing.charges"), testId: "tab-charges" }]} value={tab} onChange={setTab} />
+              <Tabs tabs={[{ id: "allocations", label: t("purchasing.allocationReport"), testId: "tab-allocations" }, { id: "charges", label: t("purchasing.charges"), testId: "tab-charges" }, { id: "discussion", label: t("comments.tab"), testId: "tab-discussion" }, { id: "history", label: t("history.tab"), testId: "tab-history" }]} value={tab} onChange={setTab} />
+              {tab === "discussion" ? <RecordDiscussion entityType="landed_cost_document" entityId={d.id} /> : null}
+              {tab === "history" ? <RecordHistory entityType="landed_cost_document" entityId={d.id} /> : null}
               {tab === "allocations" ? (
                 <Table data-testid="allocation-rows">
                   <TableHeader>

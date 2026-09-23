@@ -57,7 +57,9 @@ public static class AuditEndpoints
         {
             var detail = await queries.GetAsync(id, ct);
             return detail is null ? ApiProblems.From(Kernel.Results.Error.NotFound("audit_event", id)) : Results.Ok(detail);
-        }).RequirePermission(AuditPermissions.EventRead);
+        }).RequirePermission(AuditPermissions.EventRead)
+            .WithSummary("One audit event with its request context, before/after values, field-level diff and chain hashes")
+            .Produces<AuditEventDetail>();
 
         audit.MapGet("/records/{entityType}/{entityId:guid}", async (string entityType, Guid entityId, AuditQueries queries, CancellationToken ct) =>
             TypedResults.Ok(await queries.TimelineAsync(entityType, entityId, ct)))

@@ -11,6 +11,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, orderLineBodies, PurchaseStatus, useAgreements, useSuppliers, type LineForm, type PurchaseOrder } from "./shared";
+import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 interface OrderForm {
   id: string | null;
@@ -220,7 +221,9 @@ export function PurchaseOrdersPage() {
                 ...(o.sentTo ? [[t("purchasing.sentTo"), `${o.sentTo} · ${formatDateTime(o.sentAt)}`] as [string, string]] : []),
                 ...(o.rejectionReason ? [[t("purchasing.rejectionReason"), o.rejectionReason] as [string, string]] : []),
               ]} />
-              <Tabs tabs={[{ id: "lines", label: t("purchasing.lines"), testId: "tab-lines" }, { id: "revisions", label: t("purchasing.revisions"), testId: "tab-revisions" }, { id: "commitments", label: t("purchasing.commitments"), testId: "tab-commitments" }]} value={tab} onChange={setTab} />
+              <Tabs tabs={[{ id: "lines", label: t("purchasing.lines"), testId: "tab-lines" }, { id: "revisions", label: t("purchasing.revisions"), testId: "tab-revisions" }, { id: "commitments", label: t("purchasing.commitments"), testId: "tab-commitments" }, { id: "discussion", label: t("comments.tab"), testId: "tab-discussion" }, { id: "history", label: t("history.tab"), testId: "tab-history" }]} value={tab} onChange={setTab} />
+              {tab === "discussion" ? <RecordDiscussion entityType="purchase_order" entityId={o.id} /> : null}
+              {tab === "history" ? <RecordHistory entityType="purchase_order" entityId={o.id} /> : null}
               {tab === "lines" ? <LinesTable lines={o.lines} currency={o.currency} testId="order-lines" /> : null}
               {tab === "revisions" ? (
                 o.revisions.length === 0 ? <p className="text-sm text-fg-muted">{t("purchasing.noRevisions")}</p> : (

@@ -11,7 +11,9 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { AttachmentsPanel } from "../AttachmentsPanel";
+import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { Tabs } from "../inventory/shared";
 import { JournalImportDialog } from "./JournalImport";
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
 
@@ -86,6 +88,7 @@ export function JournalsPage() {
   const [importing, setImporting] = useState(false);
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
+  const [detailTab, setDetailTab] = useState("lines");
   const openId = search.open;
 
   const journals = useInfiniteQuery({
@@ -107,7 +110,7 @@ export function JournalsPage() {
       await queryClient.invalidateQueries({ queryKey: ["journal", id] });
     }
   };
-  const open = (id: string | null): void => { void navigate({ to: "/accounting/journals", search: id ? { open: id } : {} }); };
+  const open = (id: string | null): void => { setDetailTab("lines"); void navigate({ to: "/accounting/journals", search: id ? { open: id } : {} }); };
 
   const save = useMutation({
     mutationFn: async (input: { id: string | null; form: JournalForm }) =>
@@ -248,6 +251,17 @@ export function JournalsPage() {
                 ) : null}
                 {detail.rejectionReason ? <span className="text-danger">{t("accounting.rejectedBecause", { reason: detail.rejectionReason })}</span> : null}
               </div>
+              <Tabs
+                value={detailTab}
+                onChange={setDetailTab}
+                tabs={[
+                  { id: "lines", label: t("accounting.lines"), testId: "journal-tab-lines" },
+                  { id: "discussion", label: t("comments.tab"), testId: "journal-tab-discussion" },
+                  { id: "history", label: t("history.tab"), testId: "journal-tab-history" },
+                ]}
+              />
+              {detailTab === "lines" ? (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -276,6 +290,10 @@ export function JournalsPage() {
                 </TableBody>
               </Table>
               <AttachmentsPanel entityType="manual_journal" entityId={detail.id} />
+              </>
+              ) : null}
+              {detailTab === "discussion" ? <RecordDiscussion entityType="manual_journal" entityId={detail.id} files={false} /> : null}
+              {detailTab === "history" ? <RecordHistory entityType="manual_journal" entityId={detail.id} /> : null}
               <FormError message={problem?.message ?? null} />
               {detail.status === "pending_approval" || detail.status === "posted" ? (
                 <Field label={t("common.reason")}>

@@ -1687,6 +1687,7 @@
         "tags": [
           "Audit"
         ],
+        "summary": "One audit event with its request context, before/after values, field-level diff and chain hashes",
         "operationId": "getAuditEventsById",
         "parameters": [
           {
@@ -1701,7 +1702,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEventDetail"
+                }
+              }
+            }
           }
         }
       }
@@ -5621,6 +5629,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CommentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/collaboration/comments/mentionable": {
+      "get": {
+        "tags": [
+          "Collaboration"
+        ],
+        "summary": "Members a comment can mention: the active members by name, for anyone who comments",
+        "operationId": "getCollaborationCommentsMentionable",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MentionableMember"
+                  }
                 }
               }
             }
@@ -30728,6 +30760,23 @@
             }
           }
         }
+      },
+      "MentionableMember": {
+        "required": [
+          "membershipId",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "description": "A member a comment can mention: the name only, so commenting does not reveal the workspace's email addresses."
       },
       "MeResponse": {
         "required": [

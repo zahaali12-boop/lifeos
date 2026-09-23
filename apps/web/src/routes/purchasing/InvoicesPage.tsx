@@ -13,6 +13,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useSuppliers } from "./shared";
+import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type Invoice = components["schemas"]["InvoiceSummary"];
 type Invoicable = components["schemas"]["InvoicableLine"];
@@ -300,7 +301,9 @@ export function InvoicesPage() {
                 ...(i.rejectionReason ? [[t("purchasing.rejectionReason"), i.rejectionReason] as [string, string]] : []),
                 ...(i.reversalReason ? [[t("purchasing.reversalReason"), i.reversalReason] as [string, string]] : []),
               ]} />
-              <Tabs tabs={[{ id: "lines", label: t("purchasing.lines"), testId: "tab-lines" }, { id: "match", label: t("purchasing.match"), testId: "tab-match" }, { id: "payables", label: t("purchasing.payables"), testId: "tab-payables" }]} value={tab} onChange={setTab} />
+              <Tabs tabs={[{ id: "lines", label: t("purchasing.lines"), testId: "tab-lines" }, { id: "match", label: t("purchasing.match"), testId: "tab-match" }, { id: "payables", label: t("purchasing.payables"), testId: "tab-payables" }, { id: "discussion", label: t("comments.tab"), testId: "tab-discussion" }, { id: "history", label: t("history.tab"), testId: "tab-history" }]} value={tab} onChange={setTab} />
+              {tab === "discussion" ? <RecordDiscussion entityType="purchase_invoice" entityId={i.id} /> : null}
+              {tab === "history" ? <RecordHistory entityType="purchase_invoice" entityId={i.id} /> : null}
               {tab === "lines" ? (
                 <Table data-testid="invoice-lines">
                   <TableHeader>
