@@ -1,4 +1,4 @@
-import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, TrendingDown, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, TrendingDown, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -22,6 +22,7 @@ export const navigation: NavigationItem[] = [
   { to: "/accounting/ledger", label: "nav.ledger", icon: BookMarked, shortcut: "g l", permission: "accounting.journal.read" },
   { to: "/accounting/journal-entries", label: "nav.journalEntries", icon: Layers, shortcut: "g e", permission: "accounting.journal.read" },
   { to: "/accounting/periods", label: "nav.periods", icon: CalendarRange, shortcut: "g p", permission: "organization.company.read" },
+  { to: "/accounting/routines", label: "nav.routines", icon: Repeat, shortcut: "g !", permission: "accounting.journal.read" },
   { to: "/inventory/items", label: "nav.items", icon: Package, shortcut: "g i", permission: "inventory.item.read" },
   { to: "/inventory/warehouses", label: "nav.warehouses", icon: Warehouse, shortcut: "g b", permission: "inventory.warehouse.read" },
   { to: "/inventory/stock", label: "nav.stock", icon: Boxes, shortcut: "g k", permission: "inventory.stock.read" },

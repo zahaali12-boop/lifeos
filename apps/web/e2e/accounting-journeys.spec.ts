@@ -73,6 +73,37 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await expect(page.getByTestId("ledger-line")).toContainText("September rent");
   await expectAccessible(page);
 
+  // A recurring rent journal, generated once by hand; a year of insurance paid up front, previewed and scheduled over 12 periods.
+  await nav(page, "Recurring & deferrals");
+  await page.getByTestId("new-template").click();
+  await page.getByTestId("template-code").fill("RENT");
+  await page.getByTestId("template-name-en").fill("Monthly rent");
+  await page.getByTestId("template-account-0").fill("6110");
+  await page.getByTestId("template-debit-0").fill("1000");
+  await page.getByTestId("template-account-1").fill("2170");
+  await page.getByTestId("template-credit-1").fill("1000");
+  await expectAccessible(page);
+  await page.getByTestId("save-template").click();
+  await expect(page.getByTestId("template-detail")).toBeVisible();
+  await page.getByTestId("generate-journal").click();
+  await expect(page.getByTestId("generated")).toContainText("generated");
+  await expectAccessible(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("grid")).toContainText("RENT");
+  await page.getByTestId("tab-deferrals").click();
+  await page.getByTestId("new-deferral").click();
+  await page.getByTestId("deferral-balance").fill("1410");
+  await page.getByTestId("deferral-target").fill("6110");
+  await page.getByTestId("deferral-total").fill("12000");
+  await page.getByTestId("deferral-description").fill("Insurance year");
+  await page.getByTestId("preview-deferral").click();
+  await expect(page.getByTestId("deferral-preview").getByRole("row")).toHaveCount(13);
+  await expectAccessible(page);
+  await page.getByTestId("save-deferral").click();
+  await expect(page.getByTestId("deferral-line")).toHaveCount(12);
+  await expectAccessible(page);
+  await page.keyboard.press("Escape");
+
   // Period control: the current period is hard-closed, then reopened with a reason.
   await nav(page, "Period control");
   await expect(page.getByTestId("period-row").first()).toBeVisible();
