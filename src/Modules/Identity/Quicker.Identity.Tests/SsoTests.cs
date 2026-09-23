@@ -109,4 +109,43 @@ public sealed class SsoTests(ApiHostFixture host)
         tampered.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         (await tampered.ErrorCodeAsync()).ShouldBe("sso.state_invalid");
     }
+
+    [Fact]
+    public async Task Password_sign_in_turns_off_only_while_a_connection_is_active_and_that_connection_cannot_then_be_removed()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        static object Policy(bool allowPasswordLogin, int stepUpWindowMinutes = 5) => new
+        {
+            mfaRequired = false,
+            sessionLifetimeHours = 336,
+            accessTokenMinutes = 10,
+            passwordMinLength = 12,
+            stepUpWindowMinutes,
+            lockoutThreshold = 10,
+            lockoutMinutes = 15,
+            allowPasswordLogin,
+        };
+
+        var locked = await owner.PutAsJsonAsync("/api/v1/tenant/policy", Policy(false), Json);
+        locked.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await locked.ErrorCodeAsync()).ShouldBe("tenant.password_login_required");
+        var zeroWindow = await owner.PutAsJsonAsync("/api/v1/tenant/policy", Policy(true, stepUpWindowMinutes: 0), Json);
+        (await zeroWindow.ErrorCodeAsync()).ShouldBe("tenant.policy_invalid");
+
+        var connection = new { code = "corp", displayName = "Corporate SSO", authority = "https://idp.example.test", clientId = "quicker", clientSecret = "s3cret", scopes = "openid email", emailDomains = new[] { "example.test" }, jitProvisioning = false, isActive = true };
+        var created = await owner.PostAsJsonAsync("/api/v1/sso-connections", connection, Json);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var id = (await created.ReadJsonAsync()).GetProperty("id").GetGuid();
+        (await owner.PutAsJsonAsync("/api/v1/tenant/policy", Policy(false), Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // With password sign-in off, the only active connection is the only way in: it can be neither disabled nor removed.
+        var disabled = await owner.PutAsJsonAsync($"/api/v1/sso-connections/{id}", connection with { isActive = false }, Json);
+        (await disabled.ErrorCodeAsync()).ShouldBe("sso.connection_required");
+        var removed = await owner.DeleteAsync($"/api/v1/sso-connections/{id}");
+        (await removed.ErrorCodeAsync()).ShouldBe("sso.connection_required");
+
+        (await owner.PutAsJsonAsync("/api/v1/tenant/policy", Policy(true), Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await owner.DeleteAsync($"/api/v1/sso-connections/{id}")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
 }

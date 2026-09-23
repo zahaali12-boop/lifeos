@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Quicker.Identity.Application;
 using Quicker.Identity.Contracts;
 using Quicker.Identity.Security;
+using Quicker.Kernel.Results;
 using Quicker.Tenancy.Contracts;
 using Quicker.Web;
 
@@ -236,15 +237,22 @@ public static class IdentityEndpoints
 
         var tenant = api.MapGroup("/tenant").WithTags("Tenant").RequireAuthorization();
         tenant.MapGet("/policy", async (CurrentPrincipal current, ITenantDirectory tenants, CancellationToken ct) =>
-            Results.Ok((await tenants.FindByIdAsync(current.Required.TenantId, ct))!.Policy)).RequirePermission(IdentityPermissions.TenantSettingsManage);
-        tenant.MapPut("/policy", async (TenantSecurityPolicy policy, CurrentPrincipal current, ITenantProvisioner provisioner, ITenantDirectory tenants, CancellationToken ct) =>
+            Results.Ok((await tenants.FindByIdAsync(current.Required.TenantId, ct))!.Policy))
+            .Produces<TenantSecurityPolicy>().RequirePermission(IdentityPermissions.TenantSettingsManage);
+        tenant.MapPut("/policy", async (TenantSecurityPolicy policy, CurrentPrincipal current, ITenantProvisioner provisioner, SsoService sso, CancellationToken ct) =>
         {
+            // Turning password sign-in off with no working single sign-on would lock every member out, owners included.
+            if (!policy.AllowPasswordLogin && !(await sso.ListAsync(current.Required.TenantId.Value, ct)).Any(static c => c.IsActive))
+            {
+                return ApiProblems.From(Error.Validation("tenant.password_login_required", "Password sign-in can be turned off only while a single sign-on connection is active."));
+            }
+
             var result = await provisioner.UpdatePolicyAsync(current.Required.TenantId, policy, ct);
             return ApiProblems.From(result, () => Results.Ok(policy));
-        }).RequirePermission(IdentityPermissions.TenantSettingsManage).RequireRecentAuth();
+        }).Produces<TenantSecurityPolicy>().RequirePermission(IdentityPermissions.TenantSettingsManage).RequireRecentAuth();
 
         var meta = api.MapGroup("/meta").WithTags("Metadata").RequireAuthorization();
-        meta.MapGet("/permissions", static () => Results.Ok(PermissionCatalog.All));
+        meta.MapGet("/permissions", static () => Results.Ok(PermissionCatalog.All)).Produces<IReadOnlyCollection<PermissionDefinition>>();
         meta.MapGet("/role-templates", static () => Results.Ok(RoleTemplates.All.Select(static t => new { t.Code, Name = t.Name.Values, t.Description, t.Grants })));
 
         return api;

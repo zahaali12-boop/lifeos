@@ -1492,7 +1492,14 @@
         "operationId": "getTenantPolicy",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSecurityPolicy"
+                }
+              }
+            }
           }
         }
       },
@@ -1513,7 +1520,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSecurityPolicy"
+                }
+              }
+            }
           }
         }
       }
@@ -1526,7 +1540,17 @@
         "operationId": "getMetaPermissions",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissionDefinition"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -32406,6 +32430,30 @@
             ]
           }
         }
+      },
+      "PermissionDefinition": {
+        "required": [
+          "key",
+          "module",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isSensitive": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "A permission the system understands: a stable key, its module and a human description."
       },
       "PostedLine": {
         "required": [

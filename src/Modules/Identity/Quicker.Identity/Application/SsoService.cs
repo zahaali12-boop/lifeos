@@ -63,6 +63,11 @@ public sealed class SsoService(
             return Error.NotFound("sso_connection", id);
         }
 
+        if (connection is { IsActive: true } && !request.IsActive && await IsLastWayInAsync(tenantId, connection.Id, cancellationToken))
+        {
+            return LastWayIn();
+        }
+
         if (connection is null)
         {
             if (await db.SsoConnections.AnyAsync(c => c.TenantId == tenantId && c.Code == request.Code, cancellationToken))
@@ -101,10 +106,26 @@ public sealed class SsoService(
             return Error.NotFound("sso_connection", id);
         }
 
+        if (connection.IsActive && await IsLastWayInAsync(tenantId, connection.Id, cancellationToken))
+        {
+            return LastWayIn();
+        }
+
         db.SsoConnections.Remove(connection);
         await db.SaveChangesAsync(cancellationToken); // captured as "deleted"
         return Result.Success();
     }
+
+    /// <summary>True when password sign-in is off and no other active connection exists: removing this one would lock everyone out.</summary>
+    private async Task<bool> IsLastWayInAsync(Guid tenantId, Guid connectionId, CancellationToken cancellationToken)
+    {
+        var tenant = await tenants.FindByIdAsync(new TenantId(tenantId), cancellationToken);
+        return tenant is { Policy.AllowPasswordLogin: false }
+            && !await db.SsoConnections.AnyAsync(c => c.TenantId == tenantId && c.Id != connectionId && c.IsActive, cancellationToken);
+    }
+
+    private static Error LastWayIn() =>
+        Error.Validation("sso.connection_required", "Password sign-in is off, so members sign in only through this connection. Turn password sign-in back on first.");
 
     // ------------------------------------------------------------------ flow
 

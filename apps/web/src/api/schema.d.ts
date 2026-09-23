@@ -10202,6 +10202,14 @@ export interface components {
             changedAt: null | string;
             reason: null | string;
         };
+        /** @description A permission the system understands: a stable key, its module and a human description. */
+        PermissionDefinition: {
+            key: string;
+            module: string;
+            description: string;
+            /** @default false */
+            isSensitive: boolean;
+        };
         PostedLine: {
             /** Format: uuid */
             lineId: string;
@@ -15622,7 +15630,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TenantSecurityPolicy"];
+                };
             };
         };
     };
@@ -15644,7 +15654,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TenantSecurityPolicy"];
+                };
             };
         };
     };
@@ -15662,7 +15674,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PermissionDefinition"][];
+                };
             };
         };
     };

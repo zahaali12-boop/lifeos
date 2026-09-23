@@ -118,7 +118,9 @@ public sealed partial class TenantDirectory(IUnitOfWorkAccessor unitOfWork) : IT
     public async Task<Result> UpdatePolicyAsync(TenantId id, TenantSecurityPolicy policy, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        if (policy.PasswordMinLength is < 8 or > 128 || policy.AccessTokenMinutes is < 1 or > 60 || policy.SessionLifetimeHours is < 1 or > 24 * 90)
+        // A step-up window of zero would lock every sensitive action, this one included; lockout needs a sane floor.
+        if (policy.PasswordMinLength is < 8 or > 128 || policy.AccessTokenMinutes is < 1 or > 60 || policy.SessionLifetimeHours is < 1 or > 24 * 90
+            || policy.StepUpWindowMinutes is < 1 or > 240 || policy.LockoutThreshold is < 3 or > 100 || policy.LockoutMinutes is < 1 or > 24 * 60)
         {
             return Error.Validation("tenant.policy_invalid", "Policy values are out of range.");
         }
