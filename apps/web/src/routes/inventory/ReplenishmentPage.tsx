@@ -156,7 +156,7 @@ export function ReplenishmentPage() {
               </div>
               <section>
                 <h3 className="mb-1 text-sm font-semibold">{t("inventory.replenishment.explanation")}</h3>
-                <KeyValues entries={Object.entries(detail.explanation as Record<string, unknown>).map(([key, value]) => [t(`inventory.replenishment.why.${key}`, { defaultValue: key }), plain(value)])} />
+                <KeyValues entries={Object.entries(detail.explanation as Record<string, unknown>).map(([key, value]) => [t(`inventory.replenishment.why.${key}`, { defaultValue: key }), key === "trigger" ? t(`inventory.replenishment.why.triggers.${String(value)}`, { defaultValue: String(value) }) : plain(value)])} />
               </section>
               <FormError message={problem?.message ?? null} />
               {detail.status === "open" ? (

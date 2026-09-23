@@ -923,7 +923,9 @@
         "trigger": "Trigger",
         "target": "Target",
         "formula": "Formula",
-        "supplierId": "Supplier"
+        "supplierId": "Supplier",
+        "qualityHold": "Quality hold",
+        "triggers": { "reorder_point": "Below the reorder point", "min_qty": "Below the minimum", "max_qty": "Below the maximum" }
       }
     },
     "valuation": {
@@ -947,7 +949,7 @@
       "emptyTitle": "Nothing valued",
       "emptyDescription": "No stock is valued for these filters at this date.",
       "triggerKinds": { "stock_posting": "Back-dated movement", "invoice": "Invoice price", "landed_cost": "Landed cost", "revaluation": "Revaluation", "standard_cost": "Standard cost change", "inquiry": "Inquiry" },
-      "sourceDocuments": { "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "purchase_return": "Supplier return", "landed_cost": "Landed-cost document", "inventory_adjustment": "Adjustment", "inventory_transfer": "Transfer", "inventory_count": "Count", "inventory_revaluation": "Revaluation", "standard_cost": "Standard cost", "demo_opening": "Opening stock" }
+      "sourceDocuments": { "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "purchase_return": "Supplier return", "landed_cost": "Landed-cost document", "stock_adjustment": "Adjustment", "stock_transfer": "Transfer", "stock_count": "Count", "stock_revaluation": "Revaluation", "standard_cost": "Standard cost", "demo_opening": "Opening stock" }
     }
   },
   "workflow": {

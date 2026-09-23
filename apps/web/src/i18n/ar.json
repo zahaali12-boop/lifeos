@@ -923,7 +923,9 @@
         "trigger": "المحفّز",
         "target": "الهدف",
         "formula": "المعادلة",
-        "supplierId": "المورد"
+        "supplierId": "المورد",
+        "qualityHold": "محجوز للجودة",
+        "triggers": { "reorder_point": "دون نقطة إعادة الطلب", "min_qty": "دون الحد الأدنى", "max_qty": "دون الحد الأقصى" }
       }
     },
     "valuation": {
@@ -947,7 +949,7 @@
       "emptyTitle": "لا شيء مقيّم",
       "emptyDescription": "لا مخزون مقيّم لهذه المرشحات في هذا التاريخ.",
       "triggerKinds": { "stock_posting": "حركة بتاريخ سابق", "invoice": "سعر الفاتورة", "landed_cost": "التكاليف الواصلة", "revaluation": "إعادة تقييم", "standard_cost": "تغيير التكلفة المعيارية", "inquiry": "استعلام" },
-      "sourceDocuments": { "purchase_receipt": "سند استلام", "purchase_invoice": "فاتورة مورد", "purchase_return": "مرتجع مورد", "landed_cost": "مستند التكاليف الواصلة", "inventory_adjustment": "تسوية", "inventory_transfer": "تحويل", "inventory_count": "جرد", "inventory_revaluation": "إعادة تقييم", "standard_cost": "التكلفة المعيارية", "demo_opening": "رصيد افتتاحي" }
+      "sourceDocuments": { "purchase_receipt": "سند استلام", "purchase_invoice": "فاتورة مورد", "purchase_return": "مرتجع مورد", "landed_cost": "مستند التكاليف الواصلة", "stock_adjustment": "تسوية", "stock_transfer": "تحويل", "stock_count": "جرد", "stock_revaluation": "إعادة تقييم", "standard_cost": "التكلفة المعيارية", "demo_opening": "رصيد افتتاحي" }
     }
   },
   "workflow": {

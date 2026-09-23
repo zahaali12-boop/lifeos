@@ -87,6 +87,7 @@ These are all in `docs/PROGRESS.md`, "Post-milestone fixes".
   * expired lots shown as "Active";
   * a replenishment planner with nothing to suggest;
   * empty transfer and count screens in the demo.
+* **The replenishment "Why" panel** showed a raw `qualityHold` key and the trigger as a code. Fixed.
 * **Smaller UI issues:** Arabic dates scrambled in grids, settlement types shown as codes, and a warning colour that failed contrast. All fixed.
 
 ## 6. Known gaps
@@ -100,7 +101,7 @@ The full list with reasons is in `docs/PROGRESS.md`.
 * **Payments** go out in the payment currency or the company currency; a third currency waits for 6.1.
 * **The month-end FX revaluation** of open foreign-currency items (the second half of hard scenario 3) is slice 6.5.
 * **Tolerance rules by item category**, the manager-chain approvers, and dynamic owners are not built yet.
-* **Demo:** posted purchasing documents exist only in the current month (A-115). The demo has no requisitions, blanket agreements, foreign-currency purchases or match exceptions yet.
+* **Demo:** posted purchasing documents exist only in the current month (A-115). The demo books also leave a year of electricity bills unpaid, so the payables list and aging open on eleven overdue utility invoices; the books agree, but paying them belongs to the demo-books redesign. The demo has no requisitions, blanket agreements, foreign-currency purchases or match exceptions yet.
 
 ## 7. What you can do now
 
