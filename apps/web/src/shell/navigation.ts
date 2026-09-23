@@ -1,4 +1,4 @@
-import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Route, Scale, ScanLine, Settings2, ShieldCheck, Shapes, ShoppingCart, SlidersHorizontal, TrendingDown, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Route, Ruler, Scale, ScanLine, Settings, Settings2, ShieldCheck, Shapes, ShoppingCart, SlidersHorizontal, TrendingDown, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -17,6 +17,9 @@ export const navigation: NavigationItem[] = [
   { to: "/rates", label: "nav.rates", icon: Coins, shortcut: "g r", permission: "organization.company.read" },
   { to: "/numbering", label: "nav.numbering", icon: Hash, shortcut: "g '", permission: "numbering.series.read" },
   { to: "/dimensions", label: "nav.dimensions", icon: Shapes, shortcut: "g @", permission: "organization.company.read" },
+  { to: "/units", label: "nav.units", icon: Ruler, shortcut: "g #", permission: "organization.company.read" },
+  { to: "/calendars", label: "nav.calendars", icon: CalendarDays, shortcut: "g %", permission: "organization.company.read" },
+  { to: "/settings", label: "nav.settings", icon: Settings, shortcut: "g ^", permission: "organization.settings.manage" },
   { to: "/accounting/chart", label: "nav.chart", icon: BookOpen, shortcut: "g h", permission: "accounting.chart.read" },
   { to: "/accounting/journals", label: "nav.journals", icon: NotebookPen, shortcut: "g u", permission: "accounting.journal.read" },
   { to: "/accounting/trial-balance", label: "nav.trialBalance", icon: Scale, shortcut: "g t", permission: "accounting.journal.read" },
@@ -56,6 +59,7 @@ export const navigation: NavigationItem[] = [
   { to: "/workflows", label: "nav.workflows", icon: GitBranch, shortcut: "g 2", permission: "workflow.definition.read" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },
   { to: "/roles", label: "nav.roles", icon: ShieldCheck, shortcut: "g o", permission: "identity.role.read" },
+  { to: "/security", label: "nav.security", icon: KeyRound, shortcut: "g &", permission: "identity.sod.read" },
   { to: "/custom-fields", label: "nav.customFields", icon: SlidersHorizontal, shortcut: "g f" },
   { to: "/notifications", label: "nav.notifications", icon: Bell, shortcut: "g n" },
   { to: "/audit", label: "nav.audit", icon: ClipboardList, shortcut: "g a", permission: "audit.event.read" },

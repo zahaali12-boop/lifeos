@@ -73,7 +73,7 @@ export function Qty({ value, uom }: { value: number | string | null | undefined;
 const tones: Record<string, "success" | "accent" | "danger" | "neutral" | "warning" | "info"> = {
   posted: "success", received: "success", completed: "success", active: "success", in_stock: "success", accepted: "success",
   approved: "accent", pending_approval: "accent", shipped: "accent", partially_received: "accent", frozen: "accent", counting: "accent", review: "accent", running: "accent", queued: "accent", in_transit: "accent",
-  rejected: "danger", recalled: "danger", failed: "danger", expired: "danger", scrapped: "danger",
+  rejected: "danger", recalled: "danger", failed: "danger", expired: "danger", scrapped: "danger", revoked: "danger",
   quarantine: "warning", in_repair: "warning", superseded: "warning", open: "warning",
   cancelled: "neutral", inactive: "neutral", draft: "neutral", planned: "neutral", consumed: "neutral", dismissed: "neutral", sold: "info", returned: "info",
 };

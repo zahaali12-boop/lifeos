@@ -11,6 +11,7 @@ import { clearSession, useSession } from "../session/session";
 import { CommandPalette } from "./CommandPalette";
 import { navigation } from "./navigation";
 import { ShortcutsOverlay } from "./ShortcutsOverlay";
+import { StepUpDialog } from "./StepUpDialog";
 import { installShortcutListener, registerShortcut } from "./useShortcuts";
 
 type Theme = "light" | "dark";
@@ -221,6 +222,7 @@ export function AppShell() {
       </div>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} permissions={permissions} />
       <ShortcutsOverlay open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <StepUpDialog />
     </TooltipProvider>
   );
 }
