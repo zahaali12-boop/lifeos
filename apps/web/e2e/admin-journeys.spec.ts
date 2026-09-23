@@ -69,6 +69,23 @@ test("English: workspace, custom field, company, member invitation, announcement
   await expect(page.getByRole("dialog")).toContainText("Main Trading Co.");
   await page.keyboard.press("Escape");
 
+  // A numbering series of its own for purchase orders: a template without {seq} is refused; the saved series opens with no counters yet.
+  await nav(page, "Numbering series");
+  await page.getByTestId("new-series").click();
+  await page.getByTestId("series-code").fill("PO-MAIN");
+  await page.getByTestId("series-type").selectOption("purchase_order");
+  await page.getByTestId("series-template").fill("PO-{company}-{yyyy}");
+  await page.getByTestId("save-series").click();
+  await expect(page.getByRole("dialog")).toContainText("{seq}");
+  await page.getByTestId("series-template").fill("PO-{company}-{yyyy}-{seq:4}");
+  await page.getByTestId("series-default").check();
+  await expectAccessible(page);
+  await page.getByTestId("save-series").click();
+  await expect(page.getByTestId("series-detail")).toContainText("Nothing has been numbered");
+  await expectAccessible(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("grid")).toContainText("PO-MAIN");
+
   // A member is invited; an announcement reaches the inbox.
   await nav(page, "Members");
   await page.getByTestId("invite-member").click();
@@ -106,6 +123,9 @@ test("Arabic: the same journey renders right-to-left and stays accessible", asyn
   await page.getByLabel(/الاسم القانوني \(العربية\)/).fill("شركة الاختبار");
   await page.getByTestId("save-company").click();
   await expect(page.getByRole("grid")).toContainText("شركة الاختبار");
+  await expectAccessible(page);
+  await nav(page, "سلاسل الترقيم");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("سلاسل الترقيم");
   await expectAccessible(page);
 
   // Eastern Arabic digits when chosen.
