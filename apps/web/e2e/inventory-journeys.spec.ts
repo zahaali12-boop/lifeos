@@ -166,6 +166,22 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await expectAccessible(page);
   await closeDialog(page);
 
+  // An NRV write-down of WATER to 200 across both warehouses: the posted document reports 98 × (200 − 250) = −4,900.
+  // (What the valuation shows afterwards is open issue I1 in docs/PROGRESS.md, for the costing design pass.)
+  await nav(page, "Revaluations");
+  await page.getByTestId("new-revaluation").click();
+  await page.getByTestId("reval-item-0").fill("WATER");
+  await page.getByTestId("reval-cost-0").fill("200");
+  await expectAccessible(page);
+  await page.getByTestId("save-revaluation").click();
+  await expect(page.getByTestId("revaluation-detail")).toBeVisible();
+  await expect(page.getByTestId("revaluation-total")).toContainText("computed when posted");
+  await page.getByTestId("post-revaluation").click();
+  await expect(page.getByTestId("revaluation-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await expect(page.getByTestId("revaluation-total")).toContainText("4,900");
+  await expectAccessible(page);
+  await closeDialog(page);
+
   // Lots and serials, and replenishment, open and pass axe even when empty.
   await nav(page, "Lots & serials");
   await expectAccessible(page);

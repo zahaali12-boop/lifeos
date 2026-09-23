@@ -25,6 +25,7 @@ import { AssembliesPage } from "./inventory/AssembliesPage";
 import { CountsPage } from "./inventory/CountsPage";
 import { ItemsPage } from "./inventory/ItemsPage";
 import { ReplenishmentPage } from "./inventory/ReplenishmentPage";
+import { RevaluationsPage } from "./inventory/RevaluationsPage";
 import { StockPage } from "./inventory/StockPage";
 import { TrackingPage } from "./inventory/TrackingPage";
 import { TransfersPage } from "./inventory/TransfersPage";
@@ -101,6 +102,7 @@ const trackingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/in
 const countsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/counts", component: CountsPage, validateSearch: searchRecord });
 const replenishmentRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/replenishment", component: ReplenishmentPage, validateSearch: searchRecord });
 const valuationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/valuation", component: ValuationPage });
+const revaluationsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/revaluations", component: RevaluationsPage, validateSearch: searchRecord });
 const suppliersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/suppliers", component: SuppliersPage, validateSearch: searchRecord });
 const purchasingSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/settings", component: PurchasingSettingsPage });
 const requisitionsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/requisitions", component: RequisitionsPage, validateSearch: searchRecord });
@@ -142,7 +144,7 @@ const routeTree = rootRoute.addChildren([
   shellRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute,
-    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute,
+    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, revaluationsRoute,
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),

@@ -62,6 +62,7 @@
     "tracking": "Lots & serials",
     "counts": "Counts",
     "replenishment": "Replenishment",
+    "revaluations": "Revaluations",
     "valuation": "Valuation",
     "approvals": "Approvals",
     "workflows": "Approval rules",
@@ -980,6 +981,24 @@
         "qualityHold": "Quality hold",
         "triggers": { "reorder_point": "Below the reorder point", "min_qty": "Below the minimum", "max_qty": "Below the maximum" }
       }
+    },
+    "revaluations": {
+      "description": "Write stock down to net realisable value (never above cost) or revalue it by hand, per item at a date; posting goes through the costing engine and re-costs later movements.",
+      "new": "New revaluation",
+      "edit": "Edit revaluation",
+      "kind": "Kind",
+      "kinds": { "nrv_writedown": "Write-down to net realisable value", "manual": "Manual revaluation" },
+      "kindHints": { "nrv_writedown": "IAS 2: the new unit cost is what the stock can still be sold for, less the costs to sell. A write-down never raises the value above cost.", "manual": "The new unit cost replaces the current one for the stock on hand at the date." },
+      "currentUnitCost": "Current unit cost",
+      "newUnitCost": "New unit cost",
+      "amount": "Change in value",
+      "total": "Total change",
+      "note": "Note",
+      "atPosting": "computed when posted",
+      "post": "Post",
+      "postHint": "Posting moves the difference between the inventory account and the write-down account, and re-applies any movements after the date.",
+      "emptyTitle": "No revaluations",
+      "emptyDescription": "Write stock down when it can no longer be sold at cost, or revalue it by hand."
     },
     "valuation": {
       "description": "What the stock is worth at any date by item and warehouse, equal to the inventory accounts; the cost runs the engine made.",

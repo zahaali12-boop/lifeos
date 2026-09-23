@@ -1,4 +1,4 @@
-import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, TrendingDown, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -32,6 +32,7 @@ export const navigation: NavigationItem[] = [
   { to: "/inventory/counts", label: "nav.counts", icon: ClipboardCheck, shortcut: "g q", permission: "inventory.count.read" },
   { to: "/inventory/replenishment", label: "nav.replenishment", icon: ShoppingCart, shortcut: "g g", permission: "inventory.replenishment.read" },
   { to: "/inventory/valuation", label: "nav.valuation", icon: Calculator, shortcut: "g 9", permission: "inventory.costing.read" },
+  { to: "/inventory/revaluations", label: "nav.revaluations", icon: TrendingDown, shortcut: "g `", permission: "inventory.costing.read" },
   { to: "/m", label: "nav.mobile", icon: ScanLine, shortcut: "g s", permission: "inventory.count.enter" },
   { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
   { to: "/purchasing/settings", label: "nav.purchasingSettings", icon: Settings2, shortcut: "g 4", permission: "partners.terms.manage" },
