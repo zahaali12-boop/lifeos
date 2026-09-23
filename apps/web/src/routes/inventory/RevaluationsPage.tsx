@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
+import { ItemCodeField } from "./ItemCodeField";
 
 type Revaluation = components["schemas"]["RevaluationSummary"];
 
@@ -278,7 +279,7 @@ export function RevaluationsPage() {
                   {editing.form.lines.map((line, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        <TextField value={line.itemCode} onChange={(e) => { updateLine(index, { itemCode: e.target.value.toUpperCase() }); }} dir="ltr" aria-label={t("inventory.itemCode")} data-testid={`reval-item-${String(index)}`} />
+                        <ItemCodeField value={line.itemCode} onChange={(code) => { updateLine(index, { itemCode: code }); }} aria-label={t("inventory.itemCode")} data-testid={`reval-item-${String(index)}`} />
                       </TableCell>
                       <TableCell>
                         <WarehouseSelect warehouses={warehouses.data ?? []} value={line.warehouseId} onChange={(id) => { updateLine(index, { warehouseId: id }); }} allowAll label={t("inventory.warehouse")} testId={`reval-warehouse-${String(index)}`} />

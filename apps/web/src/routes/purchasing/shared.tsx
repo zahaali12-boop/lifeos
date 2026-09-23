@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { formatMoney, formatNumber } from "../../lib/format";
 import { SelectField, TextField } from "../common";
+import { ItemCodeField } from "../inventory/ItemCodeField";
 
 export function usePaymentTerms() {
   return useQuery({ queryKey: ["payment-terms"], queryFn: async () => unwrap(await api.GET("/api/v1/partners/payment-terms")) });
@@ -126,7 +127,7 @@ export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, sup
           <TableBody>
             {lines.map((line, index) => (
               <TableRow key={index}>
-                <TableCell><TextField aria-label={t("purchasing.itemCode")} value={line.itemCode} onChange={(e) => { patch(index, { itemCode: e.target.value.toUpperCase() }); }} dir="ltr" className="w-28" data-testid={`line-item-${String(index)}`} /></TableCell>
+                <TableCell><ItemCodeField aria-label={t("purchasing.itemCode")} value={line.itemCode} onChange={(code) => { patch(index, { itemCode: code }); }} className="w-28" data-testid={`line-item-${String(index)}`} /></TableCell>
                 {showDescription ? <TableCell><TextField aria-label={t("purchasing.description")} value={line.description} onChange={(e) => { patch(index, { description: e.target.value }); }} className="w-40" /></TableCell> : null}
                 <TableCell><TextField aria-label={t("purchasing.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patch(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`line-qty-${String(index)}`} /></TableCell>
                 <TableCell><TextField aria-label={t("purchasing.uom")} value={line.uom} onChange={(e) => { patch(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" placeholder={t("purchasing.baseUom")} data-testid={`line-uom-${String(index)}`} /></TableCell>

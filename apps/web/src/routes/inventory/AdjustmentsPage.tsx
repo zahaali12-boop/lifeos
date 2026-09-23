@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useReasonCodes, useWarehouses } from "./shared";
+import { ItemCodeField } from "./ItemCodeField";
 
 type Adjustment = components["schemas"]["AdjustmentSummary"];
 
@@ -342,7 +343,7 @@ export function AdjustmentsPage() {
                   {editing.form.lines.map((line, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        <TextField aria-label={t("inventory.itemCode")} value={line.itemCode} onChange={(e) => { updateLine(index, { itemCode: e.target.value.toUpperCase() }); }} dir="ltr" data-testid={`line-item-${index}`} />
+                        <ItemCodeField aria-label={t("inventory.itemCode")} value={line.itemCode} onChange={(code) => { updateLine(index, { itemCode: code }); }} data-testid={`line-item-${index}`} />
                       </TableCell>
                       {formWarehouse?.binsEnabled ? (
                         <TableCell>

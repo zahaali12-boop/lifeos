@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
+import { ItemCodeField } from "./ItemCodeField";
 
 type Assembly = components["schemas"]["AssemblySummary"];
 
@@ -248,7 +249,7 @@ export function AssembliesPage() {
                   {editing.lines.map((line, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        <TextField aria-label={t("inventory.assemblies.component")} value={line.itemCode} onChange={(e) => { setForm({ lines: editing.lines.map((l, i) => (i === index ? { ...l, itemCode: e.target.value.toUpperCase() } : l)) }); }} dir="ltr" data-testid={`line-item-${index}`} />
+                        <ItemCodeField aria-label={t("inventory.assemblies.component")} value={line.itemCode} onChange={(code) => { setForm({ lines: editing.lines.map((l, i) => (i === index ? { ...l, itemCode: code } : l)) }); }} data-testid={`line-item-${index}`} />
                       </TableCell>
                       <TableNumberCell>
                         <TextField aria-label={t("inventory.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { setForm({ lines: editing.lines.map((l, i) => (i === index ? { ...l, quantity: e.target.value } : l)) }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} />

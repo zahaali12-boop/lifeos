@@ -10,6 +10,7 @@ import { formatDate, formatDateTime, localized } from "../../lib/format";
 import { Field, PageHeader, TextField } from "../common";
 import { CostExplanationDialog } from "./CostExplanationDialog";
 import { CompanyFilter, Qty, Tabs, WarehouseSelect, findItemByCode, useCompanyContext, useWarehouses } from "./shared";
+import { ItemCodeField } from "./ItemCodeField";
 
 type StockRow = components["schemas"]["StockSearchRow"];
 type BalanceRow = components["schemas"]["StockBalanceRow"];
@@ -110,7 +111,7 @@ export function StockPage() {
           </Field>
         ) : (
           <Field label={t("inventory.itemCode")} description={item.isSuccess && item.data === null && itemCode.trim() ? t("inventory.itemUnknown") : undefined}>
-            <TextField value={itemCode} onChange={(e) => { setItemCode(e.target.value.toUpperCase()); }} dir="ltr" data-testid="stock-item-code" />
+            <ItemCodeField value={itemCode} onChange={setItemCode} data-testid="stock-item-code" />
           </Field>
         )}
         {tab === "stock" ? (

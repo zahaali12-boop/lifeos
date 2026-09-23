@@ -12,6 +12,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { today } from "../accounting/shared";
 import { DocStatus, KeyValues, Qty, Tabs, findItemByCode } from "./shared";
+import { ItemCodeField } from "./ItemCodeField";
 
 type Lot = components["schemas"]["LotInfo"];
 type Serial = components["schemas"]["SerialInfo"];
@@ -116,7 +117,7 @@ export function TrackingPage() {
       <PageHeader title={t("nav.tracking")} description={t("inventory.tracking.description")} />
       <div className="mb-4 grid gap-3 sm:grid-cols-4">
         <Field label={t("inventory.itemCode")} description={item.isSuccess && item.data === null && itemCode.trim() ? t("inventory.itemUnknown") : undefined}>
-          <TextField value={itemCode} onChange={(e) => { setItemCode(e.target.value.toUpperCase()); }} dir="ltr" data-testid="tracking-item" />
+          <ItemCodeField value={itemCode} onChange={setItemCode} data-testid="tracking-item" />
         </Field>
         <Field label={t("common.status")}>
           <SelectField value={status} onChange={(e) => { setStatus(e.target.value); }}>

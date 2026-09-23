@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
+import { ItemCodeField } from "./ItemCodeField";
 
 type Transfer = components["schemas"]["TransferSummary"];
 
@@ -293,7 +294,7 @@ export function TransfersPage() {
                   {editing.lines.map((line, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        <TextField aria-label={t("inventory.itemCode")} value={line.itemCode} onChange={(e) => { updateLine(index, { itemCode: e.target.value.toUpperCase() }); }} dir="ltr" data-testid={`line-item-${index}`} />
+                        <ItemCodeField aria-label={t("inventory.itemCode")} value={line.itemCode} onChange={(code) => { updateLine(index, { itemCode: code }); }} data-testid={`line-item-${index}`} />
                       </TableCell>
                       <TableNumberCell>
                         <TextField aria-label={t("inventory.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} />

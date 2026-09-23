@@ -121,6 +121,8 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await closeDialog(page);
   await page.getByTestId("new-adjustment").click();
   await page.getByTestId("adjustment-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("WAT");
+  await expect(page.locator("datalist option[value='WATER']")).toHaveCount(1);
   await page.getByTestId("line-item-0").fill("WATER");
   await page.getByTestId("line-qty-0").fill("100");
   await page.getByTestId("line-cost-0").fill("250");
