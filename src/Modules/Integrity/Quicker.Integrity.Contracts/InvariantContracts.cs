@@ -30,7 +30,13 @@ public static class InvariantCodes
     /// <summary>Per company and per goods receipt, the GRNI control account's lines net to the receipt's uninvoiced, unreturned expected cost (roadmap 4.3: GRNI equals uninvoiced receipts).</summary>
     public const string GrniMatchesReceipts = "grni_matches_receipts";
 
-    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts];
+    /// <summary>Per company, the payables control accounts' lines net to the open items' remaining functional amounts, and the supplier-advances control to the advances (roadmap 4.7, DOMAIN_MODEL §13.1).</summary>
+    public const string PayablesMatchOpenItems = "payables_match_open_items";
+
+    /// <summary>Per bank account, the control account's lines referencing the bank subledger net to the bank transactions' functional amounts (roadmap 4.7 / 6.1).</summary>
+    public const string BankMatchesTransactions = "bank_matches_transactions";
+
+    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts, PayablesMatchOpenItems, BankMatchesTransactions];
 }
 
 /// <summary>One check: what it looked at, whether it holds, and the first problems it found (never more than a page).</summary>

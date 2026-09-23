@@ -74,12 +74,12 @@ export function InvoicesPage() {
   const supplierItems = useQuery({
     queryKey: ["open-items", companyId, detail.data?.partnerId ?? ""],
     enabled: Boolean(companyId) && detail.data?.kind === "debit_note" && detail.data.status === "posted",
-    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/invoices/open-items", { params: { query: { companyId, partnerId: detail.data?.partnerId ?? "", status: "open" } } })),
+    queryFn: async () => unwrap(await api.GET("/api/v1/payables/open-items", { params: { query: { companyId, partnerId: detail.data?.partnerId ?? "", status: "live" } } })),
   });
   const settlements = useQuery({
     queryKey: ["settlements", companyId, openId],
     enabled: Boolean(companyId) && detail.data?.status === "posted" && detail.data.openItems.length > 0,
-    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/invoices/settlements", { params: { query: { companyId, openItemId: detail.data?.openItems[0]?.id ?? "" } } })),
+    queryFn: async () => unwrap(await api.GET("/api/v1/payables/settlements", { params: { query: { companyId, openItemId: detail.data?.openItems[0]?.id ?? "" } } })),
   });
   const refresh = async (): Promise<void> => {
     await Promise.all([["invoices"], ["invoice"], ["invoicable"], ["orders"], ["order"], ["receipts"], ["receipt"], ["returns"], ["return"], ["open-items"], ["settlements"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
@@ -118,7 +118,7 @@ export function InvoicesPage() {
   });
 
   const apply = useMutation({
-    mutationFn: async (input: { creditItemId: string; invoiceItemId: string; amount: number }) => unwrap(await api.POST("/api/v1/purchasing/invoices/open-items/apply", { body: input })),
+    mutationFn: async (input: { settlingItemId: string; settledItemId: string; amount: number }) => unwrap(await api.POST("/api/v1/payables/settlements/apply", { body: input })),
     onSuccess: async () => { setProblem(null); setCredit(null); await refresh(); },
     onError: fail,
   });
@@ -377,7 +377,7 @@ export function InvoicesPage() {
                       <Field label={t("purchasing.appliedTo")} required>
                         <SelectField value={credit.invoiceItemId} onChange={(e) => { setCredit({ ...credit, invoiceItemId: e.target.value }); }} data-testid="credit-target">
                           <option value="">—</option>
-                          {(supplierItems.data ?? []).filter((o) => o.kind !== "debit_note" && o.currency === i.currency).map((o) => (
+                          {(supplierItems.data ?? []).map((o) => o.item).filter((o) => Number(o.originalTc) > 0 && o.currency === i.currency).map((o) => (
                             <option key={o.id} value={o.id}>{o.documentNumber} · {formatMoney(o.remainingTc, o.currency)}</option>
                           ))}
                         </SelectField>
@@ -387,7 +387,7 @@ export function InvoicesPage() {
                       </Field>
                       <div className="flex items-end gap-2">
                         <Button type="button" variant="secondary" onClick={() => { setCredit(null); }}>{t("common.cancel")}</Button>
-                        <Button type="button" onClick={() => { const item = i.openItems[0]; if (item) { apply.mutate({ creditItemId: item.id, invoiceItemId: credit.invoiceItemId, amount: num(credit.amount) }); } }} loading={apply.isPending} disabled={!credit.invoiceItemId || num(credit.amount) <= 0} data-testid="confirm-apply-credit">{t("purchasing.applyCredit")}</Button>
+                        <Button type="button" onClick={() => { const item = i.openItems[0]; if (item) { apply.mutate({ settlingItemId: item.id, settledItemId: credit.invoiceItemId, amount: num(credit.amount) }); } }} loading={apply.isPending} disabled={!credit.invoiceItemId || num(credit.amount) <= 0} data-testid="confirm-apply-credit">{t("purchasing.applyCredit")}</Button>
                       </div>
                     </div>
                   ) : <Button type="button" variant="secondary" onClick={() => { setCredit({ invoiceItemId: "", amount: String(Math.abs(Number(i.openItems[0]?.remainingTc ?? 0))) }); }} data-testid="start-apply-credit">{t("purchasing.applyCredit")}</Button>}
@@ -411,7 +411,7 @@ export function InvoicesPage() {
                         {(settlements.data ?? []).map((st) => (
                           <TableRow key={st.id} data-testid="settlement-row">
                             <TableCell dir="ltr">{formatDate(st.settlementDate)}</TableCell>
-                            <TableCell>{st.kind}</TableCell>
+                            <TableCell>{t(`purchasing.settlementKinds.${st.kind}`)}</TableCell>
                             <TableCell dir="ltr">{st.settlingDocumentNumber} → {st.settledDocumentNumber}</TableCell>
                             <TableCell className="tabular" dir="ltr">{formatMoney(st.amountTc, st.currency)}</TableCell>
                             <TableCell className="tabular" dir="ltr">{formatMoney(st.fxGainLossFc, i.functionalCurrency)}</TableCell>

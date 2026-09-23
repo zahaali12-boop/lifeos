@@ -2516,8 +2516,8 @@ erDiagram
     date settlement_date
     numeric amount_tc
     numeric settlement_rate
-    numeric amount_fc_at_settlement
-    numeric amount_fc_booked
+    numeric amount_fc_settling_item "at the settlement rate (was amount_fc_at_settlement)"
+    numeric amount_fc_settled_item "at the booked rate (was amount_fc_booked)"
     numeric fx_gain_loss_fc
     numeric discount_taken_tc
     numeric wht_deducted_tc
@@ -2609,8 +2609,10 @@ erDiagram
     numeric write_off_tc
     numeric bank_charge_tc
     uuid journal_entry_id
-    uuid reverses_settlement_id
+    uuid reverses_settlement_id "a reversal is a mirror row with negative amounts"
     text kind
+    text status "posted | reversed"
+    text reason
   }
   ap_payment_proposals {
     uuid id PK

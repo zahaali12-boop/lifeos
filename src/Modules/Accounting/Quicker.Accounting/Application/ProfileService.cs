@@ -17,7 +17,7 @@ namespace Quicker.Accounting.Application;
 /// template chart seeds a complete default profile so a new company posts on day one; the coverage list names
 /// the roles still unresolved.
 /// </summary>
-public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory companies, IAuditSink audit, IClock clock) : IPostingGroupDirectory
+public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory companies, IAuditSink audit, IClock clock) : IPostingGroupDirectory, IPostingRules
 {
     private static readonly string[] Kinds = ["item", "partner_customer", "partner_supplier", "bank", "asset", "tax", "charge"];
 
@@ -385,6 +385,63 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         var resolved = await ActiveRulesUncachedAsync(company, date, cancellationToken);
         _rulesCache[key] = resolved;
         return resolved;
+    }
+
+    public async Task<Result> EnsureRuleAsync(CompanyId companyId, string accountRole, PostingKeys keys, Guid accountId, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        var company = await companies.FindAsync(companyId, cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", companyId.Value);
+        }
+
+        var today = clock.TodayIn(company.TimeZone);
+        var active = await ActiveRulesUncachedAsync(company, today, cancellationToken);
+        if (active.IsFailure)
+        {
+            return active.Error!;
+        }
+
+        var profile = await db.Set<PostingProfile>().Include(static p => p.Rules).SingleAsync(p => p.Id == active.Value.ProfileId, cancellationToken);
+        var existing = profile.Rules.FirstOrDefault(r => string.Equals(r.AccountRole, accountRole, StringComparison.Ordinal) && Keys(r) == keys);
+        if (existing is not null)
+        {
+            if (existing.AccountId == accountId)
+            {
+                return Result.Success();
+            }
+
+            existing.AccountId = accountId;
+            existing.UpdatedAt = clock.UtcNow;
+        }
+        else
+        {
+            profile.Rules.Add(new PostingRule
+            {
+                Id = Guid.CreateVersion7(),
+                ProfileId = profile.Id,
+                AccountRole = accountRole,
+                DocumentType = keys.DocumentType,
+                ItemPostingGroupId = keys.ItemPostingGroupId,
+                PartnerPostingGroupId = keys.PartnerPostingGroupId,
+                TaxCodeId = keys.TaxCodeId,
+                WarehouseId = keys.WarehouseId,
+                BranchId = keys.BranchId,
+                BankAccountId = keys.BankAccountId,
+                AssetCategoryId = keys.AssetCategoryId,
+                ChargeTypeId = keys.ChargeTypeId,
+                AccountId = accountId,
+                Specificity = keys.Specificity,
+                CreatedAt = clock.UtcNow,
+                UpdatedAt = clock.UtcNow,
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        _rulesCache.Clear();
+        await audit.RecordAsync(new AuditEntry("posting_profile", profile.Id, profile.Code, AuditActions.Updated, After: new { accountRole, keys, accountId }, CompanyId: company.Id.Value), cancellationToken);
+        return Result.Success();
     }
 
     private async Task<Result<(Guid ProfileId, IReadOnlyList<RuleCandidate> Rules)>> ActiveRulesUncachedAsync(CompanyInfo company, DateOnly date, CancellationToken cancellationToken)

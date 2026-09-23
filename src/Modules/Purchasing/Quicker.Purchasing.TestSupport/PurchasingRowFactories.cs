@@ -47,31 +47,8 @@ public static class PurchasingRowFactories
             await c.ExecuteAsync("INSERT INTO app.pur_match_results (tenant_id, id, invoice_id, status) VALUES (@t, @id, @invoice, 'matched')", new { t, id, invoice }, tx);
             return new RowRef("app.pur_match_results", $"id = '{id}'");
         });
-        IsolationRegistry.Register("app.ap_open_items", static async (c, tx, t) =>
-        {
-            var (invoice, _, company) = await InvoiceAsync(c, tx, t);
-            var partner = await c.ExecuteScalarAsync<Guid>("SELECT partner_id FROM app.pur_invoices WHERE tenant_id = @t AND id = @invoice", new { t, invoice }, tx);
-            var id = Guid.CreateVersion7();
-            await c.ExecuteAsync("INSERT INTO app.ap_open_items (tenant_id, id, company_id, partner_id, kind, document_type, document_id, document_number, posting_date, document_date, due_date, currency, original_tc, original_fc, remaining_tc, remaining_fc) VALUES (@t, @id, @company, @partner, 'invoice', 'purchase_invoice', @invoice, @number, '2026-09-22', '2026-09-22', '2026-10-22', 'IQD', 10, 10, 10, 10)", new { t, id, company, partner, invoice, number = Suffix(id) }, tx);
-            return new RowRef("app.ap_open_items", $"id = '{id}'");
-        });
         IsolationRegistry.Register("app.pur_returns", static async (c, tx, t) => new RowRef("app.pur_returns", $"id = '{(await ReturnAsync(c, tx, t)).Doc}'"));
         IsolationRegistry.Register("app.pur_return_lines", static async (c, tx, t) => new RowRef("app.pur_return_lines", $"id = '{(await ReturnAsync(c, tx, t)).Line}'"));
-        IsolationRegistry.Register("app.ap_settlements", static async (c, tx, t) =>
-        {
-            var (invoice, _, company) = await InvoiceAsync(c, tx, t);
-            var partner = await c.ExecuteScalarAsync<Guid>("SELECT partner_id FROM app.pur_invoices WHERE tenant_id = @t AND id = @invoice", new { t, invoice }, tx);
-            var settling = Guid.CreateVersion7();
-            var settled = Guid.CreateVersion7();
-            foreach (var (item, kind, amount) in new[] { (settling, "debit_note", -10m), (settled, "invoice", 10m) })
-            {
-                await c.ExecuteAsync("INSERT INTO app.ap_open_items (tenant_id, id, company_id, partner_id, kind, document_type, document_id, document_number, posting_date, document_date, due_date, currency, original_tc, original_fc, remaining_tc, remaining_fc) VALUES (@t, @id, @company, @partner, @kind, 'purchase_invoice', @invoice, @number, '2026-09-22', '2026-09-22', '2026-10-22', 'IQD', @amount, @amount, @amount, @amount)", new { t, id = item, company, partner, kind, invoice, number = Suffix(item), amount }, tx);
-            }
-
-            var id = Guid.CreateVersion7();
-            await c.ExecuteAsync("INSERT INTO app.ap_settlements (tenant_id, id, company_id, settling_item_id, settled_item_id, settlement_date, kind, currency, amount_tc, amount_fc_settled_item, amount_fc_settling_item) VALUES (@t, @id, @company, @settling, @settled, '2026-09-22', 'credit_application', 'IQD', 1, 1, 1)", new { t, id, company, settling, settled }, tx);
-            return new RowRef("app.ap_settlements", $"id = '{id}'");
-        });
         IsolationRegistry.Register("app.pur_charge_types", static async (c, tx, t) => new RowRef("app.pur_charge_types", $"id = '{await ChargeTypeAsync(c, tx, t)}'"));
         IsolationRegistry.Register("app.pur_landed_cost_docs", static async (c, tx, t) => new RowRef("app.pur_landed_cost_docs", $"id = '{(await LandedCostAsync(c, tx, t)).Doc}'"));
         IsolationRegistry.Register("app.pur_landed_cost_charges", static async (c, tx, t) => new RowRef("app.pur_landed_cost_charges", $"id = '{(await LandedCostAsync(c, tx, t)).Charge}'"));

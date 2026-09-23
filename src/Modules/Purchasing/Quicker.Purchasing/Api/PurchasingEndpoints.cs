@@ -138,15 +138,6 @@ public static class PurchasingEndpoints
         invoices.MapGet("/invoicable", async (Guid companyId, Guid partnerId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.InvoicableAsync(companyId, partnerId, ct)))
             .RequirePermission(PurchasingPermissions.InvoiceRead)
             .WithSummary("What the supplier can still invoice: uninvoiced receipt lines and open service lines of its orders.");
-        invoices.MapGet("/open-items", async (Guid companyId, Guid? partnerId, string? status, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.OpenItemsAsync(companyId, partnerId, status, ct)))
-            .RequirePermission(PurchasingPermissions.InvoiceRead)
-            .WithSummary("Payable open items of a company, optionally one supplier or one status.");
-        invoices.MapPost("/open-items/apply", async (ApplyCreditRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.ApplyCreditAsync(request, ct)))
-            .RequirePermission(PurchasingPermissions.InvoicePost)
-            .WithSummary("Applies a posted debit note to one of the supplier's invoice open items; a rate difference is booked as realised FX.");
-        invoices.MapGet("/settlements", async (Guid companyId, Guid? openItemId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.SettlementsAsync(companyId, openItemId, ct)))
-            .RequirePermission(PurchasingPermissions.InvoiceRead)
-            .WithSummary("Settlements between payable open items (credit applications), optionally those touching one item.");
         invoices.MapPost("/", async (SaveInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static i => $"/api/v1/purchasing/invoices/{i.Id}"))
             .RequirePermission(PurchasingPermissions.InvoiceManage)
             .WithSummary("Drafts a supplier invoice: lines against receipt lines, service order lines or expense accounts.");

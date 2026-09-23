@@ -5639,6 +5639,357 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payables/open-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Payable open items of a company: by supplier, status (open, partially_settled, settled, reversed, or live for the first two) and kind. */
+        get: operations["getPayablesOpenItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/open-items/aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Aging at any date, per supplier, in the company's currency: computed from the items and the settlements dated up to it. */
+        get: operations["getPayablesOpenItemsAging"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/open-items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPayablesOpenItemsByItemId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/open-items/{itemId}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Holds an item: proposals skip it and nothing is applied to it until released. */
+        post: operations["postPayablesOpenItemsByItemIdHold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/open-items/{itemId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPayablesOpenItemsByItemIdRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/settlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Settlements of a company, optionally those touching one item or one supplier; reversals are mirror rows naming what they reverse. */
+        get: operations["getPayablesSettlements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/settlements/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Applies a debit note, a payment on account or an advance to an invoice open item; a rate difference is realised FX. */
+        post: operations["postPayablesSettlementsApply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/settlements/{settlementId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses an application: both items reopen at their booked values, the FX journal is mirrored. */
+        post: operations["postPayablesSettlementsBySettlementIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPayablesProposals"];
+        put?: never;
+        /** Proposes what to pay by a date in one currency: unheld invoice items due by then and those whose early-payment discount is still open. */
+        post: operations["postPayablesProposals"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/proposals/{proposalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPayablesProposalsByProposalId"];
+        put?: never;
+        post?: never;
+        delete: operations["deletePayablesProposalsByProposalId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/proposals/{proposalId}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Selects, deselects or reduces lines; a partial amount forfeits the discount. */
+        put: operations["putPayablesProposalsByProposalIdLines"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/proposals/{proposalId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPayablesProposalsByProposalIdApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payables/proposals/{proposalId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPayablesProposalsByProposalIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/bank-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bank, cash and petty-cash accounts with their balances from the bank subledger. */
+        get: operations["getBankingBankAccounts"];
+        put?: never;
+        /** Creates an account on the chart's control account of its kind (or the one named) and the posting rule that routes to it. */
+        post: operations["postBankingBankAccounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/bank-accounts/{bankAccountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBankingBankAccountsByBankAccountId"];
+        put: operations["putBankingBankAccountsByBankAccountId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/bank-accounts/{bankAccountId}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's movements (its subledger), newest first. */
+        get: operations["getBankingBankAccountsByBankAccountIdTransactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBankingPayments"];
+        put?: never;
+        /** Drafts a supplier payment (lines against open invoice items, discounts, withholding at payment, charges, on account) or an advance. */
+        post: operations["postBankingPayments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/payments/from-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Drafts one payment per supplier from an approved payment proposal. */
+        post: operations["postBankingPaymentsFromProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/payments/{paymentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBankingPaymentsByPaymentId"];
+        put: operations["putBankingPaymentsByPaymentId"];
+        post?: never;
+        delete: operations["deleteBankingPaymentsByPaymentId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/payments/{paymentId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the payment: payables relieved at booked value, discount, withholding, charges, the bank movement and the realised exchange difference. */
+        post: operations["postBankingPaymentsByPaymentIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/payments/{paymentId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted payment whose remainder was not applied further: items reopen at their booked values. */
+        post: operations["postBankingPaymentsByPaymentIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/requisitions": {
         parameters: {
             query?: never;
@@ -6207,57 +6558,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/purchasing/invoices/open-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Payable open items of a company, optionally one supplier or one status. */
-        get: operations["getPurchasingInvoicesOpenItems"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/purchasing/invoices/open-items/apply": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Applies a posted debit note to one of the supplier's invoice open items; a rate difference is booked as realised FX. */
-        post: operations["postPurchasingInvoicesOpenItemsApply"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/purchasing/invoices/settlements": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Settlements between payable open items (credit applications), optionally those touching one item. */
-        get: operations["getPurchasingInvoicesSettlements"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/purchasing/invoices/{invoiceId}": {
         parameters: {
             query?: never;
@@ -6715,6 +7015,56 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        AgingReport: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            asOf: string;
+            functionalCurrency: string;
+            rows: components["schemas"]["AgingRow"][];
+            totals: components["schemas"]["AgingTotals"];
+        };
+        /** @description One supplier's payables at a date, in the company's currency, by days past due; advances are shown apart because they sit on their own control account. */
+        AgingRow: {
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            itemCount: number | string;
+            /** Format: double */
+            notDue: number | string;
+            /** Format: double */
+            days1To30: number | string;
+            /** Format: double */
+            days31To60: number | string;
+            /** Format: double */
+            days61To90: number | string;
+            /** Format: double */
+            over90: number | string;
+            /** Format: double */
+            totalFc: number | string;
+            /** Format: double */
+            advancesFc: number | string;
+        };
+        AgingTotals: {
+            /** Format: double */
+            notDue: number | string;
+            /** Format: double */
+            days1To30: number | string;
+            /** Format: double */
+            days31To60: number | string;
+            /** Format: double */
+            days61To90: number | string;
+            /** Format: double */
+            over90: number | string;
+            /** Format: double */
+            totalFc: number | string;
+            /** Format: double */
+            advancesFc: number | string;
+        };
         /** @description A posted receipt line a landed cost can be allocated to, with the basis values it would count with. */
         AllocatableReceiptLine: {
             /** Format: uuid */
@@ -6821,15 +7171,17 @@ export interface components {
             /** Format: date-time */
             revokedAt: null | string;
         };
-        ApplyCreditRequest: {
+        /** @description Applies a debit note, a payment on account or an advance to an invoice open item of the same supplier and currency. */
+        ApplyRequest: {
             /** Format: uuid */
-            creditItemId: string;
+            settlingItemId: string;
             /** Format: uuid */
-            invoiceItemId: string;
+            settledItemId: string;
             /** Format: double */
             amount: number | string;
             /** Format: date */
             settlementDate?: null | string;
+            reason?: null | string;
         };
         /** @description Who approves: named members, or every active holder of a role (scoped to the document's company unless told otherwise). */
         ApproverSpecRequest: {
@@ -7119,6 +7471,30 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        BankTransactionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            valueDate: string;
+            kind: string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            amountFc: number | string;
+            reference: null | string;
+            sourceDocumentType: null | string;
+            /** Format: uuid */
+            sourceDocumentId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversesTransactionId: null | string;
+            reconciliationStatus: string;
         };
         BarcodeMatch: {
             /** Format: uuid */
@@ -7501,6 +7877,36 @@ export interface components {
             chartCode: null | string;
             /** Format: uuid */
             postingProfileId: null | string;
+        };
+        CompanyBankAccountSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            currency: string;
+            /** Format: uuid */
+            glAccountId: string;
+            glAccountCode: string;
+            bankName: null | string;
+            branchName: null | string;
+            accountNumberMasked: null | string;
+            iban: null | string;
+            swift: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            isActive: boolean;
+            /** Format: double */
+            balanceTc: number | string;
+            /** Format: double */
+            balanceFc: number | string;
+            functionalCurrency: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         CompanyCurrencyRequest: {
             currency: string;
@@ -8276,6 +8682,9 @@ export interface components {
             error: null | string;
             checks: components["schemas"]["HealthCheckView"][];
         };
+        HoldOpenItemRequest: {
+            reason: string;
+        };
         HoldRequest: {
             status: string;
             reason: string;
@@ -8527,7 +8936,7 @@ export interface components {
             customFields: components["schemas"]["JsonElement"];
             lines: components["schemas"]["InvoiceLineSummary"][];
             matches: components["schemas"]["MatchResultSummary"][];
-            openItems: components["schemas"]["OpenItemSummary"][];
+            openItems: components["schemas"]["OpenItemInfo"][];
             /** Format: date-time */
             submittedAt: null | string;
             /** Format: date-time */
@@ -9304,9 +9713,13 @@ export interface components {
             /** @default open */
             status: string;
         };
-        OpenItemSummary: {
+        OpenItemInfo: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
             kind: string;
             documentType: string;
             /** Format: uuid */
@@ -9314,8 +9727,11 @@ export interface components {
             documentNumber: string;
             /** Format: int32 */
             instalment: number | string;
+            supplierReference: null | string;
             /** Format: date */
             postingDate: string;
+            /** Format: date */
+            documentDate: string;
             /** Format: date */
             dueDate: string;
             /** Format: date */
@@ -9328,14 +9744,32 @@ export interface components {
             /** Format: double */
             originalFc: number | string;
             /** Format: double */
+            bookedRate: number | string;
+            /** Format: double */
             settledTc: number | string;
+            /** Format: double */
+            settledFc: number | string;
             /** Format: double */
             remainingTc: number | string;
             /** Format: double */
             remainingFc: number | string;
             paymentBlocked: boolean;
             blockReason: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            branchId: null | string;
             status: string;
+        };
+        OpenItemSummary: {
+            item: components["schemas"]["OpenItemInfo"];
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            functionalCurrency: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         OrdersCreated: {
             orders: components["schemas"]["PurchaseOrderSummary"][];
@@ -9486,6 +9920,31 @@ export interface components {
             /** Format: double */
             amount: number | string;
         };
+        PaymentLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            openItemId: string;
+            documentNumber: string;
+            /** Format: int32 */
+            instalment: number | string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: double */
+            itemRemainingTc: number | string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            discountTc: number | string;
+            /** Format: double */
+            whtTc: number | string;
+            /** Format: double */
+            cashTc: number | string;
+            /** Format: uuid */
+            settlementId: null | string;
+        };
         PaymentSchedule: {
             /** Format: uuid */
             paymentTermsId: string;
@@ -9499,6 +9958,67 @@ export interface components {
             earlyDiscountPct: number | string;
             /** Format: date */
             dueOn?: string;
+        };
+        PaymentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            kind: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            /** Format: date */
+            paymentDate: string;
+            method: string;
+            reference: null | string;
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            functionalCurrency: string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            onAccountTc: number | string;
+            /** Format: double */
+            discountTc: number | string;
+            /** Format: double */
+            whtTc: number | string;
+            /** Format: double */
+            chargesBank: number | string;
+            /** Format: double */
+            bankAmount: number | string;
+            bankCurrency: string;
+            applyWht: boolean;
+            /** Format: uuid */
+            whtCodeId: null | string;
+            whtCode: null | string;
+            /** Format: uuid */
+            openItemId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            bankTransactionId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            reversalReason: null | string;
+            /** Format: uuid */
+            proposalId: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            lines: components["schemas"]["PaymentLineSummary"][];
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         PaymentTermLineSummary: {
             /** Format: int32 */
@@ -9528,6 +10048,16 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        PayProposalRequest: {
+            /** Format: uuid */
+            proposalId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: date */
+            paymentDate?: null | string;
+            /** @default transfer */
+            method: string;
         };
         /** @description Gapless audit for one reset period of a series: what was issued and which numbers are missing (expected: none). */
         PeriodGaps: {
@@ -9798,6 +10328,69 @@ export interface components {
             kind: string;
             inApp: boolean;
             email: boolean;
+        };
+        ProposalLineChange: {
+            /** Format: uuid */
+            lineId: string;
+            selected: boolean;
+            /** Format: double */
+            amountTc?: null | number | string;
+        };
+        ProposalLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            openItemId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            documentNumber: string;
+            kind: string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: date */
+            discountDate: null | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            remainingTc: number | string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            discountTc: number | string;
+            selected: boolean;
+            /** Format: uuid */
+            paymentId: null | string;
+        };
+        ProposalSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: date */
+            runDate: string;
+            /** Format: date */
+            payThrough: string;
+            currency: string;
+            /** Format: uuid */
+            bankAccountId: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+            status: string;
+            /** Format: double */
+            totalTc: number | string;
+            /** Format: double */
+            discountTc: number | string;
+            notes: null | string;
+            lines: components["schemas"]["ProposalLineSummary"][];
+            /** Format: date-time */
+            approvedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         PurchaseOrderLineSummary: {
             /** Format: uuid */
@@ -10708,6 +11301,11 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        ReversePaymentRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         ReverseReceiptRequest: {
             reason: string;
             /** Format: date */
@@ -10719,6 +11317,11 @@ export interface components {
             reversalDate?: null | string;
         };
         ReverseReturnRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
+        ReverseSettlementRequest: {
             reason: string;
             /** Format: date */
             reversalDate?: null | string;
@@ -11136,6 +11739,27 @@ export interface components {
             accountCodeFormat: string;
             /** Format: uuid */
             companyId?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveCompanyBankAccountRequest: {
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            currency: string;
+            /** Format: uuid */
+            glAccountId?: null | string;
+            bankName?: null | string;
+            branchName?: null | string;
+            accountNumber?: null | string;
+            iban?: null | string;
+            swift?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
             /** @default true */
             isActive: boolean;
         };
@@ -11627,6 +12251,58 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SavePaymentLineRequest: {
+            /** Format: uuid */
+            openItemId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            discountTc?: null | number | string;
+            /** Format: double */
+            whtTc?: null | number | string;
+        };
+        /**
+         * @description A supplier payment: lines settle invoice open items (amount, early-payment discount, withholding at payment), the
+         *     remainder goes on account; an advance (kind `supplier_advance`) has no lines. Charges and the bank amount are
+         *     in the bank account's currency; the bank amount is required when that differs from the payment currency.
+         */
+        SavePaymentRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            /** @default supplier_payment */
+            kind: string;
+            /** Format: date */
+            paymentDate?: null | string;
+            /** @default transfer */
+            method: string;
+            reference?: null | string;
+            currency?: null | string;
+            /** Format: double */
+            exchangeRate?: null | number | string;
+            lines?: null | components["schemas"]["SavePaymentLineRequest"][];
+            /**
+             * Format: double
+             * @default 0
+             */
+            onAccount: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            charges: number | string;
+            /** Format: double */
+            bankAmount?: null | number | string;
+            /** @default true */
+            applyWht: boolean;
+            /** Format: uuid */
+            whtCodeId?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
+        };
         SavePaymentTermLineRequest: {
             /** Format: int32 */
             sequence: number | string;
@@ -11680,6 +12356,22 @@ export interface components {
             };
             /** Format: date */
             validFrom?: null | string;
+        };
+        SaveProposalRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            payThrough: string;
+            currency: string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: uuid */
+            bankAccountId?: null | string;
+            /** Format: date */
+            runDate?: null | string;
+            notes?: null | string;
+            /** @default true */
+            takeDiscounts: boolean;
         };
         SavePurchaseOrderLineRequest: {
             /** Format: uuid */
@@ -12482,12 +13174,15 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        SettlementSummary: {
+        SettlementInfo: {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
             settlingItemId: string;
             settlingDocumentNumber: string;
+            settlingKind: string;
             /** Format: uuid */
             settledItemId: string;
             settledDocumentNumber: string;
@@ -12502,9 +13197,23 @@ export interface components {
             /** Format: double */
             amountFcSettlingItem: number | string;
             /** Format: double */
+            settlementRate: number | string;
+            /** Format: double */
             fxGainLossFc: number | string;
+            /** Format: double */
+            discountTakenTc: number | string;
+            /** Format: double */
+            whtWithheldTc: number | string;
+            /** Format: double */
+            writeOffTc: number | string;
+            /** Format: double */
+            bankChargeTc: number | string;
             /** Format: uuid */
             journalEntryId: null | string;
+            /** Format: uuid */
+            reversesSettlementId: null | string;
+            reason: null | string;
+            status: string;
             /** Format: date-time */
             createdAt: string;
         };
@@ -13255,6 +13964,9 @@ export interface components {
             locale?: null | string;
             timeZone?: null | string;
             digitStyle?: null | string;
+        };
+        UpdateProposalLinesRequest: {
+            lines: components["schemas"]["ProposalLineChange"][];
         };
         UserSummary: {
             /** Format: uuid */
@@ -23868,6 +24580,665 @@ export interface operations {
             };
         };
     };
+    getPayablesOpenItems: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                status?: string;
+                kind?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenItemSummary"][];
+                };
+            };
+        };
+    };
+    getPayablesOpenItemsAging: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgingReport"];
+                };
+            };
+        };
+    };
+    getPayablesOpenItemsByItemId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenItemSummary"];
+                };
+            };
+        };
+    };
+    postPayablesOpenItemsByItemIdHold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldOpenItemRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenItemSummary"];
+                };
+            };
+        };
+    };
+    postPayablesOpenItemsByItemIdRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenItemSummary"];
+                };
+            };
+        };
+    };
+    getPayablesSettlements: {
+        parameters: {
+            query: {
+                companyId: string;
+                openItemId?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementInfo"][];
+                };
+            };
+        };
+    };
+    postPayablesSettlementsApply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementInfo"];
+                };
+            };
+        };
+    };
+    postPayablesSettlementsBySettlementIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                settlementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseSettlementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementInfo"];
+                };
+            };
+        };
+    };
+    getPayablesProposals: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalSummary"][];
+                };
+            };
+        };
+    };
+    postPayablesProposals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalSummary"];
+                };
+            };
+        };
+    };
+    getPayablesProposalsByProposalId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalSummary"];
+                };
+            };
+        };
+    };
+    deletePayablesProposalsByProposalId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    putPayablesProposalsByProposalIdLines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProposalLinesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalSummary"];
+                };
+            };
+        };
+    };
+    postPayablesProposalsByProposalIdApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalSummary"];
+                };
+            };
+        };
+    };
+    postPayablesProposalsByProposalIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalSummary"];
+                };
+            };
+        };
+    };
+    getBankingBankAccounts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyBankAccountSummary"][];
+                };
+            };
+        };
+    };
+    postBankingBankAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCompanyBankAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyBankAccountSummary"];
+                };
+            };
+        };
+    };
+    getBankingBankAccountsByBankAccountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bankAccountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyBankAccountSummary"];
+                };
+            };
+        };
+    };
+    putBankingBankAccountsByBankAccountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bankAccountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCompanyBankAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyBankAccountSummary"];
+                };
+            };
+        };
+    };
+    getBankingBankAccountsByBankAccountIdTransactions: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path: {
+                bankAccountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionSummary"][];
+                };
+            };
+        };
+    };
+    getBankingPayments: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"][];
+                };
+            };
+        };
+    };
+    postBankingPayments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    postBankingPaymentsFromProposal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"][];
+                };
+            };
+        };
+    };
+    getBankingPaymentsByPaymentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    putBankingPaymentsByPaymentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    deleteBankingPaymentsByPaymentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postBankingPaymentsByPaymentIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    postBankingPaymentsByPaymentIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReversePaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
     getPurchasingRequisitions: {
         parameters: {
             query?: {
@@ -24956,77 +26327,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoicableLine"][];
-                };
-            };
-        };
-    };
-    getPurchasingInvoicesOpenItems: {
-        parameters: {
-            query: {
-                companyId: string;
-                partnerId?: string;
-                status?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OpenItemSummary"][];
-                };
-            };
-        };
-    };
-    postPurchasingInvoicesOpenItemsApply: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ApplyCreditRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SettlementSummary"];
-                };
-            };
-        };
-    };
-    getPurchasingInvoicesSettlements: {
-        parameters: {
-            query: {
-                companyId: string;
-                openItemId?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SettlementSummary"][];
                 };
             };
         };

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Quicker.Accounting;
 using Quicker.Audit;
+using Quicker.Banking;
 using Quicker.Collaboration;
 using Quicker.Identity;
 using Quicker.Integration;
@@ -17,6 +18,7 @@ using Quicker.Messaging;
 using Quicker.Numbering;
 using Quicker.Organization;
 using Quicker.Partners;
+using Quicker.Payables;
 using Quicker.Persistence;
 using Quicker.Purchasing;
 using Quicker.Storage;
@@ -76,6 +78,8 @@ internal static class DemoHost
         services.AddInventoryModule();
         services.AddWorkflowModule();
         services.AddPartnersModule();
+        services.AddPayablesModule();
+        services.AddBankingModule();
         services.AddPurchasingModule();
         return builder.Build();
     }

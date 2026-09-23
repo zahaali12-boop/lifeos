@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Quicker.Payables.Contracts;
 
 namespace Quicker.Purchasing.Application;
 
@@ -141,9 +142,7 @@ public sealed record InvoiceLineSummary(Guid Id, int LineNo, string Kind, Guid? 
 
 public sealed record MatchResultSummary(Guid Id, string Status, decimal PriceTolerancePct, decimal QtyTolerancePct, decimal PriceVarianceAmount, decimal PriceVariancePct, decimal QtyVariance, JsonElement Details, Guid? OverrideId, DateTimeOffset MatchedAt);
 
-public sealed record OpenItemSummary(Guid Id, string Kind, string DocumentType, Guid DocumentId, string DocumentNumber, int Instalment, DateOnly PostingDate, DateOnly DueDate, DateOnly? DiscountDate, decimal DiscountPct, string Currency, decimal OriginalTc, decimal OriginalFc, decimal SettledTc, decimal RemainingTc, decimal RemainingFc, bool PaymentBlocked, string? BlockReason, string Status);
-
-public sealed record InvoiceSummary(Guid Id, Guid CompanyId, string Number, string Kind, string Status, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, string? SupplierInvoiceNumber, DateOnly DocumentDate, DateOnly PostingDate, DateOnly? DueDate, string Currency, decimal ExchangeRate, string FunctionalCurrency, Guid? PaymentTermsId, string? PaymentTermsCode, Guid? WhtCodeId, string? WhtCode, decimal TotalNet, decimal TotalTax, decimal TotalWht, decimal TotalGross, decimal TotalPayable, string? BlockKind, string? BlockReason, Guid? BlockId, Guid? ApprovalRequestId, string? RejectionReason, Guid? JournalEntryId, Guid? ReversalEntryId, string? ReversalReason, string? Notes, JsonElement CustomFields, IReadOnlyList<InvoiceLineSummary> Lines, IReadOnlyList<MatchResultSummary> Matches, IReadOnlyList<OpenItemSummary> OpenItems, DateTimeOffset? SubmittedAt, DateTimeOffset? PostedAt, DateTimeOffset UpdatedAt);
+public sealed record InvoiceSummary(Guid Id, Guid CompanyId, string Number, string Kind, string Status, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, string? SupplierInvoiceNumber, DateOnly DocumentDate, DateOnly PostingDate, DateOnly? DueDate, string Currency, decimal ExchangeRate, string FunctionalCurrency, Guid? PaymentTermsId, string? PaymentTermsCode, Guid? WhtCodeId, string? WhtCode, decimal TotalNet, decimal TotalTax, decimal TotalWht, decimal TotalGross, decimal TotalPayable, string? BlockKind, string? BlockReason, Guid? BlockId, Guid? ApprovalRequestId, string? RejectionReason, Guid? JournalEntryId, Guid? ReversalEntryId, string? ReversalReason, string? Notes, JsonElement CustomFields, IReadOnlyList<InvoiceLineSummary> Lines, IReadOnlyList<MatchResultSummary> Matches, IReadOnlyList<OpenItemInfo> OpenItems, DateTimeOffset? SubmittedAt, DateTimeOffset? PostedAt, DateTimeOffset UpdatedAt);
 
 /// <summary>What can still be invoiced for a supplier: posted receipt lines with an uninvoiced quantity and open service lines of orders.</summary>
 public sealed record InvoicableLine(string Kind, Guid? ReceiptLineId, string? ReceiptNumber, Guid? OrderLineId, string? OrderNumber, Guid? OrderId, int LineNo, Guid? ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? UomId, string UomCode, decimal Quantity, decimal QtyInvoiced, decimal Remaining, decimal UnitPrice, string Currency, DateOnly? PostingDate, Guid? LandedCostChargeId = null, string? LandedCostNumber = null, Guid? ReturnLineId = null, string? ReturnNumber = null);
@@ -183,8 +182,4 @@ public sealed record ReturnSummary(Guid Id, Guid CompanyId, string Number, strin
 
 /// <summary>A posted receipt line with something left to return, and what has already gone back.</summary>
 public sealed record ReturnableLine(Guid ReceiptId, string ReceiptNumber, Guid ReceiptLineId, int LineNo, Guid PartnerId, string PartnerCode, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, string Tracking, Guid UomId, string UomCode, decimal Received, decimal Returned, decimal Remaining, string? LotNumber, IReadOnlyList<string> SerialNumbers, DateOnly PostingDate, Guid WarehouseId);
-
-public sealed record ApplyCreditRequest(Guid CreditItemId, Guid InvoiceItemId, decimal Amount, DateOnly? SettlementDate = null);
-
-public sealed record SettlementSummary(Guid Id, Guid SettlingItemId, string SettlingDocumentNumber, Guid SettledItemId, string SettledDocumentNumber, DateOnly SettlementDate, string Kind, string Currency, decimal AmountTc, decimal AmountFcSettledItem, decimal AmountFcSettlingItem, decimal FxGainLossFc, Guid? JournalEntryId, DateTimeOffset CreatedAt);
 

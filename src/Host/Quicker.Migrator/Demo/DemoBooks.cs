@@ -7,6 +7,7 @@ using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Organization.Application;
 using Quicker.Organization.Contracts;
+using Quicker.Payables.Contracts;
 
 namespace Quicker.Migrator.Demo;
 
@@ -73,6 +74,7 @@ internal static class DemoBooks
         var routines = services.GetRequiredService<AccountingRoutines>();
         var harness = services.GetRequiredService<IInvariantHarness>();
         var accounting = services.GetRequiredService<AccountingDbContext>();
+        var payables = services.GetRequiredService<IPayables>();
 
         var windowStart = new DateOnly(today.Year, today.Month, 1).AddMonths(-11);
         var previousMonthStart = new DateOnly(today.Year, today.Month, 1).AddMonths(-1);
@@ -175,10 +177,13 @@ internal static class DemoBooks
                         [Line("1210", debit: sale, subledger: ("AR", customer.Ref)), Line("4100", credit: sale, dimensions: Dimension("COST_CENTER", centres["CC-SLS"]))], reference: $"INV-{monthStart:yyyyMM}-{m + 1:00}");
                 }
 
+                Guid? purchaseItem = null;
                 if (Due(Day(8)))
                 {
                     var purchaseId = await PostAsync(Day(8), "manual", $"Goods purchased from {supplier.En}", $"مشتريات بضاعة من {supplier.Ar}",
                         [Line("5100", debit: purchase, dimensions: Dimension("COST_CENTER", centres["CC-OPS"])), Line("2110", credit: purchase, subledger: ("AP", supplier.Ref))], reference: $"PINV-{monthStart:yyyyMM}");
+                    // The payables subledger behind the journal: every AP line is an open item (roadmap 4.7 invariant).
+                    purchaseItem = (await payables.OpenAsync(new NewOpenItem(companyId, supplier.Ref, PayableKinds.Invoice, "manual_journal", purchaseId, $"PINV-{monthStart:yyyyMM}", 1, null, Day(8), Day(8), Day(8).AddDays(30), null, 0m, currency, purchase, purchase, 1m, purchaseId), cancellationToken)).Id;
                     if (code == "IQT" && m == 8)
                     {
                         (correctionCandidate, correctionAmount, correctionSupplier, correctionCurrency) = (purchaseId, purchase, supplier.Ref, currency);
@@ -189,8 +194,9 @@ internal static class DemoBooks
                 {
                     // Last month's actual bill, near the estimate the accrual reversed on the first.
                     var actual = M(760m + DemoIds.Draw(code + ":" + windowStart.AddMonths(m - 1).ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) + ":utilities", 2, 480));
-                    await PostAsync(Day(10), "manual", "Electricity and water invoice", "فاتورة الكهرباء والماء",
+                    var utilityId = await PostAsync(Day(10), "manual", "Electricity and water invoice", "فاتورة الكهرباء والماء",
                         [Line("6120", debit: actual, dimensions: Dimension("COST_CENTER", centres["CC-ADM"])), Line("2110", credit: actual, subledger: ("AP", Suppliers[3].Ref))], reference: $"UTIL-{monthStart:yyyyMM}");
+                    await payables.OpenAsync(new NewOpenItem(companyId, Suppliers[3].Ref, PayableKinds.Invoice, "manual_journal", utilityId, $"UTIL-{monthStart:yyyyMM}", 1, null, Day(10), Day(10), Day(10).AddDays(14), null, 0m, currency, actual, actual, 1m, utilityId), cancellationToken);
                 }
 
                 if (Due(Day(22)))
@@ -199,10 +205,12 @@ internal static class DemoBooks
                         [Line("1121", debit: sale, subledger: ("BANK", bank)), Line("1210", credit: sale, subledger: ("AR", customer.Ref))], reference: $"RCPT-{monthStart:yyyyMM}");
                 }
 
-                if (Due(Day(25)))
+                if (Due(Day(25)) && purchaseItem is { } invoiceItem)
                 {
-                    await PostAsync(Day(25), "manual", $"Payment to {supplier.En}", $"دفعة إلى {supplier.Ar}",
+                    var paymentId = await PostAsync(Day(25), "manual", $"Payment to {supplier.En}", $"دفعة إلى {supplier.Ar}",
                         [Line("2110", debit: purchase, subledger: ("AP", supplier.Ref)), Line("1121", credit: purchase, subledger: ("BANK", bank))], reference: $"PAY-{monthStart:yyyyMM}");
+                    var paymentItem = await payables.OpenAsync(new NewOpenItem(companyId, supplier.Ref, PayableKinds.PaymentOnAccount, "manual_journal", paymentId, $"PAY-{monthStart:yyyyMM}", 1, null, Day(25), Day(25), Day(25), null, 0m, currency, -purchase, -purchase, 1m, paymentId), cancellationToken);
+                    Require(await payables.RecordAsync(new RecordSettlementRequest(paymentItem.Id, invoiceItem, Day(25), SettlementKinds.Payment, purchase, purchase, purchase, 1m, 0m, 0m, paymentId), cancellationToken));
                 }
 
                 if (Due(Day(28)))
@@ -235,8 +243,9 @@ internal static class DemoBooks
 
                 if (m == 6 && Due(Day(12)))
                 {
-                    await PostAsync(Day(12), "manual", "Consultants for the ERP rollout", "استشاريو تطبيق النظام",
+                    var consultingId = await PostAsync(Day(12), "manual", "Consultants for the ERP rollout", "استشاريو تطبيق النظام",
                         [Line("6160", debit: M(4500m), dimensions: Dimensions(("COST_CENTER", centres["CC-ADM"]), ("PROJECT", projects["PRJ-ERP"]))), Line("2110", credit: M(4500m), subledger: ("AP", Suppliers[1].Ref))], reference: "PRJ-ERP-01");
+                    await payables.OpenAsync(new NewOpenItem(companyId, Suppliers[1].Ref, PayableKinds.Invoice, "manual_journal", consultingId, "PRJ-ERP-01", 1, null, Day(12), Day(12), Day(12).AddDays(30), null, 0m, currency, M(4500m), M(4500m), 1m, consultingId), cancellationToken);
                 }
             }
         }

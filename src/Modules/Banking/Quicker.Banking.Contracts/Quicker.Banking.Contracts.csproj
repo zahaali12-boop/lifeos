@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>What other modules may know about banking: the company's bank and cash accounts and the document types that move cash (roadmap 4.7 and M6, DOMAIN_MODEL §14).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+</Project>

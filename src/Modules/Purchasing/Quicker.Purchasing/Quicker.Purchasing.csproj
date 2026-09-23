@@ -17,6 +17,7 @@
     <ProjectReference Include="../../Numbering/Quicker.Numbering.Contracts/Quicker.Numbering.Contracts.csproj" />
     <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
     <ProjectReference Include="../../Partners/Quicker.Partners.Contracts/Quicker.Partners.Contracts.csproj" />
+    <ProjectReference Include="../../Payables/Quicker.Payables.Contracts/Quicker.Payables.Contracts.csproj" />
     <ProjectReference Include="../../Collaboration/Quicker.Collaboration.Contracts/Quicker.Collaboration.Contracts.csproj" />
     <ProjectReference Include="../../Tenancy/Quicker.Tenancy.Contracts/Quicker.Tenancy.Contracts.csproj" />
     <ProjectReference Include="../../Workflow/Quicker.Workflow.Contracts/Quicker.Workflow.Contracts.csproj" />

@@ -146,6 +146,7 @@ public static class AccountRoles
         [InventoryConsignedOut] = SubledgerTypes.Inventory,
         [GRNI] = SubledgerTypes.GoodsReceivedNotInvoiced,
         [LandedCostClearing] = SubledgerTypes.GoodsReceivedNotInvoiced,
+        [SupplierAdvances] = SubledgerTypes.Payables,
         [Bank] = SubledgerTypes.Bank,
         [Cash] = SubledgerTypes.Bank,
         [PettyCash] = SubledgerTypes.Bank,

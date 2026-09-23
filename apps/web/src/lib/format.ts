@@ -62,7 +62,12 @@ export function formatDate(iso: string | null | undefined): string {
     return "";
   }
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : new Intl.DateTimeFormat(locale(), { dateStyle: "medium" }).format(date);
+  return Number.isNaN(date.getTime()) ? iso : stripBidiMarks(new Intl.DateTimeFormat(locale(), { dateStyle: "medium" }).format(date));
+}
+
+/** Arabic locales embed right-to-left marks between date parts; inside the explicit-direction spans the screens use they reverse the parts, so they go. */
+function stripBidiMarks(text: string): string {
+  return text.replace(/[\u200E\u200F\u061C]/g, "");
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
@@ -70,7 +75,7 @@ export function formatDateTime(iso: string | null | undefined): string {
     return "";
   }
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : new Intl.DateTimeFormat(locale(), { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return Number.isNaN(date.getTime()) ? iso : stripBidiMarks(new Intl.DateTimeFormat(locale(), { dateStyle: "medium", timeStyle: "short" }).format(date));
 }
 
 /** Resolves a bilingual map for the current language with the documented fallback (requested → English → any). */

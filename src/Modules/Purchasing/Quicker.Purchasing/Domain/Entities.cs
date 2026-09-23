@@ -732,72 +732,6 @@ public sealed class MatchResult : ITenantEntity
     public DateTimeOffset MatchedAt { get; set; }
 }
 
-/// <summary>What the company owes a supplier from one document (one row per payment-terms instalment), settled by payments and credits (4.6–4.7).</summary>
-public sealed class ApOpenItem : ITenantEntity
-{
-    public Guid TenantId { get; set; }
-
-    public Guid Id { get; set; }
-
-    public Guid CompanyId { get; set; }
-
-    public Guid PartnerId { get; set; }
-
-    public string Kind { get; set; } = "invoice";
-
-    public string DocumentType { get; set; } = string.Empty;
-
-    public Guid DocumentId { get; set; }
-
-    public string DocumentNumber { get; set; } = string.Empty;
-
-    public int Instalment { get; set; } = 1;
-
-    public string? SupplierReference { get; set; }
-
-    public DateOnly PostingDate { get; set; }
-
-    public DateOnly DocumentDate { get; set; }
-
-    public DateOnly DueDate { get; set; }
-
-    public DateOnly? DiscountDate { get; set; }
-
-    public decimal DiscountPct { get; set; }
-
-    public string Currency { get; set; } = string.Empty;
-
-    public decimal OriginalTc { get; set; }
-
-    public decimal OriginalFc { get; set; }
-
-    public decimal BookedRate { get; set; } = 1m;
-
-    public decimal SettledTc { get; set; }
-
-    public decimal SettledFc { get; set; }
-
-    public decimal RemainingTc { get; set; }
-
-    public decimal RemainingFc { get; set; }
-
-    public Guid? JournalEntryId { get; set; }
-
-    public bool PaymentBlocked { get; set; }
-
-    public string? BlockReason { get; set; }
-
-    public Guid? BranchId { get; set; }
-
-    public Guid? DimensionSetId { get; set; }
-
-    public string Status { get; set; } = "open";
-
-    public DateTimeOffset CreatedAt { get; set; }
-
-    public DateTimeOffset UpdatedAt { get; set; }
-}
-
 /// <summary>A kind of landed cost (freight, customs, duty, insurance, handling) with the basis it is allocated by unless a charge says otherwise.</summary>
 public sealed class ChargeType : ITenantEntity
 {
@@ -1030,42 +964,6 @@ public sealed class SupplierReturnLine : ITenantEntity
     public Guid? SleId { get; set; }
 
     public string SleIds { get; set; } = "[]";
-
-    public DateTimeOffset CreatedAt { get; set; }
-}
-
-/// <summary>A credit applied to an invoice (a debit note now; advances and payments from 4.7), with the realized FX when the two were booked at different rates.</summary>
-public sealed class ApSettlement : ITenantEntity
-{
-    public Guid TenantId { get; set; }
-
-    public Guid Id { get; set; }
-
-    public Guid CompanyId { get; set; }
-
-    public Guid SettlingItemId { get; set; }
-
-    public Guid SettledItemId { get; set; }
-
-    public DateOnly SettlementDate { get; set; }
-
-    public string Kind { get; set; } = "credit_application";
-
-    public string Currency { get; set; } = string.Empty;
-
-    public decimal AmountTc { get; set; }
-
-    public decimal AmountFcSettledItem { get; set; }
-
-    public decimal AmountFcSettlingItem { get; set; }
-
-    public decimal FxGainLossFc { get; set; }
-
-    public Guid? JournalEntryId { get; set; }
-
-    public Guid? ReversesSettlementId { get; set; }
-
-    public Guid? CreatedBy { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }

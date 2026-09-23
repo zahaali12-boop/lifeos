@@ -43,8 +43,6 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
 
     public DbSet<MatchResult> MatchResults => Set<MatchResult>();
 
-    public DbSet<ApOpenItem> OpenItems => Set<ApOpenItem>();
-
     public DbSet<ChargeType> ChargeTypes => Set<ChargeType>();
 
     public DbSet<LandedCostDocument> LandedCosts => Set<LandedCostDocument>();
@@ -56,8 +54,6 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
     public DbSet<SupplierReturn> Returns => Set<SupplierReturn>();
 
     public DbSet<SupplierReturnLine> ReturnLines => Set<SupplierReturnLine>();
-
-    public DbSet<ApSettlement> Settlements => Set<ApSettlement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -265,20 +261,6 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.HasOne<Invoice>().WithMany().HasForeignKey(static x => new { x.TenantId, x.InvoiceId });
         });
 
-        modelBuilder.Entity<ApOpenItem>(b =>
-        {
-            b.ToTable("ap_open_items", "app");
-            b.HasKey(static x => new { x.TenantId, x.Id });
-            b.Property(static x => x.DiscountPct).HasPrecision(9, 6);
-            b.Property(static x => x.OriginalTc).HasPrecision(24, 6);
-            b.Property(static x => x.OriginalFc).HasPrecision(24, 6);
-            b.Property(static x => x.BookedRate).HasPrecision(24, 12);
-            b.Property(static x => x.SettledTc).HasPrecision(24, 6);
-            b.Property(static x => x.SettledFc).HasPrecision(24, 6);
-            b.Property(static x => x.RemainingTc).HasPrecision(24, 6);
-            b.Property(static x => x.RemainingFc).HasPrecision(24, 6);
-        });
-
         modelBuilder.Entity<ChargeType>(b =>
         {
             b.ToTable("pur_charge_types", "app");
@@ -347,18 +329,6 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.CreditedAmountFc).HasPrecision(24, 6);
             b.Property(static x => x.QtyCredited).HasPrecision(24, 9);
             b.HasOne<ReceiptLine>().WithMany().HasForeignKey(static x => new { x.TenantId, x.ReceiptLineId });
-        });
-
-        modelBuilder.Entity<ApSettlement>(b =>
-        {
-            b.ToTable("ap_settlements", "app");
-            b.HasKey(static x => new { x.TenantId, x.Id });
-            b.Property(static x => x.AmountTc).HasPrecision(24, 6);
-            b.Property(static x => x.AmountFcSettledItem).HasPrecision(24, 6);
-            b.Property(static x => x.AmountFcSettlingItem).HasPrecision(24, 6);
-            b.Property(static x => x.FxGainLossFc).HasPrecision(24, 6);
-            b.HasOne<ApOpenItem>().WithMany().HasForeignKey(static x => new { x.TenantId, x.SettlingItemId });
-            b.HasOne<ApOpenItem>().WithMany().HasForeignKey(static x => new { x.TenantId, x.SettledItemId });
         });
 
         base.OnModelCreating(modelBuilder);

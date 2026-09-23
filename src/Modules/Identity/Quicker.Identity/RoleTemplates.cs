@@ -22,7 +22,7 @@ public static class RoleTemplates
         new("ar_clerk", LocalizedText.Bilingual("Receivables clerk", "موظف الذمم المدينة"), "Customer invoices, receipts, statements and dunning",
             ["sales.invoice.*", "receivables.*", "partners.customer.read", "reporting.report.run"]),
         new("ap_clerk", LocalizedText.Bilingual("Payables clerk", "موظف الذمم الدائنة"), "Supplier invoices, matching and payments",
-            ["purchasing.invoice.*", "purchasing.landed_cost.*", "payables.*", "partners.supplier.read", "reporting.report.run"]),
+            ["purchasing.invoice.*", "purchasing.landed_cost.*", "payables.*", "banking.*", "partners.supplier.read", "reporting.report.run"]),
         new("warehouse_operator", LocalizedText.Bilingual("Warehouse operator", "أمين مستودع"), "Receiving, picking, transfers, counts and scanning",
             ["purchasing.receipt.*", "purchasing.return.*", "purchasing.order.read", "inventory.pick.*", "inventory.transfer.*", "inventory.count.*", "inventory.item.read"]),
         new("inventory_manager", LocalizedText.Bilingual("Inventory manager", "مدير المخزون"), "Item master, warehouses, stock, costing and counts",

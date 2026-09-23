@@ -122,17 +122,17 @@ public sealed class ReturnTests(ApiHostFixture host)
         // The credit applied to the invoice: both items move, nothing is booked (same currency, same rate).
         var creditId = creditItem.GetProperty("id").GetGuid();
         var invoiceItemId = invoiceItem.GetProperty("id").GetGuid();
-        (await owner.PostErrorAsync("/api/v1/purchasing/invoices/open-items/apply", new { creditItemId = creditId, invoiceItemId, amount = 3500m }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("settlement.amount_exceeds");
-        (await owner.PostErrorAsync("/api/v1/purchasing/invoices/open-items/apply", new { creditItemId = invoiceItemId, invoiceItemId = creditId, amount = 1m }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("settlement.kinds_invalid");
-        var settlement = await owner.PostAsync("/api/v1/purchasing/invoices/open-items/apply", new { creditItemId = creditId, invoiceItemId, amount = 3000m }, HttpStatusCode.OK);
+        (await owner.PostErrorAsync("/api/v1/payables/settlements/apply", new { settlingItemId = creditId, settledItemId = invoiceItemId, amount = 3500m }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("settlement.amount_exceeds");
+        (await owner.PostErrorAsync("/api/v1/payables/settlements/apply", new { settlingItemId = invoiceItemId, settledItemId = creditId, amount = 1m }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("settlement.kinds_invalid");
+        var settlement = await owner.PostAsync("/api/v1/payables/settlements/apply", new { settlingItemId = creditId, settledItemId = invoiceItemId, amount = 3000m }, HttpStatusCode.OK);
         settlement.GetProperty("kind").GetString().ShouldBe("credit_application");
         settlement.GetProperty("fxGainLossFc").GetDecimal().ShouldBe(0m);
         settlement.GetProperty("journalEntryId").ValueKind.ShouldBe(JsonValueKind.Null);
-        var items = (await owner.GetOkAsync($"/api/v1/purchasing/invoices/open-items?companyId={s.CompanyId}&partnerId={s.Supplier}")).EnumerateArray().ToList();
-        items.Single(i => i.GetProperty("id").GetGuid() == invoiceItemId).GetProperty("remainingTc").GetDecimal().ShouldBe(7000m);
-        items.Single(i => i.GetProperty("id").GetGuid() == creditId).GetProperty("status").GetString().ShouldBe("settled");
-        (await owner.GetOkAsync($"/api/v1/purchasing/invoices/settlements?companyId={s.CompanyId}&openItemId={creditId}")).GetArrayLength().ShouldBe(1);
-        (await owner.PostErrorAsync("/api/v1/purchasing/invoices/open-items/apply", new { creditItemId = creditId, invoiceItemId, amount = 1m }, HttpStatusCode.Conflict)).Code.ShouldBe("settlement.item_closed");
+        var items = (await owner.GetOkAsync($"/api/v1/payables/open-items?companyId={s.CompanyId}&partnerId={s.Supplier}")).EnumerateArray().ToList();
+        items.Single(i => i.GetProperty("item").GetProperty("id").GetGuid() == invoiceItemId).GetProperty("item").GetProperty("remainingTc").GetDecimal().ShouldBe(7000m);
+        items.Single(i => i.GetProperty("item").GetProperty("id").GetGuid() == creditId).GetProperty("item").GetProperty("status").GetString().ShouldBe("settled");
+        (await owner.GetOkAsync($"/api/v1/payables/settlements?companyId={s.CompanyId}&openItemId={creditId}")).GetArrayLength().ShouldBe(1);
+        (await owner.PostErrorAsync("/api/v1/payables/settlements/apply", new { settlingItemId = creditId, settledItemId = invoiceItemId, amount = 1m }, HttpStatusCode.Conflict)).Code.ShouldBe("settlement.item_closed");
         (await owner.PostErrorAsync($"/api/v1/purchasing/invoices/{noteId}/reverse", new { reason = "Wrong note" }, HttpStatusCode.Conflict)).Code.ShouldBe("invoice.settled");
         (await owner.PostErrorAsync($"/api/v1/purchasing/invoices/{invoiceId}/reverse", new { reason = "Wrong invoice" }, HttpStatusCode.Conflict)).Code.ShouldBe("invoice.settled");
         await owner.AssertInvariantsAsync();

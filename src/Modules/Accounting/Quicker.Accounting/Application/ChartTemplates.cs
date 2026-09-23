@@ -106,7 +106,7 @@ public static class ChartTemplates
             H("1200", "1100", "Receivables", "الذمم المدينة", asset, "current_assets"),
             A("1210", "1200", "Trade receivables", "ذمم العملاء", asset, "receivable", "current_assets", AccountRoles.AR, SubledgerTypes.Receivables, CashFlowCategories.Operating, revalue: true),
             A("1220", "1200", "Intercompany receivables", "ذمم الشركات الشقيقة المدينة", asset, "receivable", "current_assets", AccountRoles.IcReceivable, SubledgerTypes.Intercompany, CashFlowCategories.Operating, revalue: true),
-            A("1230", "1200", "Advances to suppliers", "دفعات مقدمة للموردين", asset, "advance", "current_assets", AccountRoles.SupplierAdvances, cashFlow: CashFlowCategories.Operating, revalue: true),
+            A("1230", "1200", "Advances to suppliers", "دفعات مقدمة للموردين", asset, "advance", "current_assets", AccountRoles.SupplierAdvances, SubledgerTypes.Payables, CashFlowCategories.Operating, revalue: true),
             A("1240", "1200", "Employee advances", "سلف الموظفين", asset, "advance", "current_assets", cashFlow: CashFlowCategories.Operating),
             A("1250", "1200", "Other receivables", "ذمم مدينة أخرى", asset, "receivable", "current_assets", cashFlow: CashFlowCategories.Operating),
             A("1260", "1200", "Allowance for doubtful debts", "مخصص الديون المشكوك في تحصيلها", asset, "contra_asset", "current_assets", cashFlow: CashFlowCategories.Operating),

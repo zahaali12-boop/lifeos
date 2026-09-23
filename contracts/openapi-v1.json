@@ -15998,6 +15998,1026 @@
         }
       }
     },
+    "/api/v1/payables/open-items": {
+      "get": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Payable open items of a company: by supplier, status (open, partially_settled, settled, reversed, or live for the first two) and kind.",
+        "operationId": "getPayablesOpenItems",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpenItemSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/open-items/aging": {
+      "get": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Aging at any date, per supplier, in the company's currency: computed from the items and the settlements dated up to it.",
+        "operationId": "getPayablesOpenItemsAging",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgingReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/open-items/{itemId}": {
+      "get": {
+        "tags": [
+          "Payables"
+        ],
+        "operationId": "getPayablesOpenItemsByItemId",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenItemSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/open-items/{itemId}/hold": {
+      "post": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Holds an item: proposals skip it and nothing is applied to it until released.",
+        "operationId": "postPayablesOpenItemsByItemIdHold",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldOpenItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenItemSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/open-items/{itemId}/release": {
+      "post": {
+        "tags": [
+          "Payables"
+        ],
+        "operationId": "postPayablesOpenItemsByItemIdRelease",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenItemSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/settlements": {
+      "get": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Settlements of a company, optionally those touching one item or one supplier; reversals are mirror rows naming what they reverse.",
+        "operationId": "getPayablesSettlements",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "openItemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SettlementInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/settlements/apply": {
+      "post": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Applies a debit note, a payment on account or an advance to an invoice open item; a rate difference is realised FX.",
+        "operationId": "postPayablesSettlementsApply",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/settlements/{settlementId}/reverse": {
+      "post": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Reverses an application: both items reopen at their booked values, the FX journal is mirrored.",
+        "operationId": "postPayablesSettlementsBySettlementIdReverse",
+        "parameters": [
+          {
+            "name": "settlementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseSettlementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/proposals": {
+      "get": {
+        "tags": [
+          "Payables"
+        ],
+        "operationId": "getPayablesProposals",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProposalSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Proposes what to pay by a date in one currency: unheld invoice items due by then and those whose early-payment discount is still open.",
+        "operationId": "postPayablesProposals",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/proposals/{proposalId}": {
+      "get": {
+        "tags": [
+          "Payables"
+        ],
+        "operationId": "getPayablesProposalsByProposalId",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Payables"
+        ],
+        "operationId": "deletePayablesProposalsByProposalId",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/payables/proposals/{proposalId}/lines": {
+      "put": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "Selects, deselects or reduces lines; a partial amount forfeits the discount.",
+        "operationId": "putPayablesProposalsByProposalIdLines",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProposalLinesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/proposals/{proposalId}/approve": {
+      "post": {
+        "tags": [
+          "Payables"
+        ],
+        "operationId": "postPayablesProposalsByProposalIdApprove",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payables/proposals/{proposalId}/cancel": {
+      "post": {
+        "tags": [
+          "Payables"
+        ],
+        "operationId": "postPayablesProposalsByProposalIdCancel",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/bank-accounts": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Bank, cash and petty-cash accounts with their balances from the bank subledger.",
+        "operationId": "getBankingBankAccounts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyBankAccountSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Creates an account on the chart's control account of its kind (or the one named) and the posting rule that routes to it.",
+        "operationId": "postBankingBankAccounts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCompanyBankAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyBankAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/bank-accounts/{bankAccountId}": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "getBankingBankAccountsByBankAccountId",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyBankAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "putBankingBankAccountsByBankAccountId",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCompanyBankAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyBankAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/bank-accounts/{bankAccountId}/transactions": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The account's movements (its subledger), newest first.",
+        "operationId": "getBankingBankAccountsByBankAccountIdTransactions",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankTransactionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/payments": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "getBankingPayments",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Drafts a supplier payment (lines against open invoice items, discounts, withholding at payment, charges, on account) or an advance.",
+        "operationId": "postBankingPayments",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/payments/from-proposal": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Drafts one payment per supplier from an approved payment proposal.",
+        "operationId": "postBankingPaymentsFromProposal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/payments/{paymentId}": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "getBankingPaymentsByPaymentId",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "putBankingPaymentsByPaymentId",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "deleteBankingPaymentsByPaymentId",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/banking/payments/{paymentId}/post": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Posts the payment: payables relieved at booked value, discount, withholding, charges, the bank movement and the realised exchange difference.",
+        "operationId": "postBankingPaymentsByPaymentIdPost",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/payments/{paymentId}/reverse": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Reverses a posted payment whose remainder was not applied further: items reopen at their booked values.",
+        "operationId": "postBankingPaymentsByPaymentIdReverse",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReversePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchasing/requisitions": {
       "get": {
         "tags": [
@@ -17701,130 +18721,6 @@
         }
       }
     },
-    "/api/v1/purchasing/invoices/open-items": {
-      "get": {
-        "tags": [
-          "Purchasing"
-        ],
-        "summary": "Payable open items of a company, optionally one supplier or one status.",
-        "operationId": "getPurchasingInvoicesOpenItems",
-        "parameters": [
-          {
-            "name": "companyId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "partnerId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/OpenItemSummary"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/purchasing/invoices/open-items/apply": {
-      "post": {
-        "tags": [
-          "Purchasing"
-        ],
-        "summary": "Applies a posted debit note to one of the supplier's invoice open items; a rate difference is booked as realised FX.",
-        "operationId": "postPurchasingInvoicesOpenItemsApply",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApplyCreditRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SettlementSummary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/purchasing/invoices/settlements": {
-      "get": {
-        "tags": [
-          "Purchasing"
-        ],
-        "summary": "Settlements between payable open items (credit applications), optionally those touching one item.",
-        "operationId": "getPurchasingInvoicesSettlements",
-        "parameters": [
-          {
-            "name": "companyId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "openItemId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SettlementSummary"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/purchasing/invoices/{invoiceId}": {
       "get": {
         "tags": [
@@ -19402,6 +20298,204 @@
           }
         }
       },
+      "AgingReport": {
+        "required": [
+          "companyId",
+          "asOf",
+          "functionalCurrency",
+          "rows",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgingRow"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AgingTotals"
+          }
+        }
+      },
+      "AgingRow": {
+        "required": [
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "itemCount",
+          "notDue",
+          "days1To30",
+          "days31To60",
+          "days61To90",
+          "over90",
+          "totalFc",
+          "advancesFc"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notDue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days1To30": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days31To60": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days61To90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "over90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "advancesFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One supplier's payables at a date, in the company's currency, by days past due; advances are shown apart because they sit on their own control account."
+      },
+      "AgingTotals": {
+        "required": [
+          "notDue",
+          "days1To30",
+          "days31To60",
+          "days61To90",
+          "over90",
+          "totalFc",
+          "advancesFc"
+        ],
+        "type": "object",
+        "properties": {
+          "notDue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days1To30": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days31To60": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days61To90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "over90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "advancesFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "AllocatableReceiptLine": {
         "required": [
           "receiptLineId",
@@ -19765,19 +20859,19 @@
           }
         }
       },
-      "ApplyCreditRequest": {
+      "ApplyRequest": {
         "required": [
-          "creditItemId",
-          "invoiceItemId",
+          "settlingItemId",
+          "settledItemId",
           "amount"
         ],
         "type": "object",
         "properties": {
-          "creditItemId": {
+          "settlingItemId": {
             "type": "string",
             "format": "uuid"
           },
-          "invoiceItemId": {
+          "settledItemId": {
             "type": "string",
             "format": "uuid"
           },
@@ -19795,8 +20889,15 @@
               "string"
             ],
             "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        }
+        },
+        "description": "Applies a debit note, a payment on account or an advance to an invoice open item of the same supplier and currency."
       },
       "ApproverSpecRequest": {
         "type": "object",
@@ -20916,6 +22017,97 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BankTransactionSummary": {
+        "required": [
+          "id",
+          "bankAccountId",
+          "postingDate",
+          "valueDate",
+          "kind",
+          "amountTc",
+          "amountFc",
+          "reference",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "journalEntryId",
+          "reversesTransactionId",
+          "reconciliationStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "valueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceDocumentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceDocumentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversesTransactionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reconciliationStatus": {
+            "type": "string"
           }
         }
       },
@@ -22273,6 +23465,125 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "CompanyBankAccountSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "kind",
+          "currency",
+          "glAccountId",
+          "glAccountCode",
+          "bankName",
+          "branchName",
+          "accountNumberMasked",
+          "iban",
+          "swift",
+          "branchId",
+          "isActive",
+          "balanceTc",
+          "balanceFc",
+          "functionalCurrency",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "glAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "glAccountCode": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountNumberMasked": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "swift": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "balanceTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "balanceFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -25152,6 +26463,17 @@
         },
         "description": "The health payload: a status word, the applied migrations (when the database answers), an error name and each check."
       },
+      "HoldOpenItemRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "HoldRequest": {
         "required": [
           "status",
@@ -26214,7 +27536,7 @@
           "openItems": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/OpenItemSummary"
+              "$ref": "#/components/schemas/OpenItemInfo"
             }
           },
           "submittedAt": {
@@ -29218,31 +30540,47 @@
         },
         "description": "Opens the fiscal year that starts in StartYear (on the calendar's start month) as `open` or `future`."
       },
-      "OpenItemSummary": {
+      "OpenItemInfo": {
         "required": [
           "id",
+          "companyId",
+          "partnerId",
           "kind",
           "documentType",
           "documentId",
           "documentNumber",
           "instalment",
+          "supplierReference",
           "postingDate",
+          "documentDate",
           "dueDate",
           "discountDate",
           "discountPct",
           "currency",
           "originalTc",
           "originalFc",
+          "bookedRate",
           "settledTc",
+          "settledFc",
           "remainingTc",
           "remainingFc",
           "paymentBlocked",
           "blockReason",
+          "journalEntryId",
+          "branchId",
           "status"
         ],
         "type": "object",
         "properties": {
           "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
             "type": "string",
             "format": "uuid"
           },
@@ -29267,7 +30605,17 @@
             ],
             "format": "int32"
           },
+          "supplierReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "documentDate": {
             "type": "string",
             "format": "date"
           },
@@ -29309,7 +30657,23 @@
             ],
             "format": "double"
           },
+          "bookedRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "settledTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "settledFc": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "number",
@@ -29342,8 +30706,53 @@
               "string"
             ]
           },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "OpenItemSummary": {
+        "required": [
+          "item",
+          "partnerCode",
+          "partnerName",
+          "functionalCurrency",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/OpenItemInfo"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -29938,6 +31347,103 @@
         },
         "description": "One instalment of a payment schedule: its share and the amount after the currency's rounding (the parts sum to the whole)."
       },
+      "PaymentLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "openItemId",
+          "documentNumber",
+          "instalment",
+          "dueDate",
+          "itemRemainingTc",
+          "amountTc",
+          "discountTc",
+          "whtTc",
+          "cashTc",
+          "settlementId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "openItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "instalment": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "itemRemainingTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "whtTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cashTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "settlementId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "PaymentSchedule": {
         "required": [
           "paymentTermsId",
@@ -29984,6 +31490,248 @@
           "dueOn": {
             "type": "string",
             "format": "date"
+          }
+        }
+      },
+      "PaymentSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "kind",
+          "status",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "bankAccountId",
+          "bankAccountCode",
+          "paymentDate",
+          "method",
+          "reference",
+          "currency",
+          "exchangeRate",
+          "functionalCurrency",
+          "amountTc",
+          "onAccountTc",
+          "discountTc",
+          "whtTc",
+          "chargesBank",
+          "bankAmount",
+          "bankCurrency",
+          "applyWht",
+          "whtCodeId",
+          "whtCode",
+          "openItemId",
+          "journalEntryId",
+          "bankTransactionId",
+          "reversalEntryId",
+          "reversalReason",
+          "proposalId",
+          "notes",
+          "customFields",
+          "lines",
+          "postedAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "paymentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "method": {
+            "type": "string"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "onAccountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "whtTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "chargesBank": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bankAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bankCurrency": {
+            "type": "string"
+          },
+          "applyWht": {
+            "type": "boolean"
+          },
+          "whtCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "whtCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "openItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankTransactionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "proposalId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentLineSummary"
+            }
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -30096,6 +31844,34 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "PayProposalRequest": {
+        "required": [
+          "proposalId",
+          "bankAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "proposalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "method": {
+            "type": "string",
+            "default": "transfer"
           }
         }
       },
@@ -31104,6 +32880,233 @@
           },
           "email": {
             "type": "boolean"
+          }
+        }
+      },
+      "ProposalLineChange": {
+        "required": [
+          "lineId",
+          "selected"
+        ],
+        "type": "object",
+        "properties": {
+          "lineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ProposalLineSummary": {
+        "required": [
+          "id",
+          "openItemId",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "documentNumber",
+          "kind",
+          "dueDate",
+          "discountDate",
+          "discountPct",
+          "remainingTc",
+          "amountTc",
+          "discountTc",
+          "selected",
+          "paymentId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "openItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "discountDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remainingTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "paymentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "ProposalSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "runDate",
+          "payThrough",
+          "currency",
+          "bankAccountId",
+          "partnerId",
+          "status",
+          "totalTc",
+          "discountTc",
+          "notes",
+          "lines",
+          "approvedAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "runDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "payThrough": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "totalTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalLineSummary"
+            }
+          },
+          "approvedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -34578,6 +36581,24 @@
           }
         }
       },
+      "ReversePaymentRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "ReverseReceiptRequest": {
         "required": [
           "reason"
@@ -34615,6 +36636,24 @@
         }
       },
       "ReverseReturnRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ReverseSettlementRequest": {
         "required": [
           "reason"
         ],
@@ -36050,6 +38089,85 @@
             "default": ""
           },
           "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveCompanyBankAccountRequest": {
+        "required": [
+          "companyId",
+          "code",
+          "name",
+          "kind",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "glAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "swift": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
             "type": [
               "null",
               "string"
@@ -37661,6 +39779,158 @@
           }
         }
       },
+      "SavePaymentLineRequest": {
+        "required": [
+          "openItemId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "openItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "whtTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "SavePaymentRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "bankAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "default": "supplier_payment"
+          },
+          "paymentDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "method": {
+            "type": "string",
+            "default": "transfer"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SavePaymentLineRequest"
+            }
+          },
+          "onAccount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "charges": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "bankAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "applyWht": {
+            "type": "boolean",
+            "default": true
+          },
+          "whtCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": { }
+        },
+        "description": "A supplier payment: lines settle invoice open items (amount, early-payment discount, withholding at payment), the\nremainder goes on account; an advance (kind `supplier_advance`) has no lines. Charges and the bank amount are\nin the bank account's currency; the bank amount is required when that differs from the payment currency."
+      },
       "SavePaymentTermLineRequest": {
         "required": [
           "sequence",
@@ -37809,6 +40079,58 @@
               "string"
             ],
             "format": "date"
+          }
+        }
+      },
+      "SaveProposalRequest": {
+        "required": [
+          "companyId",
+          "payThrough",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payThrough": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "runDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "takeDiscounts": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -40569,11 +42891,13 @@
           }
         }
       },
-      "SettlementSummary": {
+      "SettlementInfo": {
         "required": [
           "id",
+          "companyId",
           "settlingItemId",
           "settlingDocumentNumber",
+          "settlingKind",
           "settledItemId",
           "settledDocumentNumber",
           "settlementDate",
@@ -40582,8 +42906,16 @@
           "amountTc",
           "amountFcSettledItem",
           "amountFcSettlingItem",
+          "settlementRate",
           "fxGainLossFc",
+          "discountTakenTc",
+          "whtWithheldTc",
+          "writeOffTc",
+          "bankChargeTc",
           "journalEntryId",
+          "reversesSettlementId",
+          "reason",
+          "status",
           "createdAt"
         ],
         "type": "object",
@@ -40592,11 +42924,18 @@
             "type": "string",
             "format": "uuid"
           },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "settlingItemId": {
             "type": "string",
             "format": "uuid"
           },
           "settlingDocumentNumber": {
+            "type": "string"
+          },
+          "settlingKind": {
             "type": "string"
           },
           "settledItemId": {
@@ -40640,7 +42979,47 @@
             ],
             "format": "double"
           },
+          "settlementRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "fxGainLossFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountTakenTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "whtWithheldTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "writeOffTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bankChargeTc": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "number",
@@ -40654,6 +43033,22 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "reversesSettlementId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -43368,6 +45763,20 @@
           }
         }
       },
+      "UpdateProposalLinesRequest": {
+        "required": [
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposalLineChange"
+            }
+          }
+        }
+      },
       "UserSummary": {
         "required": [
           "id",
@@ -44106,6 +46515,12 @@
     },
     {
       "name": "Partners"
+    },
+    {
+      "name": "Payables"
+    },
+    {
+      "name": "Banking"
     },
     {
       "name": "Purchasing"

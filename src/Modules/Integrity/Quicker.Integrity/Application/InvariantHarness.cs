@@ -41,6 +41,8 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             await StockBalancesMatchLedgerAsync(uow, companyId, cancellationToken),
             await InventoryMatchesGlAsync(uow, companyId, cancellationToken),
             await GrniMatchesReceiptsAsync(uow, companyId, cancellationToken),
+            await PayablesMatchOpenItemsAsync(uow, companyId, cancellationToken),
+            await BankMatchesTransactionsAsync(uow, companyId, cancellationToken),
         };
         return new InvariantReport(uow.Context.TenantId.Value, companyId, clock.UtcNow, checks, checks.TrueForAll(static c => c.Passed));
     }
@@ -300,6 +302,69 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
         var problems = mismatches.Select(m => $"company {m.CompanyId} receipt {m.Number ?? m.ReceiptId.ToString()}: GRNI lines {N(m.Booked)}, uninvoiced receipt value {N(m.Uninvoiced)}").ToList();
         return Result(InvariantCodes.GrniMatchesReceipts, checkedCount, problems, $"{checkedCount} receipt(s), GRNI equal to the uninvoiced receipt value (net of returns and their credits) for every one");
     }
+
+    private static async Task<InvariantResult> PayablesMatchOpenItemsAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(*) FROM app.ap_open_items WHERE (@company::uuid IS NULL OR company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<ControlMismatch>(new CommandDefinition("""
+            WITH booked AS (
+              SELECT l.company_id, CASE WHEN l.account_role = 'SupplierAdvances' THEN 'advances' ELSE 'payables' END AS control, sum(l.credit_fc - l.debit_fc) AS booked
+              FROM app.gl_journal_lines l
+              WHERE l.subledger_type = 'AP' AND (@company::uuid IS NULL OR l.company_id = @company)
+              GROUP BY 1, 2
+            ), expected AS (
+              SELECT i.company_id, CASE WHEN i.kind = 'advance' THEN 'advances' ELSE 'payables' END AS control, sum(i.remaining_fc) AS expected
+              FROM app.ap_open_items i
+              WHERE i.status <> 'reversed' AND (@company::uuid IS NULL OR i.company_id = @company)
+              GROUP BY 1, 2
+            ), keys AS (
+              SELECT company_id, control FROM booked UNION SELECT company_id, control FROM expected
+            )
+            SELECT k.company_id, k.control, coalesce(b.booked, 0) AS booked, coalesce(e.expected, 0) AS expected
+            FROM keys k
+            LEFT JOIN booked b ON b.company_id = k.company_id AND b.control = k.control
+            LEFT JOIN expected e ON e.company_id = k.company_id AND e.control = k.control
+            WHERE coalesce(b.booked, 0) <> coalesce(e.expected, 0)
+            ORDER BY k.company_id, k.control
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"company {m.CompanyId} {m.Control}: control lines {N(m.Booked)}, open items {N(m.Expected)}").ToList();
+        return Result(InvariantCodes.PayablesMatchOpenItems, checkedCount, problems, $"{checkedCount} open item(s), payables and advances controls equal to their open items in every company");
+    }
+
+    private static async Task<InvariantResult> BankMatchesTransactionsAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(*) FROM app.bnk_bank_transactions WHERE (@company::uuid IS NULL OR company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<ControlMismatch>(new CommandDefinition("""
+            WITH booked AS (
+              SELECT t.company_id, t.bank_account_id::text AS control, sum(l.debit_fc - l.credit_fc) AS booked
+              FROM app.gl_journal_lines l
+              JOIN app.bnk_bank_transactions t ON t.tenant_id = l.tenant_id AND t.id = l.subledger_ref
+              WHERE l.subledger_type = 'BANK' AND (@company::uuid IS NULL OR l.company_id = @company)
+              GROUP BY 1, 2
+            ), expected AS (
+              SELECT t.company_id, t.bank_account_id::text AS control, sum(t.amount_fc) AS expected
+              FROM app.bnk_bank_transactions t
+              WHERE (@company::uuid IS NULL OR t.company_id = @company)
+              GROUP BY 1, 2
+            ), keys AS (
+              SELECT company_id, control FROM booked UNION SELECT company_id, control FROM expected
+            )
+            SELECT k.company_id, k.control, coalesce(b.booked, 0) AS booked, coalesce(e.expected, 0) AS expected
+            FROM keys k
+            LEFT JOIN booked b ON b.company_id = k.company_id AND b.control = k.control
+            LEFT JOIN expected e ON e.company_id = k.company_id AND e.control = k.control
+            WHERE coalesce(b.booked, 0) <> coalesce(e.expected, 0)
+            ORDER BY k.company_id, k.control
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"company {m.CompanyId} bank account {m.Control}: control lines {N(m.Booked)}, transactions {N(m.Expected)}").ToList();
+        return Result(InvariantCodes.BankMatchesTransactions, checkedCount, problems, $"{checkedCount} bank transaction(s), every bank account's control lines equal to its transactions");
+    }
+
+    private sealed record ControlMismatch(Guid CompanyId, string Control, decimal Booked, decimal Expected);
 
     private static InvariantResult Result(string code, long checkedCount, IReadOnlyList<string> problems, string summary) =>
         new(code, problems.Count == 0, checkedCount, problems, problems.Count == 0 ? summary : $"{problems.Count} problem(s) found (first {Math.Min(problems.Count, ProblemLimit)} listed)");

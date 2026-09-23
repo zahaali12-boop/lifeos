@@ -1,4 +1,4 @@
-import { Anchor, ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, FileText, GitBranch, Hammer, Handshake, Inbox, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, FileText, GitBranch, Hammer, HandCoins, Handshake, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -42,6 +42,10 @@ export const navigation: NavigationItem[] = [
   { to: "/purchasing/invoices", label: "nav.invoices", icon: ReceiptText, shortcut: "g .", permission: "purchasing.invoice.read" },
   { to: "/purchasing/landed-costs", label: "nav.landedCosts", icon: Anchor, shortcut: "g ,", permission: "purchasing.landed_cost.read" },
   { to: "/purchasing/returns", label: "nav.returns", icon: PackageX, shortcut: "g ;", permission: "purchasing.return.read" },
+  { to: "/payables/open-items", label: "nav.payables", icon: HandCoins, shortcut: "g /", permission: "payables.open_item.read" },
+  { to: "/payables/proposals", label: "nav.paymentProposals", icon: CalendarClock, shortcut: "g -", permission: "payables.proposal.read" },
+  { to: "/banking/bank-accounts", label: "nav.bankAccounts", icon: Landmark, shortcut: "g =", permission: "banking.bank_account.read" },
+  { to: "/banking/payments", label: "nav.payments", icon: Banknote, shortcut: "g [", permission: "banking.payment.read" },
   { to: "/approvals", label: "nav.approvals", icon: Inbox, shortcut: "g 1" },
   { to: "/workflows", label: "nav.workflows", icon: GitBranch, shortcut: "g 2", permission: "workflow.definition.read" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },

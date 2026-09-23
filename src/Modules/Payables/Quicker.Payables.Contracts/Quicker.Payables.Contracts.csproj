@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>What other modules may know about payables: the open items they create and reverse, the settlements a payment carries, and the payment proposals a payment executes (roadmap 4.7, DOMAIN_MODEL §13).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+</Project>

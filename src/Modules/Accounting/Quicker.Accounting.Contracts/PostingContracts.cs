@@ -40,7 +40,12 @@ public sealed record PostingKeys(
     }
 }
 
-/// <summary>One line of a posting request: a role and a signed transaction-currency amount (positive debit, negative credit).</summary>
+/// <summary>
+/// One line of a posting request: a role and a signed transaction-currency amount (positive debit, negative credit).
+/// <paramref name="AmountFc"/> fixes the line's functional-currency value instead of converting the amount at the entry's
+/// rate (ADR-0031): a subledger item is relieved at the value it was booked at, a bank movement at what the bank took;
+/// a line with no transaction amount and a functional amount is the realised exchange difference those lines leave.
+/// </summary>
 public sealed record PostingLine(
     string AccountRole,
     decimal Amount,
@@ -53,7 +58,8 @@ public sealed record PostingLine(
     Guid? TaxCodeId = null,
     decimal? TaxBase = null,
     LocalizedText? Description = null,
-    DateOnly? DueDate = null);
+    DateOnly? DueDate = null,
+    decimal? AmountFc = null);
 
 public sealed record PostingRequest(
     CompanyId CompanyId,
@@ -147,4 +153,11 @@ public sealed record JournalEntryPosted(
     public static int EventVersion => 1;
 
     public string AggregateType => "journal_entry";
+}
+
+/// <summary>Lets a module that owns a keyed account (a bank account, later an asset category) register the rule that routes a role to it, so its documents keep posting by role (ADR-0006).</summary>
+public interface IPostingRules
+{
+    /// <summary>Adds the rule to the company's current profile unless an identical one exists; refused while the company has no active profile.</summary>
+    Task<Result> EnsureRuleAsync(CompanyId companyId, string accountRole, PostingKeys keys, Guid accountId, CancellationToken cancellationToken = default);
 }

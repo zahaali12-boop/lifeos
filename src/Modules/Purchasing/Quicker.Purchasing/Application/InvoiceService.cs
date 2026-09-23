@@ -14,6 +14,7 @@ using Quicker.Kernel.Time;
 using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
 using Quicker.Partners.Contracts;
+using Quicker.Payables.Contracts;
 using Quicker.Purchasing.Contracts;
 using Quicker.Purchasing.Domain;
 using Quicker.Purchasing.Persistence;
@@ -43,6 +44,7 @@ public sealed class InvoiceService(
     IWorkflowEngine workflow,
     LandedCostService landedCosts,
     ReturnService returns,
+    IPayables payables,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
@@ -124,156 +126,6 @@ public sealed class InvoiceService(
         result.AddRange(await landedCosts.OpenChargesAsync(companyId, partnerId, cancellationToken));
         result.AddRange(await returns.CreditableAsync(companyId, partnerId, cancellationToken));
         return result;
-    }
-
-    public async Task<IReadOnlyList<SettlementSummary>> SettlementsAsync(Guid companyId, Guid? openItemId, CancellationToken cancellationToken)
-    {
-        var query = db.Settlements.AsNoTracking().Where(s => s.CompanyId == companyId);
-        if (openItemId is { } o)
-        {
-            query = query.Where(s => s.SettlingItemId == o || s.SettledItemId == o);
-        }
-
-        var rows = await query.OrderByDescending(static s => s.SettlementDate).ThenByDescending(static s => s.CreatedAt).Take(500).ToListAsync(cancellationToken);
-        var itemIds = rows.Select(static s => s.SettlingItemId).Concat(rows.Select(static s => s.SettledItemId)).Distinct().ToList();
-        var numbers = await db.OpenItems.AsNoTracking().Where(i => itemIds.Contains(i.Id)).ToDictionaryAsync(static i => i.Id, static i => i.DocumentNumber, cancellationToken);
-        return rows.Select(s => new SettlementSummary(s.Id, s.SettlingItemId, numbers.GetValueOrDefault(s.SettlingItemId, string.Empty), s.SettledItemId, numbers.GetValueOrDefault(s.SettledItemId, string.Empty), s.SettlementDate, s.Kind, s.Currency, s.AmountTc, s.AmountFcSettledItem, s.AmountFcSettlingItem, s.FxGainLossFc, s.JournalEntryId, s.CreatedAt)).ToList();
-    }
-
-    /// <summary>
-    /// Applies a posted debit note's credit to one of the same supplier's payable open items (POSTING_RULES "Credit application"):
-    /// both items are settled by the amount in the transaction currency; where the two were booked at different rates the
-    /// difference in the company's currency is realised FX, booked Dr/Cr AP (the subledger reference of each item) against
-    /// FX gain or loss, so the payables control account keeps matching the open items.
-    /// </summary>
-    public async Task<Result<SettlementSummary>> ApplyCreditAsync(ApplyCreditRequest request, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        if (request.Amount <= 0m)
-        {
-            return Error.Validation("settlement.amount_invalid", "The amount applied is positive.").WithWhy(("amount", request.Amount));
-        }
-
-        var credit = await db.OpenItems.SingleOrDefaultAsync(i => i.Id == request.CreditItemId, cancellationToken);
-        var payable = await db.OpenItems.SingleOrDefaultAsync(i => i.Id == request.InvoiceItemId, cancellationToken);
-        if (credit is null || payable is null)
-        {
-            return Error.NotFound("open_item", credit is null ? request.CreditItemId : request.InvoiceItemId);
-        }
-
-        if (credit.Kind != "debit_note" || payable.Kind == "debit_note")
-        {
-            return Error.Validation("settlement.kinds_invalid", "A debit note is applied to an invoice open item.").WithWhy(("creditKind", credit.Kind), ("invoiceKind", payable.Kind));
-        }
-
-        if (credit.CompanyId != payable.CompanyId || credit.PartnerId != payable.PartnerId)
-        {
-            return Error.Validation("settlement.partner_mismatch", "Both items belong to the same supplier and company.");
-        }
-
-        if (!string.Equals(credit.Currency, payable.Currency, StringComparison.Ordinal))
-        {
-            return Error.Validation("settlement.currency_mismatch", "A credit is applied in its own currency.").WithWhy(("creditCurrency", credit.Currency), ("invoiceCurrency", payable.Currency));
-        }
-
-        if (credit.Status != "open" || payable.Status != "open")
-        {
-            return Error.Conflict("settlement.item_closed", "Only open items are settled.").WithWhy(("creditStatus", credit.Status), ("invoiceStatus", payable.Status));
-        }
-
-        if (payable.PaymentBlocked)
-        {
-            return Error.Conflict("settlement.item_blocked", "The invoice is blocked for settlement.").WithWhy(("reason", payable.BlockReason));
-        }
-
-        var available = -credit.RemainingTc;
-        if (request.Amount > available || request.Amount > payable.RemainingTc)
-        {
-            return Error.Validation("settlement.amount_exceeds", "The amount exceeds what is open on one of the items.").WithWhy(("amount", request.Amount), ("creditRemaining", available), ("invoiceRemaining", payable.RemainingTc));
-        }
-
-        var company = await companies.FindAsync(new CompanyId(payable.CompanyId), cancellationToken);
-        if (company is null)
-        {
-            return Error.NotFound("company", payable.CompanyId);
-        }
-
-        var settlementDate = request.SettlementDate ?? clock.TodayIn(company.TimeZone);
-        if (settlementDate < payable.PostingDate || settlementDate < credit.PostingDate)
-        {
-            return Error.Validation("settlement.date_before_items", "A settlement is not dated before the items it settles.").WithWhy(("settlementDate", settlementDate), ("invoiceDate", payable.PostingDate), ("creditDate", credit.PostingDate));
-        }
-
-        var fullPayable = request.Amount == payable.RemainingTc;
-        var fullCredit = request.Amount == available;
-        var payableFc = fullPayable ? payable.RemainingFc : Shared.Round(request.Amount * payable.BookedRate, company.FunctionalCurrency);
-        var creditFc = fullCredit ? -credit.RemainingFc : Shared.Round(request.Amount * credit.BookedRate, company.FunctionalCurrency);
-        var fx = payableFc - creditFc;
-        var settlement = new ApSettlement
-        {
-            Id = Guid.CreateVersion7(),
-            CompanyId = payable.CompanyId,
-            SettlingItemId = credit.Id,
-            SettledItemId = payable.Id,
-            SettlementDate = settlementDate,
-            Kind = "credit_application",
-            Currency = payable.Currency,
-            AmountTc = request.Amount,
-            AmountFcSettledItem = payableFc,
-            AmountFcSettlingItem = creditFc,
-            FxGainLossFc = fx,
-            CreatedBy = principal.Principal?.MembershipId.Value,
-            CreatedAt = clock.UtcNow,
-        };
-        if (fx != 0m)
-        {
-            // In the company's currency: the payable is relieved at its booked value, the credit at its own; the difference is realised gain (+) or loss (−).
-            var supplier = await partners.FindSupplierAsync(payable.CompanyId, payable.PartnerId, cancellationToken);
-            var lines = new List<PostingLine>
-            {
-                new(AccountRoles.AP, payableFc, new PostingKeys("ap_settlement", PartnerPostingGroupId: supplier?.PostingGroupId), SubledgerType: SubledgerTypes.Payables, SubledgerRef: payable.DocumentId, PartnerId: payable.PartnerId),
-                new(AccountRoles.AP, -creditFc, new PostingKeys("ap_settlement", PartnerPostingGroupId: supplier?.PostingGroupId), SubledgerType: SubledgerTypes.Payables, SubledgerRef: credit.DocumentId, PartnerId: payable.PartnerId),
-                new(fx > 0m ? AccountRoles.FxGainRealized : AccountRoles.FxLossRealized, -fx, new PostingKeys("ap_settlement"), PartnerId: payable.PartnerId),
-            };
-            var description = LocalizedText.Bilingual($"Credit {credit.DocumentNumber} applied to {payable.DocumentNumber}", $"تطبيق إشعار {credit.DocumentNumber} على {payable.DocumentNumber}");
-            var posted = await posting.PostAsync(new PostingRequest(company.Id, "purchasing", "ap_settlement", settlement.Id, settlementDate, company.FunctionalCurrency.Code, lines, $"{credit.DocumentNumber}→{payable.DocumentNumber}", settlementDate, description,
-                payable.BranchId is { } b ? new BranchId(b) : null, RateTypes.Spot, null, null, $"ap_settlement:{settlement.Id}"), cancellationToken);
-            if (posted.IsFailure)
-            {
-                return posted.Error!;
-            }
-
-            settlement.JournalEntryId = posted.Value.EntryId;
-        }
-
-        Settle(payable, request.Amount, payableFc);
-        Settle(credit, -request.Amount, -creditFc);
-        db.Settlements.Add(settlement);
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("ap_settlement", settlement.Id, $"{credit.DocumentNumber}→{payable.DocumentNumber}", AuditActions.Posted, After: new { settlement.AmountTc, settlement.Currency, settlement.FxGainLossFc, creditRemaining = credit.RemainingTc, invoiceRemaining = payable.RemainingTc }, CompanyId: payable.CompanyId), cancellationToken);
-        return new SettlementSummary(settlement.Id, credit.Id, credit.DocumentNumber, payable.Id, payable.DocumentNumber, settlement.SettlementDate, settlement.Kind, settlement.Currency, settlement.AmountTc, settlement.AmountFcSettledItem, settlement.AmountFcSettlingItem, settlement.FxGainLossFc, settlement.JournalEntryId, settlement.CreatedAt);
-    }
-
-    private void Settle(ApOpenItem item, decimal amountTc, decimal amountFc)
-    {
-        item.SettledTc += amountTc;
-        item.SettledFc += amountFc;
-        item.RemainingTc -= amountTc;
-        item.RemainingFc -= amountFc;
-        item.Status = item.RemainingTc == 0m ? "settled" : "open";
-        item.UpdatedAt = clock.UtcNow;
-    }
-
-    public async Task<IReadOnlyList<OpenItemSummary>> OpenItemsAsync(Guid companyId, Guid? partnerId, string? status, CancellationToken cancellationToken)
-    {
-        var query = db.OpenItems.AsNoTracking().Where(i => i.CompanyId == companyId);
-        if (partnerId is { } p)
-        {
-            query = query.Where(i => i.PartnerId == p);
-        }
-
-        query = string.IsNullOrWhiteSpace(status) ? query.Where(static i => i.Status != "reversed") : query.Where(i => i.Status == status);
-        return (await query.OrderBy(static i => i.DueDate).ThenBy(static i => i.DocumentNumber).ThenBy(static i => i.Instalment).ToListAsync(cancellationToken)).Select(Map).ToList();
     }
 
     public async Task<Result<InvoiceSummary>> GetAsync(Guid id, CancellationToken cancellationToken)
@@ -730,34 +582,8 @@ public sealed class InvoiceService(
         foreach (var instalment in instalments.Value)
         {
             sequence++;
-            db.OpenItems.Add(new ApOpenItem
-            {
-                Id = Guid.CreateVersion7(),
-                CompanyId = invoice.CompanyId,
-                PartnerId = invoice.PartnerId,
-                Kind = invoice.Kind == "debit_note" ? "debit_note" : "invoice",
-                DocumentType = DocumentType,
-                DocumentId = invoice.Id,
-                DocumentNumber = invoice.Number,
-                Instalment = sequence,
-                SupplierReference = invoice.SupplierInvoiceNumber,
-                PostingDate = invoice.PostingDate,
-                DocumentDate = invoice.DocumentDate,
-                DueDate = instalment.DueOn,
-                DiscountDate = instalment.DiscountUntil,
-                DiscountPct = instalment.DiscountPct,
-                Currency = invoice.Currency,
-                OriginalTc = sign * instalment.Amount,
-                OriginalFc = sign * Shared.Round(instalment.Amount * rate.Value, company.FunctionalCurrency),
-                BookedRate = rate.Value,
-                RemainingTc = sign * instalment.Amount,
-                RemainingFc = sign * Shared.Round(instalment.Amount * rate.Value, company.FunctionalCurrency),
-                JournalEntryId = posted.Value.EntryId,
-                BranchId = invoice.BranchId,
-                Status = "open",
-                CreatedAt = clock.UtcNow,
-                UpdatedAt = clock.UtcNow,
-            });
+            await payables.OpenAsync(new NewOpenItem(invoice.CompanyId, invoice.PartnerId, invoice.Kind == "debit_note" ? PayableKinds.DebitNote : PayableKinds.Invoice, DocumentType, invoice.Id, invoice.Number, sequence, invoice.SupplierInvoiceNumber,
+                invoice.PostingDate, invoice.DocumentDate, instalment.DueOn, instalment.DiscountUntil, instalment.DiscountPct, invoice.Currency, sign * instalment.Amount, sign * Shared.Round(instalment.Amount * rate.Value, company.FunctionalCurrency), rate.Value, posted.Value.EntryId, invoice.BranchId), cancellationToken);
         }
 
         invoice.DueDate ??= instalments.Value.Count > 0 ? instalments.Value[0].DueOn : invoice.DocumentDate;
@@ -792,14 +618,14 @@ public sealed class InvoiceService(
             return Error.Conflict("invoice.not_posted", "Only a posted invoice is reversed.").WithWhy(("status", invoice.Status));
         }
 
-        var openItems = await db.OpenItems.Where(o => o.DocumentId == invoice.Id && o.DocumentType == DocumentType).ToListAsync(cancellationToken);
-        if (openItems.Any(static o => o.SettledTc != 0m))
-        {
-            return Error.Conflict("invoice.settled", "The invoice has been paid or credited in part; reverse those settlements first.");
-        }
-
         var company = await companies.FindAsync(new CompanyId(invoice.CompanyId), cancellationToken);
         var reversalDate = request.ReversalDate ?? clock.TodayIn(company?.TimeZone ?? "UTC");
+        var itemsReversed = await payables.ReverseDocumentAsync(DocumentType, invoice.Id, reversalDate, cancellationToken);
+        if (itemsReversed.IsFailure)
+        {
+            return itemsReversed.Error!.Code == "payables.item_settled" ? Error.Conflict("invoice.settled", "The invoice has been paid or credited in part; reverse those settlements first.").WithWhy(("items", itemsReversed.Error!.Why)) : itemsReversed.Error!;
+        }
+
         var reversed = await posting.ReverseAsync(invoice.JournalEntryId!.Value, reversalDate, reason, false, cancellationToken);
         if (reversed.IsFailure)
         {
@@ -863,14 +689,6 @@ public sealed class InvoiceService(
             commitment.ConsumedRc = Math.Max(0m, commitment.ConsumedRc - group.Sum(static l => l.NetAmountFc));
             commitment.Status = commitment.ConsumedRc >= commitment.AmountRc ? "consumed" : "open";
             commitment.UpdatedAt = clock.UtcNow;
-        }
-
-        foreach (var item in openItems)
-        {
-            item.Status = "reversed";
-            item.RemainingTc = 0m;
-            item.RemainingFc = 0m;
-            item.UpdatedAt = clock.UtcNow;
         }
 
         invoice.Status = "reversed";
@@ -1325,8 +1143,6 @@ public sealed class InvoiceService(
         return (item, uom);
     }
 
-    private static OpenItemSummary Map(ApOpenItem o) => new(o.Id, o.Kind, o.DocumentType, o.DocumentId, o.DocumentNumber, o.Instalment, o.PostingDate, o.DueDate, o.DiscountDate, o.DiscountPct, o.Currency, o.OriginalTc, o.OriginalFc, o.SettledTc, o.RemainingTc, o.RemainingFc, o.PaymentBlocked, o.BlockReason, o.Status);
-
     private async Task<InvoiceSummary> MapAsync(Invoice i, CancellationToken cancellationToken)
     {
         var partner = await partners.FindAsync(i.PartnerId, cancellationToken);
@@ -1352,7 +1168,7 @@ public sealed class InvoiceService(
 
         var matches = (await db.MatchResults.AsNoTracking().Where(m => m.InvoiceId == i.Id).OrderByDescending(static m => m.MatchedAt).ToListAsync(cancellationToken))
             .Select(static m => new MatchResultSummary(m.Id, m.Status, m.PriceTolerancePct, m.QtyTolerancePct, m.PriceVarianceAmount, m.PriceVariancePct, m.QtyVariance, Shared.Parse(m.Details), m.OverrideId, m.MatchedAt)).ToList();
-        var openItems = (await db.OpenItems.AsNoTracking().Where(o => o.DocumentId == i.Id && o.DocumentType == DocumentType).OrderBy(static o => o.Instalment).ToListAsync(cancellationToken)).Select(Map).ToList();
+        var openItems = await payables.ItemsOfAsync(DocumentType, i.Id, cancellationToken);
         return new InvoiceSummary(i.Id, i.CompanyId, i.Number, i.Kind, i.Status, i.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? Empty(), i.SupplierInvoiceNumber, i.DocumentDate, i.PostingDate, i.DueDate, i.Currency, i.ExchangeRate, company?.FunctionalCurrency.Code ?? i.Currency,
             i.PaymentTermsId, terms, i.WhtCodeId, wht?.Code, i.TotalNet, i.TotalTax, i.TotalWht, i.TotalGross, i.TotalPayable, i.BlockKind, i.BlockReason, i.BlockId, i.ApprovalRequestId, i.RejectionReason, i.JournalEntryId, i.ReversalEntryId, i.ReversalReason, i.Notes, Shared.Parse(i.CustomFields), lines, matches, openItems, i.SubmittedAt, i.PostedAt, i.UpdatedAt);
     }

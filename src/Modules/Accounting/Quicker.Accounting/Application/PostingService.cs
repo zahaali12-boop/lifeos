@@ -97,7 +97,7 @@ public sealed class PostingService(
         for (var i = 0; i < request.Lines.Count; i++)
         {
             var line = request.Lines[i];
-            if (line.Amount == 0m)
+            if (line.Amount == 0m && (line.AmountFc ?? 0m) == 0m)
             {
                 return Error.Validation("posting.line_zero", $"Line {i + 1} has no amount.").WithWhy(("line", i + 1));
             }
@@ -105,6 +105,24 @@ public sealed class PostingService(
             if (!new Money(line.Amount, tc).IsRoundedToMinorUnit)
             {
                 return Error.Validation("posting.amount_precision", $"Line {i + 1}: {line.Amount} has more decimals than {tc.Code} allows ({tc.MinorUnits}).").WithWhy(("line", i + 1), ("amount", line.Amount), ("minorUnits", tc.MinorUnits));
+            }
+
+            if (line.AmountFc is { } fixedFc)
+            {
+                if (!new Money(fixedFc, fc).IsRoundedToMinorUnit)
+                {
+                    return Error.Validation("posting.amount_precision", $"Line {i + 1}: {fixedFc} has more decimals than {fc.Code} allows ({fc.MinorUnits}).").WithWhy(("line", i + 1), ("amountFc", fixedFc), ("minorUnits", fc.MinorUnits));
+                }
+
+                if (line.Amount != 0m && Math.Sign(line.Amount) != Math.Sign(fixedFc))
+                {
+                    return Error.Validation("posting.amount_fc_sign", $"Line {i + 1}: the functional amount is on the other side of the transaction amount.").WithWhy(("line", i + 1), ("amount", line.Amount), ("amountFc", fixedFc));
+                }
+
+                if (tc == fc && line.Amount != fixedFc)
+                {
+                    return Error.Validation("posting.amount_fc_mismatch", $"Line {i + 1}: in the company's currency the functional amount equals the transaction amount.").WithWhy(("line", i + 1), ("amount", line.Amount), ("amountFc", fixedFc));
+                }
             }
 
             total += line.Amount;
@@ -443,9 +461,10 @@ public sealed class PostingService(
             return Error.Validation("posting.subledger_unexpected", $"Line {lineNo}: '{account.Code}' is not a control account; it takes no subledger reference.").WithWhy(("line", lineNo), ("account", account.Code));
         }
 
-        var fcAmount = policy.Round(line.Amount * rateTcFc, fc.MinorUnits);
+        // A fixed functional value (ADR-0031) replaces the conversion; the reporting value follows the functional one.
+        var fcAmount = line.AmountFc is { } fixedFc ? policy.Round(fixedFc, fc.MinorUnits) : policy.Round(line.Amount * rateTcFc, fc.MinorUnits);
         var rcAmount = rc is { } reporting
-            ? reporting == tc ? line.Amount : reporting == fc ? fcAmount : policy.Round(fcAmount * rateFcRc!.Value, reporting.MinorUnits)
+            ? reporting == tc && line.AmountFc is null ? line.Amount : reporting == fc ? fcAmount : policy.Round(fcAmount * rateFcRc!.Value, reporting.MinorUnits)
             : 0m;
         Guid? setId = null;
         if (check.Value.Dimensions.Count > 0)

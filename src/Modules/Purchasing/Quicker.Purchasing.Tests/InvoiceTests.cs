@@ -170,7 +170,7 @@ public sealed class InvoiceTests(ApiHostFixture host)
         var orderAfter = await owner.GetOkAsync($"/api/v1/purchasing/orders/{orderId}");
         orderAfter.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("id").GetGuid() == cleaningLine).GetProperty("qtyInvoiced").GetDecimal().ShouldBe(2m);
         orderAfter.GetProperty("commitments").EnumerateArray().Select(static c => c.GetProperty("status").GetString()).ShouldAllBe(static st => st == "consumed");
-        (await owner.GetOkAsync($"/api/v1/purchasing/invoices/open-items?companyId={s.CompanyId}&partnerId={s.Supplier}")).GetArrayLength().ShouldBe(2);
+        (await owner.GetOkAsync($"/api/v1/payables/open-items?companyId={s.CompanyId}&partnerId={s.Supplier}")).GetArrayLength().ShouldBe(2);
         await owner.AssertInvariantsAsync();
 
         // The same supplier reference again is a duplicate suspect; an expense invoice posts to its account.

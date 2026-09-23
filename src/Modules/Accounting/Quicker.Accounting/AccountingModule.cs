@@ -19,6 +19,7 @@ public static class AccountingModule
         services.AddScoped<IChartOfAccounts>(static sp => sp.GetRequiredService<ChartService>());
         services.AddScoped<ProfileService>();
         services.AddScoped<IPostingGroupDirectory>(static sp => sp.GetRequiredService<ProfileService>());
+        services.AddScoped<IPostingRules>(static sp => sp.GetRequiredService<ProfileService>());
         services.AddScoped<PostingService>();
         services.AddScoped<IPostingService>(static sp => sp.GetRequiredService<PostingService>());
         services.AddScoped<JournalService>();
