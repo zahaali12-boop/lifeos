@@ -14,6 +14,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
+import { TransferQuantities } from "./TransferQuantities";
 
 type Transfer = components["schemas"]["TransferSummary"];
 
@@ -65,6 +66,7 @@ export function TransfersPage() {
   const [editing, setEditing] = useState<TransferForm | null>(null);
   const [date, setDate] = useState(today());
   const [problem, setProblem] = useState<FormProblem | null>(null);
+  const [quantities, setQuantities] = useState<"ship" | "receive" | null>(null);
   const openId = search.open;
   const fromWarehouse = warehouses.data?.find((w) => w.id === editing?.fromWarehouseId);
   const toWarehouse = warehouses.data?.find((w) => w.id === editing?.toWarehouseId);
@@ -96,7 +98,7 @@ export function TransfersPage() {
       await queryClient.invalidateQueries({ queryKey: ["transfer", id] });
     }
   };
-  const open = (id: string | null): void => { void navigate({ to: "/inventory/transfers", search: id ? { open: id } : {} }); };
+  const open = (id: string | null): void => { setQuantities(null); void navigate({ to: "/inventory/transfers", search: id ? { open: id } : {} }); };
 
   const save = useMutation({
     mutationFn: async (form: TransferForm) => unwrap(await api.POST("/api/v1/inventory/transfers", { body: toRequest(companyId, form) })),
@@ -232,23 +234,44 @@ export function TransfersPage() {
                   <TextField type="date" value={date} onChange={(e) => { setDate(e.target.value); }} dir="ltr" data-testid="transfer-date" />
                 </Field>
               ) : null}
-              <DialogFooter>
-                {detail.status === "draft" ? (
-                  <Button onClick={() => { act.mutate("ship"); }} loading={act.isPending} data-testid="ship-transfer">
-                    {t("inventory.transfers.ship")}
-                  </Button>
-                ) : null}
-                {detail.status === "shipped" || detail.status === "partially_received" ? (
-                  <Button onClick={() => { act.mutate("receive"); }} loading={act.isPending} data-testid="receive-transfer">
-                    {t("inventory.transfers.receive")}
-                  </Button>
-                ) : null}
-                {detail.status !== "received" && detail.status !== "cancelled" ? (
-                  <Button variant="secondary" onClick={() => { act.mutate("cancel"); }} loading={act.isPending}>
-                    {t("common.cancel")}
-                  </Button>
-                ) : null}
-              </DialogFooter>
+              {quantities ? (
+                <TransferQuantities
+                  transfer={detail}
+                  mode={quantities}
+                  date={date}
+                  toWarehouseBins={warehouses.data?.find((w) => w.id === detail.toWarehouseId)?.binsEnabled === true}
+                  onDone={async () => { setQuantities(null); await refresh(openId); }}
+                  onCancel={() => { setQuantities(null); }}
+                />
+              ) : (
+                <DialogFooter>
+                  {detail.status === "draft" ? (
+                    <>
+                      <Button variant="secondary" onClick={() => { setProblem(null); setQuantities("ship"); }} data-testid="ship-partial">
+                        {t("inventory.transfers.shipPart")}
+                      </Button>
+                      <Button onClick={() => { act.mutate("ship"); }} loading={act.isPending} data-testid="ship-transfer">
+                        {t("inventory.transfers.ship")}
+                      </Button>
+                    </>
+                  ) : null}
+                  {detail.status === "shipped" || detail.status === "partially_received" ? (
+                    <>
+                      <Button variant="secondary" onClick={() => { setProblem(null); setQuantities("receive"); }} data-testid="receive-partial">
+                        {t("inventory.transfers.receiveDifferences")}
+                      </Button>
+                      <Button onClick={() => { act.mutate("receive"); }} loading={act.isPending} data-testid="receive-transfer">
+                        {t("inventory.transfers.receive")}
+                      </Button>
+                    </>
+                  ) : null}
+                  {detail.status !== "received" && detail.status !== "cancelled" ? (
+                    <Button variant="secondary" onClick={() => { act.mutate("cancel"); }} loading={act.isPending}>
+                      {t("common.cancel")}
+                    </Button>
+                  ) : null}
+                </DialogFooter>
+              )}
             </div>
           ) : null}
         </DialogContent>
