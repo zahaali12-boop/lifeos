@@ -86,6 +86,29 @@ test("English: workspace, custom field, company, member invitation, announcement
   await page.keyboard.press("Escape");
   await expect(page.getByRole("grid")).toContainText("PO-MAIN");
 
+  // A hierarchical "sales region" dimension: a region and a city under it.
+  await nav(page, "Dimensions");
+  await expect(page.getByRole("grid").first()).toContainText("BRANCH");
+  await page.getByTestId("new-dimension").click();
+  await page.getByTestId("dimension-code").fill("REGION");
+  await page.getByTestId("dimension-name-en").fill("Sales region");
+  await page.getByTestId("dimension-name-ar").fill("منطقة المبيعات");
+  await page.getByLabel("Values form a tree").check();
+  await page.getByTestId("save-dimension").click();
+  await expect(page.getByTestId("dimension-values")).toContainText("REGION");
+  await page.getByTestId("new-value").click();
+  await page.getByTestId("value-code").fill("NORTH");
+  await page.getByTestId("value-name-en").fill("North");
+  await page.getByTestId("save-value").click();
+  await page.getByTestId("new-value").click();
+  await page.getByTestId("value-code").fill("MOSUL");
+  await page.getByTestId("value-name-en").fill("Mosul");
+  await page.getByLabel("Parent").selectOption({ label: "NORTH · North" });
+  await expectAccessible(page);
+  await page.getByTestId("save-value").click();
+  await expect(page.getByTestId("dimension-values").getByRole("grid")).toContainText("MOSUL");
+  await expectAccessible(page);
+
   // A member is invited; an announcement reaches the inbox.
   await nav(page, "Members");
   await page.getByTestId("invite-member").click();
@@ -126,6 +149,9 @@ test("Arabic: the same journey renders right-to-left and stays accessible", asyn
   await expectAccessible(page);
   await nav(page, "سلاسل الترقيم");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("سلاسل الترقيم");
+  await expectAccessible(page);
+  await nav(page, "الأبعاد");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("الأبعاد");
   await expectAccessible(page);
 
   // Eastern Arabic digits when chosen.

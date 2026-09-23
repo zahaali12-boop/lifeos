@@ -9,6 +9,7 @@ import { JobsPage } from "./JobsPage";
 import { LoginPage } from "./LoginPage";
 import { MembersPage } from "./MembersPage";
 import { NotificationsPage } from "./NotificationsPage";
+import { DimensionsPage } from "./DimensionsPage";
 import { NumberingPage } from "./NumberingPage";
 import { RatesPage } from "./RatesPage";
 import { RolesPage } from "./RolesPage";
@@ -79,6 +80,7 @@ const searchRecord = (search: Record<string, unknown>): Record<string, string> =
 const dashboardRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: DashboardPage });
 const companiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/companies", component: CompaniesPage, validateSearch: searchRecord });
 const ratesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/rates", component: RatesPage });
+const dimensionsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dimensions", component: DimensionsPage });
 const numberingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/numbering", component: NumberingPage });
 const membersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/members", component: MembersPage });
 const rolesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/roles", component: RolesPage });
@@ -144,7 +146,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
   shellRoute.addChildren([
-    dashboardRoute, companiesRoute, ratesRoute, numberingRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
+    dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, revaluationsRoute,
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,

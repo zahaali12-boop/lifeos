@@ -1,4 +1,4 @@
-import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, TrendingDown, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Scale, ScanLine, Settings2, ShieldCheck, Shapes, ShoppingCart, SlidersHorizontal, TrendingDown, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -16,6 +16,7 @@ export const navigation: NavigationItem[] = [
   { to: "/companies", label: "nav.companies", icon: Building2, shortcut: "g c", permission: "organization.company.read" },
   { to: "/rates", label: "nav.rates", icon: Coins, shortcut: "g r", permission: "organization.company.read" },
   { to: "/numbering", label: "nav.numbering", icon: Hash, shortcut: "g '", permission: "numbering.series.read" },
+  { to: "/dimensions", label: "nav.dimensions", icon: Shapes, shortcut: "g @", permission: "organization.company.read" },
   { to: "/accounting/chart", label: "nav.chart", icon: BookOpen, shortcut: "g h", permission: "accounting.chart.read" },
   { to: "/accounting/journals", label: "nav.journals", icon: NotebookPen, shortcut: "g u", permission: "accounting.journal.read" },
   { to: "/accounting/trial-balance", label: "nav.trialBalance", icon: Scale, shortcut: "g t", permission: "accounting.journal.read" },
