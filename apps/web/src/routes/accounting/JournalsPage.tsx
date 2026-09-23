@@ -275,7 +275,7 @@ export function JournalsPage() {
                   </TableRow>
                 </TableBody>
               </Table>
-              <AttachmentsPanel entityType="journal" entityId={detail.id} />
+              <AttachmentsPanel entityType="manual_journal" entityId={detail.id} />
               <FormError message={problem?.message ?? null} />
               {detail.status === "pending_approval" || detail.status === "posted" ? (
                 <Field label={t("common.reason")}>
