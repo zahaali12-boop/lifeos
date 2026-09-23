@@ -12,6 +12,7 @@ import { formatDate, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { rememberRecent } from "../shell/CommandPalette";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { CompanyBranches } from "./CompanyBranches";
 
 type Company = components["schemas"]["CompanySummary"];
 type CustomField = components["schemas"]["CustomFieldView"];
@@ -231,8 +232,9 @@ export function CompaniesPage() {
       />
 
       <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) { setEditing(null); void navigate({ to: "/companies", search: {} }); } }}>
-        <DialogContent closeLabel={t("common.close")} className="sm:max-w-2xl">
+        <DialogContent closeLabel={t("common.close")} className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           {form ? (
+            <>
             <form onSubmit={submit} className="flex flex-col gap-4">
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold">{isEdit ? t("companies.edit") : t("companies.new")}</DialogTitle>
@@ -297,6 +299,8 @@ export function CompaniesPage() {
                 </Button>
               </DialogFooter>
             </form>
+            {editing.id ? <CompanyBranches companyId={editing.id} /> : null}
+            </>
           ) : null}
         </DialogContent>
       </Dialog>

@@ -63,6 +63,16 @@ test("English: workspace, custom field, company, member invitation, announcement
   await expect(page.getByRole("grid")).toContainText("MAIN");
   await expectAccessible(page);
 
+  // A branch for the company; it becomes a value of the branch dimension.
+  await page.getByRole("grid").getByText("MAIN", { exact: true }).dblclick();
+  await page.getByTestId("new-branch").click();
+  await page.getByTestId("branch-code").fill("BGD");
+  await page.getByTestId("branch-name-en").fill("Baghdad");
+  await page.getByTestId("save-branch").click();
+  await expect(page.getByTestId("branch-row")).toHaveCount(1);
+  await expectAccessible(page);
+  await page.keyboard.press("Escape");
+
   // The command palette finds the company.
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByPlaceholder(/Search/).fill("MA");
@@ -89,6 +99,8 @@ test("English: workspace, custom field, company, member invitation, announcement
   // A hierarchical "sales region" dimension: a region and a city under it.
   await nav(page, "Dimensions");
   await expect(page.getByRole("grid").first()).toContainText("BRANCH");
+  await page.getByRole("grid").first().getByText("BRANCH", { exact: true }).dblclick();
+  await expect(page.getByTestId("dimension-values")).toContainText("BGD");
   await page.getByTestId("new-dimension").click();
   await page.getByTestId("dimension-code").fill("REGION");
   await page.getByTestId("dimension-name-en").fill("Sales region");

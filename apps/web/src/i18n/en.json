@@ -226,6 +226,17 @@
     "noDeferrals": "No deferrals",
     "noDeferralsHint": "Prepaid insurance, annual licences, accrued bonuses and revenue billed in advance."
   },
+  "branches": {
+    "title": "Branches",
+    "hint": "Each branch is also a value of the Branch dimension, so postings can be analysed by branch.",
+    "new": "Add branch",
+    "code": "Code",
+    "name": "Name",
+    "nameEn": "Name (English)",
+    "nameAr": "Name (Arabic)",
+    "active": "Active",
+    "save": "Save branch"
+  },
   "dimensions": {
     "description": "The analysis axes that journals and documents carry — cost centre, department, project and any you add — and their values. Branch values come from the branches of each company.",
     "new": "New dimension",
