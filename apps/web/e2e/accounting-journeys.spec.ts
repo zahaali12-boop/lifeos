@@ -73,6 +73,33 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await expect(page.getByTestId("ledger-line")).toContainText("September rent");
   await expectAccessible(page);
 
+  // Posting rules: the chart's profile is in use; a new version adds a narrower rule (purchase-invoice expenses to rent) and takes over.
+  await nav(page, "Posting rules");
+  await expect(page.getByTestId("posting-profile")).toBeVisible();
+  await expect(page.getByTestId("rule-row").first()).toBeVisible();
+  await expectAccessible(page);
+  await page.getByTestId("new-profile-version").click();
+  await page.getByTestId("create-version").click();
+  await expect(page.getByTestId("profile-select")).toContainText("v2");
+  await page.getByTestId("edit-rules").click();
+  await page.getByTestId("add-rule").click();
+  const newRule = page.getByTestId("rule-edit-row").last();
+  await newRule.getByLabel("Account role").selectOption("PurchaseExpense");
+  await newRule.getByLabel("Account", { exact: true }).fill("6110");
+  await newRule.getByLabel("Document type").fill("purchase_invoice");
+  await expectAccessible(page);
+  await page.getByTestId("save-rules").click();
+  await expect(page.getByTestId("rule-row").filter({ hasText: "purchase_invoice" })).toHaveCount(1);
+  await page.getByTestId("activate-profile").click();
+  await expect(page.getByTestId("posting-profile")).toContainText("in use");
+  await page.getByTestId("tab-groups").click();
+  await page.getByTestId("new-posting-group").click();
+  await page.getByTestId("group-code").fill("IMPORTED");
+  await page.getByTestId("group-name-en").fill("Imported goods");
+  await page.getByTestId("save-posting-group").click();
+  await expect(page.getByTestId("posting-group-row")).toContainText("IMPORTED");
+  await expectAccessible(page);
+
   // A recurring rent journal, generated once by hand; a year of insurance paid up front, previewed and scheduled over 12 periods.
   await nav(page, "Recurring & deferrals");
   await page.getByTestId("new-template").click();

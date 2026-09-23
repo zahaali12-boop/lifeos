@@ -20,6 +20,7 @@ import { JournalBrowserPage } from "./accounting/JournalBrowserPage";
 import { JournalsPage } from "./accounting/JournalsPage";
 import { LedgerPage } from "./accounting/LedgerPage";
 import { PeriodsPage } from "./accounting/PeriodsPage";
+import { PostingRulesPage } from "./accounting/PostingRulesPage";
 import { RoutinesPage } from "./accounting/RoutinesPage";
 import { TrialBalancePage } from "./accounting/TrialBalancePage";
 import { AdjustmentsPage } from "./inventory/AdjustmentsPage";
@@ -95,6 +96,7 @@ const trialBalanceRoute = createRoute({ getParentRoute: () => shellRoute, path: 
 const ledgerRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/ledger", component: LedgerPage, validateSearch: searchRecord });
 const journalEntriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/journal-entries", component: JournalBrowserPage, validateSearch: searchRecord });
 const periodsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/periods", component: PeriodsPage });
+const postingRulesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/posting-rules", component: PostingRulesPage });
 const routinesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/routines", component: RoutinesPage });
 const itemsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/items", component: ItemsPage, validateSearch: searchRecord });
 const warehousesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/warehouses", component: WarehousesPage, validateSearch: searchRecord });
@@ -147,7 +149,7 @@ const routeTree = rootRoute.addChildren([
   signupRoute,
   shellRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
-    chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute,
+    chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, revaluationsRoute,
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
   ]),

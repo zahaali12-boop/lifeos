@@ -59,7 +59,7 @@ export function CostExplanationDialog({ sleId, itemCode, onClose }: { sleId: str
                       <TableNumberCell><Qty value={v.valuedQuantity} /></TableNumberCell>
                       <TableNumberCell><Amount value={v.costAmountActual} /></TableNumberCell>
                       <TableNumberCell><Amount value={v.costAmountExpected} /></TableNumberCell>
-                      <TableCell dir="ltr">{v.accountRole} / {v.offsetRole}</TableCell>
+                      <TableCell>{t(`accountRoles.${v.accountRole}`, { defaultValue: v.accountRole })} / {t(`accountRoles.${v.offsetRole}`, { defaultValue: v.offsetRole })}</TableCell>
                       <TableCell>{source(v.sourceDocumentType)}</TableCell>
                     </TableRow>
                   ))}
