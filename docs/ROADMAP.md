@@ -90,7 +90,7 @@ Goal: requisitions to supplier payment with three-way match, landed costs, appro
 | 4.6 Returns and debit notes | Supplier returns (exact cost reversing against the receipt), debit notes crediting returns or expenses, credit application to invoices. Supplier advances moved to 4.7 with bank accounts (ASSUMPTIONS A-112). | GRNI invariant extended to returns and their credits; a return at the landed cost, a note applied, a credit below cost as price variance. |
 | 4.7 Payables | AP open items, aging at any date, holds, payment proposals, bank and cash accounts, supplier payments (partial, early-payment discounts, WHT at payment, charges, realised FX, on account), advances and their application. Netting with AR moves to 5.7 with receivables (ASSUMPTIONS A-113). | AP = control invariant (harness) and aging = control at two sampled dates (test); scenario 3's realised-FX mechanics exercised on the AP side (two instalments at different rates with fees). |
 | 4.8 Supplier intelligence | Price history, lead-time statistics, performance scoring with configurable weights. | Scores and lead times exact on a two-supplier scenario; tolerance changes the grade. |
-| 4.9 Demo seed v4 | A year of purchases including backdated receipts and late landed costs. | |
+| 4.9 Demo seed v4 | A year of purchases including backdated receipts and late landed costs. | Eleven months of closed orders give the price history of the year before the live month; the current month posts receipts (one before the order's promised date, one after it), invoices, a landed cost two weeks after its receipt, a return with a debit note and payments; the harness passes (A-115). |
 
 Hard scenarios proven: **1**, **2**, **5**, **15** (AP part).
 

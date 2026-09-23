@@ -203,4 +203,32 @@ public sealed class NumberingTests(ApiHostFixture host)
         (await admin.PutErrorAsync($"/api/v1/numbering/series/{yearlyId}/counter", new { periodKey = "FY2026/27", nextNumber = 15, reason = "x" }, HttpStatusCode.Forbidden)).ShouldBe("series.reset_forbidden");
         (await admin.PostAsJsonAsync("/api/v1/numbering/allocate", new { documentType = "purchase_order", companyId, date = "2026-10-03", documentId = Guid.NewGuid() }, Json)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task A_default_series_is_ensured_for_every_company_of_the_tenant_not_only_the_first()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var (first, _) = await owner.CompanyWithBranchAsync("FIRSTCO");
+        var (second, _) = await owner.CompanyWithBranchAsync("SECONDCO");
+
+        await using var scope = Api.Services.CreateAsyncScope();
+        await using var uow = await scope.ServiceProvider.GetRequiredService<IUnitOfWorkFactory>().BeginAsync(TenantContext.System(new TenantId(ws.TenantId), "ensure-test"));
+        scope.ServiceProvider.GetRequiredService<IUnitOfWorkAccessor>().Set(uow);
+        var allocator = scope.ServiceProvider.GetRequiredService<INumberAllocator>();
+        foreach (var companyId in new[] { first, second })
+        {
+            // Series codes are unique in the tenant: a bare GRN for the first company must not leave the second without a series.
+            var ensured = await allocator.EnsureDefaultSeriesAsync("purchase_receipt", new CompanyId(companyId), "GRN", "GRN-{yyyy}-{seq:5}");
+            ensured.IsSuccess.ShouldBeTrue(ensured.Error?.Code);
+            (await allocator.EnsureDefaultSeriesAsync("purchase_receipt", new CompanyId(companyId), "GRN", "GRN-{yyyy}-{seq:5}")).Value.ShouldBe(ensured.Value, "ensuring again finds the same series");
+            var number = await allocator.AllocateAsync(new NumberRequest("purchase_receipt", new CompanyId(companyId), null, new DateOnly(2026, 9, 22), Guid.NewGuid()));
+            number.IsSuccess.ShouldBeTrue(number.Error?.Code);
+            number.Value.Text.ShouldBe("GRN-2026-00001");
+        }
+
+        (await uow.Connection.QueryAsync<string>(new CommandDefinition("SELECT code FROM app.num_series WHERE tenant_id = @t AND document_type = 'purchase_receipt' ORDER BY code", new { t = ws.TenantId }, uow.Transaction)))
+            .ShouldBe(["GRN-FIRSTCO", "GRN-SECONDCO"]);
+        await uow.CommitAsync();
+    }
 }

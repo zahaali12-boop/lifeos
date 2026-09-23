@@ -113,11 +113,22 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_bins WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3 * 48);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_lots WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThan(500);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_serials WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(first.Serials);
-        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_ledger_entries WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(first.StockLines);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_ledger_entries WHERE tenant_id = @t AND entry_type = 'opening'", new { t = DemoData.TenantId })).ShouldBe(first.StockLines);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_value_entries WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(first.StockLines, "every opening unit is valued");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_journal_lines WHERE tenant_id = @t AND subledger_type = 'INV'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(0, "the opening stock is booked");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_reason_codes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(7);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_item_warehouse_settings WHERE tenant_id = @t AND reorder_point IS NOT NULL", new { t = DemoData.TenantId })).ShouldBeGreaterThan(500, "a quarter of the stocked items carry planning parameters");
+
+        // A year of buying (roadmap 4.9): eleven months of closed orders carry the price history; the live month runs procure-to-pay through the posting engine.
+        first.PurchaseOrders.ShouldBe(3 * ((11 * 3) + 3));
+        first.SupplierInvoices.ShouldBe(3 * 4, "three invoices and a debit note per company");
+        first.SupplierPayments.ShouldBe(3 * 2);
+        (await db.ExecuteScalarAsync<int>("SELECT count(DISTINCT date_trunc('month', order_date)) FROM app.pur_orders WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(11, "eleven months of order history before the live month, whose orders were placed in the last of them");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.pur_orders WHERE tenant_id = @t AND status = 'closed'", new { t = DemoData.TenantId })).ShouldBe(3 * 11 * 3);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_ledger_entries WHERE tenant_id = @t AND entry_type IN ('purchase_receipt', 'purchase_return')", new { t = DemoData.TenantId })).ShouldBe(3 * (6 + 1), "three receipts of six lines and a return per company");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.pur_landed_cost_docs WHERE tenant_id = @t AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(3);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ap_open_items WHERE tenant_id = @t AND document_type = 'purchase_invoice' AND remaining_tc <> 0", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(6, "the late supplier part-paid and the open one unpaid leave items to age");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.pur_supplier_quotes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(9, "an RFQ per company with three quotes to compare");
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
@@ -140,6 +151,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         third.Journals.ShouldBe(first.Journals, "the books are deterministic for the same day");
         third.Entries.ShouldBe(first.Entries);
         (third.Items, third.Variants, third.Lots, third.Serials, third.StockLines).ShouldBe((first.Items, first.Variants, first.Lots, first.Serials, first.StockLines), "the item master and the stock are deterministic");
+        (third.PurchaseOrders, third.SupplierInvoices, third.SupplierPayments).ShouldBe((first.PurchaseOrders, first.SupplierInvoices, first.SupplierPayments), "the year of buying is deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

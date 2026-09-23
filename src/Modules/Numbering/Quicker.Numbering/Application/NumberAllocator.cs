@@ -32,7 +32,16 @@ public sealed class NumberAllocator(NumberingDbContext db, IUnitOfWorkAccessor u
             return id;
         }
 
-        var created = await seriesService.CreateAsync(new SaveSeriesRequest(code, type, companyId.Value, template, Gapless: true, ResetPolicy: resetPolicy, IsDefault: true), cancellationToken);
+        var company = await companies.FindAsync(companyId, cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", companyId.Value);
+        }
+
+        // Codes are unique in the tenant: a bare code (GRN) would number one company only and leave the next with none.
+        var suffix = "-" + company.Code;
+        var companyCode = code.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) ? code : code + suffix;
+        var created = await seriesService.CreateAsync(new SaveSeriesRequest(companyCode, type, companyId.Value, template, Gapless: true, ResetPolicy: resetPolicy, IsDefault: true), cancellationToken);
         return created.IsFailure ? created.Error! : created.Value.Id;
     }
 

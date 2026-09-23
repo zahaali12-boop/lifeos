@@ -26,7 +26,8 @@ public interface INumberAllocator
     /// <summary>
     /// The id of an active series for the document type and company, creating a default one (gapless, the given
     /// template and reset policy) when the company has none yet, so system documents such as journal entries can be
-    /// numbered on day one; administrators refine the series afterwards.
+    /// numbered on day one; administrators refine the series afterwards. Series codes are unique in the tenant, so the
+    /// company code is appended to <paramref name="code"/> when the caller has not already done so (GRN becomes GRN-IQT).
     /// </summary>
     Task<Result<Guid>> EnsureDefaultSeriesAsync(string documentType, CompanyId companyId, string code, string template, string resetPolicy = "yearly", CancellationToken cancellationToken = default);
 }
