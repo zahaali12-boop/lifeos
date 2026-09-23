@@ -705,7 +705,7 @@
     "componentsOf": "مكونات الإصدار {version} لإنتاج {quantity} {uom}",
     "quantity": "الكمية",
     "scrap": "الهالك",
-    "explodeFor": "المتطلبات لكمية (بوحدة {uom})",
+    "explodeFor": "الكمية المراد إنتاجها (بوحدة {uom})",
     "requirement": "المتطلب",
     "withScrap": "مع الهالك",
     "outputQtyIn": "تُنتج (بوحدة {uom})",

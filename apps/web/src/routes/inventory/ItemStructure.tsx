@@ -149,9 +149,9 @@ export function ItemBomEditor({ item }: { item: Item }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selected.lines.map((l) => (
+                  {selected.lines.map((l, index) => (
                     <TableRow key={l.id}>
-                      <TableCell>{l.position}</TableCell>
+                      <TableCell>{index + 1}</TableCell>
                       <TableCell>
                         <span dir="ltr">{l.componentItemCode}</span> {localized(l.componentName)}
                         {l.componentVariantSku ? <span className="text-fg-muted"> · <span dir="ltr">{l.componentVariantSku}</span></span> : null}

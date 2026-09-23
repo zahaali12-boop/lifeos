@@ -705,7 +705,7 @@
     "componentsOf": "Components of version {version} for {quantity} {uom}",
     "quantity": "Quantity",
     "scrap": "Scrap",
-    "explodeFor": "Requirements for (in {uom})",
+    "explodeFor": "Quantity to make (in {uom})",
     "requirement": "Requirement",
     "withScrap": "With scrap",
     "outputQtyIn": "Makes (in {uom})",
