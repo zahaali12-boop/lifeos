@@ -45,6 +45,14 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
 
     public DbSet<ApOpenItem> OpenItems => Set<ApOpenItem>();
 
+    public DbSet<ChargeType> ChargeTypes => Set<ChargeType>();
+
+    public DbSet<LandedCostDocument> LandedCosts => Set<LandedCostDocument>();
+
+    public DbSet<LandedCostCharge> LandedCostCharges => Set<LandedCostCharge>();
+
+    public DbSet<LandedCostAllocation> LandedCostAllocations => Set<LandedCostAllocation>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Requisition>(b =>
@@ -263,6 +271,51 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.SettledFc).HasPrecision(24, 6);
             b.Property(static x => x.RemainingTc).HasPrecision(24, 6);
             b.Property(static x => x.RemainingFc).HasPrecision(24, 6);
+        });
+
+        modelBuilder.Entity<ChargeType>(b =>
+        {
+            b.ToTable("pur_charge_types", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Name).HasColumnName("name_i18n");
+            b.HasAuditTrail("charge_type", static x => x.Code);
+        });
+
+        modelBuilder.Entity<LandedCostDocument>(b =>
+        {
+            b.ToTable("pur_landed_cost_docs", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.ExchangeRate).HasPrecision(24, 12);
+            b.Property(static x => x.TotalAmount).HasPrecision(24, 6);
+            b.Property(static x => x.TotalAmountFc).HasPrecision(24, 6);
+            b.Property(static x => x.OnHandPortionFc).HasPrecision(24, 6);
+            b.Property(static x => x.SoldPortionFc).HasPrecision(24, 6);
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasMany(static x => x.Charges).WithOne().HasForeignKey(static c => new { c.TenantId, c.LandedCostId });
+            b.HasMany(static x => x.Allocations).WithOne().HasForeignKey(static a => new { a.TenantId, a.LandedCostId });
+            b.HasAuditTrail("landed_cost_document", static x => x.Number);
+        });
+
+        modelBuilder.Entity<LandedCostCharge>(b =>
+        {
+            b.ToTable("pur_landed_cost_charges", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Amount).HasPrecision(24, 6);
+            b.Property(static x => x.AmountFc).HasPrecision(24, 6);
+            b.Property(static x => x.InvoicedAmountFc).HasPrecision(24, 6);
+            b.HasOne<ChargeType>().WithMany().HasForeignKey(static x => new { x.TenantId, x.ChargeTypeId });
+        });
+
+        modelBuilder.Entity<LandedCostAllocation>(b =>
+        {
+            b.ToTable("pur_landed_cost_allocations", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.BasisValue).HasPrecision(24, 9);
+            b.Property(static x => x.AllocatedAmountFc).HasPrecision(24, 6);
+            b.Property(static x => x.OnHandPortionFc).HasPrecision(24, 6);
+            b.Property(static x => x.SoldPortionFc).HasPrecision(24, 6);
+            b.HasOne<ReceiptLine>().WithMany().HasForeignKey(static x => new { x.TenantId, x.ReceiptLineId });
+            b.HasOne<LandedCostCharge>().WithMany().HasForeignKey(static x => new { x.TenantId, x.ChargeId });
         });
 
         base.OnModelCreating(modelBuilder);

@@ -189,7 +189,7 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         }
 
         return new ItemInfo(item.Id, item.Code, item.Name, item.Type, item.Tracking, item.ExpiryRequired, item.ShelfLifeDays, item.Fefo, item.BaseUomId, baseUom.Code, baseUom.Precision,
-            item.SalesUomId, item.PurchaseUomId, item.CategoryId, item.ItemPostingGroupId, item.ItemTaxGroupId, costing, item.HasVariants, item.IsActive);
+            item.SalesUomId, item.PurchaseUomId, item.CategoryId, item.ItemPostingGroupId, item.ItemTaxGroupId, costing, item.HasVariants, item.IsActive, item.WeightKg, item.VolumeM3);
     }
 }
 

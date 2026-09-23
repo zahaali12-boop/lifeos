@@ -1,3 +1,4 @@
+using Quicker.Kernel.Text;
 using Quicker.Persistence.EntityFramework;
 
 namespace Quicker.Purchasing.Domain;
@@ -695,6 +696,9 @@ public sealed class InvoiceLine : ITenantEntity
 
     public Guid? DimensionSetId { get; set; }
 
+    /// <summary>For a charge line: the landed-cost charge the invoice settles.</summary>
+    public Guid? LandedCostChargeId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 }
 
@@ -789,5 +793,137 @@ public sealed class ApOpenItem : ITenantEntity
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>A kind of landed cost (freight, customs, duty, insurance, handling) with the basis it is allocated by unless a charge says otherwise.</summary>
+public sealed class ChargeType : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string Code { get; set; } = string.Empty;
+
+    public LocalizedText Name { get; set; } = new();
+
+    public string DefaultAllocationBasis { get; set; } = "value";
+
+    public bool IsSystem { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>Charges allocated onto posted receipt lines: estimated against the clearing account, settled by the charge invoices, pushed to consumption for what was already sold.</summary>
+public sealed class LandedCostDocument : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public DateOnly PostingDate { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal ExchangeRate { get; set; } = 1m;
+
+    public decimal TotalAmount { get; set; }
+
+    public decimal TotalAmountFc { get; set; }
+
+    public decimal OnHandPortionFc { get; set; }
+
+    public decimal SoldPortionFc { get; set; }
+
+    public string? Reference { get; set; }
+
+    public string? Notes { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<LandedCostCharge> Charges { get; } = [];
+
+    public List<LandedCostAllocation> Allocations { get; } = [];
+}
+
+public sealed class LandedCostCharge : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid LandedCostId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ChargeTypeId { get; set; }
+
+    public Guid? PartnerId { get; set; }
+
+    public string? Description { get; set; }
+
+    public decimal Amount { get; set; }
+
+    public decimal AmountFc { get; set; }
+
+    public string AllocationBasis { get; set; } = "value";
+
+    public bool IsEstimate { get; set; } = true;
+
+    public Guid? SupplierInvoiceLineId { get; set; }
+
+    public decimal InvoicedAmountFc { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class LandedCostAllocation : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid LandedCostId { get; set; }
+
+    public Guid ChargeId { get; set; }
+
+    public Guid ReceiptLineId { get; set; }
+
+    public decimal BasisValue { get; set; }
+
+    public decimal AllocatedAmountFc { get; set; }
+
+    public decimal OnHandPortionFc { get; set; }
+
+    public decimal SoldPortionFc { get; set; }
+
+    public Guid? AdjustmentRunId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
 }
 

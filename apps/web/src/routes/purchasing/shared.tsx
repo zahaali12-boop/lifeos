@@ -59,6 +59,10 @@ export function useSuppliers(companyId: string) {
   });
 }
 
+export function useChargeTypes() {
+  return useQuery({ queryKey: ["charge-types"], queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/charge-types")) });
+}
+
 export function useAgreements(companyId: string) {
   return useQuery({
     queryKey: ["agreements", companyId],

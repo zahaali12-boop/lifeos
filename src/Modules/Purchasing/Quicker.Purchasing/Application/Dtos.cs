@@ -131,13 +131,13 @@ public sealed record ReceivableLine(Guid OrderId, string OrderNumber, Guid Order
 // ------------------------------------------------------------------ supplier invoices
 
 /// <summary>A line: against a posted receipt line (three-way), an order line without a receipt (services, two-way) or a free expense line on an account role; quantity and price in the invoice currency.</summary>
-public sealed record SaveInvoiceLineRequest(string Kind, decimal Quantity, decimal UnitPrice, Guid? ReceiptLineId = null, Guid? OrderLineId = null, string? AccountRole = null, string? Description = null, decimal DiscountPct = 0m, Guid? DimensionSetId = null);
+public sealed record SaveInvoiceLineRequest(string Kind, decimal Quantity, decimal UnitPrice, Guid? ReceiptLineId = null, Guid? OrderLineId = null, string? AccountRole = null, string? Description = null, decimal DiscountPct = 0m, Guid? DimensionSetId = null, Guid? LandedCostChargeId = null);
 
 public sealed record SaveInvoiceRequest(Guid CompanyId, Guid PartnerId, IReadOnlyList<SaveInvoiceLineRequest> Lines, string Kind = "invoice", string? SupplierInvoiceNumber = null, DateOnly? DocumentDate = null, DateOnly? PostingDate = null, string? Currency = null, Guid? PaymentTermsId = null, Guid? WhtCodeId = null, bool ApplyWht = true, string? Notes = null, Guid? BranchId = null, JsonElement? CustomFields = null);
 
 public sealed record ReverseInvoiceRequest(string Reason, DateOnly? ReversalDate = null);
 
-public sealed record InvoiceLineSummary(Guid Id, int LineNo, string Kind, Guid? ReceiptLineId, string? ReceiptNumber, Guid? OrderLineId, string? OrderNumber, Guid? ItemId, string? ItemCode, IReadOnlyDictionary<string, string>? ItemName, string? AccountRole, string? Description, decimal Quantity, Guid? UomId, string? UomCode, decimal UnitPrice, decimal DiscountPct, decimal NetAmount, decimal TaxAmount, decimal WhtAmount, decimal? ExpectedUnitPrice, decimal? PriceVariancePct, decimal? QtyVariance, Guid? DimensionSetId);
+public sealed record InvoiceLineSummary(Guid Id, int LineNo, string Kind, Guid? ReceiptLineId, string? ReceiptNumber, Guid? OrderLineId, string? OrderNumber, Guid? ItemId, string? ItemCode, IReadOnlyDictionary<string, string>? ItemName, string? AccountRole, string? Description, decimal Quantity, Guid? UomId, string? UomCode, decimal UnitPrice, decimal DiscountPct, decimal NetAmount, decimal TaxAmount, decimal WhtAmount, decimal? ExpectedUnitPrice, decimal? PriceVariancePct, decimal? QtyVariance, Guid? DimensionSetId, Guid? LandedCostChargeId = null, string? LandedCostNumber = null);
 
 public sealed record MatchResultSummary(Guid Id, string Status, decimal PriceTolerancePct, decimal QtyTolerancePct, decimal PriceVarianceAmount, decimal PriceVariancePct, decimal QtyVariance, JsonElement Details, Guid? OverrideId, DateTimeOffset MatchedAt);
 
@@ -146,5 +146,26 @@ public sealed record OpenItemSummary(Guid Id, string Kind, string DocumentType, 
 public sealed record InvoiceSummary(Guid Id, Guid CompanyId, string Number, string Kind, string Status, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, string? SupplierInvoiceNumber, DateOnly DocumentDate, DateOnly PostingDate, DateOnly? DueDate, string Currency, decimal ExchangeRate, string FunctionalCurrency, Guid? PaymentTermsId, string? PaymentTermsCode, Guid? WhtCodeId, string? WhtCode, decimal TotalNet, decimal TotalTax, decimal TotalWht, decimal TotalGross, decimal TotalPayable, string? BlockKind, string? BlockReason, Guid? BlockId, Guid? ApprovalRequestId, string? RejectionReason, Guid? JournalEntryId, Guid? ReversalEntryId, string? ReversalReason, string? Notes, JsonElement CustomFields, IReadOnlyList<InvoiceLineSummary> Lines, IReadOnlyList<MatchResultSummary> Matches, IReadOnlyList<OpenItemSummary> OpenItems, DateTimeOffset? SubmittedAt, DateTimeOffset? PostedAt, DateTimeOffset UpdatedAt);
 
 /// <summary>What can still be invoiced for a supplier: posted receipt lines with an uninvoiced quantity and open service lines of orders.</summary>
-public sealed record InvoicableLine(string Kind, Guid? ReceiptLineId, string? ReceiptNumber, Guid OrderLineId, string OrderNumber, Guid OrderId, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid UomId, string UomCode, decimal Quantity, decimal QtyInvoiced, decimal Remaining, decimal UnitPrice, string Currency, DateOnly? PostingDate);
+public sealed record InvoicableLine(string Kind, Guid? ReceiptLineId, string? ReceiptNumber, Guid? OrderLineId, string? OrderNumber, Guid? OrderId, int LineNo, Guid? ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? UomId, string UomCode, decimal Quantity, decimal QtyInvoiced, decimal Remaining, decimal UnitPrice, string Currency, DateOnly? PostingDate, Guid? LandedCostChargeId = null, string? LandedCostNumber = null);
+
+// ------------------------------------------------------------------ landed costs
+
+public sealed record SaveChargeTypeRequest(string Code, IReadOnlyDictionary<string, string>? Name, string DefaultAllocationBasis = "value", bool IsActive = true);
+
+public sealed record ChargeTypeSummary(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, string DefaultAllocationBasis, bool IsSystem, bool IsActive, DateTimeOffset UpdatedAt);
+
+public sealed record SaveLandedCostChargeRequest(Guid ChargeTypeId, decimal Amount, Guid? PartnerId = null, string? Description = null, string? AllocationBasis = null);
+
+public sealed record SaveLandedCostRequest(Guid CompanyId, IReadOnlyList<SaveLandedCostChargeRequest> Charges, IReadOnlyList<Guid> ReceiptLineIds, DateOnly? PostingDate = null, string? Currency = null, string? Reference = null, string? Notes = null, JsonElement? CustomFields = null);
+
+public sealed record ReverseLandedCostRequest(string Reason, DateOnly? ReversalDate = null);
+
+public sealed record LandedCostChargeSummary(Guid Id, int LineNo, Guid ChargeTypeId, string ChargeTypeCode, Guid? PartnerId, string? PartnerCode, string? Description, decimal Amount, decimal AmountFc, string AllocationBasis, bool IsEstimate, Guid? SupplierInvoiceLineId, decimal InvoicedAmountFc);
+
+public sealed record LandedCostAllocationSummary(Guid Id, Guid ChargeId, int ChargeLineNo, string ChargeTypeCode, Guid ReceiptLineId, string ReceiptNumber, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, decimal ReceivedQuantity, string UomCode, decimal BasisValue, decimal AllocatedAmountFc, decimal OnHandPortionFc, decimal SoldPortionFc);
+
+public sealed record LandedCostSummary(Guid Id, Guid CompanyId, string Number, string Status, DateOnly PostingDate, string Currency, decimal ExchangeRate, string FunctionalCurrency, decimal TotalAmount, decimal TotalAmountFc, decimal OnHandPortionFc, decimal SoldPortionFc, string? Reference, string? Notes, string? ReversalReason, JsonElement CustomFields, IReadOnlyList<LandedCostChargeSummary> Charges, IReadOnlyList<LandedCostAllocationSummary> Allocations, DateTimeOffset? PostedAt, DateTimeOffset UpdatedAt);
+
+/// <summary>A posted receipt line a landed cost can be allocated to, with the basis values it would count with.</summary>
+public sealed record AllocatableReceiptLine(Guid ReceiptLineId, string ReceiptNumber, Guid ReceiptId, DateOnly PostingDate, Guid PartnerId, string PartnerCode, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, decimal Quantity, string UomCode, decimal QuantityBase, decimal ValueFc, decimal? WeightKg, decimal? VolumeM3);
 

@@ -7,6 +7,7 @@ using Quicker.Persistence.EntityFramework;
 using Quicker.Purchasing.Application;
 using Quicker.Purchasing.Contracts;
 using Quicker.Purchasing.Persistence;
+using Quicker.Tenancy.Contracts;
 using Quicker.Workflow.Contracts;
 
 namespace Quicker.Purchasing;
@@ -21,6 +22,7 @@ public static class PurchasingModule
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Order, "app.pur_orders", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Receipt, "app.pur_receipts", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Invoice, "app.pur_invoices", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.LandedCost, "app.pur_landed_cost_docs", "custom_fields"));
         services.AddModuleDbContext<PurchasingDbContext>();
         services.AddScoped<RequisitionService>();
         services.AddScoped<RfqService>();
@@ -28,6 +30,8 @@ public static class PurchasingModule
         services.AddScoped<PurchaseOrderService>();
         services.AddScoped<ReceiptService>();
         services.AddScoped<InvoiceService>();
+        services.AddScoped<LandedCostService>();
+        services.AddScoped<ITenantSetupStep, PurchasingDefaults>();
         services.AddScoped<IPurchaseReceiptDirectory>(static sp => sp.GetRequiredService<ReceiptService>());
         services.AddScoped<PurchasingSupply>();
         services.AddScoped<IPurchaseOrderDirectory>(static sp => sp.GetRequiredService<PurchasingSupply>());

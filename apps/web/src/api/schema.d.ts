@@ -6291,6 +6291,123 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/charge-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingChargeTypes"];
+        put?: never;
+        post: operations["postPurchasingChargeTypes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/charge-types/{chargeTypeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPurchasingChargeTypesByChargeTypeId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/landed-costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Landed-cost documents of a company with their charges and allocations (the on-hand versus sold split per receipt line). */
+        get: operations["getPurchasingLandedCosts"];
+        put?: never;
+        /** Drafts a landed-cost document: charges allocated to receipt lines by value, weight, volume or quantity. */
+        post: operations["postPurchasingLandedCosts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/landed-costs/allocatable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Posted receipt lines a landed cost can be allocated to, with their value, quantity, weight and volume. */
+        get: operations["getPurchasingLandedCostsAllocatable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/landed-costs/{landedCostId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingLandedCostsByLandedCostId"];
+        put: operations["putPurchasingLandedCostsByLandedCostId"];
+        post?: never;
+        delete: operations["deletePurchasingLandedCostsByLandedCostId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/landed-costs/{landedCostId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the document: stock on hand takes its share, what was already sold goes to cost of sales, the clearing account is credited. */
+        post: operations["postPurchasingLandedCostsByLandedCostIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/landed-costs/{landedCostId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted document whose charges are still estimates. */
+        post: operations["postPurchasingLandedCostsByLandedCostIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6478,6 +6595,38 @@ export interface components {
             lines: components["schemas"]["AdjustmentLineSummary"][];
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description A posted receipt line a landed cost can be allocated to, with the basis values it would count with. */
+        AllocatableReceiptLine: {
+            /** Format: uuid */
+            receiptLineId: string;
+            receiptNumber: string;
+            /** Format: uuid */
+            receiptId: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            quantity: number | string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: double */
+            valueFc: number | string;
+            /** Format: double */
+            weightKg: null | number | string;
+            /** Format: double */
+            volumeM3: null | number | string;
         };
         /** @description An allocated number: the series that issued it, its sequence within the reset period, and the rendered text. */
         AllocatedNumber: {
@@ -7126,6 +7275,19 @@ export interface components {
         ChangePasswordRequest: {
             currentPassword: string;
             newPassword: string;
+        };
+        ChargeTypeSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            defaultAllocationBasis: string;
+            isSystem: boolean;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
         };
         ChartSummary: {
             /** Format: uuid */
@@ -8096,20 +8258,20 @@ export interface components {
             receiptLineId: null | string;
             receiptNumber: null | string;
             /** Format: uuid */
-            orderLineId: string;
-            orderNumber: string;
+            orderLineId: null | string;
+            orderNumber: null | string;
             /** Format: uuid */
-            orderId: string;
+            orderId: null | string;
             /** Format: int32 */
             lineNo: number | string;
             /** Format: uuid */
-            itemId: string;
+            itemId: null | string;
             itemCode: string;
             itemName: {
                 [key: string]: string;
             };
             /** Format: uuid */
-            uomId: string;
+            uomId: null | string;
             uomCode: string;
             /** Format: double */
             quantity: number | string;
@@ -8122,6 +8284,9 @@ export interface components {
             currency: string;
             /** Format: date */
             postingDate: null | string;
+            /** Format: uuid */
+            landedCostChargeId?: null | string;
+            landedCostNumber?: null | string;
         };
         InvoiceLineSummary: {
             /** Format: uuid */
@@ -8166,6 +8331,9 @@ export interface components {
             qtyVariance: null | number | string;
             /** Format: uuid */
             dimensionSetId: null | string;
+            /** Format: uuid */
+            landedCostChargeId?: null | string;
+            landedCostNumber?: null | string;
         };
         InvoiceSummary: {
             /** Format: uuid */
@@ -8566,6 +8734,90 @@ export interface components {
             dueDate: null | string;
         };
         JsonElement: unknown;
+        LandedCostAllocationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            chargeId: string;
+            /** Format: int32 */
+            chargeLineNo: number | string;
+            chargeTypeCode: string;
+            /** Format: uuid */
+            receiptLineId: string;
+            receiptNumber: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            receivedQuantity: number | string;
+            uomCode: string;
+            /** Format: double */
+            basisValue: number | string;
+            /** Format: double */
+            allocatedAmountFc: number | string;
+            /** Format: double */
+            onHandPortionFc: number | string;
+            /** Format: double */
+            soldPortionFc: number | string;
+        };
+        LandedCostChargeSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            chargeTypeId: string;
+            chargeTypeCode: string;
+            /** Format: uuid */
+            partnerId: null | string;
+            partnerCode: null | string;
+            description: null | string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            amountFc: number | string;
+            allocationBasis: string;
+            isEstimate: boolean;
+            /** Format: uuid */
+            supplierInvoiceLineId: null | string;
+            /** Format: double */
+            invoicedAmountFc: number | string;
+        };
+        LandedCostSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: date */
+            postingDate: string;
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            functionalCurrency: string;
+            /** Format: double */
+            totalAmount: number | string;
+            /** Format: double */
+            totalAmountFc: number | string;
+            /** Format: double */
+            onHandPortionFc: number | string;
+            /** Format: double */
+            soldPortionFc: number | string;
+            reference: null | string;
+            notes: null | string;
+            reversalReason: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            charges: components["schemas"]["LandedCostChargeSummary"][];
+            allocations: components["schemas"]["LandedCostAllocationSummary"][];
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         /** @description What a figure drills to: the ledger of the account over the same window with the same dimension filters. */
         LedgerDrill: {
             /** Format: uuid */
@@ -10207,6 +10459,11 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        ReverseLandedCostRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         ReverseReceiptRequest: {
             reason: string;
             /** Format: date */
@@ -10611,6 +10868,16 @@ export interface components {
              */
             sortOrder: number | string;
         };
+        SaveChargeTypeRequest: {
+            code: string;
+            name: null | {
+                [key: string]: string;
+            };
+            /** @default value */
+            defaultAllocationBasis: string;
+            /** @default true */
+            isActive: boolean;
+        };
         SaveChartRequest: {
             code: string;
             name: {
@@ -10887,6 +11154,8 @@ export interface components {
             discountPct: number | string;
             /** Format: uuid */
             dimensionSetId?: null | string;
+            /** Format: uuid */
+            landedCostChargeId?: null | string;
         };
         SaveInvoiceRequest: {
             /** Format: uuid */
@@ -11040,6 +11309,28 @@ export interface components {
             autoReverse: boolean;
             /** Format: date */
             autoReverseOn?: null | string;
+            customFields?: unknown;
+        };
+        SaveLandedCostChargeRequest: {
+            /** Format: uuid */
+            chargeTypeId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            description?: null | string;
+            allocationBasis?: null | string;
+        };
+        SaveLandedCostRequest: {
+            /** Format: uuid */
+            companyId: string;
+            charges: components["schemas"]["SaveLandedCostChargeRequest"][];
+            receiptLineIds: string[];
+            /** Format: date */
+            postingDate?: null | string;
+            currency?: null | string;
+            reference?: null | string;
+            notes?: null | string;
             customFields?: unknown;
         };
         SaveLotRequest: {
@@ -24525,6 +24816,263 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvoiceSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingChargeTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChargeTypeSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingChargeTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveChargeTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChargeTypeSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingChargeTypesByChargeTypeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chargeTypeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveChargeTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChargeTypeSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingLandedCosts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandedCostSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingLandedCosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLandedCostRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandedCostSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingLandedCostsAllocatable: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                from?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllocatableReceiptLine"][];
+                };
+            };
+        };
+    };
+    getPurchasingLandedCostsByLandedCostId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                landedCostId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandedCostSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingLandedCostsByLandedCostId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                landedCostId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLandedCostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandedCostSummary"];
+                };
+            };
+        };
+    };
+    deletePurchasingLandedCostsByLandedCostId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                landedCostId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPurchasingLandedCostsByLandedCostIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                landedCostId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandedCostSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingLandedCostsByLandedCostIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                landedCostId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseLandedCostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LandedCostSummary"];
                 };
             };
         };

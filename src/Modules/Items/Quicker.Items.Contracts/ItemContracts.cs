@@ -23,7 +23,9 @@ public sealed record ItemInfo(
     Guid? ItemTaxGroupId,
     string? CostingMethodOverride,
     bool HasVariants,
-    bool IsActive)
+    bool IsActive,
+    decimal? WeightKg = null,
+    decimal? VolumeM3 = null)
 {
     public bool IsStockItem => Type is "stock" or "kit" or "assembly";
 }

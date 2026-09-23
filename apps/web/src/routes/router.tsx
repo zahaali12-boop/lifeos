@@ -31,6 +31,7 @@ import { ValuationPage } from "./inventory/ValuationPage";
 import { WarehousesPage } from "./inventory/WarehousesPage";
 import { AgreementsPage } from "./purchasing/AgreementsPage";
 import { InvoicesPage } from "./purchasing/InvoicesPage";
+import { LandedCostsPage } from "./purchasing/LandedCostsPage";
 import { PurchaseOrdersPage } from "./purchasing/PurchaseOrdersPage";
 import { PurchasingSettingsPage } from "./purchasing/PurchasingSettingsPage";
 import { ReceiptsPage } from "./purchasing/ReceiptsPage";
@@ -100,6 +101,7 @@ const purchaseOrdersRoute = createRoute({ getParentRoute: () => shellRoute, path
 const agreementsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/agreements", component: AgreementsPage, validateSearch: searchRecord });
 const receiptsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/receipts", component: ReceiptsPage, validateSearch: searchRecord });
 const invoicesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/invoices", component: InvoicesPage, validateSearch: searchRecord });
+const landedCostsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/landed-costs", component: LandedCostsPage, validateSearch: searchRecord });
 const approvalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/approvals", component: ApprovalsPage, validateSearch: searchRecord });
 const workflowsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/workflows", component: WorkflowsPage, validateSearch: searchRecord });
 
@@ -127,7 +129,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),
 ]);

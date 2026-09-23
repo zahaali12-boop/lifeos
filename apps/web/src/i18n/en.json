@@ -26,6 +26,7 @@
     "company": "Companies"
   },
   "nav": {
+    "landedCosts": "Landed costs",
     "invoices": "Supplier invoices",
     "receipts": "Goods receipts",
     "dashboard": "Dashboard",
@@ -1144,6 +1145,38 @@
     "emptyTermsDescription": "Create the first entry."
   },
   "purchasing": {
+    "landedCostsDescription": "Freight, customs, duties, insurance and handling allocated to posted receipts by value, weight, volume or quantity: what is still on hand takes its share, what was already sold goes to cost of sales; estimates sit on the clearing account until the charge invoices settle them.",
+    "newLandedCost": "New landed cost",
+    "editLandedCost": "Edit landed cost",
+    "emptyLandedCosts": "No landed costs yet",
+    "emptyLandedCostsDescription": "Land the charges of a shipment on its receipts.",
+    "reference": "Reference",
+    "charges": "Charges",
+    "addCharge": "Add charge",
+    "chargeType": "Charge type",
+    "basis": "Allocation basis",
+    "typeDefault": "Type's default",
+    "bases": {
+      "value": "Value",
+      "weight": "Weight",
+      "volume": "Volume",
+      "quantity": "Quantity"
+    },
+    "expectedFrom": "Expected from",
+    "landOn": "Land on these receipt lines",
+    "nothingAllocatable": "No posted receipt lines to land on.",
+    "toStock": "To stock",
+    "toCogs": "To cost of sales",
+    "allocationReport": "Allocation",
+    "allocated": "Allocated",
+    "settlement": "Settlement",
+    "estimated": "Estimated",
+    "invoicedAt": "Invoiced at {amount}",
+    "postLandedCost": "Post landed cost",
+    "companyCurrencyHelp": "Blank uses the company's currency.",
+    "chargeTypes": "Charge types",
+    "newChargeType": "New charge type",
+    "defaultBasis": "Default basis",
     "invoicesDescription": "Supplier invoices matched to receipts (three-way) and to service lines (two-way) or entered as expenses: breaches beyond the supplier's tolerances are blocked until an override, approval follows the workflow, posting settles GRNI, re-prices the stock, withholds tax and opens the payables.",
     "newInvoice": "New supplier invoice",
     "editInvoice": "Edit supplier invoice",
@@ -1163,6 +1196,7 @@
     "nothingInvoicable": "Nothing left to invoice for this supplier.",
     "addExpenseLine": "Add expense line",
     "lineKinds": {
+      "charge": "Landed-cost charge",
       "receipt": "Receipt",
       "order": "Service",
       "expense": "Expense"

@@ -21,6 +21,7 @@ interface InvoiceLineForm {
   kind: string;
   receiptLineId: string;
   orderLineId: string;
+  landedCostChargeId: string;
   label: string;
   quantity: string;
   unitPrice: string;
@@ -83,7 +84,7 @@ export function InvoicesPage() {
         documentDate: f.documentDate || null,
         currency: f.currency || null,
         applyWht: f.applyWht,
-        lines: f.lines.filter((l) => num(l.quantity) > 0).map((l) => ({ kind: l.kind, quantity: num(l.quantity), unitPrice: num(l.unitPrice), receiptLineId: l.receiptLineId || null, orderLineId: l.orderLineId || null, description: l.description || null, discountPct: 0 })),
+        lines: f.lines.filter((l) => num(l.quantity) > 0).map((l) => ({ kind: l.kind, quantity: num(l.quantity), unitPrice: num(l.unitPrice), receiptLineId: l.receiptLineId || null, orderLineId: l.orderLineId || null, landedCostChargeId: l.landedCostChargeId || null, description: l.description || null, discountPct: 0 })),
       };
       return f.id ? unwrap(await api.PUT("/api/v1/purchasing/invoices/{invoiceId}", { params: { path: { invoiceId: f.id } }, body })) : unwrap(await api.POST("/api/v1/purchasing/invoices", { body }));
     },
@@ -121,15 +122,16 @@ export function InvoicesPage() {
   const openNew = (): void => { setProblem(null); setForm({ id: null, kind: "invoice", partnerId: "", supplierInvoiceNumber: "", documentDate: today(), currency: "", applyWht: true, lines: [] }); };
   const openEdit = (i: Invoice): void => {
     setProblem(null);
-    setForm({ id: i.id, kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", label: l.kind === "expense" ? "" : `${l.itemCode ?? ""} · ${l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "" })) });
+    setForm({ id: i.id, kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", landedCostChargeId: l.landedCostChargeId ?? "", label: l.kind === "expense" ? "" : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "" })) });
   };
   const addInvoicable = (line: Invoicable): void => {
-    if (!form || form.lines.some((l) => (line.kind === "receipt" ? l.receiptLineId === line.receiptLineId : l.kind === "order" && l.orderLineId === line.orderLineId))) {
+    if (!form || form.lines.some((l) => (line.kind === "receipt" ? l.receiptLineId === line.receiptLineId : line.kind === "charge" ? l.landedCostChargeId === line.landedCostChargeId : l.kind === "order" && l.orderLineId === line.orderLineId))) {
       return;
     }
-    setForm({ ...form, currency: form.currency || line.currency, lines: [...form.lines, { kind: line.kind, receiptLineId: line.receiptLineId ?? "", orderLineId: line.orderLineId, label: `${line.itemCode} · ${line.receiptNumber ?? line.orderNumber}`, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "" }] });
+    const label = line.kind === "charge" ? `${line.landedCostNumber ?? ""} · ${line.itemCode}` : `${line.itemCode} · ${line.receiptNumber ?? line.orderNumber ?? ""}`;
+    setForm({ ...form, currency: form.currency || line.currency, lines: [...form.lines, { kind: line.kind, receiptLineId: line.receiptLineId ?? "", orderLineId: line.orderLineId ?? "", landedCostChargeId: line.landedCostChargeId ?? "", label, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "" }] });
   };
-  const addExpense = (): void => { if (form) { setForm({ ...form, lines: [...form.lines, { kind: "expense", receiptLineId: "", orderLineId: "", label: "", quantity: "1", unitPrice: "", description: "" }] }); } };
+  const addExpense = (): void => { if (form) { setForm({ ...form, lines: [...form.lines, { kind: "expense", receiptLineId: "", orderLineId: "", landedCostChargeId: "", label: "", quantity: "1", unitPrice: "", description: "" }] }); } };
   const patchLine = (index: number, change: Partial<InvoiceLineForm>): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, ...change } : l)) }); } };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
   const i = detail.data;
@@ -203,12 +205,12 @@ export function InvoicesPage() {
                   {(invoicable.data ?? []).length === 0 ? <p className="text-xs text-fg-muted">{t("purchasing.nothingInvoicable")}</p> : (
                     <ul className="flex flex-col gap-1 text-sm">
                       {(invoicable.data ?? []).map((line) => (
-                        <li key={line.receiptLineId ?? line.orderLineId} className="flex flex-wrap items-center gap-3">
-                          <Badge tone={line.kind === "receipt" ? "info" : "neutral"}>{t(`purchasing.lineKinds.${line.kind}`)}</Badge>
-                          <span dir="ltr">{line.receiptNumber ?? line.orderNumber}</span>
+                        <li key={line.receiptLineId ?? line.landedCostChargeId ?? line.orderLineId} className="flex flex-wrap items-center gap-3">
+                          <Badge tone={line.kind === "receipt" ? "info" : line.kind === "charge" ? "warning" : "neutral"}>{t(`purchasing.lineKinds.${line.kind}`)}</Badge>
+                          <span dir="ltr">{line.receiptNumber ?? line.landedCostNumber ?? line.orderNumber}</span>
                           <span dir="auto">{line.itemCode} · {localized(line.itemName)}</span>
                           <span className="tabular" dir="ltr">{formatNumber(line.remaining, { maximumFractionDigits: 3 })} {line.uomCode} × {formatNumber(line.unitPrice, { maximumFractionDigits: 4 })} {line.currency}</span>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => { addInvoicable(line); }} data-testid={`add-invoicable-${line.itemCode}`}>{t("purchasing.addLine")}</Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => { addInvoicable(line); }} data-testid={`add-invoicable-${line.itemCode}${line.kind === "charge" ? "-charge" : ""}`}>{t("purchasing.addLine")}</Button>
                         </li>
                       ))}
                     </ul>
@@ -296,7 +298,7 @@ export function InvoicesPage() {
                       <TableRow key={l.id} data-testid="invoice-line-row">
                         <TableCell>{String(l.lineNo)}</TableCell>
                         <TableCell>{t(`purchasing.lineKinds.${l.kind}`)}</TableCell>
-                        <TableCell dir="auto">{l.kind === "expense" ? `${l.description ?? ""} (${l.accountRole ?? ""})` : `${l.itemCode ?? ""} · ${l.receiptNumber ?? l.orderNumber ?? ""}`}</TableCell>
+                        <TableCell dir="auto">{l.kind === "expense" ? `${l.description ?? ""} (${l.accountRole ?? ""})` : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.receiptNumber ?? l.orderNumber ?? ""}`}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatNumber(l.quantity, { maximumFractionDigits: 3 })} {l.uomCode ?? ""}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatNumber(l.unitPrice, { maximumFractionDigits: 4 })}</TableCell>
                         <TableCell className="tabular" dir="ltr">{l.expectedUnitPrice === null ? "" : `${formatNumber(l.expectedUnitPrice, { maximumFractionDigits: 4 })}${l.priceVariancePct === null ? "" : ` (${formatNumber(l.priceVariancePct, { maximumFractionDigits: 2 })}%)`}`}</TableCell>

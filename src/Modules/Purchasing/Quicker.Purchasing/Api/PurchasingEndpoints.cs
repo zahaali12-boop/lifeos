@@ -160,6 +160,37 @@ public static class PurchasingEndpoints
             .RequirePermission(PurchasingPermissions.InvoicePost)
             .WithSummary("Reverses a posted invoice as a whole.");
 
+        var chargeTypes = purchasing.MapGroup("/charge-types");
+        chargeTypes.MapGet("/", async (LandedCostService service, CancellationToken ct) => TypedResults.Ok(await service.ChargeTypesAsync(ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostRead);
+        chargeTypes.MapPost("/", async (SaveChargeTypeRequest request, LandedCostService service, CancellationToken ct) => ApiProblems.Created(await service.SaveChargeTypeAsync(null, request, ct), static c => $"/api/v1/purchasing/charge-types/{c.Id}"))
+            .RequirePermission(PurchasingPermissions.LandedCostManage);
+        chargeTypes.MapPut("/{chargeTypeId:guid}", async (Guid chargeTypeId, SaveChargeTypeRequest request, LandedCostService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveChargeTypeAsync(chargeTypeId, request, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostManage);
+
+        var landedCosts = purchasing.MapGroup("/landed-costs");
+        landedCosts.MapGet("/", async (Guid? companyId, string? status, LandedCostService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostRead)
+            .WithSummary("Landed-cost documents of a company with their charges and allocations (the on-hand versus sold split per receipt line).");
+        landedCosts.MapGet("/allocatable", async (Guid companyId, Guid? partnerId, DateOnly? from, LandedCostService service, CancellationToken ct) => TypedResults.Ok(await service.AllocatableAsync(companyId, partnerId, from, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostRead)
+            .WithSummary("Posted receipt lines a landed cost can be allocated to, with their value, quantity, weight and volume.");
+        landedCosts.MapPost("/", async (SaveLandedCostRequest request, LandedCostService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static d => $"/api/v1/purchasing/landed-costs/{d.Id}"))
+            .RequirePermission(PurchasingPermissions.LandedCostManage)
+            .WithSummary("Drafts a landed-cost document: charges allocated to receipt lines by value, weight, volume or quantity.");
+        landedCosts.MapGet("/{landedCostId:guid}", async (Guid landedCostId, LandedCostService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(landedCostId, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostRead);
+        landedCosts.MapPut("/{landedCostId:guid}", async (Guid landedCostId, SaveLandedCostRequest request, LandedCostService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(landedCostId, request, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostManage);
+        landedCosts.MapDelete("/{landedCostId:guid}", async (Guid landedCostId, LandedCostService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(landedCostId, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostManage);
+        landedCosts.MapPost("/{landedCostId:guid}/post", async (Guid landedCostId, LandedCostService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(landedCostId, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostPost)
+            .WithSummary("Posts the document: stock on hand takes its share, what was already sold goes to cost of sales, the clearing account is credited.");
+        landedCosts.MapPost("/{landedCostId:guid}/reverse", async (Guid landedCostId, ReverseLandedCostRequest request, LandedCostService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(landedCostId, request, ct)))
+            .RequirePermission(PurchasingPermissions.LandedCostPost)
+            .WithSummary("Reverses a posted document whose charges are still estimates.");
+
         return api;
     }
 }

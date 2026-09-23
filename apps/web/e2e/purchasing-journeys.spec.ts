@@ -36,7 +36,7 @@ async function supplier(page: Page, code: string, name: string, email: string): 
   await closeDialog(page);
 }
 
-test("English: requisition to purchase order, a change order, a send, a receipt and an invoice, an RFQ compared and a blanket agreement", async ({ page }) => {
+test("English: requisition to purchase order, a change order, a send, a receipt, an invoice and a landed cost, an RFQ compared and a blanket agreement", async ({ page }) => {
   const slug = `pur-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
   await page.goto("/signup");
@@ -168,6 +168,25 @@ test("English: requisition to purchase order, a change order, a send, a receipt 
   await expect(page.getByTestId("invoice-detail").getByTestId("doc-status").first()).toContainText("Posted");
   await page.getByTestId("tab-payables").click();
   await expect(page.getByTestId("open-item-row")).toHaveCount(1);
+  await expectAccessible(page);
+  await closeDialog(page);
+
+  // Freight of 240 lands on the 8 received tea (nothing sold yet): all of it to stock.
+  await nav(page, "Landed costs");
+  await expect(page.getByText("No landed costs yet")).toBeVisible();
+  await page.getByTestId("new-landed-cost").click();
+  await page.getByTestId("charge-type-0").selectOption({ label: "FREIGHT · Freight" });
+  await page.getByTestId("charge-amount-0").fill("240");
+  await page.getByTestId("landed-cost-reference").fill("BL-77");
+  await page.getByTestId("allocatable-lines").getByRole("checkbox").first().check();
+  await expectAccessible(page);
+  await page.getByTestId("save-landed-cost").click();
+  await expect(page.getByTestId("landed-cost-detail")).toBeVisible();
+  await expect(page.getByTestId("landed-cost-total")).toContainText("240");
+  await page.getByTestId("post-landed-cost").click();
+  await expect(page.getByTestId("landed-cost-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await expect(page.getByTestId("landed-cost-on-hand")).toContainText("240");
+  await expect(page.getByTestId("allocation-row")).toHaveCount(1);
   await expectAccessible(page);
   await closeDialog(page);
 

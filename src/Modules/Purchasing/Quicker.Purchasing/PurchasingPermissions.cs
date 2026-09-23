@@ -20,6 +20,9 @@ public static class PurchasingPermissions
     public const string InvoiceRead = "purchasing.invoice.read";
     public const string InvoiceManage = "purchasing.invoice.manage";
     public const string InvoicePost = "purchasing.invoice.post";
+    public const string LandedCostRead = "purchasing.landed_cost.read";
+    public const string LandedCostManage = "purchasing.landed_cost.manage";
+    public const string LandedCostPost = "purchasing.landed_cost.post";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -38,5 +41,8 @@ public static class PurchasingPermissions
         new(InvoiceRead, "purchasing", "Read supplier invoices, their match results and the payables they created"),
         new(InvoiceManage, "purchasing", "Create, edit, submit and delete draft supplier invoices"),
         new(InvoicePost, "purchasing", "Post supplier invoices into the books and reverse them"),
+        new(LandedCostRead, "purchasing", "Read landed-cost documents, charge types and allocations"),
+        new(LandedCostManage, "purchasing", "Create, edit and delete draft landed-cost documents and maintain charge types"),
+        new(LandedCostPost, "purchasing", "Post landed-cost documents onto stock and reverse them"),
     ];
 }

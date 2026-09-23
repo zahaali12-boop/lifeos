@@ -17948,6 +17948,385 @@
           }
         }
       }
+    },
+    "/api/v1/purchasing/charge-types": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "getPurchasingChargeTypes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChargeTypeSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "postPurchasingChargeTypes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveChargeTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargeTypeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/charge-types/{chargeTypeId}": {
+      "put": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "putPurchasingChargeTypesByChargeTypeId",
+        "parameters": [
+          {
+            "name": "chargeTypeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveChargeTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargeTypeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/landed-costs": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Landed-cost documents of a company with their charges and allocations (the on-hand versus sold split per receipt line).",
+        "operationId": "getPurchasingLandedCosts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LandedCostSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Drafts a landed-cost document: charges allocated to receipt lines by value, weight, volume or quantity.",
+        "operationId": "postPurchasingLandedCosts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLandedCostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LandedCostSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/landed-costs/allocatable": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Posted receipt lines a landed cost can be allocated to, with their value, quantity, weight and volume.",
+        "operationId": "getPurchasingLandedCostsAllocatable",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AllocatableReceiptLine"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/landed-costs/{landedCostId}": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "getPurchasingLandedCostsByLandedCostId",
+        "parameters": [
+          {
+            "name": "landedCostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LandedCostSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "putPurchasingLandedCostsByLandedCostId",
+        "parameters": [
+          {
+            "name": "landedCostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLandedCostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LandedCostSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "deletePurchasingLandedCostsByLandedCostId",
+        "parameters": [
+          {
+            "name": "landedCostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/landed-costs/{landedCostId}/post": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Posts the document: stock on hand takes its share, what was already sold goes to cost of sales, the clearing account is credited.",
+        "operationId": "postPurchasingLandedCostsByLandedCostIdPost",
+        "parameters": [
+          {
+            "name": "landedCostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LandedCostSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/landed-costs/{landedCostId}/reverse": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Reverses a posted document whose charges are still estimates.",
+        "operationId": "postPurchasingLandedCostsByLandedCostIdReverse",
+        "parameters": [
+          {
+            "name": "landedCostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseLandedCostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LandedCostSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -18653,6 +19032,118 @@
             "format": "date-time"
           }
         }
+      },
+      "AllocatableReceiptLine": {
+        "required": [
+          "receiptLineId",
+          "receiptNumber",
+          "receiptId",
+          "postingDate",
+          "partnerId",
+          "partnerCode",
+          "lineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "quantity",
+          "uomCode",
+          "quantityBase",
+          "valueFc",
+          "weightKg",
+          "volumeM3"
+        ],
+        "type": "object",
+        "properties": {
+          "receiptLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receiptNumber": {
+            "type": "string"
+          },
+          "receiptId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "quantityBase": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "valueFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "weightKg": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "volumeM3": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "A posted receipt line a landed cost can be allocated to, with the basis values it would count with."
       },
       "AllocatedNumber": {
         "required": [
@@ -21037,6 +21528,46 @@
           },
           "newPassword": {
             "type": "string"
+          }
+        }
+      },
+      "ChargeTypeSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "defaultAllocationBasis",
+          "isSystem",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "defaultAllocationBasis": {
+            "type": "string"
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -24678,14 +25209,23 @@
             ]
           },
           "orderLineId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "orderNumber": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "orderId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "lineNo": {
@@ -24697,7 +25237,10 @@
             "format": "int32"
           },
           "itemId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "itemCode": {
@@ -24710,7 +25253,10 @@
             }
           },
           "uomId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "uomCode": {
@@ -24757,6 +25303,19 @@
               "string"
             ],
             "format": "date"
+          },
+          "landedCostChargeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "landedCostNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "description": "What can still be invoiced for a supplier: posted receipt lines with an uninvoiced quantity and open service lines of orders."
@@ -24959,6 +25518,19 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "landedCostChargeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "landedCostNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -26536,6 +27108,340 @@
         }
       },
       "JsonElement": { },
+      "LandedCostAllocationSummary": {
+        "required": [
+          "id",
+          "chargeId",
+          "chargeLineNo",
+          "chargeTypeCode",
+          "receiptLineId",
+          "receiptNumber",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "receivedQuantity",
+          "uomCode",
+          "basisValue",
+          "allocatedAmountFc",
+          "onHandPortionFc",
+          "soldPortionFc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chargeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chargeLineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chargeTypeCode": {
+            "type": "string"
+          },
+          "receiptLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receiptNumber": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "receivedQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "basisValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "allocatedAmountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "onHandPortionFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "soldPortionFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "LandedCostChargeSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "chargeTypeId",
+          "chargeTypeCode",
+          "partnerId",
+          "partnerCode",
+          "description",
+          "amount",
+          "amountFc",
+          "allocationBasis",
+          "isEstimate",
+          "supplierInvoiceLineId",
+          "invoicedAmountFc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chargeTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chargeTypeCode": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "allocationBasis": {
+            "type": "string"
+          },
+          "isEstimate": {
+            "type": "boolean"
+          },
+          "supplierInvoiceLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "invoicedAmountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "LandedCostSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "status",
+          "postingDate",
+          "currency",
+          "exchangeRate",
+          "functionalCurrency",
+          "totalAmount",
+          "totalAmountFc",
+          "onHandPortionFc",
+          "soldPortionFc",
+          "reference",
+          "notes",
+          "reversalReason",
+          "customFields",
+          "charges",
+          "allocations",
+          "postedAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalAmountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "onHandPortionFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "soldPortionFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reversalReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "charges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LandedCostChargeSummary"
+            }
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LandedCostAllocationSummary"
+            }
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "LedgerDrill": {
         "required": [
           "accountId",
@@ -32820,6 +33726,24 @@
           }
         }
       },
+      "ReverseLandedCostRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "ReverseReceiptRequest": {
         "required": [
           "reason"
@@ -34224,6 +35148,35 @@
           }
         }
       },
+      "SaveChargeTypeRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "defaultAllocationBasis": {
+            "type": "string",
+            "default": "value"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveChartRequest": {
         "required": [
           "code",
@@ -35078,6 +36031,13 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "landedCostChargeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         },
         "description": "A line: against a posted receipt line (three-way), an order line without a receipt (services, two-way) or a free expense line on an account role; quantity and price in the invoice currency."
@@ -35611,6 +36571,99 @@
               "string"
             ],
             "format": "date"
+          },
+          "customFields": { }
+        }
+      },
+      "SaveLandedCostChargeRequest": {
+        "required": [
+          "chargeTypeId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "chargeTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "allocationBasis": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SaveLandedCostRequest": {
+        "required": [
+          "companyId",
+          "charges",
+          "receiptLineIds"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "charges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveLandedCostChargeRequest"
+            }
+          },
+          "receiptLineIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "customFields": { }
         }

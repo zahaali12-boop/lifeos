@@ -55,6 +55,10 @@ public static class PurchasingRowFactories
             await c.ExecuteAsync("INSERT INTO app.ap_open_items (tenant_id, id, company_id, partner_id, kind, document_type, document_id, document_number, posting_date, document_date, due_date, currency, original_tc, original_fc, remaining_tc, remaining_fc) VALUES (@t, @id, @company, @partner, 'invoice', 'purchase_invoice', @invoice, @number, '2026-09-22', '2026-09-22', '2026-10-22', 'IQD', 10, 10, 10, 10)", new { t, id, company, partner, invoice, number = Suffix(id) }, tx);
             return new RowRef("app.ap_open_items", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.pur_charge_types", static async (c, tx, t) => new RowRef("app.pur_charge_types", $"id = '{await ChargeTypeAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.pur_landed_cost_docs", static async (c, tx, t) => new RowRef("app.pur_landed_cost_docs", $"id = '{(await LandedCostAsync(c, tx, t)).Doc}'"));
+        IsolationRegistry.Register("app.pur_landed_cost_charges", static async (c, tx, t) => new RowRef("app.pur_landed_cost_charges", $"id = '{(await LandedCostAsync(c, tx, t)).Charge}'"));
+        IsolationRegistry.Register("app.pur_landed_cost_allocations", static async (c, tx, t) => new RowRef("app.pur_landed_cost_allocations", $"id = '{(await LandedCostAsync(c, tx, t)).Allocation}'"));
         IsolationRegistry.Register("app.pur_commitments", static async (c, tx, t) =>
         {
             var (order, line, company) = await OrderAsync(c, tx, t);
@@ -139,6 +143,27 @@ public static class PurchasingRowFactories
         await c.ExecuteAsync("INSERT INTO app.pur_invoices (tenant_id, id, company_id, number, partner_id, document_date, posting_date, currency) VALUES (@t, @id, @company, @number, @partner, '2026-09-22', '2026-09-22', 'IQD')", new { t, id, company, number = Suffix(id), partner }, tx);
         await c.ExecuteAsync("INSERT INTO app.pur_invoice_lines (tenant_id, id, invoice_id, line_no, kind, account_role, description, quantity, unit_price) VALUES (@t, @line, @id, 1, 'expense', 'PurchaseExpense', 'Probe', 1, 10)", new { t, line, id }, tx);
         return (id, line, company);
+    }
+
+    private static async Task<Guid> ChargeTypeAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.pur_charge_types (tenant_id, id, code, name_i18n) VALUES (@t, @id, @code, '{\"en\":\"Probe\"}')", new { t, id, code = Suffix(id) }, tx);
+        return id;
+    }
+
+    private static async Task<(Guid Doc, Guid Charge, Guid Allocation)> LandedCostAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (_, receiptLine) = await ReceiptAsync(c, tx, t);
+        var company = await c.ExecuteScalarAsync<Guid>("SELECT r.company_id FROM app.pur_receipt_lines l JOIN app.pur_receipts r ON r.tenant_id = l.tenant_id AND r.id = l.receipt_id WHERE l.tenant_id = @t AND l.id = @receiptLine", new { t, receiptLine }, tx);
+        var type = await ChargeTypeAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        var charge = Guid.CreateVersion7();
+        var allocation = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.pur_landed_cost_docs (tenant_id, id, company_id, number, posting_date, currency) VALUES (@t, @id, @company, @number, '2026-09-22', 'IQD')", new { t, id, company, number = Suffix(id) }, tx);
+        await c.ExecuteAsync("INSERT INTO app.pur_landed_cost_charges (tenant_id, id, landed_cost_id, line_no, charge_type_id, amount, allocation_basis) VALUES (@t, @charge, @id, 1, @type, 10, 'value')", new { t, charge, id, type }, tx);
+        await c.ExecuteAsync("INSERT INTO app.pur_landed_cost_allocations (tenant_id, id, landed_cost_id, charge_id, receipt_line_id, basis_value, allocated_amount_fc) VALUES (@t, @allocation, @id, @charge, @receiptLine, 1, 10)", new { t, allocation, id, charge, receiptLine }, tx);
+        return (id, charge, allocation);
     }
 
     private static async Task<Guid> PartnerAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

@@ -41,6 +41,7 @@ public sealed class InvoiceService(
     IInventoryCosting costing,
     IPostingService posting,
     IWorkflowEngine workflow,
+    LandedCostService landedCosts,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
@@ -49,7 +50,7 @@ public sealed class InvoiceService(
 
     public static readonly IReadOnlyList<string> Kinds = ["invoice", "expense"];
 
-    public static readonly IReadOnlyList<string> LineKinds = ["receipt", "order", "expense"];
+    public static readonly IReadOnlyList<string> LineKinds = ["receipt", "order", "expense", "charge"];
 
     public static readonly IReadOnlyList<string> BlockKinds = ["price_variance", "qty_variance", "duplicate_suspect"];
 
@@ -118,6 +119,7 @@ public sealed class InvoiceService(
                 row.Line.Quantity - row.Line.QtyCancelled, row.Line.QtyInvoiced, row.Line.Quantity - row.Line.QtyCancelled - row.Line.QtyInvoiced, row.Line.UnitPrice * (1m - row.Line.DiscountPct / 100m), row.Order.Currency, null));
         }
 
+        result.AddRange(await landedCosts.OpenChargesAsync(companyId, partnerId, cancellationToken));
         return result;
     }
 
@@ -428,6 +430,13 @@ public sealed class InvoiceService(
                         break;
                     }
 
+                case "charge":
+                    {
+                        var charge = await db.LandedCostCharges.AsNoTracking().SingleAsync(x => x.Id == line.LandedCostChargeId, cancellationToken);
+                        postingLines.Add(new PostingLine(AccountRoles.LandedCostClearing, line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), SubledgerType: SubledgerTypes.GoodsReceivedNotInvoiced, SubledgerRef: charge.LandedCostId, PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
+                        break;
+                    }
+
                 default:
                     postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
                     break;
@@ -481,6 +490,24 @@ public sealed class InvoiceService(
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "expense"))
         {
             line.NetAmountFc = Shared.Round(line.NetAmount * rate.Value, company.FunctionalCurrency);
+        }
+
+        // Charge lines settle their landed-cost estimates at what was booked on the clearing account; a difference lands on the same receipt lines.
+        foreach (var group in invoice.Lines.Where(static l => l.Kind == "charge").GroupBy(static l => l.LandedCostChargeId!.Value))
+        {
+            var chargeLines = group.ToList();
+            var bookedFc = Shared.Round(chargeLines.Sum(static l => l.NetAmount) * rate.Value, company.FunctionalCurrency);
+            var shares = RoundingPolicy.Default.Allocate(new Money(bookedFc, company.FunctionalCurrency), chargeLines.Select(static l => l.NetAmount).ToList());
+            for (var i = 0; i < chargeLines.Count; i++)
+            {
+                chargeLines[i].NetAmountFc = shares[i].Amount;
+            }
+
+            var settled = await landedCosts.SettleChargeAsync(group.Key, chargeLines[0].Id, bookedFc, invoice.PostingDate, $"Charge invoice {invoice.Number}", +1, cancellationToken);
+            if (settled.IsFailure)
+            {
+                return settled.Error!;
+            }
         }
 
         // 4. Commitments consumed by what the invoice books against each order line.
@@ -610,6 +637,15 @@ public sealed class InvoiceService(
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "order"))
         {
             orderLines[line.OrderLineId!.Value].QtyInvoiced -= line.Quantity;
+        }
+
+        foreach (var line in invoice.Lines.Where(static l => l.Kind == "charge"))
+        {
+            var unsettled = await landedCosts.SettleChargeAsync(line.LandedCostChargeId!.Value, line.Id, 0m, reversed.Value.PostingDate, $"Charge invoice {invoice.Number} reversed: {reason}", -1, cancellationToken);
+            if (unsettled.IsFailure)
+            {
+                return unsettled.Error!;
+            }
         }
 
         var commitments = await db.Commitments.Where(c => orderLineIds.Contains(c.OrderLineId) && c.Status != "released").ToListAsync(cancellationToken);
@@ -807,6 +843,41 @@ public sealed class InvoiceService(
                         break;
                     }
 
+                case "charge":
+                    {
+                        if (l.LandedCostChargeId is null)
+                        {
+                            return Error.Validation("invoice.charge_required", "A charge line names the landed-cost charge it settles.").WithWhy(("lineNo", lineNo));
+                        }
+
+                        var charge = await db.LandedCostCharges.AsNoTracking().SingleOrDefaultAsync(x => x.Id == l.LandedCostChargeId, cancellationToken);
+                        var doc = charge is null ? null : await db.LandedCosts.AsNoTracking().SingleOrDefaultAsync(x => x.Id == charge.LandedCostId, cancellationToken);
+                        if (charge is null || doc is null || doc.CompanyId != request.CompanyId)
+                        {
+                            return Error.Validation("invoice.charge_unknown", "The landed-cost charge does not belong to the company.").WithWhy(("lineNo", lineNo), ("chargeId", l.LandedCostChargeId));
+                        }
+
+                        if (doc.Status != "posted" || !charge.IsEstimate)
+                        {
+                            return Error.Conflict("invoice.charge_not_open", "Only an estimated charge of a posted landed-cost document is settled by an invoice.").WithWhy(("lineNo", lineNo), ("document", doc.Number), ("status", doc.Status), ("isEstimate", charge.IsEstimate));
+                        }
+
+                        if (charge.PartnerId is { } expectedPartner && expectedPartner != request.PartnerId)
+                        {
+                            return Error.Validation("invoice.charge_other_supplier", "The charge was expected from another supplier.").WithWhy(("lineNo", lineNo), ("document", doc.Number));
+                        }
+
+                        if (lines.Any(x => x.LandedCostChargeId == charge.Id))
+                        {
+                            return Error.Validation("invoice.charge_duplicate", "A charge is settled once on an invoice.").WithWhy(("lineNo", lineNo));
+                        }
+
+                        line.LandedCostChargeId = charge.Id;
+                        line.AccountRole = AccountRoles.LandedCostClearing;
+                        line.Description ??= $"Landed cost {doc.Number} line {charge.LineNo}";
+                        break;
+                    }
+
                 default:
                     {
                         var role = Shared.Trim(l.AccountRole) ?? AccountRoles.PurchaseExpense;
@@ -903,7 +974,7 @@ public sealed class InvoiceService(
         {
             line.PriceVariancePct = null;
             line.QtyVariance = null;
-            if (line.Kind == "expense")
+            if (line.Kind is "expense" or "charge")
             {
                 continue;
             }
@@ -940,7 +1011,7 @@ public sealed class InvoiceService(
             details.Add(new { lineNo = line.LineNo, kind = line.Kind, expectedUnitPrice = expected, unitPrice = actual, priceVariancePct, priceVarianceAmount, remaining, quantity = line.Quantity, qtyVariance = line.QtyVariance, qtyAllowed, priceBreach = linePriceBreach, qtyBreach = lineQtyBreach });
         }
 
-        var matchedNet = invoice.Lines.Where(static l => l.Kind != "expense").Sum(static l => l.NetAmount);
+        var matchedNet = invoice.Lines.Where(static l => l.Kind is not ("expense" or "charge")).Sum(static l => l.NetAmount);
         result.PriceVariancePct = RoundingPolicy.Default.Round(matchedNet == 0m ? 0m : result.PriceVarianceAmount / (matchedNet - result.PriceVarianceAmount == 0m ? 1m : matchedNet - result.PriceVarianceAmount) * 100m, 6);
         var reference = invoice.SupplierInvoiceNumber is { } given ? given.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) : null;
         var duplicate = reference is not null
@@ -1013,12 +1084,14 @@ public sealed class InvoiceService(
         var receiptNumbers = receiptLineIds.Count == 0 ? new Dictionary<Guid, string>() : await (from l in db.ReceiptLines.AsNoTracking() join r in db.Receipts.AsNoTracking() on new { l.TenantId, Id = l.ReceiptId } equals new { r.TenantId, r.Id } where receiptLineIds.Contains(l.Id) select new { l.Id, r.Number }).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
         var orderLineIds = i.Lines.Where(static l => l.OrderLineId is not null).Select(static l => l.OrderLineId!.Value).ToList();
         var orderNumbers = orderLineIds.Count == 0 ? new Dictionary<Guid, string>() : await (from l in db.OrderLines.AsNoTracking() join o in db.Orders.AsNoTracking() on new { l.TenantId, Id = l.OrderId } equals new { o.TenantId, o.Id } where orderLineIds.Contains(l.Id) select new { l.Id, o.Number }).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
+        var chargeIds = i.Lines.Where(static l => l.LandedCostChargeId is not null).Select(static l => l.LandedCostChargeId!.Value).ToList();
+        var chargeDocs = chargeIds.Count == 0 ? new Dictionary<Guid, string>() : await (from c in db.LandedCostCharges.AsNoTracking() join d in db.LandedCosts.AsNoTracking() on new { c.TenantId, Id = c.LandedCostId } equals new { d.TenantId, d.Id } where chargeIds.Contains(c.Id) select new { c.Id, d.Number }).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
         var lines = new List<InvoiceLineSummary>(i.Lines.Count);
         foreach (var l in i.Lines.OrderBy(static l => l.LineNo))
         {
             var (item, uom) = l.ItemId is { } itemId && l.UomId is { } uomId ? await ItemAsync(itemId, uomId, cancellationToken) : (null, null);
             lines.Add(new InvoiceLineSummary(l.Id, l.LineNo, l.Kind, l.ReceiptLineId, l.ReceiptLineId is { } rl ? receiptNumbers.GetValueOrDefault(rl) : null, l.OrderLineId, l.OrderLineId is { } ol ? orderNumbers.GetValueOrDefault(ol) : null, l.ItemId, item?.Code, item?.Name.Values, l.AccountRole, l.Description,
-                l.Quantity, l.UomId, uom?.UomCode, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.WhtAmount, l.ExpectedUnitPrice, l.PriceVariancePct, l.QtyVariance, l.DimensionSetId));
+                l.Quantity, l.UomId, uom?.UomCode, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.WhtAmount, l.ExpectedUnitPrice, l.PriceVariancePct, l.QtyVariance, l.DimensionSetId, l.LandedCostChargeId, l.LandedCostChargeId is { } ch ? chargeDocs.GetValueOrDefault(ch) : null));
         }
 
         var matches = (await db.MatchResults.AsNoTracking().Where(m => m.InvoiceId == i.Id).OrderByDescending(static m => m.MatchedAt).ToListAsync(cancellationToken))

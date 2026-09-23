@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, FileText, GitBranch, Hammer, Handshake, Inbox, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, ReceiptText, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, FileText, GitBranch, Hammer, Handshake, Inbox, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, ReceiptText, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -40,6 +40,7 @@ export const navigation: NavigationItem[] = [
   { to: "/purchasing/agreements", label: "nav.agreements", icon: FileSignature, shortcut: "g 8", permission: "purchasing.agreement.read" },
   { to: "/purchasing/receipts", label: "nav.receipts", icon: PackageCheck, shortcut: "g 0", permission: "purchasing.receipt.read" },
   { to: "/purchasing/invoices", label: "nav.invoices", icon: ReceiptText, shortcut: "g .", permission: "purchasing.invoice.read" },
+  { to: "/purchasing/landed-costs", label: "nav.landedCosts", icon: Anchor, shortcut: "g ,", permission: "purchasing.landed_cost.read" },
   { to: "/approvals", label: "nav.approvals", icon: Inbox, shortcut: "g 1" },
   { to: "/workflows", label: "nav.workflows", icon: GitBranch, shortcut: "g 2", permission: "workflow.definition.read" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },
