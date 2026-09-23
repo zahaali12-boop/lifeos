@@ -29,6 +29,7 @@
     <ProjectReference Include="../../Modules/Inventory/Quicker.Inventory/Quicker.Inventory.csproj" />
     <ProjectReference Include="../../Modules/Workflow/Quicker.Workflow/Quicker.Workflow.csproj" />
     <ProjectReference Include="../../Modules/Partners/Quicker.Partners/Quicker.Partners.csproj" />
+    <ProjectReference Include="../../Modules/Purchasing/Quicker.Purchasing/Quicker.Purchasing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

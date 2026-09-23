@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{ number }}</title>
+<style>
+  body { font-family: "Segoe UI", "Noto Sans Arabic", Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .muted { color: #666; font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 13px; }
+  th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: start; }
+  th { background: #f3f4f6; }
+  .num { text-align: end; font-variant-numeric: tabular-nums; }
+  .totals td { font-weight: 600; }
+  section { margin-bottom: 32px; }
+  [dir="rtl"] { direction: rtl; }
+</style>
+</head>
+<body>
+<section dir="ltr" lang="en">
+  <h1>Purchase order {{ number }}{{ if revision > 1 }} (revision {{ revision }}){{ end }}</h1>
+  <p class="muted">{{ company_name_en }} · {{ company_code }} · order date {{ order_date }}{{ if expected_date }} · expected {{ expected_date }}{{ end }}</p>
+  <p><strong>Supplier:</strong> {{ supplier_name_en }} ({{ supplier_code }})</p>
+  {{ if payment_terms }}<p><strong>Payment terms:</strong> {{ payment_terms }}{{ if delivery_terms }} · <strong>Delivery:</strong> {{ delivery_terms }}{{ end }}</p>{{ end }}
+  {{ if message }}<p>{{ message }}</p>{{ end }}
+  <table>
+    <thead><tr><th>#</th><th>Item</th><th>Description</th><th class="num">Quantity</th><th>Unit</th><th class="num">Unit price</th><th class="num">Net</th></tr></thead>
+    <tbody>
+    {{ for line in lines }}
+      <tr><td>{{ line.line_no }}</td><td>{{ line.item_code }}</td><td>{{ line.description_en }}</td><td class="num">{{ line.quantity }}</td><td>{{ line.uom }}</td><td class="num">{{ line.unit_price }}</td><td class="num">{{ line.net }}</td></tr>
+    {{ end }}
+    </tbody>
+    <tfoot>
+      <tr class="totals"><td colspan="6">Total net ({{ currency }})</td><td class="num">{{ total_net }}</td></tr>
+      <tr class="totals"><td colspan="6">Total ({{ currency }})</td><td class="num">{{ total_gross }}</td></tr>
+    </tfoot>
+  </table>
+  {{ if notes }}<p class="muted">{{ notes }}</p>{{ end }}
+</section>
+<section dir="rtl" lang="ar">
+  <h1>أمر شراء {{ number }}{{ if revision > 1 }} (المراجعة {{ revision }}){{ end }}</h1>
+  <p class="muted">{{ company_name_ar }} · {{ company_code }} · تاريخ الأمر {{ order_date }}{{ if expected_date }} · المتوقع {{ expected_date }}{{ end }}</p>
+  <p><strong>المورد:</strong> {{ supplier_name_ar }} ({{ supplier_code }})</p>
+  {{ if payment_terms }}<p><strong>شروط الدفع:</strong> {{ payment_terms }}{{ if delivery_terms }} · <strong>التسليم:</strong> {{ delivery_terms }}{{ end }}</p>{{ end }}
+  <table>
+    <thead><tr><th>#</th><th>الصنف</th><th>الوصف</th><th class="num">الكمية</th><th>الوحدة</th><th class="num">سعر الوحدة</th><th class="num">الصافي</th></tr></thead>
+    <tbody>
+    {{ for line in lines }}
+      <tr><td>{{ line.line_no }}</td><td>{{ line.item_code }}</td><td>{{ line.description_ar }}</td><td class="num">{{ line.quantity }}</td><td>{{ line.uom }}</td><td class="num">{{ line.unit_price }}</td><td class="num">{{ line.net }}</td></tr>
+    {{ end }}
+    </tbody>
+    <tfoot>
+      <tr class="totals"><td colspan="6">الصافي ({{ currency }})</td><td class="num">{{ total_net }}</td></tr>
+      <tr class="totals"><td colspan="6">الإجمالي ({{ currency }})</td><td class="num">{{ total_gross }}</td></tr>
+    </tfoot>
+  </table>
+</section>
+</body>
+</html>

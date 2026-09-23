@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, GitBranch, Hammer, Handshake, Inbox, Layers, LayoutDashboard, ListChecks, NotebookPen, Package, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, FileText, GitBranch, Hammer, Handshake, Inbox, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -34,6 +34,10 @@ export const navigation: NavigationItem[] = [
   { to: "/m", label: "nav.mobile", icon: ScanLine, shortcut: "g s", permission: "inventory.count.enter" },
   { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
   { to: "/purchasing/settings", label: "nav.purchasingSettings", icon: Settings2, shortcut: "g 4", permission: "partners.terms.manage" },
+  { to: "/purchasing/requisitions", label: "nav.requisitions", icon: ClipboardList, shortcut: "g 5", permission: "purchasing.requisition.read" },
+  { to: "/purchasing/rfqs", label: "nav.rfqs", icon: MessageSquareQuote, shortcut: "g 6", permission: "purchasing.rfq.read" },
+  { to: "/purchasing/orders", label: "nav.purchaseOrders", icon: FileText, shortcut: "g 7", permission: "purchasing.order.read" },
+  { to: "/purchasing/agreements", label: "nav.agreements", icon: FileSignature, shortcut: "g 8", permission: "purchasing.agreement.read" },
   { to: "/approvals", label: "nav.approvals", icon: Inbox, shortcut: "g 1" },
   { to: "/workflows", label: "nav.workflows", icon: GitBranch, shortcut: "g 2", permission: "workflow.definition.read" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },

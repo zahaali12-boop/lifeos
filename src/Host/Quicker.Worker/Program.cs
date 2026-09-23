@@ -15,6 +15,7 @@ using Quicker.Observability;
 using Quicker.Organization;
 using Quicker.Partners;
 using Quicker.Persistence;
+using Quicker.Purchasing;
 using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
@@ -50,6 +51,7 @@ builder.Services.AddItemsModule();
 builder.Services.AddInventoryModule();
 builder.Services.AddWorkflowModule();
 builder.Services.AddPartnersModule();
+builder.Services.AddPurchasingModule();
 
 var app = builder.Build();
 

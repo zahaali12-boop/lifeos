@@ -29,7 +29,11 @@ import { TrackingPage } from "./inventory/TrackingPage";
 import { TransfersPage } from "./inventory/TransfersPage";
 import { ValuationPage } from "./inventory/ValuationPage";
 import { WarehousesPage } from "./inventory/WarehousesPage";
+import { AgreementsPage } from "./purchasing/AgreementsPage";
+import { PurchaseOrdersPage } from "./purchasing/PurchaseOrdersPage";
 import { PurchasingSettingsPage } from "./purchasing/PurchasingSettingsPage";
+import { RequisitionsPage } from "./purchasing/RequisitionsPage";
+import { RfqsPage } from "./purchasing/RfqsPage";
 import { SuppliersPage } from "./purchasing/SuppliersPage";
 import { ApprovalsPage } from "./workflow/ApprovalsPage";
 import { WorkflowsPage } from "./workflow/WorkflowsPage";
@@ -87,6 +91,10 @@ const replenishmentRoute = createRoute({ getParentRoute: () => shellRoute, path:
 const valuationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/valuation", component: ValuationPage });
 const suppliersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/suppliers", component: SuppliersPage, validateSearch: searchRecord });
 const purchasingSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/settings", component: PurchasingSettingsPage });
+const requisitionsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/requisitions", component: RequisitionsPage, validateSearch: searchRecord });
+const rfqsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/rfqs", component: RfqsPage, validateSearch: searchRecord });
+const purchaseOrdersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/orders", component: PurchaseOrdersPage, validateSearch: searchRecord });
+const agreementsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/agreements", component: AgreementsPage, validateSearch: searchRecord });
 const approvalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/approvals", component: ApprovalsPage, validateSearch: searchRecord });
 const workflowsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/workflows", component: WorkflowsPage, validateSearch: searchRecord });
 
@@ -113,7 +121,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute]),
 ]);

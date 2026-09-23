@@ -27,6 +27,8 @@ using Quicker.Organization.Api;
 using Quicker.Partners;
 using Quicker.Partners.Api;
 using Quicker.Persistence;
+using Quicker.Purchasing;
+using Quicker.Purchasing.Api;
 using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
@@ -83,6 +85,7 @@ builder.Services.AddItemsModule();
 builder.Services.AddInventoryModule();
 builder.Services.AddWorkflowModule();
 builder.Services.AddPartnersModule();
+builder.Services.AddPurchasingModule();
 
 var app = builder.Build();
 
@@ -115,6 +118,7 @@ api.MapItemsEndpoints();
 api.MapInventoryEndpoints();
 api.MapWorkflowEndpoints();
 api.MapPartnersEndpoints();
+api.MapPurchasingEndpoints();
 
 app.Run();
 

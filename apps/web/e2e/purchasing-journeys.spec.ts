@@ -1,0 +1,181 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * The requisition-to-order journey of 4.2: a requisition with a suggested supplier is submitted (approved at once,
+ * no workflow definition yet) and turned into a purchase order; the order is submitted, sent to the supplier and
+ * changed through a revision; an RFQ is sent to two suppliers, their quotes recorded and compared; a blanket
+ * agreement is activated. Then the screens in Arabic, right-to-left. Every screen passes axe with no serious or
+ * critical violation.
+ */
+const password = "correct-horse-battery-staple";
+
+async function expectAccessible(page: Page): Promise<void> {
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
+  const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  expect(serious, serious.map((v) => `${v.id}: ${v.help}\n  ${v.nodes.map((n) => n.target.join(" ")).join("\n  ")}`).join("\n")).toEqual([]);
+}
+
+async function nav(page: Page, name: string): Promise<void> {
+  await page.getByRole("navigation").getByRole("link", { name, exact: true }).click();
+}
+
+async function closeDialog(page: Page): Promise<void> {
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+}
+
+async function supplier(page: Page, code: string, name: string, email: string): Promise<void> {
+  await page.getByTestId("new-supplier").click();
+  await page.getByTestId("partner-code").fill(code);
+  await page.getByTestId("partner-legal-name-en").fill(name);
+  await page.getByTestId("partner-legal-name-ar").fill(name);
+  await page.getByTestId("partner-email").fill(email);
+  await page.getByTestId("save-supplier").click();
+  await expect(page.getByTestId("supplier-detail")).toBeVisible();
+  await closeDialog(page);
+}
+
+test("English: requisition to purchase order, a change order and a send, an RFQ compared and a blanket agreement", async ({ page }) => {
+  const slug = `pur-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
+  await page.goto("/signup");
+  await page.getByLabel(/Workspace name/).fill("Purchasing " + slug);
+  await page.getByLabel(/^Slug/).fill(slug);
+  await page.getByLabel(/Your name/).fill("Owner");
+  await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
+  await page.getByLabel(/^Password/).fill(password);
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome");
+
+  await nav(page, "Companies");
+  await page.getByTestId("new-company").click();
+  await page.getByLabel(/^Code/).fill("PUR");
+  await page.getByLabel(/Legal name \(English\)/).fill("Purchasing Co.");
+  await page.getByTestId("save-company").click();
+  await expect(page.getByRole("grid")).toContainText("PUR");
+
+  // An item to buy and two suppliers registered for the company.
+  await nav(page, "Items");
+  await page.getByTestId("new-item").click();
+  await page.getByTestId("item-code").fill("TEA");
+  await page.getByTestId("item-name-en").fill("Tea");
+  await page.getByTestId("item-name-ar").fill("شاي");
+  await page.getByTestId("save-item").click();
+  await expect(page.getByTestId("item-detail")).toBeVisible();
+  await closeDialog(page);
+  await nav(page, "Suppliers");
+  await supplier(page, "ALPHA", "Alpha Supplies", "alpha@example.test");
+  await supplier(page, "BETA", "Beta Trading", "beta@example.test");
+
+  // A requisition: submitted, approved at once, turned into an order for the suggested supplier.
+  await nav(page, "Requisitions");
+  await expect(page.getByText("No requisitions yet")).toBeVisible();
+  await expectAccessible(page);
+  await page.getByTestId("new-requisition").click();
+  await page.getByTestId("requisition-justification").fill("Canteen restock");
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("10");
+  await page.getByTestId("line-price-0").fill("1500");
+  await page.getByTestId("line-supplier-0").selectOption({ label: "ALPHA" });
+  await expectAccessible(page);
+  await page.getByTestId("save-requisition").click();
+  await expect(page.getByTestId("requisition-detail")).toBeVisible();
+  await expect(page.getByTestId("requisition-detail")).toContainText("REQ-");
+  await page.getByTestId("submit-requisition").click();
+  await expect(page.getByTestId("requisition-detail").getByTestId("doc-status").first()).toContainText("Approved");
+  await page.getByTestId("create-orders").click();
+  await expect(page.getByTestId("created-orders")).toContainText("PO-");
+  await expectAccessible(page);
+  await closeDialog(page);
+  await expect(page.getByRole("grid")).toContainText("Ordered");
+
+  // The order: submitted (approved at once), sent by email, then changed through a revision that goes back to approval.
+  await nav(page, "Purchase orders");
+  await expect(page.getByRole("grid")).toContainText("PO-");
+  await page.getByRole("grid").getByRole("row").filter({ hasText: "PO-" }).first().dblclick();
+  await expect(page.getByTestId("order-detail")).toBeVisible();
+  await expect(page.getByTestId("order-total")).toContainText("15,000");
+  await page.getByTestId("submit-order").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Approved");
+  await page.getByTestId("tab-commitments").click();
+  await expect(page.getByTestId("commitment-row")).toHaveCount(1);
+  await page.getByTestId("send-order").click();
+  await page.getByTestId("send-message").fill("Please confirm.");
+  await page.getByTestId("confirm-send").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Sent");
+  await expect(page.getByTestId("order-detail")).toContainText("alpha@example.test");
+  await expectAccessible(page);
+  await page.getByTestId("change-order").click();
+  await page.getByTestId("change-reason").fill("Two more cartons");
+  await page.getByTestId("line-qty-0").fill("12");
+  await page.getByTestId("save-order").click();
+  await expect(page.getByTestId("order-revision")).toContainText("revision 2");
+  await expect(page.getByTestId("order-total")).toContainText("18,000");
+  await page.getByTestId("tab-revisions").click();
+  await expect(page.getByTestId("revision-row")).toHaveCount(1);
+  await expect(page.getByTestId("revision-row")).toContainText("Two more cartons");
+  await closeDialog(page);
+
+  // An RFQ to both suppliers, two quotes, compared: the cheaper one ranks first.
+  await nav(page, "Requests for quotation");
+  await page.getByTestId("new-rfq").click();
+  await page.getByTestId("rfq-title").fill("Tea for Q4");
+  await page.getByTestId("invite-ALPHA").check();
+  await page.getByTestId("invite-BETA").check();
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("100");
+  await page.getByTestId("save-rfq").click();
+  await expect(page.getByTestId("rfq-detail")).toBeVisible();
+  await page.getByTestId("send-rfq").click();
+  await expect(page.getByTestId("rfq-detail").getByTestId("doc-status").first()).toContainText("Sent");
+  await page.getByTestId("tab-suppliers").click();
+  await expect(page.getByTestId("rfq-supplier-row")).toHaveCount(2);
+  await page.getByTestId("record-quote-ALPHA").click();
+  await page.getByTestId("quote-lead-time").fill("5");
+  await page.getByTestId("quote-price-0").fill("1400");
+  await page.getByTestId("save-quote").click();
+  await expect(page.getByTestId("quote-form")).toHaveCount(0);
+  await page.getByTestId("record-quote-BETA").click();
+  await page.getByTestId("quote-lead-time").fill("3");
+  await page.getByTestId("quote-price-0").fill("1350");
+  await page.getByTestId("save-quote").click();
+  await expect(page.getByTestId("quote-form")).toHaveCount(0);
+  await page.getByTestId("compare-quotes").click();
+  await expect(page.getByTestId("comparison-note")).toBeVisible();
+  const rows = page.getByTestId("quote-row");
+  await expect(rows.filter({ hasText: "BETA" }).getByTestId("quote-rank")).toHaveText("1");
+  await expect(rows.filter({ hasText: "ALPHA" }).getByTestId("quote-rank")).toHaveText("2");
+  await expectAccessible(page);
+  await page.getByTestId("award-BETA").click();
+  await expect(page.getByTestId("awarded-order")).toContainText("PO-");
+  await closeDialog(page);
+
+  // A blanket agreement with ALPHA, activated.
+  await nav(page, "Blanket agreements");
+  await page.getByTestId("new-agreement").click();
+  await page.getByTestId("agreement-supplier").selectOption({ label: "ALPHA · Alpha Supplies" });
+  await page.getByTestId("agreement-to").fill("2027-12-31");
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("1000");
+  await page.getByTestId("line-price-0").fill("1400");
+  await page.getByTestId("save-agreement").click();
+  await expect(page.getByTestId("agreement-detail")).toBeVisible();
+  await page.getByTestId("activate-agreement").click();
+  await expect(page.getByTestId("agreement-detail").getByTestId("doc-status").first()).toContainText("Active");
+  await expect(page.getByTestId("remaining-qty")).toContainText("1,000");
+  await expectAccessible(page);
+  await closeDialog(page);
+
+  // Arabic, right-to-left.
+  await page.getByTestId("language-menu").click();
+  await page.getByTestId("language-ar").click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await nav(page, "أوامر الشراء");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("أوامر الشراء");
+  await expect(page.getByRole("grid")).toContainText("PO-");
+  await expectAccessible(page);
+  await nav(page, "طلبات عروض الأسعار");
+  await expect(page.getByRole("grid")).toContainText("RFQ-");
+  await expectAccessible(page);
+});

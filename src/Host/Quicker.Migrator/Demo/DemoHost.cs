@@ -18,6 +18,7 @@ using Quicker.Numbering;
 using Quicker.Organization;
 using Quicker.Partners;
 using Quicker.Persistence;
+using Quicker.Purchasing;
 using Quicker.Storage;
 using Quicker.Tenancy;
 using Quicker.Web;
@@ -75,6 +76,7 @@ internal static class DemoHost
         services.AddInventoryModule();
         services.AddWorkflowModule();
         services.AddPartnersModule();
+        services.AddPurchasingModule();
         return builder.Build();
     }
 }

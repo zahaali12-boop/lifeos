@@ -5639,6 +5639,454 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/requisitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingRequisitions"];
+        put?: never;
+        /** A draft requisition: items (or free text with a unit), quantities, estimated prices, the warehouse and the suggested supplier per line */
+        post: operations["postPurchasingRequisitions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/requisitions/{requisitionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingRequisitionsByRequisitionId"];
+        put: operations["putPurchasingRequisitionsByRequisitionId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/requisitions/{requisitionId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the active approval definition for purchase_requisition; without one the requisition is approved at once */
+        post: operations["postPurchasingRequisitionsByRequisitionIdSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/requisitions/{requisitionId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingRequisitionsByRequisitionIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/requisitions/{requisitionId}/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Purchase order drafts from the approved lines, one per supplier (the suggested one, or partnerId for all) */
+        post: operations["postPurchasingRequisitionsByRequisitionIdOrders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingRfqs"];
+        put?: never;
+        /** Lines to price (from requisition lines or ad hoc) and the suppliers to invite */
+        post: operations["postPurchasingRfqs"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingRfqsByRfqId"];
+        put: operations["putPurchasingRfqsByRfqId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingRfqsByRfqIdInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Emails the request to every invited supplier not yet sent to (emails: {partnerId: address} overrides the partner's) */
+        post: operations["postPurchasingRfqsByRfqIdSend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Records or replaces a supplier's quote: currency, validity, lead time, freight and charges, a price per request line */
+        post: operations["postPurchasingRfqsByRfqIdQuotes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/suppliers/{partnerId}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingRfqsByRfqIdSuppliersByPartnerIdDecline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ranks the quotes: complete ones first, then landed total in the company's currency (goods + freight + charges at today's spot rate), then lead time */
+        post: operations["postPurchasingRfqsByRfqIdCompare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/award": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Awards a quote and returns the purchase order draft created from it */
+        post: operations["postPurchasingRfqsByRfqIdAward"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingRfqsByRfqIdClose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/rfqs/{rfqId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingRfqsByRfqIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/agreements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingAgreements"];
+        put?: never;
+        /** A blanket agreement: agreed quantities and prices per item with a supplier for a period, optionally a committed amount */
+        post: operations["postPurchasingAgreements"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/agreements/{agreementId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingAgreementsByAgreementId"];
+        put: operations["putPurchasingAgreementsByAgreementId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/agreements/{agreementId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingAgreementsByAgreementIdActivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/agreements/{agreementId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingAgreementsByAgreementIdClose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/agreements/{agreementId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingAgreementsByAgreementIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** status=open lists approved, sent and partially received orders */
+        get: operations["getPurchasingOrders"];
+        put?: never;
+        /** A draft order in the supplier's currency (rate resolved at the order date), lines priced or released from an agreement line */
+        post: operations["postPurchasingOrders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/orders/{orderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The order with its lines, revisions (change orders) and budget commitments */
+        get: operations["getPurchasingOrdersByOrderId"];
+        put: operations["putPurchasingOrdersByOrderId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/orders/{orderId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the active approval definition for purchase_order (a rule over the amount routes it); approval records commitments and agreement releases */
+        post: operations["postPurchasingOrdersByOrderIdSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/orders/{orderId}/change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A change order on an approved or sent order: keeps the previous revision, re-applies the content and goes through approval again */
+        post: operations["postPurchasingOrdersByOrderIdChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/orders/{orderId}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Emails the order (bilingual HTML) to the supplier's address or the one given */
+        post: operations["postPurchasingOrdersByOrderIdSend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/orders/{orderId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingOrdersByOrderIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/orders/{orderId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Closes short: what was not received is cancelled and the open commitments released */
+        post: operations["postPurchasingOrdersByOrderIdClose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6115,6 +6563,12 @@ export interface components {
             items: components["schemas"]["AuditEventSummary"][];
             nextCursor: null | string;
         };
+        AwardRequest: {
+            /** Format: uuid */
+            quoteId: string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+        };
         BalanceDifference: {
             /** Format: uuid */
             accountId: string;
@@ -6223,6 +6677,56 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        BlanketAgreementSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            validFrom: string;
+            /** Format: date */
+            validTo: string;
+            currency: string;
+            /** Format: double */
+            committedAmount: number | string;
+            /** Format: double */
+            releasedAmount: number | string;
+            status: string;
+            notes: null | string;
+            lines: components["schemas"]["BlanketLineSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        BlanketLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            agreedQty: number | string;
+            /** Format: double */
+            agreedPrice: number | string;
+            /** Format: double */
+            releasedQty: number | string;
+            /** Format: double */
+            remainingQty: number | string;
         };
         BlockSummary: {
             /** Format: uuid */
@@ -6410,6 +6914,11 @@ export interface components {
             durationMs: number | string;
             headHash: string;
         };
+        /** @description A change order: the same shape as a save, plus why; the previous revision is kept and the order goes through approval again. */
+        ChangeOrderRequest: {
+            order: components["schemas"]["SavePurchaseOrderRequest"];
+            reason: string;
+        };
         ChangePasswordRequest: {
             currentPassword: string;
             newPassword: string;
@@ -6469,6 +6978,24 @@ export interface components {
             editedAt: null | string;
             /** Format: date-time */
             deletedAt: null | string;
+        };
+        CommitmentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            orderLineId: string;
+            accountRole: string;
+            /** Format: uuid */
+            dimensionSetId: null | string;
+            periodKey: string;
+            /** Format: double */
+            amountFc: number | string;
+            currency: string;
+            /** Format: double */
+            amountRc: number | string;
+            /** Format: double */
+            consumedRc: number | string;
+            status: string;
         };
         CompanyAccountingSettings: {
             /** Format: uuid */
@@ -6813,6 +7340,13 @@ export interface components {
             /** Format: date-time */
             expiresAt?: null | string;
             ipAllowlist?: null | string[];
+        };
+        CreateOrdersFromRequisitionRequest: {
+            lineIds?: null | string[];
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
         };
         CurrencySummary: {
             code: string;
@@ -7340,6 +7874,9 @@ export interface components {
             checked: number | string;
             problems: string[];
             summary: string;
+        };
+        InviteSuppliersRequest: {
+            partnerIds: string[];
         };
         InviteUserRequest: {
             email: string;
@@ -8013,6 +8550,9 @@ export interface components {
             /** @default open */
             status: string;
         };
+        OrdersCreated: {
+            orders: components["schemas"]["PurchaseOrderSummary"][];
+        };
         /** @description A stored outbox row as the dispatcher and the operator UI see it. */
         OutboxMessage: {
             /** Format: uuid */
@@ -8472,6 +9012,126 @@ export interface components {
             inApp: boolean;
             email: boolean;
         };
+        PurchaseOrderLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            /** Format: date */
+            expectedDate: null | string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            /** Format: uuid */
+            dimensionSetId: null | string;
+            /** Format: double */
+            qtyReceived: number | string;
+            /** Format: double */
+            qtyInvoiced: number | string;
+            /** Format: double */
+            qtyCancelled: number | string;
+            /** Format: uuid */
+            requisitionLineId: null | string;
+            /** Format: uuid */
+            blanketLineId: null | string;
+            status: string;
+        };
+        PurchaseOrderRevisionSummary: {
+            /** Format: int32 */
+            revision: number | string;
+            reason: null | string;
+            /** Format: uuid */
+            changedBy: null | string;
+            /** Format: date-time */
+            changedAt: string;
+            snapshot: components["schemas"]["JsonElement"];
+        };
+        PurchaseOrderSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: int32 */
+            revision: number | string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            /** Format: date */
+            orderDate: string;
+            /** Format: date */
+            expectedDate: null | string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            paymentTermsCode: null | string;
+            /** Format: uuid */
+            deliveryTermsId: null | string;
+            deliveryTermsCode: null | string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            warehouseCode: null | string;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalTax: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            /** Format: double */
+            totalGrossRc: number | string;
+            /** Format: uuid */
+            approvalRequestId: null | string;
+            rejectionReason: null | string;
+            /** Format: uuid */
+            requisitionId: null | string;
+            /** Format: uuid */
+            rfqId: null | string;
+            /** Format: uuid */
+            agreementId: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            submittedAt: null | string;
+            /** Format: date-time */
+            approvedAt: null | string;
+            /** Format: date-time */
+            sentAt: null | string;
+            sentTo: null | string;
+            lines: components["schemas"]["PurchaseOrderLineSummary"][];
+            revisions: components["schemas"]["PurchaseOrderRevisionSummary"][];
+            commitments: components["schemas"]["CommitmentSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
         QuantityConversion: {
             /** Format: double */
             value: number | string;
@@ -8484,6 +9144,63 @@ export interface components {
             /** Format: double */
             denominator: number | string;
             method: string;
+        };
+        QuoteComparison: {
+            /** Format: uuid */
+            rfqId: string;
+            currency: string;
+            rankings: components["schemas"]["QuoteRanking"][];
+            /** Format: date */
+            rateDate: string;
+        };
+        QuoteLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            rfqLineId: string;
+            /** Format: int32 */
+            rfqLineNo: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: int32 */
+            leadTimeDays: null | number | string;
+            /** Format: double */
+            lineTotal: number | string;
+        };
+        /** @description One quote in the comparison: the landed total in the company's currency, the rate used, the rank and why. */
+        QuoteRanking: {
+            /** Format: uuid */
+            quoteId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            currency: string;
+            /** Format: double */
+            goodsTotal: number | string;
+            /** Format: double */
+            landedTotal: number | string;
+            /** Format: double */
+            exchangeRate: number | string;
+            /** Format: double */
+            landedTotalRc: number | string;
+            /** Format: double */
+            landedUnitAverageRc: number | string;
+            /** Format: int32 */
+            leadTimeDays: number | string;
+            complete: boolean;
+            /** Format: int32 */
+            rank: number | string;
+            landedUnitPricesRc: {
+                [key: string]: number | string;
+            };
         };
         RateResolution: {
             fromCurrency: string;
@@ -8785,6 +9502,68 @@ export interface components {
             blockId: null | string;
             canAct: boolean;
         };
+        RequisitionLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: null | string;
+            itemCode: null | string;
+            itemName: null | {
+                [key: string]: string;
+            };
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: double */
+            estimatedPrice: null | number | string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            /** Format: uuid */
+            dimensionSetId: null | string;
+            /** Format: uuid */
+            suggestedSupplierId: null | string;
+            suggestedSupplierCode: null | string;
+            /** Format: double */
+            qtyOrdered: number | string;
+            status: string;
+        };
+        RequisitionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            requesterMembershipId: null | string;
+            requesterName: null | string;
+            /** Format: date */
+            neededBy: null | string;
+            justification: null | string;
+            currency: string;
+            /** Format: double */
+            totalEstimated: number | string;
+            /** Format: uuid */
+            approvalRequestId: null | string;
+            rejectionReason: null | string;
+            /** Format: uuid */
+            departmentValueId: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            lines: components["schemas"]["RequisitionLineSummary"][];
+            /** Format: date-time */
+            submittedAt: null | string;
+            /** Format: date-time */
+            approvedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         ReservationInfo: {
             /** Format: uuid */
             id: string;
@@ -8905,6 +9684,63 @@ export interface components {
             reason: string;
             /** Format: date */
             reversalDate?: null | string;
+        };
+        RfqLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: null | string;
+            itemCode: null | string;
+            itemName: null | {
+                [key: string]: string;
+            };
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: uuid */
+            requisitionLineId: null | string;
+        };
+        RfqSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            title: null | string;
+            /** Format: date */
+            dueOn: null | string;
+            status: string;
+            /** Format: uuid */
+            awardedQuoteId: null | string;
+            notes: null | string;
+            lines: components["schemas"]["RfqLineSummary"][];
+            suppliers: components["schemas"]["RfqSupplierSummary"][];
+            quotes: components["schemas"]["SupplierQuoteSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        RfqSupplierSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            contactEmail: null | string;
+            /** Format: date-time */
+            sentAt: null | string;
+            status: string;
+            /** Format: uuid */
+            quoteId: null | string;
         };
         RoleSummary: {
             /** Format: uuid */
@@ -9135,6 +9971,42 @@ export interface components {
             pickSequence: number | string;
             /** @default true */
             isActive: boolean;
+        };
+        SaveBlanketAgreementRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: date */
+            validFrom: string;
+            /** Format: date */
+            validTo: string;
+            lines: components["schemas"]["SaveBlanketLineRequest"][];
+            currency?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            committedAmount: number | string;
+            notes?: null | string;
+        };
+        SaveBlanketLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            agreedQty: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            agreedPrice: number | string;
         };
         SaveBomLineRequest: {
             /** Format: uuid */
@@ -9689,6 +10561,100 @@ export interface components {
             /** Format: date */
             validFrom?: null | string;
         };
+        SavePurchaseOrderLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            description?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: double */
+            unitPrice?: null | number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            discountPct: number | string;
+            /** Format: date */
+            expectedDate?: null | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: uuid */
+            dimensionSetId?: null | string;
+            /** Format: uuid */
+            requisitionLineId?: null | string;
+            /** Format: uuid */
+            blanketLineId?: null | string;
+        };
+        SavePurchaseOrderRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            lines: components["schemas"]["SavePurchaseOrderLineRequest"][];
+            currency?: null | string;
+            /** Format: date */
+            orderDate?: null | string;
+            /** Format: date */
+            expectedDate?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: uuid */
+            deliveryTermsId?: null | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: uuid */
+            agreementId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
+        };
+        SaveQuoteLineRequest: {
+            /** Format: uuid */
+            rfqLineId: string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            quantity?: null | number | string;
+            /** Format: int32 */
+            leadTimeDays?: null | number | string;
+        };
+        SaveQuoteRequest: {
+            /** Format: uuid */
+            partnerId: string;
+            currency: string;
+            lines: components["schemas"]["SaveQuoteLineRequest"][];
+            supplierReference?: null | string;
+            /** Format: date */
+            validUntil?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            leadTimeDays: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            freightAmount: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            otherCharges: number | string;
+            notes?: null | string;
+        };
         SaveRateRequest: {
             rateType: string;
             fromCurrency: string;
@@ -9744,6 +10710,41 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveRequisitionLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            description?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: double */
+            estimatedPrice?: null | number | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: uuid */
+            dimensionSetId?: null | string;
+            /** Format: uuid */
+            suggestedSupplierId?: null | string;
+        };
+        SaveRequisitionRequest: {
+            /** Format: uuid */
+            companyId: string;
+            lines: components["schemas"]["SaveRequisitionLineRequest"][];
+            /** Format: date */
+            neededBy?: null | string;
+            justification?: null | string;
+            /** Format: uuid */
+            departmentValueId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            customFields?: unknown;
+        };
         SaveRevaluationLineRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -9766,6 +10767,32 @@ export interface components {
             postingDate?: null | string;
             reference?: null | string;
             notes?: null | string;
+        };
+        SaveRfqLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            description?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: uuid */
+            requisitionLineId?: null | string;
+        };
+        SaveRfqRequest: {
+            /** Format: uuid */
+            companyId: string;
+            lines: components["schemas"]["SaveRfqLineRequest"][];
+            title?: null | string;
+            /** Format: date */
+            dueOn?: null | string;
+            notes?: null | string;
+            partnerIds?: null | string[];
         };
         SaveRoleRequest: {
             code: string;
@@ -10117,6 +11144,15 @@ export interface components {
         SelectTenantRequest: {
             challengeToken: string;
             tenantSlug: string;
+        };
+        SendOrderRequest: {
+            to?: null | string;
+            message?: null | string;
+        };
+        SendRfqRequest: {
+            emails?: null | {
+                [key: string]: string;
+            };
         };
         /** @description The serial and everything that happened to it, oldest first (hard scenario 13: one screen, one query). */
         SerialHistory: {
@@ -10694,6 +11730,39 @@ export interface components {
             suppliers: number | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        SupplierQuoteSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            rfqSupplierId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            supplierReference: null | string;
+            currency: string;
+            /** Format: date */
+            validUntil: null | string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            /** Format: int32 */
+            leadTimeDays: number | string;
+            /** Format: double */
+            freightAmount: number | string;
+            /** Format: double */
+            otherCharges: number | string;
+            /** Format: double */
+            goodsTotal: number | string;
+            /** Format: double */
+            landedTotal: number | string;
+            notes: null | string;
+            comparison: null | components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            receivedAt: string;
+            lines: components["schemas"]["QuoteLineSummary"][];
         };
         TaxRegistrationSummary: {
             /** Format: uuid */
@@ -21595,6 +22664,839 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SupplierAccountSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingRequisitions: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequisitionSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingRequisitions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRequisitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequisitionSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingRequisitionsByRequisitionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequisitionSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingRequisitionsByRequisitionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRequisitionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequisitionSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRequisitionsByRequisitionIdSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequisitionSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRequisitionsByRequisitionIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequisitionSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRequisitionsByRequisitionIdOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requisitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["CreateOrdersFromRequisitionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrdersCreated"];
+                };
+            };
+        };
+    };
+    getPurchasingRfqs: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingRfqs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRfqRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingRfqsByRfqId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingRfqsByRfqId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRfqRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteSuppliersRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdSend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["SendRfqRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdQuotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdSuppliersByPartnerIdDecline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdCompare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteComparison"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdAward: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AwardRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdClose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingRfqsByRfqIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RfqSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingAgreements: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlanketAgreementSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingAgreements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBlanketAgreementRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlanketAgreementSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingAgreementsByAgreementId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlanketAgreementSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingAgreementsByAgreementId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBlanketAgreementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlanketAgreementSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingAgreementsByAgreementIdActivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlanketAgreementSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingAgreementsByAgreementIdClose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlanketAgreementSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingAgreementsByAgreementIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlanketAgreementSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingOrders: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePurchaseOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingOrdersByOrderId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingOrdersByOrderId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePurchaseOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingOrdersByOrderIdSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingOrdersByOrderIdChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingOrdersByOrderIdSend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["SendOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingOrdersByOrderIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["SendOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingOrdersByOrderIdClose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseOrderSummary"];
                 };
             };
         };

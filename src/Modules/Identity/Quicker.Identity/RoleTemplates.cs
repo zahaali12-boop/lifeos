@@ -30,7 +30,7 @@ public static class RoleTemplates
         new("sales_rep", LocalizedText.Bilingual("Sales representative", "مندوب مبيعات"), "Customers, quotes and orders",
             ["sales.quote.*", "sales.order.*", "partners.customer.*", "inventory.item.read", "reporting.report.run"]),
         new("purchaser", LocalizedText.Bilingual("Purchaser", "مسؤول مشتريات"), "Requisitions, RFQs, purchase orders and suppliers",
-            ["purchasing.requisition.*", "purchasing.rfq.*", "purchasing.order.*", "partners.supplier.*", "partners.terms.manage", "inventory.item.read"]),
+            ["purchasing.requisition.*", "purchasing.rfq.*", "purchasing.agreement.*", "purchasing.order.*", "partners.supplier.*", "partners.terms.manage", "inventory.item.read", "inventory.warehouse.read"]),
         new("approver", LocalizedText.Bilingual("Approver", "معتمد"), "Approves documents routed by workflow", ["workflow.request.approve", "workflow.request.read"]),
         new("auditor", LocalizedText.Bilingual("Auditor", "مدقق"), "Read-only access to books, documents and the audit log",
             ["accounting.ledger.read", "accounting.journal.read", "reporting.*", "audit.event.read", "audit.event.export", "audit.chain.verify", "identity.user.read", "identity.role.read", "identity.sod.read"]),
