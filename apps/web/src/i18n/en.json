@@ -26,6 +26,14 @@
     "company": "Companies"
   },
   "nav": {
+    "groups": {
+      "organization": "Organization",
+      "accounting": "Accounting",
+      "inventory": "Inventory",
+      "purchasing": "Purchasing",
+      "finance": "Payables and banking",
+      "administration": "Administration"
+    },
     "units": "Units of measure",
     "calendars": "Calendars",
     "settings": "Settings",
@@ -81,6 +89,8 @@
     "agreements": "Blanket agreements"
   },
   "shell": {
+    "filterMenu": "Filter the menu",
+    "noMenuMatch": "No screen matches.",
     "skipToContent": "Skip to content",
     "primaryNavigation": "Primary",
     "keyboardShortcuts": "Keyboard shortcuts",

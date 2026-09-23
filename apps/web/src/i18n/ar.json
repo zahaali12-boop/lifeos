@@ -26,6 +26,14 @@
     "company": "الشركات"
   },
   "nav": {
+    "groups": {
+      "organization": "المنظمة",
+      "accounting": "المحاسبة",
+      "inventory": "المخزون",
+      "purchasing": "المشتريات",
+      "finance": "الذمم الدائنة والبنوك",
+      "administration": "الإدارة"
+    },
     "units": "وحدات القياس",
     "calendars": "التقاويم",
     "settings": "الإعدادات",
@@ -81,6 +89,8 @@
     "valuation": "التقييم"
   },
   "shell": {
+    "filterMenu": "تصفية القائمة",
+    "noMenuMatch": "لا توجد شاشة مطابقة.",
     "skipToContent": "الانتقال إلى المحتوى",
     "primaryNavigation": "التنقّل الرئيسي",
     "keyboardShortcuts": "اختصارات لوحة المفاتيح",

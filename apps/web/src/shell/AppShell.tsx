@@ -11,6 +11,7 @@ import { clearSession, useSession } from "../session/session";
 import { CommandPalette } from "./CommandPalette";
 import { navigation } from "./navigation";
 import { ShortcutsOverlay } from "./ShortcutsOverlay";
+import { SidebarNav } from "./SidebarNav";
 import { StepUpDialog } from "./StepUpDialog";
 import { installShortcutListener, registerShortcut } from "./useShortcuts";
 
@@ -72,7 +73,7 @@ export function AppShell() {
     const unregister = [
       registerShortcut({ keys: "mod+k", description: "shortcuts.palette", group: "shortcuts.groups.global", handler: () => { setPaletteOpen(true); } }),
       registerShortcut({ keys: "?", description: "shortcuts.overlay", group: "shortcuts.groups.global", handler: () => { setShortcutsOpen(true); } }),
-      ...navigation.map((item) => registerShortcut({ keys: item.shortcut, description: item.label, group: "shortcuts.groups.navigation", handler: () => { void navigate({ to: item.to }); } })),
+      ...navigation.map((item) => registerShortcut({ keys: item.shortcut, description: item.label, group: item.group ? `nav.groups.${item.group}` : "shortcuts.groups.navigation", handler: () => { void navigate({ to: item.to }); } })),
     ];
     return () => {
       unregister.forEach((fn) => {
@@ -118,26 +119,7 @@ export function AppShell() {
             <span className="text-lg font-bold tracking-tight text-accent">Quicker</span>
             <span className="truncate text-xs text-fg-muted">{session?.tenant.name}</span>
           </div>
-          <nav className="flex-1 overflow-y-auto p-2">
-            <ul className="flex flex-col gap-0.5">
-              {visibleNavigation.map((item) => {
-                const active = item.to === "/" ? location === "/" : location === item.to || location.startsWith(`${item.to}/`);
-                return (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      onClick={() => { setSidebarOpen(false); }}
-                      aria-current={active ? "page" : undefined}
-                      className={cn("flex h-9 items-center gap-3 rounded-md px-3 text-sm transition-colors", active ? "bg-accent-soft font-medium text-accent" : "text-fg-muted hover:bg-surface-sunken hover:text-fg")}
-                    >
-                      <item.icon className="size-4 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{t(item.label)}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <SidebarNav items={visibleNavigation} location={location} onNavigate={() => { setSidebarOpen(false); }} />
           <div className="border-t border-border p-3 text-xs text-fg-subtle">
             <Button variant="ghost" size="sm" className="w-full justify-start gap-2" onClick={() => { setShortcutsOpen(true); }}>
               <Keyboard aria-hidden="true" />

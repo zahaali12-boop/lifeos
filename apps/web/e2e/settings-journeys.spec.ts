@@ -248,3 +248,27 @@ test("Arabic: the set-up screens read right to left and stay accessible", async 
   await expect(page.getByTestId("policy")).toContainText("الحد الأدنى لطول كلمة المرور");
   await expectAccessible(page);
 });
+
+test("English: the sidebar groups screens by module, remembers collapsed sections and filters", async ({ page }) => {
+  await signup(page, "en");
+  const purchasing = page.getByTestId("nav-group-purchasing");
+  await expect(purchasing.getByRole("link", { name: "Purchase orders" })).toBeVisible();
+  await page.getByTestId("nav-toggle-purchasing").click();
+  await expect(page.getByTestId("nav-toggle-purchasing")).toHaveAttribute("aria-expanded", "false");
+  await expect(purchasing.getByRole("link", { name: "Purchase orders" })).toBeHidden();
+  await expectAccessible(page);
+
+  // Collapsed sections stay collapsed after a reload, and open again when the current page is in them.
+  await page.reload();
+  await expect(page.getByTestId("nav-toggle-purchasing")).toHaveAttribute("aria-expanded", "false");
+  await page.goto("/purchasing/orders");
+  await expect(page.getByTestId("nav-toggle-purchasing")).toHaveAttribute("aria-expanded", "true");
+  await expect(purchasing.getByRole("link", { name: "Purchase orders" })).toHaveAttribute("aria-current", "page");
+
+  // The filter narrows every section at once; Enter opens the first match.
+  await page.getByTestId("nav-filter").fill("trial");
+  await expect(page.getByRole("navigation").getByRole("link")).toHaveCount(1);
+  await page.getByTestId("nav-filter").press("Enter");
+  await expect(page).toHaveURL(/\/accounting\/trial-balance$/);
+  await expect(page.getByTestId("nav-filter")).toHaveValue("");
+});
