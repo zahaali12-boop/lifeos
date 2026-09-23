@@ -253,7 +253,9 @@ public static class IdentityEndpoints
 
         var meta = api.MapGroup("/meta").WithTags("Metadata").RequireAuthorization();
         meta.MapGet("/permissions", static () => Results.Ok(PermissionCatalog.All)).Produces<IReadOnlyCollection<PermissionDefinition>>();
-        meta.MapGet("/role-templates", static () => Results.Ok(RoleTemplates.All.Select(static t => new { t.Code, Name = t.Name.Values, t.Description, t.Grants })));
+        meta.MapGet("/role-templates", static () => Results.Ok(RoleTemplates.All.Select(static t => new RoleTemplateInfo(
+                t.Code, t.Name.Values, t.Description, t.Grants.Where(PermissionCatalog.IsValidGrant).ToList(), t.Grants.Where(static g => !PermissionCatalog.IsValidGrant(g)).ToList())).ToList()))
+            .Produces<IReadOnlyList<RoleTemplateInfo>>();
 
         return api;
     }

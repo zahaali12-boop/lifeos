@@ -39,15 +39,19 @@ public static class RoleTemplates
     public static RoleTemplate? Find(string code) => All.FirstOrDefault(t => string.Equals(t.Code, code, StringComparison.Ordinal));
 }
 
-/// <summary>Segregation-of-duties rules every tenant starts with (ADR-0014). Admins can add more.</summary>
+/// <summary>
+/// Segregation-of-duties rules every tenant starts with (ADR-0014). Admins can add more. A rule may name a permission of
+/// a module still to come (sales, receivables); once a module ships, its rules must name keys it registers, which a test
+/// checks against the catalogue.
+/// </summary>
 public static class DefaultSodRules
 {
     public sealed record Rule(string PermissionA, string PermissionB, string Severity, LocalizedText Rationale);
 
     public static readonly IReadOnlyList<Rule> All =
     [
-        new("partners.supplier.manage", "payables.payment.post", "block", LocalizedText.Bilingual("Creating suppliers and paying them must be separated.", "يجب فصل إنشاء الموردين عن سداد مدفوعاتهم.")),
-        new("purchasing.order.approve", "purchasing.invoice.post", "warn", LocalizedText.Bilingual("Approving purchase orders and posting supplier invoices should be separated.", "يفضل فصل اعتماد أوامر الشراء عن ترحيل فواتير الموردين.")),
+        new("partners.supplier.manage", "banking.payment.post", "block", LocalizedText.Bilingual("Creating suppliers and paying them must be separated.", "يجب فصل إنشاء الموردين عن سداد مدفوعاتهم.")),
+        new("purchasing.order.manage", "purchasing.invoice.post", "warn", LocalizedText.Bilingual("Raising purchase orders and posting supplier invoices should be separated.", "يفضل فصل إصدار أوامر الشراء عن ترحيل فواتير الموردين.")),
         new("accounting.journal.post", "accounting.period.reopen", "block", LocalizedText.Bilingual("Posting journals and reopening periods must be separated.", "يجب فصل ترحيل القيود عن إعادة فتح الفترات.")),
         new("sales.invoice.post", "receivables.writeoff.post", "warn", LocalizedText.Bilingual("Invoicing customers and writing off their balances should be separated.", "يفضل فصل إصدار فواتير العملاء عن شطب أرصدتهم.")),
         new("identity.role.manage", "identity.assignment.manage", "warn", LocalizedText.Bilingual("Defining roles and assigning them should be separated.", "يفضل فصل تعريف الأدوار عن إسنادها.")),

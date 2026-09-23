@@ -78,6 +78,13 @@ public sealed record MemberSummary(Guid MembershipId, Guid UserId, string Email,
 
 public sealed record RoleSummary(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, string Description, bool IsSystem, string? TemplateCode, bool IsActive, IReadOnlyList<string> Grants, IReadOnlyList<Contracts.FieldRule> FieldRules, IReadOnlyList<Contracts.DocumentTypeRule> DocumentTypeRules);
 
+/// <summary>
+/// A starting point for a role: the grants a typical job needs, copied into a new role and edited there. Grants name
+/// permissions that exist today; pending grants name areas of modules not yet available, which the system role of the
+/// same template already holds and a new role can be given once the module ships.
+/// </summary>
+public sealed record RoleTemplateInfo(string Code, IReadOnlyDictionary<string, string> Name, string Description, IReadOnlyList<string> Grants, IReadOnlyList<string> PendingGrants);
+
 public sealed record SaveRoleRequest(string Code, IReadOnlyDictionary<string, string> Name, string Description, IReadOnlyList<string> Grants, IReadOnlyList<Contracts.FieldRule>? FieldRules = null, IReadOnlyList<Contracts.DocumentTypeRule>? DocumentTypeRules = null, bool IsActive = true);
 
 public sealed record ScopeInput(string ScopeType, Guid ScopeId);

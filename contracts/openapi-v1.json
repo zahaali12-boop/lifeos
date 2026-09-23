@@ -1563,7 +1563,17 @@
         "operationId": "getMetaRoleTemplates",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleTemplateInfo"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -37586,6 +37596,43 @@
             }
           }
         }
+      },
+      "RoleTemplateInfo": {
+        "required": [
+          "code",
+          "name",
+          "description",
+          "grants",
+          "pendingGrants"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "grants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pendingGrants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A starting point for a role: the grants a typical job needs, copied into a new role and edited there. Grants name\npermissions that exist today; pending grants name areas of modules not yet available, which the system role of the\nsame template already holds and a new role can be given once the module ships."
       },
       "RoutineOutcome": {
         "required": [

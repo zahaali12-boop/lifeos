@@ -11564,6 +11564,20 @@ export interface components {
             fieldRules: components["schemas"]["FieldRule"][];
             documentTypeRules: components["schemas"]["DocumentTypeRule"][];
         };
+        /**
+         * @description A starting point for a role: the grants a typical job needs, copied into a new role and edited there. Grants name
+         *     permissions that exist today; pending grants name areas of modules not yet available, which the system role of the
+         *     same template already holds and a new role can be given once the module ships.
+         */
+        RoleTemplateInfo: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            description: string;
+            grants: string[];
+            pendingGrants: string[];
+        };
         /** @description One item the routine handled: what it targeted, what it produced, or why it waited. */
         RoutineOutcome: {
             /** Format: uuid */
@@ -15694,7 +15708,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["RoleTemplateInfo"][];
+                };
             };
         };
     };

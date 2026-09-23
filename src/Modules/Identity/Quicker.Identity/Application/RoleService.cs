@@ -75,7 +75,8 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
             return Error.Forbidden("role.system_locked", "The owner role cannot be edited.");
         }
 
-        var validation = Validate(request);
+        // Grants the role already holds stay valid: system roles carry areas reserved for modules still to come.
+        var validation = Validate(request, role.Permissions.Select(static p => p.PermissionKey).ToHashSet(StringComparer.Ordinal));
         if (validation.IsFailure)
         {
             return validation.Error!;
@@ -470,7 +471,7 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
 
     private IQueryable<Role> Query() => db.Roles.Include(static r => r.Permissions).Include(static r => r.FieldRules).Include(static r => r.DocumentTypeRules);
 
-    private static Result Validate(SaveRoleRequest request)
+    private static Result Validate(SaveRoleRequest request, IReadOnlySet<string>? kept = null)
     {
         if (string.IsNullOrWhiteSpace(request.Code) || request.Code.Length > 64 || !request.Code.All(static c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c == '_'))
         {
@@ -482,7 +483,7 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
             return Error.Validation("role.name_required", "Role name is required in at least one language.");
         }
 
-        var invalid = request.Grants.Where(static g => !PermissionCatalog.IsValidGrant(g)).ToList();
+        var invalid = request.Grants.Where(g => !PermissionCatalog.IsValidGrant(g) && kept?.Contains(g) != true).ToList();
         if (invalid.Count > 0)
         {
             return Error.Validation("role.grant_unknown", "Unknown permission keys.").WithWhy(("keys", invalid));

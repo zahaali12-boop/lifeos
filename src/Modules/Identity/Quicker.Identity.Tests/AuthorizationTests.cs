@@ -117,6 +117,73 @@ public sealed class AuthorizationTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task Every_role_template_saves_as_a_role_as_it_stands()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var templates = await (await owner.GetAsync("/api/v1/meta/role-templates")).ReadJsonAsync();
+        templates.GetArrayLength().ShouldBeGreaterThan(0);
+
+        // The role designer copies a template's grants into a new role unchanged, so each must save as it stands.
+        foreach (var template in templates.EnumerateArray())
+        {
+            var code = template.GetProperty("code").GetString()!;
+            var saved = await owner.PostAsJsonAsync("/api/v1/roles", new
+            {
+                code = $"from_{code}",
+                name = template.GetProperty("name"),
+                description = template.GetProperty("description").GetString(),
+                grants = template.GetProperty("grants"),
+            }, Json);
+            saved.StatusCode.ShouldBe(HttpStatusCode.Created, $"template {code}: {await saved.Content.ReadAsStringAsync()}");
+        }
+
+        var accountant = templates.EnumerateArray().Single(static t => t.GetProperty("code").GetString() == "accountant");
+        accountant.GetProperty("pendingGrants").EnumerateArray().Select(static g => g.GetString()).ShouldContain("finance.*");
+        accountant.GetProperty("grants").EnumerateArray().Select(static g => g.GetString()).ShouldContain("accounting.journal.*");
+    }
+
+    [Fact]
+    public async Task A_system_role_keeps_its_reserved_grants_when_edited_but_new_grants_must_exist()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var roles = await (await owner.GetAsync("/api/v1/roles")).ReadJsonAsync();
+        var accountant = roles.EnumerateArray().Single(static r => r.GetProperty("code").GetString() == "accountant");
+        var id = accountant.GetProperty("id").GetGuid();
+        var grants = accountant.GetProperty("grants").EnumerateArray().Select(static g => g.GetString()!).ToList();
+        grants.ShouldContain("finance.*"); // reserved for a module still to come
+
+        var edited = await owner.PutAsJsonAsync($"/api/v1/roles/{id}", new { code = "accountant", name = accountant.GetProperty("name"), description = "Keeps the books.", grants }, Json);
+        edited.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await edited.ReadJsonAsync()).GetProperty("grants").EnumerateArray().Select(static g => g.GetString()).ShouldContain("finance.*");
+
+        var typo = await owner.PutAsJsonAsync($"/api/v1/roles/{id}", new { code = "accountant", name = accountant.GetProperty("name"), description = "Keeps the books.", grants = grants.Append("acounting.journal.post").ToList() }, Json);
+        typo.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var problem = await typo.ReadJsonAsync();
+        problem.GetProperty("code").GetString().ShouldBe("role.grant_unknown");
+        problem.GetProperty("why").GetProperty("keys").EnumerateArray().Select(static k => k.GetString()).ShouldBe(["acounting.journal.post"]);
+    }
+
+    [Fact]
+    public async Task Default_sod_rules_name_permissions_that_exist_once_their_module_has_shipped()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var catalogue = (await (await owner.GetAsync("/api/v1/meta/permissions")).ReadJsonAsync()).EnumerateArray().Select(static p => p.GetProperty("key").GetString()!).ToHashSet(StringComparer.Ordinal);
+        var rules = (await (await owner.GetAsync("/api/v1/sod/rules")).ReadJsonAsync()).EnumerateArray().Where(static r => r.GetProperty("isSystem").GetBoolean()).ToList();
+        rules.ShouldNotBeEmpty();
+
+        // A rule naming a key its (shipped) module does not register can never trip: the control silently does nothing.
+        var dead = rules
+            .SelectMany(static r => new[] { r.GetProperty("permissionA").GetString()!, r.GetProperty("permissionB").GetString()! })
+            .Where(k => catalogue.Any(c => c.StartsWith(k.Split('.')[0] + ".", StringComparison.Ordinal)) && !catalogue.Contains(k))
+            .ToList();
+        dead.ShouldBeEmpty();
+        rules.ShouldContain(static r => r.GetProperty("permissionA").GetString() == "partners.supplier.manage" && r.GetProperty("permissionB").GetString() == "banking.payment.post");
+    }
+
+    [Fact]
     public async Task Api_keys_act_as_their_member_with_narrowed_scopes_and_die_when_revoked()
     {
         var ws = await Api.SignupAsync();
