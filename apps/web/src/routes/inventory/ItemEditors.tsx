@@ -19,7 +19,7 @@ type WarehouseSettings = components["schemas"]["WarehouseSettingsSummary"];
 const symbologies = ["EAN13", "EAN8", "UPCA", "CODE128", "CODE39", "QR", "DATAMATRIX", "OTHER"];
 const cycleClasses = ["", "A", "B", "C"];
 
-function useItemRefresh(itemId: string) {
+export function useItemRefresh(itemId: string) {
   const queryClient = useQueryClient();
   return async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["item", itemId] });

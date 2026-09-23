@@ -13,6 +13,7 @@ import { rememberRecent } from "../../shell/CommandPalette";
 import { Amount } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { ItemCostingEditor, ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEditor } from "./ItemEditors";
+import { ItemAttributesEditor, ItemBomEditor, ItemImage, ItemSubstitutesEditor, ItemVariantsEditor } from "./ItemStructure";
 import { DocStatus, Tabs, type Item } from "./shared";
 
 interface ItemForm {
@@ -77,7 +78,7 @@ export function ItemsPage() {
   const item = useQuery({
     queryKey: ["item", openId],
     enabled: Boolean(openId),
-    queryFn: async () => unwrap(await api.GET("/api/v1/items/{itemId}", { params: { path: { itemId: openId ?? "" }, query: { expand: "uoms,variants,suppliers" } } })),
+    queryFn: async () => unwrap(await api.GET("/api/v1/items/{itemId}", { params: { path: { itemId: openId ?? "" }, query: { expand: "uoms,variants,suppliers,substitutes" } } })),
   });
   const uoms = useQuery({ queryKey: ["uoms"], queryFn: async () => unwrap(await api.GET("/api/v1/organization/uoms")) });
   const categories = useQuery({ queryKey: ["item-categories"], queryFn: async () => unwrap(await api.GET("/api/v1/items/categories")) });
@@ -189,6 +190,7 @@ export function ItemsPage() {
           </DialogHeader>
           {detail ? (
             <div className="flex flex-col gap-4" data-testid="item-detail">
+              <ItemImage item={detail} />
               <div className="flex flex-wrap gap-2 text-sm">
                 <Badge tone={detail.isActive ? "success" : "neutral"}>{detail.isActive ? t("common.active") : t("common.inactive")}</Badge>
                 <Badge>{t(`inventory.items.types.${detail.type}`, { defaultValue: detail.type })}</Badge>
@@ -210,22 +212,18 @@ export function ItemsPage() {
                   { id: "suppliers", label: t("itemEditor.tabs.suppliers"), testId: "item-tab-suppliers" },
                   { id: "planning", label: t("itemEditor.tabs.planning"), testId: "item-tab-planning" },
                   { id: "costing", label: t("itemEditor.tabs.costing"), testId: "item-tab-costing" },
-                  ...((detail.variants ?? []).length > 0 ? [{ id: "variants", label: t("inventory.items.variants"), testId: "item-tab-variants" }] : []),
+                  ...(detail.type === "kit" || detail.type === "assembly" ? [{ id: "bom", label: t("itemStructure.tabs.bom"), testId: "item-tab-bom" }] : []),
+                  { id: "variants", label: t("inventory.items.variants"), testId: "item-tab-variants" },
+                  { id: "substitutes", label: t("itemStructure.tabs.substitutes"), testId: "item-tab-substitutes" },
                 ]}
               />
               {detailTab === "units" ? <ItemUnitsEditor item={detail} /> : null}
               {detailTab === "suppliers" ? <ItemSuppliersEditor item={detail} /> : null}
               {detailTab === "planning" ? <ItemPlanningEditor item={detail} /> : null}
               {detailTab === "costing" ? <ItemCostingEditor item={detail} /> : null}
-              {detailTab === "variants" ? (
-                <ul className="flex flex-wrap gap-2 text-sm">
-                  {(detail.variants ?? []).map((v) => (
-                    <li key={v.id} className="rounded-md border border-border px-2 py-1">
-                      <span dir="ltr">{v.sku}</span> <span className="text-fg-muted">{localized(v.name)}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              {detailTab === "bom" ? <ItemBomEditor item={detail} /> : null}
+              {detailTab === "variants" ? <ItemVariantsEditor item={detail} /> : null}
+              {detailTab === "substitutes" ? <ItemSubstitutesEditor item={detail} /> : null}
               <DialogFooter>
                 <Button variant="secondary" onClick={() => { setProblem(null); setEditing({ id: detail.id, form: toForm(detail) }); }} data-testid="edit-item">
                   {t("inventory.items.edit")}
@@ -424,6 +422,9 @@ function MasterDataDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               {t("inventory.items.addBrand")}
             </Button>
           </form>
+        </div>
+        <div className="mt-6 border-t border-border pt-4">
+          <ItemAttributesEditor />
         </div>
       </DialogContent>
     </Dialog>
