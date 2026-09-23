@@ -156,6 +156,16 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await expect(page.getByTestId("valuation-totals")).toContainText("24,500");
   await expectAccessible(page);
 
+  // Why a movement cost what it did: the opening adjustment of 100 at 250 explains itself as 25,000 of direct cost.
+  await nav(page, "Stock");
+  await page.getByTestId("tab-ledger").click();
+  await page.getByRole("grid").getByRole("row").filter({ hasText: "Positive adjustment" }).first().dblclick();
+  await expect(page.getByTestId("cost-explanation")).toBeVisible();
+  await expect(page.getByTestId("explained-cost")).toContainText("25,000");
+  await expect(page.getByTestId("value-entry-row").first()).toContainText("Direct cost");
+  await expectAccessible(page);
+  await closeDialog(page);
+
   // Lots and serials, and replenishment, open and pass axe even when empty.
   await nav(page, "Lots & serials");
   await expectAccessible(page);

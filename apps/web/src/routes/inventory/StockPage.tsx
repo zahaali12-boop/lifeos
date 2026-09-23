@@ -8,6 +8,7 @@ import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, formatDateTime, localized } from "../../lib/format";
 import { Field, PageHeader, TextField } from "../common";
+import { CostExplanationDialog } from "./CostExplanationDialog";
 import { CompanyFilter, Qty, Tabs, WarehouseSelect, findItemByCode, useCompanyContext, useWarehouses } from "./shared";
 
 type StockRow = components["schemas"]["StockSearchRow"];
@@ -26,6 +27,7 @@ export function StockPage() {
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [explain, setExplain] = useState<LedgerRow | null>(null);
 
   const item = useQuery({ queryKey: ["item-by-code", itemCode], enabled: itemCode.trim().length > 0, queryFn: () => findItemByCode(itemCode) });
   const itemId = item.data?.id;
@@ -88,7 +90,7 @@ export function StockPage() {
       { id: "entered", accessorKey: "enteredQuantity", header: t("inventory.stock.entered"), size: 120, cell: ({ row }) => <Qty value={row.original.enteredQuantity} uom={row.original.enteredUom} /> },
       { id: "lot", accessorKey: "lotNumber", header: t("inventory.stock.lot"), size: 110 },
       { id: "serial", accessorKey: "serialNumber", header: t("inventory.stock.serial"), size: 130 },
-      { id: "source", accessorKey: "sourceDocumentType", header: t("inventory.stock.source"), size: 150 },
+      { id: "source", accessorKey: "sourceDocumentType", header: t("inventory.stock.source"), size: 170, cell: ({ row }) => t(`inventory.valuation.sourceDocuments.${row.original.sourceDocumentType}`, { defaultValue: row.original.sourceDocumentType }) },
     ],
     [t],
   );
@@ -150,7 +152,8 @@ export function StockPage() {
       {tab === "balances" ? <DataGrid<BalanceRow> label="inventory.stock.balances" columns={balanceColumns} data={balances.data ?? []} rowKey={(row) => `${row.itemId}:${row.variantId ?? ""}:${row.warehouseId}:${row.binId ?? ""}:${row.lotId ?? ""}:${row.serialId ?? ""}`} loading={balances.isPending && Boolean(companyId)} emptyTitle={t("inventory.stock.emptyTitle")} emptyDescription={t("inventory.stock.emptyDescription")} /> : null}
       {tab === "ledger" ? (
         <>
-          <DataGrid<LedgerRow> label="inventory.stock.ledger" columns={ledgerColumns} data={ledgerRows} rowKey={(row) => row.id} loading={ledger.isPending && Boolean(companyId)} emptyTitle={t("inventory.stock.noMovements")} emptyDescription={t("inventory.stock.noMovementsHint")} />
+          <p className="mb-2 text-sm text-fg-muted">{t("inventory.cost.openHint")}</p>
+          <DataGrid<LedgerRow> label="inventory.stock.ledger" columns={ledgerColumns} data={ledgerRows} rowKey={(row) => row.id} onOpen={setExplain} loading={ledger.isPending && Boolean(companyId)} emptyTitle={t("inventory.stock.noMovements")} emptyDescription={t("inventory.stock.noMovementsHint")} />
           {ledger.hasNextPage ? (
             <Button variant="secondary" className="mt-3" onClick={() => { void ledger.fetchNextPage(); }} loading={ledger.isFetchingNextPage}>
               {t("common.loadMore")}
@@ -158,6 +161,7 @@ export function StockPage() {
           ) : null}
         </>
       ) : null}
+      <CostExplanationDialog sleId={explain?.id ?? null} itemCode={explain?.itemCode} onClose={() => { setExplain(null); }} />
     </>
   );
 }
