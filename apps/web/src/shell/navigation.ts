@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, GitBranch, Hammer, Inbox, Layers, LayoutDashboard, ListChecks, NotebookPen, Package, Scale, ScanLine, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { ArrowRightLeft, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, GitBranch, Hammer, Handshake, Inbox, Layers, LayoutDashboard, ListChecks, NotebookPen, Package, Scale, ScanLine, Settings2, ShieldCheck, ShoppingCart, SlidersHorizontal, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The primary navigation: one entry per admin area shipped in 1.4–1.8, the accounting screens of M2 and the mobile scanner of M3, each with a "g <key>" shortcut. */
 export interface NavigationItem {
@@ -32,6 +32,8 @@ export const navigation: NavigationItem[] = [
   { to: "/inventory/replenishment", label: "nav.replenishment", icon: ShoppingCart, shortcut: "g g", permission: "inventory.replenishment.read" },
   { to: "/inventory/valuation", label: "nav.valuation", icon: Calculator, shortcut: "g 9", permission: "inventory.costing.read" },
   { to: "/m", label: "nav.mobile", icon: ScanLine, shortcut: "g s", permission: "inventory.count.enter" },
+  { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
+  { to: "/purchasing/settings", label: "nav.purchasingSettings", icon: Settings2, shortcut: "g 4", permission: "partners.terms.manage" },
   { to: "/approvals", label: "nav.approvals", icon: Inbox, shortcut: "g 1" },
   { to: "/workflows", label: "nav.workflows", icon: GitBranch, shortcut: "g 2", permission: "workflow.definition.read" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read" },

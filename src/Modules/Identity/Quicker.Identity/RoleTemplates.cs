@@ -18,7 +18,7 @@ public static class RoleTemplates
         // Reopening a closed period is a controller's decision, kept apart from posting (default SoD rule), so the
         // template names the accounting areas instead of "accounting.*": a default role must be assignable on its own.
         new("accountant", LocalizedText.Bilingual("Accountant", "محاسب"), "General ledger, period close, finance and reporting",
-            ["accounting.journal.*", "accounting.ledger.*", "accounting.chart.*", "accounting.dimension.*", "accounting.period.manage", "accounting.period.post_in_soft_closed", "finance.*", "tax.*", "reporting.*", "organization.company.read", "identity.user.read"]),
+            ["accounting.journal.*", "accounting.ledger.*", "accounting.chart.*", "accounting.dimension.*", "accounting.period.manage", "accounting.period.post_in_soft_closed", "finance.*", "tax.*", "partners.terms.manage", "partners.supplier.read", "reporting.*", "organization.company.read", "identity.user.read"]),
         new("ar_clerk", LocalizedText.Bilingual("Receivables clerk", "موظف الذمم المدينة"), "Customer invoices, receipts, statements and dunning",
             ["sales.invoice.*", "receivables.*", "partners.customer.read", "reporting.report.run"]),
         new("ap_clerk", LocalizedText.Bilingual("Payables clerk", "موظف الذمم الدائنة"), "Supplier invoices, matching and payments",
@@ -30,7 +30,7 @@ public static class RoleTemplates
         new("sales_rep", LocalizedText.Bilingual("Sales representative", "مندوب مبيعات"), "Customers, quotes and orders",
             ["sales.quote.*", "sales.order.*", "partners.customer.*", "inventory.item.read", "reporting.report.run"]),
         new("purchaser", LocalizedText.Bilingual("Purchaser", "مسؤول مشتريات"), "Requisitions, RFQs, purchase orders and suppliers",
-            ["purchasing.requisition.*", "purchasing.rfq.*", "purchasing.order.*", "partners.supplier.*", "inventory.item.read"]),
+            ["purchasing.requisition.*", "purchasing.rfq.*", "purchasing.order.*", "partners.supplier.*", "partners.terms.manage", "inventory.item.read"]),
         new("approver", LocalizedText.Bilingual("Approver", "معتمد"), "Approves documents routed by workflow", ["workflow.request.approve", "workflow.request.read"]),
         new("auditor", LocalizedText.Bilingual("Auditor", "مدقق"), "Read-only access to books, documents and the audit log",
             ["accounting.ledger.read", "accounting.journal.read", "reporting.*", "audit.event.read", "audit.event.export", "audit.chain.verify", "identity.user.read", "identity.role.read", "identity.sod.read"]),

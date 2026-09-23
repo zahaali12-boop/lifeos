@@ -24,6 +24,8 @@ using Quicker.Numbering.Api;
 using Quicker.Observability;
 using Quicker.Organization;
 using Quicker.Organization.Api;
+using Quicker.Partners;
+using Quicker.Partners.Api;
 using Quicker.Persistence;
 using Quicker.Storage;
 using Quicker.Tenancy;
@@ -80,6 +82,7 @@ builder.Services.AddIntegrityModule();
 builder.Services.AddItemsModule();
 builder.Services.AddInventoryModule();
 builder.Services.AddWorkflowModule();
+builder.Services.AddPartnersModule();
 
 var app = builder.Build();
 
@@ -111,6 +114,7 @@ api.MapIntegrityEndpoints();
 api.MapItemsEndpoints();
 api.MapInventoryEndpoints();
 api.MapWorkflowEndpoints();
+api.MapPartnersEndpoints();
 
 app.Run();
 

@@ -29,6 +29,8 @@ import { TrackingPage } from "./inventory/TrackingPage";
 import { TransfersPage } from "./inventory/TransfersPage";
 import { ValuationPage } from "./inventory/ValuationPage";
 import { WarehousesPage } from "./inventory/WarehousesPage";
+import { PurchasingSettingsPage } from "./purchasing/PurchasingSettingsPage";
+import { SuppliersPage } from "./purchasing/SuppliersPage";
 import { ApprovalsPage } from "./workflow/ApprovalsPage";
 import { WorkflowsPage } from "./workflow/WorkflowsPage";
 import { MobileCountPage } from "./mobile/MobileCountPage";
@@ -83,6 +85,8 @@ const trackingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/in
 const countsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/counts", component: CountsPage, validateSearch: searchRecord });
 const replenishmentRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/replenishment", component: ReplenishmentPage, validateSearch: searchRecord });
 const valuationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/valuation", component: ValuationPage });
+const suppliersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/suppliers", component: SuppliersPage, validateSearch: searchRecord });
+const purchasingSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/settings", component: PurchasingSettingsPage });
 const approvalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/approvals", component: ApprovalsPage, validateSearch: searchRecord });
 const workflowsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/workflows", component: WorkflowsPage, validateSearch: searchRecord });
 
@@ -109,7 +113,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute,
-    approvalsRoute, workflowsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute]),
 ]);

@@ -14628,6 +14628,1375 @@
           }
         }
       }
+    },
+    "/api/v1/partners/supplier-groups": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersSupplierGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierGroupSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "A supplier group: the posting group, payment and delivery terms its members default to",
+        "operationId": "postPartnersSupplierGroups",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSupplierGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/supplier-groups/{groupId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersSupplierGroupsByGroupId",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSupplierGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/payment-terms": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersPaymentTerms",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentTermsSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Payment terms: due days from the invoice date, the end of its month or the delivery; optional instalments (percentages summing to 100), early-payment discount, business days only",
+        "operationId": "postPartnersPaymentTerms",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePaymentTermsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTermsSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/payment-terms/{termsId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersPaymentTermsByTermsId",
+        "parameters": [
+          {
+            "name": "termsId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePaymentTermsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTermsSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/payment-terms/{termsId}/schedule": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The due dates and instalment amounts an invoice of this amount would carry (the parts sum to the whole in the currency's minor unit)",
+        "operationId": "postPartnersPaymentTermsByTermsIdSchedule",
+        "parameters": [
+          {
+            "name": "termsId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchedulePreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSchedule"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/delivery-terms": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersDeliveryTerms",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryTermsSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "postPartnersDeliveryTerms",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDeliveryTermsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryTermsSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/delivery-terms/{termsId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersDeliveryTermsByTermsId",
+        "parameters": [
+          {
+            "name": "termsId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDeliveryTermsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryTermsSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/wht-codes": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersWhtCodes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WhtCodeSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "A withholding tax code: rate, withheld at invoice or payment, optional threshold",
+        "operationId": "postPartnersWhtCodes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWhtCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhtCodeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/wht-codes/{whtCodeId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersWhtCodesByWhtCodeId",
+        "parameters": [
+          {
+            "name": "whtCodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveWhtCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhtCodeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/suppliers": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Supplier accounts with their partner and effective terms; holdStatus=held for every held one",
+        "operationId": "getPartnersSuppliers",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "holdStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierAccountSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Partners newest first, paged: q matches the code, a name in any language or the email; role=supplier|customer|employee",
+        "operationId": "getPartners",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfPartnerSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "A partner: one record per legal person wearing the supplier, customer and employee roles; custom fields under host 'partner'",
+        "operationId": "postPartners",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePartnerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/by-code/{code}": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersByCodeByCode",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The partner with contacts, addresses, masked bank accounts, tax registrations and supplier accounts",
+        "operationId": "getPartnersByPartnerId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersByPartnerId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePartnerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/contacts": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "postPartnersByPartnerIdContacts",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/contacts/{contactId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersByPartnerIdContactsByContactId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveContactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "deletePartnersByPartnerIdContactsByContactId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/addresses": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "role billing|shipping|legal|other; address is a structured bilingual object; one default per role",
+        "operationId": "postPartnersByPartnerIdAddresses",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAddressRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/addresses/{addressId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersByPartnerIdAddressesByAddressId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAddressRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "deletePartnersByPartnerIdAddressesByAddressId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/bank-accounts": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Account number and IBAN are checked (IBAN mod-97), stored encrypted and shown masked",
+        "operationId": "postPartnersByPartnerIdBankAccounts",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBankAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/bank-accounts/{accountId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersByPartnerIdBankAccountsByAccountId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBankAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "deletePartnersByPartnerIdBankAccountsByAccountId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/bank-accounts/{accountId}/reveal": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The full account number and IBAN, once, with an audit event naming who revealed them",
+        "operationId": "postPartnersByPartnerIdBankAccountsByAccountIdReveal",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountReveal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/tax-registrations": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "registrationType vat|tin|crn|other, unique per partner, country, type and number",
+        "operationId": "postPartnersByPartnerIdTaxRegistrations",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxRegistrationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/tax-registrations/{registrationId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersByPartnerIdTaxRegistrationsByRegistrationId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxRegistrationSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "deletePartnersByPartnerIdTaxRegistrationsByRegistrationId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/supplier-accounts": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersByPartnerIdSupplierAccounts",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupplierAccountSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/supplier-accounts/{companyId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The partner as a supplier of the company: group, terms, posting group, withholding code, currency, lead time, tolerances, requires PO; blanks default from the group",
+        "operationId": "putPartnersByPartnerIdSupplierAccountsByCompanyId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSupplierAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/supplier-accounts/{companyId}/hold": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "status purchase|payment|all with a reason; documents of that kind refuse the supplier (supplier.on_hold)",
+        "operationId": "postPartnersByPartnerIdSupplierAccountsByCompanyIdHold",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/supplier-accounts/{companyId}/release": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "postPartnersByPartnerIdSupplierAccountsByCompanyIdRelease",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -15013,6 +16382,51 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "AddressSummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "role",
+          "address",
+          "country",
+          "region",
+          "isDefault",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "country": {
+            "type": "string"
+          },
+          "region": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -16543,6 +17957,105 @@
           }
         }
       },
+      "BankAccountReveal": {
+        "required": [
+          "id",
+          "accountNumber",
+          "iban"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "BankAccountSummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "accountHolder",
+          "bankName",
+          "branch",
+          "swiftBic",
+          "currency",
+          "accountNumberMasked",
+          "ibanMasked",
+          "isDefault",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accountHolder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "branch": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "swiftBic": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "accountNumberMasked": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ibanMasked": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "BarcodeMatch": {
         "required": [
           "itemId",
@@ -17881,6 +19394,82 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "ContactSummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "name",
+          "role",
+          "email",
+          "phone",
+          "mobile",
+          "isPrimary",
+          "receivesStatements",
+          "notes",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "role": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mobile": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "receivesStatements": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -19450,6 +21039,42 @@
           }
         }
       },
+      "DeliveryTermsSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "isSystem",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "DimensionBalanceRow": {
         "required": [
           "valueId",
@@ -19890,6 +21515,58 @@
           }
         }
       },
+      "EffectiveTerms": {
+        "required": [
+          "paymentTermsId",
+          "paymentTermsCode",
+          "deliveryTermsId",
+          "deliveryTermsCode",
+          "postingGroupId",
+          "whtCode"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "whtCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "EntryLinkSummary": {
         "required": [
           "fromEntryId",
@@ -20284,6 +21961,21 @@
           }
         },
         "description": "The health payload: a status word, the applied migrations (when the database answers), an error name and each check."
+      },
+      "HoldRequest": {
+        "required": [
+          "status",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
       },
       "HolidaySummary": {
         "required": [
@@ -23545,6 +25237,28 @@
         },
         "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
       },
+      "PageOfPartnerSummary": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerSummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
       "PageOfStockLedgerRow": {
         "required": [
           "items",
@@ -23588,6 +25302,376 @@
           }
         },
         "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
+      "PartnerDetail": {
+        "required": [
+          "partner",
+          "contacts",
+          "addresses",
+          "bankAccounts",
+          "taxRegistrations",
+          "supplierAccounts"
+        ],
+        "type": "object",
+        "properties": {
+          "partner": {
+            "$ref": "#/components/schemas/PartnerSummary"
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactSummary"
+            }
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddressSummary"
+            }
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankAccountSummary"
+            }
+          },
+          "taxRegistrations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRegistrationSummary"
+            }
+          },
+          "supplierAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupplierAccountSummary"
+            }
+          }
+        }
+      },
+      "PartnerSummary": {
+        "required": [
+          "id",
+          "code",
+          "legalName",
+          "tradeName",
+          "kind",
+          "isSupplier",
+          "isCustomer",
+          "isEmployee",
+          "intercompanyCompanyId",
+          "defaultLanguage",
+          "website",
+          "email",
+          "phone",
+          "parentPartnerId",
+          "parentPartnerCode",
+          "notes",
+          "customFields",
+          "isActive",
+          "supplierCompanies",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "tradeName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "isSupplier": {
+            "type": "boolean"
+          },
+          "isCustomer": {
+            "type": "boolean"
+          },
+          "isEmployee": {
+            "type": "boolean"
+          },
+          "intercompanyCompanyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "defaultLanguage": {
+            "type": "string"
+          },
+          "website": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "parentPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "parentPartnerCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "supplierCompanies": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentInstalment": {
+        "required": [
+          "sequence",
+          "dueOn",
+          "percentage",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dueOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One instalment of a payment schedule: its share and the amount after the currency's rounding (the parts sum to the whole)."
+      },
+      "PaymentSchedule": {
+        "required": [
+          "paymentTermsId",
+          "code",
+          "baseDate",
+          "instalments",
+          "earlyDiscountUntil",
+          "earlyDiscountPct"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentTermsId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "baseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "instalments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentInstalment"
+            }
+          },
+          "earlyDiscountUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "earlyDiscountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "dueOn": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "PaymentTermLineSummary": {
+        "required": [
+          "sequence",
+          "percentage",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PaymentTermsSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "dueBasis",
+          "dueDays",
+          "earlyDiscountPct",
+          "earlyDiscountDays",
+          "businessDaysOnly",
+          "lines",
+          "isSystem",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dueBasis": {
+            "type": "string"
+          },
+          "dueDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "earlyDiscountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "earlyDiscountDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "businessDaysOnly": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentTermLineSummary"
+            }
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "PeriodGaps": {
         "required": [
@@ -26503,6 +28587,32 @@
           }
         }
       },
+      "SaveAddressRequest": {
+        "required": [
+          "role",
+          "country"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "address": { },
+          "region": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isDefault": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
       "SaveAdjustmentLineRequest": {
         "type": "object",
         "properties": {
@@ -26902,6 +29012,60 @@
             "default": 0
           }
         }
+      },
+      "SaveBankAccountRequest": {
+        "required": [
+          "bankName",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branch": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "swiftBic": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isDefault": {
+            "type": "boolean",
+            "default": false
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "description": "Numbers are sent in clear over TLS once and stored only encrypted; omit them on an update to keep what is stored."
       },
       "SaveBarcodeRequest": {
         "required": [
@@ -27371,6 +29535,62 @@
           }
         }
       },
+      "SaveContactRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "role": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mobile": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "default": false
+          },
+          "receivesStatements": {
+            "type": "boolean",
+            "default": false
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveCountRequest": {
         "required": [
           "companyId",
@@ -27695,6 +29915,28 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "SaveDeliveryTermsRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -28383,6 +30625,196 @@
           "customFields": { }
         }
       },
+      "SavePartnerRequest": {
+        "required": [
+          "code",
+          "legalName"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "tradeName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string",
+            "default": "organization"
+          },
+          "isSupplier": {
+            "type": "boolean",
+            "default": false
+          },
+          "isCustomer": {
+            "type": "boolean",
+            "default": false
+          },
+          "isEmployee": {
+            "type": "boolean",
+            "default": false
+          },
+          "intercompanyCompanyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "defaultLanguage": {
+            "type": "string",
+            "default": "en"
+          },
+          "website": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "parentPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": { },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SavePaymentTermLineRequest": {
+        "required": [
+          "sequence",
+          "percentage",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SavePaymentTermsRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dueBasis": {
+            "type": "string",
+            "default": "invoice_date"
+          },
+          "dueDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "earlyDiscountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "earlyDiscountDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "businessDaysOnly": {
+            "type": "boolean",
+            "default": false
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SavePaymentTermLineRequest"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SavePostingGroupRequest": {
         "required": [
           "kind",
@@ -29048,6 +31480,170 @@
           }
         }
       },
+      "SaveSupplierAccountRequest": {
+        "type": "object",
+        "properties": {
+          "supplierGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "whtCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "leadTimeDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "priceTolerancePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "qtyTolerancePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "requiresPo": {
+            "type": "boolean",
+            "default": false
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveSupplierGroupRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveTaxRegistrationRequest": {
+        "required": [
+          "country",
+          "registrationType",
+          "number"
+        ],
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string"
+          },
+          "registrationType": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "SaveTransferLineRequest": {
         "type": "object",
         "properties": {
@@ -29465,6 +32061,93 @@
           "active": {
             "type": "boolean",
             "default": true
+          }
+        }
+      },
+      "SaveWhtCodeRequest": {
+        "required": [
+          "code",
+          "name",
+          "ratePct"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "withholdAt": {
+            "type": "string",
+            "default": "payment"
+          },
+          "thresholdAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "thresholdCurrency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SchedulePreviewRequest": {
+        "required": [
+          "companyId",
+          "invoiceDate",
+          "amount",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "deliveryDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -31460,6 +34143,281 @@
           }
         }
       },
+      "SupplierAccountSummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "companyId",
+          "companyCode",
+          "supplierGroupId",
+          "supplierGroupCode",
+          "paymentTermsId",
+          "deliveryTermsId",
+          "postingGroupId",
+          "taxGroupId",
+          "whtCodeId",
+          "currency",
+          "leadTimeDays",
+          "priceTolerancePct",
+          "qtyTolerancePct",
+          "requiresPo",
+          "holdStatus",
+          "holdReason",
+          "heldAt",
+          "isActive",
+          "effective",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyCode": {
+            "type": "string"
+          },
+          "supplierGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "supplierGroupCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "whtCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "priceTolerancePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyTolerancePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "requiresPo": {
+            "type": "boolean"
+          },
+          "holdStatus": {
+            "type": "string"
+          },
+          "holdReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "heldAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "effective": {
+            "$ref": "#/components/schemas/EffectiveTerms"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The account as saved plus the effective terms once the group's defaults are applied."
+      },
+      "SupplierGroupSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "postingGroupId",
+          "paymentTermsId",
+          "deliveryTermsId",
+          "isActive",
+          "suppliers",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "suppliers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TaxRegistrationSummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "country",
+          "registrationType",
+          "number",
+          "validFrom",
+          "validTo",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "country": {
+            "type": "string"
+          },
+          "registrationType": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "TemplateSummary": {
         "required": [
           "code",
@@ -33001,6 +35959,68 @@
           }
         }
       },
+      "WhtCodeSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "ratePct",
+          "withholdAt",
+          "thresholdAmount",
+          "thresholdCurrency",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "withholdAt": {
+            "type": "string"
+          },
+          "thresholdAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "thresholdCurrency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "WorkflowCatalogue": {
         "required": [
           "subjects",
@@ -33125,6 +36145,9 @@
     },
     {
       "name": "Workflow"
+    },
+    {
+      "name": "Partners"
     }
   ]
 }

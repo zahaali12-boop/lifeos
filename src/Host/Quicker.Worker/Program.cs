@@ -13,6 +13,7 @@ using Quicker.Messaging;
 using Quicker.Numbering;
 using Quicker.Observability;
 using Quicker.Organization;
+using Quicker.Partners;
 using Quicker.Persistence;
 using Quicker.Storage;
 using Quicker.Tenancy;
@@ -48,6 +49,7 @@ builder.Services.AddIntegrityModule();
 builder.Services.AddItemsModule();
 builder.Services.AddInventoryModule();
 builder.Services.AddWorkflowModule();
+builder.Services.AddPartnersModule();
 
 var app = builder.Build();
 

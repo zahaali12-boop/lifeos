@@ -5209,6 +5209,436 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partners/supplier-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersSupplierGroups"];
+        put?: never;
+        /** A supplier group: the posting group, payment and delivery terms its members default to */
+        post: operations["postPartnersSupplierGroups"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/supplier-groups/{groupId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersSupplierGroupsByGroupId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/payment-terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersPaymentTerms"];
+        put?: never;
+        /** Payment terms: due days from the invoice date, the end of its month or the delivery; optional instalments (percentages summing to 100), early-payment discount, business days only */
+        post: operations["postPartnersPaymentTerms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/payment-terms/{termsId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersPaymentTermsByTermsId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/payment-terms/{termsId}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The due dates and instalment amounts an invoice of this amount would carry (the parts sum to the whole in the currency's minor unit) */
+        post: operations["postPartnersPaymentTermsByTermsIdSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/delivery-terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersDeliveryTerms"];
+        put?: never;
+        post: operations["postPartnersDeliveryTerms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/delivery-terms/{termsId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersDeliveryTermsByTermsId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/wht-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersWhtCodes"];
+        put?: never;
+        /** A withholding tax code: rate, withheld at invoice or payment, optional threshold */
+        post: operations["postPartnersWhtCodes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/wht-codes/{whtCodeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersWhtCodesByWhtCodeId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Supplier accounts with their partner and effective terms; holdStatus=held for every held one */
+        get: operations["getPartnersSuppliers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Partners newest first, paged: q matches the code, a name in any language or the email; role=supplier|customer|employee */
+        get: operations["getPartners"];
+        put?: never;
+        /** A partner: one record per legal person wearing the supplier, customer and employee roles; custom fields under host 'partner' */
+        post: operations["postPartners"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/by-code/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersByCodeByCode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The partner with contacts, addresses, masked bank accounts, tax registrations and supplier accounts */
+        get: operations["getPartnersByPartnerId"];
+        put: operations["putPartnersByPartnerId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPartnersByPartnerIdContacts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/contacts/{contactId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersByPartnerIdContactsByContactId"];
+        post?: never;
+        delete: operations["deletePartnersByPartnerIdContactsByContactId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** role billing|shipping|legal|other; address is a structured bilingual object; one default per role */
+        post: operations["postPartnersByPartnerIdAddresses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/addresses/{addressId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersByPartnerIdAddressesByAddressId"];
+        post?: never;
+        delete: operations["deletePartnersByPartnerIdAddressesByAddressId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/bank-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Account number and IBAN are checked (IBAN mod-97), stored encrypted and shown masked */
+        post: operations["postPartnersByPartnerIdBankAccounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/bank-accounts/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersByPartnerIdBankAccountsByAccountId"];
+        post?: never;
+        delete: operations["deletePartnersByPartnerIdBankAccountsByAccountId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/bank-accounts/{accountId}/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The full account number and IBAN, once, with an audit event naming who revealed them */
+        post: operations["postPartnersByPartnerIdBankAccountsByAccountIdReveal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/tax-registrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** registrationType vat|tin|crn|other, unique per partner, country, type and number */
+        post: operations["postPartnersByPartnerIdTaxRegistrations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/tax-registrations/{registrationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersByPartnerIdTaxRegistrationsByRegistrationId"];
+        post?: never;
+        delete: operations["deletePartnersByPartnerIdTaxRegistrationsByRegistrationId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/supplier-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersByPartnerIdSupplierAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/supplier-accounts/{companyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** The partner as a supplier of the company: group, terms, posting group, withholding code, currency, lead time, tolerances, requires PO; blanks default from the group */
+        put: operations["putPartnersByPartnerIdSupplierAccountsByCompanyId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/supplier-accounts/{companyId}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** status purchase|payment|all with a reason; documents of that kind refuse the supplier (supplier.on_hold) */
+        post: operations["postPartnersByPartnerIdSupplierAccountsByCompanyIdHold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/supplier-accounts/{companyId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPartnersByPartnerIdSupplierAccountsByCompanyIdRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5313,6 +5743,19 @@ export interface components {
             mentions?: null | string[];
             /** Format: uuid */
             parentId?: null | string;
+        };
+        AddressSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            role: string;
+            address: components["schemas"]["JsonElement"];
+            country: string;
+            region: null | string;
+            isDefault: boolean;
+            /** Format: date-time */
+            updatedAt: string;
         };
         AdjustmentLineSummary: {
             /** Format: uuid */
@@ -5718,6 +6161,29 @@ export interface components {
             differences: components["schemas"]["BalanceDifference"][];
             isConsistent?: boolean;
         };
+        BankAccountReveal: {
+            /** Format: uuid */
+            id: string;
+            accountNumber: null | string;
+            iban: null | string;
+        };
+        BankAccountSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            accountHolder: null | string;
+            bankName: string;
+            branch: null | string;
+            swiftBic: null | string;
+            currency: string;
+            accountNumberMasked: null | string;
+            ibanMasked: null | string;
+            isDefault: boolean;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         BarcodeMatch: {
             /** Format: uuid */
             itemId: string;
@@ -6094,6 +6560,25 @@ export interface components {
             chartId?: null | string;
             /** Format: uuid */
             postingProfileId?: null | string;
+        };
+        ContactSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            name: {
+                [key: string]: string;
+            };
+            role: null | string;
+            email: null | string;
+            phone: null | string;
+            mobile: null | string;
+            isPrimary: boolean;
+            receivesStatements: boolean;
+            notes: null | string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
         };
         ConversionResult: {
             /** Format: uuid */
@@ -6510,6 +6995,18 @@ export interface components {
             /** Format: date-time */
             deliveredAt: null | string;
         };
+        DeliveryTermsSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            isSystem: boolean;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         DimensionBalanceRow: {
             /** Format: uuid */
             valueId: null | string;
@@ -6631,6 +7128,17 @@ export interface components {
             body: string;
             mentions?: null | string[];
         };
+        EffectiveTerms: {
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            paymentTermsCode: null | string;
+            /** Format: uuid */
+            deliveryTermsId: null | string;
+            deliveryTermsCode: null | string;
+            /** Format: uuid */
+            postingGroupId: null | string;
+            whtCode: null | string;
+        };
         EntryLinkSummary: {
             /** Format: uuid */
             fromEntryId: string;
@@ -6738,6 +7246,10 @@ export interface components {
             migrations: null | number | string;
             error: null | string;
             checks: components["schemas"]["HealthCheckView"][];
+        };
+        HoldRequest: {
+            status: string;
+            reason: string;
         };
         HolidaySummary: {
             /** Format: uuid */
@@ -7583,6 +8095,11 @@ export interface components {
             nextCursor: null | string;
         };
         /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
+        PageOfPartnerSummary: {
+            items: components["schemas"]["PartnerSummary"][];
+            nextCursor: null | string;
+        };
+        /** @description One page of a list: the items and the opaque cursor of the next page (null on the last page). */
         PageOfStockLedgerRow: {
             items: components["schemas"]["StockLedgerRow"][];
             nextCursor: null | string;
@@ -7591,6 +8108,99 @@ export interface components {
         PageOfStockSearchRow: {
             items: components["schemas"]["StockSearchRow"][];
             nextCursor: null | string;
+        };
+        PartnerDetail: {
+            partner: components["schemas"]["PartnerSummary"];
+            contacts: components["schemas"]["ContactSummary"][];
+            addresses: components["schemas"]["AddressSummary"][];
+            bankAccounts: components["schemas"]["BankAccountSummary"][];
+            taxRegistrations: components["schemas"]["TaxRegistrationSummary"][];
+            supplierAccounts: components["schemas"]["SupplierAccountSummary"][];
+        };
+        PartnerSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            legalName: {
+                [key: string]: string;
+            };
+            tradeName: {
+                [key: string]: string;
+            };
+            kind: string;
+            isSupplier: boolean;
+            isCustomer: boolean;
+            isEmployee: boolean;
+            /** Format: uuid */
+            intercompanyCompanyId: null | string;
+            defaultLanguage: string;
+            website: null | string;
+            email: null | string;
+            phone: null | string;
+            /** Format: uuid */
+            parentPartnerId: null | string;
+            parentPartnerCode: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            isActive: boolean;
+            /** Format: int32 */
+            supplierCompanies: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description One instalment of a payment schedule: its share and the amount after the currency's rounding (the parts sum to the whole). */
+        PaymentInstalment: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: date */
+            dueOn: string;
+            /** Format: double */
+            percentage: number | string;
+            /** Format: double */
+            amount: number | string;
+        };
+        PaymentSchedule: {
+            /** Format: uuid */
+            paymentTermsId: string;
+            code: string;
+            /** Format: date */
+            baseDate: string;
+            instalments: components["schemas"]["PaymentInstalment"][];
+            /** Format: date */
+            earlyDiscountUntil: null | string;
+            /** Format: double */
+            earlyDiscountPct: number | string;
+            /** Format: date */
+            dueOn?: string;
+        };
+        PaymentTermLineSummary: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: double */
+            percentage: number | string;
+            /** Format: int32 */
+            days: number | string;
+        };
+        PaymentTermsSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            dueBasis: string;
+            /** Format: int32 */
+            dueDays: number | string;
+            /** Format: double */
+            earlyDiscountPct: number | string;
+            /** Format: int32 */
+            earlyDiscountDays: number | string;
+            businessDaysOnly: boolean;
+            lines: components["schemas"]["PaymentTermLineSummary"][];
+            isSystem: boolean;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
         };
         /** @description Gapless audit for one reset period of a series: what was issued and which numbers are missing (expected: none). */
         PeriodGaps: {
@@ -8371,6 +8981,14 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveAddressRequest: {
+            role: string;
+            country: string;
+            address?: unknown;
+            region?: null | string;
+            /** @default false */
+            isDefault: boolean;
+        };
         SaveAdjustmentLineRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -8479,6 +9097,20 @@ export interface components {
              * @default 0
              */
             sortOrder: number | string;
+        };
+        /** @description Numbers are sent in clear over TLS once and stored only encrypted; omit them on an update to keep what is stored. */
+        SaveBankAccountRequest: {
+            bankName: string;
+            currency: string;
+            accountHolder?: null | string;
+            branch?: null | string;
+            swiftBic?: null | string;
+            accountNumber?: null | string;
+            iban?: null | string;
+            /** @default false */
+            isDefault: boolean;
+            /** @default true */
+            isActive: boolean;
         };
         SaveBarcodeRequest: {
             barcode: string;
@@ -8639,6 +9271,22 @@ export interface components {
             defaultWarehouseId?: null | string;
             allowNegativeStock?: null | boolean;
         };
+        SaveContactRequest: {
+            name: {
+                [key: string]: string;
+            };
+            role?: null | string;
+            email?: null | string;
+            phone?: null | string;
+            mobile?: null | string;
+            /** @default false */
+            isPrimary: boolean;
+            /** @default false */
+            receivesStatements: boolean;
+            notes?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
         SaveCountRequest: {
             /** Format: uuid */
             companyId: string;
@@ -8735,6 +9383,14 @@ export interface components {
             reason?: null | string;
             /** Format: uuid */
             fromMembershipId?: null | string;
+        };
+        SaveDeliveryTermsRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** @default true */
+            isActive: boolean;
         };
         SaveDimensionRequest: {
             code: string;
@@ -8949,6 +9605,72 @@ export interface components {
             supplierPartnerId?: null | string;
             customFields?: unknown;
         };
+        SavePartnerRequest: {
+            code: string;
+            legalName: {
+                [key: string]: string;
+            };
+            tradeName?: null | {
+                [key: string]: string;
+            };
+            /** @default organization */
+            kind: string;
+            /** @default false */
+            isSupplier: boolean;
+            /** @default false */
+            isCustomer: boolean;
+            /** @default false */
+            isEmployee: boolean;
+            /** Format: uuid */
+            intercompanyCompanyId?: null | string;
+            /** @default en */
+            defaultLanguage: string;
+            website?: null | string;
+            email?: null | string;
+            phone?: null | string;
+            /** Format: uuid */
+            parentPartnerId?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
+            /** @default true */
+            isActive: boolean;
+        };
+        SavePaymentTermLineRequest: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: double */
+            percentage: number | string;
+            /** Format: int32 */
+            days: number | string;
+        };
+        SavePaymentTermsRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** @default invoice_date */
+            dueBasis: string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            dueDays: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            earlyDiscountPct: number | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            earlyDiscountDays: number | string;
+            /** @default false */
+            businessDaysOnly: boolean;
+            lines?: null | components["schemas"]["SavePaymentTermLineRequest"][];
+            /** @default true */
+            isActive: boolean;
+        };
         SavePostingGroupRequest: {
             kind: string;
             code: string;
@@ -9151,6 +9873,63 @@ export interface components {
         SaveSubstitutesRequest: {
             substitutes: components["schemas"]["SubstituteRequest"][];
         };
+        SaveSupplierAccountRequest: {
+            /** Format: uuid */
+            supplierGroupId?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: uuid */
+            deliveryTermsId?: null | string;
+            /** Format: uuid */
+            postingGroupId?: null | string;
+            /** Format: uuid */
+            taxGroupId?: null | string;
+            /** Format: uuid */
+            whtCodeId?: null | string;
+            currency?: null | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            leadTimeDays: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            priceTolerancePct: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            qtyTolerancePct: number | string;
+            /** @default false */
+            requiresPo: boolean;
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveSupplierGroupRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            postingGroupId?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: uuid */
+            deliveryTermsId?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveTaxRegistrationRequest: {
+            country: string;
+            registrationType: string;
+            number: string;
+            /** Format: date */
+            validFrom?: null | string;
+            /** Format: date */
+            validTo?: null | string;
+        };
         SaveTransferLineRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -9281,6 +10060,32 @@ export interface components {
             };
             /** @default true */
             active: boolean;
+        };
+        SaveWhtCodeRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            ratePct: number | string;
+            /** @default payment */
+            withholdAt: string;
+            /** Format: double */
+            thresholdAmount?: null | number | string;
+            thresholdCurrency?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
+        SchedulePreviewRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            invoiceDate: string;
+            /** Format: double */
+            amount: number | string;
+            currency: string;
+            /** Format: date */
+            deliveryDate?: null | string;
         };
         ScheduleRecord: {
             /** Format: uuid */
@@ -9828,6 +10633,83 @@ export interface components {
             /** Format: int32 */
             priority: number | string;
         };
+        /** @description The account as saved plus the effective terms once the group's defaults are applied. */
+        SupplierAccountSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId: string;
+            companyCode: string;
+            /** Format: uuid */
+            supplierGroupId: null | string;
+            supplierGroupCode: null | string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            /** Format: uuid */
+            deliveryTermsId: null | string;
+            /** Format: uuid */
+            postingGroupId: null | string;
+            /** Format: uuid */
+            taxGroupId: null | string;
+            /** Format: uuid */
+            whtCodeId: null | string;
+            currency: string;
+            /** Format: int32 */
+            leadTimeDays: number | string;
+            /** Format: double */
+            priceTolerancePct: number | string;
+            /** Format: double */
+            qtyTolerancePct: number | string;
+            requiresPo: boolean;
+            holdStatus: string;
+            holdReason: null | string;
+            /** Format: date-time */
+            heldAt: null | string;
+            isActive: boolean;
+            effective: components["schemas"]["EffectiveTerms"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SupplierGroupSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            postingGroupId: null | string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            /** Format: uuid */
+            deliveryTermsId: null | string;
+            isActive: boolean;
+            /** Format: int32 */
+            suppliers: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        TaxRegistrationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            country: string;
+            registrationType: string;
+            number: string;
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         TemplateSummary: {
             code: string;
             name: {
@@ -10258,6 +11140,23 @@ export interface components {
             createdBy: null | string;
             /** Format: date-time */
             createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        WhtCodeSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            ratePct: number | string;
+            withholdAt: string;
+            /** Format: double */
+            thresholdAmount: null | number | string;
+            thresholdCurrency: null | string;
+            isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -19828,6 +20727,875 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getPartnersSupplierGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierGroupSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersSupplierGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSupplierGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierGroupSummary"];
+                };
+            };
+        };
+    };
+    putPartnersSupplierGroupsByGroupId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSupplierGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierGroupSummary"];
+                };
+            };
+        };
+    };
+    getPartnersPaymentTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentTermsSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersPaymentTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePaymentTermsRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentTermsSummary"];
+                };
+            };
+        };
+    };
+    putPartnersPaymentTermsByTermsId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                termsId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePaymentTermsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentTermsSummary"];
+                };
+            };
+        };
+    };
+    postPartnersPaymentTermsByTermsIdSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                termsId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchedulePreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSchedule"];
+                };
+            };
+        };
+    };
+    getPartnersDeliveryTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryTermsSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersDeliveryTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDeliveryTermsRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryTermsSummary"];
+                };
+            };
+        };
+    };
+    putPartnersDeliveryTermsByTermsId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                termsId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDeliveryTermsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryTermsSummary"];
+                };
+            };
+        };
+    };
+    getPartnersWhtCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhtCodeSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersWhtCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveWhtCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhtCodeSummary"];
+                };
+            };
+        };
+    };
+    putPartnersWhtCodesByWhtCodeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                whtCodeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveWhtCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhtCodeSummary"];
+                };
+            };
+        };
+    };
+    getPartnersSuppliers: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                q?: string;
+                holdStatus?: string;
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierAccountSummary"][];
+                };
+            };
+        };
+    };
+    getPartners: {
+        parameters: {
+            query?: {
+                q?: string;
+                role?: string;
+                isActive?: boolean;
+                limit?: number | string;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageOfPartnerSummary"];
+                };
+            };
+        };
+    };
+    postPartners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePartnerRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSummary"];
+                };
+            };
+        };
+    };
+    getPartnersByCodeByCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
+                };
+            };
+        };
+    };
+    getPartnersByPartnerId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
+                };
+            };
+        };
+    };
+    putPartnersByPartnerId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePartnerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerSummary"];
+                };
+            };
+        };
+    };
+    postPartnersByPartnerIdContacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveContactRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactSummary"];
+                };
+            };
+        };
+    };
+    putPartnersByPartnerIdContactsByContactId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                contactId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveContactRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactSummary"];
+                };
+            };
+        };
+    };
+    deletePartnersByPartnerIdContactsByContactId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                contactId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPartnersByPartnerIdAddresses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAddressRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressSummary"];
+                };
+            };
+        };
+    };
+    putPartnersByPartnerIdAddressesByAddressId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                addressId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAddressRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressSummary"];
+                };
+            };
+        };
+    };
+    deletePartnersByPartnerIdAddressesByAddressId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                addressId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPartnersByPartnerIdBankAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBankAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountSummary"];
+                };
+            };
+        };
+    };
+    putPartnersByPartnerIdBankAccountsByAccountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBankAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountSummary"];
+                };
+            };
+        };
+    };
+    deletePartnersByPartnerIdBankAccountsByAccountId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPartnersByPartnerIdBankAccountsByAccountIdReveal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankAccountReveal"];
+                };
+            };
+        };
+    };
+    postPartnersByPartnerIdTaxRegistrations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveTaxRegistrationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRegistrationSummary"];
+                };
+            };
+        };
+    };
+    putPartnersByPartnerIdTaxRegistrationsByRegistrationId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                registrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveTaxRegistrationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRegistrationSummary"];
+                };
+            };
+        };
+    };
+    deletePartnersByPartnerIdTaxRegistrationsByRegistrationId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                registrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPartnersByPartnerIdSupplierAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierAccountSummary"][];
+                };
+            };
+        };
+    };
+    putPartnersByPartnerIdSupplierAccountsByCompanyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSupplierAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierAccountSummary"];
+                };
+            };
+        };
+    };
+    postPartnersByPartnerIdSupplierAccountsByCompanyIdHold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierAccountSummary"];
+                };
+            };
+        };
+    };
+    postPartnersByPartnerIdSupplierAccountsByCompanyIdRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierAccountSummary"];
+                };
             };
         };
     };
