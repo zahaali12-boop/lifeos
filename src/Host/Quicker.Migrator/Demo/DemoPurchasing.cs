@@ -9,6 +9,7 @@ using Quicker.Payables.Contracts;
 using Quicker.Persistence;
 using Quicker.Purchasing.Application;
 using Quicker.Purchasing.Contracts;
+using Quicker.Workflow.Application;
 
 namespace Quicker.Migrator.Demo;
 
@@ -24,7 +25,8 @@ public sealed record DemoPurchasingOutcome(int Orders, int Receipts, int Invoice
 /// back against a debit note, paid in part) and one still open (partly received, invoiced, unpaid, so the aging has
 /// something to show), plus an RFQ with three quotes waiting to be compared. Around them, the rest of the chain a
 /// buyer meets: a requisition turned into an order that arrives in two deliveries, each invoiced; a blanket agreement
-/// with its first release; an invoice five percent above the order price, blocked by the match for an override; and
+/// with its first release; an invoice five percent above the order price, blocked by the match and waiting for the
+/// approver's override (a workflow rule routes price variances to the Approver role); and
 /// an approved requisition waiting to be ordered. Everything posts through the posting engine and the harness runs
 /// before the seed commits (ASSUMPTIONS A-115).
 /// </summary>
@@ -71,6 +73,14 @@ internal static class DemoPurchasing
             "SELECT id FROM app.pur_charge_types WHERE tenant_id = @tenant AND code = 'FREIGHT'", new { tenant }, unitOfWork.Transaction, cancellationToken: cancellationToken));
         var suppliers = Suppliers.Select(static s => DemoIds.For("party:" + s.Key)).ToArray();
         int orders = 0, receipts = 0, invoices = 0, payments = 0;
+
+        // Invoices above the order price wait for an override from the Approver role, with a comment.
+        var definitions = services.GetRequiredService<DefinitionService>();
+        var overrides = Require(await definitions.CreateAsync(new SaveDefinitionRequest("purchase_invoice", "on_block", Text("Price variance overrides", "تجاوز فروق الأسعار"),
+            [new SaveRuleRequest(Text("Any price above the order", "أي سعر أعلى من الأمر"), "priceVariancePct > 0",
+                [new SaveStepRequest(Text("Approver", "المعتمد"), "role", new ApproverSpecRequest(RoleCode: "approver"), RequireComment: true)])],
+            BlockKind: "price_variance", OverrideValidHours: 72), cancellationToken));
+        Require(await definitions.ActivateAsync(overrides.Id, cancellationToken));
 
         foreach (var plan in Plans)
         {
@@ -226,7 +236,7 @@ internal static class DemoPurchasing
             Require(await orderService.SubmitAsync(release.Id, cancellationToken));
             orders++;
 
-            // An invoice five percent above the order price: the match blocks it until someone overrides or corrects it.
+            // An invoice five percent above the order price: the match blocks it and asks the approver for an override.
             var (dearOrder, dearReceipt) = await ReceiveAsync(1, opening.AddDays(-2), opening.AddDays(5), Day(9), [3], 40m, 40m);
             var dearPrices = dearOrder.Lines.ToDictionary(static l => l.Id, static l => l.UnitPrice);
             var dear = Require(await invoiceService.CreateAsync(new SaveInvoiceRequest(companyId, suppliers[1],
@@ -244,6 +254,8 @@ internal static class DemoPurchasing
 
         return new DemoPurchasingOutcome(orders, receipts, invoices, payments);
     }
+
+    private static Dictionary<string, string> Text(string en, string ar) => new(StringComparer.Ordinal) { ["en"] = en, ["ar"] = ar };
 
     private static T Require<T>(Result<T> result)
     {
