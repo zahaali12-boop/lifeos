@@ -1,9 +1,11 @@
-import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableNumberCell, TableRow } from "@quicker/ui";
-import { useQuery } from "@tanstack/react-query";
+import { Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Table, TableBody, TableCell, TableHead, TableHeader, TableNumberCell, TableRow } from "@quicker/ui";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { recordRoute } from "../../lib/documents";
+import { saveFile } from "../../lib/download";
 import { formatDate, formatMoney, localized } from "../../lib/format";
 import { kindLabel } from "./shared";
 
@@ -19,6 +21,43 @@ export function SupplierStatement({ companyId, partnerId, from, to }: { companyI
     queryFn: async () => unwrap(await api.GET("/api/v1/payables/statement", { params: { query: { companyId, partnerId, ...(from ? { from } : {}), ...(to ? { to } : {}) } } })),
   });
 
+  // The statement as a file to send to the supplier: each currency's balance brought forward, its lines and its closing balance.
+  const exportStatement = useMutation({
+    mutationFn: async (format: "xlsx" | "csv") => {
+      const d = statement.data;
+      if (!d) {
+        return;
+      }
+      const name = `${t("payables.statement.title")} ${d.partnerCode} ${d.from} ${d.to}`;
+      const rows = d.currencies.flatMap((c) => [
+        [c.currency, d.from, null, t("payables.statement.broughtForward"), null, null, null, String(c.opening)],
+        ...c.lines.map((line) => [c.currency, line.date, line.documentNumber, line.reversal ? `${kindLabel(t, line.kind)} (${t("payables.statement.reversal")})` : kindLabel(t, line.kind), line.supplierReference ?? null, line.dueDate ?? null, String(line.amount), String(line.balance)]),
+        [c.currency, d.to, null, t("payables.statement.closing"), null, null, null, String(c.closing)],
+      ]);
+      const result = await api.POST("/api/v1/exports/table", {
+        body: {
+          format,
+          name,
+          documentType: null,
+          rightToLeft: document.documentElement.dir === "rtl",
+          columns: [
+            { header: t("accounting.currency"), type: "text" },
+            { header: t("payables.statement.date"), type: "date" },
+            { header: t("purchasing.number"), type: "text" },
+            { header: t("purchasing.kind"), type: "text" },
+            { header: t("purchasing.supplierReference"), type: "text" },
+            { header: t("purchasing.dueDate"), type: "date" },
+            { header: t("payables.statement.amount"), type: "number" },
+            { header: t("payables.statement.balance"), type: "number" },
+          ],
+          rows,
+        },
+        parseAs: "blob",
+      });
+      saveFile(unwrap(result), result.response.headers, `${name}.${format}`);
+    },
+  });
+
   if (!partnerId) {
     return <p className="mt-3 text-sm text-fg-muted" data-testid="statement-choose">{t("payables.statement.chooseSupplier")}</p>;
   }
@@ -29,10 +68,26 @@ export function SupplierStatement({ companyId, partnerId, from, to }: { companyI
 
   return (
     <div className="mt-3 flex flex-col gap-6" data-testid="statement">
-      <p className="text-sm">
-        <span className="font-medium" dir="auto">{data.partnerCode} · {localized(data.partnerName)}</span>
-        <span className="text-fg-muted" dir="ltr"> · {formatDate(data.from)} – {formatDate(data.to)}</span>
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm">
+          <span className="font-medium" dir="auto">{data.partnerCode} · {localized(data.partnerName)}</span>
+          <span className="text-fg-muted" dir="ltr"> · {formatDate(data.from)} – {formatDate(data.to)}</span>
+        </p>
+        {data.currencies.length > 0 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="sm" loading={exportStatement.isPending} data-testid="statement-export">
+                <Download aria-hidden="true" />
+                {t("grid.export")}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => { exportStatement.mutate("xlsx"); }} data-testid="statement-export-xlsx">{t("grid.exportXlsx")}</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => { exportStatement.mutate("csv"); }} data-testid="statement-export-csv">{t("grid.exportCsv")}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+      </div>
       {data.currencies.length === 0 ? <p className="text-sm text-fg-muted">{t("payables.statement.empty")}</p> : null}
       {data.currencies.map((c) => (
         <section key={c.currency} className="flex flex-col gap-2" data-testid="statement-currency">

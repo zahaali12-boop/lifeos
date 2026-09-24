@@ -142,6 +142,10 @@ test("English: an invoice paid in part, the remainder on account applied, the re
   await expect(page.getByTestId("statement-closing")).toContainText("3,000");
   await expect(page.getByTestId("statement-line").first()).toContainText("PI-2026-00001");
   await expectAccessible(page);
+  // It leaves as a workbook to send to the supplier.
+  await page.getByTestId("statement-export").click();
+  const [workbook] = await Promise.all([page.waitForEvent("download"), page.getByTestId("statement-export-xlsx").click()]);
+  expect(workbook.suggestedFilename()).toMatch(/^Statement-ALPHA-2026-01-01-\d{4}-\d{2}-\d{2}-\d{8}-\d{4}\.xlsx$/);
 
   // The home page counts the day's work: what is owed to suppliers and the money in the bank among it.
   await page.goto("/");
