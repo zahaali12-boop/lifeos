@@ -42,7 +42,7 @@ public static class IdentityEndpoints
         {
             var user = accounts.UserFromEnrollmentChallenge(request.ChallengeToken);
             return user.IsFailure ? ApiProblems.From(user.Error!) : Results.Ok(await accounts.StartTotpAsync(user.Value, ct));
-        }).WithSummary("Start TOTP enrolment when the workspace policy requires MFA before the first session");
+        }).Produces<TotpEnrollResponse>().WithSummary("Start TOTP enrolment when the workspace policy requires MFA before the first session");
 
         auth.MapPost("/mfa/enroll/totp/confirm", async (TotpConfirmWithChallenge request, HttpContext http, AccountService accounts, AuthService service, CancellationToken ct) =>
         {
@@ -60,8 +60,8 @@ public static class IdentityEndpoints
 
             // Enrolment done: continue the login as an MFA challenge so the same code proves possession.
             var login = await service.LoginAsync(new LoginRequest(request.Email, request.Password, request.TenantSlug), Client(http), ct);
-            return ApiProblems.From(login, r => Results.Ok(new { login = r, recoveryCodes = confirmed.Value.Codes }));
-        });
+            return ApiProblems.From(login, r => Results.Ok(new TotpEnrolledResponse(r, confirmed.Value.Codes)));
+        }).Produces<TotpEnrolledResponse>().WithSummary("Confirm the enrolment and continue the sign-in; the recovery codes are shown once");
 
         auth.MapPost("/refresh", async (RefreshRequest request, HttpContext http, AuthService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.RefreshAsync(request, Client(http), ct)))
@@ -71,7 +71,7 @@ public static class IdentityEndpoints
         {
             await accounts.ForgotPasswordAsync(request, ct);
             return Results.Accepted();
-        });
+        }).Produces(StatusCodes.Status202Accepted).WithSummary("Send a reset link if the address belongs to someone; the answer is the same either way");
 
         auth.MapPost("/password/reset", async (ResetPasswordRequest request, AccountService accounts, CancellationToken ct) =>
             ApiProblems.NoContent(await accounts.ResetPasswordAsync(request, ct)));
@@ -81,6 +81,7 @@ public static class IdentityEndpoints
 
         auth.MapGet("/sso/{tenantSlug}/{connectionCode}/start", async (string tenantSlug, string connectionCode, string? returnTo, SsoService sso, CancellationToken ct) =>
             ApiProblems.From(await sso.StartAsync(tenantSlug, connectionCode, returnTo, ct), static r => Results.Redirect(r.RedirectUrl)))
+            .Produces(StatusCodes.Status302Found)
             .WithSummary("Redirects to the tenant's identity provider");
 
         auth.MapGet("/sso/callback", async (string? code, string? state, string? error, HttpContext http, SsoService sso, CancellationToken ct) =>
@@ -116,7 +117,7 @@ public static class IdentityEndpoints
         {
             await service.LogoutAsync(SessionId(http), current.Required.UserId.Value, request ?? new LogoutRequest(), ct);
             return Results.NoContent();
-        });
+        }).Produces(StatusCodes.Status204NoContent);
 
         me.MapPost("/step-up", async (StepUpRequest request, HttpContext http, CurrentPrincipal current, AuthService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.StepUpAsync(SessionId(http) ?? Guid.Empty, current.Required.UserId.Value, request, Client(http), ct)))
@@ -150,7 +151,7 @@ public static class IdentityEndpoints
         {
             var user = (await service.LoadUserAsync(current.Required.UserId.Value, ct))!;
             return Results.Ok(await webAuthn.RegistrationOptionsAsync(user, ct));
-        });
+        }).Produces<WebAuthnRegisterOptionsResponse>();
 
         me.MapPost("/mfa/webauthn/register/verify", async (WebAuthnRegisterVerifyRequest request, CurrentPrincipal current, AuthService service, WebAuthnService webAuthn, CancellationToken ct) =>
         {
@@ -207,7 +208,8 @@ public static class IdentityEndpoints
         sod.MapPut("/rules/{ruleId:guid}", async (Guid ruleId, SaveSodRuleRequest request, RoleService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.SaveSodRuleAsync(ruleId, request, ct))).RequirePermission(IdentityPermissions.SodManage);
         sod.MapPost("/exceptions", async (SodExceptionRequest request, CurrentPrincipal current, RoleService service, CancellationToken ct) =>
-            ApiProblems.From(await service.AddSodExceptionAsync(request, current.Required.UserId.Value, ct), static id => Results.Created($"/api/v1/sod/exceptions/{id}", new { id })))
+            ApiProblems.From(await service.AddSodExceptionAsync(request, current.Required.UserId.Value, ct), static id => Results.Created($"/api/v1/sod/exceptions/{id}", new SodExceptionCreated(id))))
+            .Produces<SodExceptionCreated>(StatusCodes.Status201Created)
             .RequirePermission(IdentityPermissions.SodManage);
         sod.MapGet("/exceptions", async (RoleService service, CancellationToken ct) => TypedResults.Ok(await service.ListSodExceptionsAsync(ct)))
             .RequirePermission(IdentityPermissions.SodRead)

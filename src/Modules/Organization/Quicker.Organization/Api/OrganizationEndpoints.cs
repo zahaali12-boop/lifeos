@@ -89,6 +89,7 @@ public static class OrganizationEndpoints
         companies.MapGet("/{companyId:guid}/periods/resolve", async (Guid companyId, DateOnly date, string? module, FiscalCalendarService service, CancellationToken ct) =>
             ApiProblems.From(await service.ResolveAsync(new Kernel.Ids.CompanyId(companyId), date, module ?? PostingModules.GeneralLedger, ct), static p =>
                 Results.Ok(new PeriodResolution(p.Period.PeriodId, p.Period.FiscalYearId, p.Period.FiscalYearCode, p.Period.Number, p.Period.StartsOn, p.Period.EndsOn, p.Period.YearStatus, p.Module, p.State))))
+            .Produces<PeriodResolution>()
             .RequirePermission(OrganizationPermissions.CompanyRead)
             .WithSummary("The fiscal period a posting date falls in and the module's state in it");
 

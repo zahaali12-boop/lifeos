@@ -69,7 +69,7 @@ public static class ExportEndpoints
             return Results.File(file.Bytes, file.ContentType, file.FileName);
         })
         .RequireAuthorization()
-        .Produces(StatusCodes.Status200OK, contentType: TabularExport.CsvContentType, additionalContentTypes: [TabularExport.XlsxContentType])
+        .Produces<Stream>(StatusCodes.Status200OK, "text/csv", TabularExport.XlsxContentType)
         .WithTags("Exports")
         .WithSummary("Writes the rows a list shows as CSV (UTF-8) or XLSX; checks the role may export the document type and records the export in the audit trail");
         return api;

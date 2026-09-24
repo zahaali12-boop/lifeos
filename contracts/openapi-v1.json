@@ -260,7 +260,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpEnrollResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -270,6 +277,7 @@
         "tags": [
           "Authentication"
         ],
+        "summary": "Confirm the enrolment and continue the sign-in; the recovery codes are shown once",
         "operationId": "postAuthMfaEnrollTotpConfirm",
         "requestBody": {
           "content": {
@@ -283,7 +291,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpEnrolledResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -324,6 +339,7 @@
         "tags": [
           "Authentication"
         ],
+        "summary": "Send a reset link if the address belongs to someone; the answer is the same either way",
         "operationId": "postAuthPasswordForgot",
         "requestBody": {
           "content": {
@@ -336,8 +352,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "202": {
+            "description": "Accepted"
           }
         }
       }
@@ -428,8 +444,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "302": {
+            "description": "Found"
           }
         }
       }
@@ -559,8 +575,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -768,7 +784,14 @@
         "operationId": "postMeMfaWebauthnRegisterOptions",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebAuthnRegisterOptionsResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1033,7 +1056,19 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              }
+            }
           }
         }
       }
@@ -1290,8 +1325,15 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SodExceptionCreated"
+                }
+              }
+            }
           }
         }
       },
@@ -1930,7 +1972,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              }
+            }
           }
         }
       }
@@ -1944,7 +1993,14 @@
         "operationId": "getAuditChain",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainStatus"
+                }
+              }
+            }
           }
         }
       }
@@ -1979,7 +2035,17 @@
         "operationId": "postAuditChainAnchor",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditAnchor"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -2170,7 +2236,14 @@
         "operationId": "getAuditPlatformChain",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainStatus"
+                }
+              }
+            }
           }
         }
       }
@@ -2203,7 +2276,17 @@
         "operationId": "postAuditPlatformChainAnchor",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditAnchor"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -2666,7 +2749,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeriodResolution"
+                }
+              }
+            }
           }
         }
       }
@@ -4642,7 +4732,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftIdentifier"
+                }
+              }
+            }
           }
         }
       }
@@ -4713,7 +4810,17 @@
         "operationId": "getPlatformJobsTypes",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4767,8 +4874,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -4791,8 +4898,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -4876,8 +4983,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -4953,8 +5060,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -4988,8 +5095,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -5722,7 +5829,14 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              }
+            }
           }
         }
       }
@@ -5999,8 +6113,25 @@
           "required": true
         },
         "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentLink"
+                }
+              }
+            }
+          },
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentLink"
+                }
+              }
+            }
           }
         }
       }
@@ -9234,7 +9365,14 @@
         "operationId": "getItemsExport",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -23535,6 +23673,71 @@
           }
         }
       },
+      "ChainHead": {
+        "required": [
+          "seq",
+          "headHash",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "seq": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "headHash": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChainStatus": {
+        "required": [
+          "head",
+          "lastAnchor",
+          "lastVerification"
+        ],
+        "type": "object",
+        "properties": {
+          "head": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChainHead"
+              }
+            ]
+          },
+          "lastAnchor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AuditAnchor"
+              }
+            ]
+          },
+          "lastVerification": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChainVerification"
+              }
+            ]
+          }
+        }
+      },
       "ChainVerification": {
         "required": [
           "id",
@@ -26589,6 +26792,23 @@
             "type": "boolean"
           }
         }
+      },
+      "DraftIdentifier": {
+        "required": [
+          "documentId",
+          "identifier"
+        ],
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "identifier": {
+            "type": "string"
+          }
+        },
+        "description": "The identifier a draft shows until numbering issues its number."
       },
       "EditCommentRequest": {
         "required": [
@@ -32751,6 +32971,58 @@
           }
         },
         "description": "Gapless audit for one reset period of a series: what was issued and which numbers are missing (expected: none)."
+      },
+      "PeriodResolution": {
+        "required": [
+          "periodId",
+          "fiscalYearId",
+          "fiscalYearCode",
+          "number",
+          "startsOn",
+          "endsOn",
+          "yearStatus",
+          "module",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "periodId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fiscalYearCode": {
+            "type": "string"
+          },
+          "number": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "yearStatus": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        }
       },
       "PeriodStateSummary": {
         "required": [
@@ -44582,6 +44854,18 @@
           }
         }
       },
+      "SodExceptionCreated": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "SodExceptionRequest": {
         "required": [
           "ruleId",
@@ -45823,6 +46107,10 @@
         },
         "description": "One value entry of a stock ledger entry, with the reason it exists."
       },
+      "Stream": {
+        "type": "string",
+        "format": "binary"
+      },
       "SubstituteRequest": {
         "type": "object",
         "properties": {
@@ -46589,6 +46877,25 @@
             ]
           }
         }
+      },
+      "TotpEnrolledResponse": {
+        "required": [
+          "login",
+          "recoveryCodes"
+        ],
+        "type": "object",
+        "properties": {
+          "login": {
+            "$ref": "#/components/schemas/LoginResponse"
+          },
+          "recoveryCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "TOTP enrolment confirmed during sign-in: the sign-in continues, and the recovery codes are shown once."
       },
       "TotpEnrollResponse": {
         "required": [
@@ -47802,6 +48109,22 @@
         }
       },
       "WebAuthnAssertionOptionsResponse": {
+        "required": [
+          "optionsId",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "optionsId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "options": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "WebAuthnRegisterOptionsResponse": {
         "required": [
           "optionsId",
           "options"

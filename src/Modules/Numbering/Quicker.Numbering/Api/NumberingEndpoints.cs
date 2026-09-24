@@ -52,7 +52,7 @@ public static class NumberingEndpoints
         numbering.MapGet("/documents", async (string? q, int? limit, DocumentSearchService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.SearchAsync(q, limit, ct)))
             .WithSummary("Find documents by number across modules (\"PO-2026-00027\", \"00027\", \"PO-27\"): only the types the member may read, in the companies their grant covers");
-        numbering.MapGet("/drafts/{documentId:guid}", (Guid documentId) => Results.Ok(new { documentId, identifier = DraftIdentifiers.For(documentId) }))
+        numbering.MapGet("/drafts/{documentId:guid}", (Guid documentId) => TypedResults.Ok(new DraftIdentifier(documentId, DraftIdentifiers.For(documentId))))
             .RequirePermission(NumberingPermissions.SeriesRead);
 
         return api;
@@ -64,3 +64,6 @@ public static class NumberingEndpoints
         return new NumberRequest(r.DocumentType, new CompanyId(r.CompanyId), r.BranchId is { } b ? new BranchId(b) : null, r.Date, r.DocumentId, r.SeriesId);
     }
 }
+
+/// <summary>The identifier a draft shows until numbering issues its number.</summary>
+public sealed record DraftIdentifier(Guid DocumentId, string Identifier);

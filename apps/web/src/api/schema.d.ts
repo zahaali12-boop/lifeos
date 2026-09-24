@@ -164,6 +164,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Confirm the enrolment and continue the sign-in; the recovery codes are shown once */
         post: operations["postAuthMfaEnrollTotpConfirm"];
         delete?: never;
         options?: never;
@@ -197,6 +198,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Send a reset link if the address belongs to someone; the answer is the same either way */
         post: operations["postAuthPasswordForgot"];
         delete?: never;
         options?: never;
@@ -7920,6 +7922,18 @@ export interface components {
             sortOrder: number | string;
             isSystem: boolean;
         };
+        ChainHead: {
+            /** Format: int64 */
+            seq: number | string;
+            headHash: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ChainStatus: {
+            head: null | components["schemas"]["ChainHead"];
+            lastAnchor: null | components["schemas"]["AuditAnchor"];
+            lastVerification: null | components["schemas"]["ChainVerification"];
+        };
         ChainVerification: {
             /** Format: uuid */
             id: string;
@@ -8746,6 +8760,12 @@ export interface components {
             documentType: string;
             action: string;
             allowed: boolean;
+        };
+        /** @description The identifier a draft shows until numbering issues its number. */
+        DraftIdentifier: {
+            /** Format: uuid */
+            documentId: string;
+            identifier: string;
         };
         EditCommentRequest: {
             body: string;
@@ -10320,6 +10340,22 @@ export interface components {
             /** Format: int64 */
             nextNumber: number | string;
             missing: (number | string)[];
+        };
+        PeriodResolution: {
+            /** Format: uuid */
+            periodId: string;
+            /** Format: uuid */
+            fiscalYearId: string;
+            fiscalYearCode: string;
+            /** Format: int32 */
+            number: number | string;
+            /** Format: date */
+            startsOn: string;
+            /** Format: date */
+            endsOn: string;
+            yearStatus: string;
+            module: string;
+            state: string;
         };
         PeriodStateSummary: {
             /** Format: uuid */
@@ -13665,6 +13701,10 @@ export interface components {
             };
             hasException: boolean;
         };
+        SodExceptionCreated: {
+            /** Format: uuid */
+            id: string;
+        };
         SodExceptionRequest: {
             /** Format: uuid */
             ruleId: string;
@@ -14004,6 +14044,8 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        /** Format: binary */
+        Stream: string;
         SubstituteRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -14232,6 +14274,11 @@ export interface components {
             email: string;
             password: string;
             tenantSlug?: null | string;
+        };
+        /** @description TOTP enrolment confirmed during sign-in: the sign-in continues, and the recovery codes are shown once. */
+        TotpEnrolledResponse: {
+            login: components["schemas"]["LoginResponse"];
+            recoveryCodes: string[];
         };
         TotpEnrollResponse: {
             /** Format: uuid */
@@ -14559,6 +14606,11 @@ export interface components {
             optionsId: string;
             options: components["schemas"]["JsonElement"];
         };
+        WebAuthnRegisterOptionsResponse: {
+            /** Format: uuid */
+            optionsId: string;
+            options: components["schemas"]["JsonElement"];
+        };
         WebAuthnRegisterVerifyRequest: {
             /** Format: uuid */
             optionsId: string;
@@ -14844,7 +14896,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TotpEnrollResponse"];
+                };
             };
         };
     };
@@ -14866,7 +14920,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TotpEnrolledResponse"];
+                };
             };
         };
     };
@@ -14907,8 +14963,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Accepted */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14976,8 +15032,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Found */
+            302: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15088,8 +15144,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15279,7 +15335,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["WebAuthnRegisterOptionsResponse"];
+                };
             };
         };
     };
@@ -15481,7 +15539,10 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "text/csv": components["schemas"]["Stream"];
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": components["schemas"]["Stream"];
+                };
             };
         };
     };
@@ -15700,12 +15761,14 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["SodExceptionCreated"];
+                };
             };
         };
     };
@@ -16094,7 +16157,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/x-ndjson": components["schemas"]["Stream"];
+                };
             };
         };
     };
@@ -16112,7 +16177,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ChainStatus"];
+                };
             };
         };
     };
@@ -16147,6 +16214,15 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditAnchor"];
+                };
+            };
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16244,7 +16320,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ChainStatus"];
+                };
             };
         };
     };
@@ -16279,6 +16357,15 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditAnchor"];
+                };
+            };
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16573,7 +16660,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PeriodResolution"];
+                };
             };
         };
     };
@@ -17867,7 +17956,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["DraftIdentifier"];
+                };
             };
         };
     };
@@ -17910,7 +18001,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": string[];
+                };
             };
         };
     };
@@ -17947,8 +18040,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17967,8 +18060,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18033,8 +18126,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18077,8 +18170,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18101,8 +18194,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18625,7 +18718,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/octet-stream": components["schemas"]["Stream"];
+                };
             };
         };
     };
@@ -18808,7 +18903,18 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["DocumentLink"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentLink"];
+                };
             };
         };
     };
@@ -20800,7 +20906,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "text/csv": string;
+                };
             };
         };
     };

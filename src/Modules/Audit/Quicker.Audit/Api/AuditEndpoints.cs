@@ -79,7 +79,8 @@ public static class AuditEndpoints
             await sink.RecordAsync(new AuditEntry("audit_log", current.Required.TenantId.Value, "audit log", AuditActions.Exported,
                 Details: new Dictionary<string, object?>(StringComparer.Ordinal) { ["filter"] = filter, ["rows"] = rows.Count }), ct);
             return Results.File(Encoding.UTF8.GetBytes(builder.ToString()), "application/x-ndjson", "audit-events.ndjson");
-        }).RequirePermission(AuditPermissions.EventExport)
+        }).Produces<Stream>(StatusCodes.Status200OK, "application/x-ndjson")
+          .RequirePermission(AuditPermissions.EventExport)
           .WithSummary("Export matching events as JSON lines (the export itself is audited)");
 
         // ---------------------------------------------------------------- chain
@@ -88,6 +89,7 @@ public static class AuditEndpoints
                 await anchoring.TenantHeadAsync(ct),
                 First(await anchoring.ListTenantAnchorsAsync(1, ct)),
                 First(await verifier.ListTenantVerificationsAsync(1, ct)))))
+            .Produces<ChainStatus>()
             .RequirePermission(AuditPermissions.ChainVerify)
             .WithSummary("Chain head, last anchor and last verification of this tenant");
 
@@ -99,7 +101,8 @@ public static class AuditEndpoints
         {
             var anchor = await anchoring.AnchorTenantAsync(ct);
             return anchor is null ? Results.NoContent() : Results.Ok(anchor);
-        }).RequirePermission(AuditPermissions.ChainAnchor)
+        }).Produces<AuditAnchor>().Produces(StatusCodes.Status204NoContent)
+          .RequirePermission(AuditPermissions.ChainAnchor)
           .WithSummary("Write the current chain head to the anchor store");
 
         audit.MapGet("/chain/anchors", async (int? limit, ChainAnchoring anchoring, CancellationToken ct) =>
@@ -121,7 +124,8 @@ public static class AuditEndpoints
             Results.Ok(new ChainStatus(
                 await anchoring.PlatformHeadAsync(ct),
                 First(await anchoring.ListPlatformAnchorsAsync(1, ct)),
-                First(await verifier.ListPlatformVerificationsAsync(1, ct)))));
+                First(await verifier.ListPlatformVerificationsAsync(1, ct)))))
+            .Produces<ChainStatus>();
 
         platform.MapPost("/chain/verify", async (ChainVerifier verifier, CancellationToken ct) => TypedResults.Ok(await verifier.VerifyPlatformAsync(ct)));
 
@@ -129,7 +133,7 @@ public static class AuditEndpoints
         {
             var anchor = await anchoring.AnchorPlatformAsync(ct);
             return anchor is null ? Results.NoContent() : Results.Ok(anchor);
-        });
+        }).Produces<AuditAnchor>().Produces(StatusCodes.Status204NoContent);
 
         return api;
     }

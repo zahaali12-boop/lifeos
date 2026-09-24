@@ -42,6 +42,8 @@ public static class RecordEndpoints
             .RequirePermission(CollaborationPermissions.LinkRead);
         links.MapPost("/", async (LinkRequest request, DocumentLinkService service, CancellationToken ct) =>
             ApiProblems.From(await service.CreateAsync(request, ct), static r => r.Created ? Results.Created($"/api/v1/collaboration/links/{r.Link.Id}", r.Link) : Results.Ok(r.Link)))
+            .Produces<Contracts.DocumentLink>(StatusCodes.Status201Created)
+            .Produces<Contracts.DocumentLink>()
             .RequirePermission(CollaborationPermissions.LinkManage)
             .WithSummary("Link two records (201) or return the existing link (200)");
         links.MapDelete("/{linkId:guid}", async (Guid linkId, DocumentLinkService service, CancellationToken ct) =>

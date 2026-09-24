@@ -62,6 +62,11 @@ public sealed record TotpConfirmRequest(Guid MethodId, string Code);
 
 public sealed record RecoveryCodesResponse(IReadOnlyList<string> Codes);
 
+/// <summary>TOTP enrolment confirmed during sign-in: the sign-in continues, and the recovery codes are shown once.</summary>
+public sealed record TotpEnrolledResponse(LoginResponse Login, IReadOnlyList<string> RecoveryCodes);
+
+public sealed record SodExceptionCreated(Guid Id);
+
 public sealed record MfaMethodSummary(Guid Id, string Kind, string Name, DateTimeOffset? VerifiedAt, DateTimeOffset? LastUsedAt);
 
 public sealed record WebAuthnRegisterOptionsResponse(Guid OptionsId, System.Text.Json.JsonElement Options);

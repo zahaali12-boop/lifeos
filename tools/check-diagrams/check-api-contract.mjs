@@ -12,6 +12,10 @@
  * Corrections (ADR-0012): when the published document misdescribed the server (two types once shared one schema
  * name), the corrected contract lists each removed line, verbatim, with its reason in contract-corrections.json next
  * to the head document; exactly those lines are accepted, everything else still fails.
+ *
+ * Also, on the head alone (so it holds from the first contract): every operation describes its success response,
+ * with a schema for a 200 or 201 body (a DTO, or a binary string for files) or as a 202, 204 or 3xx without one, so
+ * the generated client is typed end to end.
  */
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -21,13 +25,28 @@ if (!basePath || !headPath) {
   console.error("usage: check-api-contract <base.json> <head.json>");
   process.exit(2);
 }
+const head = JSON.parse(readFileSync(headPath, "utf8"));
+
+const untyped = [];
+for (const [path, operations] of Object.entries(head.paths ?? {})) {
+  for (const [method, operation] of Object.entries(operations)) {
+    if (!["get", "post", "put", "patch", "delete"].includes(method)) continue;
+    const success = Object.entries(operation.responses ?? {}).filter(([status]) => /^[23]/.test(status));
+    const described = success.some(([status, response]) => ["202", "204"].includes(status) || status.startsWith("3") || Object.values(response.content ?? {}).some((media) => media.schema));
+    if (!described) untyped.push(`${method.toUpperCase()} ${path}`);
+  }
+}
+if (untyped.length > 0) {
+  console.error(`API contract: ${untyped.length} operation(s) without a typed success response (declare it with Produces<T> or a typed result)\n  - ${untyped.join("\n  - ")}`);
+  process.exit(1);
+}
+
 if (!existsSync(basePath)) {
-  console.log(`No base contract at ${basePath}: nothing to compare (first contract).`);
+  console.log(`No base contract at ${basePath}: nothing to compare (first contract); every operation is typed.`);
   process.exit(0);
 }
 
 const base = JSON.parse(readFileSync(basePath, "utf8"));
-const head = JSON.parse(readFileSync(headPath, "utf8"));
 const breaking = [];
 const additions = [];
 

@@ -33,6 +33,7 @@ public static class ItemsEndpoints
             .RequirePermission(ItemsPermissions.ItemRead)
             .WithSummary("The item, unit and variant a scanned barcode stands for");
         items.MapGet("/export", async (ItemService service, CancellationToken ct) => Results.Text(await service.ExportCsvAsync(ct), "text/csv; charset=utf-8"))
+            .Produces<string>(StatusCodes.Status200OK, "text/csv")
             .RequirePermission(ItemsPermissions.ItemRead)
             .WithSummary("CSV with one row per item, units and barcodes packed (the import format)");
         items.MapPost("/import", async (HttpRequest http, ItemService service, CancellationToken ct) =>

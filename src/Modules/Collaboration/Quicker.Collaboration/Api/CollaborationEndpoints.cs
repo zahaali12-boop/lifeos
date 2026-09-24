@@ -68,6 +68,7 @@ public static class CollaborationEndpoints
             .RequirePermission(CollaborationPermissions.AttachmentRead);
         attachments.MapGet("/{attachmentId:guid}/content", async (Guid attachmentId, AttachmentService service, CancellationToken ct) =>
             ApiProblems.From(await service.OpenAsync(attachmentId, ct), static opened => Results.Stream(opened.Content.Content, opened.Attachment.ContentType, opened.Attachment.FileName)))
+            .Produces<Stream>(StatusCodes.Status200OK, "application/octet-stream")
             .RequirePermission(CollaborationPermissions.AttachmentRead)
             .WithSummary("Download the file");
         attachments.MapDelete("/{attachmentId:guid}", async (Guid attachmentId, AttachmentService service, CancellationToken ct) =>

@@ -18,16 +18,18 @@ public static class PlatformEndpoints
         jobs.MapGet("/", async (string? state, string? type, int? limit, bool? allTenants, CurrentPrincipal current, JobAdmin admin, CancellationToken ct) =>
             TypedResults.Ok(await admin.ListAsync(current.Required.TenantId.Value, allTenants == true && current.Required.IsPlatformOperator, state, type, limit ?? 100, ct)))
             .RequirePermission(PlatformPermissions.JobRead);
-        jobs.MapGet("/types", (JobAdmin admin) => Results.Ok(admin.JobTypes.OrderBy(static t => t, StringComparer.Ordinal)))
+        jobs.MapGet("/types", (JobAdmin admin) => TypedResults.Ok((IReadOnlyList<string>)admin.JobTypes.OrderBy(static t => t, StringComparer.Ordinal).ToList()))
             .RequirePermission(PlatformPermissions.JobRead);
         jobs.MapGet("/{jobId:guid}", async (Guid jobId, CurrentPrincipal current, JobAdmin admin, CancellationToken ct) =>
             ApiProblems.Found(await admin.GetAsync(jobId, current.Required.TenantId.Value, current.Required.IsPlatformOperator, ct), "job", jobId))
             .RequirePermission(PlatformPermissions.JobRead);
         jobs.MapPost("/{jobId:guid}/retry", async (Guid jobId, CurrentPrincipal current, JobAdmin admin, CancellationToken ct) =>
             await admin.RetryAsync(jobId, current.Required.TenantId.Value, current.Required.IsPlatformOperator, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("job.not_retryable", "Only failed or dead jobs can be retried.")))
+            .Produces(StatusCodes.Status204NoContent)
             .RequirePermission(PlatformPermissions.JobManage);
         jobs.MapPost("/{jobId:guid}/cancel", async (Guid jobId, CurrentPrincipal current, JobAdmin admin, CancellationToken ct) =>
             await admin.CancelAsync(jobId, current.Required.TenantId.Value, current.Required.IsPlatformOperator, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("job.not_cancellable", "Only queued jobs can be cancelled.")))
+            .Produces(StatusCodes.Status204NoContent)
             .RequirePermission(PlatformPermissions.JobManage);
 
         var schedules = platform.MapGroup("/schedules");
@@ -40,6 +42,7 @@ public static class PlatformEndpoints
             .WithSummary("Create or replace a tenant schedule by code: cron (five fields), time zone, job type and payload");
         schedules.MapDelete("/{scheduleId:guid}", async (Guid scheduleId, CurrentPrincipal current, Scheduler scheduler, CancellationToken ct) =>
             await scheduler.DeleteAsync(scheduleId, current.Required.TenantId.Value, current.Required.IsPlatformOperator, ct) ? Results.NoContent() : ApiProblems.From(Error.NotFound("schedule", scheduleId)))
+            .Produces(StatusCodes.Status204NoContent)
             .RequirePermission(PlatformPermissions.ScheduleManage);
 
         // ---------------------------------------------------------------- operators
@@ -48,7 +51,8 @@ public static class PlatformEndpoints
             TypedResults.Ok(await outbox.ListAsync(state ?? "dead", tenantId, limit ?? 100, ct)))
             .WithSummary("Outbox messages by state: dead (default), discarded, pending, published, all");
         ops.MapPost("/outbox/{messageId:guid}/retry", async (Guid messageId, OutboxAdmin outbox, CancellationToken ct) =>
-            await outbox.RetryAsync(messageId, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("outbox.not_dead", "Only dead-lettered messages that were not discarded can be retried.")));
+            await outbox.RetryAsync(messageId, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("outbox.not_dead", "Only dead-lettered messages that were not discarded can be retried.")))
+            .Produces(StatusCodes.Status204NoContent);
         ops.MapPost("/outbox/{messageId:guid}/discard", async (Guid messageId, DiscardOutboxMessageRequest request, CurrentPrincipal current, OutboxAdmin outbox, ILogger<OutboxAdmin> logger, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length > 500)
@@ -64,7 +68,8 @@ public static class PlatformEndpoints
 
             logger.LogWarning("Outbox message {EventId} discarded by {Operator}: {Reason}", messageId, by, request.Reason);
             return Results.NoContent();
-        }).WithSummary("Give up on a dead letter (reason required): its handlers never run and its aggregate's later events flow");
+        }).Produces(StatusCodes.Status204NoContent)
+          .WithSummary("Give up on a dead letter (reason required): its handlers never run and its aggregate's later events flow");
         ops.MapPut("/schedules", async (SaveScheduleRequest request, Scheduler scheduler, JobAdmin admin, CancellationToken ct) =>
             ApiProblems.Ok(await scheduler.SaveAsync(null, request, admin.JobTypes, ct)))
             .WithSummary("Create or replace a platform-wide schedule (no tenant)");
