@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Quicker.Partners.Contracts;
 
 namespace Quicker.Partners.Application;
 
@@ -394,3 +395,25 @@ public sealed record CrmActivitySummary(
     Guid? CreatedBy,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
+
+// ------------------------------------------------------------------ Customer 360
+
+/// <summary>
+/// The partner at a glance: its record with contacts, addresses and the accounts the member may read; its pipeline;
+/// open and recent activities; and each module's balances and latest documents with it.
+/// </summary>
+public sealed record Customer360(
+    PartnerDetail Partner,
+    Customer360Pipeline Pipeline,
+    IReadOnlyList<CrmActivitySummary> OpenActivities,
+    IReadOnlyList<CrmActivitySummary> RecentActivities,
+    IReadOnlyList<PartnerActivityPanel> Panels);
+
+/// <summary>Open opportunities with their totals per currency, those closed in the last year, and the win rate over them.</summary>
+public sealed record Customer360Pipeline(
+    IReadOnlyList<OpportunitySummary> Open,
+    IReadOnlyList<PipelineTotal> OpenTotals,
+    IReadOnlyList<OpportunitySummary> RecentlyClosed,
+    int WonLastYear,
+    int LostLastYear,
+    decimal? WinRatePct);

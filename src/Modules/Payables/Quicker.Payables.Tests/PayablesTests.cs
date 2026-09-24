@@ -159,6 +159,42 @@ public sealed class PayablesTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task The_partners_360_view_shows_what_the_company_owes_it_and_its_latest_documents_to_those_who_may_read_payables()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await InvoiceAsync(s, s.Supplier, "A-08", "2026-08-01", 300_000m);
+        await InvoiceAsync(s, s.Supplier, "A-09", "2026-09-30", 120_000m);
+        var wrong = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "expense", supplierInvoiceNumber = "A-WRONG", documentDate = "2026-09-15", lines = new[] { new { kind = "expense", quantity = 1m, unitPrice = 50_000m, description = "Billed twice" } } });
+        var wrongId = wrong.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{wrongId}/submit", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{wrongId}/post", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{wrongId}/reverse", new { reason = "Billed twice" }, HttpStatusCode.OK);
+
+        // Alpha also buys from us: a customer account and an opportunity sit beside what we owe it.
+        await owner.PutAsync($"/api/v1/partners/{s.Supplier}/customer-accounts/{s.CompanyId}", new { });
+        await owner.PostAsync("/api/v1/partners/opportunities", new { companyId = s.CompanyId, partnerId = s.Supplier, title = "Office fit-out", expectedAmount = 900_000 });
+
+        var view = await owner.GetOkAsync($"/api/v1/partners/{s.Supplier}/customer-360");
+        view.GetProperty("partner").GetProperty("customerAccounts").Only().GetProperty("companyId").GetGuid().ShouldBe(s.CompanyId);
+        view.GetProperty("pipeline").GetProperty("open").Only().GetProperty("title").GetString().ShouldBe("Office fit-out");
+        var payables = view.GetProperty("panels").EnumerateArray().Single(static p => p.GetProperty("source").GetString() == "payables");
+        var balance = payables.GetProperty("balances").Only();
+        (balance.GetProperty("side").GetString(), balance.GetProperty("currency").GetString(), balance.GetProperty("open").GetDecimal(), balance.GetProperty("openFunctional").GetDecimal()).ShouldBe(("payable", "IQD", 420_000m, 420_000m));
+        balance.GetProperty("overdue").GetDecimal().ShouldBe(300_000m, "today is the 22nd: August's invoice is past due, September's is not");
+        balance.GetProperty("openItems").GetInt32().ShouldBe(2);
+        balance.GetProperty("oldestDueOn").GetString().ShouldBe("2026-08-01");
+        payables.GetProperty("documents").EnumerateArray().Select(static d => d.GetProperty("number").GetString()).ShouldNotContain(wrong.GetProperty("number").GetString());
+        payables.GetProperty("documents").GetArrayLength().ShouldBe(2, "the reversed invoice is not among the latest documents");
+
+        // A sales rep who may not read payables sees the customer side only.
+        var rep = await InviteAsync(s, "rep", "partners.customer.read");
+        var repView = await rep.GetOkAsync($"/api/v1/partners/{s.Supplier}/customer-360");
+        repView.GetProperty("panels").GetArrayLength().ShouldBe(0);
+        repView.GetProperty("partner").GetProperty("supplierAccounts").GetArrayLength().ShouldBe(0);
+    }
+
+    [Fact]
     public async Task Aging_at_any_date_equals_the_control_account_holds_keep_items_out_and_a_proposal_picks_what_is_due()
     {
         var s = await SetUpAsync();

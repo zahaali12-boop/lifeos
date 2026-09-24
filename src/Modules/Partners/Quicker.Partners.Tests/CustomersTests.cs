@@ -395,4 +395,57 @@ public sealed class CustomersTests(ApiHostFixture host)
         var (exportReader, _) = await MemberAsync(s, "export_reader", s.OtherCompanyId, "partners.customer.read");
         (await exportReader.GetOkAsync($"/api/v1/partners/crm-activities?partnerId={partnerId}")).EnumerateArray().Select(static a => a.GetProperty("kind").GetString()).Order(StringComparer.Ordinal).ShouldBe(["note", "task"]);
     }
+
+    [Fact]
+    public async Task Customer_360_composes_the_partner_its_pipeline_and_activities_within_the_members_companies()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        var partnerId = await PartnerAsync(owner, "KARBALA-FOODS");
+        await owner.PostAsync($"/api/v1/partners/{partnerId}/contacts", new { name = Name("Ali", "علي"), isPrimary = true });
+        await owner.PostAsync($"/api/v1/partners/{partnerId}/addresses", new { role = "billing", country = "IQ", isDefault = true });
+        await owner.PutAsync($"/api/v1/partners/{partnerId}/customer-accounts/{s.CompanyId}", new { });
+        await owner.PutAsync($"/api/v1/partners/{partnerId}/customer-accounts/{s.OtherCompanyId}", new { });
+        var stages = await owner.GetOkAsync("/api/v1/partners/pipeline-stages");
+        Guid Stage(string code) => stages.ByCode(code).GetProperty("id").GetGuid();
+
+        async Task<Guid> OpportunityAsync(Guid companyId, string title, decimal amount, string? closeAs = null)
+        {
+            var id = (await owner.PostAsync("/api/v1/partners/opportunities", new { companyId, partnerId, title, expectedAmount = amount })).GetProperty("id").GetGuid();
+            if (closeAs is not null)
+            {
+                await owner.PostAsync($"/api/v1/partners/opportunities/{id}/move", new { stageId = Stage(closeAs), lostReason = closeAs == "LOST" ? "Price" : null }, HttpStatusCode.OK);
+            }
+
+            return id;
+        }
+
+        await OpportunityAsync(s.CompanyId, "Cold store", 4_000_000);
+        await OpportunityAsync(s.CompanyId, "Delivery vans", 9_000_000, "WON");
+        await OpportunityAsync(s.CompanyId, "Racking", 1_000_000, "WON");
+        await OpportunityAsync(s.CompanyId, "Scales", 500_000, "LOST");
+        await OpportunityAsync(s.OtherCompanyId, "Export licence", 20_000);
+        await owner.PostAsync("/api/v1/partners/crm-activities", new { partnerId, kind = "meeting", subject = "Site visit", dueAt = Api.Clock.UtcNow.AddDays(2) });
+        await owner.PostAsync("/api/v1/partners/crm-activities", new { partnerId, kind = "note", subject = "Owner prefers Arabic invoices" });
+
+        var view = await owner.GetOkAsync($"/api/v1/partners/{partnerId}/customer-360");
+        view.GetProperty("partner").GetProperty("contacts").GetArrayLength().ShouldBe(1);
+        view.GetProperty("partner").GetProperty("addresses").GetArrayLength().ShouldBe(1);
+        view.GetProperty("partner").GetProperty("customerAccounts").GetArrayLength().ShouldBe(2);
+        var pipeline = view.GetProperty("pipeline");
+        pipeline.GetProperty("open").EnumerateArray().Select(static o => o.GetProperty("title").GetString()).ShouldBe(["Cold store", "Export licence"], ignoreOrder: true);
+        (pipeline.GetProperty("wonLastYear").GetInt32(), pipeline.GetProperty("lostLastYear").GetInt32(), pipeline.GetProperty("winRatePct").GetDecimal()).ShouldBe((2, 1, 66.7m));
+        pipeline.GetProperty("recentlyClosed").GetArrayLength().ShouldBe(3);
+        pipeline.GetProperty("openTotals").EnumerateArray().Select(static t => t.GetProperty("currency").GetString()).ShouldBe(["AED", "IQD"]);
+        view.GetProperty("openActivities").Only().GetProperty("subject").GetString().ShouldBe("Site visit");
+        view.GetProperty("recentActivities").Only().GetProperty("kind").GetString().ShouldBe("note");
+
+        // A reader of the export company alone sees its account and its deal only.
+        var (exportReader, _) = await MemberAsync(s, "export_reader", s.OtherCompanyId, "partners.customer.read");
+        var limited = await exportReader.GetOkAsync($"/api/v1/partners/{partnerId}/customer-360");
+        limited.GetProperty("partner").GetProperty("customerAccounts").Only().GetProperty("companyId").GetGuid().ShouldBe(s.OtherCompanyId);
+        limited.GetProperty("pipeline").GetProperty("open").Only().GetProperty("title").GetString().ShouldBe("Export licence");
+        limited.GetProperty("pipeline").GetProperty("wonLastYear").GetInt32().ShouldBe(0);
+        (await exportReader.GetAsync(new Uri($"/api/v1/partners/{Guid.CreateVersion7()}/customer-360", UriKind.Relative))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
 }

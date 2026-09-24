@@ -394,7 +394,7 @@ public sealed class OpportunityService(
     /// <summary>The expected amount times the probability: an estimate for the forecast, never posted, so kept exact.</summary>
     private static decimal Weighted(decimal amount, int probability) => amount * probability / 100m;
 
-    private static IReadOnlyList<PipelineTotal> Totals(IReadOnlyList<OpportunitySummary> opportunities) =>
+    internal static IReadOnlyList<PipelineTotal> Totals(IReadOnlyList<OpportunitySummary> opportunities) =>
         opportunities.GroupBy(static o => o.Currency, StringComparer.Ordinal).OrderBy(static g => g.Key, StringComparer.Ordinal)
             .Select(static g => new PipelineTotal(g.Key, g.Count(), g.Sum(static o => o.ExpectedAmount), g.Sum(static o => o.WeightedAmount))).ToList();
 }

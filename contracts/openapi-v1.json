@@ -16419,6 +16419,38 @@
         }
       }
     },
+    "/api/v1/partners/{partnerId}/customer-360": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Customer 360: the partner with contacts, addresses and customer accounts, its pipeline (open, closed in the last year, win rate), open and recent activities, and each module's balances and latest documents with it, within what the member may read",
+        "operationId": "getPartnersByPartnerIdCustomer360",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer360"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners/opportunities": {
       "get": {
         "tags": [
@@ -27732,6 +27764,100 @@
           }
         }
       },
+      "Customer360": {
+        "required": [
+          "partner",
+          "pipeline",
+          "openActivities",
+          "recentActivities",
+          "panels"
+        ],
+        "type": "object",
+        "properties": {
+          "partner": {
+            "$ref": "#/components/schemas/PartnerDetail"
+          },
+          "pipeline": {
+            "$ref": "#/components/schemas/Customer360Pipeline"
+          },
+          "openActivities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrmActivitySummary"
+            }
+          },
+          "recentActivities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrmActivitySummary"
+            }
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerActivityPanel"
+            }
+          }
+        },
+        "description": "The partner at a glance: its record with contacts, addresses and the accounts the member may read; its pipeline;\nopen and recent activities; and each module's balances and latest documents with it."
+      },
+      "Customer360Pipeline": {
+        "required": [
+          "open",
+          "openTotals",
+          "recentlyClosed",
+          "wonLastYear",
+          "lostLastYear",
+          "winRatePct"
+        ],
+        "type": "object",
+        "properties": {
+          "open": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpportunitySummary"
+            }
+          },
+          "openTotals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineTotal"
+            }
+          },
+          "recentlyClosed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpportunitySummary"
+            }
+          },
+          "wonLastYear": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lostLastYear": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "winRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Open opportunities with their totals per currency, those closed in the last year, and the win rate over them."
+      },
       "CustomerAccountSummary": {
         "required": [
           "id",
@@ -35103,6 +35229,100 @@
         },
         "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
       },
+      "PartnerActivityPanel": {
+        "required": [
+          "source",
+          "balances",
+          "documents"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "balances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerBalance"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerDocument"
+            }
+          }
+        }
+      },
+      "PartnerBalance": {
+        "required": [
+          "source",
+          "companyId",
+          "side",
+          "currency",
+          "open",
+          "openFunctional",
+          "overdue",
+          "openItems",
+          "oldestDueOn"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "side": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "open": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "openFunctional": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "overdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "openItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "oldestDueOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "What is open with a partner in one company and currency: the amount in that currency and in the company's, what is past due, how many items, the oldest due date."
+      },
       "PartnerDetail": {
         "required": [
           "partner",
@@ -35155,6 +35375,75 @@
             }
           }
         }
+      },
+      "PartnerDocument": {
+        "required": [
+          "source",
+          "documentType",
+          "documentId",
+          "number",
+          "companyId",
+          "date",
+          "dueOn",
+          "currency",
+          "amount",
+          "open",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "open": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "description": "One of the partner's documents as the module that owns it shows it in the 360 view."
       },
       "PartnerSummary": {
         "required": [

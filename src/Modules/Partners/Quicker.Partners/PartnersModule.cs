@@ -26,6 +26,7 @@ public static class PartnersModule
         services.AddScoped<SalesSetupService>();
         services.AddScoped<OpportunityService>();
         services.AddScoped<CrmActivityService>();
+        services.AddScoped<Customer360Service>();
         services.AddScoped<CustomerDirectory>();
         services.AddScoped<ICustomerDirectory>(static sp => sp.GetRequiredService<CustomerDirectory>());
         services.AddScoped<IRecordCompanies, PartnersRecordCompanies>();

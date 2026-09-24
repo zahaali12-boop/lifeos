@@ -192,6 +192,10 @@ public static class PartnersEndpoints
         accounts.MapPost("/{companyId:guid}/release", async (Guid partnerId, Guid companyId, SupplierService service, CancellationToken ct) => ApiProblems.Ok(await service.ReleaseAsync(partnerId, companyId, ct)))
             .RequirePermission(PartnersPermissions.SupplierManage);
 
+        partners.MapGet("/{partnerId:guid}/customer-360", async (Guid partnerId, Customer360Service service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(partnerId, ct), "partner", partnerId))
+            .RequirePermission(PartnersPermissions.CustomerRead)
+            .WithSummary("Customer 360: the partner with contacts, addresses and customer accounts, its pipeline (open, closed in the last year, win rate), open and recent activities, and each module's balances and latest documents with it, within what the member may read");
+
         var customerAccounts = partners.MapGroup("/{partnerId:guid}/customer-accounts");
         customerAccounts.MapGet("/", async (Guid partnerId, CustomerService service, CancellationToken ct) => TypedResults.Ok(await service.ListAccountsOfPartnerAsync(partnerId, ct)))
             .RequirePermission(PartnersPermissions.CustomerRead);

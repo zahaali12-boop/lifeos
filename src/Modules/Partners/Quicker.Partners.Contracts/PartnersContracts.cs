@@ -254,3 +254,32 @@ public interface ICustomerDirectory
     /// <summary>The commission a sale earns under the plan (see <see cref="CommissionQuote"/>).</summary>
     Task<Result<CommissionQuote>> QuoteCommissionAsync(Guid planId, Guid? itemCategoryId, Guid? customerGroupId, decimal periodToDate, decimal basis, CancellationToken cancellationToken = default);
 }
+
+// ------------------------------------------------------------------ the partner's 360 view (roadmap 5.1)
+
+public static class PartnerBalanceSides
+{
+    /// <summary>The partner owes the company.</summary>
+    public const string Receivable = "receivable";
+
+    /// <summary>The company owes the partner.</summary>
+    public const string Payable = "payable";
+}
+
+/// <summary>What is open with a partner in one company and currency: the amount in that currency and in the company's, what is past due, how many items, the oldest due date.</summary>
+public sealed record PartnerBalance(string Source, Guid CompanyId, string Side, string Currency, decimal Open, decimal OpenFunctional, decimal Overdue, int OpenItems, DateOnly? OldestDueOn);
+
+/// <summary>One of the partner's documents as the module that owns it shows it in the 360 view.</summary>
+public sealed record PartnerDocument(string Source, string DocumentType, Guid DocumentId, string Number, Guid CompanyId, DateOnly Date, DateOnly? DueOn, string Currency, decimal Amount, decimal Open, string Status);
+
+public sealed record PartnerActivityPanel(string Source, IReadOnlyList<PartnerBalance> Balances, IReadOnlyList<PartnerDocument> Documents);
+
+/// <summary>
+/// A module's side of a partner for the 360 view (DOMAIN_MODEL §7): its balances and latest documents. Payables,
+/// receivables and sales each implement it for what they hold, so the view composes modules it does not know.
+/// </summary>
+public interface IPartnerActivitySource
+{
+    /// <summary>The partner's side in this module within the given companies (every company when null), or null when the member may not read this module's records.</summary>
+    Task<PartnerActivityPanel?> ReadAsync(Guid partnerId, IReadOnlyCollection<Guid>? companyIds, CancellationToken cancellationToken = default);
+}

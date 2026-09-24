@@ -5782,6 +5782,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partners/{partnerId}/customer-360": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customer 360: the partner with contacts, addresses and customer accounts, its pipeline (open, closed in the last year, win rate), open and recent activities, and each module's balances and latest documents with it, within what the member may read */
+        get: operations["getPartnersByPartnerIdCustomer360"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/partners/opportunities": {
         parameters: {
             query?: never;
@@ -9101,6 +9118,29 @@ export interface components {
             /** Format: double */
             amount: number | string;
         };
+        /**
+         * @description The partner at a glance: its record with contacts, addresses and the accounts the member may read; its pipeline;
+         *     open and recent activities; and each module's balances and latest documents with it.
+         */
+        Customer360: {
+            partner: components["schemas"]["PartnerDetail"];
+            pipeline: components["schemas"]["Customer360Pipeline"];
+            openActivities: components["schemas"]["CrmActivitySummary"][];
+            recentActivities: components["schemas"]["CrmActivitySummary"][];
+            panels: components["schemas"]["PartnerActivityPanel"][];
+        };
+        /** @description Open opportunities with their totals per currency, those closed in the last year, and the win rate over them. */
+        Customer360Pipeline: {
+            open: components["schemas"]["OpportunitySummary"][];
+            openTotals: components["schemas"]["PipelineTotal"][];
+            recentlyClosed: components["schemas"]["OpportunitySummary"][];
+            /** Format: int32 */
+            wonLastYear: number | string;
+            /** Format: int32 */
+            lostLastYear: number | string;
+            /** Format: double */
+            winRatePct: null | number | string;
+        };
         CustomerAccountSummary: {
             /** Format: uuid */
             id: string;
@@ -11029,6 +11069,29 @@ export interface components {
             items: components["schemas"]["StockSearchRow"][];
             nextCursor: null | string;
         };
+        PartnerActivityPanel: {
+            source: string;
+            balances: components["schemas"]["PartnerBalance"][];
+            documents: components["schemas"]["PartnerDocument"][];
+        };
+        /** @description What is open with a partner in one company and currency: the amount in that currency and in the company's, what is past due, how many items, the oldest due date. */
+        PartnerBalance: {
+            source: string;
+            /** Format: uuid */
+            companyId: string;
+            side: string;
+            currency: string;
+            /** Format: double */
+            open: number | string;
+            /** Format: double */
+            openFunctional: number | string;
+            /** Format: double */
+            overdue: number | string;
+            /** Format: int32 */
+            openItems: number | string;
+            /** Format: date */
+            oldestDueOn: null | string;
+        };
         PartnerDetail: {
             partner: components["schemas"]["PartnerSummary"];
             contacts: components["schemas"]["ContactSummary"][];
@@ -11037,6 +11100,26 @@ export interface components {
             taxRegistrations: components["schemas"]["TaxRegistrationSummary"][];
             supplierAccounts: components["schemas"]["SupplierAccountSummary"][];
             customerAccounts: components["schemas"]["CustomerAccountSummary"][];
+        };
+        /** @description One of the partner's documents as the module that owns it shows it in the 360 view. */
+        PartnerDocument: {
+            source: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            number: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            date: string;
+            /** Format: date */
+            dueOn: null | string;
+            currency: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            open: number | string;
+            status: string;
         };
         PartnerSummary: {
             /** Format: uuid */
@@ -26617,6 +26700,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PartnerSummary"];
+                };
+            };
+        };
+    };
+    getPartnersByPartnerIdCustomer360: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer360"];
                 };
             };
         };
