@@ -34,7 +34,11 @@ namespace Quicker.Migrator.Demo;
 /// </summary>
 internal static class DemoHost
 {
-    public static IHost Build(string ownerConnection, string appConnection, IClock clock)
+    /// <remarks>
+    /// Maintenance commands that must read what the running system wrote (the audit anchor store) pass the
+    /// deployment's settings, layered over the seeder's scratch defaults; the connections given here always win.
+    /// </remarks>
+    public static IHost Build(string ownerConnection, string appConnection, IClock clock, IConfiguration? deployment = null)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { Args = [] });
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
@@ -42,14 +46,22 @@ internal static class DemoHost
         var scratch = Path.Combine(Path.GetTempPath(), "quicker-demo-seed");
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
-            ["Quicker:Db:OwnerConnection"] = ownerConnection,
-            ["Quicker:Db:AppConnection"] = appConnection,
             ["Quicker:Db:StatementTimeoutSeconds"] = "120",
             ["Quicker:Db:LockTimeoutSeconds"] = "30",
             ["Quicker:Email:Provider"] = "capture",
             ["Quicker:Storage:Provider"] = "filesystem",
             ["Quicker:Storage:Path"] = Path.Combine(scratch, "storage"),
             ["Quicker:Audit:Anchoring:Path"] = Path.Combine(scratch, "audit-anchors"),
+        });
+        if (deployment is not null)
+        {
+            builder.Configuration.AddConfiguration(deployment);
+        }
+
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["Quicker:Db:OwnerConnection"] = ownerConnection,
+            ["Quicker:Db:AppConnection"] = appConnection,
         });
 
         var services = builder.Services;

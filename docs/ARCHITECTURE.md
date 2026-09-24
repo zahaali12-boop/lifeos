@@ -44,7 +44,7 @@ This document is the map. Each major decision has an Architecture Decision Recor
                           <Name>.Tests       unit and integration tests for the module
 /src/Host/Quicker.Api   composition root for the HTTP API
 /src/Host/Quicker.Worker composition root for background workers (outbox dispatch, jobs, schedules, PDF)
-/src/Host/Quicker.Migrator runs migrations and seeds
+/src/Host/Quicker.Migrator runs migrations and seeds, builds the demo tenant, and carries the maintenance commands (backup, restore, verify, rebuild-balances, operator)
 /apps/web               React application (desktop and mobile web, including the scanning app)
 /packages/ui            design system (tokens, components, Storybook)
 /packages/api-client    generated TypeScript client from OpenAPI

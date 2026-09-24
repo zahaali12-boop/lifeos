@@ -30,4 +30,5 @@ storybook-static/
 
 # Local data
 .data/
+backups/
 *.log

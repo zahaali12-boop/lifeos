@@ -6,7 +6,7 @@ COMPOSE ?= docker compose
 # Owner connection used by tests to create per-class databases. Override to point at any PostgreSQL 16+ cluster.
 QUICKER_TEST_CONNECTION ?= Host=127.0.0.1;Port=5432;Database=postgres;Username=quicker_owner;Password=quicker
 
-.PHONY: help up down logs migrate seed demo build test test-dotnet test-web lint format web api clean
+.PHONY: help up down logs migrate seed demo backup restore verify build test test-dotnet test-web lint format web api clean
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -35,6 +35,16 @@ seed: ## Apply reference-data seeds (idempotent)
 
 demo: ## Rebuild the demo tenant from scratch (migrations and seeds first); sign in as owner@quicker.example / DemoPass2026!
 	dotnet run --project src/Host/Quicker.Migrator -- demo
+
+backup: ## Back up the local database with its manifest (OUT=file, default backups/quicker-<UTC time>.dump)
+	dotnet run --project src/Host/Quicker.Migrator -- backup --out $(or $(OUT),backups/quicker-$(shell date -u +%Y%m%dT%H%M%SZ).dump)
+
+restore: ## Restore a backup into a new database and prove it: rows against the manifest, then the invariant harness (FROM=file DB=name)
+	@test -n "$(FROM)" -a -n "$(DB)" || { echo "usage: make restore FROM=backups/<file>.dump DB=<new database name>"; exit 2; }
+	dotnet run --project src/Host/Quicker.Migrator -- restore --from $(FROM) --database $(DB)
+
+verify: ## Run the invariant harness over every active tenant of the local database (TENANT=slug for one)
+	dotnet run --project src/Host/Quicker.Migrator -- verify $(if $(TENANT),--tenant $(TENANT))
 
 build: ## Build .NET solution and web packages
 	dotnet build Quicker.sln
