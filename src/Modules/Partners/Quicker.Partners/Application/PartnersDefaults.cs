@@ -1,13 +1,17 @@
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Text;
 using Quicker.Kernel.Time;
+using Quicker.Partners.Contracts;
 using Quicker.Partners.Domain;
 using Quicker.Partners.Persistence;
 using Quicker.Tenancy.Contracts;
 
 namespace Quicker.Partners.Application;
 
-/// <summary>What every new tenant starts with: the Incoterms delivery terms and the usual payment terms, all system rows an admin may deactivate but not remove.</summary>
+/// <summary>
+/// What every new tenant starts with: the Incoterms delivery terms, the usual payment terms and a sales pipeline (lead,
+/// qualified, proposal, negotiation, won, lost), all system rows an admin may rename, reorder or deactivate but not remove.
+/// </summary>
 public sealed class PartnersDefaults(PartnersDbContext db, IClock clock) : ITenantSetupStep
 {
     public Task SetUpAsync(TenantId tenantId, string defaultLanguage, CancellationToken cancellationToken)
@@ -37,6 +41,21 @@ public sealed class PartnersDefaults(PartnersDbContext db, IClock clock) : ITena
         })
         {
             db.PaymentTerms.Add(new PaymentTerms { Id = Guid.CreateVersion7(), Code = code, Name = LocalizedText.Bilingual(en, ar), DueBasis = basis, DueDays = days, IsSystem = true, CreatedAt = now, UpdatedAt = now });
+        }
+
+        var order = 0;
+        foreach (var (code, en, ar, probability, outcome) in new[]
+        {
+            ("LEAD", "Lead", "عميل محتمل", 10, OpportunityOutcomes.Open),
+            ("QUALIFIED", "Qualified", "مؤهل", 25, OpportunityOutcomes.Open),
+            ("PROPOSAL", "Proposal", "عرض مقدم", 50, OpportunityOutcomes.Open),
+            ("NEGOTIATION", "Negotiation", "تفاوض", 75, OpportunityOutcomes.Open),
+            ("WON", "Won", "مكسوبة", 100, OpportunityOutcomes.Won),
+            ("LOST", "Lost", "خاسرة", 0, OpportunityOutcomes.Lost),
+        })
+        {
+            order += 10;
+            db.PipelineStages.Add(new PipelineStage { Id = Guid.CreateVersion7(), Code = code, Name = LocalizedText.Bilingual(en, ar), SortOrder = order, DefaultProbability = probability, Outcome = outcome, IsSystem = true, CreatedAt = now, UpdatedAt = now });
         }
 
         return db.SaveChangesAsync(cancellationToken);

@@ -902,6 +902,11 @@ erDiagram
   ptr_partners ||--o{ ptr_partner_relationships : "related"
   ptr_partners ||--o{ ptr_opportunities : "pursued with"
   ptr_pipeline_stages ||--o{ ptr_opportunities : "at stage"
+  ptr_opportunities ||--o{ ptr_opportunity_stage_changes : "moved"
+  ptr_commission_plans ||--|{ ptr_commission_rules : "bands"
+  ptr_commission_plans ||--o{ ptr_sales_reps : "pays"
+  ptr_partners ||--o{ ptr_crm_activities : "with"
+  ptr_opportunities ||--o{ ptr_crm_activities : "about"
 
   ptr_partners {
     uuid id PK
@@ -962,20 +967,20 @@ erDiagram
     uuid company_id FK
     uuid customer_group_id FK
     uuid payment_terms_id FK
-    uuid price_list_id
+    uuid price_list_id "5.2"
     uuid posting_group_id
     uuid tax_group_id
     text currency
-    numeric credit_limit
-    text credit_limit_currency
+    numeric credit_limit "functional currency; empty = none"
     text credit_status "ok | on_hold | blocked"
+    text credit_status_reason
     text credit_exposure_basis "open_ar | open_ar_plus_orders"
     int overdue_block_days
     uuid sales_rep_id FK
     uuid default_warehouse_id
     uuid delivery_terms_id
     int dunning_level
-    text statement_frequency
+    text statement_frequency "none | weekly | monthly"
     bool is_active
   }
   ptr_supplier_accounts {
@@ -1000,8 +1005,10 @@ erDiagram
     uuid id PK
     text code
     i18n name
-    uuid price_list_id
+    uuid price_list_id "5.2"
     uuid posting_group_id
+    uuid payment_terms_id
+    uuid delivery_terms_id
   }
   ptr_supplier_groups {
     uuid id PK
@@ -1032,13 +1039,30 @@ erDiagram
   }
   ptr_sales_reps {
     uuid id PK
-    uuid membership_id
+    uuid membership_id "unique"
     uuid partner_id "employee partner"
     text code
     i18n name
-    uuid commission_plan_id
-    uuid branch_id
+    uuid company_id "empty = every company"
+    uuid commission_plan_id FK
     bool is_active
+  }
+  ptr_commission_plans {
+    uuid id PK
+    text code
+    i18n name
+    text basis "revenue | margin | collected"
+    text accrual_point "invoice | payment"
+    text tier_period "month | quarter | year"
+    text currency
+  }
+  ptr_commission_rules {
+    uuid plan_id FK
+    int sequence
+    uuid item_category_id "and descendants"
+    uuid customer_group_id
+    numeric from_amount "marginal band start"
+    numeric rate_pct
   }
   ptr_partner_relationships {
     uuid partner_id FK
@@ -1047,30 +1071,59 @@ erDiagram
   }
   ptr_opportunities {
     uuid id PK
-    uuid partner_id FK
     uuid company_id
-    i18n title
+    text number "OPP-yyyy-nnnnn per company"
+    uuid partner_id FK
+    uuid contact_id
+    text title
     uuid stage_id FK
+    uuid sales_rep_id
     numeric expected_amount
     text currency
     int probability_pct
     date expected_close
-    uuid owner_membership_id
+    text source
     text status "open | won | lost"
     text lost_reason
+    date closed_on
     jsonb custom_fields
+  }
+  ptr_opportunity_stage_changes {
+    uuid id PK
+    uuid opportunity_id FK
+    uuid from_stage_id
+    uuid to_stage_id
+    int probability_pct
+    numeric expected_amount
+    timestamptz changed_at
   }
   ptr_pipeline_stages {
     uuid id PK
+    text code
     i18n name
     int sort_order
     int default_probability
-    bool is_closed_won
-    bool is_closed_lost
+    text outcome "open | won 100 | lost 0"
+    bool is_system
+  }
+  ptr_crm_activities {
+    uuid id PK
+    uuid partner_id FK
+    uuid company_id
+    uuid opportunity_id FK
+    uuid contact_id
+    text kind "call | meeting | email | task | note"
+    text subject
+    timestamptz due_at
+    uuid assigned_membership_id
+    text status "open | done | cancelled"
+    text outcome
   }
 ```
 
-The **Customer 360** screen composes `ptr_partners` + `ptr_customer_accounts` (per company) + `ptr_contacts` + addresses + `ptr_opportunities` + `col_activities` + AR open items + sales documents via read contracts.
+The **Customer 360** screen composes `ptr_partners` + `ptr_customer_accounts` (per company) + `ptr_contacts` + addresses + `ptr_opportunities` + `ptr_crm_activities` + AR open items + sales documents via read contracts.
+
+Commission plans are master data about the sales team and live here (A-142); the accruals they drive, `sls_commission_entries`, stay with invoicing. CRM activities are planned work with a partner (assigned, due, done or cancelled) and are kept apart from `col_activities`, the system's append-only account of what happened to a record.
 
 ## 8. Items and units of measure
 
@@ -1952,8 +2005,8 @@ erDiagram
   sls_returns ||--o| sls_invoices : "credited by"
   sls_recurring_templates ||--o{ sls_invoices : "generates"
   sls_credit_holds }o--|| ptr_customer_accounts : "on"
-  sls_commission_plans ||--|{ sls_commission_rules : "has"
   sls_invoice_lines ||--o{ sls_commission_entries : "earns"
+  sls_commission_entries }o--|| ptr_commission_plans : "under"
   prc_price_lists ||--|{ prc_price_list_items : "has"
   prc_price_lists ||--o{ prc_price_lists : "derived from"
   prc_discount_rules }o--o{ sls_order_lines : "applied in breakdown"
@@ -2197,20 +2250,6 @@ erDiagram
     uuid override_id
     uuid released_by
     timestamptz released_at
-  }
-  sls_commission_plans {
-    uuid id PK
-    i18n name
-    text basis "revenue | margin | collected"
-    text accrual_point "invoice | payment"
-  }
-  sls_commission_rules {
-    uuid plan_id FK
-    uuid category_id
-    uuid customer_group_id
-    numeric rate_pct
-    numeric threshold
-    int tier
   }
   sls_commission_entries {
     uuid id PK

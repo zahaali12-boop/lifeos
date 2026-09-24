@@ -42,6 +42,7 @@ public sealed record PartnerSummary(
     JsonElement CustomFields,
     bool IsActive,
     int SupplierCompanies,
+    int CustomerCompanies,
     DateTimeOffset UpdatedAt);
 
 public sealed record PartnerDetail(
@@ -50,7 +51,8 @@ public sealed record PartnerDetail(
     IReadOnlyList<AddressSummary> Addresses,
     IReadOnlyList<BankAccountSummary> BankAccounts,
     IReadOnlyList<TaxRegistrationSummary> TaxRegistrations,
-    IReadOnlyList<SupplierAccountSummary> SupplierAccounts);
+    IReadOnlyList<SupplierAccountSummary> SupplierAccounts,
+    IReadOnlyList<CustomerAccountSummary> CustomerAccounts);
 
 public sealed record SaveContactRequest(IReadOnlyDictionary<string, string> Name, string? Role = null, string? Email = null, string? Phone = null, string? Mobile = null, bool IsPrimary = false, bool ReceivesStatements = false, string? Notes = null, bool IsActive = true);
 
@@ -150,3 +152,245 @@ public sealed record DeliveryTermsSummary(Guid Id, string Code, IReadOnlyDiction
 public sealed record SaveWhtCodeRequest(string Code, IReadOnlyDictionary<string, string> Name, decimal RatePct, string WithholdAt = "payment", decimal? ThresholdAmount = null, string? ThresholdCurrency = null, bool IsActive = true);
 
 public sealed record WhtCodeSummary(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, decimal RatePct, string WithholdAt, decimal? ThresholdAmount, string? ThresholdCurrency, bool IsActive, DateTimeOffset UpdatedAt);
+
+// ------------------------------------------------------------------ customer accounts (roadmap 5.1)
+
+/// <summary>
+/// The partner as a customer of one company. Blank terms and posting default from the group. The credit fields
+/// (limit in the company's functional currency, empty for none; exposure basis; overdue days that block) change only
+/// with <c>partners.credit.manage</c>; send them as they stand otherwise.
+/// </summary>
+public sealed record SaveCustomerAccountRequest(
+    Guid? CustomerGroupId = null,
+    Guid? PaymentTermsId = null,
+    Guid? DeliveryTermsId = null,
+    Guid? PostingGroupId = null,
+    Guid? TaxGroupId = null,
+    Guid? SalesRepId = null,
+    Guid? DefaultWarehouseId = null,
+    string? Currency = null,
+    decimal? CreditLimit = null,
+    string CreditExposureBasis = "open_ar_plus_orders",
+    int? OverdueBlockDays = null,
+    string StatementFrequency = "monthly",
+    bool IsActive = true);
+
+public sealed record CustomerAccountSummary(
+    Guid Id,
+    Guid PartnerId,
+    string PartnerCode,
+    IReadOnlyDictionary<string, string> PartnerName,
+    Guid CompanyId,
+    string CompanyCode,
+    string FunctionalCurrency,
+    Guid? CustomerGroupId,
+    string? CustomerGroupCode,
+    Guid? PaymentTermsId,
+    Guid? DeliveryTermsId,
+    Guid? PostingGroupId,
+    Guid? TaxGroupId,
+    Guid? SalesRepId,
+    string? SalesRepCode,
+    Guid? DefaultWarehouseId,
+    string Currency,
+    decimal? CreditLimit,
+    string CreditExposureBasis,
+    int? OverdueBlockDays,
+    string CreditStatus,
+    string? CreditStatusReason,
+    DateTimeOffset? CreditStatusAt,
+    string StatementFrequency,
+    int DunningLevel,
+    bool IsActive,
+    EffectiveCustomerTerms Effective,
+    DateTimeOffset UpdatedAt);
+
+public sealed record EffectiveCustomerTerms(Guid? PaymentTermsId, string? PaymentTermsCode, Guid? DeliveryTermsId, string? DeliveryTermsCode, Guid? PostingGroupId);
+
+/// <summary>status on_hold (new orders wait for release) or blocked (orders, shipments and invoices refused), with a reason; ok releases.</summary>
+public sealed record CreditStatusRequest(string Status, string? Reason = null);
+
+public sealed record SaveCustomerGroupRequest(string Code, IReadOnlyDictionary<string, string> Name, Guid? PostingGroupId = null, Guid? PaymentTermsId = null, Guid? DeliveryTermsId = null, bool IsActive = true);
+
+public sealed record CustomerGroupSummary(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, Guid? PostingGroupId, Guid? PaymentTermsId, Guid? DeliveryTermsId, bool IsActive, int Customers, DateTimeOffset UpdatedAt);
+
+// ------------------------------------------------------------------ sales reps and commission plans
+
+public sealed record SaveSalesRepRequest(
+    string Code,
+    IReadOnlyDictionary<string, string> Name,
+    Guid? MembershipId = null,
+    Guid? PartnerId = null,
+    Guid? CompanyId = null,
+    Guid? CommissionPlanId = null,
+    string? Email = null,
+    string? Phone = null,
+    bool IsActive = true);
+
+public sealed record SalesRepSummary(
+    Guid Id,
+    string Code,
+    IReadOnlyDictionary<string, string> Name,
+    Guid? MembershipId,
+    string? MemberName,
+    Guid? PartnerId,
+    string? PartnerCode,
+    Guid? CompanyId,
+    string? CompanyCode,
+    Guid? CommissionPlanId,
+    string? CommissionPlanCode,
+    string? Email,
+    string? Phone,
+    bool IsActive,
+    int Customers,
+    int OpenOpportunities,
+    DateTimeOffset UpdatedAt);
+
+/// <summary>One band: for sales in the item category (and its descendants) and/or the customer group, from a period-to-date amount upwards.</summary>
+public sealed record SaveCommissionRuleRequest(decimal RatePct, decimal FromAmount = 0m, Guid? ItemCategoryId = null, Guid? CustomerGroupId = null);
+
+public sealed record SaveCommissionPlanRequest(
+    string Code,
+    IReadOnlyDictionary<string, string> Name,
+    string Currency,
+    string Basis = "revenue",
+    string AccrualPoint = "invoice",
+    string TierPeriod = "month",
+    IReadOnlyList<SaveCommissionRuleRequest>? Rules = null,
+    bool IsActive = true);
+
+public sealed record CommissionRuleSummary(int Sequence, Guid? ItemCategoryId, string? ItemCategoryCode, Guid? CustomerGroupId, string? CustomerGroupCode, decimal FromAmount, decimal RatePct);
+
+public sealed record CommissionPlanSummary(
+    Guid Id,
+    string Code,
+    IReadOnlyDictionary<string, string> Name,
+    string Basis,
+    string AccrualPoint,
+    string TierPeriod,
+    string Currency,
+    IReadOnlyList<CommissionRuleSummary> Rules,
+    bool IsActive,
+    int SalesReps,
+    DateTimeOffset UpdatedAt);
+
+public sealed record CommissionQuoteRequest(decimal Amount, decimal PeriodToDate = 0m, Guid? ItemCategoryId = null, Guid? CustomerGroupId = null);
+
+// ------------------------------------------------------------------ pipeline
+
+public sealed record SavePipelineStageRequest(string Code, IReadOnlyDictionary<string, string> Name, int DefaultProbability, string Outcome = "open", int? SortOrder = null, bool IsActive = true);
+
+public sealed record PipelineStageSummary(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, int SortOrder, int DefaultProbability, string Outcome, bool IsSystem, bool IsActive, int OpenOpportunities, DateTimeOffset UpdatedAt);
+
+/// <summary>The stages in the order the board shows them; every stage of the tenant, each once.</summary>
+public sealed record ReorderStagesRequest(IReadOnlyList<Guid> StageIds);
+
+public sealed record CreateOpportunityRequest(
+    Guid CompanyId,
+    Guid PartnerId,
+    string Title,
+    decimal ExpectedAmount = 0m,
+    string? Currency = null,
+    Guid? StageId = null,
+    int? ProbabilityPct = null,
+    Guid? ContactId = null,
+    Guid? SalesRepId = null,
+    DateOnly? ExpectedClose = null,
+    string? Source = null,
+    string? Notes = null,
+    JsonElement? CustomFields = null);
+
+public sealed record UpdateOpportunityRequest(
+    string Title,
+    decimal ExpectedAmount,
+    string Currency,
+    int ProbabilityPct,
+    Guid? ContactId = null,
+    Guid? SalesRepId = null,
+    DateOnly? ExpectedClose = null,
+    string? Source = null,
+    string? Notes = null,
+    JsonElement? CustomFields = null);
+
+/// <summary>Moves the opportunity to a stage; a lost stage needs the reason; the probability defaults to the stage's.</summary>
+public sealed record MoveOpportunityRequest(Guid StageId, int? ProbabilityPct = null, string? LostReason = null);
+
+public sealed record OpportunitySummary(
+    Guid Id,
+    Guid CompanyId,
+    string CompanyCode,
+    string Number,
+    Guid PartnerId,
+    string PartnerCode,
+    IReadOnlyDictionary<string, string> PartnerName,
+    Guid? ContactId,
+    string Title,
+    Guid StageId,
+    string StageCode,
+    IReadOnlyDictionary<string, string> StageName,
+    Guid? SalesRepId,
+    string? SalesRepCode,
+    decimal ExpectedAmount,
+    string Currency,
+    int ProbabilityPct,
+    decimal WeightedAmount,
+    DateOnly? ExpectedClose,
+    bool IsOverdue,
+    string? Source,
+    string Status,
+    string? LostReason,
+    DateOnly? ClosedOn,
+    string? Notes,
+    JsonElement CustomFields,
+    DateTimeOffset StageSince,
+    DateTimeOffset UpdatedAt);
+
+public sealed record StageChangeSummary(Guid Id, Guid? FromStageId, string? FromStageCode, Guid ToStageId, string ToStageCode, int ProbabilityPct, decimal ExpectedAmount, DateTimeOffset ChangedAt, Guid? ChangedBy);
+
+public sealed record OpportunityDetail(OpportunitySummary Opportunity, IReadOnlyList<StageChangeSummary> StageHistory, IReadOnlyList<CrmActivitySummary> Activities);
+
+/// <summary>A total of opportunities in one currency: how many, their expected amount and the probability-weighted amount.</summary>
+public sealed record PipelineTotal(string Currency, int Count, decimal Amount, decimal Weighted);
+
+public sealed record PipelineColumn(PipelineStageSummary Stage, IReadOnlyList<OpportunitySummary> Opportunities, IReadOnlyList<PipelineTotal> Totals);
+
+/// <summary>The board: every active stage in order with its opportunities (won and lost columns show the last 90 days) and the open pipeline's totals.</summary>
+public sealed record PipelineBoard(IReadOnlyList<PipelineColumn> Columns, IReadOnlyList<PipelineTotal> OpenTotals);
+
+// ------------------------------------------------------------------ CRM activities
+
+public sealed record SaveCrmActivityRequest(
+    Guid PartnerId,
+    string Kind,
+    string Subject,
+    string? Body = null,
+    DateTimeOffset? DueAt = null,
+    Guid? AssignedMembershipId = null,
+    Guid? OpportunityId = null,
+    Guid? ContactId = null,
+    Guid? CompanyId = null);
+
+public sealed record CompleteCrmActivityRequest(string? Outcome = null);
+
+public sealed record CrmActivitySummary(
+    Guid Id,
+    Guid PartnerId,
+    string PartnerCode,
+    IReadOnlyDictionary<string, string> PartnerName,
+    Guid? CompanyId,
+    Guid? OpportunityId,
+    string? OpportunityNumber,
+    Guid? ContactId,
+    string Kind,
+    string Subject,
+    string? Body,
+    DateTimeOffset? DueAt,
+    bool IsOverdue,
+    Guid? AssignedMembershipId,
+    string? AssignedName,
+    string Status,
+    string? Outcome,
+    DateTimeOffset? CompletedAt,
+    Guid? CreatedBy,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);

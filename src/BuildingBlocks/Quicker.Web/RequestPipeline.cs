@@ -175,6 +175,31 @@ public sealed class RequirePermissionFilter(string permission) : IEndpointFilter
     }
 }
 
+/// <summary>Requires any one of several permissions: records two sides of the business share (a partner is read by purchasing and by sales).</summary>
+public sealed class RequireAnyPermissionFilter(IReadOnlyList<string> permissions) : IEndpointFilter
+{
+    public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        var current = context.HttpContext.RequestServices.GetRequiredService<CurrentPrincipal>();
+        if (current.Principal is null)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Authentication required", extensions: new Dictionary<string, object?>(StringComparer.Ordinal) { ["code"] = "auth.required" });
+        }
+
+        if (!permissions.Any(current.Principal.Has))
+        {
+            var names = string.Join(", ", permissions);
+            return Results.Problem(statusCode: StatusCodes.Status403Forbidden, title: "Forbidden", detail: $"Missing one of the permissions '{names}'.", extensions: new Dictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["code"] = "auth.forbidden",
+                ["why"] = new Dictionary<string, object?>(StringComparer.Ordinal) { ["permission"] = names },
+            });
+        }
+
+        return await next(context);
+    }
+}
+
 /// <summary>Requires a recent authentication (step-up) for sensitive actions, per tenant policy.</summary>
 public sealed class RequireRecentAuthFilter : IEndpointFilter
 {
@@ -228,6 +253,19 @@ public static class EndpointConventions
     {
         ArgumentNullException.ThrowIfNull(builder);
         builder.AddEndpointFilter(new RequirePermissionFilter(permission));
+        return builder;
+    }
+
+    public static TBuilder RequireAnyPermission<TBuilder>(this TBuilder builder, params string[] permissions) where TBuilder : IEndpointConventionBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(permissions);
+        if (permissions.Length == 0)
+        {
+            throw new ArgumentException("At least one permission is required.", nameof(permissions));
+        }
+
+        builder.AddEndpointFilter(new RequireAnyPermissionFilter(permissions));
         return builder;
     }
 

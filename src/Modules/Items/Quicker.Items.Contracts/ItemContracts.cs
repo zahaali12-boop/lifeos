@@ -30,6 +30,9 @@ public sealed record ItemInfo(
     public bool IsStockItem => Type is "stock" or "kit" or "assembly";
 }
 
+/// <summary>An item category as other modules match against it (commission rules, reporting).</summary>
+public sealed record ItemCategoryInfo(Guid Id, string Code, LocalizedText Name, Guid? ParentId, bool IsActive);
+
 public sealed record ItemVariantInfo(Guid Id, Guid ItemId, string Sku, LocalizedText Name, bool IsActive);
 
 /// <summary>One unit an item is handled in: 1 unit = Numerator / Denominator base units, exactly.</summary>
@@ -87,6 +90,9 @@ public interface IItemDirectory
 
     /// <summary>The items whose warehouse settings put them in one of the cycle-count classes (A, B, C) for the warehouse.</summary>
     Task<IReadOnlyList<Guid>> ItemsForCycleCountAsync(Guid warehouseId, IReadOnlyList<string> classes, CancellationToken cancellationToken = default);
+
+    /// <summary>The category followed by its ancestors, nearest first; empty when the category does not exist.</summary>
+    Task<IReadOnlyList<ItemCategoryInfo>> CategoryLineageAsync(Guid categoryId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -104,3 +104,153 @@ public interface IPartnerDirectory
     /// </summary>
     Task<Result<PaymentSchedule>> ScheduleAsync(Guid companyId, Guid paymentTermsId, DateOnly invoiceDate, DateOnly? deliveryDate, decimal amount, string currency, CancellationToken cancellationToken = default);
 }
+
+// ------------------------------------------------------------------ customer side (roadmap 5.1)
+
+/// <summary>A customer account's credit standing: on hold sends new orders to a credit hold for release; blocked refuses orders, shipments and invoices.</summary>
+public static class CreditStatuses
+{
+    public const string Ok = "ok";
+    public const string OnHold = "on_hold";
+    public const string Blocked = "blocked";
+
+    public static readonly IReadOnlyList<string> Values = [Ok, OnHold, Blocked];
+}
+
+/// <summary>What a credit limit is measured against: open receivables, or open receivables plus confirmed unbilled orders.</summary>
+public static class CreditExposureBases
+{
+    public const string OpenAr = "open_ar";
+    public const string OpenArPlusOrders = "open_ar_plus_orders";
+
+    public static readonly IReadOnlyList<string> All = [OpenAr, OpenArPlusOrders];
+}
+
+public static class StatementFrequencies
+{
+    public const string None = "none";
+    public const string Weekly = "weekly";
+    public const string Monthly = "monthly";
+
+    public static readonly IReadOnlyList<string> All = [None, Weekly, Monthly];
+}
+
+/// <summary>What a module is about to do with a customer, so a blocked account refuses it.</summary>
+public static class CustomerPurposes
+{
+    public const string Quote = "quote";
+    public const string Order = "order";
+    public const string Shipment = "shipment";
+    public const string Invoice = "invoice";
+    public const string Receipt = "receipt";
+}
+
+public static class CommissionBases
+{
+    public const string Revenue = "revenue";
+    public const string Margin = "margin";
+    public const string Collected = "collected";
+
+    public static readonly IReadOnlyList<string> All = [Revenue, Margin, Collected];
+}
+
+public static class CommissionAccrualPoints
+{
+    public const string Invoice = "invoice";
+    public const string Payment = "payment";
+
+    public static readonly IReadOnlyList<string> All = [Invoice, Payment];
+}
+
+public static class CommissionTierPeriods
+{
+    public const string Month = "month";
+    public const string Quarter = "quarter";
+    public const string Year = "year";
+
+    public static readonly IReadOnlyList<string> All = [Month, Quarter, Year];
+}
+
+/// <summary>Where an opportunity stands: the outcome of its stage.</summary>
+public static class OpportunityOutcomes
+{
+    public const string Open = "open";
+    public const string Won = "won";
+    public const string Lost = "lost";
+
+    public static readonly IReadOnlyList<string> All = [Open, Won, Lost];
+}
+
+public static class CrmActivityKinds
+{
+    public const string Call = "call";
+    public const string Meeting = "meeting";
+    public const string Email = "email";
+    public const string Task = "task";
+    public const string Note = "note";
+
+    public static readonly IReadOnlyList<string> All = [Call, Meeting, Email, Task, Note];
+}
+
+public static class CrmActivityStatuses
+{
+    public const string Open = "open";
+    public const string Done = "done";
+    public const string Cancelled = "cancelled";
+}
+
+/// <summary>A company's customer terms with the group's defaults applied: what a quote, order, shipment, invoice or receipt reads.</summary>
+public sealed record CustomerTermsInfo(
+    Guid PartnerId,
+    string PartnerCode,
+    LocalizedText PartnerName,
+    Guid CompanyId,
+    string Currency,
+    Guid? CustomerGroupId,
+    Guid? PaymentTermsId,
+    string? PaymentTermsCode,
+    Guid? DeliveryTermsId,
+    string? DeliveryTermsCode,
+    Guid? PostingGroupId,
+    Guid? TaxGroupId,
+    Guid? SalesRepId,
+    Guid? DefaultWarehouseId,
+    decimal? CreditLimit,
+    string CreditExposureBasis,
+    int? OverdueBlockDays,
+    string CreditStatus,
+    string? CreditStatusReason,
+    string StatementFrequency,
+    int DunningLevel,
+    bool IsActive);
+
+public sealed record SalesRepInfo(Guid Id, string Code, LocalizedText Name, Guid? MembershipId, Guid? PartnerId, Guid? CompanyId, Guid? CommissionPlanId, bool IsActive);
+
+/// <summary>One band of a commission: the part of the basis that fell between two thresholds, at its rate.</summary>
+public sealed record CommissionBand(decimal FromAmount, decimal? ToAmount, decimal RatePct, decimal Basis, decimal Commission);
+
+/// <summary>
+/// What a sale earns under a plan: the scope that matched (the most specific rules for the item's category and the
+/// customer's group), the bands the sale crossed given the rep's basis so far in the tier period, and the total rounded
+/// in the plan's currency. A negative basis (a credit note) gives back what the same bands earned.
+/// </summary>
+public sealed record CommissionQuote(Guid PlanId, string PlanCode, string Currency, Guid? MatchedCategoryId, Guid? MatchedCustomerGroupId, IReadOnlyList<CommissionBand> Bands, decimal Commission);
+
+/// <summary>Read access to the customer side of the partner master for sales, receivables and commissions (roadmap 5.1).</summary>
+public interface ICustomerDirectory
+{
+    /// <summary>The partner's customer account in the company with group defaults applied, or null when the partner is not a customer there.</summary>
+    Task<CustomerTermsInfo?> FindCustomerAsync(Guid companyId, Guid partnerId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The customer account when it exists, is active and is not blocked (<c>customer.not_registered</c>,
+    /// <c>customer.inactive</c>, <c>customer.credit_blocked</c>); a receipt is always taken. An account on credit
+    /// hold is returned: holding the order is the credit check's decision, not a refusal.
+    /// </summary>
+    Task<Result<CustomerTermsInfo>> EnsureCustomerAsync(Guid companyId, Guid partnerId, string purpose, CancellationToken cancellationToken = default);
+
+    Task<SalesRepInfo?> FindSalesRepAsync(Guid salesRepId, CancellationToken cancellationToken = default);
+
+    /// <summary>The commission a sale earns under the plan (see <see cref="CommissionQuote"/>).</summary>
+    Task<Result<CommissionQuote>> QuoteCommissionAsync(Guid planId, Guid? itemCategoryId, Guid? customerGroupId, decimal periodToDate, decimal basis, CancellationToken cancellationToken = default);
+}

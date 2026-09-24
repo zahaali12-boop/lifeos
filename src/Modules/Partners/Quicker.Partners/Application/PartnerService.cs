@@ -27,7 +27,8 @@ public sealed class PartnerService(
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock,
-    SupplierService suppliers)
+    SupplierService suppliers,
+    CustomerService customers)
 {
     public const string EntityType = "partner";
 
@@ -75,7 +76,8 @@ public sealed class PartnerService(
         var ids = paged.Value.Items.Select(static p => p.Id).ToList();
         var parents = await db.Partners.AsNoTracking().Where(p => paged.Value.Items.Select(static x => x.ParentPartnerId).Contains(p.Id)).ToDictionaryAsync(static p => p.Id, static p => p.Code, cancellationToken);
         var supplierCounts = await db.SupplierAccounts.AsNoTracking().Where(a => ids.Contains(a.PartnerId)).GroupBy(static a => a.PartnerId).Select(static g => new { g.Key, Count = g.Count() }).ToDictionaryAsync(static g => g.Key, static g => g.Count, cancellationToken);
-        return paged.Value.Map(p => Map(p, p.ParentPartnerId is { } parent ? parents.GetValueOrDefault(parent) : null, supplierCounts.GetValueOrDefault(p.Id)));
+        var customerCounts = await db.CustomerAccounts.AsNoTracking().Where(a => ids.Contains(a.PartnerId)).GroupBy(static a => a.PartnerId).Select(static g => new { g.Key, Count = g.Count() }).ToDictionaryAsync(static g => g.Key, static g => g.Count, cancellationToken);
+        return paged.Value.Map(p => Map(p, p.ParentPartnerId is { } parent ? parents.GetValueOrDefault(parent) : null, supplierCounts.GetValueOrDefault(p.Id), customerCounts.GetValueOrDefault(p.Id)));
     }
 
     public async Task<PartnerDetail?> GetAsync(Guid partnerId, CancellationToken cancellationToken)
@@ -104,7 +106,7 @@ public sealed class PartnerService(
         db.Partners.Add(partner);
         await db.SaveChangesAsync(cancellationToken);
         var parentCode = partner.ParentPartnerId is { } parent ? await db.Partners.Where(p => p.Id == parent).Select(static p => p.Code).SingleOrDefaultAsync(cancellationToken) : null;
-        return Map(partner, parentCode, 0);
+        return Map(partner, parentCode, 0, 0);
     }
 
     public async Task<Result<PartnerSummary>> UpdateAsync(Guid partnerId, SavePartnerRequest request, CancellationToken cancellationToken)
@@ -127,9 +129,14 @@ public sealed class PartnerService(
             return Error.Conflict("partner.supplier_accounts_active", "Deactivate the partner's supplier accounts before removing the supplier role.");
         }
 
+        if (!partner.IsCustomer && await db.CustomerAccounts.AnyAsync(a => a.PartnerId == partnerId && a.IsActive, cancellationToken))
+        {
+            return Error.Conflict("partner.customer_accounts_active", "Deactivate the partner's customer accounts before removing the customer role.");
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         var parentCode = partner.ParentPartnerId is { } parent ? await db.Partners.Where(p => p.Id == parent).Select(static p => p.Code).SingleOrDefaultAsync(cancellationToken) : null;
-        return Map(partner, parentCode, await db.SupplierAccounts.CountAsync(a => a.PartnerId == partnerId, cancellationToken));
+        return Map(partner, parentCode, await db.SupplierAccounts.CountAsync(a => a.PartnerId == partnerId, cancellationToken), await db.CustomerAccounts.CountAsync(a => a.PartnerId == partnerId, cancellationToken));
     }
 
     private async Task<Result> ApplyAsync(Partner partner, SavePartnerRequest request, CancellationToken cancellationToken)
@@ -184,6 +191,21 @@ public sealed class PartnerService(
             if (!await db.Partners.AnyAsync(p => p.Id == parentId, cancellationToken))
             {
                 return Error.Validation("partner.parent_unknown", "The parent partner does not exist.").WithWhy(("parentPartnerId", parentId));
+            }
+        }
+
+        // Each side of the business decides who wears its role: giving or taking the supplier role needs the supplier
+        // permission, the customer role the customer permission (so a sales rep cannot make a partner payable).
+        var isNew = partner.Code.Length == 0;
+        foreach (var (was, now, permission, role) in new[]
+        {
+            (!isNew && partner.IsSupplier, request.IsSupplier, PartnersPermissions.SupplierManage, "supplier"),
+            (!isNew && partner.IsCustomer, request.IsCustomer, PartnersPermissions.CustomerManage, "customer"),
+        })
+        {
+            if (was != now && principal.Principal is { } actor && !actor.Has(permission))
+            {
+                return Error.Forbidden("partner.role_forbidden", $"Giving or taking the {role} role needs '{permission}'.").WithWhy(("role", role), ("permission", permission));
             }
         }
 
@@ -365,9 +387,10 @@ public sealed class PartnerService(
     public async Task<Result<BankAccountSummary>> SaveBankAccountAsync(Guid partnerId, Guid? accountId, SaveBankAccountRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (!await db.Partners.AnyAsync(p => p.Id == partnerId, cancellationToken))
+        var guarded = await BankAccountGuardAsync(partnerId, cancellationToken);
+        if (guarded.IsFailure)
         {
-            return Error.NotFound(EntityType, partnerId);
+            return guarded.Error!;
         }
 
         if (string.IsNullOrWhiteSpace(request.BankName))
@@ -450,6 +473,12 @@ public sealed class PartnerService(
 
     public async Task<Result> DeleteBankAccountAsync(Guid partnerId, Guid accountId, CancellationToken cancellationToken)
     {
+        var guarded = await BankAccountGuardAsync(partnerId, cancellationToken);
+        if (guarded.IsFailure)
+        {
+            return guarded.Error!;
+        }
+
         var account = await db.BankAccounts.SingleOrDefaultAsync(a => a.Id == accountId && a.PartnerId == partnerId, cancellationToken);
         if (account is null)
         {
@@ -458,6 +487,27 @@ public sealed class PartnerService(
 
         db.BankAccounts.Remove(account);
         await db.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// A supplier's bank accounts are where payments go, so only the supplier permission changes them (the
+    /// segregation of creating suppliers from paying them rests on it); a customer-only partner's accounts may be kept
+    /// by either side.
+    /// </summary>
+    private async Task<Result> BankAccountGuardAsync(Guid partnerId, CancellationToken cancellationToken)
+    {
+        var partner = await db.Partners.AsNoTracking().SingleOrDefaultAsync(p => p.Id == partnerId, cancellationToken);
+        if (partner is null)
+        {
+            return Error.NotFound(EntityType, partnerId);
+        }
+
+        if (partner.IsSupplier && principal.Principal is { } actor && !actor.Has(PartnersPermissions.SupplierManage))
+        {
+            return Error.Forbidden("bank_account.supplier_permission_required", "A supplier's bank accounts change only with the supplier permission.").WithWhy(("permission", PartnersPermissions.SupplierManage));
+        }
+
         return Result.Success();
     }
 
@@ -561,13 +611,16 @@ public sealed class PartnerService(
         var addresses = await db.Addresses.AsNoTracking().Where(a => a.PartnerId == partner.Id).OrderBy(static a => a.Role).ThenByDescending(static a => a.IsDefault).ToListAsync(cancellationToken);
         var bankAccounts = await db.BankAccounts.AsNoTracking().Where(a => a.PartnerId == partner.Id).OrderByDescending(static a => a.IsDefault).ThenBy(static a => a.CreatedAt).ToListAsync(cancellationToken);
         var registrations = await db.TaxRegistrations.AsNoTracking().Where(r => r.PartnerId == partner.Id).OrderBy(static r => r.Country).ThenBy(static r => r.RegistrationType).ToListAsync(cancellationToken);
-        var accounts = await suppliers.ListAccountsOfPartnerAsync(partner.Id, cancellationToken);
-        return new PartnerDetail(Map(partner, parentCode, accounts.Count), contacts.Select(Map).ToList(), addresses.Select(Map).ToList(), bankAccounts.Select(Map).ToList(), registrations.Select(Map).ToList(), accounts);
+        // Each side sees its own accounts: supplier terms and holds to purchasing, customer terms and credit to sales.
+        var actor = principal.Principal;
+        var supplierAccounts = actor is null || actor.Has(PartnersPermissions.SupplierRead) ? await suppliers.ListAccountsOfPartnerAsync(partner.Id, cancellationToken) : [];
+        var customerAccounts = actor is null || actor.Has(PartnersPermissions.CustomerRead) ? await customers.ListAccountsOfPartnerAsync(partner.Id, cancellationToken) : [];
+        return new PartnerDetail(Map(partner, parentCode, supplierAccounts.Count, customerAccounts.Count), contacts.Select(Map).ToList(), addresses.Select(Map).ToList(), bankAccounts.Select(Map).ToList(), registrations.Select(Map).ToList(), supplierAccounts, customerAccounts);
     }
 
-    private static PartnerSummary Map(Partner p, string? parentCode, int supplierCompanies) => new(
+    private static PartnerSummary Map(Partner p, string? parentCode, int supplierCompanies, int customerCompanies) => new(
         p.Id, p.Code, p.LegalName.Values, p.TradeName.Values, p.Kind, p.IsSupplier, p.IsCustomer, p.IsEmployee, p.IntercompanyCompanyId, p.DefaultLanguage, p.Website, p.Email, p.Phone,
-        p.ParentPartnerId, parentCode, p.Notes, JsonDocument.Parse(p.CustomFields).RootElement.Clone(), p.IsActive, supplierCompanies, p.UpdatedAt);
+        p.ParentPartnerId, parentCode, p.Notes, JsonDocument.Parse(p.CustomFields).RootElement.Clone(), p.IsActive, supplierCompanies, customerCompanies, p.UpdatedAt);
 
     private static ContactSummary Map(Contact c) => new(c.Id, c.PartnerId, c.Name.Values, c.Role, c.Email, c.Phone, c.Mobile, c.IsPrimary, c.ReceivesStatements, c.Notes, c.IsActive, c.UpdatedAt);
 

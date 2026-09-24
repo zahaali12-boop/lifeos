@@ -15654,6 +15654,578 @@
         }
       }
     },
+    "/api/v1/partners/customer-groups": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersCustomerGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerGroupSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "A customer group: the posting group, payment and delivery terms its members default to",
+        "operationId": "postPartnersCustomerGroups",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCustomerGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/customer-groups/{groupId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersCustomerGroupsByGroupId",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCustomerGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/customers": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Customer accounts in the companies the member may read, with their partner and effective terms; creditStatus=held for every held or blocked one; mine=true for the signed-in rep's customers",
+        "operationId": "getPartnersCustomers",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "creditStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "salesRepId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "customerGroupId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerAccountSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/sales-reps": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersSalesReps",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SalesRepSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "A sales rep: optionally a workspace member (for 'my customers' and 'my pipeline') and an employee partner, for one company or all, paid under a commission plan",
+        "operationId": "postPartnersSalesReps",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSalesRepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesRepSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/sales-reps/{repId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersSalesRepsByRepId",
+        "parameters": [
+          {
+            "name": "repId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSalesRepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesRepSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/commission-plans": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersCommissionPlans",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommissionPlanSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "A commission plan: paid on revenue, margin or what was collected, accruing at invoice or payment, with marginal rate bands by item category and customer group from a period-to-date threshold",
+        "operationId": "postPartnersCommissionPlans",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCommissionPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommissionPlanSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/commission-plans/{planId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersCommissionPlansByPlanId",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCommissionPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommissionPlanSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/commission-plans/{planId}/quote": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "What a sale of this amount earns under the plan given the rep's basis so far in the tier period: the matching scope, the bands crossed and the rounded commission",
+        "operationId": "postPartnersCommissionPlansByPlanIdQuote",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommissionQuoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommissionQuote"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/pipeline-stages": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersPipelineStages",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PipelineStageSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "A pipeline stage: open, won (100%) or lost (0%), with the probability opportunities take on entering it",
+        "operationId": "postPartnersPipelineStages",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePipelineStageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineStageSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/pipeline-stages/order": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The order of the board's columns: every stage, each once",
+        "operationId": "putPartnersPipelineStagesOrder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderStagesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PipelineStageSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/pipeline-stages/{stageId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersPipelineStagesByStageId",
+        "parameters": [
+          {
+            "name": "stageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePipelineStageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineStageSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/pipeline": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The pipeline board: each active stage with its opportunities (won and lost for the last 90 days) and totals per currency, weighted by probability",
+        "operationId": "getPartnersPipeline",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "salesRepId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineBoard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners": {
       "get": {
         "tags": [
@@ -15720,7 +16292,7 @@
         "tags": [
           "Partners"
         ],
-        "summary": "A partner: one record per legal person wearing the supplier, customer and employee roles; custom fields under host 'partner'",
+        "summary": "A partner: one record per legal person wearing the supplier, customer and employee roles (each role given only with its side's permission); custom fields under host 'partner'",
         "operationId": "postPartners",
         "requestBody": {
           "content": {
@@ -15781,7 +16353,7 @@
         "tags": [
           "Partners"
         ],
-        "summary": "The partner with contacts, addresses, masked bank accounts, tax registrations and supplier accounts",
+        "summary": "The partner with contacts, addresses, masked bank accounts, tax registrations, and the supplier and customer accounts the member may read",
         "operationId": "getPartnersByPartnerId",
         "parameters": [
           {
@@ -15840,6 +16412,432 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PartnerSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/opportunities": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Opportunities most recently changed first; q matches the number, the title or the partner",
+        "operationId": "getPartnersOpportunities",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stageId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "salesRepId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpportunitySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "An opportunity, numbered in the company's series, in the first open stage unless another is named; the rep and currency default from the customer account; custom fields under host 'opportunity'",
+        "operationId": "postPartnersOpportunities",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOpportunityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpportunitySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/opportunities/{opportunityId}": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The opportunity with every stage it passed through and its activities",
+        "operationId": "getPartnersOpportunitiesByOpportunityId",
+        "parameters": [
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpportunityDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersOpportunitiesByOpportunityId",
+        "parameters": [
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOpportunityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpportunitySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/opportunities/{opportunityId}/move": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Moves the opportunity to a stage: a won stage wins it, a lost stage loses it (with the reason), an open stage reopens it; every move is kept",
+        "operationId": "postPartnersOpportunitiesByOpportunityIdMove",
+        "parameters": [
+          {
+            "name": "opportunityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveOpportunityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpportunitySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/crm-activities": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "CRM activities, open ones first by due date; mine=true for those assigned to the signed-in member; due=overdue|upcoming",
+        "operationId": "getPartnersCrmActivities",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "opportunityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "due",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CrmActivitySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "kind call|meeting|email|task|note with a partner, optionally about one of its opportunities or with a contact; a note is logged done; an assignee other than the author is notified",
+        "operationId": "postPartnersCrmActivities",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCrmActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrmActivitySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/crm-activities/{activityId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "putPartnersCrmActivitiesByActivityId",
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCrmActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrmActivitySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/crm-activities/{activityId}/complete": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "postPartnersCrmActivitiesByActivityIdComplete",
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteCrmActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrmActivitySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/crm-activities/{activityId}/cancel": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "postPartnersCrmActivitiesByActivityIdCancel",
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrmActivitySummary"
                 }
               }
             }
@@ -16097,7 +17095,7 @@
         "tags": [
           "Partners"
         ],
-        "summary": "Account number and IBAN are checked (IBAN mod-97), stored encrypted and shown masked",
+        "summary": "Account number and IBAN are checked (IBAN mod-97), stored encrypted and shown masked; a supplier's accounts change only with the supplier permission",
         "operationId": "postPartnersByPartnerIdBankAccounts",
         "parameters": [
           {
@@ -16548,6 +17546,142 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SupplierAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/customer-accounts": {
+      "get": {
+        "tags": [
+          "Partners"
+        ],
+        "operationId": "getPartnersByPartnerIdCustomerAccounts",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerAccountSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/customer-accounts/{companyId}": {
+      "put": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "The partner as a customer of the company. The customer permission keeps group, terms, posting group, sales rep, default warehouse, currency and statements; the credit permission the credit limit (functional currency, empty for none), exposure basis and overdue block; send the other side's fields as they stand",
+        "operationId": "putPartnersByPartnerIdCustomerAccountsByCompanyId",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCustomerAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerAccountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{partnerId}/customer-accounts/{companyId}/credit-status": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "status on_hold|blocked with a reason, or ok to release: on hold sends new orders to credit hold, blocked refuses orders, shipments and invoices (customer.credit_blocked)",
+        "operationId": "postPartnersByPartnerIdCustomerAccountsByCompanyIdCreditStatus",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerAccountSummary"
                 }
               }
             }
@@ -24477,6 +25611,280 @@
           }
         }
       },
+      "CommissionBand": {
+        "required": [
+          "fromAmount",
+          "toAmount",
+          "ratePct",
+          "basis",
+          "commission"
+        ],
+        "type": "object",
+        "properties": {
+          "fromAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "toAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "basis": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "commission": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One band of a commission: the part of the basis that fell between two thresholds, at its rate."
+      },
+      "CommissionPlanSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "basis",
+          "accrualPoint",
+          "tierPeriod",
+          "currency",
+          "rules",
+          "isActive",
+          "salesReps",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "basis": {
+            "type": "string"
+          },
+          "accrualPoint": {
+            "type": "string"
+          },
+          "tierPeriod": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommissionRuleSummary"
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "salesReps": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CommissionQuote": {
+        "required": [
+          "planId",
+          "planCode",
+          "currency",
+          "matchedCategoryId",
+          "matchedCustomerGroupId",
+          "bands",
+          "commission"
+        ],
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "planCode": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "matchedCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "matchedCustomerGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommissionBand"
+            }
+          },
+          "commission": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "What a sale earns under a plan: the scope that matched (the most specific rules for the item's category and the\ncustomer's group), the bands the sale crossed given the rep's basis so far in the tier period, and the total rounded\nin the plan's currency. A negative basis (a credit note) gives back what the same bands earned."
+      },
+      "CommissionQuoteRequest": {
+        "required": [
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "periodToDate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "itemCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "CommissionRuleSummary": {
+        "required": [
+          "sequence",
+          "itemCategoryId",
+          "itemCategoryCode",
+          "customerGroupId",
+          "customerGroupCode",
+          "fromAmount",
+          "ratePct"
+        ],
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCategoryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customerGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerGroupCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fromAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "CommitmentSummary": {
         "required": [
           "id",
@@ -24982,6 +26390,17 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "CompleteCrmActivityRequest": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -25983,6 +27402,92 @@
           }
         }
       },
+      "CreateOpportunityRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "expectedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "stageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "probabilityPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "contactId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "expectedClose": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "source": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": { }
+        }
+      },
       "CreateOrdersFromRequisitionRequest": {
         "type": "object",
         "properties": {
@@ -26009,6 +27514,162 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "CreditStatusRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "status on_hold (new orders wait for release) or blocked (orders, shipments and invoices refused), with a reason; ok releases."
+      },
+      "CrmActivitySummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "companyId",
+          "opportunityId",
+          "opportunityNumber",
+          "contactId",
+          "kind",
+          "subject",
+          "body",
+          "dueAt",
+          "isOverdue",
+          "assignedMembershipId",
+          "assignedName",
+          "status",
+          "outcome",
+          "completedAt",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "opportunityId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "opportunityNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "isOverdue": {
+            "type": "boolean"
+          },
+          "assignedMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "assignedName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -26068,6 +27729,255 @@
               "string"
             ],
             "format": "double"
+          }
+        }
+      },
+      "CustomerAccountSummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "companyId",
+          "companyCode",
+          "functionalCurrency",
+          "customerGroupId",
+          "customerGroupCode",
+          "paymentTermsId",
+          "deliveryTermsId",
+          "postingGroupId",
+          "taxGroupId",
+          "salesRepId",
+          "salesRepCode",
+          "defaultWarehouseId",
+          "currency",
+          "creditLimit",
+          "creditExposureBasis",
+          "overdueBlockDays",
+          "creditStatus",
+          "creditStatusReason",
+          "creditStatusAt",
+          "statementFrequency",
+          "dunningLevel",
+          "isActive",
+          "effective",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyCode": {
+            "type": "string"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "customerGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerGroupCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultWarehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "creditLimit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditExposureBasis": {
+            "type": "string"
+          },
+          "overdueBlockDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "creditStatus": {
+            "type": "string"
+          },
+          "creditStatusReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creditStatusAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "statementFrequency": {
+            "type": "string"
+          },
+          "dunningLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "effective": {
+            "$ref": "#/components/schemas/EffectiveCustomerTerms"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerGroupSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "postingGroupId",
+          "paymentTermsId",
+          "deliveryTermsId",
+          "isActive",
+          "customers",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "customers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -27266,6 +29176,51 @@
               "type": "string",
               "format": "uuid"
             }
+          }
+        }
+      },
+      "EffectiveCustomerTerms": {
+        "required": [
+          "paymentTermsId",
+          "paymentTermsCode",
+          "deliveryTermsId",
+          "deliveryTermsCode",
+          "postingGroupId"
+        ],
+        "type": "object",
+        "properties": {
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -31930,6 +33885,34 @@
           }
         }
       },
+      "MoveOpportunityRequest": {
+        "required": [
+          "stageId"
+        ],
+        "type": "object",
+        "properties": {
+          "stageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "probabilityPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lostReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Moves the opportunity to a stage; a lost stage needs the reason; the probability defaults to the stage's."
+      },
       "NotificationOutcome": {
         "required": [
           "inApp",
@@ -32496,6 +34479,205 @@
           }
         }
       },
+      "OpportunityDetail": {
+        "required": [
+          "opportunity",
+          "stageHistory",
+          "activities"
+        ],
+        "type": "object",
+        "properties": {
+          "opportunity": {
+            "$ref": "#/components/schemas/OpportunitySummary"
+          },
+          "stageHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageChangeSummary"
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrmActivitySummary"
+            }
+          }
+        }
+      },
+      "OpportunitySummary": {
+        "required": [
+          "id",
+          "companyId",
+          "companyCode",
+          "number",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "contactId",
+          "title",
+          "stageId",
+          "stageCode",
+          "stageName",
+          "salesRepId",
+          "salesRepCode",
+          "expectedAmount",
+          "currency",
+          "probabilityPct",
+          "weightedAmount",
+          "expectedClose",
+          "isOverdue",
+          "source",
+          "status",
+          "lostReason",
+          "closedOn",
+          "notes",
+          "customFields",
+          "stageSince",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyCode": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "contactId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "stageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stageCode": {
+            "type": "string"
+          },
+          "stageName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expectedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "probabilityPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "weightedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expectedClose": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "isOverdue": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "lostReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "closedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "stageSince": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "OrdersCreated": {
         "required": [
           "orders"
@@ -32928,7 +35110,8 @@
           "addresses",
           "bankAccounts",
           "taxRegistrations",
-          "supplierAccounts"
+          "supplierAccounts",
+          "customerAccounts"
         ],
         "type": "object",
         "properties": {
@@ -32964,6 +35147,12 @@
             "items": {
               "$ref": "#/components/schemas/SupplierAccountSummary"
             }
+          },
+          "customerAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerAccountSummary"
+            }
           }
         }
       },
@@ -32988,6 +35177,7 @@
           "customFields",
           "isActive",
           "supplierCompanies",
+          "customerCompanies",
           "updatedAt"
         ],
         "type": "object",
@@ -33077,6 +35267,14 @@
             "type": "boolean"
           },
           "supplierCompanies": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "customerCompanies": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -33845,6 +36043,159 @@
           }
         },
         "description": "A permission the system understands: a stable key, its module and a human description."
+      },
+      "PipelineBoard": {
+        "required": [
+          "columns",
+          "openTotals"
+        ],
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineColumn"
+            }
+          },
+          "openTotals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineTotal"
+            }
+          }
+        },
+        "description": "The board: every active stage in order with its opportunities (won and lost columns show the last 90 days) and the open pipeline's totals."
+      },
+      "PipelineColumn": {
+        "required": [
+          "stage",
+          "opportunities",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "stage": {
+            "$ref": "#/components/schemas/PipelineStageSummary"
+          },
+          "opportunities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpportunitySummary"
+            }
+          },
+          "totals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PipelineTotal"
+            }
+          }
+        }
+      },
+      "PipelineStageSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "sortOrder",
+          "defaultProbability",
+          "outcome",
+          "isSystem",
+          "isActive",
+          "openOpportunities",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "defaultProbability": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "openOpportunities": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PipelineTotal": {
+        "required": [
+          "currency",
+          "count",
+          "amount",
+          "weighted"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "weighted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "A total of opportunities in one currency: how many, their expected amount and the probability-weighted amount."
       },
       "PostedLine": {
         "required": [
@@ -37028,6 +39379,22 @@
           }
         }
       },
+      "ReorderStagesRequest": {
+        "required": [
+          "stageIds"
+        ],
+        "type": "object",
+        "properties": {
+          "stageIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "The stages in the order the board shows them; every stage of the tenant, each once."
+      },
       "ReplenishmentRunRequest": {
         "required": [
           "companyId"
@@ -39417,6 +41784,130 @@
           }
         }
       },
+      "SalesRepSummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "membershipId",
+          "memberName",
+          "partnerId",
+          "partnerCode",
+          "companyId",
+          "companyCode",
+          "commissionPlanId",
+          "commissionPlanCode",
+          "email",
+          "phone",
+          "isActive",
+          "customers",
+          "openOpportunities",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "membershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "memberName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "companyCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "commissionPlanId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "commissionPlanCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "customers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "openOpportunities": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "SaveAccountRequest": {
         "required": [
           "code",
@@ -40440,6 +42931,93 @@
           }
         }
       },
+      "SaveCommissionPlanRequest": {
+        "required": [
+          "code",
+          "name",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "currency": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "string",
+            "default": "revenue"
+          },
+          "accrualPoint": {
+            "type": "string",
+            "default": "invoice"
+          },
+          "tierPeriod": {
+            "type": "string",
+            "default": "month"
+          },
+          "rules": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SaveCommissionRuleRequest"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveCommissionRuleRequest": {
+        "required": [
+          "ratePct"
+        ],
+        "type": "object",
+        "properties": {
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "fromAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "itemCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "One band: for sales in the item category (and its descendants) and/or the customer group, from a period-to-date amount upwards."
+      },
       "SaveCompanyBankAccountRequest": {
         "required": [
           "companyId",
@@ -40797,6 +43375,201 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "SaveCrmActivityRequest": {
+        "required": [
+          "partnerId",
+          "kind",
+          "subject"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "assignedMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "opportunityId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "contactId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "SaveCustomerAccountRequest": {
+        "type": "object",
+        "properties": {
+          "customerGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "defaultWarehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creditLimit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditExposureBasis": {
+            "type": "string",
+            "default": "open_ar_plus_orders"
+          },
+          "overdueBlockDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "statementFrequency": {
+            "type": "string",
+            "default": "monthly"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "description": "The partner as a customer of one company. Blank terms and posting default from the group. The credit fields\n(limit in the company's functional currency, empty for none; exposure basis; overdue days that block) change only\nwith `partners.credit.manage`; send them as they stand otherwise."
+      },
+      "SaveCustomerGroupRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "postingGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "deliveryTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -42381,6 +45154,50 @@
           }
         }
       },
+      "SavePipelineStageRequest": {
+        "required": [
+          "code",
+          "name",
+          "defaultProbability"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "defaultProbability": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "outcome": {
+            "type": "string",
+            "default": "open"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SavePostingGroupRequest": {
         "required": [
           "kind",
@@ -43567,6 +46384,68 @@
             "items": {
               "$ref": "#/components/schemas/SaveStepRequest"
             }
+          }
+        }
+      },
+      "SaveSalesRepRequest": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "membershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "commissionPlanId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -46159,6 +49038,73 @@
         "properties": {
           "code": {
             "type": "string"
+          }
+        }
+      },
+      "StageChangeSummary": {
+        "required": [
+          "id",
+          "fromStageId",
+          "fromStageCode",
+          "toStageId",
+          "toStageCode",
+          "probabilityPct",
+          "expectedAmount",
+          "changedAt",
+          "changedBy"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromStageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fromStageCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "toStageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toStageCode": {
+            "type": "string"
+          },
+          "probabilityPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "expectedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -48850,6 +51796,73 @@
           "isActive": {
             "type": "boolean"
           }
+        }
+      },
+      "UpdateOpportunityRequest": {
+        "required": [
+          "title",
+          "expectedAmount",
+          "currency",
+          "probabilityPct"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "expectedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "probabilityPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "contactId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "expectedClose": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "source": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": { }
         }
       },
       "UpdateProfileRequest": {

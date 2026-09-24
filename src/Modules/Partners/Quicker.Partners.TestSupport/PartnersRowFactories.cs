@@ -80,6 +80,79 @@ public static class PartnersRowFactories
             await c.ExecuteAsync("INSERT INTO app.ptr_supplier_accounts (tenant_id, id, partner_id, company_id, currency) VALUES (@t, @id, @partner, @company, 'IQD')", new { t, id, partner, company }, tx);
             return new RowRef("app.ptr_supplier_accounts", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.ptr_customer_groups", static async (c, tx, t) => new RowRef("app.ptr_customer_groups", $"id = '{await CustomerGroupAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.ptr_customer_accounts", static async (c, tx, t) =>
+        {
+            var partner = await PartnerAsync(c, tx, t);
+            var company = await CompanyAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ptr_customer_accounts (tenant_id, id, partner_id, company_id, currency, credit_limit) VALUES (@t, @id, @partner, @company, 'IQD', 1000)", new { t, id, partner, company }, tx);
+            return new RowRef("app.ptr_customer_accounts", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.ptr_commission_plans", static async (c, tx, t) => new RowRef("app.ptr_commission_plans", $"id = '{await CommissionPlanAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.ptr_commission_rules", static async (c, tx, t) =>
+        {
+            var plan = await CommissionPlanAsync(c, tx, t);
+            await c.ExecuteAsync("INSERT INTO app.ptr_commission_rules (tenant_id, plan_id, sequence, rate_pct) VALUES (@t, @plan, 1, 2.5)", new { t, plan }, tx);
+            return new RowRef("app.ptr_commission_rules", $"plan_id = '{plan}'");
+        });
+        IsolationRegistry.Register("app.ptr_sales_reps", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ptr_sales_reps (tenant_id, id, code, name_i18n) VALUES (@t, @id, @code, '{\"en\":\"Probe\"}')", new { t, id, code = Suffix(id) }, tx);
+            return new RowRef("app.ptr_sales_reps", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.ptr_pipeline_stages", static async (c, tx, t) => new RowRef("app.ptr_pipeline_stages", $"id = '{await StageAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.ptr_opportunities", static async (c, tx, t) => new RowRef("app.ptr_opportunities", $"id = '{await OpportunityAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.ptr_opportunity_stage_changes", static async (c, tx, t) =>
+        {
+            var opportunity = await OpportunityAsync(c, tx, t);
+            var stage = await c.ExecuteScalarAsync<Guid>("SELECT stage_id FROM app.ptr_opportunities WHERE tenant_id = @t AND id = @opportunity", new { t, opportunity }, tx);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ptr_opportunity_stage_changes (tenant_id, id, opportunity_id, to_stage_id, probability_pct, expected_amount) VALUES (@t, @id, @opportunity, @stage, 10, 500)", new { t, id, opportunity, stage }, tx);
+            return new RowRef("app.ptr_opportunity_stage_changes", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.ptr_crm_activities", static async (c, tx, t) =>
+        {
+            var partner = await PartnerAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ptr_crm_activities (tenant_id, id, partner_id, kind, subject) VALUES (@t, @id, @partner, 'call', 'Probe call')", new { t, id, partner }, tx);
+            return new RowRef("app.ptr_crm_activities", $"id = '{id}'");
+        });
+    }
+
+    private static async Task<Guid> CustomerGroupAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.ptr_customer_groups (tenant_id, id, code, name_i18n) VALUES (@t, @id, @code, '{}')", new { t, id, code = Suffix(id) }, tx);
+        return id;
+    }
+
+    private static async Task<Guid> CommissionPlanAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.ptr_commission_plans (tenant_id, id, code, name_i18n, currency) VALUES (@t, @id, @code, '{}', 'IQD')", new { t, id, code = Suffix(id) }, tx);
+        return id;
+    }
+
+    private static async Task<Guid> StageAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.ptr_pipeline_stages (tenant_id, id, code, name_i18n, sort_order, default_probability) VALUES (@t, @id, @code, '{}', 1, 10)", new { t, id, code = Suffix(id) }, tx);
+        return id;
+    }
+
+    private static async Task<Guid> OpportunityAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var partner = await PartnerAsync(c, tx, t);
+        var company = await CompanyAsync(c, tx, t);
+        var stage = await StageAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("""
+            INSERT INTO app.ptr_opportunities (tenant_id, id, company_id, number, partner_id, title, stage_id, currency, probability_pct)
+            VALUES (@t, @id, @company, @number, @partner, 'Probe deal', @stage, 'IQD', 10)
+            """, new { t, id, company, number = Suffix(id), partner, stage }, tx);
+        return id;
     }
 
     private static async Task<Guid> PartnerAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

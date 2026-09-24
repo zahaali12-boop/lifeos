@@ -162,6 +162,21 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         return await db.WarehouseSettings.Where(s => s.WarehouseId == warehouseId && s.CycleCountClass != null && wanted.Contains(s.CycleCountClass)).Select(static s => s.ItemId).Distinct().ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ItemCategoryInfo>> CategoryLineageAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    {
+        var category = await db.Categories.AsNoTracking().SingleOrDefaultAsync(c => c.Id == categoryId, cancellationToken);
+        if (category is null)
+        {
+            return [];
+        }
+
+        // The materialised path names every ancestor by code ("/ROOT/CHILD/"); one query reads them all.
+        var codes = category.Path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var rows = await db.Categories.AsNoTracking().Where(c => codes.Contains(c.Code)).ToListAsync(cancellationToken);
+        var byCode = rows.Where(c => category.Path.StartsWith(c.Path, StringComparison.Ordinal)).ToDictionary(static c => c.Code, StringComparer.Ordinal);
+        return Enumerable.Reverse(codes).Where(byCode.ContainsKey).Select(code => byCode[code]).Select(static c => new ItemCategoryInfo(c.Id, c.Code, c.Name, c.ParentId, c.IsActive)).ToList();
+    }
+
     public async Task<ItemCompanyPolicy?> CompanyPolicyAsync(Guid itemId, Guid companyId, CancellationToken cancellationToken = default)
     {
         var settings = await db.CompanySettings.SingleOrDefaultAsync(s => s.ItemId == itemId && s.CompanyId == companyId, cancellationToken);

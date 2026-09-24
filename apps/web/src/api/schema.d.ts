@@ -5531,6 +5531,206 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/partners/customer-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersCustomerGroups"];
+        put?: never;
+        /** A customer group: the posting group, payment and delivery terms its members default to */
+        post: operations["postPartnersCustomerGroups"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/customer-groups/{groupId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersCustomerGroupsByGroupId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customer accounts in the companies the member may read, with their partner and effective terms; creditStatus=held for every held or blocked one; mine=true for the signed-in rep's customers */
+        get: operations["getPartnersCustomers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/sales-reps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersSalesReps"];
+        put?: never;
+        /** A sales rep: optionally a workspace member (for 'my customers' and 'my pipeline') and an employee partner, for one company or all, paid under a commission plan */
+        post: operations["postPartnersSalesReps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/sales-reps/{repId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersSalesRepsByRepId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/commission-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersCommissionPlans"];
+        put?: never;
+        /** A commission plan: paid on revenue, margin or what was collected, accruing at invoice or payment, with marginal rate bands by item category and customer group from a period-to-date threshold */
+        post: operations["postPartnersCommissionPlans"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/commission-plans/{planId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersCommissionPlansByPlanId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/commission-plans/{planId}/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** What a sale of this amount earns under the plan given the rep's basis so far in the tier period: the matching scope, the bands crossed and the rounded commission */
+        post: operations["postPartnersCommissionPlansByPlanIdQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/pipeline-stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersPipelineStages"];
+        put?: never;
+        /** A pipeline stage: open, won (100%) or lost (0%), with the probability opportunities take on entering it */
+        post: operations["postPartnersPipelineStages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/pipeline-stages/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** The order of the board's columns: every stage, each once */
+        put: operations["putPartnersPipelineStagesOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/pipeline-stages/{stageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersPipelineStagesByStageId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The pipeline board: each active stage with its opportunities (won and lost for the last 90 days) and totals per currency, weighted by probability */
+        get: operations["getPartnersPipeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/partners": {
         parameters: {
             query?: never;
@@ -5541,7 +5741,7 @@ export interface paths {
         /** Partners newest first, paged: q matches the code, a name in any language or the email; role=supplier|customer|employee */
         get: operations["getPartners"];
         put?: never;
-        /** A partner: one record per legal person wearing the supplier, customer and employee roles; custom fields under host 'partner' */
+        /** A partner: one record per legal person wearing the supplier, customer and employee roles (each role given only with its side's permission); custom fields under host 'partner' */
         post: operations["postPartners"];
         delete?: never;
         options?: never;
@@ -5572,10 +5772,128 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The partner with contacts, addresses, masked bank accounts, tax registrations and supplier accounts */
+        /** The partner with contacts, addresses, masked bank accounts, tax registrations, and the supplier and customer accounts the member may read */
         get: operations["getPartnersByPartnerId"];
         put: operations["putPartnersByPartnerId"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Opportunities most recently changed first; q matches the number, the title or the partner */
+        get: operations["getPartnersOpportunities"];
+        put?: never;
+        /** An opportunity, numbered in the company's series, in the first open stage unless another is named; the rep and currency default from the customer account; custom fields under host 'opportunity' */
+        post: operations["postPartnersOpportunities"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/opportunities/{opportunityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The opportunity with every stage it passed through and its activities */
+        get: operations["getPartnersOpportunitiesByOpportunityId"];
+        put: operations["putPartnersOpportunitiesByOpportunityId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/opportunities/{opportunityId}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Moves the opportunity to a stage: a won stage wins it, a lost stage loses it (with the reason), an open stage reopens it; every move is kept */
+        post: operations["postPartnersOpportunitiesByOpportunityIdMove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/crm-activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CRM activities, open ones first by due date; mine=true for those assigned to the signed-in member; due=overdue|upcoming */
+        get: operations["getPartnersCrmActivities"];
+        put?: never;
+        /** kind call|meeting|email|task|note with a partner, optionally about one of its opportunities or with a contact; a note is logged done; an assignee other than the author is notified */
+        post: operations["postPartnersCrmActivities"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/crm-activities/{activityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPartnersCrmActivitiesByActivityId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/crm-activities/{activityId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPartnersCrmActivitiesByActivityIdComplete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/crm-activities/{activityId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPartnersCrmActivitiesByActivityIdCancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5656,7 +5974,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Account number and IBAN are checked (IBAN mod-97), stored encrypted and shown masked */
+        /** Account number and IBAN are checked (IBAN mod-97), stored encrypted and shown masked; a supplier's accounts change only with the supplier permission */
         post: operations["postPartnersByPartnerIdBankAccounts"];
         delete?: never;
         options?: never;
@@ -5790,6 +6108,56 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["postPartnersByPartnerIdSupplierAccountsByCompanyIdRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/customer-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPartnersByPartnerIdCustomerAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/customer-accounts/{companyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** The partner as a customer of the company. The customer permission keeps group, terms, posting group, sales rep, default warehouse, currency and statements; the credit permission the credit limit (functional currency, empty for none), exposure basis and overdue block; send the other side's fields as they stand */
+        put: operations["putPartnersByPartnerIdCustomerAccountsByCompanyId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/{partnerId}/customer-accounts/{companyId}/credit-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** status on_hold|blocked with a reason, or ok to release: on hold sends new orders to credit hold, blocked refuses orders, shipments and invoices (customer.credit_blocked) */
+        post: operations["postPartnersByPartnerIdCustomerAccountsByCompanyIdCreditStatus"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8171,6 +8539,82 @@ export interface components {
             /** Format: date-time */
             deletedAt: null | string;
         };
+        /** @description One band of a commission: the part of the basis that fell between two thresholds, at its rate. */
+        CommissionBand: {
+            /** Format: double */
+            fromAmount: number | string;
+            /** Format: double */
+            toAmount: null | number | string;
+            /** Format: double */
+            ratePct: number | string;
+            /** Format: double */
+            basis: number | string;
+            /** Format: double */
+            commission: number | string;
+        };
+        CommissionPlanSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            basis: string;
+            accrualPoint: string;
+            tierPeriod: string;
+            currency: string;
+            rules: components["schemas"]["CommissionRuleSummary"][];
+            isActive: boolean;
+            /** Format: int32 */
+            salesReps: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /**
+         * @description What a sale earns under a plan: the scope that matched (the most specific rules for the item's category and the
+         *     customer's group), the bands the sale crossed given the rep's basis so far in the tier period, and the total rounded
+         *     in the plan's currency. A negative basis (a credit note) gives back what the same bands earned.
+         */
+        CommissionQuote: {
+            /** Format: uuid */
+            planId: string;
+            planCode: string;
+            currency: string;
+            /** Format: uuid */
+            matchedCategoryId: null | string;
+            /** Format: uuid */
+            matchedCustomerGroupId: null | string;
+            bands: components["schemas"]["CommissionBand"][];
+            /** Format: double */
+            commission: number | string;
+        };
+        CommissionQuoteRequest: {
+            /** Format: double */
+            amount: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            periodToDate: number | string;
+            /** Format: uuid */
+            itemCategoryId?: null | string;
+            /** Format: uuid */
+            customerGroupId?: null | string;
+        };
+        CommissionRuleSummary: {
+            /** Format: int32 */
+            sequence: number | string;
+            /** Format: uuid */
+            itemCategoryId: null | string;
+            itemCategoryCode: null | string;
+            /** Format: uuid */
+            customerGroupId: null | string;
+            customerGroupCode: null | string;
+            /** Format: double */
+            fromAmount: number | string;
+            /** Format: double */
+            ratePct: number | string;
+        };
         CommitmentSummary: {
             /** Format: uuid */
             id: string;
@@ -8309,6 +8753,9 @@ export interface components {
             chartId?: null | string;
             /** Format: uuid */
             postingProfileId?: null | string;
+        };
+        CompleteCrmActivityRequest: {
+            outcome?: null | string;
         };
         ContactSummary: {
             /** Format: uuid */
@@ -8564,12 +9011,79 @@ export interface components {
             expiresAt?: null | string;
             ipAllowlist?: null | string[];
         };
+        CreateOpportunityRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            title: string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            expectedAmount: number | string;
+            currency?: null | string;
+            /** Format: uuid */
+            stageId?: null | string;
+            /** Format: int32 */
+            probabilityPct?: null | number | string;
+            /** Format: uuid */
+            contactId?: null | string;
+            /** Format: uuid */
+            salesRepId?: null | string;
+            /** Format: date */
+            expectedClose?: null | string;
+            source?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
+        };
         CreateOrdersFromRequisitionRequest: {
             lineIds?: null | string[];
             /** Format: uuid */
             partnerId?: null | string;
             /** Format: uuid */
             warehouseId?: null | string;
+        };
+        /** @description status on_hold (new orders wait for release) or blocked (orders, shipments and invoices refused), with a reason; ok releases. */
+        CreditStatusRequest: {
+            status: string;
+            reason?: null | string;
+        };
+        CrmActivitySummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId: null | string;
+            /** Format: uuid */
+            opportunityId: null | string;
+            opportunityNumber: null | string;
+            /** Format: uuid */
+            contactId: null | string;
+            kind: string;
+            subject: string;
+            body: null | string;
+            /** Format: date-time */
+            dueAt: null | string;
+            isOverdue: boolean;
+            /** Format: uuid */
+            assignedMembershipId: null | string;
+            assignedName: null | string;
+            status: string;
+            outcome: null | string;
+            /** Format: date-time */
+            completedAt: null | string;
+            /** Format: uuid */
+            createdBy: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         CurrencySummary: {
             code: string;
@@ -8586,6 +9100,72 @@ export interface components {
             currency: string;
             /** Format: double */
             amount: number | string;
+        };
+        CustomerAccountSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId: string;
+            companyCode: string;
+            functionalCurrency: string;
+            /** Format: uuid */
+            customerGroupId: null | string;
+            customerGroupCode: null | string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            /** Format: uuid */
+            deliveryTermsId: null | string;
+            /** Format: uuid */
+            postingGroupId: null | string;
+            /** Format: uuid */
+            taxGroupId: null | string;
+            /** Format: uuid */
+            salesRepId: null | string;
+            salesRepCode: null | string;
+            /** Format: uuid */
+            defaultWarehouseId: null | string;
+            currency: string;
+            /** Format: double */
+            creditLimit: null | number | string;
+            creditExposureBasis: string;
+            /** Format: int32 */
+            overdueBlockDays: null | number | string;
+            creditStatus: string;
+            creditStatusReason: null | string;
+            /** Format: date-time */
+            creditStatusAt: null | string;
+            statementFrequency: string;
+            /** Format: int32 */
+            dunningLevel: number | string;
+            isActive: boolean;
+            effective: components["schemas"]["EffectiveCustomerTerms"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CustomerGroupSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            postingGroupId: null | string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            /** Format: uuid */
+            deliveryTermsId: null | string;
+            isActive: boolean;
+            /** Format: int32 */
+            customers: number | string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         /** @description The record types that carry custom fields, in code order. */
         CustomFieldHostList: {
@@ -8928,6 +9508,16 @@ export interface components {
         EditCommentRequest: {
             body: string;
             mentions?: null | string[];
+        };
+        EffectiveCustomerTerms: {
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            paymentTermsCode: null | string;
+            /** Format: uuid */
+            deliveryTermsId: null | string;
+            deliveryTermsCode: null | string;
+            /** Format: uuid */
+            postingGroupId: null | string;
         };
         EffectiveTerms: {
             /** Format: uuid */
@@ -10112,6 +10702,14 @@ export interface components {
         MfaWebAuthnOptionsRequest: {
             challengeToken: string;
         };
+        /** @description Moves the opportunity to a stage; a lost stage needs the reason; the probability defaults to the stage's. */
+        MoveOpportunityRequest: {
+            /** Format: uuid */
+            stageId: string;
+            /** Format: int32 */
+            probabilityPct?: null | number | string;
+            lostReason?: null | string;
+        };
         /** @description How many in-app rows were written and how many emails were queued after preferences. */
         NotificationOutcome: {
             /** Format: int32 */
@@ -10267,6 +10865,58 @@ export interface components {
             /** Format: int32 */
             lateLines: number | string;
         };
+        OpportunityDetail: {
+            opportunity: components["schemas"]["OpportunitySummary"];
+            stageHistory: components["schemas"]["StageChangeSummary"][];
+            activities: components["schemas"]["CrmActivitySummary"][];
+        };
+        OpportunitySummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            companyCode: string;
+            number: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            contactId: null | string;
+            title: string;
+            /** Format: uuid */
+            stageId: string;
+            stageCode: string;
+            stageName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            salesRepId: null | string;
+            salesRepCode: null | string;
+            /** Format: double */
+            expectedAmount: number | string;
+            currency: string;
+            /** Format: int32 */
+            probabilityPct: number | string;
+            /** Format: double */
+            weightedAmount: number | string;
+            /** Format: date */
+            expectedClose: null | string;
+            isOverdue: boolean;
+            source: null | string;
+            status: string;
+            lostReason: null | string;
+            /** Format: date */
+            closedOn: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            stageSince: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         OrdersCreated: {
             orders: components["schemas"]["PurchaseOrderSummary"][];
         };
@@ -10386,6 +11036,7 @@ export interface components {
             bankAccounts: components["schemas"]["BankAccountSummary"][];
             taxRegistrations: components["schemas"]["TaxRegistrationSummary"][];
             supplierAccounts: components["schemas"]["SupplierAccountSummary"][];
+            customerAccounts: components["schemas"]["CustomerAccountSummary"][];
         };
         PartnerSummary: {
             /** Format: uuid */
@@ -10415,6 +11066,8 @@ export interface components {
             isActive: boolean;
             /** Format: int32 */
             supplierCompanies: number | string;
+            /** Format: int32 */
+            customerCompanies: number | string;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -10618,6 +11271,45 @@ export interface components {
             description: string;
             /** @default false */
             isSensitive: boolean;
+        };
+        /** @description The board: every active stage in order with its opportunities (won and lost columns show the last 90 days) and the open pipeline's totals. */
+        PipelineBoard: {
+            columns: components["schemas"]["PipelineColumn"][];
+            openTotals: components["schemas"]["PipelineTotal"][];
+        };
+        PipelineColumn: {
+            stage: components["schemas"]["PipelineStageSummary"];
+            opportunities: components["schemas"]["OpportunitySummary"][];
+            totals: components["schemas"]["PipelineTotal"][];
+        };
+        PipelineStageSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            sortOrder: number | string;
+            /** Format: int32 */
+            defaultProbability: number | string;
+            outcome: string;
+            isSystem: boolean;
+            isActive: boolean;
+            /** Format: int32 */
+            openOpportunities: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description A total of opportunities in one currency: how many, their expected amount and the probability-weighted amount. */
+        PipelineTotal: {
+            currency: string;
+            /** Format: int32 */
+            count: number | string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            weighted: number | string;
         };
         PostedLine: {
             /** Format: uuid */
@@ -11467,6 +12159,10 @@ export interface components {
             /** @default open */
             state: string;
         };
+        /** @description The stages in the order the board shows them; every stage of the tenant, each once. */
+        ReorderStagesRequest: {
+            stageIds: string[];
+        };
         ReplenishmentRunRequest: {
             /** Format: uuid */
             companyId: string;
@@ -12094,6 +12790,35 @@ export interface components {
             condition: string;
             steps: components["schemas"]["StepSummary"][];
         };
+        SalesRepSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            membershipId: null | string;
+            memberName: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+            partnerCode: null | string;
+            /** Format: uuid */
+            companyId: null | string;
+            companyCode: null | string;
+            /** Format: uuid */
+            commissionPlanId: null | string;
+            commissionPlanCode: null | string;
+            email: null | string;
+            phone: null | string;
+            isActive: boolean;
+            /** Format: int32 */
+            customers: number | string;
+            /** Format: int32 */
+            openOpportunities: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         SaveAccountRequest: {
             code: string;
             name: {
@@ -12407,6 +13132,36 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveCommissionPlanRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            currency: string;
+            /** @default revenue */
+            basis: string;
+            /** @default invoice */
+            accrualPoint: string;
+            /** @default month */
+            tierPeriod: string;
+            rules?: null | components["schemas"]["SaveCommissionRuleRequest"][];
+            /** @default true */
+            isActive: boolean;
+        };
+        /** @description One band: for sales in the item category (and its descendants) and/or the customer group, from a period-to-date amount upwards. */
+        SaveCommissionRuleRequest: {
+            /** Format: double */
+            ratePct: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            fromAmount: number | string;
+            /** Format: uuid */
+            itemCategoryId?: null | string;
+            /** Format: uuid */
+            customerGroupId?: null | string;
+        };
         SaveCompanyBankAccountRequest: {
             /** Format: uuid */
             companyId: string;
@@ -12513,6 +13268,69 @@ export interface components {
             /** @default false */
             blockMovements: boolean;
             notes?: null | string;
+        };
+        SaveCrmActivityRequest: {
+            /** Format: uuid */
+            partnerId: string;
+            kind: string;
+            subject: string;
+            body?: null | string;
+            /** Format: date-time */
+            dueAt?: null | string;
+            /** Format: uuid */
+            assignedMembershipId?: null | string;
+            /** Format: uuid */
+            opportunityId?: null | string;
+            /** Format: uuid */
+            contactId?: null | string;
+            /** Format: uuid */
+            companyId?: null | string;
+        };
+        /**
+         * @description The partner as a customer of one company. Blank terms and posting default from the group. The credit fields
+         *     (limit in the company's functional currency, empty for none; exposure basis; overdue days that block) change only
+         *     with `partners.credit.manage`; send them as they stand otherwise.
+         */
+        SaveCustomerAccountRequest: {
+            /** Format: uuid */
+            customerGroupId?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: uuid */
+            deliveryTermsId?: null | string;
+            /** Format: uuid */
+            postingGroupId?: null | string;
+            /** Format: uuid */
+            taxGroupId?: null | string;
+            /** Format: uuid */
+            salesRepId?: null | string;
+            /** Format: uuid */
+            defaultWarehouseId?: null | string;
+            currency?: null | string;
+            /** Format: double */
+            creditLimit?: null | number | string;
+            /** @default open_ar_plus_orders */
+            creditExposureBasis: string;
+            /** Format: int32 */
+            overdueBlockDays?: null | number | string;
+            /** @default monthly */
+            statementFrequency: string;
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveCustomerGroupRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            postingGroupId?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: uuid */
+            deliveryTermsId?: null | string;
+            /** @default true */
+            isActive: boolean;
         };
         SaveCustomFieldRequest: {
             entityType: string;
@@ -13008,6 +13826,20 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SavePipelineStageRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            defaultProbability: number | string;
+            /** @default open */
+            outcome: string;
+            /** Format: int32 */
+            sortOrder?: null | number | string;
+            /** @default true */
+            isActive: boolean;
+        };
         SavePostingGroupRequest: {
             kind: string;
             code: string;
@@ -13347,6 +14179,24 @@ export interface components {
             };
             condition: string;
             steps: components["schemas"]["SaveStepRequest"][];
+        };
+        SaveSalesRepRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            membershipId?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: uuid */
+            companyId?: null | string;
+            /** Format: uuid */
+            commissionPlanId?: null | string;
+            email?: null | string;
+            phone?: null | string;
+            /** @default true */
+            isActive: boolean;
         };
         SaveScheduleRequest: {
             code: string;
@@ -14100,6 +14950,24 @@ export interface components {
         SsoExchangeRequest: {
             code: string;
         };
+        StageChangeSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            fromStageId: null | string;
+            fromStageCode: null | string;
+            /** Format: uuid */
+            toStageId: string;
+            toStageCode: string;
+            /** Format: int32 */
+            probabilityPct: number | string;
+            /** Format: double */
+            expectedAmount: number | string;
+            /** Format: date-time */
+            changedAt: string;
+            /** Format: uuid */
+            changedBy: null | string;
+        };
         StandardCostVersionInfo: {
             /** Format: uuid */
             id: string;
@@ -14843,6 +15711,23 @@ export interface components {
             precision: number | string;
             isSystem: boolean;
             isActive: boolean;
+        };
+        UpdateOpportunityRequest: {
+            title: string;
+            /** Format: double */
+            expectedAmount: number | string;
+            currency: string;
+            /** Format: int32 */
+            probabilityPct: number | string;
+            /** Format: uuid */
+            contactId?: null | string;
+            /** Format: uuid */
+            salesRepId?: null | string;
+            /** Format: date */
+            expectedClose?: null | string;
+            source?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
         };
         UpdateProfileRequest: {
             displayName?: null | string;
@@ -25234,6 +26119,388 @@ export interface operations {
             };
         };
     };
+    getPartnersCustomerGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerGroupSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersCustomerGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCustomerGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerGroupSummary"];
+                };
+            };
+        };
+    };
+    putPartnersCustomerGroupsByGroupId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCustomerGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerGroupSummary"];
+                };
+            };
+        };
+    };
+    getPartnersCustomers: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                q?: string;
+                creditStatus?: string;
+                salesRepId?: string;
+                customerGroupId?: string;
+                mine?: boolean;
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerAccountSummary"][];
+                };
+            };
+        };
+    };
+    getPartnersSalesReps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesRepSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersSalesReps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSalesRepRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesRepSummary"];
+                };
+            };
+        };
+    };
+    putPartnersSalesRepsByRepId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                repId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSalesRepRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesRepSummary"];
+                };
+            };
+        };
+    };
+    getPartnersCommissionPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionPlanSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersCommissionPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCommissionPlanRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionPlanSummary"];
+                };
+            };
+        };
+    };
+    putPartnersCommissionPlansByPlanId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCommissionPlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionPlanSummary"];
+                };
+            };
+        };
+    };
+    postPartnersCommissionPlansByPlanIdQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommissionQuoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionQuote"];
+                };
+            };
+        };
+    };
+    getPartnersPipelineStages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStageSummary"][];
+                };
+            };
+        };
+    };
+    postPartnersPipelineStages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePipelineStageRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStageSummary"];
+                };
+            };
+        };
+    };
+    putPartnersPipelineStagesOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderStagesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStageSummary"][];
+                };
+            };
+        };
+    };
+    putPartnersPipelineStagesByStageId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePipelineStageRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStageSummary"];
+                };
+            };
+        };
+    };
+    getPartnersPipeline: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                salesRepId?: string;
+                mine?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineBoard"];
+                };
+            };
+        };
+    };
     getPartners: {
         parameters: {
             query?: {
@@ -25350,6 +26617,256 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PartnerSummary"];
+                };
+            };
+        };
+    };
+    getPartnersOpportunities: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                partnerId?: string;
+                status?: string;
+                stageId?: string;
+                salesRepId?: string;
+                mine?: boolean;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunitySummary"][];
+                };
+            };
+        };
+    };
+    postPartnersOpportunities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOpportunityRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunitySummary"];
+                };
+            };
+        };
+    };
+    getPartnersOpportunitiesByOpportunityId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunityDetail"];
+                };
+            };
+        };
+    };
+    putPartnersOpportunitiesByOpportunityId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOpportunityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunitySummary"];
+                };
+            };
+        };
+    };
+    postPartnersOpportunitiesByOpportunityIdMove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveOpportunityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpportunitySummary"];
+                };
+            };
+        };
+    };
+    getPartnersCrmActivities: {
+        parameters: {
+            query?: {
+                partnerId?: string;
+                opportunityId?: string;
+                status?: string;
+                mine?: boolean;
+                due?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmActivitySummary"][];
+                };
+            };
+        };
+    };
+    postPartnersCrmActivities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCrmActivityRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmActivitySummary"];
+                };
+            };
+        };
+    };
+    putPartnersCrmActivitiesByActivityId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCrmActivityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmActivitySummary"];
+                };
+            };
+        };
+    };
+    postPartnersCrmActivitiesByActivityIdComplete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteCrmActivityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmActivitySummary"];
+                };
+            };
+        };
+    };
+    postPartnersCrmActivitiesByActivityIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrmActivitySummary"];
                 };
             };
         };
@@ -25768,6 +27285,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SupplierAccountSummary"];
+                };
+            };
+        };
+    };
+    getPartnersByPartnerIdCustomerAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerAccountSummary"][];
+                };
+            };
+        };
+    };
+    putPartnersByPartnerIdCustomerAccountsByCompanyId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCustomerAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerAccountSummary"];
+                };
+            };
+        };
+    };
+    postPartnersByPartnerIdCustomerAccountsByCompanyIdCreditStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                partnerId: string;
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerAccountSummary"];
                 };
             };
         };
