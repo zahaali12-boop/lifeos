@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
 import type { components } from "../api/schema";
 import { DataGrid } from "../grid/DataGrid";
+import { todayIn } from "../lib/dates";
 import { formatDate, formatNumber } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
@@ -17,7 +18,7 @@ export function RatesPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ rateType: "spot", fromCurrency: "USD", toCurrency: "IQD", validFrom: new Date().toISOString().slice(0, 10), rate: "", reason: "" });
+  const [form, setForm] = useState({ rateType: "spot", fromCurrency: "USD", toCurrency: "IQD", validFrom: todayIn(), rate: "", reason: "" });
   const [problem, setProblem] = useState<FormProblem | null>(null);
 
   const rates = useQuery({ queryKey: ["rates"], queryFn: async () => unwrap(await api.GET("/api/v1/organization/rates", { params: { query: { limit: 500 } } })) });

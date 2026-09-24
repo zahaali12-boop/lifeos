@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
+import { todayIn } from "../../lib/dates";
 import { recordRoute } from "../../lib/documents";
 import { formatNumber, localized } from "../../lib/format";
 import { Field, SelectField } from "../common";
@@ -71,8 +72,9 @@ export function Amount({ value, minorUnits = 2 }: { value: number | string | nul
   );
 }
 
+/** Today in the signed-in person's time zone (the API dates documents in the company's, never in UTC). */
 export function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  return todayIn();
 }
 
 const tones: Record<string, "success" | "accent" | "danger" | "neutral"> = { posted: "success", approved: "accent", pending_approval: "accent", rejected: "danger", cancelled: "neutral", draft: "neutral", open: "success", soft_closed: "accent", hard_closed: "danger", never_opened: "neutral" };
