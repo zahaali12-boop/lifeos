@@ -143,6 +143,14 @@ test("English: an invoice paid in part, the remainder on account applied, the re
   await expect(page.getByTestId("statement-line").first()).toContainText("PI-2026-00001");
   await expectAccessible(page);
 
+  // The home page counts the day's work: what is owed to suppliers and the money in the bank among it.
+  await page.goto("/");
+  await expect(page.getByTestId("work-today")).toBeVisible();
+  await expect(page.getByTestId("work-overdue")).toContainText("3,000");
+  await expect(page.getByTestId("work-cash")).toBeVisible();
+  await expect(page.getByTestId("work-approvals-value")).toHaveText("0");
+  await expectAccessible(page);
+
   // A proposal for what is left, approved and drafted into a payment.
   await nav(page, "Payment proposals");
   await expect(page.getByText("No proposals yet")).toBeVisible();

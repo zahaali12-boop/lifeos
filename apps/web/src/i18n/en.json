@@ -227,6 +227,18 @@
     "recoverySaved": "I have saved them"
   },
   "dashboard": {
+    "workspace": "Workspace",
+    "work": {
+      "title": "Your work today",
+      "approvals": "Waiting for your approval",
+      "lateDeliveries": "Deliveries past their date",
+      "blockedInvoices": "Supplier invoices on hold",
+      "overduePayables": "Overdue to suppliers",
+      "totalPayables": "{amount} owed in all",
+      "cash": "Cash and bank",
+      "accounts": "{count, plural, one {# account} other {# accounts}}",
+      "reorder": "Items to reorder"
+    },
     "title": "Welcome, {name}",
     "description": "{tenant} at a glance.",
     "unreadNotifications": "Unread notifications",

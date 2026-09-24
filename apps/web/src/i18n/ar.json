@@ -227,6 +227,18 @@
     "recoverySaved": "حفظتها"
   },
   "dashboard": {
+    "workspace": "مساحة العمل",
+    "work": {
+      "title": "عملك اليوم",
+      "approvals": "بانتظار موافقتك",
+      "lateDeliveries": "توريدات تجاوزت موعدها",
+      "blockedInvoices": "فواتير موردين موقوفة",
+      "overduePayables": "مستحقات متأخرة للموردين",
+      "totalPayables": "إجمالي المستحق {amount}",
+      "cash": "النقد والمصارف",
+      "accounts": "{count, plural, zero {لا حسابات} one {حساب واحد} two {حسابان} few {# حسابات} many {# حسابًا} other {# حساب}}",
+      "reorder": "أصناف يلزم طلبها"
+    },
     "title": "أهلاً {name}",
     "description": "{tenant} في لمحة.",
     "unreadNotifications": "إشعارات غير مقروءة",
