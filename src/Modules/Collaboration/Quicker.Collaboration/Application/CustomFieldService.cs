@@ -280,14 +280,15 @@ public sealed class CustomFieldService(CollaborationDbContext db, IUnitOfWorkAcc
 
     public async Task<Result<string>> ValidateAsync(string entityType, JsonElement? values, CancellationToken cancellationToken = default)
     {
-        var definitions = await db.CustomFields.Where(f => f.EntityType == entityType && f.Active).ToListAsync(cancellationToken);
+        var all = await db.CustomFields.Where(f => f.EntityType == entityType).ToListAsync(cancellationToken);
+        var definitions = all.Where(static f => f.Active).ToList();
         var given = values is { ValueKind: JsonValueKind.Object } v ? v : (JsonElement?)null;
         if (values is { ValueKind: not (JsonValueKind.Object or JsonValueKind.Null or JsonValueKind.Undefined) })
         {
             return Error.Validation("custom_field.values_invalid", "customFields is an object keyed by field.");
         }
 
-        var known = definitions.Select(static d => d.Key).ToHashSet(StringComparer.Ordinal);
+        var known = all.Select(static d => d.Key).ToHashSet(StringComparer.Ordinal);
         var unknown = given?.EnumerateObject().Select(static p => p.Name).Where(name => !known.Contains(name)).ToList() ?? [];
         if (unknown.Count > 0)
         {
@@ -295,6 +296,17 @@ public sealed class CustomFieldService(CollaborationDbContext db, IUnitOfWorkAcc
         }
 
         var result = new JsonObject();
+
+        // A field taken out of use keeps the values records already hold (it is not required and has no default any
+        // more); a value that is not one the field accepts is dropped rather than kept unchecked.
+        foreach (var retired in all.Where(static f => !f.Active))
+        {
+            if (given is { } kept && kept.TryGetProperty(retired.Key, out var old) && old.ValueKind is not JsonValueKind.Null && Normalize(retired, old) is { IsSuccess: true } still)
+            {
+                result[retired.Key] = still.Value;
+            }
+        }
+
         foreach (var definition in definitions.OrderBy(static d => d.Position).ThenBy(static d => d.Key, StringComparer.Ordinal))
         {
             var present = given is { } g && g.TryGetProperty(definition.Key, out var raw) && raw.ValueKind is not JsonValueKind.Null;

@@ -29,7 +29,7 @@ function optionLabel(value: string, labels: { en: string; ar: string } | undefin
 /** Entity types that carry custom fields today; each host registers itself on the API as it lands. */
 const types = ["text", "number", "date", "boolean", "select", "multi_select", "reference"] as const;
 
-const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof types)[number], required: false, indexed: false, options: "", min: "", max: "", maxLength: "", pattern: "", referenceType: "", defaultValue: undefined as unknown, helpEn: "", helpAr: "", optionLabels: {} as Record<string, { en: string; ar: string }> };
+const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof types)[number], required: false, indexed: false, options: "", min: "", max: "", maxLength: "", pattern: "", referenceType: "", defaultValue: undefined as unknown, helpEn: "", helpAr: "", optionLabels: {} as Record<string, { en: string; ar: string }>, position: "0", active: true };
 
 export function CustomFieldsPage() {
   const { t } = useTranslation();
@@ -54,8 +54,8 @@ export function CustomFieldsPage() {
         indexed: f.indexed,
         options: f.type === "select" || f.type === "multi_select" ? optionValues(f.options).map((value) => ({ value, label: optionLabel(value, f.optionLabels[value]) })) : null,
         rules: { min: f.min ? Number(f.min) : null, max: f.max ? Number(f.max) : null, maxLength: f.maxLength ? Number(f.maxLength) : null, pattern: f.pattern || null, referenceType: f.referenceType || null },
-        position: 0,
-        active: true,
+        position: Number(f.position) || 0,
+        active: f.active,
         description: f.helpEn || f.helpAr ? { ...(f.helpEn ? { en: f.helpEn } : {}), ...(f.helpAr ? { ar: f.helpAr } : {}) } : null,
         defaultValue: f.defaultValue ?? null,
       };
@@ -96,6 +96,8 @@ export function CustomFieldsPage() {
         type: field.type as (typeof types)[number],
         required: field.required,
         indexed: field.indexed,
+        position: String(field.position),
+        active: field.active,
         options: field.options.map((o) => o.value).join(", "),
         min: field.rules.min == null ? "" : String(field.rules.min),
         max: field.rules.max == null ? "" : String(field.rules.max),
@@ -257,6 +259,13 @@ export function CustomFieldsPage() {
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.required} onChange={(e) => { setForm({ required: e.target.checked }); }} />
                   {t("customFields.required")}
+                </label>
+                <Field label={t("customFields.position")} description={t("customFields.positionHint")}>
+                  <TextField type="number" inputMode="numeric" value={form.position} onChange={(e) => { setForm({ position: e.target.value }); }} dir="ltr" className="w-28" data-testid="custom-field-position" />
+                </Field>
+                <label className="flex items-center gap-2 self-end text-sm">
+                  <input type="checkbox" checked={form.active} onChange={(e) => { setForm({ active: e.target.checked }); }} data-testid="custom-field-active" />
+                  {t("customFields.activeHint")}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.indexed} onChange={(e) => { setForm({ indexed: e.target.checked }); }} />

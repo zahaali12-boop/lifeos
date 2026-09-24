@@ -49,6 +49,17 @@ public sealed class CustomFieldTests(ApiHostFixture host)
         given.GetProperty("customFields").GetProperty("region").GetString().ShouldBe("south");
         given.GetProperty("customFields").GetProperty("headcount").GetDecimal().ShouldBe(250m);
 
+        // Taken out of use, the field no longer fills new companies, and a company that has a value keeps it through a save.
+        var regionId = (await defined.ReadJsonAsync()).GetProperty("id").GetGuid();
+        (await owner.PutAsJsonAsync($"/api/v1/collaboration/custom-fields/{regionId}", new { entityType = "company", key = "region", label = new { en = "Region" }, type = "select", required = true, options, defaultValue = "north", active = false }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var later = await (await owner.PostAsJsonAsync("/api/v1/organization/companies", new { code = "LAT", legalName = new { en = "Later Co" }, country = "IQ", functionalCurrency = "IQD", timeZone = "Asia/Baghdad" }, Json)).ReadJsonAsync();
+        later.GetProperty("customFields").TryGetProperty("region", out _).ShouldBeFalse();
+        var givenId = given.GetProperty("id").GetGuid();
+        var resaved = await owner.PutAsJsonAsync($"/api/v1/organization/companies/{givenId}", new { code = "GIV", legalName = new { en = "Given Co, renamed" }, country = "IQ", functionalCurrency = "IQD", timeZone = "Asia/Baghdad", customFields = new { region = "south", headcount = 250 } }, Json);
+        resaved.StatusCode.ShouldBe(HttpStatusCode.OK, await resaved.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        (await resaved.ReadJsonAsync()).GetProperty("customFields").GetProperty("region").GetString().ShouldBe("south");
+        (await owner.PutAsJsonAsync($"/api/v1/collaboration/custom-fields/{regionId}", new { entityType = "company", key = "region", label = new { en = "Region" }, type = "select", required = true, options, defaultValue = "north", active = true }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
         // The published schema carries the default and no longer lists the field as one a client must send.
         var schema = await (await owner.GetAsync("/api/v1/collaboration/custom-fields/company/schema")).ReadJsonAsync();
         schema.GetProperty("properties").GetProperty("region").GetProperty("default").GetString().ShouldBe("north");
