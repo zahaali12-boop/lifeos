@@ -197,6 +197,9 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await expect(page.getByTestId("slow-total")).toContainText("24,500");
   await expect(page.getByTestId("idle-days").first()).toContainText("days");
   await expectAccessible(page);
+  await page.goto("/");
+  await expect(page.getByTestId("work-idle")).toContainText("nothing idle");
+  await nav(page, "Valuation");
 
   // Why a movement cost what it did: the opening adjustment of 100 at 250 explains itself as 25,000 of direct cost.
   await nav(page, "Stock");

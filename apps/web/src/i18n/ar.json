@@ -238,6 +238,8 @@
       "totalPayables": "إجمالي المستحق {amount}",
       "cash": "النقد والمصارف",
       "accounts": "{count, plural, zero {لا حسابات} one {حساب واحد} two {حسابان} few {# حسابات} many {# حسابًا} other {# حساب}}",
+      "idleStock": "مخزون راكد 90 يومًا أو أكثر",
+      "idleLines": "{count, plural, zero {لا شيء راكد} one {بند واحد} two {بندان} few {# بنود} many {# بندًا} other {# بند}}",
       "reorder": "أصناف يلزم طلبها"
     },
     "title": "أهلاً {name}",

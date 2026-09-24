@@ -28,7 +28,7 @@ function Stat({ label, value, to, hint, tone, testId }: { label: string; value: 
 function WorkToday() {
   const { t } = useTranslation();
   const can = useCan();
-  const { companies, companyId, setCompanyId } = useCompanyContext();
+  const { companies, companyId, setCompanyId, company } = useCompanyContext();
   const on = (permission: string): boolean => Boolean(companyId) && can(permission);
 
   const approvals = useQuery({ queryKey: ["approvals", "inbox"], queryFn: async () => unwrap(await api.GET("/api/v1/workflow/requests")) });
@@ -58,11 +58,17 @@ function WorkToday() {
     queryFn: async () => unwrap(await api.GET("/api/v1/inventory/replenishment/suggestions", { params: { query: { companyId, status: "open" } } })),
   });
 
+  const idle = useQuery({
+    queryKey: ["slow-moving", companyId, "", today(), 90],
+    enabled: on("inventory.stock.read"),
+    queryFn: async () => unwrap(await api.GET("/api/v1/inventory/stock/slow-moving", { params: { query: { companyId, idleDays: 90, asOf: today() } } })),
+  });
+
   const pending = (approvals.data ?? []).filter((r) => r.status === "pending");
   const totals = aging.data?.totals;
   const overdue = totals ? add(totals.days1To30, totals.days31To60, totals.days61To90, totals.over90) : null;
   const activeBanks = (banks.data ?? []).filter((b) => b.isActive);
-  const functional = activeBanks[0]?.functionalCurrency ?? aging.data?.functionalCurrency ?? "";
+  const functional = company?.functionalCurrency ?? activeBanks[0]?.functionalCurrency ?? aging.data?.functionalCurrency ?? "";
   const cash = add(...activeBanks.map((b) => b.balanceFc));
 
   return (
@@ -87,6 +93,15 @@ function WorkToday() {
         ) : null}
         {reorder.data ? (
           <Stat label={t("dashboard.work.reorder")} value={formatNumber(reorder.data.length)} to="/inventory/replenishment" testId="work-reorder" />
+        ) : null}
+        {idle.data ? (
+          <Stat
+            label={t("dashboard.work.idleStock")}
+            value={idle.data.totalValue !== null && functional ? formatMoney(idle.data.totalValue, functional) : formatNumber(idle.data.rows.length)}
+            hint={t("dashboard.work.idleLines", { count: idle.data.rows.length })}
+            to="/inventory/slow-moving"
+            testId="work-idle"
+          />
         ) : null}
       </div>
     </section>

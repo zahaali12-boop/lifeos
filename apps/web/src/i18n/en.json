@@ -238,6 +238,8 @@
       "totalPayables": "{amount} owed in all",
       "cash": "Cash and bank",
       "accounts": "{count, plural, one {# account} other {# accounts}}",
+      "idleStock": "Stock idle 90 days or more",
+      "idleLines": "{count, plural, =0 {nothing idle} one {# line} other {# lines}}",
       "reorder": "Items to reorder"
     },
     "title": "Welcome, {name}",
