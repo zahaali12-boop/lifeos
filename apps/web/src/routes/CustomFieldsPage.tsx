@@ -14,10 +14,22 @@ import { CustomFieldControl } from "./CustomFieldsFieldset";
 
 type CustomField = components["schemas"]["CustomFieldView"];
 
+/** The option values typed as a comma-separated list, each once, in the order typed. */
+function optionValues(text: string): string[] {
+  return [...new Set(text.split(",").map((o) => o.trim()).filter(Boolean))];
+}
+
+/** An option's labels as saved: the English label or the value itself, and the Arabic one when given. */
+function optionLabel(value: string, labels: { en: string; ar: string } | undefined): Record<string, string> {
+  const en = labels?.en.trim() ?? "";
+  const ar = labels?.ar.trim() ?? "";
+  return { en: en === "" ? value : en, ...(ar === "" ? {} : { ar }) };
+}
+
 /** Entity types that carry custom fields today; each host registers itself on the API as it lands. */
 const types = ["text", "number", "date", "boolean", "select", "multi_select", "reference"] as const;
 
-const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof types)[number], required: false, indexed: false, options: "", min: "", max: "", maxLength: "", pattern: "", referenceType: "", defaultValue: undefined as unknown };
+const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof types)[number], required: false, indexed: false, options: "", min: "", max: "", maxLength: "", pattern: "", referenceType: "", defaultValue: undefined as unknown, helpEn: "", helpAr: "", optionLabels: {} as Record<string, { en: string; ar: string }> };
 
 export function CustomFieldsPage() {
   const { t } = useTranslation();
@@ -40,11 +52,11 @@ export function CustomFieldsPage() {
         type: f.type,
         required: f.required,
         indexed: f.indexed,
-        options: f.type === "select" || f.type === "multi_select" ? f.options.split(",").map((o) => o.trim()).filter(Boolean).map((value) => ({ value, label: { en: value } })) : null,
+        options: f.type === "select" || f.type === "multi_select" ? optionValues(f.options).map((value) => ({ value, label: optionLabel(value, f.optionLabels[value]) })) : null,
         rules: { min: f.min ? Number(f.min) : null, max: f.max ? Number(f.max) : null, maxLength: f.maxLength ? Number(f.maxLength) : null, pattern: f.pattern || null, referenceType: f.referenceType || null },
         position: 0,
         active: true,
-        description: null,
+        description: f.helpEn || f.helpAr ? { ...(f.helpEn ? { en: f.helpEn } : {}), ...(f.helpAr ? { ar: f.helpAr } : {}) } : null,
         defaultValue: f.defaultValue ?? null,
       };
       return input.id ? unwrap(await api.PUT("/api/v1/collaboration/custom-fields/{fieldId}", { params: { path: { fieldId: input.id } }, body })) : unwrap(await api.POST("/api/v1/collaboration/custom-fields", { body }));
@@ -91,6 +103,9 @@ export function CustomFieldsPage() {
         pattern: field.rules.pattern ?? "",
         referenceType: field.rules.referenceType ?? "",
         defaultValue: field.defaultValue ?? undefined,
+        helpEn: field.description.en ?? "",
+        helpAr: field.description.ar ?? "",
+        optionLabels: Object.fromEntries(field.options.map((o) => [o.value, { en: o.label.en ?? "", ar: o.label.ar ?? "" }])),
       },
     });
   };
@@ -174,6 +189,24 @@ export function CustomFieldsPage() {
                     <TextField value={form.options} onChange={(e) => { setForm({ options: e.target.value }); }} required dir="ltr" />
                   </Field>
                 ) : null}
+                {(form.type === "select" || form.type === "multi_select") && optionValues(form.options).length > 0 ? (
+                  <fieldset className="grid gap-2 sm:col-span-2" data-testid="option-labels">
+                    <legend className="mb-1 text-sm font-medium">{t("customFields.optionLabels")}</legend>
+                    {optionValues(form.options).map((value) => (
+                      <div key={value} className="grid items-center gap-2 sm:grid-cols-[8rem_1fr_1fr]">
+                        <span className="text-sm" dir="ltr">{value}</span>
+                        <TextField aria-label={t("customFields.optionLabelEn", { value })} placeholder={value} value={form.optionLabels[value]?.en ?? ""} onChange={(e) => { setForm({ optionLabels: { ...form.optionLabels, [value]: { en: e.target.value, ar: form.optionLabels[value]?.ar ?? "" } } }); }} />
+                        <TextField aria-label={t("customFields.optionLabelAr", { value })} value={form.optionLabels[value]?.ar ?? ""} onChange={(e) => { setForm({ optionLabels: { ...form.optionLabels, [value]: { en: form.optionLabels[value]?.en ?? "", ar: e.target.value } } }); }} dir="rtl" data-testid={`option-ar-${value}`} />
+                      </div>
+                    ))}
+                  </fieldset>
+                ) : null}
+                <Field label={t("customFields.helpEn")}>
+                  <TextField value={form.helpEn} onChange={(e) => { setForm({ helpEn: e.target.value }); }} />
+                </Field>
+                <Field label={t("customFields.helpAr")}>
+                  <TextField value={form.helpAr} onChange={(e) => { setForm({ helpAr: e.target.value }); }} dir="rtl" />
+                </Field>
                 {form.type === "number" ? (
                   <>
                     <Field label={t("customFields.min")} error={problem?.fields.rules}>
@@ -209,7 +242,7 @@ export function CustomFieldsPage() {
                       description: {},
                       type: form.type,
                       required: false,
-                      options: form.options.split(",").map((o) => o.trim()).filter(Boolean).map((value) => ({ value, label: { en: value } })),
+                      options: optionValues(form.options).map((value) => ({ value, label: optionLabel(value, form.optionLabels[value]) })),
                       rules: { maxLength: form.maxLength ? Number(form.maxLength) : null, referenceType: form.referenceType || null },
                       indexed: false,
                       position: 0,

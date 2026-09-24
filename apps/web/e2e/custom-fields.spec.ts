@@ -63,6 +63,15 @@ test("English: fields added to purchase orders are filled on the order form, enf
     await expect(page.getByRole("grid")).toContainText(key);
   };
   await define("priority", "Delivery priority", "أولوية التسليم", "select", "normal, urgent", true);
+  // Choices read in Arabic too: the labels of each option are set beside it, and survive editing the field.
+  await page.getByRole("grid").getByText("Delivery priority").dblclick();
+  await page.getByLabel("English label of urgent").fill("Urgent");
+  await page.getByTestId("option-ar-urgent").fill("عاجل");
+  await page.getByTestId("option-ar-normal").fill("عادي");
+  await page.getByTestId("save-custom-field").click();
+  await page.getByRole("grid").getByText("Delivery priority").dblclick();
+  await expect(page.getByTestId("option-ar-urgent")).toHaveValue("عاجل");
+  await page.keyboard.press("Escape");
   await define("channels", "Sent by", "أُرسل عبر", "multi_select", "email, portal", false);
   await expectAccessible(page);
 
@@ -82,7 +91,7 @@ test("English: fields added to purchase orders are filled on the order form, enf
 
   // The order shows what was chosen, and keeps it through another edit.
   const values = page.getByTestId("order-detail").getByTestId("custom-field-values");
-  await expect(values.getByTestId("cf-value-priority")).toHaveText("urgent");
+  await expect(values.getByTestId("cf-value-priority")).toHaveText("Urgent");
   await expect(values.getByTestId("cf-value-channels")).toHaveText("email, portal");
   await page.getByTestId("edit-order").click();
   await expect(page.getByTestId("cf-priority")).toHaveValue("urgent");
@@ -108,7 +117,7 @@ test("English: fields added to purchase orders are filled on the order form, enf
   await page.getByTestId("save-item").click();
   await expect(page.getByTestId("cf-value-shelf")).toHaveText("A-12");
   await page.goto(`/purchasing/orders?open=${order.id}`);
-  await expect(values.getByTestId("cf-value-priority")).toHaveText("urgent");
+  await expect(values.getByTestId("cf-value-priority")).toHaveText("Urgent");
 
   // In Arabic the labels are the Arabic ones.
   await page.keyboard.press("Escape");
@@ -118,5 +127,6 @@ test("English: fields added to purchase orders are filled on the order form, enf
   await page.goto(`/purchasing/orders?open=${order.id}`);
   await expect(values).toContainText("أولوية التسليم");
   await expect(values).toContainText("أُرسل عبر");
+  await expect(values.getByTestId("cf-value-priority")).toHaveText("عاجل");
   await expectAccessible(page);
 });
