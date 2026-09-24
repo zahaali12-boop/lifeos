@@ -109,7 +109,7 @@ public static class PartnersRowFactories
             var opportunity = await OpportunityAsync(c, tx, t);
             var stage = await c.ExecuteScalarAsync<Guid>("SELECT stage_id FROM app.ptr_opportunities WHERE tenant_id = @t AND id = @opportunity", new { t, opportunity }, tx);
             var id = Guid.CreateVersion7();
-            await c.ExecuteAsync("INSERT INTO app.ptr_opportunity_stage_changes (tenant_id, id, opportunity_id, to_stage_id, probability_pct, expected_amount) VALUES (@t, @id, @opportunity, @stage, 10, 500)", new { t, id, opportunity, stage }, tx);
+            await c.ExecuteAsync("INSERT INTO app.ptr_opportunity_stage_changes (tenant_id, id, opportunity_id, sequence, to_stage_id, probability_pct, expected_amount) VALUES (@t, @id, @opportunity, 1, @stage, 10, 500)", new { t, id, opportunity, stage }, tx);
             return new RowRef("app.ptr_opportunity_stage_changes", $"id = '{id}'");
         });
         IsolationRegistry.Register("app.ptr_crm_activities", static async (c, tx, t) =>

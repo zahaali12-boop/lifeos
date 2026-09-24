@@ -193,11 +193,13 @@ CREATE INDEX ptr_opportunities_partner_idx ON app.ptr_opportunities (tenant_id, 
 CALL app.enable_tenant_rls('app.ptr_opportunities');
 CALL app.track_updated_at('app.ptr_opportunities');
 
--- Every move of an opportunity between stages, append-only: time in stage, conversion and velocity read from it.
+-- Every move of an opportunity between stages, numbered in order and never changed: time in stage, conversion and
+-- velocity read from it.
 CREATE TABLE app.ptr_opportunity_stage_changes (
   tenant_id        uuid NOT NULL,
   id               uuid NOT NULL,
   opportunity_id   uuid NOT NULL,
+  sequence         int NOT NULL CHECK (sequence >= 1),
   from_stage_id    uuid,
   to_stage_id      uuid NOT NULL,
   probability_pct  int NOT NULL,
@@ -205,11 +207,11 @@ CREATE TABLE app.ptr_opportunity_stage_changes (
   changed_at       timestamptz NOT NULL DEFAULT now(),
   changed_by       uuid,
   PRIMARY KEY (tenant_id, id),
+  UNIQUE (tenant_id, opportunity_id, sequence),
   FOREIGN KEY (tenant_id, opportunity_id) REFERENCES app.ptr_opportunities (tenant_id, id) ON DELETE CASCADE,
   FOREIGN KEY (tenant_id, from_stage_id) REFERENCES app.ptr_pipeline_stages (tenant_id, id),
   FOREIGN KEY (tenant_id, to_stage_id) REFERENCES app.ptr_pipeline_stages (tenant_id, id)
 );
-CREATE INDEX ptr_opportunity_stage_changes_opportunity_idx ON app.ptr_opportunity_stage_changes (tenant_id, opportunity_id, changed_at);
 CALL app.enable_tenant_rls('app.ptr_opportunity_stage_changes');
 
 -- Calls, meetings, emails and tasks planned or logged with a partner (and optionally one of its opportunities or

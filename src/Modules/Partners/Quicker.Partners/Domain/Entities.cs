@@ -562,6 +562,9 @@ public sealed class OpportunityStageChange : ITenantEntity
 
     public Guid OpportunityId { get; set; }
 
+    /// <summary>1 for the stage it started in, then one more per move.</summary>
+    public int Sequence { get; set; }
+
     public Guid? FromStageId { get; set; }
 
     public Guid ToStageId { get; set; }

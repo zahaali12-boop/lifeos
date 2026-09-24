@@ -74,7 +74,7 @@ public sealed class OpportunityService(
         }
 
         var stages = await db.PipelineStages.AsNoTracking().ToDictionaryAsync(static s => s.Id, static s => s.Code, cancellationToken);
-        var history = await db.OpportunityStageChanges.AsNoTracking().Where(c => c.OpportunityId == opportunityId).OrderBy(static c => c.ChangedAt).ThenBy(static c => c.Id).ToListAsync(cancellationToken);
+        var history = await db.OpportunityStageChanges.AsNoTracking().Where(c => c.OpportunityId == opportunityId).OrderBy(static c => c.Sequence).ToListAsync(cancellationToken);
         var summary = (await MapAsync([opportunity], cancellationToken))[0];
         return new OpportunityDetail(
             summary,
@@ -177,7 +177,7 @@ public sealed class OpportunityService(
 
         opportunity.Number = number.Value.Text;
         db.Opportunities.Add(opportunity);
-        db.OpportunityStageChanges.Add(new OpportunityStageChange { Id = Guid.CreateVersion7(), OpportunityId = opportunity.Id, ToStageId = stage.Id, ProbabilityPct = opportunity.ProbabilityPct, ExpectedAmount = opportunity.ExpectedAmount, ChangedAt = clock.UtcNow, ChangedBy = principal.Principal?.UserId.Value });
+        db.OpportunityStageChanges.Add(new OpportunityStageChange { Id = Guid.CreateVersion7(), OpportunityId = opportunity.Id, Sequence = 1, ToStageId = stage.Id, ProbabilityPct = opportunity.ProbabilityPct, ExpectedAmount = opportunity.ExpectedAmount, ChangedAt = clock.UtcNow, ChangedBy = principal.Principal?.UserId.Value });
         await db.SaveChangesAsync(cancellationToken);
         return (await MapAsync([opportunity], cancellationToken))[0];
     }
@@ -238,6 +238,7 @@ public sealed class OpportunityService(
         }
 
         var moved = stage.Id != opportunity.StageId;
+        var from = opportunity.StageId;
         opportunity.StageId = stage.Id;
         opportunity.ProbabilityPct = probability;
         opportunity.Status = stage.Outcome;
@@ -246,7 +247,8 @@ public sealed class OpportunityService(
         opportunity.UpdatedAt = clock.UtcNow;
         if (moved)
         {
-            db.OpportunityStageChanges.Add(new OpportunityStageChange { Id = Guid.CreateVersion7(), OpportunityId = opportunity.Id, FromStageId = await db.OpportunityStageChanges.AsNoTracking().Where(c => c.OpportunityId == opportunity.Id).OrderByDescending(static c => c.ChangedAt).ThenByDescending(static c => c.Id).Select(static c => (Guid?)c.ToStageId).FirstOrDefaultAsync(cancellationToken), ToStageId = stage.Id, ProbabilityPct = probability, ExpectedAmount = opportunity.ExpectedAmount, ChangedAt = clock.UtcNow, ChangedBy = principal.Principal?.UserId.Value });
+            var sequence = await db.OpportunityStageChanges.Where(c => c.OpportunityId == opportunity.Id).MaxAsync(static c => (int?)c.Sequence, cancellationToken) ?? 0;
+            db.OpportunityStageChanges.Add(new OpportunityStageChange { Id = Guid.CreateVersion7(), OpportunityId = opportunity.Id, Sequence = sequence + 1, FromStageId = from, ToStageId = stage.Id, ProbabilityPct = probability, ExpectedAmount = opportunity.ExpectedAmount, ChangedAt = clock.UtcNow, ChangedBy = principal.Principal?.UserId.Value });
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -373,7 +375,11 @@ public sealed class OpportunityService(
         var partners = await db.Partners.AsNoTracking().Where(p => partnerIds.Contains(p.Id)).ToDictionaryAsync(static p => p.Id, cancellationToken);
         var stages = await db.PipelineStages.AsNoTracking().ToDictionaryAsync(static s => s.Id, cancellationToken);
         var reps = await db.SalesReps.AsNoTracking().ToDictionaryAsync(static r => r.Id, static r => r.Code, cancellationToken);
-        var since = await db.OpportunityStageChanges.AsNoTracking().Where(c => ids.Contains(c.OpportunityId)).GroupBy(static c => c.OpportunityId).Select(static g => new { g.Key, At = g.Max(static c => c.ChangedAt) }).ToDictionaryAsync(static g => g.Key, static g => g.At, cancellationToken);
+        // In its stage since the last move (the change with the highest sequence).
+        var since = await db.OpportunityStageChanges.AsNoTracking().Where(c => ids.Contains(c.OpportunityId))
+            .GroupBy(static c => c.OpportunityId)
+            .Select(static g => new { g.Key, At = g.OrderByDescending(static c => c.Sequence).Select(static c => c.ChangedAt).First() })
+            .ToDictionaryAsync(static g => g.Key, static g => g.At, cancellationToken);
         var companyRows = (await companies.ListAsync(cancellationToken)).ToDictionary(static c => c.Id.Value);
         return rows.Select(o =>
         {
