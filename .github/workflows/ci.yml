@@ -171,11 +171,22 @@ jobs:
           # No separate worker process here: the API runs the dispatcher itself, as on a single-node install, so the
           # events the demo seed wrote are published and readiness reflects a draining outbox.
           Quicker__Worker__Embedded: "true"
+          # An absolute anchor store, so the harness below reads the anchors the API wrote.
+          Quicker__Audit__Anchoring__Store: file
+          Quicker__Audit__Anchoring__Path: ${{ github.workspace }}/.data/audit-anchors
       - run: pnpm --filter @quicker/web exec playwright install --with-deps chromium
       - run: pnpm --filter @quicker/web e2e
         env:
           CI: "1"
           E2E_API_URL: http://127.0.0.1:8080
+      # The books every journey left behind must still agree: the invariant harness over every workspace they created.
+      - name: Invariant harness over the journeys' workspaces
+        run: dotnet run --project src/Host/Quicker.Migrator -c Release -- verify
+        env:
+          QUICKER__DB__OWNERCONNECTION: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+          QUICKER__DB__APPPASSWORD: quicker
+          QUICKER__AUDIT__ANCHORING__STORE: file
+          QUICKER__AUDIT__ANCHORING__PATH: ${{ github.workspace }}/.data/audit-anchors
       - name: API log on failure
         if: failure()
         run: tail -n 200 api.log
