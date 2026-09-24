@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Quicker.Kernel.Time;
 
@@ -13,7 +14,7 @@ public sealed class FileSystemObjectStorage(string root, IClock clock) : IObject
     private const string SidecarSuffix = ".meta.json";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    private sealed record Sidecar(string ContentType, long Length, DateTimeOffset? RetainUntil);
+    private sealed record Sidecar(string ContentType, long Length, DateTimeOffset? RetainUntil, DateTimeOffset? StoredAt = null);
 
     public string Provider => "filesystem";
 
@@ -48,9 +49,10 @@ public sealed class FileSystemObjectStorage(string root, IClock clock) : IObject
             }
         }
 
-        var sidecar = new Sidecar(contentType, length, retention?.RetainUntil);
+        var storedAt = clock.UtcNow;
+        var sidecar = new Sidecar(contentType, length, retention?.RetainUntil, storedAt);
         await File.WriteAllTextAsync(path + SidecarSuffix, JsonSerializer.Serialize(sidecar, Json), cancellationToken);
-        return new StoredObjectInfo(key, length, contentType, retention?.RetainUntil, null);
+        return new StoredObjectInfo(key, length, contentType, retention?.RetainUntil, null, storedAt);
     }
 
     public async Task<StoredObject?> GetAsync(string key, string? versionId = null, CancellationToken cancellationToken = default)
@@ -74,7 +76,7 @@ public sealed class FileSystemObjectStorage(string root, IClock clock) : IObject
 
         var path = PathFor(key);
         var sidecar = await ReadSidecarAsync(path, cancellationToken);
-        return sidecar is null || !File.Exists(path) ? null : new StoredObjectInfo(key, sidecar.Length, sidecar.ContentType, sidecar.RetainUntil, null);
+        return sidecar is null || !File.Exists(path) ? null : new StoredObjectInfo(key, sidecar.Length, sidecar.ContentType, sidecar.RetainUntil, null, sidecar.StoredAt ?? new DateTimeOffset(File.GetLastWriteTimeUtc(path), TimeSpan.Zero));
     }
 
     public async Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default)
@@ -98,6 +100,32 @@ public sealed class FileSystemObjectStorage(string root, IClock clock) : IObject
         }
 
         return true;
+    }
+
+    public async IAsyncEnumerable<StoredObjectInfo> ListAsync(string prefix, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(prefix);
+        // Walk the deepest directory the prefix names fully, then keep the keys that start with the whole prefix.
+        var directoryPart = prefix.Contains('/', StringComparison.Ordinal) ? prefix[..(prefix.LastIndexOf('/') + 1)] : string.Empty;
+        var directory = directoryPart.Length == 0 ? Root : PathFor(directoryPart.TrimEnd('/'));
+        if (!Directory.Exists(directory))
+        {
+            yield break;
+        }
+
+        var keys = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
+            .Where(static f => !f.EndsWith(SidecarSuffix, StringComparison.Ordinal) && !f.EndsWith(".tmp", StringComparison.Ordinal))
+            .Select(f => Path.GetRelativePath(Root, f).Replace(Path.DirectorySeparatorChar, '/'))
+            .Where(k => k.StartsWith(prefix, StringComparison.Ordinal) && ObjectKeys.IsValid(k))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+        foreach (var key in keys)
+        {
+            if (await HeadAsync(key, null, cancellationToken) is { } info)
+            {
+                yield return info;
+            }
+        }
     }
 
     private string PathFor(string key)

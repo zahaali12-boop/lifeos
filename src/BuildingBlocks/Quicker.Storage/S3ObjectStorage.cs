@@ -1,4 +1,5 @@
 using System.Net;
+using System.Runtime.CompilerServices;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
@@ -111,6 +112,28 @@ public sealed class S3ObjectStorage(IAmazonS3 client, StorageOptions options, IC
 
         await client.DeleteObjectAsync(new DeleteObjectRequest { BucketName = await BucketForAsync(key, cancellationToken), Key = key, VersionId = head.VersionId }, cancellationToken);
         return true;
+    }
+
+    public async IAsyncEnumerable<StoredObjectInfo> ListAsync(string prefix, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(prefix);
+        var request = new ListObjectsV2Request { BucketName = await BucketForAsync(prefix, cancellationToken), Prefix = prefix };
+        while (true)
+        {
+            var page = await client.ListObjectsV2Async(request, cancellationToken);
+            foreach (var entry in page.S3Objects ?? [])
+            {
+                // The listing carries no content type; a caller that needs it asks for the object's head.
+                yield return new StoredObjectInfo(entry.Key, entry.Size ?? 0, "application/octet-stream", null, null, entry.LastModified is { } modified ? new DateTimeOffset(DateTime.SpecifyKind(modified, DateTimeKind.Utc)) : null);
+            }
+
+            if (page.IsTruncated != true)
+            {
+                yield break;
+            }
+
+            request.ContinuationToken = page.NextContinuationToken;
+        }
     }
 
     private static DateTimeOffset? RetainUntil(DateTime? date) => date is { } d ? new DateTimeOffset(DateTime.SpecifyKind(d, DateTimeKind.Utc)) : null;

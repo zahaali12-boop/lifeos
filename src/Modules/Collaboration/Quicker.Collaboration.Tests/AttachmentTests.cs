@@ -6,6 +6,9 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Collaboration.Application;
 using Quicker.Identity.TestSupport;
+using Quicker.Kernel.Ids;
+using Quicker.Kernel.Tenancy;
+using Quicker.Persistence;
 using Quicker.Storage;
 
 namespace Quicker.Collaboration.Tests;
@@ -89,5 +92,60 @@ public sealed class AttachmentTests(ApiHostFixture host)
         (await storage.HeadAsync(key)).ShouldBeNull();
         var trail = (await (await owner.GetAsync($"/api/v1/audit/records/attachment/{id}")).ReadJsonAsync()).EnumerateArray().Select(static e => e.GetProperty("action").GetString()).ToList();
         trail.ShouldBe(["created", "deleted"]);
+    }
+
+    [Fact]
+    public async Task The_sweep_removes_files_left_by_a_failed_save_once_a_day_has_passed_and_keeps_the_rest()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        using var form = Form([7, 7, 7], "kept.pdf", "application/pdf", "sales_invoice", Guid.NewGuid());
+        var kept = (await (await owner.PostAsync("/api/v1/collaboration/attachments", form)).ReadJsonAsync()).GetProperty("id").GetGuid();
+
+        // A file stored for an upload whose record never committed, and another workspace's orphan.
+        var storage = Api.Services.GetRequiredService<IObjectStorage>();
+        var orphan = AttachmentService.KeyFor(ws.TenantId, Guid.CreateVersion7());
+        using (var bytes = new MemoryStream([1, 2, 3]))
+        {
+            await storage.PutAsync(orphan, bytes, "application/pdf");
+        }
+
+        var other = await Api.SignupAsync();
+        var foreign = AttachmentService.KeyFor(other.TenantId, Guid.CreateVersion7());
+        using (var bytes = new MemoryStream([4, 5, 6]))
+        {
+            await storage.PutAsync(foreign, bytes, "application/pdf");
+        }
+
+        // Within the day it may still belong to a save in flight: nothing is touched.
+        (await SweepAsync(ws.TenantId)).ShouldBe(0);
+        (await storage.HeadAsync(orphan)).ShouldNotBeNull();
+
+        // A day later the orphan goes; the attached file stays, and so does the other workspace's until its own sweep.
+        Api.Clock.Advance(AttachmentService.OrphanGrace + TimeSpan.FromMinutes(1));
+        using (var fresh = new MemoryStream([9]))
+        {
+            await storage.PutAsync(AttachmentService.KeyFor(ws.TenantId, Guid.CreateVersion7()), fresh, "application/pdf");
+        }
+
+        (await SweepAsync(ws.TenantId)).ShouldBe(1);
+        (await storage.HeadAsync(orphan)).ShouldBeNull();
+        (await storage.HeadAsync(AttachmentService.KeyFor(ws.TenantId, kept))).ShouldNotBeNull();
+        (await storage.HeadAsync(foreign)).ShouldNotBeNull();
+        (await SweepAsync(other.TenantId)).ShouldBe(1);
+        (await storage.HeadAsync(foreign)).ShouldBeNull();
+    }
+
+    private async Task<int> SweepAsync(Guid tenantId)
+    {
+        await using var scope = Api.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        var context = TenantContext.System(new TenantId(tenantId), "test-sweep");
+        await using var unitOfWork = await services.GetRequiredService<IUnitOfWorkFactory>().BeginAsync(context, cancellationToken: TestContext.Current.CancellationToken);
+        services.GetRequiredService<IUnitOfWorkAccessor>().Set(unitOfWork);
+        using var ambient = services.GetRequiredService<ITenantContextAccessor>().Use(context);
+        var removed = await services.GetRequiredService<AttachmentService>().SweepOrphansAsync(TestContext.Current.CancellationToken);
+        await unitOfWork.CommitAsync(TestContext.Current.CancellationToken);
+        return removed;
     }
 }

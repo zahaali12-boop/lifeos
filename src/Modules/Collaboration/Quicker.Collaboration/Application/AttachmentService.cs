@@ -86,6 +86,50 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
         return Map(attachment);
     }
 
+    /// <summary>How long an upload may wait for its record: a file stored this recently may belong to a save still in flight.</summary>
+    public static readonly TimeSpan OrphanGrace = TimeSpan.FromHours(24);
+
+    /// <summary>
+    /// Removes this workspace's attachment files that no attachment refers to. A file is stored before its record commits,
+    /// so a save that fails afterwards leaves the file behind; files older than <see cref="OrphanGrace"/> without a record
+    /// are deleted (retained ones are left). Returns how many were removed.
+    /// </summary>
+    public async Task<int> SweepOrphansAsync(CancellationToken cancellationToken)
+    {
+        var prefix = $"tenants/{unitOfWork.Current.Context.TenantId!.Value:N}/attachments/";
+        var cutoff = clock.UtcNow - OrphanGrace;
+        var candidates = new Dictionary<Guid, string>();
+        await foreach (var stored in storage.ListAsync(prefix, cancellationToken))
+        {
+            if (stored.StoredAt is { } at && at < cutoff && Guid.TryParseExact(stored.Key[prefix.Length..], "N", out var id))
+            {
+                candidates[id] = stored.Key;
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            return 0;
+        }
+
+        var ids = candidates.Keys.ToList();
+        var referenced = (await db.Attachments.Where(a => ids.Contains(a.Id)).Select(static a => a.Id).ToListAsync(cancellationToken)).ToHashSet();
+        var removed = 0;
+        foreach (var (id, key) in candidates.Where(c => !referenced.Contains(c.Key)))
+        {
+            try
+            {
+                removed += await storage.DeleteAsync(key, cancellationToken) ? 1 : 0;
+            }
+            catch (ObjectRetainedException)
+            {
+                // A retained object outlives its record by design; it goes when its retention ends.
+            }
+        }
+
+        return removed;
+    }
+
     public async Task<Result<IReadOnlyList<AttachmentSummary>>> ListAsync(string? entityType, Guid entityId, CancellationToken cancellationToken)
     {
         var type = entityType?.Trim() ?? string.Empty;

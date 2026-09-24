@@ -30,6 +30,7 @@ public static class CollaborationModule
         services.AddScoped<CustomFieldService>();
         services.AddScoped<ICustomFieldValidator>(static sp => sp.GetRequiredService<CustomFieldService>());
         services.AddJobHandler<EmailSendJob, EmailSendPayload>();
+        services.AddJobHandler<AttachmentSweepJob, AttachmentSweepPayload>();
         return services;
     }
 }

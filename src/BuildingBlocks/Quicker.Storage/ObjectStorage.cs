@@ -37,7 +37,7 @@ public sealed class StorageOptions
 public sealed record ObjectRetention(DateTimeOffset RetainUntil);
 
 /// <summary>What the store knows about a stored object. <see cref="VersionId"/> pins an exact version where the store versions (S3).</summary>
-public sealed record StoredObjectInfo(string Key, long Length, string ContentType, DateTimeOffset? RetainUntil, string? VersionId);
+public sealed record StoredObjectInfo(string Key, long Length, string ContentType, DateTimeOffset? RetainUntil, string? VersionId, DateTimeOffset? StoredAt = null);
 
 /// <summary>A stored object's metadata and content; dispose to release the content stream.</summary>
 public sealed class StoredObject(StoredObjectInfo info, Stream content) : IAsyncDisposable
@@ -67,6 +67,9 @@ public interface IObjectStorage
 
     /// <summary>Removes the object; false when it did not exist. Throws <see cref="ObjectRetainedException"/> while a retention holds.</summary>
     Task<bool> DeleteAsync(string key, CancellationToken cancellationToken = default);
+
+    /// <summary>The current objects whose keys start with the prefix, in key order, each with when it was stored (for sweeps of objects nothing refers to).</summary>
+    IAsyncEnumerable<StoredObjectInfo> ListAsync(string prefix, CancellationToken cancellationToken = default);
 }
 
 /// <summary>The object is under retention and cannot be replaced or deleted yet.</summary>

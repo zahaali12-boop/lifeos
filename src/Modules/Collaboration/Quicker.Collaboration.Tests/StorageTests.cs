@@ -16,6 +16,36 @@ public sealed class StorageTests(ApiHostFixture host)
     private static MemoryStream Bytes(string text) => new(Encoding.UTF8.GetBytes(text));
 
     [Fact]
+    public async Task Filesystem_provider_lists_the_objects_under_a_prefix_with_when_they_were_stored()
+    {
+        var root = Path.Combine(host.StorageRoot, "list-" + Guid.NewGuid().ToString("N")[..8]);
+        var storage = new FileSystemObjectStorage(root, Api.Clock);
+        foreach (var key in new[] { "tenants/t1/files/b.txt", "tenants/t1/files/a.txt", "tenants/t1/other/c.txt", "tenants/t2/files/d.txt" })
+        {
+            using var content = Bytes(key);
+            await storage.PutAsync(key, content, "text/plain");
+        }
+
+        var listed = new List<StoredObjectInfo>();
+        await foreach (var info in storage.ListAsync("tenants/t1/files/"))
+        {
+            listed.Add(info);
+        }
+
+        listed.Select(static i => i.Key).ShouldBe(["tenants/t1/files/a.txt", "tenants/t1/files/b.txt"]);
+        listed.ShouldAllBe(i => i.StoredAt == Api.Clock.UtcNow && i.Length == 22);
+        var all = new List<string>();
+        await foreach (var info in storage.ListAsync("tenants/t1/"))
+        {
+            all.Add(info.Key);
+        }
+
+        all.ShouldBe(["tenants/t1/files/a.txt", "tenants/t1/files/b.txt", "tenants/t1/other/c.txt"]);
+        var none = storage.ListAsync("tenants/t9/");
+        (await none.AnyAsync()).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Filesystem_provider_stores_reads_deletes_and_refuses_to_touch_a_retained_object()
     {
         var root = Path.Combine(host.StorageRoot, "unit-" + Guid.NewGuid().ToString("N")[..8]);
@@ -23,7 +53,7 @@ public sealed class StorageTests(ApiHostFixture host)
 
         using var content = Bytes("hello");
         var info = await storage.PutAsync("tenants/t1/files/a.txt", content, "text/plain");
-        info.ShouldBe(new StoredObjectInfo("tenants/t1/files/a.txt", 5, "text/plain", null, null));
+        info.ShouldBe(new StoredObjectInfo("tenants/t1/files/a.txt", 5, "text/plain", null, null, Api.Clock.UtcNow));
         await using (var stored = (await storage.GetAsync("tenants/t1/files/a.txt"))!)
         {
             stored.Info.ContentType.ShouldBe("text/plain");
@@ -120,6 +150,23 @@ public sealed class StorageTests(ApiHostFixture host)
 
         (await storage.DeleteAsync("tenants/t1/files/a.txt")).ShouldBeTrue();
         (await storage.HeadAsync("tenants/t1/files/a.txt")).ShouldBeNull();
+
+        // Listing: the objects under a prefix, in key order, with when the store took them, across pages.
+        var prefix = $"tenants/{Guid.NewGuid():N}/files/";
+        foreach (var name in new[] { "b.txt", "a.txt" })
+        {
+            using var file = Bytes(name);
+            await storage.PutAsync(prefix + name, file, "text/plain");
+        }
+
+        var listed = new List<StoredObjectInfo>();
+        await foreach (var entry in storage.ListAsync(prefix))
+        {
+            listed.Add(entry);
+        }
+
+        listed.Select(static l => l.Key).ShouldBe([prefix + "a.txt", prefix + "b.txt"]);
+        listed.ShouldAllBe(static l => l.Length == 5 && l.StoredAt != null);
 
         // Immutable: every write is a retained version; the first version stays readable by id after a second write.
         var until = clock.UtcNow.AddMinutes(2);
