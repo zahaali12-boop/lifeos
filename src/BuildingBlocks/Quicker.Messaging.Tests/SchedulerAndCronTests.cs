@@ -14,6 +14,22 @@ public sealed class SchedulerAndCronTests(ApiHostFixture host)
 
     private static readonly TimeZoneInfo Baghdad = TimeZoneInfo.FindSystemTimeZoneById("Asia/Baghdad");
 
+    [Fact]
+    public async Task Every_shipped_schedule_names_a_job_the_host_runs_with_a_cron_and_time_zone_that_parse()
+    {
+        // The platform schedules the seeds ship (ids 0199a000-…): a typo in a job type would only fail at night, in production.
+        await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
+        await db.OpenAsync(TestContext.Current.CancellationToken);
+        var shipped = (await db.QueryAsync<(string Code, string JobType, string Cron, string TimeZone)>(
+            "SELECT code, job_type, cron, time_zone FROM ops.schedules WHERE tenant_id IS NULL AND id::text LIKE '0199a000-0000-7000-8000-%' ORDER BY code")).ToList();
+        shipped.Count.ShouldBeGreaterThanOrEqualTo(11);
+        var known = Api.Services.GetRequiredService<JobHandlerRegistry>().JobTypes;
+        shipped.Where(s => !known.Contains(s.JobType)).Select(static s => $"{s.Code} → {s.JobType}").ShouldBeEmpty();
+        shipped.Where(static s => CronExpression.Parse(s.Cron).IsFailure).Select(static s => $"{s.Code}: {s.Cron}").ShouldBeEmpty();
+        shipped.Where(static s => !TimeZoneInfo.TryFindSystemTimeZoneById(s.TimeZone, out _)).Select(static s => $"{s.Code}: {s.TimeZone}").ShouldBeEmpty();
+        shipped.Select(static s => s.Code).ShouldContain("collaboration.attachment_sweep");
+    }
+
     [Theory]
     [InlineData("0 2 * * *", "2026-09-22T08:00:00Z", "UTC", "2026-09-23T02:00:00Z")]
     [InlineData("*/15 * * * *", "2026-09-22T08:07:00Z", "UTC", "2026-09-22T08:15:00Z")]
