@@ -44,6 +44,7 @@ import { InvoicesPage } from "./purchasing/InvoicesPage";
 import { LandedCostsPage } from "./purchasing/LandedCostsPage";
 import { ReturnsPage } from "./purchasing/ReturnsPage";
 import { SupplierIntelligencePage } from "./purchasing/SupplierIntelligencePage";
+import { OpenOrderLinesPage } from "./purchasing/OpenOrderLinesPage";
 import { OpenItemsPage } from "./payables/OpenItemsPage";
 import { ProposalsPage } from "./payables/ProposalsPage";
 import { BankAccountsPage } from "./banking/BankAccountsPage";
@@ -130,6 +131,7 @@ const invoicesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/pu
 const landedCostsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/landed-costs", component: LandedCostsPage, validateSearch: searchRecord });
 const returnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/returns", component: ReturnsPage, validateSearch: searchRecord });
 const intelligenceRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/intelligence", component: SupplierIntelligencePage, validateSearch: searchRecord });
+const openLinesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/open-lines", component: OpenOrderLinesPage });
 const payablesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/open-items", component: OpenItemsPage, validateSearch: searchRecord });
 const proposalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/proposals", component: ProposalsPage, validateSearch: searchRecord });
 const bankAccountsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/bank-accounts", component: BankAccountsPage, validateSearch: searchRecord });
@@ -161,7 +163,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),
 ]);

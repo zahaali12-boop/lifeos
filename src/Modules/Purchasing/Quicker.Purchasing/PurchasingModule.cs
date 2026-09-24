@@ -38,6 +38,7 @@ public static class PurchasingModule
         services.AddScoped<RequisitionService>();
         services.AddScoped<DocumentFlowService>();
         services.AddScoped<ReplenishmentOrderService>();
+        services.AddScoped<PurchasingReportService>();
         services.AddScoped<RfqService>();
         services.AddScoped<BlanketAgreementService>();
         services.AddScoped<PurchaseOrderService>();

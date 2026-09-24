@@ -241,6 +241,13 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await expect(page.getByTestId("open-item-remaining")).toContainText("0");
   await closeDialog(page);
 
+  // The four tea still to come are an open order line, valued at the order price.
+  await nav(page, "Open order lines");
+  await expect(page.getByRole("grid")).toContainText("TEA");
+  await expect(page.getByTestId("open-lines-summary")).toContainText("1 open line");
+  await expect(page.getByTestId("open-lines-summary")).toContainText("6,000");
+  await expectAccessible(page);
+
   // The order's smart buttons: everything that followed it, one click away. The one receipt opens directly; nothing
   // is left to invoice on the order once its receipt is billed.
   await nav(page, "Purchase orders");

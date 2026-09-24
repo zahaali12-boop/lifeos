@@ -40,6 +40,7 @@
     "security": "Security",
     "landedCosts": "Landed costs",
     "returns": "Supplier returns",
+    "openOrderLines": "Open order lines",
     "supplierIntelligence": "Supplier intelligence",
     "payables": "Payables",
     "paymentProposals": "Payment proposals",
@@ -2417,6 +2418,17 @@
     }
   },
   "purchasing": {
+    "openLines": {
+      "description": "What is still to arrive from suppliers: approved, sent and partly received order lines with goods open, valued at the net order price; late lines are flagged.",
+      "late": "Late",
+      "daysLate": "{count, plural, one {# day late} other {# days late}}",
+      "open": "Open",
+      "openValue": "Open value",
+      "lateOnly": "Late only",
+      "summary": "{lines, plural, =0 {No open lines} one {# open line} other {# open lines}}, {late, plural, =0 {none late} one {# late} other {# late}}",
+      "emptyTitle": "Nothing is waiting to arrive",
+      "emptyDescription": "Approved orders with goods still to receive appear here."
+    },
     "settlementKinds": {
       "credit_application": "Credit applied",
       "advance_application": "Advance applied",

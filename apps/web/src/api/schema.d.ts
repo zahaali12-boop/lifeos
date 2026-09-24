@@ -6130,6 +6130,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/reports/open-order-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Order lines with goods still to arrive, valued at the net order price, late ones counted */
+        get: operations["getPurchasingReportsOpenOrderLines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/requisitions": {
         parameters: {
             query?: never;
@@ -8497,6 +8514,11 @@ export interface components {
             };
             isActive: boolean;
         };
+        CurrencyTotal: {
+            currency: string;
+            /** Format: double */
+            amount: number | string;
+        };
         CustomFieldOption: {
             value: string;
             label: {
@@ -10118,6 +10140,56 @@ export interface components {
             functionalCurrency: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description One order line with goods still to arrive: what was ordered, what came, what is open and whether it is late. */
+        OpenOrderLine: {
+            /** Format: uuid */
+            orderId: string;
+            orderNumber: string;
+            orderStatus: string;
+            /** Format: date */
+            orderDate: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: null | string;
+            warehouseCode: null | string;
+            /** Format: int32 */
+            lineNo: number | string;
+            uomCode: string;
+            /** Format: double */
+            ordered: number | string;
+            /** Format: double */
+            received: number | string;
+            /** Format: double */
+            open: number | string;
+            /** Format: double */
+            netUnitPrice: number | string;
+            /** Format: double */
+            openValue: number | string;
+            currency: string;
+            /** Format: date */
+            expectedDate: null | string;
+            /** Format: int32 */
+            daysLate: null | number | string;
+        };
+        OpenOrderLinesReport: {
+            /** Format: date */
+            asOf: string;
+            lines: components["schemas"]["OpenOrderLine"][];
+            totals: components["schemas"]["CurrencyTotal"][];
+            /** Format: int32 */
+            lateLines: number | string;
         };
         OrdersCreated: {
             orders: components["schemas"]["PurchaseOrderSummary"][];
@@ -26128,6 +26200,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentFlow"];
+                };
+            };
+        };
+    };
+    getPurchasingReportsOpenOrderLines: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                warehouseId?: string;
+                itemId?: string;
+                lateOnly?: boolean;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenOrderLinesReport"];
                 };
             };
         };

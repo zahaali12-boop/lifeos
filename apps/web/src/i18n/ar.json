@@ -40,6 +40,7 @@
     "security": "الأمان",
     "landedCosts": "تكاليف الوصول",
     "returns": "مرتجعات الموردين",
+    "openOrderLines": "بنود الأوامر المفتوحة",
     "supplierIntelligence": "تحليلات الموردين",
     "payables": "الذمم الدائنة",
     "paymentProposals": "مقترحات الدفع",
@@ -2417,6 +2418,17 @@
     }
   },
   "purchasing": {
+    "openLines": {
+      "description": "ما لم يصل بعد من الموردين: بنود الأوامر المعتمدة والمرسلة والمستلمة جزئيًا التي بقي منها شيء، مقيّمة بصافي سعر الأمر، مع تمييز المتأخر منها.",
+      "late": "التأخير",
+      "daysLate": "{count, plural, zero {في الموعد} one {متأخر يومًا واحدًا} two {متأخر يومين} few {متأخر # أيام} many {متأخر # يومًا} other {متأخر # يوم}}",
+      "open": "المتبقي",
+      "openValue": "قيمة المتبقي",
+      "lateOnly": "المتأخر فقط",
+      "summary": "{lines, plural, zero {لا بنود مفتوحة} one {بند مفتوح واحد} two {بندان مفتوحان} few {# بنود مفتوحة} many {# بندًا مفتوحًا} other {# بند مفتوح}}، {late, plural, zero {لا متأخر} one {واحد متأخر} two {اثنان متأخران} few {# متأخرة} many {# متأخرًا} other {# متأخر}}",
+      "emptyTitle": "لا شيء بانتظار الوصول",
+      "emptyDescription": "تظهر هنا الأوامر المعتمدة التي بقي منها ما يُستلم."
+    },
     "settlementKinds": {
       "credit_application": "تطبيق إشعار",
       "advance_application": "تطبيق دفعة مقدمة",

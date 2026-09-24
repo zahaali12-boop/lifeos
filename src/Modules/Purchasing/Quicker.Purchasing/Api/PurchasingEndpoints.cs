@@ -94,6 +94,10 @@ public static class PurchasingEndpoints
         orders.MapPost("/", async (SavePurchaseOrderRequest request, PurchaseOrderService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static o => $"/api/v1/purchasing/orders/{o.Id}"))
             .RequirePermission(PurchasingPermissions.OrderManage)
             .WithSummary("A draft order in the supplier's currency (rate resolved at the order date), lines priced or released from an agreement line");
+        purchasing.MapGet("/reports/open-order-lines", async (Guid companyId, Guid? partnerId, Guid? warehouseId, Guid? itemId, bool? lateOnly, DateOnly? asOf, PurchasingReportService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.OpenOrderLinesAsync(companyId, partnerId, warehouseId, itemId, lateOnly ?? false, asOf, ct)))
+            .RequirePermission(PurchasingPermissions.OrderRead)
+            .WithSummary("Order lines with goods still to arrive, valued at the net order price, late ones counted");
         orders.MapPost("/from-suggestions", async (OrderSuggestionsRequest request, ReplenishmentOrderService service, CancellationToken ct) => ApiProblems.Ok(await service.OrderAsync(request, ct)))
             .RequirePermission(PurchasingPermissions.OrderManage)
             .WithSummary("Draft orders from replenishment suggestions: one per supplier and warehouse, at the supplier's last price for each item");

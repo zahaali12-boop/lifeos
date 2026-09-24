@@ -61,6 +61,57 @@ public sealed class PurchasingTests(ApiHostFixture host)
         new { companyId = s.CompanyId, partnerId, currency, warehouseId = s.WarehouseId, agreementId, lines };
 
     [Fact]
+    public async Task Open_order_lines_show_what_is_still_to_arrive_at_the_net_price_and_flag_the_late_ones()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+
+        // Alpha: ten tea due on the 5th, six of which arrived; four coffee at 10 % off, due on the 20th.
+        var alpha = await owner.PostAsync("/api/v1/purchasing/orders", new
+        {
+            companyId = s.CompanyId,
+            partnerId = s.SupplierA,
+            warehouseId = s.WarehouseId,
+            expectedDate = "2026-09-05",
+            lines = new object[] { new { itemId = s.Tea, quantity = 10m, uom = "PCS", unitPrice = 100m }, new { itemId = s.Coffee, quantity = 4m, uom = "PCS", unitPrice = 50m, discountPct = 10m, expectedDate = "2026-09-20" } },
+        });
+        var alphaId = alpha.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/orders/{alphaId}/submit", new { }, HttpStatusCode.OK);
+        var teaLine = alpha.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("itemId").GetGuid() == s.Tea).GetProperty("id").GetGuid();
+        var receipt = await owner.PostAsync("/api/v1/purchasing/receipts", new { orderId = alphaId, postingDate = "2026-09-03", lines = new[] { new { orderLineId = teaLine, quantity = 6m } } });
+        await owner.PostAsync($"/api/v1/purchasing/receipts/{receipt.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+
+        // Beta: a draft (not ordered yet) and a cancelled order, neither of which is open.
+        await owner.PostAsync("/api/v1/purchasing/orders", Order(s, s.SupplierB, [Line(s.Tea, 3m, 90m)]));
+        var cancelled = (await owner.PostAsync("/api/v1/purchasing/orders", Order(s, s.SupplierB, [Line(s.Coffee, 2m, 40m)]))).GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/orders/{cancelled}/submit", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/purchasing/orders/{cancelled}/cancel", new { }, HttpStatusCode.OK);
+
+        var report = await owner.GetOkAsync($"/api/v1/purchasing/reports/open-order-lines?companyId={s.CompanyId}&asOf=2026-09-10");
+        report.GetProperty("asOf").GetString().ShouldBe("2026-09-10");
+        var lines = report.GetProperty("lines").EnumerateArray().ToList();
+        lines.Count.ShouldBe(2);
+        var tea = lines[0];
+        (tea.GetProperty("itemCode").GetString(), tea.GetProperty("partnerCode").GetString(), tea.GetProperty("orderStatus").GetString()).ShouldBe(("TEA", "SUP-A", "partially_received"));
+        (tea.GetProperty("ordered").GetDecimal(), tea.GetProperty("received").GetDecimal(), tea.GetProperty("open").GetDecimal(), tea.GetProperty("openValue").GetDecimal()).ShouldBe((10m, 6m, 4m, 400m));
+        tea.GetProperty("daysLate").GetInt32().ShouldBe(5, "due on the 5th, still open on the 10th");
+        var coffee = lines[1];
+        (coffee.GetProperty("itemCode").GetString(), coffee.GetProperty("netUnitPrice").GetDecimal(), coffee.GetProperty("openValue").GetDecimal()).ShouldBe(("COFFEE", 45m, 180m));
+        coffee.GetProperty("expectedDate").GetString().ShouldBe("2026-09-20");
+        coffee.GetProperty("daysLate").ValueKind.ShouldBe(JsonValueKind.Null);
+        report.GetProperty("totals").Only().GetProperty("amount").GetDecimal().ShouldBe(580m);
+        report.GetProperty("lateLines").GetInt32().ShouldBe(1);
+
+        (await owner.GetOkAsync($"/api/v1/purchasing/reports/open-order-lines?companyId={s.CompanyId}&asOf=2026-09-10&lateOnly=true")).GetProperty("lines").Only().GetProperty("itemCode").GetString().ShouldBe("TEA");
+        (await owner.GetOkAsync($"/api/v1/purchasing/reports/open-order-lines?companyId={s.CompanyId}&partnerId={s.SupplierB}")).GetProperty("lines").GetArrayLength().ShouldBe(0);
+        (await owner.GetOkAsync($"/api/v1/purchasing/reports/open-order-lines?companyId={s.CompanyId}&itemId={s.Coffee}")).GetProperty("lines").Only().GetProperty("itemCode").GetString().ShouldBe("COFFEE");
+
+        // Reading it takes the permission to read orders.
+        var clerk = await InviteAsync(owner, s.Ws, "clerk", "inventory.item.read");
+        (await clerk.Client.GetAsync($"/api/v1/purchasing/reports/open-order-lines?companyId={s.CompanyId}")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task Replenishment_suggestions_become_draft_orders_per_supplier_at_the_last_price_and_stop_being_suggested_once_approved()
     {
         var s = await SetUpAsync();
