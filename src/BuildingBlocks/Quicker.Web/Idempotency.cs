@@ -20,7 +20,7 @@ public sealed class IdempotencyOptions
 
     public int RetentionHours { get; set; } = 24;
 
-    /// <summary>Responses larger than this are not stored; a replay then re-executes (still safe for reads, documented for writes).</summary>
+    /// <summary>Responses larger than this are not stored, nor are bodies other than JSON (files); a replay then re-executes (still safe for reads, documented for writes).</summary>
     public int MaxStoredBodyBytes { get; set; } = 1_048_576;
 }
 
@@ -109,16 +109,19 @@ public sealed class IdempotencyMiddleware(NpgsqlDataSource dataSource, IOptions<
             buffer.Position = 0;
             await buffer.CopyToAsync(original, context.RequestAborted);
 
-            // Server errors are not stored: the client should retry and get a real execution.
-            if (context.Response.StatusCode < 500 && buffer.Length <= options.Value.MaxStoredBodyBytes)
+            // Server errors are not stored: the client should retry and get a real execution. Nor are refusals of who is
+            // asking (401, 403: a step-up or a new grant changes the answer to the same request) or files (an export's CSV
+            // or workbook): only JSON bodies and empty ones are kept, so a replay of those answers them again.
+            var status = context.Response.StatusCode;
+            var isJson = context.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true;
+            if (status < 500 && status is not (StatusCodes.Status401Unauthorized or StatusCodes.Status403Forbidden) && buffer.Length <= options.Value.MaxStoredBodyBytes && (buffer.Length == 0 || isJson))
             {
                 var body = buffer.Length == 0 ? null : Encoding.UTF8.GetString(buffer.ToArray());
-                var isJson = context.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true;
                 await connection.ExecuteAsync(new CommandDefinition("""
                     INSERT INTO ops.idempotency_keys (tenant_id, principal, key, request_hash, response_status, response_body, response_content_type, expires_at)
                     VALUES (@tenant, @principal, @key, @hash, @status, CASE WHEN @isJson THEN @body::jsonb ELSE to_jsonb(@body::text) END, @contentType, now() + make_interval(hours => @hours))
                     ON CONFLICT (tenant_id, principal, key) DO UPDATE SET request_hash = EXCLUDED.request_hash, response_status = EXCLUDED.response_status, response_body = EXCLUDED.response_body, response_content_type = EXCLUDED.response_content_type, expires_at = EXCLUDED.expires_at, created_at = now()
-                    """, new { tenant, principal, key, hash = requestHash, status = context.Response.StatusCode, body, isJson = isJson && body is not null, contentType = context.Response.ContentType, hours = options.Value.RetentionHours }, cancellationToken: CancellationToken.None));
+                    """, new { tenant, principal, key, hash = requestHash, status, body, isJson = isJson && body is not null, contentType = context.Response.ContentType, hours = options.Value.RetentionHours }, cancellationToken: CancellationToken.None));
             }
         }
         finally

@@ -63,6 +63,52 @@ public sealed class IdempotencyTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task A_refusal_for_who_is_asking_is_not_stored_so_the_same_key_goes_through_after_a_step_up()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var key = Guid.NewGuid().ToString();
+        var body = new { name = "ci" };
+
+        Api.Clock.Advance(TimeSpan.FromMinutes(6)); // beyond the step-up window, within the token lifetime
+        var stale = await owner.SendAsync(Post("/api/v1/api-keys", body, key));
+        stale.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await stale.ErrorCodeAsync()).ShouldBe("auth.step_up_required");
+
+        // The person confirms who they are and the client sends the same request under the same key: it runs, once.
+        var fresh = (await (await owner.PostAsJsonAsync("/api/v1/me/step-up", new { password = ws.OwnerPassword }, Json)).ReadJsonAsync()).GetProperty("accessToken").GetString()!;
+        using var confirmed = Api.ClientFor(fresh);
+        var created = await confirmed.SendAsync(Post("/api/v1/api-keys", body, key));
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        created.Headers.Contains("Idempotent-Replayed").ShouldBeFalse();
+        var replay = await confirmed.SendAsync(Post("/api/v1/api-keys", body, key));
+        replay.StatusCode.ShouldBe(HttpStatusCode.Created);
+        replay.Headers.Contains("Idempotent-Replayed").ShouldBeTrue();
+        (await (await confirmed.GetAsync("/api/v1/api-keys")).ReadJsonAsync()).EnumerateArray().Count(static k => k.GetProperty("name").GetString() == "ci").ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_file_answered_under_a_key_is_delivered_and_not_stored_so_a_replay_answers_it_again()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var key = Guid.NewGuid().ToString();
+        var table = new { format = "xlsx", name = "Rates", columns = new object[] { new { header = "Code" }, new { header = "Rate", type = "number" } }, rows = new object[][] { ["USD", 1310.5m], ["EUR", 1420m] } };
+
+        // A workbook is binary (a zip with zero bytes in it); only JSON answers are kept for replay.
+        foreach (var attempt in new[] { 1, 2 })
+        {
+            var file = await owner.SendAsync(Post("/api/v1/exports/table", table, key));
+            file.StatusCode.ShouldBe(HttpStatusCode.OK, $"attempt {attempt}");
+            file.Content.Headers.ContentType!.MediaType.ShouldBe("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            file.Content.Headers.ContentDisposition!.FileNameStar.ShouldNotBeNull().ShouldStartWith("Rates-");
+            file.Headers.Contains("Idempotent-Replayed").ShouldBeFalse();
+            var bytes = await file.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
+            (bytes[0], bytes[1]).ShouldBe(((byte)'P', (byte)'K'));
+        }
+    }
+
+    [Fact]
     public async Task Concurrent_replays_of_one_key_create_exactly_one_record()
     {
         var ws = await Api.SignupAsync();

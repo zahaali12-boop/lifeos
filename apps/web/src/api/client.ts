@@ -21,11 +21,50 @@ function defaultBaseUrl(): string {
   return typeof window === "undefined" ? "http://localhost" : window.location.origin;
 }
 
+const mutating = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/** How long to wait before sending a write again whose answer the network lost. */
+export const RESEND_DELAY_MS = 800;
+
+/** A random version-4 UUID; crypto.getRandomValues also works on plain-HTTP deployments, where randomUUID does not. */
+export function newIdempotencyKey(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = ((bytes[6] ?? 0) & 0x0f) | 0x40;
+  bytes[8] = ((bytes[8] ?? 0) & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+/**
+ * Sends a request; a write whose answer the network lost (the connection dropped, fetch rejected) is sent once more
+ * under the same Idempotency-Key, so the API answers with what it already did instead of doing it twice. A cancelled
+ * request (AbortError) is not sent again.
+ */
+async function send(request: Request): Promise<Response> {
+  if (!mutating.has(request.method) || !request.headers.has("Idempotency-Key")) {
+    return globalThis.fetch(request);
+  }
+  const again = request.clone();
+  try {
+    return await globalThis.fetch(request);
+  } catch (error) {
+    if (!(error instanceof TypeError) || again.signal.aborted) {
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, RESEND_DELAY_MS));
+    return globalThis.fetch(again);
+  }
+}
+
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   // fetch is resolved per call, so a test double installed after the client was created is honoured.
-  const client = createClient<paths>({ baseUrl: options.baseUrl ?? defaultBaseUrl(), fetch: (input) => globalThis.fetch(input) });
+  const client = createClient<paths>({ baseUrl: options.baseUrl ?? defaultBaseUrl(), fetch: send });
   const auth: Middleware = {
     onRequest({ request }) {
+      // Every write carries its own key (ADR-0009): a resend of it, or the replay after a step-up, runs at most once.
+      if (mutating.has(request.method) && !request.headers.has("Idempotency-Key")) {
+        request.headers.set("Idempotency-Key", newIdempotencyKey());
+      }
       const token = options.accessToken?.();
       if (token) {
         request.headers.set("Authorization", `Bearer ${token}`);

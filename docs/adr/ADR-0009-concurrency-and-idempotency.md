@@ -52,3 +52,9 @@ Every mutable row exposes a `row_version` (PostgreSQL `xmin` mapped through EF C
 
 * Correctness lives in the database transaction; the lock ladder must be followed by every posting path (reviewed in PRs and exercised by the scenario suite).
 * Predictable behaviour under contention: the loser waits briefly and gets a clear error.
+
+## Amendment 2026-09-24 (post-M4 routine pass, as built)
+
+* **What is kept for replay.** JSON answers and empty ones below 5xx, except refusals of who is asking: a `401` or `403` is not stored, because a step-up or a new grant changes the answer to the same request, and the web client replays a write under the same key after a step-up. Files (an export's CSV or workbook) are not stored either; a replay of a file request answers it again, which is harmless because exports change nothing but the audit trail. Response headers other than the content type (`Location`, `ETag`, `Content-Disposition`) are not part of a replay.
+* **Who sends the key.** The web client puts a fresh key on every write and, when the network loses the answer (fetch rejects without an HTTP response), sends the same request once more under the same key after a short pause, so a dropped connection never doubles a write; a cancelled request is not sent again. The header stays optional on the server (`Quicker:Api:Idempotency:Required=false`) for integrations until the published client libraries send it too (A-135).
+
