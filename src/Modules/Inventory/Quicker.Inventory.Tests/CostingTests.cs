@@ -38,6 +38,49 @@ public sealed class CostingTests(ApiHostFixture host)
 
     private static DateOnly D(int day) => new(2026, 9, day);
 
+    [Fact]
+    public async Task Costing_methods_are_free_until_stock_moves_and_locked_after_it_for_the_company_the_category_and_the_item()
+    {
+        var s = await SetUpAsync("average");
+        var owner = s.Owner;
+        object Company(string costingMethod, string costingScope = "company", string trade = "Rafidain") =>
+            new { code = "IQT", legalName = Name("Rafidain", "الرافدين"), tradeName = Name(trade, trade), country = "IQ", functionalCurrency = "IQD", timeZone = "Asia/Baghdad", costingMethod, costingScope };
+        object Category(string code, string? costingMethodOverride) => new { code, name = Name(code, code), costingMethodOverride };
+        var plain = (await owner.PostAsync("/api/v1/items/categories", Category("PLAIN", null))).GetProperty("id").GetGuid();
+        var alsoPlain = (await owner.PostAsync("/api/v1/items/categories", Category("OTHER", null))).GetProperty("id").GetGuid();
+        var fifo = (await owner.PostAsync("/api/v1/items/categories", Category("FIFOCAT", "fifo"))).GetProperty("id").GetGuid();
+        object Item(Guid categoryId) => new { code = "TEA", name = Name("Tea", "شاي"), baseUom = "PCS", categoryId };
+        var tea = (await owner.PostAsync("/api/v1/items", Item(plain))).GetProperty("id").GetGuid();
+        var other = await owner.PostAsync("/api/v1/organization/companies", new { code = "USI", legalName = Name("Tigris", "دجلة"), country = "IQ", functionalCurrency = "USD", timeZone = "Asia/Baghdad" });
+        var otherCompany = other.GetProperty("id").GetGuid();
+
+        // Before anything has moved, every one of them may change (and change back).
+        await owner.PutAsync($"/api/v1/organization/companies/{s.CompanyId}", Company("fifo", "warehouse"));
+        await owner.PutAsync($"/api/v1/organization/companies/{s.CompanyId}", Company("average"));
+        await owner.PutAsync($"/api/v1/items/categories/{plain}", Category("PLAIN", "standard"));
+        await owner.PutAsync($"/api/v1/items/categories/{plain}", Category("PLAIN", null));
+        await owner.PutAsync($"/api/v1/items/{tea}/company-settings/{s.CompanyId}", new { costingMethodOverride = "fifo" });
+        await owner.PutAsync($"/api/v1/items/{tea}/company-settings/{s.CompanyId}", new { costingMethodOverride = (string?)null });
+        await owner.PutAsync($"/api/v1/items/{tea}", Item(fifo));
+        await owner.PutAsync($"/api/v1/items/{tea}", Item(plain));
+
+        await PostAsync(s, tea, StockEntryTypes.PurchaseReceipt, 10m, D(1), 100m);
+
+        // Now the company keeps its method and pool, the item keeps its override and its category's method.
+        (await owner.PutErrorAsync($"/api/v1/organization/companies/{s.CompanyId}", Company("fifo"), HttpStatusCode.Conflict)).Code.ShouldBe("company.costing_locked");
+        (await owner.PutErrorAsync($"/api/v1/organization/companies/{s.CompanyId}", Company("average", "warehouse"), HttpStatusCode.Conflict)).Code.ShouldBe("company.costing_locked");
+        (await owner.PutAsync($"/api/v1/organization/companies/{s.CompanyId}", Company("average", trade: "Rafidain Trading"))).GetProperty("costingMethod").GetString().ShouldBe("average");
+        (await owner.PutErrorAsync($"/api/v1/items/categories/{plain}", Category("PLAIN", "fifo"), HttpStatusCode.Conflict)).Code.ShouldBe("category.costing_locked");
+        await owner.PutAsync($"/api/v1/items/categories/{plain}", Category("PLAIN", null));
+        (await owner.PutErrorAsync($"/api/v1/items/{tea}/company-settings/{s.CompanyId}", new { costingMethodOverride = "standard", standardCost = 100m }, HttpStatusCode.Conflict)).Code.ShouldBe("item_settings.costing_locked");
+        (await owner.PutAsync($"/api/v1/items/{tea}/company-settings/{s.CompanyId}", new { costingMethodOverride = (string?)null, allowNegativeStock = true })).GetProperty("allowNegativeStock").GetBoolean().ShouldBeTrue();
+        (await owner.PutErrorAsync($"/api/v1/items/{tea}", Item(fifo), HttpStatusCode.Conflict)).Code.ShouldBe("item.costing_locked");
+        (await owner.PutAsync($"/api/v1/items/{tea}", Item(alsoPlain))).GetProperty("categoryId").GetGuid().ShouldBe(alsoPlain);
+
+        // In a company where the item has not moved, its override is still free.
+        (await owner.PutAsync($"/api/v1/items/{tea}/company-settings/{otherCompany}", new { costingMethodOverride = "fifo" })).GetProperty("costingMethodOverride").GetString().ShouldBe("fifo");
+    }
+
     private static async Task<JsonElement> ExplainAsync(Setup s, Guid sleId) => await s.Owner.GetOkAsync($"/api/v1/inventory/costing/entries/{sleId}");
 
     private static async Task<JsonElement> ValuationAsync(Setup s, DateOnly asOf, Guid? itemId = null) =>

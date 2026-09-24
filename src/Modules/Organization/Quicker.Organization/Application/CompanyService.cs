@@ -16,7 +16,7 @@ using Quicker.Web;
 namespace Quicker.Organization.Application;
 
 /// <summary>Companies, branches (with their BRANCH dimension value), enabled currencies and settings.</summary>
-public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, FiscalCalendarService calendars, IAuditSink audit, ICustomFieldValidator customFields, IClock clock) : ICompanyDirectory, ICompanySettings
+public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, FiscalCalendarService calendars, IAuditSink audit, ICustomFieldValidator customFields, IEnumerable<ICompanyCostingGuard> costingGuards, IClock clock) : ICompanyDirectory, ICompanySettings
 {
     private static readonly string[] CostingMethods = ["fifo", "average", "standard"];
     private static readonly string[] CostingScopes = ["company", "warehouse"];
@@ -180,6 +180,17 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         {
             // Immutable after creation (ADR-0017): balances and open items are carried in it.
             return Error.Conflict("company.functional_currency_locked", "The functional currency cannot change once the company exists; create a new company instead.");
+        }
+
+        if (!isNew && (company.CostingMethod != costingMethod.Value || company.CostingScope != costingScope.Value))
+        {
+            foreach (var guard in costingGuards)
+            {
+                if (await guard.RefusalAsync(new CompanyId(company.Id), cancellationToken) is { } refusal)
+                {
+                    return refusal.WithWhy(("costingMethod", company.CostingMethod), ("costingScope", company.CostingScope));
+                }
+            }
         }
 
         var fiscalCalendarId = request.FiscalCalendarId ?? (isNew ? await calendars.DefaultCalendarIdAsync(cancellationToken) : company.FiscalCalendarId);

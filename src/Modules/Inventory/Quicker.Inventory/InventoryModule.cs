@@ -8,6 +8,7 @@ using Quicker.Inventory.Contracts;
 using Quicker.Inventory.Persistence;
 using Quicker.Messaging;
 using Quicker.Numbering.Contracts;
+using Quicker.Organization.Contracts;
 using Quicker.Persistence.EntityFramework;
 using Quicker.Workflow.Contracts;
 
@@ -38,6 +39,9 @@ public static class InventoryModule
         services.AddScoped<IStockReservations>(static sp => sp.GetRequiredService<ReservationService>());
         services.AddScoped<TransferService>();
         services.AddScoped<StockInquiryService>();
+        services.AddScoped<StockActivity>();
+        services.AddScoped<IStockActivity>(static sp => sp.GetRequiredService<StockActivity>());
+        services.AddScoped<ICompanyCostingGuard>(static sp => sp.GetRequiredService<StockActivity>());
         services.AddScoped<SlowMovingStockService>();
         services.AddSingleton(static sp => sp.GetRequiredService<IConfiguration>().GetSection(InventoryOptions.SectionName).Get<InventoryOptions>() ?? new InventoryOptions());
         services.AddScoped<CostingService>();

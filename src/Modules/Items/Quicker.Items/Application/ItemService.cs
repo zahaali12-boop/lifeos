@@ -29,6 +29,7 @@ public sealed class ItemService(
     IPostingGroupDirectory postingGroups,
     IWarehouseDirectory warehouses,
     ICustomFieldValidator customFields,
+    IStockActivity stock,
     IAuditSink audit,
     IClock clock)
 {
@@ -185,6 +186,18 @@ public sealed class ItemService(
         if (category.IsFailure)
         {
             return category.Error!;
+        }
+
+        // The category's costing method applies to the item (ADR-0008): moving stock that has moved to a category with
+        // another method would re-value its history.
+        if (item is not null && item.CategoryId != category.Value?.Id)
+        {
+            var before = item.CategoryId is { } oldCategory ? await db.Categories.Where(c => c.Id == oldCategory).Select(static c => c.CostingMethodOverride).SingleOrDefaultAsync(cancellationToken) : null;
+            var after = category.Value?.CostingMethodOverride;
+            if (!string.Equals(before, after, StringComparison.Ordinal) && (await stock.ItemsWithMovementsAsync([item.Id], null, cancellationToken)).Count > 0)
+            {
+                return Error.Conflict("item.costing_locked", "The item's stock has moved under its category's costing method; it cannot move to a category with another method.").WithWhy(("costingMethodBefore", before), ("costingMethodAfter", after));
+            }
         }
 
         var brand = await ResolveBrandAsync(request.BrandId, request.BrandCode, cancellationToken);
@@ -867,6 +880,11 @@ public sealed class ItemService(
         }
 
         var settings = await db.CompanySettings.SingleOrDefaultAsync(s => s.ItemId == itemId && s.CompanyId == companyId, cancellationToken);
+        if (!string.Equals(settings?.CostingMethodOverride, costing.Value, StringComparison.Ordinal) && (await stock.ItemsWithMovementsAsync([itemId], companyId, cancellationToken)).Count > 0)
+        {
+            return Error.Conflict("item_settings.costing_locked", "The item's stock has moved in this company under its costing method; it cannot change now.").WithWhy(("costingMethodOverride", settings?.CostingMethodOverride));
+        }
+
         if (settings is null)
         {
             settings = new ItemCompanySettings { ItemId = itemId, CompanyId = companyId };

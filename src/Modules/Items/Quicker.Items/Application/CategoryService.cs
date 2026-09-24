@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Quicker.Accounting.Contracts;
+using Quicker.Inventory.Contracts;
 using Quicker.Items.Domain;
 using Quicker.Items.Persistence;
 using Quicker.Kernel.Results;
@@ -8,7 +9,7 @@ using Quicker.Kernel.Time;
 namespace Quicker.Items.Application;
 
 /// <summary>Item categories as a tree with a materialised path, so a subtree is one prefix query and a move rewrites its paths.</summary>
-public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory postingGroups, IClock clock)
+public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory postingGroups, IStockActivity stock, IClock clock)
 {
     public async Task<IReadOnlyList<ItemCategorySummary>> ListAsync(CancellationToken cancellationToken)
     {
@@ -74,6 +75,18 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
         if (code != category.Code && await db.Categories.AnyAsync(c => c.Code == code, cancellationToken))
         {
             return Error.Conflict("category.code_taken", $"A category with code '{code}' already exists.");
+        }
+
+        // The category's costing method applies to its items (ADR-0008); once one of them has moved it stays.
+        var costing = string.IsNullOrWhiteSpace(request.CostingMethodOverride) ? null : request.CostingMethodOverride.Trim();
+        if (!string.Equals(costing, category.CostingMethodOverride, StringComparison.Ordinal))
+        {
+            var itemIds = await db.Items.Where(i => i.CategoryId == categoryId).Select(static i => i.Id).ToListAsync(cancellationToken);
+            var moved = await stock.ItemsWithMovementsAsync(itemIds, null, cancellationToken);
+            if (moved.Count > 0)
+            {
+                return Error.Conflict("category.costing_locked", "Items of the category have moved stock under its costing method; it cannot change now.").WithWhy(("itemsWithStockMovements", moved.Count));
+            }
         }
 
         var oldPath = category.Path;

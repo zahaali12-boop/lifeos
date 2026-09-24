@@ -351,6 +351,13 @@ public sealed record SerialInfo(Guid Id, Guid ItemId, string ItemCode, string Se
 /// <summary>Stock on its way into a warehouse from outside the stock ledger (open purchase order lines, M4); transfers in transit are read from the ledger itself.</summary>
 public sealed record IncomingSupplyInfo(Guid ItemId, Guid WarehouseId, decimal Quantity, DateOnly? ExpectedOn, string SourceDocumentType, Guid SourceDocumentId);
 
+/// <summary>Whether stock has moved: stock that moved was costed by a method that cannot change without re-valuing it (A-139).</summary>
+public interface IStockActivity
+{
+    /// <summary>The items of the list with stock ledger entries, in one company or in any.</summary>
+    Task<IReadOnlyList<Guid>> ItemsWithMovementsAsync(IReadOnlyCollection<Guid> itemIds, Guid? companyId = null, CancellationToken cancellationToken = default);
+}
+
 /// <summary>What the purchasing module (M4) reports as incoming; the inventory module ships a default that reports nothing.</summary>
 public interface IIncomingSupply
 {

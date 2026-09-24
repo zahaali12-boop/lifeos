@@ -124,6 +124,16 @@ public interface IWorkingDayCalendar
     Task<DateOnly> DueDateAsync(CompanyId companyId, DateOnly from, int calendarDays, CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// Lets a module whose records were valued under a company's costing method and cost pool refuse to let them change
+/// (A-139): stock that has moved keeps the method it was costed by.
+/// </summary>
+public interface ICompanyCostingGuard
+{
+    /// <summary>Null while the company's costing method and cost pool may still change; otherwise why not.</summary>
+    Task<Error?> RefusalAsync(CompanyId companyId, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Deduplicated dimension combinations: journal lines, balances and budgets reference one id per combination.</summary>
 public interface IDimensionSets
 {
