@@ -11,6 +11,7 @@ namespace Quicker.Demo.Tests;
 /// items with opening stock of v3, every unit costed and booked, ASSUMPTIONS A-104: under ten minutes), leaves it
 /// alone on a plain run, and rebuilds it from scratch with the same identifiers when asked to reseed.
 /// </summary>
+[Collection(DemoSeeding.Name)]
 public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<DatabaseFixture>
 {
     private static readonly TimeSpan Budget = TimeSpan.FromMinutes(10);

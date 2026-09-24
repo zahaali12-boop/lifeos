@@ -7,6 +7,16 @@ using Quicker.Testing;
 
 namespace Quicker.Demo.Tests;
 
+/// <summary>
+/// The classes that seed the whole demo tenant run one after the other: two seeds at once slow each other past the
+/// seeder's time budget (A-104) on a CI runner.
+/// </summary>
+[CollectionDefinition(Name)]
+public sealed class DemoSeeding
+{
+    public const string Name = "Demo seeding";
+}
+
 /// <summary>The demo tenant seeded once and backed up once, for the restore drill.</summary>
 public sealed class BackedUpDemoFixture : IAsyncLifetime
 {
@@ -43,6 +53,7 @@ public sealed class BackedUpDemoFixture : IAsyncLifetime
 /// line is taken away, so the drill's verdict is real. A restore refuses a changed file and an existing database,
 /// and a backup never overwrites another.
 /// </summary>
+[Collection(DemoSeeding.Name)]
 public sealed class BackupRestoreTests(BackedUpDemoFixture fixture) : IClassFixture<BackedUpDemoFixture>
 {
     [Fact]
