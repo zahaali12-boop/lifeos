@@ -227,7 +227,7 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         var ws = await Api.SignupAsync();
         using var owner = Api.ClientFor(ws.AccessToken);
         var setup = await SetupAsync(owner, "REV", "IQD", "USD", 1310m);
-        var supplier = Guid.NewGuid();
+        var supplier = (await owner.PostAsync("/api/v1/partners", new { code = "SUP-R", legalName = new { en = "Reversal Supplies", ar = "توريدات العكس" }, isSupplier = true })).GetProperty("id").GetGuid();
         var post = "/api/v1/accounting/postings";
 
         var first = await owner.PostAsync(post, Posting(setup.CompanyId, "USD", [Line("Inventory", 250m, "INV", Guid.NewGuid()), Line("AP", -250m, "AP", supplier)]));

@@ -155,6 +155,38 @@ public sealed record JournalEntryPosted(
     public string AggregateType => "journal_entry";
 }
 
+/// <summary>
+/// Registered by a module that posts entries for its own documents (a supplier invoice, a payment, a stock movement):
+/// the document keeps its subledger and reverses itself, so its entries are not posted, reversed or corrected
+/// through the journal-entry API, and the journal subledgers do not follow them (A-140).
+/// </summary>
+public sealed record PostingDocumentModule(string Module);
+
+/// <summary>A line of an Accounting-owned entry on a control account; <paramref name="AmountTc"/> and <paramref name="AmountFc"/> are signed, positive debit.</summary>
+public sealed record JournalSubledgerLine(int LineNo, string SubledgerType, Guid SubledgerRef, string AccountRole, decimal AmountTc, decimal AmountFc, DateOnly? DueDate);
+
+/// <summary>An entry Accounting owns (a manual, opening, recurring or correcting journal) as the subledger behind a control account sees it; the id and number are known once it is written.</summary>
+public sealed record JournalSubledgerEntry(Guid CompanyId, Guid EntryId, string Number, DateOnly PostingDate, DateOnly DocumentDate, string Currency, decimal RateTcFc, bool IsOpeningEntry, Guid? BranchId, IReadOnlyList<JournalSubledgerLine> Lines);
+
+/// <summary>
+/// A module that keeps the subledger behind a control account follows the entries Accounting owns (POSTING_RULES §8,
+/// A-140): a journal line on its control account opens the subledger item it names, and reversing the entry reverses
+/// it, so the subledger keeps equal to its control. Documents of other modules keep their own subledger themselves.
+/// </summary>
+public interface IJournalSubledger
+{
+    string SubledgerType { get; }
+
+    /// <summary>Checked before the entry is written: refuses a line whose reference the subledger cannot carry.</summary>
+    Task<Result> CheckAsync(Guid companyId, IReadOnlyList<JournalSubledgerLine> lines, CancellationToken cancellationToken = default);
+
+    /// <summary>The entry was written: open the items its lines name.</summary>
+    Task PostedAsync(JournalSubledgerEntry entry, CancellationToken cancellationToken = default);
+
+    /// <summary>Before the reversal of an entry is written: reverse the items it opened, or refuse (an item already settled).</summary>
+    Task<Result> ReverseAsync(Guid entryId, DateOnly reversalDate, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Lets a module that owns a keyed account (a bank account, later an asset category) register the rule that routes a role to it, so its documents keep posting by role (ADR-0006).</summary>
 public interface IPostingRules
 {

@@ -56,6 +56,6 @@ To switch the system over to a restored database, point `QUICKER__DB__OWNERCONNE
 
 | Date | Source | Dump | Backup | Restore + counts + harness | Result |
 |---|---|---|---|---|---|
-| 2026-09-24 | local development database (the demo tenant and 379 tenants left by the browser journeys; 177 tables, 301,676 rows) | 20.6 MB | 7.6 s | 34 s | every table matched its manifest; the demo tenant passed all 11 checks; see open issue I4 for six journey tenants whose payables check fails in the source database as well |
+| 2026-09-24 | local development database (the demo tenant and 379 tenants left by the browser journeys; 177 tables, 301,676 rows) | 20.6 MB | 7.6 s | 34 s | every table matched its manifest; the demo tenant passed all 11 checks; six journey tenants failed the payables check in the source database as well (open issue I4, since fixed by A-140) |
 
 The automated drill (`tests/Demo/Quicker.Demo.Tests/BackupRestoreTests.cs`) repeats it in CI on every change: the demo tenant backed up, restored into a new database with every row, all checks passing, and the harness failing once a posted line is removed from the restored books.

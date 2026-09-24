@@ -36,9 +36,26 @@ public sealed class PostingService(
     ICurrentPrincipal principal,
     IAuditSink audit,
     IOutbox outbox,
+    IEnumerable<IJournalSubledger> subledgers,
+    IEnumerable<PostingDocumentModule> documentModules,
     IClock clock) : IPostingService
 {
     public const string JournalDocumentType = "journal_entry";
+
+    private HashSet<string>? _documentModules;
+
+    /// <summary>Whether entries of the module belong to documents that keep their own subledger (A-140).</summary>
+    public bool IsDocumentModule(string module) =>
+        (_documentModules ??= documentModules.Select(static m => m.Module).ToHashSet(StringComparer.Ordinal)).Contains(module);
+
+    /// <summary>Refuses an entry that belongs to another module's document: that document is reversed or corrected, not its entry.</summary>
+    public async Task<Error?> RefuseDocumentEntryAsync(Guid entryId, CancellationToken cancellationToken)
+    {
+        var entry = await db.Set<JournalEntry>().AsNoTracking().Where(e => e.Id == entryId).Select(static e => new { e.SourceModule, e.SourceDocumentType, e.SourceDocumentNumber }).SingleOrDefaultAsync(cancellationToken);
+        return entry is not null && IsDocumentModule(entry.SourceModule)
+            ? Error.Conflict("journal_entry.owned_by_document", $"The entry belongs to {entry.SourceDocumentType} {entry.SourceDocumentNumber}; reverse that document instead, so what it keeps besides the journal follows.").WithWhy(("sourceModule", entry.SourceModule), ("sourceDocumentType", entry.SourceDocumentType), ("sourceDocumentNumber", entry.SourceDocumentNumber))
+            : null;
+    }
     private const string BranchDimension = "BRANCH";
 
     private sealed record ResolvedLine(PostingLine Source, AccountInfo Account, Guid? RuleId, decimal Tc, decimal Fc, decimal Rc, Guid? DimensionSetId, Guid? BranchId, bool IsRounding);
@@ -198,10 +215,40 @@ public sealed class PostingService(
             resolvedLines.Add(rounding.Value);
         }
 
+        // A journal's lines on a control account open the subledger items they name (A-140); refused before anything is written.
+        var followed = new List<(IJournalSubledger Subledger, IReadOnlyList<JournalSubledgerLine> Lines)>();
+        if (!IsDocumentModule(request.SourceModule))
+        {
+            foreach (var subledger in subledgers)
+            {
+                var lines = resolvedLines.Select((l, i) => (Line: l, No: i + 1))
+                    .Where(x => string.Equals(x.Line.Account.SubledgerType, subledger.SubledgerType, StringComparison.Ordinal) && x.Line.Source.SubledgerRef is not null)
+                    .Select(x => new JournalSubledgerLine(x.No, subledger.SubledgerType, x.Line.Source.SubledgerRef!.Value, x.Line.Source.AccountRole, x.Line.Tc, x.Line.Fc, x.Line.Source.DueDate))
+                    .ToList();
+                if (lines.Count == 0)
+                {
+                    continue;
+                }
+
+                var checkedLines = await subledger.CheckAsync(company.Id.Value, lines, cancellationToken);
+                if (checkedLines.IsFailure)
+                {
+                    return checkedLines.Error!;
+                }
+
+                followed.Add((subledger, lines));
+            }
+        }
+
         var entry = await WriteEntryAsync(request, company, period.Value, tc, fc, rc, rateType, rateTcFc.Value, rateFcRc, rules.Value.ProfileId, resolvedLines, isReversal: false, cancellationToken);
         if (entry.IsFailure)
         {
             return entry.Error!;
+        }
+
+        foreach (var (subledger, lines) in followed)
+        {
+            await subledger.PostedAsync(new JournalSubledgerEntry(company.Id.Value, entry.Value.Id, entry.Value.Number, entry.Value.PostingDate, entry.Value.DocumentDate, entry.Value.CurrencyTc, entry.Value.RateTcFc, entry.Value.IsOpeningEntry, request.BranchId?.Value, lines), cancellationToken);
         }
 
         await outbox.PublishAsync(new JournalEntryPosted(entry.Value.Id, company.Id.Value, entry.Value.Number, entry.Value.PostingDate, entry.Value.SourceModule, entry.Value.SourceDocumentType, entry.Value.SourceDocumentId, false, null), cancellationToken);
@@ -266,6 +313,19 @@ public sealed class PostingService(
         if (period.IsFailure)
         {
             return period.Error!;
+        }
+
+        // The items a journal opened are reversed with it (A-140), or the reversal is refused while one is settled.
+        if (!IsDocumentModule(original.SourceModule))
+        {
+            foreach (var subledger in subledgers.Where(s => original.Lines.Any(l => string.Equals(l.SubledgerType, s.SubledgerType, StringComparison.Ordinal))))
+            {
+                var reversedItems = await subledger.ReverseAsync(original.Id, date, cancellationToken);
+                if (reversedItems.IsFailure)
+                {
+                    return reversedItems.Error!;
+                }
+            }
         }
 
         var accounts = await db.Accounts.Where(a => original.Lines.Select(static l => l.AccountId).Contains(a.Id)).ToDictionaryAsync(static a => a.Id, cancellationToken);

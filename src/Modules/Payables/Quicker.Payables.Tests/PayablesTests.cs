@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Dapper;
 using Npgsql;
 using Quicker.Identity.TestSupport;
@@ -54,6 +55,62 @@ public sealed class PayablesTests(ApiHostFixture host)
         await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
         await db.OpenAsync(TestContext.Current.CancellationToken);
         return await db.ExecuteScalarAsync<decimal>("SELECT coalesce(sum(l.credit_fc - l.debit_fc), 0) FROM app.gl_journal_lines l WHERE l.tenant_id = @t AND l.company_id = @c AND l.account_role = 'AP' AND l.posting_date <= @d::date", new { t = s.Ws.TenantId, c = s.CompanyId, d = asOf });
+    }
+
+    [Fact]
+    public async Task A_journal_on_the_payables_control_opens_the_suppliers_item_and_reversing_it_follows_while_documents_keep_their_own()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        object Line(string account, decimal debit = 0m, decimal credit = 0m, Guid? supplier = null, string? dueDate = null) =>
+            new { accountCode = account, debit, credit, subledgerType = supplier is null ? null : "AP", subledgerRef = supplier, dueDate };
+        async Task<JsonElement> JournalAsync(string date, params object[] lines) =>
+            await owner.PostAsync($"/api/v1/accounting/companies/{s.CompanyId}/journals", new { kind = "manual", postingDate = date, currency = "IQD", description = Name("Rent", "إيجار"), lines });
+        async Task<List<JsonElement>> ItemsAsync() =>
+            (await owner.GetOkAsync($"/api/v1/payables/open-items?companyId={s.CompanyId}&partnerId={s.Supplier}")).EnumerateArray().Select(static o => o.GetProperty("item")).ToList();
+
+        // Only a supplier can be named on the payables control.
+        var customer = (await owner.PostAsync("/api/v1/partners", new { code = "CUS-A", legalName = Name("A customer", "زبون"), isCustomer = true })).GetProperty("id").GetGuid();
+        foreach (var notASupplier in new[] { customer, Guid.NewGuid() })
+        {
+            var draft = await JournalAsync("2026-09-05", Line("6110", debit: 100m), Line("2110", credit: 100m, supplier: notASupplier));
+            (await owner.PostErrorAsync($"/api/v1/accounting/journals/{draft.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("journal.supplier_required");
+        }
+
+        // Rent owed to the supplier: the credit opens an item owed to them, due when the line says.
+        var rent = await JournalAsync("2026-09-05", Line("6110", debit: 1000m), Line("2110", credit: 1000m, supplier: s.Supplier, dueDate: "2026-10-15"));
+        var rentPosted = await owner.PostAsync($"/api/v1/accounting/journals/{rent.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        var rentEntry = rentPosted.GetProperty("journalEntryId").GetGuid();
+        var owed = (await ItemsAsync()).ShouldHaveSingleItem();
+        (owed.GetProperty("kind").GetString(), owed.GetProperty("documentType").GetString(), owed.GetProperty("originalTc").GetDecimal(), owed.GetProperty("dueDate").GetString()).ShouldBe(("adjustment", "journal_entry", 1000m, "2026-10-15"));
+        await owner.AssertInvariantsAsync();
+
+        // A credit from the supplier by journal (a debit on the control) is theirs to owe, and applies to the rent like any credit.
+        var credit = await JournalAsync("2026-09-08", Line("2110", debit: 300m, supplier: s.Supplier), Line("6110", credit: 300m));
+        await owner.PostAsync($"/api/v1/accounting/journals/{credit.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        var creditItem = (await ItemsAsync()).Single(i => i.GetProperty("originalTc").GetDecimal() == -300m);
+        await owner.PostAsync("/api/v1/payables/settlements/apply", new { settlingItemId = creditItem.GetProperty("id").GetGuid(), settledItemId = owed.GetProperty("id").GetGuid(), amount = 300m }, HttpStatusCode.OK);
+        (await ItemsAsync()).Single(i => i.GetProperty("id").GetGuid() == owed.GetProperty("id").GetGuid()).GetProperty("remainingTc").GetDecimal().ShouldBe(700m);
+        await owner.AssertInvariantsAsync();
+
+        // A settled item is not reversed from under its settlement: neither through the entry nor by correcting the journal.
+        (await owner.PostErrorAsync($"/api/v1/accounting/journal-entries/{rentEntry}/reverse", new { reason = "Wrong supplier" }, HttpStatusCode.Conflict)).Code.ShouldBe("payables.item_settled");
+
+        // An unsettled one follows its journal's reversal.
+        var fee = await JournalAsync("2026-09-10", Line("6110", debit: 200m), Line("2110", credit: 200m, supplier: s.Supplier));
+        var feeEntry = (await owner.PostAsync($"/api/v1/accounting/journals/{fee.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK)).GetProperty("journalEntryId").GetGuid();
+        await owner.PostAsync($"/api/v1/accounting/journal-entries/{feeEntry}/reverse", new { reason = "Billed twice" });
+        (await ItemsAsync()).ShouldNotContain(i => i.GetProperty("originalTc").GetDecimal() == 200m);
+        (await owner.GetOkAsync($"/api/v1/payables/open-items?companyId={s.CompanyId}&partnerId={s.Supplier}&status=reversed")).EnumerateArray().ShouldHaveSingleItem().GetProperty("item").GetProperty("originalTc").GetDecimal().ShouldBe(200m);
+        await owner.AssertInvariantsAsync();
+
+        // A document's entry is reversed through the document, and no one posts in a document module's name.
+        var invoice = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "expense", supplierInvoiceNumber = "E-1", documentDate = "2026-09-12", lines = new[] { new { kind = "expense", quantity = 1m, unitPrice = 50m, description = "Courier" } } });
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{invoice.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+        var invoiceEntry = (await owner.PostAsync($"/api/v1/purchasing/invoices/{invoice.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK)).GetProperty("journalEntryId").GetGuid();
+        (await owner.PostErrorAsync($"/api/v1/accounting/journal-entries/{invoiceEntry}/reverse", new { reason = "Undo" }, HttpStatusCode.Conflict)).Code.ShouldBe("journal_entry.owned_by_document");
+        (await owner.PostErrorAsync("/api/v1/accounting/postings", new { companyId = s.CompanyId, sourceModule = "purchasing", sourceDocumentType = "purchase_invoice", sourceDocumentId = Guid.NewGuid(), postingDate = "2026-09-12", currency = "IQD", lines = new object[] { new { accountRole = "PurchaseExpense", amount = 10m }, new { accountRole = "AP", amount = -10m, subledgerType = "AP", subledgerRef = s.Supplier } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.source_module_reserved");
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]

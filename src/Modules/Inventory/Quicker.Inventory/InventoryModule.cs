@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Quicker.Accounting.Contracts;
 using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Inventory.Application;
@@ -11,13 +12,14 @@ using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
 using Quicker.Persistence.EntityFramework;
 using Quicker.Workflow.Contracts;
-
 namespace Quicker.Inventory;
 
 public static class InventoryModule
 {
     public static IServiceCollection AddInventoryModule(this IServiceCollection services)
     {
+        // Entries of this module belong to its documents, which keep their own subledger (A-140).
+        services.AddSingleton(new PostingDocumentModule("inventory"));
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(InventoryPermissions.All);
         NumberedDocumentTypes.Register(

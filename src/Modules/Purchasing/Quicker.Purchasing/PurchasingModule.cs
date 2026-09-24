@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Quicker.Accounting.Contracts;
 using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Inventory.Contracts;
@@ -10,13 +11,14 @@ using Quicker.Purchasing.Contracts;
 using Quicker.Purchasing.Persistence;
 using Quicker.Tenancy.Contracts;
 using Quicker.Workflow.Contracts;
-
 namespace Quicker.Purchasing;
 
 public static class PurchasingModule
 {
     public static IServiceCollection AddPurchasingModule(this IServiceCollection services)
     {
+        // Entries of this module belong to its documents, which keep their own subledger (A-140).
+        services.AddSingleton(new PostingDocumentModule("purchasing"));
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(PurchasingPermissions.All);
         NumberedDocumentTypes.Register(

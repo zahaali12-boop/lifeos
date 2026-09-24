@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Quicker.Accounting.Application;
 using Quicker.Accounting.Contracts;
 using Quicker.Kernel.Ids;
+using Quicker.Kernel.Results;
 using Quicker.Kernel.Text;
 using Quicker.Web;
 
@@ -69,8 +70,11 @@ public static class PostingEndpoints
             .RequirePermission(AccountingPermissions.ProfileManage)
             .WithSummary("Makes the profile the company's current one; the previous active version of the same code is retired");
 
-        accounting.MapPost("/postings", async (PostJournalRequest request, IPostingService service, CancellationToken ct) =>
-            ApiProblems.Created(await service.PostAsync(ToRequest(request), ct), static r => $"/api/v1/accounting/journal-entries/{r.EntryId}"))
+        accounting.MapPost("/postings", async (PostJournalRequest request, PostingService service, CancellationToken ct) =>
+        {
+            Result<PostingResult> posted = service.IsDocumentModule(request.SourceModule) ? Reserved(request.SourceModule) : await service.PostAsync(ToRequest(request), ct);
+            return ApiProblems.Created(posted, static r => $"/api/v1/accounting/journal-entries/{r.EntryId}");
+        })
             .RequirePermission(AccountingPermissions.JournalPost)
             .WithSummary("Posts a balanced request through the engine: roles resolved by the company's profile, amounts converted to functional and reporting currency, period and control checks, rounding line, balances");
 
@@ -78,17 +82,28 @@ public static class PostingEndpoints
         entries.MapGet("/{entryId:guid}", async (Guid entryId, JournalService service, CancellationToken ct) =>
             ApiProblems.Found(await service.GetEntryAsync(entryId, ct), "journal_entry", entryId))
             .RequirePermission(AccountingPermissions.JournalRead);
-        entries.MapPost("/{entryId:guid}/reverse", async (Guid entryId, ReverseRequest request, IPostingService service, CancellationToken ct) =>
-            ApiProblems.Created(await service.ReverseAsync(entryId, request.ReversalDate, request.Reason, cancellationToken: ct), static r => $"/api/v1/accounting/journal-entries/{r.EntryId}"))
+        entries.MapPost("/{entryId:guid}/reverse", async (Guid entryId, ReverseRequest request, PostingService service, CancellationToken ct) =>
+        {
+            Result<PostingResult> reversed = await service.RefuseDocumentEntryAsync(entryId, ct) is { } refused ? refused : await service.ReverseAsync(entryId, request.ReversalDate, request.Reason, cancellationToken: ct);
+            return ApiProblems.Created(reversed, static r => $"/api/v1/accounting/journal-entries/{r.EntryId}");
+        })
             .RequirePermission(AccountingPermissions.JournalReverse)
             .WithSummary("The mirror entry on the original date when its period is open, else on the first open period; both entries are linked");
-        entries.MapPost("/{entryId:guid}/correct", async (Guid entryId, CorrectEntryRequest request, IPostingService service, CancellationToken ct) =>
-            ApiProblems.Created(await service.CorrectAsync(entryId, ToRequest(request.Replacement), request.Reason, ct), static r => $"/api/v1/accounting/journal-entries/{r.Replacement.EntryId}"))
+        entries.MapPost("/{entryId:guid}/correct", async (Guid entryId, CorrectEntryRequest request, PostingService service, CancellationToken ct) =>
+        {
+            Result<CorrectionResult> corrected = await service.RefuseDocumentEntryAsync(entryId, ct) is { } refused ? refused
+                : service.IsDocumentModule(request.Replacement.SourceModule) ? Reserved(request.Replacement.SourceModule)
+                : await service.CorrectAsync(entryId, ToRequest(request.Replacement), request.Reason, ct);
+            return ApiProblems.Created(corrected, static r => $"/api/v1/accounting/journal-entries/{r.Replacement.EntryId}");
+        })
             .RequirePermission(AccountingPermissions.JournalReverse)
             .WithSummary("Reverses the entry into the first open period and posts the replacement there (or on its own later date); the replacement is linked to the original as its correction");
 
         return accounting;
     }
+
+    private static Error Reserved(string module) =>
+        Error.Validation("posting.source_module_reserved", $"Entries of '{module}' are posted by its documents, not through the journal-entry API.").WithWhy(("sourceModule", module));
 
     private static PostingRequest ToRequest(PostJournalRequest r)
     {
