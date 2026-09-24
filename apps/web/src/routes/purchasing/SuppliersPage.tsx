@@ -15,6 +15,7 @@ import { CompanyFilter, Tabs, useCompanyContext } from "../inventory/shared";
 import { HoldBadge, num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, useSupplierPostingGroups, useWhtCodes } from "./shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
+import { covers } from "../../lib/permissions";
 
 type SupplierAccount = components["schemas"]["SupplierAccountSummary"];
 
@@ -337,7 +338,7 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
 
   const me = useQuery({ queryKey: ["me"], queryFn: async () => unwrap(await api.GET("/api/v1/me")), staleTime: 60_000 });
   const permissions = useMemo(() => new Set<string>(me.data?.permissions ?? []), [me.data]);
-  const canReveal = permissions.has("*") || permissions.has("partners.supplier.reveal_bank_account");
+  const canReveal = covers(permissions, "partners.supplier.reveal_bank_account");
   const detail = useQuery({ queryKey: ["partner", partnerId], queryFn: async () => unwrap(await api.GET("/api/v1/partners/{partnerId}", { params: { path: { partnerId } } })) });
   const partner = detail.data?.partner;
   const current = detail.data?.supplierAccounts.find((a) => a.companyId === companyId);

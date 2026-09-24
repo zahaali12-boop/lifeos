@@ -8,6 +8,7 @@ import { api, unwrap } from "../api";
 import { formatDateTime, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, PageHeader, TextField, TextareaField } from "./common";
+import { covers } from "../lib/permissions";
 
 /** The member's inbox (paged by cursor), read/read-all, channel preferences, and announcements for those allowed. */
 export function NotificationsPage() {
@@ -34,7 +35,7 @@ export function NotificationsPage() {
   });
   const preferences = useQuery({ queryKey: ["notifications", "preferences"], queryFn: async () => unwrap(await api.GET("/api/v1/collaboration/notifications/preferences")) });
   const me = useQuery({ queryKey: ["me"], queryFn: async () => unwrap(await api.GET("/api/v1/me")) });
-  const canAnnounce = (me.data?.permissions.includes("*") ?? false) || (me.data?.permissions.includes("collaboration.notification.announce") ?? false);
+  const canAnnounce = covers(me.data?.permissions ?? [], "collaboration.notification.announce");
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["notifications"] });
   const markRead = useMutation({ mutationFn: async (id: string) => unwrap(await api.POST("/api/v1/collaboration/notifications/{notificationId}/read", { params: { path: { notificationId: id } } })), onSuccess: invalidate });

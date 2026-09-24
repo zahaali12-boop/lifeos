@@ -1,10 +1,30 @@
-import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type HTMLAttributes, type TdHTMLAttributes, type ThHTMLAttributes } from "react";
 import { cn } from "../lib/cn";
 
-/** Semantic table primitives for small, non-virtualized lists; the data grid in the app builds on the same classes. */
+/**
+ * Semantic table primitives for small, non-virtualized lists; the data grid in the app builds on the same classes.
+ * A table wider than its column scrolls sideways, and the scrolling box then takes keyboard focus so it can be
+ * scrolled without a mouse (WCAG 2.1.1) even when nothing inside it is focusable.
+ */
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
+  const box = useRef<HTMLDivElement>(null);
+  const [scrollable, setScrollable] = useState(false);
+  useEffect(() => {
+    const element = box.current;
+    if (!element || typeof ResizeObserver === "undefined") {
+      return undefined;
+    }
+    const measure = (): void => { setScrollable(element.scrollWidth > element.clientWidth); };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    if (element.firstElementChild) {
+      observer.observe(element.firstElementChild);
+    }
+    return () => { observer.disconnect(); };
+  }, []);
   return (
-    <div className="w-full overflow-x-auto rounded-md border border-border">
+    <div ref={box} tabIndex={scrollable ? 0 : undefined} className="w-full overflow-x-auto rounded-md border border-border focus-visible:outline-2 focus-visible:outline-accent">
       <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   );

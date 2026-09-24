@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField, TextareaField } from "../common";
 import { KeyValues, Tabs, plain } from "../inventory/shared";
+import { covers } from "../../lib/permissions";
 
 type Request = components["schemas"]["RequestSummary"];
 type Delegation = components["schemas"]["DelegationSummary"];
@@ -56,7 +57,7 @@ export function ApprovalsPage() {
 
   const me = useQuery({ queryKey: ["me"], queryFn: async () => unwrap(await api.GET("/api/v1/me")), staleTime: 60_000 });
   const permissions = useMemo(() => new Set<string>(me.data?.permissions ?? []), [me.data]);
-  const canReadAll = permissions.has("*") || permissions.has("workflow.request.read");
+  const canReadAll = covers(permissions, "workflow.request.read");
   const inbox = useQuery({ queryKey: ["approvals", "inbox"], queryFn: async () => unwrap(await api.GET("/api/v1/workflow/requests")) });
   const all = useQuery({
     queryKey: ["approvals", "all", status],

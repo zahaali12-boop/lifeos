@@ -1,7 +1,7 @@
-import { Anchor, ArrowRightLeft, ChartColumn, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Route, Ruler, Scale, ScanLine, Settings, Settings2, ShieldCheck, Shapes, ShoppingCart, SlidersHorizontal, TrendingDown, Truck, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, BadgePercent, ChartColumn, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Contact, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, Kanban, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, ListTodo, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Route, Ruler, Scale, ScanLine, Settings, Settings2, ShieldCheck, Shapes, ShoppingCart, SlidersHorizontal, TrendingDown, Truck, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The sections of the sidebar, in order; each is labelled `nav.groups.<id>` and can be collapsed. */
-export const navigationGroups = ["organization", "accounting", "inventory", "purchasing", "finance", "administration"] as const;
+export const navigationGroups = ["organization", "accounting", "inventory", "purchasing", "sales", "finance", "administration"] as const;
 export type NavigationGroup = (typeof navigationGroups)[number];
 
 /**
@@ -62,6 +62,10 @@ export const navigation: NavigationItem[] = [
   { to: "/purchasing/open-lines", label: "nav.openOrderLines", icon: Truck, shortcut: "g *", permission: "purchasing.order.read", group: "purchasing" },
   { to: "/purchasing/analysis", label: "nav.purchaseAnalysis", icon: ChartColumn, shortcut: "g (", permission: "purchasing.order.read", group: "purchasing" },
   { to: "/purchasing/intelligence", label: "nav.supplierIntelligence", icon: Gauge, shortcut: "g ]", permission: "purchasing.intelligence.read", group: "purchasing" },
+  { to: "/sales/customers", label: "nav.customers", icon: Contact, shortcut: "s c", permission: "partners.customer.read", group: "sales" },
+  { to: "/sales/pipeline", label: "nav.pipeline", icon: Kanban, shortcut: "s p", permission: "partners.customer.read", group: "sales" },
+  { to: "/sales/activities", label: "nav.crmActivities", icon: ListTodo, shortcut: "s a", permission: "partners.customer.read", group: "sales" },
+  { to: "/sales/setup", label: "nav.salesSetup", icon: BadgePercent, shortcut: "s t", permission: "partners.customer.read", group: "sales" },
   { to: "/payables/open-items", label: "nav.payables", icon: HandCoins, shortcut: "g /", permission: "payables.open_item.read", group: "finance" },
   { to: "/payables/proposals", label: "nav.paymentProposals", icon: CalendarClock, shortcut: "g -", permission: "payables.proposal.read", group: "finance" },
   { to: "/banking/bank-accounts", label: "nav.bankAccounts", icon: Landmark, shortcut: "g =", permission: "banking.bank_account.read", group: "finance" },

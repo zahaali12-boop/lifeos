@@ -57,6 +57,11 @@ import { ReceiptsPage } from "./purchasing/ReceiptsPage";
 import { RequisitionsPage } from "./purchasing/RequisitionsPage";
 import { RfqsPage } from "./purchasing/RfqsPage";
 import { SuppliersPage } from "./purchasing/SuppliersPage";
+import { ActivitiesPage } from "./sales/ActivitiesPage";
+import { Customer360Page } from "./sales/Customer360Page";
+import { CustomersPage } from "./sales/CustomersPage";
+import { PipelinePage } from "./sales/PipelinePage";
+import { SalesSetupPage } from "./sales/SalesSetupPage";
 import { ApprovalsPage } from "./workflow/ApprovalsPage";
 import { WorkflowsPage } from "./workflow/WorkflowsPage";
 import { MobileCountPage } from "./mobile/MobileCountPage";
@@ -136,6 +141,11 @@ const returnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/pur
 const intelligenceRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/intelligence", component: SupplierIntelligencePage, validateSearch: searchRecord });
 const openLinesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/open-lines", component: OpenOrderLinesPage });
 const analysisRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/analysis", component: PurchaseAnalysisPage });
+const customersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers", component: CustomersPage });
+const customer360Route = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers/$partnerId", component: Customer360Page });
+const pipelineRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pipeline", component: PipelinePage, validateSearch: searchRecord });
+const crmActivitiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/activities", component: ActivitiesPage });
+const salesSetupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/setup", component: SalesSetupPage });
 const payablesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/open-items", component: OpenItemsPage, validateSearch: searchRecord });
 const proposalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/proposals", component: ProposalsPage, validateSearch: searchRecord });
 const bankAccountsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/bank-accounts", component: BankAccountsPage, validateSearch: searchRecord });
@@ -167,7 +177,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, pipelineRoute, crmActivitiesRoute, salesSetupRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),
 ]);

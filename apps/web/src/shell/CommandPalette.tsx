@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogTitle } from "@quicker/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
-import { Building2, FileText, Handshake, Megaphone, Package, Plus, Search } from "lucide-react";
+import { Building2, Contact, FileText, Handshake, Megaphone, Package, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
@@ -11,6 +11,7 @@ import { formatDate, localized } from "../lib/format";
 import { auditEntityLabel } from "../routes/auditLabels";
 import { navigation } from "./navigation";
 import { describeKeys } from "./useShortcuts";
+import { covers } from "../lib/permissions";
 
 export interface CommandPaletteProps {
   open: boolean;
@@ -45,7 +46,7 @@ function readRecent(): RecentRecord[] {
 }
 
 function allowed(permissions: ReadonlySet<string>, permission?: string): boolean {
-  return !permission || permissions.has("*") || permissions.has(permission);
+  return !permission || covers(permissions, permission);
 }
 
 /**
@@ -76,6 +77,11 @@ export function CommandPalette({ open, onOpenChange, permissions }: CommandPalet
     queryKey: ["palette", "items", term],
     enabled: open && term.length >= 2 && allowed(permissions, "inventory.item.read"),
     queryFn: async () => unwrap(await api.GET("/api/v1/items", { params: { query: { q: term, limit: 6 } } })),
+  });
+  const customers = useQuery({
+    queryKey: ["palette", "customers", term],
+    enabled: open && term.length >= 2 && allowed(permissions, "partners.customer.read"),
+    queryFn: async () => unwrap(await api.GET("/api/v1/partners", { params: { query: { q: term, role: "customer", limit: 6 } } })),
   });
   const suppliers = useQuery({
     queryKey: ["palette", "suppliers", term],
@@ -150,6 +156,17 @@ export function CommandPalette({ open, onOpenChange, permissions }: CommandPalet
                     <Package className="size-4 text-fg-subtle" aria-hidden="true" />
                     <span className="font-medium" dir="ltr">{item.code}</span>
                     <span className="text-fg-muted">{localized(item.name)}</span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            ) : null}
+            {customers.data && customers.data.items.length > 0 ? (
+              <Command.Group heading={t("palette.groups.customers")} className={groupClass}>
+                {customers.data.items.map((partner) => (
+                  <Command.Item key={partner.id} value={`customer ${partner.code} ${localized(partner.legalName)} ${term}`} onSelect={() => { go(`/sales/customers/${partner.id}`); }} className={itemClass}>
+                    <Contact className="size-4 text-fg-subtle" aria-hidden="true" />
+                    <span className="font-medium" dir="ltr">{partner.code}</span>
+                    <span className="text-fg-muted">{localized(partner.legalName)}</span>
                   </Command.Item>
                 ))}
               </Command.Group>

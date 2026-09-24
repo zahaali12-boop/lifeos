@@ -14,6 +14,7 @@ import { ShortcutsOverlay } from "./ShortcutsOverlay";
 import { SidebarNav } from "./SidebarNav";
 import { StepUpDialog } from "./StepUpDialog";
 import { installShortcutListener, registerShortcut } from "./useShortcuts";
+import { covers } from "../lib/permissions";
 
 type Theme = "light" | "dark";
 
@@ -100,7 +101,7 @@ export function AppShell() {
     }
   }, [navigate, queryClient]);
 
-  const visibleNavigation = navigation.filter((item) => !item.permission || permissions.has("*") || permissions.has(item.permission));
+  const visibleNavigation = navigation.filter((item) => !item.permission || covers(permissions, item.permission));
 
   return (
     <TooltipProvider delayDuration={300}>
