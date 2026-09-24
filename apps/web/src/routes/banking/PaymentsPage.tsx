@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { ItemStatus, useBankAccounts, useOpenItems } from "../payables/shared";
 import { num, useSuppliers } from "../purchasing/shared";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Payment = components["schemas"]["PaymentSummary"];
 
@@ -326,6 +327,7 @@ export function PaymentsPage() {
                   <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
                 </Field>
               ) : null}
+              <RecordActivity entityType="bank_payment" entityId={p.id} />
               <DialogFooter>
                 {p.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: p.id, kind: p.kind, partnerId: p.partnerId, bankAccountId: p.bankAccountId, paymentDate: p.paymentDate, method: p.method, reference: p.reference ?? "", currency: p.currency, exchangeRate: "", onAccount: p.onAccountTc ? String(p.onAccountTc) : "", charges: p.chargesBank ? String(p.chargesBank) : "", bankAmount: p.bankCurrency !== p.currency ? String(p.bankAmount) : "", lines: p.lines.map((l) => ({ openItemId: l.openItemId, label: `${l.documentNumber} · ${formatMoney(l.itemRemainingTc, p.currency)}`, remaining: Number(l.itemRemainingTc), amount: String(l.amountTc) })) }); }} data-testid="edit-payment">{t("common.edit")}</Button> : null}
                 {p.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: p.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-payment">{t("purchasing.deleteDraft")}</Button> : null}

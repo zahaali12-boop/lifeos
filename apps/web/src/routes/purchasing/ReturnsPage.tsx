@@ -14,6 +14,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Return = components["schemas"]["ReturnSummary"];
 type Returnable = components["schemas"]["ReturnableLine"];
@@ -272,6 +273,7 @@ export function ReturnsPage() {
                   <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
                 </Field>
               ) : null}
+              <RecordActivity entityType="purchase_return" entityId={r.id} />
               <DialogFooter>
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, receiptId: r.receiptId, postingDate: r.postingDate, reason: r.reason ?? "", supplierRma: r.supplierRma ?? "", lines: r.lines.map((l) => ({ receiptLineId: l.receiptLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", serialNumbers: l.serialNumbers.join(" "), reason: l.reason ?? "" })) }); }} data-testid="edit-return">{t("common.edit")}</Button> : null}
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-return">{t("purchasing.deleteDraft")}</Button> : null}

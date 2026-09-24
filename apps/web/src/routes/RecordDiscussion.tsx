@@ -1,6 +1,6 @@
 import { Badge, Button, Field } from "@quicker/ui";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, X } from "lucide-react";
+import { History, MessageSquare, X } from "lucide-react";
 import { useMemo, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
@@ -414,5 +414,31 @@ export function RecordDiscussion({ entityType, entityId, files = true }: RecordR
       <CommentsPanel entityType={entityType} entityId={entityId} />
       {files && can.attachments ? <AttachmentsPanel entityType={entityType} entityId={entityId} /> : null}
     </div>
+  );
+}
+
+/**
+ * The discussion and history of a record as two toggles under its details, for records whose detail has no tabs:
+ * either opens in place, neither is loaded until asked for.
+ */
+export function RecordActivity({ entityType, entityId }: RecordRef) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState<"discussion" | "history" | null>(null);
+  const toggle = (panel: "discussion" | "history") => { setOpen(open === panel ? null : panel); };
+  return (
+    <section className="flex flex-col gap-3 border-t border-border pt-3" aria-label={`${t("comments.tab")} · ${t("history.tab")}`}>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant={open === "discussion" ? "secondary" : "ghost"} aria-expanded={open === "discussion"} onClick={() => { toggle("discussion"); }} data-testid="record-discussion-toggle">
+          <MessageSquare aria-hidden="true" />
+          {t("comments.tab")}
+        </Button>
+        <Button type="button" size="sm" variant={open === "history" ? "secondary" : "ghost"} aria-expanded={open === "history"} onClick={() => { toggle("history"); }} data-testid="record-history-toggle">
+          <History aria-hidden="true" />
+          {t("history.tab")}
+        </Button>
+      </div>
+      {open === "discussion" ? <RecordDiscussion entityType={entityType} entityId={entityId} /> : null}
+      {open === "history" ? <RecordHistory entityType={entityType} entityId={entityId} /> : null}
+    </section>
   );
 }

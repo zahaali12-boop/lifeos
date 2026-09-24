@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
 import { TransferQuantities } from "./TransferQuantities";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Transfer = components["schemas"]["TransferSummary"];
 
@@ -244,6 +245,8 @@ export function TransfersPage() {
                   onCancel={() => { setQuantities(null); }}
                 />
               ) : (
+                <>
+                <RecordActivity entityType="stock_transfer" entityId={detail.id} />
                 <DialogFooter>
                   {detail.status === "draft" ? (
                     <>
@@ -271,6 +274,7 @@ export function TransfersPage() {
                     </Button>
                   ) : null}
                 </DialogFooter>
+                </>
               )}
             </div>
           ) : null}

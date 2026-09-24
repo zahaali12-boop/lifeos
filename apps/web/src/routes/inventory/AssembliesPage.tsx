@@ -14,6 +14,7 @@ import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Assembly = components["schemas"]["AssemblySummary"];
 
@@ -195,6 +196,7 @@ export function AssembliesPage() {
                 </TableBody>
               </Table>
               <FormError message={problem?.message ?? null} />
+              <RecordActivity entityType="stock_assembly" entityId={detail.id} />
               <DialogFooter>
                 {detail.status === "draft" ? (
                   <>

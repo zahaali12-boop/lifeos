@@ -145,6 +145,16 @@ test("English: ship part of a transfer, receive with a reasoned shortage, then r
   await page.getByTestId("receive-transfer").click();
   await expect(detail.getByTestId("doc-status")).toContainText("Received");
   await expect(detail.getByRole("row", { name: /JUICE/ })).toContainText(/40.*35.*30.*5/);
+
+  // A note on the transfer, and its history: created, shipped, received.
+  await detail.getByTestId("record-discussion-toggle").click();
+  await detail.getByTestId("comment-new-body").fill("Claim filed with the carrier for the crushed carton.");
+  await detail.getByTestId("comment-new-send").click();
+  await expect(detail.getByTestId("comment-body")).toHaveText("Claim filed with the carrier for the crushed carton.");
+  await detail.getByTestId("record-history-toggle").click();
+  await expect(detail.getByTestId("history-audit").filter({ hasText: "Created" })).toHaveCount(1);
+  await expect(detail.getByTestId("history-activity").filter({ hasText: "Owner commented" })).toHaveCount(1);
+  await expectAccessible(page);
   await closeDialog(page);
 
   // Stock: 15 left in MAIN, 30 in EAST, nothing left on the road.

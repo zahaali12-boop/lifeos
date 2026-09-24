@@ -14,6 +14,7 @@ import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Revaluation = components["schemas"]["RevaluationSummary"];
 
@@ -219,6 +220,7 @@ export function RevaluationsPage() {
               </Table>
               <p className="text-sm text-fg-muted">{t("inventory.revaluations.postHint")}</p>
               <FormError message={problem?.message ?? null} />
+              <RecordActivity entityType="stock_revaluation" entityId={detail.id} />
               <DialogFooter>
                 {detail.status === "draft" ? (
                   <>

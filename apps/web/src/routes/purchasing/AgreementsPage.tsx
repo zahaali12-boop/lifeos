@@ -13,6 +13,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, num, PurchaseStatus, useAgreements, useSuppliers, type Agreement, type LineForm } from "./shared";
+import { RecordActivity } from "../RecordDiscussion";
 
 interface AgreementForm {
   partnerId: string;
@@ -187,6 +188,7 @@ export function AgreementsPage() {
                   ))}
                 </TableBody>
               </Table>
+              <RecordActivity entityType="purchase_agreement" entityId={a.id} />
               <DialogFooter>
                 {a.status === "draft" ? <Button onClick={() => { act.mutate({ id: a.id, action: "activate" }); }} loading={act.isPending} data-testid="activate-agreement">{t("purchasing.activate")}</Button> : null}
                 {a.status === "active" ? <Button variant="secondary" onClick={() => { act.mutate({ id: a.id, action: "close" }); }} loading={act.isPending} data-testid="close-agreement">{t("purchasing.close")}</Button> : null}

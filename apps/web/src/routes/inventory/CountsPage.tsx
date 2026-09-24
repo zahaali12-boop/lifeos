@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useReasonCodes, useWarehouses } from "./shared";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Count = components["schemas"]["CountSummary"];
 
@@ -251,6 +252,7 @@ export function CountsPage() {
                 </TableBody>
               </Table>
               <FormError message={problem?.message ?? null} />
+              <RecordActivity entityType="stock_count" entityId={count.id} />
               <DialogFooter>
                 {count.status === "planned" ? (
                   <Button onClick={() => { act.mutate("freeze"); }} loading={act.isPending} data-testid="freeze-count">

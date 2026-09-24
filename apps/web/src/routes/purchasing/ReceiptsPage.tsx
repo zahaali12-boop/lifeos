@@ -14,6 +14,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Receipt = components["schemas"]["ReceiptSummary"];
 type Receivable = components["schemas"]["ReceivableLine"];
@@ -273,6 +274,7 @@ export function ReceiptsPage() {
                   <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
                 </Field>
               ) : null}
+              <RecordActivity entityType="purchase_receipt" entityId={r.id} />
               <DialogFooter>
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, orderId: r.orderId, warehouseId: r.warehouseId, postingDate: r.postingDate, supplierDeliveryNote: r.supplierDeliveryNote ?? "", lines: r.lines.map((l) => ({ orderLineId: l.orderLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", expiresOn: l.expiresOn ?? "", serialNumbers: l.serialNumbers.join(" ") })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-receipt">{t("purchasing.deleteDraft")}</Button> : null}

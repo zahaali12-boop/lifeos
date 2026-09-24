@@ -14,6 +14,7 @@ import { Amount, today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useReasonCodes, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Adjustment = components["schemas"]["AdjustmentSummary"];
 
@@ -266,6 +267,7 @@ export function AdjustmentsPage() {
                   <TextField value={reason} onChange={(e) => { setReason(e.target.value); }} />
                 </Field>
               ) : null}
+              <RecordActivity entityType="stock_adjustment" entityId={detail.id} />
               <DialogFooter>
                 {editable ? (
                   <Button variant="secondary" onClick={() => { setProblem(null); setEditing({ id: detail.id, form: toForm(detail) }); }}>

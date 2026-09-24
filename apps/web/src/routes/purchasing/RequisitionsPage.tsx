@@ -12,6 +12,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, num, optionalNum, PurchaseStatus, useSuppliers, type LineForm, type Requisition } from "./shared";
+import { RecordActivity } from "../RecordDiscussion";
 
 interface RequisitionForm {
   neededBy: string;
@@ -168,6 +169,7 @@ export function RequisitionsPage() {
               ]} />
               <LinesTable lines={r.lines.map((l) => ({ id: l.id, lineNo: l.lineNo, itemCode: l.itemCode, description: l.description, quantity: l.quantity, uomCode: l.uomCode, unitPrice: l.estimatedPrice, status: l.status }))} currency={r.currency} testId="requisition-lines" />
               {createdOrders.length > 0 ? <p className="text-sm" data-testid="created-orders">{t("purchasing.ordersCreated", { numbers: createdOrders.join(", ") })}</p> : null}
+              <RecordActivity entityType="purchase_requisition" entityId={r.id} />
               <DialogFooter>
                 {r.status === "draft" || r.status === "rejected" ? <Button onClick={() => { act.mutate({ id: r.id, action: "submit" }); }} loading={act.isPending} data-testid="submit-requisition">{t("purchasing.submit")}</Button> : null}
                 {r.status === "approved" ? <Button onClick={() => { act.mutate({ id: r.id, action: "orders" }); }} loading={act.isPending} data-testid="create-orders">{t("purchasing.createOrders")}</Button> : null}

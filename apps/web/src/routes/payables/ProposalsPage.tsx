@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, useSuppliers } from "../purchasing/shared";
 import { ItemStatus, useBankAccounts } from "./shared";
+import { RecordActivity } from "../RecordDiscussion";
 
 type Proposal = components["schemas"]["ProposalSummary"];
 
@@ -216,6 +217,7 @@ export function ProposalsPage() {
                   </SelectField>
                 </Field>
               ) : null}
+              <RecordActivity entityType="payment_proposal" entityId={p.id} />
               <DialogFooter>
                 {p.status === "draft" && Object.keys(edits).length > 0 ? <Button variant="secondary" onClick={() => { act.mutate({ action: "lines", id: p.id }); }} loading={act.isPending} data-testid="save-lines">{t("common.save")}</Button> : null}
                 {p.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ action: "delete", id: p.id }); }} loading={act.isPending} data-testid="delete-proposal">{t("purchasing.deleteDraft")}</Button> : null}
