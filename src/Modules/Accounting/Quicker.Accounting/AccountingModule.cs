@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Quicker.Accounting.Application;
 using Quicker.Accounting.Contracts;
 using Quicker.Accounting.Persistence;
+using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Messaging;
 using Quicker.Numbering.Contracts;
@@ -33,6 +34,8 @@ public static class AccountingModule
         services.AddScoped<AccountingRoutines>();
         services.AddScoped<InquiryService>();
         services.AddJobHandler<AccountingDailyJob, AccountingDailyPayload>();
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("manual_journal", AccountingPermissions.JournalRead));
         return services;
     }
 }

@@ -12,22 +12,31 @@ namespace Quicker.Collaboration.Application;
 public sealed record LinkRequest(DocumentRef From, DocumentRef To, string Relation);
 
 /// <summary>Directed links between records; creating one is idempotent per (from, to, relation) and lands on both timelines.</summary>
-public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IActivityLog activities, IClock clock) : IDocumentLinks
+public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IActivityLog activities, IClock clock, RecordAccess access) : IDocumentLinks
 {
+    // The contract (other modules linking their documents) is not limited by the member's permissions; the API is.
     public async Task<DocumentLink> LinkAsync(DocumentRef from, DocumentRef to, string relation, CancellationToken cancellationToken = default)
     {
-        var created = await CreateAsync(new LinkRequest(from, to, relation), cancellationToken);
+        var created = await CreateAsync(new LinkRequest(from, to, relation), checkAccess: false, cancellationToken);
         return created.IsSuccess ? created.Value.Link : throw new ArgumentException(created.Error!.Message, nameof(from));
     }
 
     public async Task<IReadOnlyList<DocumentLink>> ListAsync(DocumentRef document, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
-        var listed = await ListAsync(document.Type, document.Id, cancellationToken);
+        var listed = await ListAsync(document.Type, document.Id, checkAccess: false, cancellationToken);
         return listed.IsSuccess ? listed.Value : throw new ArgumentException(listed.Error!.Message, nameof(document));
     }
 
-    public async Task<Result<IReadOnlyList<DocumentLink>>> ListAsync(string? entityType, Guid entityId, CancellationToken cancellationToken)
+    /// <summary>A record's links, both directions; the member must be able to read the record, and links to records they cannot read are left out.</summary>
+    public Task<Result<IReadOnlyList<DocumentLink>>> ListAsync(string? entityType, Guid entityId, CancellationToken cancellationToken) =>
+        ListAsync(entityType, entityId, checkAccess: true, cancellationToken);
+
+    /// <summary>Returns the link and whether it was created now (false: it already existed); the member must be able to read both records.</summary>
+    public Task<Result<(DocumentLink Link, bool Created)>> CreateAsync(LinkRequest request, CancellationToken cancellationToken) =>
+        CreateAsync(request, checkAccess: true, cancellationToken);
+
+    private async Task<Result<IReadOnlyList<DocumentLink>>> ListAsync(string? entityType, Guid entityId, bool checkAccess, CancellationToken cancellationToken)
     {
         var type = entityType?.Trim() ?? string.Empty;
         if (!EntityTypes.IsValid(type) || entityId == Guid.Empty)
@@ -35,12 +44,16 @@ public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAc
             return Error.Validation("link.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
+        if (checkAccess && !access.MayRead(type))
+        {
+            return access.Refusal(type);
+        }
+
         var rows = await db.Links.Where(l => (l.FromType == type && l.FromId == entityId) || (l.ToType == type && l.ToId == entityId)).OrderBy(static l => l.Id).ToListAsync(cancellationToken);
-        return rows.Select(Map).ToList();
+        return rows.Where(l => !checkAccess || (access.MayRead(l.FromType) && access.MayRead(l.ToType))).Select(Map).ToList();
     }
 
-    /// <summary>Returns the link and whether it was created now (false: it already existed).</summary>
-    public async Task<Result<(DocumentLink Link, bool Created)>> CreateAsync(LinkRequest request, CancellationToken cancellationToken)
+    private async Task<Result<(DocumentLink Link, bool Created)>> CreateAsync(LinkRequest request, bool checkAccess, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (request.From is null || request.To is null || !EntityTypes.IsValid(request.From.Type) || !EntityTypes.IsValid(request.To.Type) || request.From.Id == Guid.Empty || request.To.Id == Guid.Empty)
@@ -56,6 +69,11 @@ public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAc
         if (request.From == request.To)
         {
             return Error.Validation("link.self", "A document cannot be linked to itself.");
+        }
+
+        if (checkAccess && (!access.MayRead(request.From.Type) || !access.MayRead(request.To.Type)))
+        {
+            return access.Refusal(access.MayRead(request.From.Type) ? request.To.Type : request.From.Type);
         }
 
         var existing = await db.Links.SingleOrDefaultAsync(l => l.FromType == request.From.Type && l.FromId == request.From.Id && l.ToType == request.To.Type && l.ToId == request.To.Id && l.Relation == request.Relation, cancellationToken);
@@ -86,7 +104,7 @@ public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAc
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var link = await db.Links.SingleOrDefaultAsync(l => l.Id == id, cancellationToken);
-        if (link is null)
+        if (link is null || !access.MayRead(link.FromType) || !access.MayRead(link.ToType))
         {
             return Error.NotFound("link", id);
         }

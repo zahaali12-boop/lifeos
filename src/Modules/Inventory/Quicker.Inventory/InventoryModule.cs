@@ -57,6 +57,13 @@ public static class InventoryModule
         services.AddJobHandler<LotExpiryJob, LotExpiryPayload>();
         services.AddJobHandler<ReservationExpiryJob, ReservationExpiryPayload>();
         services.AddJobHandler<CostRecostJob, CostRecostPayload>();
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("stock_adjustment", InventoryPermissions.AdjustmentRead));
+        services.AddSingleton(new RecordReadPermission("stock_transfer", InventoryPermissions.TransferRead));
+        services.AddSingleton(new RecordReadPermission("stock_count", InventoryPermissions.CountRead));
+        services.AddSingleton(new RecordReadPermission("stock_assembly", InventoryPermissions.AssemblyRead));
+        services.AddSingleton(new RecordReadPermission("stock_revaluation", InventoryPermissions.CostingRead));
+        services.AddSingleton(new RecordReadPermission("warehouse", InventoryPermissions.WarehouseRead));
         return services;
     }
 }

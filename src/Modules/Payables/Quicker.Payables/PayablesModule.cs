@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Numbering.Contracts;
 using Quicker.Payables.Application;
@@ -20,6 +21,8 @@ public static class PayablesModule
         services.AddScoped<SettlementService>();
         services.AddScoped<ProposalService>();
         services.AddScoped<IPayables>(static sp => sp.GetRequiredService<PayablesService>());
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("payment_proposal", PayablesPermissions.ProposalRead));
         return services;
     }
 }

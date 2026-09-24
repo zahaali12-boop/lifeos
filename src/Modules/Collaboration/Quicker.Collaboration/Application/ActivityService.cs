@@ -12,7 +12,7 @@ namespace Quicker.Collaboration.Application;
 public sealed record ActivityView(Guid Id, string EntityType, Guid EntityId, string Kind, Guid? ActorMembershipId, IReadOnlyDictionary<string, string> Summary, JsonElement Data, DateTimeOffset CreatedAt);
 
 /// <summary>The activity timeline of a record: written by every module through <see cref="IActivityLog"/>, read newest first.</summary>
-public sealed class ActivityService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IClock clock) : IActivityLog
+public sealed class ActivityService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IClock clock, RecordAccess access) : IActivityLog
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -44,6 +44,11 @@ public sealed class ActivityService(CollaborationDbContext db, IUnitOfWorkAccess
         if (!EntityTypes.IsValid(type) || entityId == Guid.Empty)
         {
             return Error.Validation("activity.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
+        }
+
+        if (!access.MayRead(type))
+        {
+            return access.Refusal(type);
         }
 
         var paged = await KeysetPaging.ByIdDescendingAsync(db.Activities.Where(a => a.EntityType == type && a.EntityId == entityId), static a => a.Id, page, cancellationToken);

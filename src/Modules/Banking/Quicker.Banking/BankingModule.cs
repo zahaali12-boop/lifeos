@@ -21,6 +21,9 @@ public static class BankingModule
         services.AddScoped<BankAccountService>();
         services.AddScoped<PaymentService>();
         services.AddScoped<IBankAccountDirectory>(static sp => sp.GetRequiredService<BankAccountService>());
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("bank_payment", BankingPermissions.PaymentRead));
+        services.AddSingleton(new RecordReadPermission("bank_account", BankingPermissions.BankAccountRead));
         return services;
     }
 }

@@ -54,6 +54,12 @@ public static class PurchasingModule
         services.AddScoped<IWorkflowSubjectProvider, RequisitionWorkflowSubject>();
         services.AddScoped<IWorkflowSubjectProvider, PurchaseOrderWorkflowSubject>();
         services.AddScoped<IWorkflowSubjectProvider, InvoiceWorkflowSubject>();
+        // Comments, files, history and links on purchasing documents are shown to those who may read the documents.
+        foreach (var (documentType, permission) in DocumentFlowService.ReadPermissions)
+        {
+            services.AddSingleton(new RecordReadPermission(documentType, permission));
+        }
+
         return services;
     }
 }

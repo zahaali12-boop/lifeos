@@ -46,6 +46,8 @@ public static class OrganizationModule
         services.AddScoped<IWorkingDayCalendar>(static sp => sp.GetRequiredService<BusinessCalendarService>());
         services.AddScoped<ITenantSetupStep, OrganizationDefaults>();
         services.AddJobHandler<RateImportJob, ImportRatesRequest>();
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("company", OrganizationPermissions.CompanyRead));
         return services;
     }
 }

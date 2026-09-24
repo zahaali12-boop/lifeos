@@ -21,7 +21,7 @@ public sealed record CommentView(Guid Id, string EntityType, Guid EntityId, Guid
 public sealed record MentionableMember(Guid MembershipId, string DisplayName);
 
 /// <summary>Comments on records with @mentions: each comment is an activity, and every mentioned member is notified.</summary>
-public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, ICurrentPrincipal principal, IMemberDirectory members, IActivityLog activities, INotifier notifier, IClock clock)
+public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, ICurrentPrincipal principal, IMemberDirectory members, IActivityLog activities, INotifier notifier, IClock clock, RecordAccess access)
 {
     public const int MaxBodyLength = 4000;
     public const int MaxMentions = 20;
@@ -34,6 +34,11 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
         if (!EntityTypes.IsValid(type) || entityId == Guid.Empty)
         {
             return Error.Validation("comment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
+        }
+
+        if (!access.MayRead(type))
+        {
+            return access.Refusal(type);
         }
 
         var rows = await db.Comments.Where(c => c.EntityType == type && c.EntityId == entityId).OrderBy(static c => c.Id).ToListAsync(cancellationToken);
@@ -60,6 +65,11 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
         if (!EntityTypes.IsValid(type) || request.EntityId == Guid.Empty)
         {
             return Error.Validation("comment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
+        }
+
+        if (!access.MayRead(type))
+        {
+            return access.Refusal(type);
         }
 
         var body = Body(request.Body);
@@ -109,7 +119,7 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
     {
         ArgumentNullException.ThrowIfNull(request);
         var comment = await db.Comments.SingleOrDefaultAsync(c => c.Id == id && c.DeletedAt == null, cancellationToken);
-        if (comment is null)
+        if (comment is null || !access.MayRead(comment.EntityType))
         {
             return Error.NotFound("comment", id);
         }
@@ -143,7 +153,7 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var comment = await db.Comments.SingleOrDefaultAsync(c => c.Id == id && c.DeletedAt == null, cancellationToken);
-        if (comment is null)
+        if (comment is null || !access.MayRead(comment.EntityType))
         {
             return Error.NotFound("comment", id);
         }

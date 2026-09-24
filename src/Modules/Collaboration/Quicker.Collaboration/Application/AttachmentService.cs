@@ -19,7 +19,7 @@ public sealed record AttachmentSummary(Guid Id, string EntityType, Guid EntityId
 /// <c>tenants/{tenant}/attachments/{id}</c>. Uploads are spooled to a temporary file while the size limit is
 /// enforced and the SHA-256 computed, then stored; deletion removes the object just before the row's commit.
 /// </summary>
-public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IObjectStorage storage, StorageOptions options, IActivityLog activities, IClock clock)
+public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAccessor unitOfWork, IObjectStorage storage, StorageOptions options, IActivityLog activities, IClock clock, RecordAccess access)
 {
     public const int MaxFileNameLength = 255;
 
@@ -32,6 +32,11 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
         if (!IsEntityType(type) || entityId == Guid.Empty)
         {
             return Error.Validation("attachment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
+        }
+
+        if (!access.MayRead(type))
+        {
+            return access.Refusal(type);
         }
 
         var name = Path.GetFileName(fileName?.Trim() ?? string.Empty);
@@ -89,6 +94,11 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
             return Error.Validation("attachment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
+        if (!access.MayRead(type))
+        {
+            return access.Refusal(type);
+        }
+
         var rows = await db.Attachments.Where(a => a.EntityType == type && a.EntityId == entityId).OrderBy(static a => a.CreatedAt).ThenBy(static a => a.Id).ToListAsync(cancellationToken);
         return rows.Select(Map).ToList();
     }
@@ -96,14 +106,14 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
     public async Task<AttachmentSummary?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var attachment = await db.Attachments.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
-        return attachment is null ? null : Map(attachment);
+        return attachment is null || !access.MayRead(attachment.EntityType) ? null : Map(attachment);
     }
 
     /// <summary>The attachment and its content stream; the caller disposes the stream.</summary>
     public async Task<Result<(AttachmentSummary Attachment, StoredObject Content)>> OpenAsync(Guid id, CancellationToken cancellationToken)
     {
         var attachment = await db.Attachments.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
-        if (attachment is null)
+        if (attachment is null || !access.MayRead(attachment.EntityType))
         {
             return Error.NotFound("attachment", id);
         }
@@ -120,7 +130,7 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var attachment = await db.Attachments.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
-        if (attachment is null)
+        if (attachment is null || !access.MayRead(attachment.EntityType))
         {
             return Error.NotFound("attachment", id);
         }

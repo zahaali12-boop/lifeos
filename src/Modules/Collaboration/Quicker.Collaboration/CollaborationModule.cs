@@ -18,6 +18,7 @@ public static class CollaborationModule
         services.AddModuleDbContext<CollaborationDbContext>();
         services.AddScoped<NotificationService>();
         services.AddScoped<INotifier>(static sp => sp.GetRequiredService<NotificationService>());
+        services.AddScoped<RecordAccess>();
         services.AddScoped<AttachmentService>();
         services.AddScoped<ActivityService>();
         services.AddScoped<IActivityLog>(static sp => sp.GetRequiredService<ActivityService>());

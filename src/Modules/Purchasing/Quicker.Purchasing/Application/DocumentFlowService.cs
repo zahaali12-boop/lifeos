@@ -28,7 +28,7 @@ public sealed class DocumentFlowService(IUnitOfWorkAccessor unitOfWork, ICurrent
     /// <summary>A blanket agreement can release many orders; past this many the flow is cut and says so.</summary>
     public const int MaxOrders = 50;
 
-    private static readonly Dictionary<string, string> ReadPermissions = new(StringComparer.Ordinal)
+    internal static readonly Dictionary<string, string> ReadPermissions = new(StringComparer.Ordinal)
     {
         [PurchaseDocumentTypes.Requisition] = PurchasingPermissions.RequisitionRead,
         [PurchaseDocumentTypes.Rfq] = PurchasingPermissions.RfqRead,

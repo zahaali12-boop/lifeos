@@ -23,6 +23,8 @@ public static class ItemsModule
         services.AddScoped<IBomDirectory>(static sp => sp.GetRequiredService<BomService>());
         services.AddScoped<ItemDirectory>();
         services.AddScoped<IItemDirectory>(static sp => sp.GetRequiredService<ItemDirectory>());
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("item", ItemsPermissions.ItemRead));
         return services;
     }
 }

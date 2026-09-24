@@ -22,6 +22,8 @@ public static class PartnersModule
         services.AddScoped<PartnerDirectory>();
         services.AddScoped<IPartnerDirectory>(static sp => sp.GetRequiredService<PartnerDirectory>());
         services.AddScoped<ITenantSetupStep, PartnersDefaults>();
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("partner", PartnersPermissions.SupplierRead));
         return services;
     }
 }
