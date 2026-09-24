@@ -119,7 +119,7 @@ export function CommandPalette({ open, onOpenChange, permissions }: CommandPalet
                 {documents.data.filter((hit) => recordRoute(hit.documentType, hit.documentId) !== null).map((hit) => (
                   <Command.Item
                     key={`${hit.documentType}:${hit.documentId}`}
-                    value={`document ${hit.number} ${hit.documentType} ${term}`}
+                    value={`document ${hit.number} ${hit.documentType} ${hit.documentId} ${term}`}
                     onSelect={() => { openDocument(hit.documentType, hit.documentId, `${hit.number} · ${auditEntityLabel(t, hit.documentType)}`); }}
                     className={itemClass}
                     data-testid="palette-document"
