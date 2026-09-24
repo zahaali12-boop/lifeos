@@ -2,7 +2,7 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, Dialo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
@@ -10,6 +10,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { useFollowOnSource, useOpenRecord, type FollowOnSource } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
+import { describeDimensions, DimensionSelects, useLineDimensions } from "../accounting/JournalLineDetails";
 import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
@@ -31,7 +32,11 @@ interface InvoiceLineForm {
   quantity: string;
   unitPrice: string;
   description: string;
+  dimensions: Record<string, string>;
 }
+
+/** Lines whose amount lands in profit and loss carry dimensions; goods and landed-cost lines settle balance-sheet accounts. */
+const takesDimensions = (kind: string): boolean => kind === "expense" || kind === "order" || kind === "return";
 
 interface InvoiceForm {
   id: string | null;
@@ -55,7 +60,7 @@ const belongsTo = (line: Invoicable, source: FollowOnSource): boolean =>
 
 function lineFrom(line: Invoicable): InvoiceLineForm {
   const label = line.kind === "charge" ? `${line.landedCostNumber ?? ""} · ${line.itemCode}` : `${line.itemCode} · ${line.returnNumber ?? line.receiptNumber ?? line.orderNumber ?? ""}`;
-  return { kind: line.kind, receiptLineId: line.kind === "return" ? "" : (line.receiptLineId ?? ""), orderLineId: line.orderLineId ?? "", landedCostChargeId: line.landedCostChargeId ?? "", returnLineId: line.returnLineId ?? "", label, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "" };
+  return { kind: line.kind, receiptLineId: line.kind === "return" ? "" : (line.receiptLineId ?? ""), orderLineId: line.orderLineId ?? "", landedCostChargeId: line.landedCostChargeId ?? "", returnLineId: line.returnLineId ?? "", label, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "", dimensions: {} };
 }
 
 /** Supplier invoices (roadmap 4.4): lines picked from uninvoiced receipts and open service lines or entered as expenses, matched against tolerances, blocked breaches waiting for an override, approved, posted and reversed. */
@@ -74,6 +79,7 @@ export function InvoicesPage() {
   const [pendingSource, setPendingSource] = useState<FollowOnSource | null>(null);
   const started = useRef<string | null>(null);
   const suppliers = useSuppliers(companyId);
+  const lineDimensions = useLineDimensions(companyId);
 
   const list = useQuery({
     queryKey: ["invoices", companyId, status],
@@ -128,7 +134,7 @@ export function InvoicesPage() {
         documentDate: f.documentDate || null,
         currency: f.currency || null,
         applyWht: f.applyWht,
-        lines: f.lines.filter((l) => num(l.quantity) > 0).map((l) => ({ kind: l.kind, quantity: num(l.quantity), unitPrice: num(l.unitPrice), receiptLineId: l.receiptLineId || null, orderLineId: l.orderLineId || null, landedCostChargeId: l.landedCostChargeId || null, returnLineId: l.returnLineId || null, description: l.description || null, discountPct: 0 })),
+        lines: f.lines.filter((l) => num(l.quantity) > 0).map((l) => ({ kind: l.kind, quantity: num(l.quantity), unitPrice: num(l.unitPrice), receiptLineId: l.receiptLineId || null, orderLineId: l.orderLineId || null, landedCostChargeId: l.landedCostChargeId || null, returnLineId: l.returnLineId || null, description: l.description || null, discountPct: 0, dimensions: takesDimensions(l.kind) && Object.keys(l.dimensions).length > 0 ? l.dimensions : null })),
       };
       return f.id ? unwrap(await api.PUT("/api/v1/purchasing/invoices/{invoiceId}", { params: { path: { invoiceId: f.id } }, body })) : unwrap(await api.POST("/api/v1/purchasing/invoices", { body }));
     },
@@ -173,7 +179,7 @@ export function InvoicesPage() {
   const openNew = (): void => { setProblem(null); setForm({ id: null, customFields: {}, kind: "invoice", partnerId: "", supplierInvoiceNumber: "", documentDate: today(), currency: "", applyWht: true, lines: [] }); };
   const openEdit = (i: Invoice): void => {
     setProblem(null);
-    setForm({ id: i.id, customFields: asCustomFieldValues(i.customFields), kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", landedCostChargeId: l.landedCostChargeId ?? "", returnLineId: l.returnLineId ?? "", label: l.kind === "expense" ? "" : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "" })) });
+    setForm({ id: i.id, customFields: asCustomFieldValues(i.customFields), kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", landedCostChargeId: l.landedCostChargeId ?? "", returnLineId: l.returnLineId ?? "", label: l.kind === "expense" ? "" : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "", dimensions: { ...(l.dimensions ?? {}) } })) });
   };
   const addInvoicable = (line: Invoicable): void => {
     if (!form || form.lines.some((l) => (line.kind === "receipt" ? l.receiptLineId === line.receiptLineId : line.kind === "charge" ? l.landedCostChargeId === line.landedCostChargeId : line.kind === "return" ? l.returnLineId === line.returnLineId : l.kind === "order" && l.orderLineId === line.orderLineId))) {
@@ -207,7 +213,7 @@ export function InvoicesPage() {
       setProblem({ message: t("documentFlow.nothingToInvoice"), fields: {} });
     }
   }, [pendingSource, form, invoicable.isFetching, invoicable.isFetchedAfterMount, invoicable.data, t]);
-  const addExpense = (): void => { if (form) { setForm({ ...form, lines: [...form.lines, { kind: "expense", receiptLineId: "", orderLineId: "", landedCostChargeId: "", returnLineId: "", label: "", quantity: "1", unitPrice: "", description: "" }] }); } };
+  const addExpense = (): void => { if (form) { setForm({ ...form, lines: [...form.lines, { kind: "expense", receiptLineId: "", orderLineId: "", landedCostChargeId: "", returnLineId: "", label: "", quantity: "1", unitPrice: "", description: "", dimensions: {} }] }); } };
   const offered = (invoicable.data ?? []).filter((line) => (form?.kind === "debit_note" ? line.kind === "return" : line.kind !== "return"));
   const patchLine = (index: number, change: Partial<InvoiceLineForm>): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, ...change } : l)) }); } };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
@@ -312,13 +318,31 @@ export function InvoicesPage() {
                   </TableHeader>
                   <TableBody>
                     {form.lines.map((line, index) => (
-                      <TableRow key={index} data-testid="invoice-line">
-                        <TableCell>{t(`purchasing.lineKinds.${line.kind}`)}</TableCell>
-                        <TableCell dir="auto">{line.kind === "expense" ? <TextField aria-label={t("purchasing.description")} value={line.description} onChange={(e) => { patchLine(index, { description: e.target.value }); }} className="w-56" data-testid={`invoice-description-${String(index)}`} /> : line.label}</TableCell>
-                        <TableCell><TextField aria-label={t("purchasing.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} /></TableCell>
-                        <TableCell><TextField aria-label={t("purchasing.unitPrice")} inputMode="decimal" value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" data-testid={`invoice-price-${String(index)}`} /></TableCell>
-                        <TableCell><Button type="button" variant="ghost" size="sm" onClick={() => { setForm({ ...form, lines: form.lines.filter((_, x) => x !== index) }); }}>{t("workflow.remove")}</Button></TableCell>
-                      </TableRow>
+                      <Fragment key={index}>
+                        <TableRow data-testid="invoice-line">
+                          <TableCell>{t(`purchasing.lineKinds.${line.kind}`)}</TableCell>
+                          <TableCell dir="auto">{line.kind === "expense" ? <TextField aria-label={t("purchasing.description")} value={line.description} onChange={(e) => { patchLine(index, { description: e.target.value }); }} className="w-56" data-testid={`invoice-description-${String(index)}`} /> : line.label}</TableCell>
+                          <TableCell><TextField aria-label={t("purchasing.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} /></TableCell>
+                          <TableCell><TextField aria-label={t("purchasing.unitPrice")} inputMode="decimal" value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" data-testid={`invoice-price-${String(index)}`} /></TableCell>
+                          <TableCell><Button type="button" variant="ghost" size="sm" onClick={() => { setForm({ ...form, lines: form.lines.filter((_, x) => x !== index) }); }}>{t("workflow.remove")}</Button></TableCell>
+                        </TableRow>
+                        {takesDimensions(line.kind) && lineDimensions.dimensions.length > 0 ? (
+                          <TableRow data-testid="invoice-line-dimensions">
+                            <TableCell colSpan={5}>
+                              <fieldset className="grid gap-3 sm:grid-cols-3">
+                                <legend className="sr-only">{t("purchasing.lineDimensions", { line: index + 1 })}</legend>
+                                <DimensionSelects
+                                  testIdPrefix={`invoice-dimension-${String(index)}`}
+                                  values={line.dimensions}
+                                  reference={lineDimensions}
+                                  emptyLabel={line.kind === "order" ? t("purchasing.dimensionAsOrdered") : "—"}
+                                  onChange={(dimensions) => { patchLine(index, { dimensions }); }}
+                                />
+                              </fieldset>
+                            </TableCell>
+                          </TableRow>
+                        ) : null}
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>
@@ -381,7 +405,10 @@ export function InvoicesPage() {
                       <TableRow key={l.id} data-testid="invoice-line-row">
                         <TableCell>{String(l.lineNo)}</TableCell>
                         <TableCell>{t(`purchasing.lineKinds.${l.kind}`)}</TableCell>
-                        <TableCell dir="auto">{l.kind === "expense" ? `${l.description ?? ""} (${l.accountRole ?? ""})` : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`}</TableCell>
+                        <TableCell dir="auto">
+                          {l.kind === "expense" ? `${l.description ?? ""} (${l.accountRole ?? ""})` : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`}
+                          {l.dimensions && Object.keys(l.dimensions).length > 0 ? <p className="mt-0.5 text-xs text-fg-muted" data-testid="invoice-line-dimension-text">{describeDimensions(l.dimensions, lineDimensions)}</p> : null}
+                        </TableCell>
                         <TableCell className="tabular" dir="ltr">{formatNumber(l.quantity, { maximumFractionDigits: 3 })} {l.uomCode ?? ""}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatNumber(l.unitPrice, { maximumFractionDigits: 4 })}</TableCell>
                         <TableCell className="tabular" dir="ltr">{l.expectedUnitPrice === null ? "" : `${formatNumber(l.expectedUnitPrice, { maximumFractionDigits: 4 })}${l.priceVariancePct === null ? "" : ` (${formatNumber(l.priceVariancePct, { maximumFractionDigits: 2 })}%)`}`}</TableCell>

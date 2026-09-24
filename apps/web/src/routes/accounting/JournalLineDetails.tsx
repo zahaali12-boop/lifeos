@@ -22,17 +22,8 @@ export interface LineDetails {
 
 export const emptyDetails = (): LineDetails => ({ description: "", dimensions: {}, subledgerType: "", subledgerRef: "" });
 
-/**
- * Everything the line details need for one company: its chart's accounts by code, the dimensions a line can carry
- * (the branch is the journal's, not a line's), their values, each used account's dimension rules, and the suppliers
- * and customers that items of the payables and receivables control accounts refer to.
- */
-export function useJournalReference(companyId: string, chartId: string | null | undefined, accountIds: string[], accountCodes: string[]) {
-  const chart = useQuery({
-    queryKey: ["chart", chartId],
-    enabled: Boolean(chartId),
-    queryFn: async () => unwrap(await api.GET("/api/v1/accounting/charts/{chartId}", { params: { path: { chartId: chartId ?? "" }, query: { expand: "accounts" } } })),
-  });
+/** The dimensions a document line can carry (the branch is the document's, not a line's) and their values in one company. */
+export function useLineDimensions(companyId: string) {
   const dimensionList = useQuery({ queryKey: ["dimensions"], queryFn: async () => unwrap(await api.GET("/api/v1/organization/dimensions")) });
   const dimensions = useMemo(
     () => (dimensionList.data ?? []).filter((d) => d.isActive && d.code !== "BRANCH").sort((a, b) => Number(a.sortOrder) - Number(b.sortOrder) || a.code.localeCompare(b.code)),
@@ -45,6 +36,61 @@ export function useJournalReference(companyId: string, chartId: string | null | 
       staleTime: 60_000,
     })),
   });
+  const valuesByDimension = new Map<string, DimensionValue[]>(dimensions.map((d, i) => [d.code, (values[i]?.data ?? []).filter((v) => v.companyId === null || v.companyId === companyId)]));
+  return { dimensions, valuesByDimension };
+}
+
+export type LineDimensionReference = ReturnType<typeof useLineDimensions>;
+
+/** "Cost centre: CC-1 Head office · Project: …" for the values a line carries. */
+export function describeDimensions(values: Record<string, string>, reference: LineDimensionReference): string {
+  return Object.entries(values).map(([code, valueId]) => {
+    const dimension = reference.dimensions.find((d) => d.code === code);
+    const value = reference.valuesByDimension.get(code)?.find((v) => v.id === valueId);
+    return `${dimension ? localized(dimension.name) : code}: ${value ? `${value.code} ${localized(value.name)}` : valueId.slice(0, 8)}`;
+  }).join(" · ");
+}
+
+/** One select per dimension; the empty choice is labelled with what applies when none is picked. */
+export function DimensionSelects({ testIdPrefix, values, reference, emptyLabel, onChange }: { testIdPrefix: string; values: Record<string, string>; reference: LineDimensionReference; emptyLabel: string; onChange: (values: Record<string, string>) => void }) {
+  return (
+    <>
+      {reference.dimensions.map((dimension) => {
+        const options = reference.valuesByDimension.get(dimension.code) ?? [];
+        return (
+          <Field key={dimension.id} label={localized(dimension.name)}>
+            <SelectField
+              value={values[dimension.code] ?? ""}
+              onChange={(e) => {
+                const rest = Object.fromEntries(Object.entries(values).filter(([code]) => code !== dimension.code));
+                onChange(e.target.value ? { ...rest, [dimension.code]: e.target.value } : rest);
+              }}
+              data-testid={`${testIdPrefix}-${dimension.code}`}
+            >
+              <option value="">{emptyLabel}</option>
+              {options.filter((v) => v.isActive || v.id === values[dimension.code]).map((v) => (
+                <option key={v.id} value={v.id}>{`${v.code} · ${localized(v.name)}`}</option>
+              ))}
+            </SelectField>
+          </Field>
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * Everything the line details need for one company: its chart's accounts by code, the dimensions a line can carry
+ * (the branch is the journal's, not a line's), their values, each used account's dimension rules, and the suppliers
+ * and customers that items of the payables and receivables control accounts refer to.
+ */
+export function useJournalReference(companyId: string, chartId: string | null | undefined, accountIds: string[], accountCodes: string[]) {
+  const chart = useQuery({
+    queryKey: ["chart", chartId],
+    enabled: Boolean(chartId),
+    queryFn: async () => unwrap(await api.GET("/api/v1/accounting/charts/{chartId}", { params: { path: { chartId: chartId ?? "" }, query: { expand: "accounts" } } })),
+  });
+  const { dimensions, valuesByDimension } = useLineDimensions(companyId);
   const accounts = useMemo(() => new Map((chart.data?.accounts ?? []).map((a) => [a.code, a])), [chart.data]);
   const uniqueAccounts = [...new Set([...accountIds, ...accountCodes.map((code) => accounts.get(code.trim())?.id ?? "")].filter(Boolean))].sort();
   const rules = useQueries({
@@ -57,7 +103,6 @@ export function useJournalReference(companyId: string, chartId: string | null | 
   const suppliers = useQuery({ queryKey: ["partners", "supplier", "all"], queryFn: async () => unwrap(await api.GET("/api/v1/partners", { params: { query: { role: "supplier", limit: 500 } } })), staleTime: 60_000 });
   const customers = useQuery({ queryKey: ["partners", "customer", "all"], queryFn: async () => unwrap(await api.GET("/api/v1/partners", { params: { query: { role: "customer", limit: 500 } } })), staleTime: 60_000 });
 
-  const valuesByDimension = new Map<string, DimensionValue[]>(dimensions.map((d, i) => [d.code, (values[i]?.data ?? []).filter((v) => v.companyId === null || v.companyId === companyId)]));
   const rulesByAccount = new Map<string, Rule[]>(uniqueAccounts.map((id, i) => [id, rules[i]?.data ?? []]));
   const partners = new Map<string, Partner[]>([["AP", suppliers.data?.items ?? []], ["AR", customers.data?.items ?? []]]);
   return { accounts, dimensions, valuesByDimension, rulesByAccount, partners };
@@ -68,12 +113,7 @@ export type JournalReference = ReturnType<typeof useJournalReference>;
 /** The dimension values, partner and description of one line, read-only (the journal's detail view). */
 export function LineDetailsSummary({ dimensions, subledgerType, subledgerRef, description, reference }: { dimensions: Record<string, string>; subledgerType: string | null; subledgerRef: string | null; description: Record<string, string>; reference: JournalReference }) {
   const { t } = useTranslation();
-  const parts: string[] = [];
-  for (const [code, valueId] of Object.entries(dimensions)) {
-    const dimension = reference.dimensions.find((d) => d.code === code);
-    const value = reference.valuesByDimension.get(code)?.find((v) => v.id === valueId);
-    parts.push(`${dimension ? localized(dimension.name) : code}: ${value ? `${value.code} ${localized(value.name)}` : valueId.slice(0, 8)}`);
-  }
+  const parts: string[] = Object.keys(dimensions).length > 0 ? [describeDimensions(dimensions, reference)] : [];
   if (subledgerType && subledgerRef) {
     const partner = reference.partners.get(subledgerType)?.find((p) => p.id === subledgerRef);
     parts.push(`${t(`accounting.subledgerTypes.${subledgerType}`, { defaultValue: subledgerType })}: ${partner ? `${partner.code} ${localized(partner.legalName)}` : subledgerRef.slice(0, 8)}`);

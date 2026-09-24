@@ -5,9 +5,10 @@ import { expect, test, type Page } from "@playwright/test";
  * The payables journey of 4.7: a supplier's expense invoice is posted, a bank account opened, the invoice paid in
  * part with a remainder on account, the open items and their aging read, the on-account remainder applied to the
  * invoice, a proposal for the rest drafted into a payment. Then the screens in Arabic, right-to-left. Every screen
- * passes axe with no serious or critical violation.
+ * passes axe with no serious or critical violation. The expense line is charged to a cost centre.
  */
 const password = "correct-horse-battery-staple";
+const apiUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8080";
 
 async function expectAccessible(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
@@ -66,7 +67,14 @@ test("English: an invoice paid in part, the remainder on account applied, the re
   await expect(page.getByTestId("supplier-detail")).toBeVisible();
   await closeDialog(page);
 
-  // An expense invoice of 10 000 posted.
+  // A cost centre to charge the rent to, through the API.
+  const token = await page.evaluate(() => (JSON.parse(window.localStorage.getItem("quicker.session") ?? "{}") as { accessToken?: string }).accessToken);
+  const headers = { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" };
+  const dimensions = (await (await page.request.get(`${apiUrl}/api/v1/organization/dimensions`, { headers })).json()) as { id: string; code: string }[];
+  const costCentre = dimensions.find((d) => d.code === "COST_CENTER");
+  expect((await page.request.post(`${apiUrl}/api/v1/organization/dimensions/${costCentre?.id ?? ""}/values`, { headers, data: { code: "CC-ADM", name: { en: "Administration", ar: "الإدارة" } } })).ok()).toBeTruthy();
+
+  // An expense invoice of 10 000 for administration, posted.
   await nav(page, "Supplier invoices");
   await page.getByTestId("new-invoice").click();
   await page.getByTestId("invoice-supplier").selectOption({ label: "ALPHA · Alpha Supplies" });
@@ -75,8 +83,11 @@ test("English: an invoice paid in part, the remainder on account applied, the re
   await page.getByTestId("add-expense-line").click();
   await page.getByTestId("invoice-description-0").fill("Office rent");
   await page.getByTestId("invoice-price-0").fill("10000");
+  await page.getByTestId("invoice-dimension-0-COST_CENTER").selectOption({ label: "CC-ADM · Administration" });
+  await expectAccessible(page);
   await page.getByTestId("save-invoice").click();
   await expect(page.getByTestId("invoice-detail")).toBeVisible();
+  await expect(page.getByTestId("invoice-line-dimension-text")).toContainText("Cost centre: CC-ADM Administration");
   await page.getByTestId("submit-invoice").click();
   await expect(page.getByTestId("invoice-detail").getByTestId("doc-status").first()).toContainText("Approved");
   await page.getByTestId("post-invoice").click();

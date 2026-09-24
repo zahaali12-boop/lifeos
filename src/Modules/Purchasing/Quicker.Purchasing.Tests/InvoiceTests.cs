@@ -92,6 +92,77 @@ public sealed class InvoiceTests(ApiHostFixture host)
         Kept(await owner.GetOkAsync($"/api/v1/purchasing/invoices/{invoice.GetProperty("id").GetGuid()}"));
     }
 
+    [Fact]
+    public async Task Invoice_lines_carry_their_cost_centre_and_project_to_the_journal_and_an_order_line_lends_its_own()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        async Task<Guid> ValueAsync(string dimension, string code)
+        {
+            var dimensionId = (await owner.GetOkAsync("/api/v1/organization/dimensions")).EnumerateArray().Single(d => d.GetProperty("code").GetString() == dimension).GetProperty("id").GetGuid();
+            return (await owner.PostAsync($"/api/v1/organization/dimensions/{dimensionId}/values", new { code, name = Name(code, code) })).GetProperty("id").GetGuid();
+        }
+
+        var headOffice = await ValueAsync("COST_CENTER", "CC-HQ");
+        var workshop = await ValueAsync("COST_CENTER", "CC-WS");
+        var fitOut = await ValueAsync("PROJECT", "PRJ-FIT");
+
+        // The service ordered for the workshop: the order line names its cost centre.
+        var workshopSet = (await owner.PostAsync("/api/v1/organization/dimension-sets", new { values = new Dictionary<string, Guid> { ["COST_CENTER"] = workshop } }, HttpStatusCode.OK)).GetProperty("id").GetGuid();
+        var order = await owner.PostAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId = s.Supplier, warehouseId = s.WarehouseId, lines = new object[] { new { itemId = s.Cleaning, quantity = 2m, uom = "HR", unitPrice = 30m, dimensionSetId = workshopSet } } });
+        var orderId = order.GetProperty("id").GetGuid();
+        var cleaningLine = order.GetProperty("lines").Only().GetProperty("id").GetGuid();
+        (await owner.PostAsync($"/api/v1/purchasing/orders/{orderId}/submit", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("approved");
+
+        // Dimensions only go where the amount lands in profit and loss, and they must exist and be unambiguous.
+        (await owner.PostErrorAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, lines = new[] { new { kind = "receipt", receiptLineId = Guid.NewGuid(), quantity = 1m, unitPrice = 1m, dimensions = new Dictionary<string, Guid> { ["COST_CENTER"] = headOffice } } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("invoice.dimensions_not_applicable");
+        (await owner.PostErrorAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "expense", lines = new[] { new { kind = "expense", description = "Rent", quantity = 1m, unitPrice = 1m, dimensionSetId = Guid.NewGuid() } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("invoice.dimension_set_unknown");
+        (await owner.PostErrorAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "expense", lines = new[] { new { kind = "expense", description = "Rent", quantity = 1m, unitPrice = 1m, dimensionSetId = workshopSet, dimensions = new Dictionary<string, Guid> { ["COST_CENTER"] = headOffice } } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("invoice.dimensions_ambiguous");
+        (await owner.PostErrorAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "expense", lines = new[] { new { kind = "expense", description = "Rent", quantity = 1m, unitPrice = 1m, dimensions = new Dictionary<string, Guid> { ["PROJECT"] = headOffice } } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("dimension_set.value_mismatch");
+
+        // Rent for head office on the fit-out project, next to the workshop's cleaning service (which names no dimensions of its own).
+        var invoice = await owner.PostAsync("/api/v1/purchasing/invoices", new
+        {
+            companyId = s.CompanyId,
+            partnerId = s.Supplier,
+            supplierInvoiceNumber = "DIM-1",
+            documentDate = "2026-09-20",
+            applyWht = false,
+            lines = new object[]
+            {
+                new { kind = "expense", description = "Head office rent", quantity = 1m, unitPrice = 100m, dimensions = new Dictionary<string, Guid> { ["COST_CENTER"] = headOffice, ["PROJECT"] = fitOut } },
+                new { kind = "order", orderLineId = cleaningLine, quantity = 2m, unitPrice = 30m },
+            },
+        });
+        var invoiceId = invoice.GetProperty("id").GetGuid();
+        var saved = invoice.GetProperty("lines").EnumerateArray().ToList();
+        saved[0].GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(headOffice);
+        saved[0].GetProperty("dimensions").GetProperty("PROJECT").GetGuid().ShouldBe(fitOut);
+        saved[1].GetProperty("dimensionSetId").GetGuid().ShouldBe(workshopSet);
+        saved[1].GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(workshop);
+        (await owner.PostAsync($"/api/v1/purchasing/invoices/{invoiceId}/submit", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("approved");
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{invoiceId}/post", new { }, HttpStatusCode.OK);
+
+        // The expense lines of the journal carry them (in the company's IQD at 1,300); the payable does not.
+        await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
+        await db.OpenAsync(ct);
+        var booked = (await db.QueryAsync<(decimal Debit, decimal Credit, string Role, string? Values)>("""
+            SELECT l.debit_fc, l.credit_fc, l.account_role, ds.values::text
+            FROM app.gl_journal_lines l
+            JOIN app.gl_journal_entries e ON e.tenant_id = l.tenant_id AND e.id = l.entry_id
+            LEFT JOIN app.org_dimension_sets ds ON ds.tenant_id = l.tenant_id AND ds.id = l.dimension_set_id
+            WHERE l.tenant_id = @t AND e.source_document_id = @invoiceId
+            """, new { t = s.Ws.TenantId, invoiceId })).ToList();
+        Guid? Value(string? values, string code) => values is null ? null : JsonDocument.Parse(values).RootElement.TryGetProperty(code, out var v) ? v.GetGuid() : null;
+        var rent = booked.Single(b => b.Role == "PurchaseExpense" && b.Debit == 130000m);
+        (Value(rent.Values, "COST_CENTER"), Value(rent.Values, "PROJECT")).ShouldBe((headOffice, fitOut));
+        var cleaning = booked.Single(b => b.Role == "PurchaseExpense" && b.Debit == 78000m);
+        (Value(cleaning.Values, "COST_CENTER"), Value(cleaning.Values, "PROJECT")).ShouldBe((workshop, (Guid?)null));
+        Value(booked.Single(b => b.Role == "AP").Values, "COST_CENTER").ShouldBeNull();
+        await owner.AssertInvariantsAsync();
+    }
+
     private async Task<decimal> BookedAsync(Setup s, string sql, object? extra = null)
     {
         await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);

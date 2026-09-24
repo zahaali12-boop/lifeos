@@ -28621,6 +28621,16 @@
               "null",
               "string"
             ]
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -41345,6 +41355,16 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         },
         "description": "A line: against a posted receipt line (three-way), an order line without a receipt (services, two-way) or a free expense line on an account role; quantity and price in the invoice currency."

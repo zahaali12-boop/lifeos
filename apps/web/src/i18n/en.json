@@ -2586,6 +2586,8 @@
     "invoicable": "Open for invoicing",
     "nothingInvoicable": "Nothing left to invoice for this supplier.",
     "addExpenseLine": "Add expense line",
+    "lineDimensions": "Dimensions of line {line}",
+    "dimensionAsOrdered": "— (as ordered)",
     "lineKinds": {
       "charge": "Landed-cost charge",
       "receipt": "Receipt",

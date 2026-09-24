@@ -45,6 +45,7 @@ public sealed class InvoiceService(
     LandedCostService landedCosts,
     ReturnService returns,
     IPayables payables,
+    IDimensionSets dimensionSets,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
@@ -414,8 +415,26 @@ public sealed class InvoiceService(
             }
         }
 
-        // 2. The journal in the invoice currency at the invoice rate.
+        // 2. The journal in the invoice currency at the invoice rate. Lines that land in profit and loss carry the line's
+        // dimensions; goods and landed-cost lines relieve balance-sheet clearing accounts, as the receipt booked them.
         var postingLines = new List<PostingLine>();
+        var dimensionsBySet = new Dictionary<Guid, IReadOnlyDictionary<string, Guid>?>();
+        async Task<IReadOnlyDictionary<string, Guid>?> DimensionsOf(InvoiceLine line)
+        {
+            if (line.DimensionSetId is not { } setId)
+            {
+                return null;
+            }
+
+            if (!dimensionsBySet.TryGetValue(setId, out var values))
+            {
+                values = await dimensionSets.GetAsync(setId, cancellationToken);
+                dimensionsBySet[setId] = values;
+            }
+
+            return values;
+        }
+
         foreach (var line in invoice.Lines)
         {
             switch (line.Kind)
@@ -432,7 +451,7 @@ public sealed class InvoiceService(
                 case "order":
                     {
                         var item = line.ItemId is { } itemId ? await items.FindAsync(itemId, cancellationToken) : null;
-                        postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, line.NetAmount, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
+                        postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, line.NetAmount, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
                         break;
                     }
 
@@ -459,14 +478,14 @@ public sealed class InvoiceService(
                         var variance = line.NetAmount - costTc;
                         if (variance != 0m)
                         {
-                            postingLines.Add(new PostingLine(AccountRoles.PurchasePriceVariance, -variance, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: ret.WarehouseId), PartnerId: invoice.PartnerId, Description: LocalizedText.Bilingual($"Return {ret.Number} credited at {line.UnitPrice:0.##} against cost", $"إشعار على المرتجع {ret.Number} بسعر {line.UnitPrice:0.##} مقابل الكلفة")));
+                            postingLines.Add(new PostingLine(AccountRoles.PurchasePriceVariance, -variance, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: ret.WarehouseId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: LocalizedText.Bilingual($"Return {ret.Number} credited at {line.UnitPrice:0.##} against cost", $"إشعار على المرتجع {ret.Number} بسعر {line.UnitPrice:0.##} مقابل الكلفة")));
                         }
 
                         break;
                     }
 
                 default:
-                    postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, sign * line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
+                    postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, sign * line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
                     break;
             }
         }
@@ -802,7 +821,38 @@ public sealed class InvoiceService(
                 return Error.Validation("invoice.line_invalid", "Quantities are positive, prices not negative and discounts between 0 and 100.").WithWhy(("lineNo", lineNo));
             }
 
-            var line = new InvoiceLine { Id = Guid.CreateVersion7(), TenantId = invoice.TenantId, InvoiceId = invoice.Id, LineNo = lineNo, Kind = l.Kind, Quantity = l.Quantity, UnitPrice = l.UnitPrice, DiscountPct = l.DiscountPct, Description = Shared.Trim(l.Description), DimensionSetId = l.DimensionSetId, CreatedAt = clock.UtcNow };
+            var line = new InvoiceLine { Id = Guid.CreateVersion7(), TenantId = invoice.TenantId, InvoiceId = invoice.Id, LineNo = lineNo, Kind = l.Kind, Quantity = l.Quantity, UnitPrice = l.UnitPrice, DiscountPct = l.DiscountPct, Description = Shared.Trim(l.Description), CreatedAt = clock.UtcNow };
+            var explicitDimensions = l.Dimensions is { Count: > 0 } || l.DimensionSetId is not null;
+            if (explicitDimensions && l.Kind is "receipt" or "charge")
+            {
+                return Error.Validation("invoice.dimensions_not_applicable", "Goods and landed-cost lines settle balance-sheet accounts; their dimensions come from the receipt and the stock.").WithWhy(("lineNo", lineNo), ("kind", l.Kind));
+            }
+
+            if (l.Dimensions is { Count: > 0 } values)
+            {
+                if (l.DimensionSetId is not null)
+                {
+                    return Error.Validation("invoice.dimensions_ambiguous", "A line gives its dimension values or a dimension set, not both.").WithWhy(("lineNo", lineNo));
+                }
+
+                var set = await dimensionSets.GetOrCreateAsync(values, cancellationToken);
+                if (set.IsFailure)
+                {
+                    return set.Error!.WithWhy(("lineNo", lineNo));
+                }
+
+                line.DimensionSetId = set.Value;
+            }
+            else if (l.DimensionSetId is { } setId)
+            {
+                if (await dimensionSets.GetAsync(setId, cancellationToken) is null)
+                {
+                    return Error.Validation("invoice.dimension_set_unknown", "The dimension set does not exist.").WithWhy(("lineNo", lineNo), ("dimensionSetId", setId));
+                }
+
+                line.DimensionSetId = setId;
+            }
+
             switch (l.Kind)
             {
                 case "receipt":
@@ -872,6 +922,11 @@ public sealed class InvoiceService(
                         line.UomId = orderLine.UomId;
                         line.AccountRole = AccountRoles.PurchaseExpense;
                         line.ExpectedUnitPrice = orderLine.UnitPrice * (1m - orderLine.DiscountPct / 100m);
+                        if (!explicitDimensions)
+                        {
+                            line.DimensionSetId = orderLine.DimensionSetId;
+                        }
+
                         break;
                     }
 
@@ -1163,7 +1218,8 @@ public sealed class InvoiceService(
             var (item, uom) = l.ItemId is { } itemId && l.UomId is { } uomId ? await ItemAsync(itemId, uomId, cancellationToken) : (null, null);
             lines.Add(new InvoiceLineSummary(l.Id, l.LineNo, l.Kind, l.ReceiptLineId, l.ReceiptLineId is { } rl ? receiptNumbers.GetValueOrDefault(rl) : null, l.OrderLineId, l.OrderLineId is { } ol ? orderNumbers.GetValueOrDefault(ol) : null, l.ItemId, item?.Code, item?.Name.Values, l.AccountRole, l.Description,
                 l.Quantity, l.UomId, uom?.UomCode, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.WhtAmount, l.ExpectedUnitPrice, l.PriceVariancePct, l.QtyVariance, l.DimensionSetId, l.LandedCostChargeId, l.LandedCostChargeId is { } ch ? chargeDocs.GetValueOrDefault(ch) : null,
-                l.ReturnLineId, l.ReturnLineId is { } rt ? returnNumbers.GetValueOrDefault(rt) : null));
+                l.ReturnLineId, l.ReturnLineId is { } rt ? returnNumbers.GetValueOrDefault(rt) : null,
+                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
         }
 
         var matches = (await db.MatchResults.AsNoTracking().Where(m => m.InvoiceId == i.Id).OrderByDescending(static m => m.MatchedAt).ToListAsync(cancellationToken))

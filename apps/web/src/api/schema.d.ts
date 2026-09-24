@@ -9267,6 +9267,9 @@ export interface components {
             /** Format: uuid */
             returnLineId?: null | string;
             returnNumber?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         InvoiceSummary: {
             /** Format: uuid */
@@ -12694,6 +12697,9 @@ export interface components {
             landedCostChargeId?: null | string;
             /** Format: uuid */
             returnLineId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         SaveInvoiceRequest: {
             /** Format: uuid */

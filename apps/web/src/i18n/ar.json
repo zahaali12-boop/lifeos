@@ -2586,6 +2586,8 @@
     "invoicable": "المتاح للفوترة",
     "nothingInvoicable": "لم يبقَ ما يُفوتر لهذا المورد.",
     "addExpenseLine": "إضافة بند مصروف",
+    "lineDimensions": "أبعاد البند {line}",
+    "dimensionAsOrdered": "— (كما في الطلب)",
     "lineKinds": {
       "charge": "رسم تكلفة وصول",
       "receipt": "استلام",
