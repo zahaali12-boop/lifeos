@@ -83,6 +83,26 @@ public sealed class TestDatabase : IAsyncDisposable
         return new TestDatabase(name, owner, app);
     }
 
+    /// <summary>
+    /// A new database copied from another (<c>CREATE DATABASE ... TEMPLATE</c>), for tests that must not disturb the
+    /// one they copy: the source must have no open sessions, which holds for these connections (no pooling).
+    /// </summary>
+    public static async Task<TestDatabase> CopyOfAsync(TestDatabase source, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        var ownerBase = await EnsureTemplateAsync(cancellationToken);
+        var name = "quicker_test_" + Guid.NewGuid().ToString("N")[..12];
+        await using (var admin = new NpgsqlConnection(ownerBase))
+        {
+            await admin.OpenAsync(cancellationToken);
+            await admin.ExecuteAsync($"CREATE DATABASE \"{name}\" TEMPLATE \"{source.Name}\"");
+        }
+
+        var owner = new NpgsqlConnectionStringBuilder(ownerBase) { Database = name, Pooling = false }.ConnectionString;
+        var app = new NpgsqlConnectionStringBuilder(ownerBase) { Database = name, Username = "quicker_app", Password = "quicker", Pooling = false }.ConnectionString;
+        return new TestDatabase(name, owner, app);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_ownerBase is null)

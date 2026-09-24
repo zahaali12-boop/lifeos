@@ -35,10 +35,14 @@ public sealed class ApiFixture : IAsyncDisposable
     public IServiceProvider Services => _factory!.Services;
 
     /// <param name="configure">Extra host settings a module's tests need (provider URLs, feature options).</param>
-    public static async Task<ApiFixture> StartAsync(Action<IWebHostBuilder>? configure = null)
+    public static async Task<ApiFixture> StartAsync(Action<IWebHostBuilder>? configure = null) => StartOn(await TestDatabase.CreateAsync(), configure);
+
+    /// <summary>Boots the API against a migrated database the caller prepared (a copy of the seeded demo, say); the fixture owns it from then on and drops it on dispose.</summary>
+    public static ApiFixture StartOn(TestDatabase database, Action<IWebHostBuilder>? configure = null)
     {
+        ArgumentNullException.ThrowIfNull(database);
         var fixture = new ApiFixture();
-        fixture.Db = await TestDatabase.CreateAsync();
+        fixture.Db = database;
         fixture._factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Quicker:Api:RateLimit:Enabled", "false"); // budgets are exercised by their own tests; suites hammer the API from one address

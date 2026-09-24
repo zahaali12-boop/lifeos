@@ -27,7 +27,7 @@ public sealed record DemoBooksOutcome(int Journals, int Entries, int PeriodsClos
 /// </summary>
 internal static class DemoBooks
 {
-    private sealed record Party(string Key, string En, string Ar)
+    internal sealed record Party(string Key, string En, string Ar)
     {
         public Guid Ref => DemoIds.For("party:" + Key);
     }
@@ -48,7 +48,7 @@ internal static class DemoBooks
 
     private static readonly (string Code, string En, string Ar)[] Projects = [("PRJ-ERP", "ERP rollout", "تطبيق نظام تخطيط الموارد"), ("PRJ-BSR", "Basra expansion", "توسعة البصرة")];
 
-    private static readonly Party[] Customers =
+    internal static readonly Party[] Customers =
     [
         new("cust:baghdad-mall", "Baghdad Mall LLC", "شركة بغداد مول"), new("cust:al-noor", "Al-Noor Supermarkets", "أسواق النور"), new("cust:kurdistan-dist", "Kurdistan Distribution", "توزيع كردستان"),
         new("cust:basra-oil", "Basra Oil Services", "خدمات نفط البصرة"), new("cust:gulf-retail", "Gulf Retail Group", "مجموعة الخليج للتجزئة"), new("cust:dubai-hotels", "Dubai Hotels Supply", "تجهيزات فنادق دبي"),

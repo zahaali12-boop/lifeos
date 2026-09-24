@@ -8,6 +8,7 @@ using Quicker.Audit;
 using Quicker.Banking;
 using Quicker.Collaboration;
 using Quicker.Identity;
+using Quicker.Identity.Contracts;
 using Quicker.Integration;
 using Quicker.Integrity;
 using Quicker.Inventory;
@@ -93,6 +94,18 @@ internal static class DemoHost
         services.AddPayablesModule();
         services.AddBankingModule();
         services.AddPurchasingModule();
+
+        // The seed stores no secrets (no bank account numbers, no provider keys), and the migrator is not given the
+        // platform key: a protector that refuses keeps it that way instead of encrypting under a key the API would not
+        // share.
+        services.AddSingleton<ISecretProtector, RefusingSecretProtector>();
         return builder.Build();
+    }
+
+    private sealed class RefusingSecretProtector : ISecretProtector
+    {
+        public string ProtectString(string value) => throw new InvalidOperationException("The demo seed stores no secrets; the platform key is the API's.");
+
+        public string UnprotectString(string protectedBase64) => throw new InvalidOperationException("The demo seed reads no secrets; the platform key is the API's.");
     }
 }

@@ -139,6 +139,17 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_replenishment_suggestions WHERE tenant_id = @t AND status = 'open'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(50, "the planner ran once per company and found rows below their reorder point");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_lots WHERE tenant_id = @t AND status = 'active' AND expires_on < CURRENT_DATE - 1", new { t = DemoData.TenantId })).ShouldBe(0, "lots past their expiry are marked expired, as the daily job would have done");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.pur_supplier_quotes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(9, "an RFQ per company with three quotes to compare");
+
+        // Customers and the pipeline (roadmap 5.1): the books' six customers with an account in each company they buy
+        // from, one on credit hold; four reps, the sales user among them; six prospects; deals in every stage.
+        (first.Customers, first.Opportunities).ShouldBe((6, 23));
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ptr_customer_accounts WHERE tenant_id = @t AND credit_limit > 0", new { t = DemoData.TenantId })).ShouldBe(8);
+        (await db.ExecuteScalarAsync<string>("SELECT p.code FROM app.ptr_customer_accounts a JOIN app.ptr_partners p ON p.tenant_id = a.tenant_id AND p.id = a.partner_id WHERE a.tenant_id = @t AND a.credit_status <> 'ok'", new { t = DemoData.TenantId })).ShouldBe("CUS-AL-NOOR");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ptr_sales_reps WHERE tenant_id = @t AND membership_id = @m", new { t = DemoData.TenantId, m = DemoData.MembershipId(DemoData.Users.Single(static u => u.Local == "sales")) })).ShouldBe(1);
+        (await db.QueryAsync<(string Status, int Count)>("SELECT status, count(*)::int FROM app.ptr_opportunities WHERE tenant_id = @t GROUP BY status ORDER BY status", new { t = DemoData.TenantId })).ShouldBe([("lost", 4), ("open", 14), ("won", 5)]);
+        (await db.ExecuteScalarAsync<int>("SELECT count(DISTINCT stage_id) FROM app.ptr_opportunities WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(6, "a deal in every stage");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ptr_crm_activities WHERE tenant_id = @t AND status = 'open' AND due_at < now()", new { t = DemoData.TenantId })).ShouldBeGreaterThan(0, "some next steps are already late");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ptr_opportunity_stage_changes WHERE tenant_id = @t AND changed_at < now() - interval '30 days'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(10, "the pipeline's history is dated over the past months");
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
@@ -162,6 +173,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         third.Entries.ShouldBe(first.Entries);
         (third.Items, third.Variants, third.Lots, third.Serials, third.StockLines).ShouldBe((first.Items, first.Variants, first.Lots, first.Serials, first.StockLines), "the item master and the stock are deterministic");
         (third.PurchaseOrders, third.SupplierInvoices, third.SupplierPayments).ShouldBe((first.PurchaseOrders, first.SupplierInvoices, first.SupplierPayments), "the year of buying is deterministic");
+        (third.Customers, third.Opportunities).ShouldBe((first.Customers, first.Opportunities), "the customers and the pipeline are deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

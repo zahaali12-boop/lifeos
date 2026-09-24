@@ -9,10 +9,11 @@ namespace Quicker.Demo.Tests;
 
 /// <summary>
 /// The classes that seed the whole demo tenant run one after the other: two seeds at once slow each other past the
-/// seeder's time budget (A-104) on a CI runner.
+/// seeder's time budget (A-104) on a CI runner. The demo seeded and backed up once is shared by the classes that only
+/// read it (the restore drill, the Customer 360 timing).
 /// </summary>
 [CollectionDefinition(Name)]
-public sealed class DemoSeeding
+public sealed class DemoSeeding : ICollectionFixture<BackedUpDemoFixture>
 {
     public const string Name = "Demo seeding";
 }
@@ -54,7 +55,7 @@ public sealed class BackedUpDemoFixture : IAsyncLifetime
 /// and a backup never overwrites another.
 /// </summary>
 [Collection(DemoSeeding.Name)]
-public sealed class BackupRestoreTests(BackedUpDemoFixture fixture) : IClassFixture<BackedUpDemoFixture>
+public sealed class BackupRestoreTests(BackedUpDemoFixture fixture)
 {
     [Fact]
     public async Task The_demo_tenant_restores_with_every_row_and_passes_the_harness_which_catches_a_missing_line()

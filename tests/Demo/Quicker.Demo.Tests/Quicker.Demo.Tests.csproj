@@ -7,6 +7,7 @@
     <ProjectReference Include="../../../src/BuildingBlocks/Quicker.Testing/Quicker.Testing.csproj" />
     <ProjectReference Include="../../../src/Host/Quicker.Migrator/Quicker.Migrator.csproj" />
     <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity/Quicker.Identity.csproj" />
+    <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>
