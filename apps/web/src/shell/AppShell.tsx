@@ -1,7 +1,7 @@
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger, TooltipProvider, cn } from "@quicker/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell, Keyboard, Languages, LogOut, Menu, Moon, Search, Sun, User } from "lucide-react";
+import { Bell, Keyboard, Languages, LogOut, Menu, Moon, Search, Sun, User, UserCog } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
@@ -189,6 +189,10 @@ export function AppShell() {
                     <div className="text-xs font-normal text-fg-muted">{session?.user.email}</div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => { void navigate({ to: "/account" }); }} data-testid="my-account">
+                    <UserCog className="size-4" aria-hidden="true" />
+                    {t("account.title")}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => { void logout(); }} data-testid="logout">
                     <LogOut className="size-4" aria-hidden="true" />
                     {t("shell.signOut")}

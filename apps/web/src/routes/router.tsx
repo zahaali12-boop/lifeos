@@ -13,6 +13,7 @@ import { DimensionsPage } from "./DimensionsPage";
 import { NumberingPage } from "./NumberingPage";
 import { CalendarsPage } from "./CalendarsPage";
 import { SecurityPage } from "./SecurityPage";
+import { AccountPage } from "./account/AccountPage";
 import { SettingsPage } from "./SettingsPage";
 import { UnitsPage } from "./UnitsPage";
 import { RatesPage } from "./RatesPage";
@@ -91,6 +92,7 @@ const unitsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/units
 const calendarsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/calendars", component: CalendarsPage });
 const settingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/settings", component: SettingsPage });
 const securityRoute = createRoute({ getParentRoute: () => shellRoute, path: "/security", component: SecurityPage });
+const accountRoute = createRoute({ getParentRoute: () => shellRoute, path: "/account", component: AccountPage });
 const membersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/members", component: MembersPage });
 const rolesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/roles", component: RolesPage });
 const customFieldsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/custom-fields", component: CustomFieldsPage });
@@ -156,7 +158,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
   shellRoute.addChildren([
-    dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
+    dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, revaluationsRoute,
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,

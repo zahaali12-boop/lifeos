@@ -33,7 +33,8 @@
     "openapi-fetch": "^0.17.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-i18next": "^17.0.15"
+    "react-i18next": "^17.0.15",
+    "uqr": "0.1.3"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

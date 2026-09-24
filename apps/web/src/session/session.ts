@@ -46,6 +46,20 @@ export function setSession(tokens: TokenResponse): Session {
   return current;
 }
 
+/** Keeps the stored user in step after the person changes their profile or two-step verification. */
+export function updateSessionUser(user: Partial<Session["user"]>): void {
+  if (!current) {
+    return;
+  }
+  current = { ...current, user: { ...current.user, ...user } };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  } catch {
+    // ignore
+  }
+  emit();
+}
+
 export function clearSession(): void {
   current = null;
   try {
