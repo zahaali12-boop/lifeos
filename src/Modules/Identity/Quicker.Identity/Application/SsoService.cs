@@ -289,6 +289,11 @@ public sealed class SsoService(
             return Error.Forbidden("auth.account_disabled", "This account is disabled.");
         }
 
+        if (!IpAllowlists.Allows(tenant.Policy.IpAllowlist, client.Ip))
+        {
+            return AuthService.NetworkNotAllowed(client);
+        }
+
         // Group → role mapping applies inside the tenant.
         await unitOfWork.Current.SwitchTenantAsync(tenant.Id, new UserId(user.Id), new MembershipId(membership.Id), user.Email, cancellationToken);
         if (connection.GroupClaim is { } groupClaim)

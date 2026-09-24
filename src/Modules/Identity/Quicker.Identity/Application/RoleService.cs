@@ -426,6 +426,51 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
         return exception.Id;
     }
 
+    /// <summary>Every exception, newest first, active ones (not revoked, not expired) marked as such.</summary>
+    public async Task<IReadOnlyList<SodExceptionSummary>> ListSodExceptionsAsync(CancellationToken cancellationToken)
+    {
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var rows = await db.SodExceptions.OrderByDescending(static e => e.CreatedAt).ToListAsync(cancellationToken);
+        var rules = await db.SodRules.ToDictionaryAsync(static r => r.Id, cancellationToken);
+        var members = await ListMembersAsync(cancellationToken);
+        string Member(Guid membershipId) => members.FirstOrDefault(m => m.MembershipId == membershipId)?.DisplayName ?? "Former member";
+        string User(Guid userId) => members.FirstOrDefault(m => m.UserId == userId)?.DisplayName ?? "Former member";
+        return rows.Select(e =>
+        {
+            var rule = rules.GetValueOrDefault(e.SodRuleId);
+            return new SodExceptionSummary(e.Id, e.SodRuleId, rule?.PermissionA ?? string.Empty, rule?.PermissionB ?? string.Empty, e.MembershipId, Member(e.MembershipId), e.Reason, User(e.ApprovedBy),
+                e.ExpiresOn, e.CreatedAt, e.RevokedAt, e.RevokedBy is { } by ? User(by) : null, e.RevokeReason, e.RevokedAt is null && (e.ExpiresOn is null || e.ExpiresOn >= today));
+        }).ToList();
+    }
+
+    /// <summary>Ends an exception before it expires; the member's conflict counts again from now. Kept, with who revoked it and why.</summary>
+    public async Task<Result> RevokeSodExceptionAsync(Guid id, RevokeSodExceptionRequest request, Guid revokedBy, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var exception = await db.SodExceptions.SingleOrDefaultAsync(e => e.Id == id, cancellationToken);
+        if (exception is null)
+        {
+            return Error.NotFound("sod_exception", id);
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            return Error.Validation("sod.reason_required", "A reason is required to revoke a segregation-of-duties exception.");
+        }
+
+        if (exception.RevokedAt is not null)
+        {
+            return Error.Conflict("sod.exception_revoked", "The exception is already revoked.").WithWhy(("revokedAt", exception.RevokedAt));
+        }
+
+        exception.RevokedAt = clock.UtcNow;
+        exception.RevokedBy = revokedBy;
+        exception.RevokeReason = request.Reason.Trim();
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry("sod_exception", exception.Id, exception.MembershipId.ToString(), AuditActions.Revoked, Reason: exception.RevokeReason), cancellationToken);
+        return Result.Success();
+    }
+
     public async Task<IReadOnlyList<SodReportRow>> SodReportAsync(CancellationToken cancellationToken)
     {
         var rows = new List<SodReportRow>();
@@ -448,7 +493,7 @@ public sealed class RoleService(IdentityDbContext db, IUnitOfWorkAccessor unitOf
         var rules = await db.SodRules.Where(static r => r.IsActive).ToListAsync(cancellationToken);
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         var exceptions = membershipId is { } mid
-            ? await db.SodExceptions.Where(e => e.MembershipId == mid && (e.ExpiresOn == null || e.ExpiresOn >= today)).Select(static e => e.SodRuleId).ToListAsync(cancellationToken)
+            ? await db.SodExceptions.Where(e => e.MembershipId == mid && e.RevokedAt == null && (e.ExpiresOn == null || e.ExpiresOn >= today)).Select(static e => e.SodRuleId).ToListAsync(cancellationToken)
             : [];
 
         // The all-access grant is a deliberate super-user decision, reported as such rather than as a conflict per rule.

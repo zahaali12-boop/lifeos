@@ -86,6 +86,12 @@ public sealed class PrincipalResolver(IdentityDbContext db, RoleService roles, I
             return null;
         }
 
+        // A member's session is accepted only from the workspace's allowed networks; API keys carry their own list.
+        if (kind != "api_key" && !IpAllowlists.Allows(tenant.Policy.IpAllowlist, httpContext.Connection.RemoteIpAddress))
+        {
+            return null;
+        }
+
         var cacheKey = $"grants:{membershipId}:{tenant.PermissionsEpoch}";
         var cached = await cache.GetOrCreateAsync(cacheKey, async entry =>
         {

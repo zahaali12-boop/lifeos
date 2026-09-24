@@ -3,9 +3,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 /**
  * The workspace set-up screens against the real API: units of measure and conversions, fiscal and business calendars,
- * company settings, and security (segregation-of-duties rules, API keys, single sign-on, the sign-in policy), with
- * the step-up prompt that sensitive actions raise once the sign-in is no longer recent. English and Arabic; every
- * screen passes axe with no serious or critical violation.
+ * company settings, and security (segregation-of-duties rules, API keys, single sign-on with roles from groups, the
+ * sign-in policy with its allowed networks), with the step-up prompt that sensitive actions raise once the sign-in is
+ * no longer recent. English and Arabic; every screen passes axe with no serious or critical violation.
  */
 const password = "correct-horse-battery-staple";
 
@@ -183,6 +183,17 @@ test("English: segregation-of-duties rule, API key shown once and revoked, SSO c
   await expect(page.getByTestId("sso-row")).toContainText("Corporate sign-in");
   await page.getByTestId("sso-row").getByRole("button", { name: "Edit" }).click();
   await expect(page.getByRole("dialog")).toContainText("Leave empty to keep the stored secret.");
+  // Groups in the provider's token grant roles: the claim is named, then a group mapped to the auditor role.
+  await page.getByTestId("sso-group-claim").fill("groups");
+  await page.getByTestId("sso-add-group").click();
+  await page.getByTestId("sso-group-0").fill("finance-auditors");
+  await page.getByTestId("sso-group-role-0").selectOption({ label: "auditor · Auditor" });
+  await expectAccessible(page);
+  await page.getByTestId("save-sso").click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByTestId("sso-row").getByRole("button", { name: "Edit" }).click();
+  await expect(page.getByTestId("sso-group-0")).toHaveValue("finance-auditors");
+  await expect(page.getByTestId("sso-group-role-0").locator("option:checked")).toHaveText("auditor · Auditor");
   await closeDialog(page);
 
   // Sign-in policy: with an active connection password sign-in may be turned off; the step-up window is shortened.
@@ -194,6 +205,31 @@ test("English: segregation-of-duties rule, API key shown once and revoked, SSO c
   await expect(page.getByTestId("save-policy")).toBeDisabled();
   await expect(page.getByTestId("policy-passwordMinLength")).toHaveValue("14");
   await expectAccessible(page);
+
+  // Allowed networks: malformed entries are refused, a list that leaves out this browser's address would lock the
+  // owner out and says which address that is; with it added the list saves, and cleared again every network is open.
+  const networks = page.getByTestId("policy-ipAllowlist");
+  const note = page.getByTestId("policy-network-note");
+  await networks.fill("10.0.0.0/8\noffice-router");
+  await page.getByTestId("save-policy").click();
+  await expect(note).toHaveText("Not an address or a CIDR range: office-router");
+  await networks.fill("10.0.0.0/8");
+  await page.getByTestId("save-policy").click();
+  await expect(note).toContainText("You are working from");
+  const address = /working from (\S+);/.exec((await note.textContent()) ?? "")?.[1] ?? "";
+  expect(address).not.toBe("");
+  await expectAccessible(page);
+  await networks.fill(`10.0.0.0/8\n${address}`);
+  await page.getByTestId("save-policy").click();
+  await expect(page.getByTestId("save-policy")).toBeDisabled();
+  await expect(networks).toHaveValue(`10.0.0.0/8\n${address}`);
+  await page.reload();
+  await page.getByTestId("tab-policy").click();
+  await expect(networks).toHaveValue(`10.0.0.0/8\n${address}`);
+  await networks.fill("");
+  await page.getByTestId("save-policy").click();
+  await expect(page.getByTestId("save-policy")).toBeDisabled();
+  await expect(networks).toHaveValue("");
 });
 
 test("English: a sensitive action after the step-up window asks to confirm identity and then completes", async ({ page }) => {

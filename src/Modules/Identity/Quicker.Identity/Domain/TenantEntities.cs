@@ -144,6 +144,12 @@ public sealed class SodException : ITenantEntity
     public DateOnly? ExpiresOn { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset? RevokedAt { get; set; }
+
+    public Guid? RevokedBy { get; set; }
+
+    public string? RevokeReason { get; set; }
 }
 
 public sealed class ApiKey : ITenantEntity

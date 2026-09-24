@@ -4,8 +4,9 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * Access control against the real API: roles designed from the permission catalogue (a whole area, a template with
  * grants held back for modules still to come, a combination a blocking segregation rule refuses), a member given two
- * roles that trip a warning rule (acknowledged), one role limited to a company, the conflict excepted on the Security
- * screen with a reason, and a role taken away. English and Arabic, with axe on every screen.
+ * roles that trip a warning rule (acknowledged), one role limited to two companies, the conflict excepted on the
+ * Security screen with a reason and the exception revoked, and a role taken away. English and Arabic, with axe on every
+ * screen.
  */
 const password = "correct-horse-battery-staple";
 
@@ -56,6 +57,11 @@ test("English: roles designed and assigned, a warning acknowledged, the conflict
   await page.getByLabel(/Legal name \(English\)/).fill("Main Trading Co.");
   await page.getByTestId("save-company").click();
   await expect(page.getByRole("grid")).toContainText("MAIN");
+  await page.getByTestId("new-company").click();
+  await page.getByLabel(/^Code/).fill("SIDE");
+  await page.getByLabel(/Legal name \(English\)/).fill("Side Trading Co.");
+  await page.getByTestId("save-company").click();
+  await expect(page.getByRole("grid")).toContainText("SIDE");
 
   // A counting role over the whole count area: every count permission is included and locked.
   await nav(page, "Roles");
@@ -96,11 +102,14 @@ test("English: roles designed and assigned, a warning acknowledged, the conflict
   const dialog = page.getByTestId("member-dialog");
   await expect(dialog).toContainText("No roles assigned");
   await page.getByTestId("assign-role-select").selectOption({ label: "counter · Stock counter" });
-  await page.getByTestId("assign-scope-type").selectOption("company");
-  await page.getByTestId("assign-scope").selectOption({ label: "MAIN · Main Trading Co." });
+  const companies = page.getByTestId("assign-scopes-company");
+  await companies.getByLabel("MAIN · Main Trading Co.").check();
+  await companies.getByLabel("SIDE · Side Trading Co.").check();
+  await expectAccessible(page);
   await page.getByTestId("save-assignment").click();
   await expect(page.getByTestId("assignment-row")).toHaveCount(1);
-  await expect(page.getByTestId("assignment-row")).toContainText("Company: MAIN · Main Trading Co.");
+  await expect(page.getByTestId("assignment-row")).toContainText("Company: MAIN · Main Trading Co.; Company: SIDE · Side Trading Co.");
+  await expect(companies.getByLabel("MAIN · Main Trading Co.")).not.toBeChecked();
   await page.getByTestId("assign-role-select").selectOption({ label: "poster · Adjustment poster" });
   await page.getByTestId("save-assignment").click();
   await expect(page.getByTestId("assignment-problem")).toContainText("inventory.count.approve");
@@ -120,6 +129,20 @@ test("English: roles designed and assigned, a warning acknowledged, the conflict
   await expectAccessible(page);
   await page.getByTestId("save-exception").click();
   await expect(violation).toContainText("Exception granted");
+  const excepted = page.getByTestId("sod-exception-row").filter({ hasText: "Store Clerk" });
+  await expect(excepted).toContainText("Single-person store until the second clerk starts");
+  await expect(excepted.getByTestId("doc-status")).toHaveText("Active");
+
+  // The second clerk has started: the exception is revoked with a reason, stays in the list, and the conflict counts again.
+  await excepted.getByTestId("revoke-exception").click();
+  await page.getByTestId("revoke-exception-reason").fill("Second clerk started");
+  await expectAccessible(page);
+  await page.getByTestId("confirm-revoke-exception").click();
+  await expect(excepted.getByTestId("doc-status")).toHaveText("Revoked");
+  await expect(excepted.getByTestId("sod-exception-revoked")).toContainText("Second clerk started");
+  await expect(excepted.getByTestId("revoke-exception")).toHaveCount(0);
+  await expect(violation.getByTestId("grant-exception")).toBeVisible();
+  await expectAccessible(page);
 
   // Taking the posting role away ends the conflict.
   await nav(page, "Members");

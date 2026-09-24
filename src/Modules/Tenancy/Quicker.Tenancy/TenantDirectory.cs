@@ -125,6 +125,14 @@ public sealed partial class TenantDirectory(IUnitOfWorkAccessor unitOfWork) : IT
             return Error.Validation("tenant.policy_invalid", "Policy values are out of range.");
         }
 
+        var invalid = IpAllowlists.Invalid(policy.IpAllowlist);
+        if (invalid.Count > 0 || (policy.IpAllowlist?.Count ?? 0) > IpAllowlists.MaxEntries)
+        {
+            return Error.Validation("tenant.policy_ip_invalid", $"Each allowed network is an address or a CIDR range, at most {IpAllowlists.MaxEntries}.").WithWhy(("invalid", invalid), ("max", IpAllowlists.MaxEntries));
+        }
+
+        policy = policy with { IpAllowlist = policy.IpAllowlist is { Count: > 0 } list ? list.Select(static e => e.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList() : null };
+
         var uow = unitOfWork.Current;
         await uow.Connection.ExecuteAsync(new CommandDefinition(
             "UPDATE control.tenants SET settings = settings || @settings::jsonb WHERE id = @id",

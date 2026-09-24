@@ -662,9 +662,27 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Exceptions to segregation-of-duties rules, newest first, with whether each is still in force */
+        get: operations["getSodExceptions"];
         put?: never;
         post: operations["postSodExceptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sod/exceptions/{exceptionId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End an exception before it expires (reason required); the conflict counts again from now */
+        post: operations["postSodExceptionsByExceptionIdRevoke"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11545,6 +11563,9 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        RevokeSodExceptionRequest: {
+            reason: string;
+        };
         RfqLineSummary: {
             /** Format: uuid */
             id: string;
@@ -13556,6 +13577,29 @@ export interface components {
             /** Format: date */
             expiresOn?: null | string;
         };
+        /** @description An exception to a segregation-of-duties rule for one member: why, who allowed it, until when, and whether it was revoked. */
+        SodExceptionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            ruleId: string;
+            permissionA: string;
+            permissionB: string;
+            /** Format: uuid */
+            membershipId: string;
+            memberName: string;
+            reason: string;
+            approvedBy: string;
+            /** Format: date */
+            expiresOn: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            revokedAt: null | string;
+            revokedBy: null | string;
+            revokeReason: null | string;
+            isActive: boolean;
+        };
         SodReportRow: {
             /** Format: uuid */
             membershipId: string;
@@ -15487,6 +15531,26 @@ export interface operations {
             };
         };
     };
+    getSodExceptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SodExceptionSummary"][];
+                };
+            };
+        };
+    };
     postSodExceptions: {
         parameters: {
             query?: never;
@@ -15502,6 +15566,30 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postSodExceptionsByExceptionIdRevoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exceptionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeSodExceptionRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };

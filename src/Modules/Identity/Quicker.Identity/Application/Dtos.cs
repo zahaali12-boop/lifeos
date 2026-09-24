@@ -101,6 +101,25 @@ public sealed record SaveSodRuleRequest(string PermissionA, string PermissionB, 
 
 public sealed record SodExceptionRequest(Guid RuleId, Guid MembershipId, string Reason, DateOnly? ExpiresOn = null);
 
+/// <summary>An exception to a segregation-of-duties rule for one member: why, who allowed it, until when, and whether it was revoked.</summary>
+public sealed record SodExceptionSummary(
+    Guid Id,
+    Guid RuleId,
+    string PermissionA,
+    string PermissionB,
+    Guid MembershipId,
+    string MemberName,
+    string Reason,
+    string ApprovedBy,
+    DateOnly? ExpiresOn,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? RevokedAt,
+    string? RevokedBy,
+    string? RevokeReason,
+    bool IsActive);
+
+public sealed record RevokeSodExceptionRequest(string Reason);
+
 public sealed record SodReportRow(Guid MembershipId, string Email, string DisplayName, IReadOnlyList<SodConflict> Conflicts, bool IsSuperUser);
 
 public sealed record CreateApiKeyRequest(string Name, IReadOnlyList<string>? Scopes = null, DateTimeOffset? ExpiresAt = null, IReadOnlyList<string>? IpAllowlist = null);

@@ -153,6 +153,11 @@ public sealed class AuthService(
             return Error.Forbidden("auth.tenant_unavailable", "This workspace is not available.");
         }
 
+        if (!IpAllowlists.Allows(tenant.Policy.IpAllowlist, client.Ip))
+        {
+            return NetworkNotAllowed(client);
+        }
+
         if (!tenant.Policy.AllowPasswordLogin && amr == "pwd")
         {
             return Error.Forbidden("auth.password_login_disabled", "Sign in with your organisation's identity provider.");
@@ -188,6 +193,11 @@ public sealed class AuthService(
         if (user is null || tenant is null || membership is null)
         {
             return InvalidCredentials();
+        }
+
+        if (!IpAllowlists.Allows(tenant.Policy.IpAllowlist, client.Ip))
+        {
+            return NetworkNotAllowed(client);
         }
 
         var now = clock.UtcNow;
@@ -289,6 +299,11 @@ public sealed class AuthService(
             return Error.Forbidden("auth.session_invalid", "The session is not valid.");
         }
 
+        if (!IpAllowlists.Allows(tenant.Policy.IpAllowlist, client.Ip))
+        {
+            return NetworkNotAllowed(client);
+        }
+
         session.RevokedAt = now;
         session.RevokedReason = "rotated";
         var replacement = NewSession(user, membership, tenant, client, session.Amr, session.AuthTime, session.FamilyId, now, out var refreshToken);
@@ -380,6 +395,9 @@ public sealed class AuthService(
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
+
+    internal static Error NetworkNotAllowed(ClientInfo client) =>
+        Error.Forbidden("auth.ip_not_allowed", "This workspace accepts sign-in only from its approved networks.").WithWhy(("address", client.Ip?.ToString()));
 
     /// <summary>Issues a session for an already-authenticated user (OIDC callback, invitation acceptance).</summary>
     public async Task<TokenResponse> IssueSessionAsync(User user, TenantMembership membership, TenantInfo tenant, ClientInfo client, string amr, DateTimeOffset authTime, CancellationToken cancellationToken)

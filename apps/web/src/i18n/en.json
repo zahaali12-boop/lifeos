@@ -556,6 +556,20 @@
     "exceptionTitle": "Exception for {member}",
     "exceptionHint": "The member keeps both permissions. The reason and who approved it are recorded in the audit trail; an end date makes sure the exception is reviewed.",
     "exceptionEnds": "Ends on",
+    "exceptions": "Exceptions granted",
+    "noExceptions": "No exceptions have been granted.",
+    "approvedBy": "Approved by",
+    "revokedNote": "Revoked {when} by {who}: {reason}",
+    "revokeExceptionTitle": "Revoke the exception for {member}",
+    "revokeExceptionHint": "From now on the conflict counts again: it shows in the report and, for a blocking rule, a new assignment that creates it is refused. The exception stays in the history with your reason.",
+    "groupClaimHint": "The token claim that lists the member's groups, such as groups.",
+    "groupRoles": "Roles from groups",
+    "groupRolesHint": "At each sign-in, a member in one of these groups is given the role mapped to it (roles are added, never removed).",
+    "group": "Group",
+    "addGroup": "Add group",
+    "removeGroup": "Remove group {group}",
+    "invalidNetworks": "Not an address or a CIDR range: {entries}",
+    "yourAddress": "You are working from {address}; add it, or a range that covers it, to keep your access.",
     "superUsers": "Full access",
     "superUsersHint": "Owners and members granted every permission are outside segregation of duties; keep this list short.",
     "description": "Segregation-of-duties rules, API keys for integrations, single sign-on and the workspace sign-in policy.",
@@ -640,7 +654,8 @@
       "lockoutMinutes": "{min}–{max} minutes.",
       "mfaRequired": "Members without an authenticator enrol one at their next sign-in.",
       "allowPasswordLogin": "Turn off to make single sign-on the only way in.",
-      "allowPasswordLoginNoSso": "Password sign-in can be turned off once a single sign-on connection is active."
+      "allowPasswordLoginNoSso": "Password sign-in can be turned off once a single sign-on connection is active.",
+      "ipAllowlist": "One address or CIDR range per line, such as 203.0.113.7 or 10.0.0.0/8; leave empty to allow every network. Outside the list members cannot sign in and their sessions stop working. API keys have their own lists."
     }
   },
   "stepUp": {
@@ -798,6 +813,7 @@
     "removeRole": "Remove role {role}",
     "assignRole": "Assign a role",
     "limitTo": "Limit to",
+    "limitToHint": "Tick one or more of each kind, or none to leave the role unlimited. A record is in reach when it belongs to a ticked company, a ticked branch and a ticked warehouse; a kind with nothing ticked does not limit.",
     "scopeTypes": {
       "company": "Company",
       "branch": "Branch",

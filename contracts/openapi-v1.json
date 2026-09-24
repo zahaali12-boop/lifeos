@@ -1270,6 +1270,63 @@
             "description": "OK"
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Segregation of duties"
+        ],
+        "summary": "Exceptions to segregation-of-duties rules, newest first, with whether each is still in force",
+        "operationId": "getSodExceptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SodExceptionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sod/exceptions/{exceptionId}/revoke": {
+      "post": {
+        "tags": [
+          "Segregation of duties"
+        ],
+        "summary": "End an exception before it expires (reason required); the conflict counts again from now",
+        "operationId": "postSodExceptionsByExceptionIdRevoke",
+        "parameters": [
+          {
+            "name": "exceptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeSodExceptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/api/v1/sod/report": {
@@ -37478,6 +37535,17 @@
           }
         }
       },
+      "RevokeSodExceptionRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "RfqLineSummary": {
         "required": [
           "id",
@@ -44281,6 +44349,88 @@
             "format": "date"
           }
         }
+      },
+      "SodExceptionSummary": {
+        "required": [
+          "id",
+          "ruleId",
+          "permissionA",
+          "permissionB",
+          "membershipId",
+          "memberName",
+          "reason",
+          "approvedBy",
+          "expiresOn",
+          "createdAt",
+          "revokedAt",
+          "revokedBy",
+          "revokeReason",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "permissionA": {
+            "type": "string"
+          },
+          "permissionB": {
+            "type": "string"
+          },
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "revokedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "revokeReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "description": "An exception to a segregation-of-duties rule for one member: why, who allowed it, until when, and whether it was revoked."
       },
       "SodReportRow": {
         "required": [

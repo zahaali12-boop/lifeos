@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -210,6 +209,13 @@ public static class IdentityEndpoints
         sod.MapPost("/exceptions", async (SodExceptionRequest request, CurrentPrincipal current, RoleService service, CancellationToken ct) =>
             ApiProblems.From(await service.AddSodExceptionAsync(request, current.Required.UserId.Value, ct), static id => Results.Created($"/api/v1/sod/exceptions/{id}", new { id })))
             .RequirePermission(IdentityPermissions.SodManage);
+        sod.MapGet("/exceptions", async (RoleService service, CancellationToken ct) => TypedResults.Ok(await service.ListSodExceptionsAsync(ct)))
+            .RequirePermission(IdentityPermissions.SodRead)
+            .WithSummary("Exceptions to segregation-of-duties rules, newest first, with whether each is still in force");
+        sod.MapPost("/exceptions/{exceptionId:guid}/revoke", async (Guid exceptionId, RevokeSodExceptionRequest request, CurrentPrincipal current, RoleService service, CancellationToken ct) =>
+            ApiProblems.NoContent(await service.RevokeSodExceptionAsync(exceptionId, request, current.Required.UserId.Value, ct)))
+            .RequirePermission(IdentityPermissions.SodManage)
+            .WithSummary("End an exception before it expires (reason required); the conflict counts again from now");
         sod.MapGet("/report", async (RoleService service, CancellationToken ct) => TypedResults.Ok(await service.SodReportAsync(ct))).RequirePermission(IdentityPermissions.SodRead);
 
         // ---------------------------------------------------------------- administration: API keys, SSO, policy, metadata
@@ -239,12 +245,19 @@ public static class IdentityEndpoints
         tenant.MapGet("/policy", async (CurrentPrincipal current, ITenantDirectory tenants, CancellationToken ct) =>
             Results.Ok((await tenants.FindByIdAsync(current.Required.TenantId, ct))!.Policy))
             .Produces<TenantSecurityPolicy>().RequirePermission(IdentityPermissions.TenantSettingsManage);
-        tenant.MapPut("/policy", async (TenantSecurityPolicy policy, CurrentPrincipal current, ITenantProvisioner provisioner, SsoService sso, CancellationToken ct) =>
+        tenant.MapPut("/policy", async (TenantSecurityPolicy policy, HttpContext http, CurrentPrincipal current, ITenantProvisioner provisioner, SsoService sso, CancellationToken ct) =>
         {
             // Turning password sign-in off with no working single sign-on would lock every member out, owners included.
             if (!policy.AllowPasswordLogin && !(await sso.ListAsync(current.Required.TenantId.Value, ct)).Any(static c => c.IsActive))
             {
                 return ApiProblems.From(Error.Validation("tenant.password_login_required", "Password sign-in can be turned off only while a single sign-on connection is active."));
+            }
+
+            // An allow-list that leaves out the address this change comes from would lock its author out at once.
+            var address = http.Connection.RemoteIpAddress;
+            if (IpAllowlists.Invalid(policy.IpAllowlist).Count == 0 && !IpAllowlists.Allows(policy.IpAllowlist, address))
+            {
+                return ApiProblems.From(Error.Validation("tenant.policy_ip_lockout", "The allowed networks must include the address you are working from.").WithWhy(("address", address?.ToString())));
             }
 
             var result = await provisioner.UpdatePolicyAsync(current.Required.TenantId, policy, ct);
@@ -260,12 +273,10 @@ public static class IdentityEndpoints
         return api;
     }
 
-    private static ClientInfo Client(HttpContext http)
-    {
-        var forwarded = http.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim();
-        IPAddress? ip = forwarded is not null && IPAddress.TryParse(forwarded, out var parsed) ? parsed : http.Connection.RemoteIpAddress;
-        return new ClientInfo(ip, http.Request.Headers.UserAgent.FirstOrDefault());
-    }
+    // The connection's address; a forwarded one is taken only from trusted proxies (Quicker:Api:TrustedProxies), never
+    // from a header any client can send, since sign-in and the network allow-list depend on it.
+    private static ClientInfo Client(HttpContext http) =>
+        new(http.Connection.RemoteIpAddress, http.Request.Headers.UserAgent.FirstOrDefault());
 
     private static Guid? SessionId(HttpContext http) =>
         Guid.TryParse(http.User.FindFirst(QuickerClaims.Session)?.Value, out var id) ? id : null;

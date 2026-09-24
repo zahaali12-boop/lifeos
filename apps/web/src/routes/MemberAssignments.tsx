@@ -18,11 +18,13 @@ const scopeTypes = ["company", "branch", "warehouse"] as const;
 
 interface Assign {
   roleId: string;
-  scopeType: string;
-  scopeId: string;
+  /** The companies, branches and warehouses ticked, as "type:id". */
+  scopes: string[];
   validFrom: string;
   validTo: string;
 }
+
+const emptyAssign = (): Assign => ({ roleId: "", scopes: [], validFrom: "", validTo: "" });
 
 function conflictsOf(error: unknown): Conflict[] {
   if (!isApiProblem(error) || !error.why) {
@@ -62,7 +64,7 @@ export function MemberDialog({ member, roles, onClose }: { member: Member | null
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const options = useScopeOptions();
-  const [assign, setAssign] = useState<Assign>({ roleId: "", scopeType: "", scopeId: "", validFrom: "", validTo: "" });
+  const [assign, setAssign] = useState<Assign>(emptyAssign);
   const [problem, setProblem] = useState<{ message: string; conflicts: Conflict[]; warning: boolean } | null>(null);
   const report = useQuery({ queryKey: ["sod-report"], enabled: member !== null, retry: false, queryFn: async () => unwrap(await api.GET("/api/v1/sod/report")) });
   const own = report.data?.find((r) => r.membershipId === member?.membershipId)?.conflicts ?? [];
@@ -85,14 +87,14 @@ export function MemberDialog({ member, roles, onClose }: { member: Member | null
         params: { path: { membershipId: member.membershipId } },
         body: {
           roleId: assign.roleId,
-          scopes: assign.scopeType && assign.scopeId ? [{ scopeType: assign.scopeType, scopeId: assign.scopeId }] : null,
+          scopes: assign.scopes.length > 0 ? assign.scopes.map((key) => { const [scopeType = "", scopeId = ""] = key.split(":"); return { scopeType, scopeId }; }) : null,
           validFrom: assign.validFrom || null,
           validTo: assign.validTo || null,
           acknowledgeWarnings,
         },
       }));
     },
-    onSuccess: async () => { setProblem(null); setAssign({ roleId: "", scopeType: "", scopeId: "", validFrom: "", validTo: "" }); await refresh(); },
+    onSuccess: async () => { setProblem(null); setAssign(emptyAssign()); await refresh(); },
     onError: fail,
   });
   const unassign = useMutation({
@@ -112,9 +114,11 @@ export function MemberDialog({ member, roles, onClose }: { member: Member | null
     onError: fail,
   });
 
-  const close = (): void => { setProblem(null); setAssign({ roleId: "", scopeType: "", scopeId: "", validFrom: "", validTo: "" }); onClose(); };
+  const close = (): void => { setProblem(null); setAssign(emptyAssign()); onClose(); };
   const submit = (event: FormEvent): void => { event.preventDefault(); add.mutate(false); };
-  const scopeChoices = assign.scopeType ? options[assign.scopeType as (typeof scopeTypes)[number]] : [];
+  const toggleScope = (key: string, on: boolean): void => {
+    setAssign({ ...assign, scopes: on ? [...assign.scopes, key] : assign.scopes.filter((k) => k !== key) });
+  };
 
   return (
     <Dialog open={member !== null} onOpenChange={(isOpen) => { if (!isOpen) { close(); } }}>
@@ -206,34 +210,36 @@ export function MemberDialog({ member, roles, onClose }: { member: Member | null
                     ))}
                   </SelectField>
                 </Field>
-                <Field label={t("members.limitTo")}>
-                  <SelectField value={assign.scopeType} onChange={(e) => { setAssign({ ...assign, scopeType: e.target.value, scopeId: "" }); }} data-testid="assign-scope-type">
-                    <option value="">{t("members.everywhere")}</option>
-                    {scopeTypes.map((s) => (
-                      <option key={s} value={s}>
-                        {t(`members.scopeTypes.${s}`)}
-                      </option>
-                    ))}
-                  </SelectField>
-                </Field>
-                {assign.scopeType ? (
-                  <Field label={t(`members.scopeTypes.${assign.scopeType}`)} required>
-                    <SelectField value={assign.scopeId} onChange={(e) => { setAssign({ ...assign, scopeId: e.target.value }); }} required data-testid="assign-scope">
-                      <option value="">—</option>
-                      {scopeChoices.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </SelectField>
-                  </Field>
-                ) : null}
                 <Field label={t("members.validFrom")}>
                   <TextField type="date" value={assign.validFrom} onChange={(e) => { setAssign({ ...assign, validFrom: e.target.value }); }} dir="ltr" />
                 </Field>
                 <Field label={t("members.validTo")}>
                   <TextField type="date" value={assign.validTo} onChange={(e) => { setAssign({ ...assign, validTo: e.target.value }); }} dir="ltr" />
                 </Field>
+              </div>
+              <div className="flex flex-col gap-2" data-testid="assign-scopes">
+                <p className="text-sm font-medium">{t("members.limitTo")}</p>
+                <p className="text-xs text-fg-muted">{t("members.limitToHint")}</p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {scopeTypes.map((type) => (
+                    <fieldset key={type} className="flex min-w-0 flex-col gap-1 rounded-md border border-border p-2" data-testid={`assign-scopes-${type}`}>
+                      <legend className="px-1 text-xs font-medium text-fg-muted">{t(`members.scopeTypes.${type}`)}</legend>
+                      {options[type].length === 0 ? <p className="text-xs text-fg-muted">—</p> : (
+                        <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
+                          {options[type].map((o) => {
+                            const key = `${type}:${o.id}`;
+                            return (
+                              <label key={o.id} className="flex items-start gap-2 text-sm">
+                                <input type="checkbox" className="mt-1" checked={assign.scopes.includes(key)} onChange={(e) => { toggleScope(key, e.target.checked); }} />
+                                <span className="min-w-0 break-words">{o.label}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </fieldset>
+                  ))}
+                </div>
               </div>
               <div>
                 <Button type="submit" size="sm" loading={add.isPending && !problem?.warning} data-testid="save-assignment">

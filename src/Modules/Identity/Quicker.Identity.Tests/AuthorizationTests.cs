@@ -114,6 +114,29 @@ public sealed class AuthorizationTests(ApiHostFixture host)
         var report = await (await owner.GetAsync("/api/v1/sod/report")).ReadJsonAsync();
         report.EnumerateArray().Single(r => r.GetProperty("membershipId").GetGuid() == membership).GetProperty("conflicts").GetArrayLength().ShouldBe(1);
         report.EnumerateArray().Single(r => r.GetProperty("membershipId").GetGuid() == ws.MembershipId).GetProperty("isSuperUser").GetBoolean().ShouldBeTrue();
+
+        // An exception clears the conflict; revoked (reason required, once), the conflict counts again and the exception stays listed.
+        var conflict = report.EnumerateArray().Single(r => r.GetProperty("membershipId").GetGuid() == membership).GetProperty("conflicts")[0];
+        conflict.GetProperty("hasException").GetBoolean().ShouldBeFalse();
+        var granted = await owner.PostAsJsonAsync("/api/v1/sod/exceptions", new { ruleId = conflict.GetProperty("ruleId").GetGuid(), membershipId = membership, reason = "Small team until March" }, Json);
+        granted.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var exceptionId = (await granted.ReadJsonAsync()).GetProperty("id").GetGuid();
+        async Task<JsonElement> ConflictAsync() => (await (await owner.GetAsync("/api/v1/sod/report")).ReadJsonAsync()).EnumerateArray().Single(r => r.GetProperty("membershipId").GetGuid() == membership).GetProperty("conflicts")[0];
+        (await ConflictAsync()).GetProperty("hasException").GetBoolean().ShouldBeTrue();
+        var listed = (await (await owner.GetAsync("/api/v1/sod/exceptions")).ReadJsonAsync()).EnumerateArray().Single();
+        listed.GetProperty("id").GetGuid().ShouldBe(exceptionId);
+        listed.GetProperty("memberName").GetString().ShouldBe("S");
+        listed.GetProperty("isActive").GetBoolean().ShouldBeTrue();
+
+        var noReason = await owner.PostAsJsonAsync($"/api/v1/sod/exceptions/{exceptionId}/revoke", new { reason = " " }, Json);
+        (await noReason.ErrorCodeAsync()).ShouldBe("sod.reason_required");
+        (await owner.PostAsJsonAsync($"/api/v1/sod/exceptions/{exceptionId}/revoke", new { reason = "Team has grown" }, Json)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await (await owner.PostAsJsonAsync($"/api/v1/sod/exceptions/{exceptionId}/revoke", new { reason = "again" }, Json)).ErrorCodeAsync()).ShouldBe("sod.exception_revoked");
+        (await ConflictAsync()).GetProperty("hasException").GetBoolean().ShouldBeFalse();
+        var revoked = (await (await owner.GetAsync("/api/v1/sod/exceptions")).ReadJsonAsync()).EnumerateArray().Single();
+        revoked.GetProperty("isActive").GetBoolean().ShouldBeFalse();
+        revoked.GetProperty("revokeReason").GetString().ShouldBe("Team has grown");
+        revoked.GetProperty("revokedBy").GetString().ShouldNotBeNullOrEmpty();
     }
 
     [Fact]

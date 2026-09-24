@@ -3,14 +3,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Plus, Trash2 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { api, unwrap } from "../api";
+import { api, isApiProblem, unwrap } from "../api";
 import type { components } from "../api/schema";
-import { formatDateTime, localized } from "../lib/format";
+import { formatDate, formatDateTime, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
-import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { FormError, PageHeader, SelectField, TextareaField, TextField } from "./common";
 import { DocStatus, Tabs } from "./inventory/shared";
 
 type Policy = components["schemas"]["TenantSecurityPolicy"];
+type SodException = components["schemas"]["SodExceptionSummary"];
+
+/** An exception is in force, ended by its date, or revoked before then. */
+function exceptionStatus(e: SodException): string {
+  return e.isActive ? "active" : e.revokedAt ? "revoked" : "expired";
+}
 
 /** The numeric policy fields, with the ranges the server accepts. */
 const policyNumbers = [
@@ -27,8 +33,10 @@ function list(value: string): string[] {
 }
 
 /**
- * Security (roadmap 1.5–1.6): segregation-of-duties rules and the report of members who hold conflicting permissions,
- * API keys for integrations (the secret is shown once), and single sign-on connections to an OpenID Connect provider.
+ * Security (roadmap 1.5–1.6): segregation-of-duties rules, the report of members who hold conflicting permissions and
+ * the exceptions granted (revocable with a reason), API keys for integrations (the secret is shown once), single
+ * sign-on connections to an OpenID Connect provider with their group-to-role mapping, and the sign-in policy with the
+ * networks members may work from.
  */
 export function SecurityPage() {
   const { t } = useTranslation();
@@ -39,18 +47,26 @@ export function SecurityPage() {
   const [rule, setRule] = useState<{ id: string | null; permissionA: string; permissionB: string; severity: string; rationaleEn: string; rationaleAr: string; isActive: boolean } | null>(null);
   const [key, setKey] = useState<{ name: string; scopes: string; expiresAt: string; ipAllowlist: string } | null>(null);
   const [created, setCreated] = useState<{ name: string; key: string } | null>(null);
-  const [sso, setSso] = useState<{ id: string | null; code: string; displayName: string; authority: string; clientId: string; clientSecret: string; scopes: string; emailDomains: string; jitProvisioning: boolean; groupClaim: string; groupRoleMap: Record<string, string> | null; isActive: boolean; hasSecret: boolean } | null>(null);
+  const [sso, setSso] = useState<{ id: string | null; code: string; displayName: string; authority: string; clientId: string; clientSecret: string; scopes: string; emailDomains: string; jitProvisioning: boolean; groupClaim: string; groups: { group: string; roleId: string }[]; isActive: boolean; hasSecret: boolean } | null>(null);
   const [policy, setPolicy] = useState<Policy | null>(null);
+  // The allow-list as typed (one entry per line), kept apart from the policy so blank lines survive editing.
+  const [networks, setNetworks] = useState<string | null>(null);
+  // What the server said about the list: the entries it could not read, or the address a list would lock out.
+  const [networkNote, setNetworkNote] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<{ id: string; member: string; reason: string } | null>(null);
   const [exception, setException] = useState<{ ruleId: string; membershipId: string; member: string; reason: string; expiresOn: string } | null>(null);
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
   const permissions = useQuery({ queryKey: ["permission-catalog"], queryFn: async () => unwrap(await api.GET("/api/v1/meta/permissions")) });
   const rules = useQuery({ queryKey: ["sod-rules"], enabled: tab === "sod", queryFn: async () => unwrap(await api.GET("/api/v1/sod/rules")) });
   const report = useQuery({ queryKey: ["sod-report"], enabled: tab === "sod", queryFn: async () => unwrap(await api.GET("/api/v1/sod/report")) });
+  const exceptions = useQuery({ queryKey: ["sod-exceptions"], enabled: tab === "sod", queryFn: async () => unwrap(await api.GET("/api/v1/sod/exceptions")) });
+  const roles = useQuery({ queryKey: ["roles"], enabled: tab === "sso", queryFn: async () => unwrap(await api.GET("/api/v1/roles")) });
   const keys = useQuery({ queryKey: ["api-keys"], enabled: tab === "keys", queryFn: async () => unwrap(await api.GET("/api/v1/api-keys")) });
   const connections = useQuery({ queryKey: ["sso-connections"], enabled: tab === "sso" || tab === "policy", queryFn: async () => unwrap(await api.GET("/api/v1/sso-connections")) });
   const savedPolicy = useQuery({ queryKey: ["tenant-policy"], enabled: tab === "policy", queryFn: async () => unwrap(await api.GET("/api/v1/tenant/policy")) });
   const draft = policy ?? savedPolicy.data ?? null;
+  const networksText = networks ?? (draft?.ipAllowlist ?? []).join("\n");
 
   const saveRule = useMutation({
     mutationFn: async () => {
@@ -74,7 +90,17 @@ export function SecurityPage() {
       }
       unwrap(await api.POST("/api/v1/sod/exceptions", { body: { ruleId: exception.ruleId, membershipId: exception.membershipId, reason: exception.reason, expiresOn: exception.expiresOn || null } }));
     },
-    onSuccess: async () => { setException(null); setProblem(null); await queryClient.invalidateQueries({ queryKey: ["sod-report"] }); },
+    onSuccess: async () => { setException(null); setProblem(null); await queryClient.invalidateQueries({ queryKey: ["sod-report"] }); await queryClient.invalidateQueries({ queryKey: ["sod-exceptions"] }); },
+    onError: fail,
+  });
+  const revokeException = useMutation({
+    mutationFn: async () => {
+      if (!revoking) {
+        return;
+      }
+      await api.POST("/api/v1/sod/exceptions/{exceptionId}/revoke", { params: { path: { exceptionId: revoking.id } }, body: { reason: revoking.reason } }).then(unwrap);
+    },
+    onSuccess: async () => { setRevoking(null); setProblem(null); await queryClient.invalidateQueries({ queryKey: ["sod-report"] }); await queryClient.invalidateQueries({ queryKey: ["sod-exceptions"] }); },
     onError: fail,
   });
   const createKey = useMutation({
@@ -97,7 +123,9 @@ export function SecurityPage() {
       if (!sso) {
         return;
       }
-      const body = { code: sso.code, displayName: sso.displayName, authority: sso.authority, clientId: sso.clientId, clientSecret: sso.clientSecret || null, scopes: sso.scopes, emailDomains: list(sso.emailDomains), jitProvisioning: sso.jitProvisioning, groupClaim: sso.groupClaim || null, groupRoleMap: sso.groupRoleMap, isActive: sso.isActive };
+      const mapped = sso.groups.filter((g) => g.group.trim() && g.roleId);
+      const groupRoleMap = sso.groupClaim.trim() && mapped.length > 0 ? Object.fromEntries(mapped.map((g) => [g.group.trim(), g.roleId])) : null;
+      const body = { code: sso.code, displayName: sso.displayName, authority: sso.authority, clientId: sso.clientId, clientSecret: sso.clientSecret || null, scopes: sso.scopes, emailDomains: list(sso.emailDomains), jitProvisioning: sso.jitProvisioning, groupClaim: sso.groupClaim.trim() || null, groupRoleMap, isActive: sso.isActive };
       if (sso.id) {
         unwrap(await api.PUT("/api/v1/sso-connections/{connectionId}", { params: { path: { connectionId: sso.id } }, body }));
       } else {
@@ -114,8 +142,19 @@ export function SecurityPage() {
   });
   const savePolicy = useMutation({
     mutationFn: async (body: Policy) => unwrap(await api.PUT("/api/v1/tenant/policy", { body })),
-    onSuccess: async () => { setPolicy(null); setProblem(null); await queryClient.invalidateQueries({ queryKey: ["tenant-policy"] }); },
-    onError: fail,
+    onSuccess: async () => { setPolicy(null); setNetworks(null); setNetworkNote(null); setProblem(null); await queryClient.invalidateQueries({ queryKey: ["tenant-policy"] }); },
+    onError: (error: unknown) => {
+      fail(error);
+      const why = isApiProblem(error) ? error.why : undefined;
+      const code = isApiProblem(error) ? error.code : undefined;
+      if (code === "tenant.policy_ip_lockout" && typeof why?.address === "string") {
+        setNetworkNote(t("security.yourAddress", { address: why.address }));
+      } else if (code === "tenant.policy_ip_invalid" && Array.isArray(why?.invalid) && why.invalid.length > 0) {
+        setNetworkNote(t("security.invalidNetworks", { entries: why.invalid.join(", ") }));
+      } else {
+        setNetworkNote(null);
+      }
+    },
   });
 
   const violations = (report.data ?? []).filter((r) => r.conflicts.length > 0);
@@ -123,13 +162,17 @@ export function SecurityPage() {
   const submitRule = (event: FormEvent): void => { event.preventDefault(); saveRule.mutate(); };
   const submitKey = (event: FormEvent): void => { event.preventDefault(); createKey.mutate(); };
   const submitException = (event: FormEvent): void => { event.preventDefault(); grantException.mutate(); };
+  const submitRevoke = (event: FormEvent): void => { event.preventDefault(); revokeException.mutate(); };
   const submitSso = (event: FormEvent): void => { event.preventDefault(); saveSso.mutate(); };
   const submitPolicy = (event: FormEvent): void => {
     event.preventDefault();
     if (draft) {
-      savePolicy.mutate(draft);
+      const entries = list(networksText);
+      savePolicy.mutate({ ...draft, ipAllowlist: entries.length > 0 ? entries : null });
     }
   };
+  const policyChanged = policy !== null || networks !== null;
+  const networkProblem = problem?.code === "tenant.policy_ip_invalid" || problem?.code === "tenant.policy_ip_lockout" ? problem.message : undefined;
   const activeSso = (connections.data ?? []).some((c) => c.isActive);
 
   return (
@@ -149,7 +192,7 @@ export function SecurityPage() {
               {t("security.newKey")}
             </Button>
           ) : tab === "policy" ? null : (
-            <Button onClick={() => { setProblem(null); setSso({ id: null, code: "", displayName: "", authority: "", clientId: "", clientSecret: "", scopes: "openid profile email", emailDomains: "", jitProvisioning: false, groupClaim: "", groupRoleMap: null, isActive: true, hasSecret: false }); }} data-testid="new-sso">
+            <Button onClick={() => { setProblem(null); setSso({ id: null, code: "", displayName: "", authority: "", clientId: "", clientSecret: "", scopes: "openid profile email", emailDomains: "", jitProvisioning: false, groupClaim: "", groups: [], isActive: true, hasSecret: false }); }} data-testid="new-sso">
               <Plus aria-hidden="true" />
               {t("security.newSso")}
             </Button>
@@ -166,7 +209,7 @@ export function SecurityPage() {
           { id: "policy", label: t("security.policy"), testId: "tab-policy" },
         ]}
       />
-      <FormError message={problem && !rule && !key && !sso && !exception && tab !== "policy" ? problem.message : null} />
+      <FormError message={problem && !rule && !key && !sso && !exception && !revoking && tab !== "policy" ? problem.message : null} />
       <datalist id={permissionListId}>
         {(permissions.data ?? []).map((p) => (
           <option key={p.key} value={p.key}>
@@ -227,6 +270,54 @@ export function SecurityPage() {
               </ul>
             </section>
           ) : null}
+          <section className="flex flex-col gap-2" data-testid="sod-exceptions">
+            <h2 className="text-base font-semibold">{t("security.exceptions")}</h2>
+            {(exceptions.data ?? []).length === 0 ? <p className="text-sm text-fg-muted">{t("security.noExceptions")}</p> : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("security.member")}</TableHead>
+                    <TableHead>{t("security.conflictingPermissions")}</TableHead>
+                    <TableHead>{t("common.reason")}</TableHead>
+                    <TableHead>{t("security.approvedBy")}</TableHead>
+                    <TableHead>{t("security.exceptionEnds")}</TableHead>
+                    <TableHead>{t("common.status")}</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(exceptions.data ?? []).map((e) => (
+                    <TableRow key={e.id} data-testid="sod-exception-row">
+                      <TableCell>{e.memberName}</TableCell>
+                      <TableCell>
+                        <span dir="ltr" className="font-mono text-xs">{e.permissionA}</span> + <span dir="ltr" className="font-mono text-xs">{e.permissionB}</span>
+                      </TableCell>
+                      <TableCell>
+                        {e.reason}
+                        {e.revokedAt ? (
+                          <span className="block text-xs text-fg-muted" data-testid="sod-exception-revoked">
+                            {t("security.revokedNote", { when: formatDateTime(e.revokedAt), who: e.revokedBy ?? "—", reason: e.revokeReason ?? "" })}
+                          </span>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        {e.approvedBy} <span className="block text-xs text-fg-muted">{formatDateTime(e.createdAt)}</span>
+                      </TableCell>
+                      <TableCell>{e.expiresOn ? formatDate(e.expiresOn) : t("security.never")}</TableCell>
+                      <TableCell><DocStatus status={exceptionStatus(e)} /></TableCell>
+                      <TableCell>
+                        {e.isActive ? (
+                          <Button variant="ghost" size="sm" onClick={() => { setProblem(null); setRevoking({ id: e.id, member: e.memberName, reason: "" }); }} data-testid="revoke-exception">
+                            {t("security.revoke")}
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </section>
           <section className="flex flex-col gap-2">
             <h2 className="text-base font-semibold">{t("security.rules")}</h2>
             <Table>
@@ -337,7 +428,7 @@ export function SecurityPage() {
                     <TableCell dir="ltr">{c.emailDomains.join(", ")}</TableCell>
                     <TableCell><DocStatus status={c.isActive ? "active" : "inactive"} /></TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => { setProblem(null); setSso({ id: c.id, code: c.code, displayName: c.displayName, authority: c.authority, clientId: c.clientId, clientSecret: "", scopes: c.scopes, emailDomains: c.emailDomains.join(", "), jitProvisioning: c.jitProvisioning, groupClaim: c.groupClaim ?? "", groupRoleMap: c.groupRoleMap, isActive: c.isActive, hasSecret: c.hasClientSecret }); }}>
+                      <Button variant="ghost" size="sm" onClick={() => { setProblem(null); setSso({ id: c.id, code: c.code, displayName: c.displayName, authority: c.authority, clientId: c.clientId, clientSecret: "", scopes: c.scopes, emailDomains: c.emailDomains.join(", "), jitProvisioning: c.jitProvisioning, groupClaim: c.groupClaim ?? "", groups: Object.entries(c.groupRoleMap).map(([group, roleId]) => ({ group, roleId })), isActive: c.isActive, hasSecret: c.hasClientSecret }); }}>
                         {t("common.edit")}
                       </Button>
                     </TableCell>
@@ -373,18 +464,26 @@ export function SecurityPage() {
               <span className="block text-fg-muted">{activeSso ? t("security.policyHints.allowPasswordLogin") : t("security.policyHints.allowPasswordLoginNoSso")}</span>
             </span>
           </label>
-          {draft.ipAllowlist && draft.ipAllowlist.length > 0 ? (
-            <p className="text-sm">
-              {t("security.policyFields.ipAllowlist")}: <span dir="ltr" className="font-mono text-xs">{draft.ipAllowlist.join(", ")}</span>
-            </p>
-          ) : null}
-          <FormError message={problem && problem.code !== "tenant.policy_invalid" ? problem.message : null} />
+          <Field label={t("security.policyFields.ipAllowlist")} description={t("security.policyHints.ipAllowlist")} error={networkProblem}>
+            <TextareaField
+              className="font-mono"
+              value={networksText}
+              onChange={(e) => { setNetworks(e.target.value); }}
+              rows={4}
+              dir="ltr"
+              spellCheck={false}
+              placeholder={"203.0.113.0/24\n198.51.100.7"}
+              data-testid="policy-ipAllowlist"
+            />
+          </Field>
+          {networkNote ? <p className="text-sm" role="status" dir="auto" data-testid="policy-network-note">{networkNote}</p> : null}
+          <FormError message={problem && problem.code !== "tenant.policy_invalid" && !networkProblem ? problem.message : null} />
           <div className="flex gap-2">
-            <Button type="submit" loading={savePolicy.isPending} disabled={!policy} data-testid="save-policy">
+            <Button type="submit" loading={savePolicy.isPending} disabled={!policyChanged} data-testid="save-policy">
               {t("common.save")}
             </Button>
-            {policy ? (
-              <Button type="button" variant="secondary" onClick={() => { setPolicy(null); setProblem(null); }}>
+            {policyChanged ? (
+              <Button type="button" variant="secondary" onClick={() => { setPolicy(null); setNetworks(null); setNetworkNote(null); setProblem(null); }}>
                 {t("common.cancel")}
               </Button>
             ) : null}
@@ -466,6 +565,31 @@ export function SecurityPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={Boolean(revoking)} onOpenChange={(isOpen) => { if (!isOpen) { setRevoking(null); } }}>
+        <DialogContent closeLabel={t("common.close")}>
+          {revoking ? (
+            <form onSubmit={submitRevoke} className="flex flex-col gap-4">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-semibold">{t("security.revokeExceptionTitle", { member: revoking.member })}</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-fg-muted">{t("security.revokeExceptionHint")}</p>
+              <FormError message={problem?.message ?? null} />
+              <Field label={t("common.reason")} required>
+                <TextField value={revoking.reason} onChange={(e) => { setRevoking({ ...revoking, reason: e.target.value }); }} required data-testid="revoke-exception-reason" />
+              </Field>
+              <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => { setRevoking(null); }}>
+                  {t("common.cancel")}
+                </Button>
+                <Button type="submit" variant="danger" loading={revokeException.isPending} data-testid="confirm-revoke-exception">
+                  {t("security.revoke")}
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={Boolean(key)} onOpenChange={(isOpen) => { if (!isOpen) { setKey(null); } }}>
         <DialogContent closeLabel={t("common.close")}>
           {key ? (
@@ -531,10 +655,40 @@ export function SecurityPage() {
                 <Field label={t("security.emailDomains")} description={t("security.emailDomainsHint")} error={problem?.fields.emailDomains}>
                   <TextField value={sso.emailDomains} onChange={(e) => { setSso({ ...sso, emailDomains: e.target.value }); }} dir="ltr" data-testid="sso-domains" />
                 </Field>
-                <Field label={t("security.groupClaim")}>
-                  <TextField value={sso.groupClaim} onChange={(e) => { setSso({ ...sso, groupClaim: e.target.value }); }} dir="ltr" />
+                <Field label={t("security.groupClaim")} description={t("security.groupClaimHint")}>
+                  <TextField value={sso.groupClaim} onChange={(e) => { setSso({ ...sso, groupClaim: e.target.value }); }} dir="ltr" data-testid="sso-group-claim" />
                 </Field>
               </div>
+              {sso.groupClaim.trim() ? (
+                <fieldset className="flex flex-col gap-2 rounded-md border border-border p-3" data-testid="sso-group-map">
+                  <legend className="px-1 text-sm font-medium">{t("security.groupRoles")}</legend>
+                  <p className="text-xs text-fg-muted">{t("security.groupRolesHint")}</p>
+                  {sso.groups.map((g, index) => (
+                    <div key={index} className="flex flex-wrap items-end gap-2" data-testid="sso-group-row">
+                      <Field label={t("security.group")} className="min-w-40 flex-1">
+                        <TextField value={g.group} onChange={(e) => { setSso({ ...sso, groups: sso.groups.map((x, i) => (i === index ? { ...x, group: e.target.value } : x)) }); }} required dir="ltr" data-testid={`sso-group-${index}`} />
+                      </Field>
+                      <Field label={t("members.role")} className="min-w-40 flex-1">
+                        <SelectField value={g.roleId} onChange={(e) => { setSso({ ...sso, groups: sso.groups.map((x, i) => (i === index ? { ...x, roleId: e.target.value } : x)) }); }} required data-testid={`sso-group-role-${index}`}>
+                          <option value="">—</option>
+                          {(roles.data ?? []).filter((r) => (r.isActive && r.code !== "owner") || r.id === g.roleId).map((r) => (
+                            <option key={r.id} value={r.id}>{`${r.code} · ${localized(r.name)}`}</option>
+                          ))}
+                        </SelectField>
+                      </Field>
+                      <Button type="button" variant="ghost" size="icon" aria-label={t("security.removeGroup", { group: g.group || "—" })} onClick={() => { setSso({ ...sso, groups: sso.groups.filter((_, i) => i !== index) }); }}>
+                        <Trash2 aria-hidden="true" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => { setSso({ ...sso, groups: [...sso.groups, { group: "", roleId: "" }] }); }} data-testid="sso-add-group">
+                      <Plus aria-hidden="true" />
+                      {t("security.addGroup")}
+                    </Button>
+                  </div>
+                </fieldset>
+              ) : null}
               <div className="flex flex-wrap gap-4 text-sm">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={sso.jitProvisioning} onChange={(e) => { setSso({ ...sso, jitProvisioning: e.target.checked }); }} />

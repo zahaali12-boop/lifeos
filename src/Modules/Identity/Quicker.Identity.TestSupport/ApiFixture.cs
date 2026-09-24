@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,6 +53,7 @@ public sealed class ApiFixture : IAsyncDisposable
             builder.ConfigureServices(services =>
             {
                 services.AddSingleton<IClock>(fixture.Clock);
+                services.AddSingleton<IStartupFilter, ClientAddressFilter>();
             });
         });
         fixture.Client = fixture._factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -63,6 +65,19 @@ public sealed class ApiFixture : IAsyncDisposable
     {
         var client = _factory!.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        return client;
+    }
+
+    /// <summary>A client whose requests come from the given network address (the test host has no real connection).</summary>
+    public HttpClient ClientFrom(string address, string? accessToken = null)
+    {
+        var client = _factory!.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        client.DefaultRequestHeaders.Add(ClientAddressFilter.Header, address);
+        if (accessToken is not null)
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
         return client;
     }
 
@@ -131,4 +146,27 @@ public static class HttpAssertions
         var json = await response.ReadJsonAsync();
         return json.ValueKind == JsonValueKind.Object && json.TryGetProperty("code", out var code) ? code.GetString() : null;
     }
+}
+
+/// <summary>
+/// The in-memory test host gives requests no remote address; this sets it from a test header, first in the pipeline
+/// (before forwarded headers), so network rules can be exercised as a real connection would.
+/// </summary>
+internal sealed class ClientAddressFilter : IStartupFilter
+{
+    public const string Header = "X-Test-Remote-Address";
+
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+    {
+        app.Use(static (context, following) =>
+        {
+            if (System.Net.IPAddress.TryParse(context.Request.Headers[Header].ToString(), out var address))
+            {
+                context.Connection.RemoteIpAddress = address;
+            }
+
+            return following(context);
+        });
+        next(app);
+    };
 }

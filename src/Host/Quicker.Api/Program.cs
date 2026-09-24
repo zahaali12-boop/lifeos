@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Quicker.Accounting;
 using Quicker.Accounting.Api;
@@ -35,6 +36,7 @@ using Quicker.Purchasing;
 using Quicker.Purchasing.Api;
 using Quicker.Storage;
 using Quicker.Tenancy;
+using Quicker.Tenancy.Contracts;
 using Quicker.Web;
 using Quicker.Workflow;
 using Quicker.Workflow.Api;
@@ -70,6 +72,29 @@ var allowedOrigins = (builder.Configuration["Quicker:Api:AllowedOrigins"] ?? bui
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
     policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("ETag", "Idempotent-Replayed", "Retry-After", "Location")));
+// Behind a reverse proxy the client's address arrives in X-Forwarded-For. Only the proxies named in
+// Quicker:Api:TrustedProxies (addresses or CIDR ranges, comma-separated) are believed, so network allow-lists, rate
+// limits and the audit trail see the real client; with none configured the connection's own address is used.
+var trustedProxies = (builder.Configuration["Quicker:Api:TrustedProxies"] ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+if (trustedProxies.Length > 0)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Clear();
+        foreach (var entry in trustedProxies)
+        {
+            if (!IpAllowlists.TryParse(entry, out var network))
+            {
+                throw new InvalidOperationException($"Quicker:Api:TrustedProxies has an entry that is neither an address nor a CIDR range: '{entry}'.");
+            }
+
+            options.KnownIPNetworks.Add(network);
+        }
+    });
+}
+
 if (builder.Configuration.GetValue<bool>("Quicker:Worker:Embedded"))
 {
     // Single-node installs run the dispatcher, job slots and scheduler inside the API process (ADR-0010).
@@ -95,6 +120,11 @@ builder.Services.AddBankingModule();
 builder.Services.AddPurchasingModule();
 
 var app = builder.Build();
+
+if (trustedProxies.Length > 0)
+{
+    app.UseForwardedHeaders();
+}
 
 app.UseExceptionHandler();
 app.UseCors();
