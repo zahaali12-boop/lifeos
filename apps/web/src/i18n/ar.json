@@ -1418,6 +1418,8 @@
     "noFilter": "بدون تصفية",
     "filterValue": "قيمة التصفية",
     "anyValue": "أي قيمة",
+    "addFilter": "إضافة تصفية",
+    "removeFilter": "إزالة التصفية",
     "balanced": "متوازن",
     "unbalanced": "غير متوازن",
     "tbSummary": "{currency} · {rows, plural, zero {لا حسابات} one {حساب واحد} two {حسابان} few {# حسابات} many {# حساباً} other {# حساب}}",

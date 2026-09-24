@@ -1,7 +1,7 @@
 import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableNumberCell, TableRow } from "@quicker/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Download } from "lucide-react";
+import { Download, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
@@ -13,6 +13,45 @@ import { Amount, CompanySelect, saveFile, today, useCompanies, useCompanySelecti
 
 type TrialBalance = components["schemas"]["TrialBalance"];
 type TrialBalanceRow = components["schemas"]["TrialBalanceRow"];
+type Dimension = components["schemas"]["DimensionSummary"];
+
+/** One dimension filter row: its own dimension and value pickers, the value list fetched for whichever dimension is chosen. */
+function DimensionFilterRow({ dimensions, taken, dimensionCode, valueId, onChange, onRemove }: { dimensions: Dimension[]; taken: Set<string>; dimensionCode: string; valueId: string; onChange: (next: { dimensionCode: string; valueId: string }) => void; onRemove: () => void }) {
+  const { t } = useTranslation();
+  const dimensionId = dimensions.find((d) => d.code === dimensionCode)?.id;
+  const values = useQuery({
+    queryKey: ["dimension-values", dimensionId],
+    enabled: Boolean(dimensionId),
+    queryFn: async () => unwrap(await api.GET("/api/v1/organization/dimensions/{dimensionId}/values", { params: { path: { dimensionId: dimensionId ?? "" } } })),
+  });
+  return (
+    <div className="flex items-end gap-2" data-testid="tb-filter-row">
+      <Field label={t("accounting.filterDimension")}>
+        <SelectField value={dimensionCode} onChange={(e) => { onChange({ dimensionCode: e.target.value, valueId: "" }); }} data-testid="tb-filter-dimension">
+          <option value="">{t("accounting.noFilter")}</option>
+          {dimensions.filter((d) => d.code === dimensionCode || !taken.has(d.code)).map((d) => (
+            <option key={d.id} value={d.code}>
+              {localized(d.name)}
+            </option>
+          ))}
+        </SelectField>
+      </Field>
+      <Field label={t("accounting.filterValue")}>
+        <SelectField value={valueId} onChange={(e) => { onChange({ dimensionCode, valueId: e.target.value }); }} disabled={!dimensionCode} data-testid="tb-filter-value">
+          <option value="">{t("accounting.anyValue")}</option>
+          {(values.data ?? []).map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.code} · {localized(v.name)}
+            </option>
+          ))}
+        </SelectField>
+      </Field>
+      <Button variant="secondary" size="sm" onClick={onRemove} aria-label={t("accounting.removeFilter")} data-testid="tb-filter-remove">
+        <X aria-hidden="true" />
+      </Button>
+    </div>
+  );
+}
 
 /** The trial balance at any date: movement window, comparative, basis, one dimension filter or grouping; every row drills to its ledger. */
 export function TrialBalancePage() {
@@ -26,17 +65,11 @@ export function TrialBalancePage() {
   const [compareAsOf, setCompareAsOf] = useState("");
   const [basis, setBasis] = useState("fc");
   const [groupBy, setGroupBy] = useState("");
-  const [filterDimension, setFilterDimension] = useState("");
-  const [filterValue, setFilterValue] = useState("");
+  const [filterRows, setFilterRows] = useState<{ id: string; dimensionCode: string; valueId: string }[]>([]);
 
   const dimensions = useQuery({ queryKey: ["dimensions"], queryFn: async () => unwrap(await api.GET("/api/v1/organization/dimensions")) });
-  const filterDimensionId = dimensions.data?.find((d) => d.code === filterDimension)?.id;
-  const values = useQuery({
-    queryKey: ["dimension-values", filterDimensionId],
-    enabled: Boolean(filterDimensionId),
-    queryFn: async () => unwrap(await api.GET("/api/v1/organization/dimensions/{dimensionId}/values", { params: { path: { dimensionId: filterDimensionId ?? "" } } })),
-  });
-  const filters: Record<string, string> = filterDimension && filterValue ? { [`d.${filterDimension}`]: filterValue } : {};
+  const usedDimensions = new Set(filterRows.map((r) => r.dimensionCode).filter(Boolean));
+  const filters: Record<string, string> = Object.fromEntries(filterRows.filter((r) => r.dimensionCode && r.valueId).map((r) => [`d.${r.dimensionCode}`, r.valueId]));
   const query = withFilters({ asOf, ...(from ? { from } : {}), ...(compareAsOf ? { compareAsOf } : {}), basis, ...(groupBy ? { groupBy } : {}) }, filters);
 
   const report = useQuery({
@@ -110,27 +143,33 @@ export function TrialBalancePage() {
             ))}
           </SelectField>
         </Field>
-        <Field label={t("accounting.filterDimension")}>
-          <SelectField value={filterDimension} onChange={(e) => { setFilterDimension(e.target.value); setFilterValue(""); }}>
-            <option value="">{t("accounting.noFilter")}</option>
-            {(dimensions.data ?? []).map((d) => (
-              <option key={d.id} value={d.code}>
-                {localized(d.name)}
-              </option>
-            ))}
-          </SelectField>
-        </Field>
-        <Field label={t("accounting.filterValue")}>
-          <SelectField value={filterValue} onChange={(e) => { setFilterValue(e.target.value); }} disabled={!filterDimension}>
-            <option value="">{t("accounting.anyValue")}</option>
-            {(values.data ?? []).map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.code} · {localized(v.name)}
-              </option>
-            ))}
-          </SelectField>
-        </Field>
       </div>
+      {filterRows.length > 0 ? (
+        <div className="mb-4 flex flex-col gap-2" data-testid="tb-filters">
+          {filterRows.map((row) => (
+            <DimensionFilterRow
+              key={row.id}
+              dimensions={dimensions.data ?? []}
+              taken={new Set([...usedDimensions].filter((code) => code !== row.dimensionCode))}
+              dimensionCode={row.dimensionCode}
+              valueId={row.valueId}
+              onChange={(next) => { setFilterRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, ...next } : r))); }}
+              onRemove={() => { setFilterRows((rows) => rows.filter((r) => r.id !== row.id)); }}
+            />
+          ))}
+        </div>
+      ) : null}
+      <Button
+        variant="secondary"
+        size="sm"
+        className="mb-4"
+        onClick={() => { setFilterRows((rows) => [...rows, { id: crypto.randomUUID(), dimensionCode: "", valueId: "" }]); }}
+        disabled={usedDimensions.size >= (dimensions.data?.length ?? 0)}
+        data-testid="tb-filter-add"
+      >
+        <Plus aria-hidden="true" />
+        {t("accounting.addFilter")}
+      </Button>
       <FormError message={problem?.message ?? null} />
       {data ? (
         <>

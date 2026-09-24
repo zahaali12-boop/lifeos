@@ -1418,6 +1418,8 @@
     "noFilter": "No filter",
     "filterValue": "Filter value",
     "anyValue": "Any value",
+    "addFilter": "Add filter",
+    "removeFilter": "Remove filter",
     "balanced": "Balanced",
     "unbalanced": "Not balanced",
     "tbSummary": "{currency} · {rows, plural, one {# account} other {# accounts}}",
