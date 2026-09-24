@@ -16,6 +16,7 @@ import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useW
 import { ItemCodeField } from "./ItemCodeField";
 import { TransferQuantities } from "./TransferQuantities";
 import { RecordActivity } from "../RecordDiscussion";
+import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 
 type Transfer = components["schemas"]["TransferSummary"];
 
@@ -35,6 +36,7 @@ interface TransferForm {
   transitWarehouseId: string;
   kind: string;
   reference: string;
+  customFields: CustomFieldValues;
   lines: LineForm[];
 }
 
@@ -49,6 +51,7 @@ function toRequest(companyId: string, f: TransferForm): components["schemas"]["S
     transitWarehouseId: f.kind === "two_step" && f.transitWarehouseId ? f.transitWarehouseId : null,
     kind: f.kind,
     reference: f.reference || null,
+    customFields: f.customFields,
     lines: f.lines
       .filter((l) => l.itemCode.trim())
       .map((l) => ({ itemCode: l.itemCode.trim(), quantity: l.quantity || "0", uom: l.uom || null, fromBinId: l.fromBinId || null, toBinId: l.toBinId || null, lotNumber: l.lotNumber || null, serialNumbers: l.serialNumbers.trim() ? l.serialNumbers.split(/[\s,;]+/).filter(Boolean) : null })),
@@ -166,7 +169,7 @@ export function TransfersPage() {
         title={t("nav.transfers")}
         description={t("inventory.transfers.description")}
         actions={
-          <Button onClick={() => { setProblem(null); setEditing({ fromWarehouseId: stockWarehouses[0]?.id ?? "", toWarehouseId: stockWarehouses[1]?.id ?? "", transitWarehouseId: transits[0]?.id ?? "", kind: transits.length > 0 ? "two_step" : "one_step", reference: "", lines: [{ ...emptyLine }] }); }} disabled={!companyId} data-testid="new-transfer">
+          <Button onClick={() => { setProblem(null); setEditing({ fromWarehouseId: stockWarehouses[0]?.id ?? "", toWarehouseId: stockWarehouses[1]?.id ?? "", transitWarehouseId: transits[0]?.id ?? "", kind: transits.length > 0 ? "two_step" : "one_step", reference: "", customFields: {}, lines: [{ ...emptyLine }] }); }} disabled={!companyId} data-testid="new-transfer">
             <Plus aria-hidden="true" />
             {t("inventory.transfers.new")}
           </Button>
@@ -246,6 +249,7 @@ export function TransfersPage() {
                 />
               ) : (
                 <>
+                <CustomFieldValuesList entityType="stock_transfer" values={detail.customFields} />
                 <RecordActivity entityType="stock_transfer" entityId={detail.id} />
                 <DialogFooter>
                   {detail.status === "draft" ? (
@@ -374,6 +378,7 @@ export function TransfersPage() {
                   {t("accounting.addLine")}
                 </Button>
               </div>
+              <CustomFieldsFieldset entityType="stock_transfer" values={editing.customFields} onChange={(customFields) => { setForm({ customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setEditing(null); }}>
                   {t("common.cancel")}

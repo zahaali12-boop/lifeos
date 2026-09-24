@@ -71,6 +71,26 @@ public sealed class PaymentTests(ApiHostFixture host)
     private static async Task<JsonElement> BankAsync(Setup s, Guid id) => await s.Owner.GetOkAsync($"/api/v1/banking/bank-accounts/{id}");
 
     [Fact]
+    public async Task A_payment_keeps_its_custom_fields_as_validated_and_a_required_one_is_asked_for()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await owner.PostAsync("/api/v1/collaboration/custom-fields", new { entityType = "bank_payment", key = "approved_by", label = Name("Approved by", "اعتمدها"), type = "multi_select", options = new[] { new { value = "cfo", label = Name("CFO", "المدير المالي") }, new { value = "ceo", label = Name("CEO", "المدير العام") } } });
+        await owner.PostAsync("/api/v1/collaboration/custom-fields", new { entityType = "bank_payment", key = "voucher", label = Name("Voucher", "سند"), type = "text", required = true });
+
+        var body = new { companyId = s.CompanyId, partnerId = s.Local, bankAccountId = s.Cash, kind = "supplier_advance", method = "cash", onAccount = 500m };
+        (await owner.PostErrorAsync("/api/v1/banking/payments", body, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("custom_field.required");
+
+        // Each option once, no nulls: what the validator returns is what is kept.
+        var advance = await owner.PostAsync("/api/v1/banking/payments", new { body.companyId, body.partnerId, body.bankAccountId, body.kind, body.method, body.onAccount, customFields = new Dictionary<string, object?> { ["approved_by"] = new[] { "cfo", "cfo", "ceo" }, ["voucher"] = "PV-7", ["unused"] = null } }, HttpStatusCode.UnprocessableEntity);
+        advance.GetProperty("code").GetString().ShouldBe("custom_field.unknown");
+        var saved = await owner.PostAsync("/api/v1/banking/payments", new { body.companyId, body.partnerId, body.bankAccountId, body.kind, body.method, body.onAccount, customFields = new Dictionary<string, object?> { ["approved_by"] = new[] { "cfo", "cfo", "ceo" }, ["voucher"] = "PV-7" } });
+        var fields = saved.GetProperty("customFields");
+        fields.GetProperty("approved_by").EnumerateArray().Select(static v => v.GetString()).ShouldBe(["cfo", "ceo"]);
+        fields.GetProperty("voucher").GetString().ShouldBe("PV-7");
+    }
+
+    [Fact]
     public async Task A_eur_invoice_paid_in_two_instalments_at_different_rates_with_fees_books_realised_fx_and_a_local_payment_takes_discount_and_withholding()
     {
         var s = await SetUpAsync();

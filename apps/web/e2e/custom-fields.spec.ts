@@ -90,6 +90,24 @@ test("English: fields added to purchase orders are filled on the order form, enf
   await expect(values.getByTestId("cf-value-channels")).toHaveText("email, portal");
   await expectAccessible(page);
 
+  // The same on the item master: a shelf field defined for items is filled on the item and shown with it.
+  await page.keyboard.press("Escape");
+  await page.getByRole("navigation").getByRole("link", { name: "Custom fields", exact: true }).click();
+  await page.getByTestId("custom-field-host").selectOption({ label: "Item" });
+  await page.getByTestId("new-custom-field").click();
+  await page.getByLabel(/^Key/).fill("shelf");
+  await page.getByLabel(/Label \(English\)/).fill("Shelf");
+  await page.getByLabel(/Label \(Arabic\)/).fill("الرف");
+  await page.getByTestId("save-custom-field").click();
+  await expect(page.getByRole("grid")).toContainText("shelf");
+  await page.goto(`/inventory/items?open=${item.id}`);
+  await page.getByTestId("edit-item").click();
+  await page.getByTestId("cf-shelf").fill("A-12");
+  await page.getByTestId("save-item").click();
+  await expect(page.getByTestId("cf-value-shelf")).toHaveText("A-12");
+  await page.goto(`/purchasing/orders?open=${order.id}`);
+  await expect(values.getByTestId("cf-value-priority")).toHaveText("urgent");
+
   // In Arabic the labels are the Arabic ones.
   await page.keyboard.press("Escape");
   await page.getByTestId("language-menu").click();

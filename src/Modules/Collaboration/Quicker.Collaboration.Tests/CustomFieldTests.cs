@@ -51,6 +51,8 @@ public sealed class CustomFieldTests(ApiHostFixture host)
         var hosts = (await (await owner.GetAsync("/api/v1/collaboration/custom-fields/hosts")).ReadJsonAsync()).GetProperty("entityTypes").EnumerateArray().Select(static h => h.GetString()!).ToList();
         hosts.ShouldContain("company");
         hosts.ShouldContain("purchase_order");
+        hosts.ShouldContain("manual_journal");
+        hosts.ShouldContain("bank_payment");
         hosts.ShouldNotContain("sales_invoice");
         hosts.ShouldBe([.. hosts.Order(StringComparer.Ordinal)]);
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "company", key = "Region", label = new { en = "X" }, type = "text" }, Json)).ErrorCodeAsync()).ShouldBe("custom_field.key_invalid");

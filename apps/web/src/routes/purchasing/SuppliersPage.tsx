@@ -14,6 +14,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, Tabs, useCompanyContext } from "../inventory/shared";
 import { HoldBadge, num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, useSupplierPostingGroups, useWhtCodes } from "./shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
+import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 
 type SupplierAccount = components["schemas"]["SupplierAccountSummary"];
 
@@ -28,6 +29,7 @@ interface PartnerForm {
   phone: string;
   website: string;
   notes: string;
+  customFields: CustomFieldValues;
 }
 
 interface AccountForm {
@@ -44,7 +46,7 @@ interface AccountForm {
   isActive: boolean;
 }
 
-const emptyPartner = (): PartnerForm => ({ code: "", legalName: "", legalNameAr: "", tradeName: "", tradeNameAr: "", kind: "organization", email: "", phone: "", website: "", notes: "" });
+const emptyPartner = (): PartnerForm => ({ code: "", legalName: "", legalNameAr: "", tradeName: "", tradeNameAr: "", kind: "organization", email: "", phone: "", website: "", notes: "", customFields: {} });
 const emptyAccount = (currency: string): AccountForm => ({ supplierGroupId: "", paymentTermsId: "", deliveryTermsId: "", postingGroupId: "", whtCodeId: "", currency, leadTimeDays: "0", priceTolerancePct: "0", qtyTolerancePct: "0", requiresPo: false, isActive: true });
 
 function accountBody(f: AccountForm) {
@@ -107,7 +109,7 @@ export function SuppliersPage() {
   const create = useMutation({
     mutationFn: async (input: { partner: PartnerForm; account: AccountForm }) => {
       const p = input.partner;
-      const partner = unwrap(await api.POST("/api/v1/partners", { body: { code: p.code, legalName: { en: p.legalName, ar: p.legalNameAr || p.legalName }, tradeName: p.tradeName ? { en: p.tradeName, ar: p.tradeNameAr || p.tradeName } : null, kind: p.kind, isSupplier: true, isCustomer: false, isEmployee: false, defaultLanguage: "en", isActive: true, email: p.email || null, phone: p.phone || null, website: p.website || null, notes: p.notes || null } }));
+      const partner = unwrap(await api.POST("/api/v1/partners", { body: { code: p.code, legalName: { en: p.legalName, ar: p.legalNameAr || p.legalName }, tradeName: p.tradeName ? { en: p.tradeName, ar: p.tradeNameAr || p.tradeName } : null, kind: p.kind, isSupplier: true, isCustomer: false, isEmployee: false, defaultLanguage: "en", isActive: true, email: p.email || null, phone: p.phone || null, website: p.website || null, notes: p.notes || null, customFields: p.customFields } }));
       unwrap(await api.PUT("/api/v1/partners/{partnerId}/supplier-accounts/{companyId}", { params: { path: { partnerId: partner.id, companyId } }, body: accountBody(input.account) }));
       return partner;
     },
@@ -220,6 +222,7 @@ export function SuppliersPage() {
                 </Field>
               </div>
               <AccountFields form={creating.account} onChange={(patch) => { setCreating((prev) => (prev ? { ...prev, account: { ...prev.account, ...patch } } : prev)); }} />
+              <CustomFieldsFieldset entityType="partner" values={creating.partner.customFields} onChange={(customFields) => { setPartner({ customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setCreating(null); }}>
                   {t("common.cancel")}
@@ -402,6 +405,7 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
               {partner.email ? <span className="text-fg-muted" dir="ltr">{partner.email}</span> : null}
               {partner.phone ? <span className="text-fg-muted" dir="ltr">{partner.phone}</span> : null}
             </div>
+            <CustomFieldValuesList entityType="partner" values={partner.customFields} />
             <Tabs
               tabs={[
                 { id: "account", label: t("partners.account"), testId: "tab-account" },

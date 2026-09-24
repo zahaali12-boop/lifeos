@@ -1053,7 +1053,7 @@
     "pattern": "Pattern (regular expression)",
     "referenceType": "Referenced record type",
     "referencePlaceholder": "Id of the referenced record",
-    "hosts": { "company": "Company", "purchase_requisition": "Purchase requisition", "purchase_order": "Purchase order", "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "landed_cost_document": "Landed-cost document", "purchase_return": "Supplier return" },
+    "hosts": { "company": "Company", "purchase_requisition": "Purchase requisition", "purchase_order": "Purchase order", "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "landed_cost_document": "Landed-cost document", "purchase_return": "Supplier return", "item": "Item", "partner": "Supplier / partner", "manual_journal": "Manual journal", "bank_payment": "Supplier payment", "stock_adjustment": "Stock adjustment", "stock_transfer": "Stock transfer", "lot": "Lot", "serial": "Serial number" },
     "emptyTitle": "No custom fields",
     "emptyDescription": "Define a field and it appears on the record's form and in the API schema.",
     "types": {

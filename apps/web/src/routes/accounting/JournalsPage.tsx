@@ -14,6 +14,7 @@ import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { AttachmentsPanel } from "../AttachmentsPanel";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs } from "../inventory/shared";
 import { JournalImportDialog } from "./JournalImport";
@@ -41,6 +42,7 @@ interface JournalForm {
   descriptionAr: string;
   reference: string;
   autoReverseOn: string;
+  customFields: CustomFieldValues;
   lines: LineForm[];
 }
 
@@ -48,7 +50,7 @@ const kinds = ["manual", "opening", "accrual", "allocation"];
 const statuses = ["", "draft", "pending_approval", "approved", "rejected", "posted", "cancelled"];
 
 function emptyForm(currency: string): JournalForm {
-  return { kind: "manual", postingDate: today(), currency, descriptionEn: "", descriptionAr: "", reference: "", autoReverseOn: "", lines: [emptyLine(), emptyLine()] };
+  return { kind: "manual", postingDate: today(), currency, descriptionEn: "", descriptionAr: "", reference: "", autoReverseOn: "", customFields: {}, lines: [emptyLine(), emptyLine()] };
 }
 
 function toForm(journal: Journal): JournalForm {
@@ -60,6 +62,7 @@ function toForm(journal: Journal): JournalForm {
     descriptionAr: journal.description.ar ?? "",
     reference: journal.reference ?? "",
     autoReverseOn: journal.autoReverseOn ?? "",
+    customFields: asCustomFieldValues(journal.customFields),
     lines: (journal.lines ?? []).map((line) => ({
       accountCode: line.accountCode,
       debit: compare(line.debit, 0) > 0 ? String(line.debit) : "",
@@ -84,6 +87,7 @@ function toRequest(form: JournalForm): components["schemas"]["SaveJournalRequest
     autoReverse: form.kind === "accrual" && Boolean(form.autoReverseOn),
     autoReverseOn: form.kind === "accrual" && form.autoReverseOn ? form.autoReverseOn : null,
     rateType: "spot",
+    customFields: form.customFields,
     lines: form.lines.filter((line) => line.accountCode.trim()).map((line) => {
       const description = Object.fromEntries(Object.entries({ ...line.descriptionMap, [currentLanguage()]: line.description.trim() }).filter(([, text]) => text));
       return {
@@ -325,6 +329,7 @@ export function JournalsPage() {
                   </TableRow>
                 </TableBody>
               </Table>
+              <CustomFieldValuesList entityType="manual_journal" values={detail.customFields} />
               <AttachmentsPanel entityType="manual_journal" entityId={detail.id} />
               </>
               ) : null}
@@ -486,6 +491,7 @@ export function JournalsPage() {
                   </TableRow>
                 </TableBody>
               </Table>
+              <CustomFieldsFieldset entityType="manual_journal" values={editing.form.customFields} onChange={(customFields) => { setEditing({ ...editing, form: { ...editing.form, customFields } }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setEditing(null); }}>
                   {t("common.cancel")}

@@ -16,6 +16,7 @@ public static class AccountingModule
     {
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(AccountingPermissions.All);
+        CustomFieldHosts.Register(new CustomFieldHost(ManualJournalService.EntityType, "app.gl_manual_journals", "custom_fields"));
         NumberedDocumentTypes.Register(
             new(ManualJournalService.EntityType, AccountingPermissions.JournalRead),
             new(PostingService.JournalDocumentType, AccountingPermissions.JournalRead));

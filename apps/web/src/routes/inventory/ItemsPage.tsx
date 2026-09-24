@@ -16,6 +16,7 @@ import { ItemCostingEditor, ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEd
 import { ItemAttributesEditor, ItemBomEditor, ItemImage, ItemSubstitutesEditor, ItemVariantsEditor } from "./ItemStructure";
 import { DocStatus, Tabs, type Item } from "./shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 
 interface ItemForm {
   code: string;
@@ -32,11 +33,12 @@ interface ItemForm {
   listPrice: string;
   listPriceCurrency: string;
   isActive: boolean;
+  customFields: CustomFieldValues;
 }
 
 const types = ["stock", "non_stock", "service", "kit", "assembly"];
 const trackings = ["none", "lot", "serial", "lot_and_serial"];
-const empty: ItemForm = { code: "", nameEn: "", nameAr: "", type: "stock", baseUom: "PCS", categoryCode: "", brandCode: "", tracking: "none", expiryRequired: false, shelfLifeDays: "", fefo: false, listPrice: "", listPriceCurrency: "", isActive: true };
+const empty: ItemForm = { code: "", nameEn: "", nameAr: "", type: "stock", baseUom: "PCS", categoryCode: "", brandCode: "", tracking: "none", expiryRequired: false, shelfLifeDays: "", fefo: false, listPrice: "", listPriceCurrency: "", isActive: true, customFields: {} };
 
 function toForm(item: Item): ItemForm {
   return {
@@ -54,6 +56,7 @@ function toForm(item: Item): ItemForm {
     listPrice: item.listPrice === null ? "" : String(item.listPrice),
     listPriceCurrency: item.listPriceCurrency ?? "",
     isActive: item.isActive,
+    customFields: asCustomFieldValues(item.customFields),
   };
 }
 
@@ -104,6 +107,7 @@ export function ItemsPage() {
         listPrice: f.listPrice || null,
         listPriceCurrency: f.listPriceCurrency || null,
         isActive: f.isActive,
+        customFields: f.customFields,
       };
       return input.id
         ? unwrap(await api.PUT("/api/v1/items/{itemId}", { params: { path: { itemId: input.id } }, body }))
@@ -205,6 +209,7 @@ export function ItemsPage() {
                   </span>
                 ) : null}
               </div>
+              <CustomFieldValuesList entityType="item" values={detail.customFields} />
               <Tabs
                 value={detailTab}
                 onChange={setDetailTab}
@@ -328,6 +333,7 @@ export function ItemsPage() {
                   </label>
                 </div>
               </div>
+              <CustomFieldsFieldset entityType="item" values={form.customFields} onChange={(customFields) => { setForm({ customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setEditing(null); }}>
                   {t("common.cancel")}

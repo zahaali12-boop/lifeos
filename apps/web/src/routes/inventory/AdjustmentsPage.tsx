@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useReasonCodes, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
 import { RecordActivity } from "../RecordDiscussion";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 
 type Adjustment = components["schemas"]["AdjustmentSummary"];
 
@@ -37,6 +38,7 @@ interface AdjustmentForm {
   postingDate: string;
   reference: string;
   notes: string;
+  customFields: CustomFieldValues;
   lines: LineForm[];
 }
 
@@ -51,6 +53,7 @@ function toForm(a: Adjustment): AdjustmentForm {
     postingDate: a.postingDate,
     reference: a.reference ?? "",
     notes: a.notes ?? "",
+    customFields: asCustomFieldValues(a.customFields),
     lines: a.lines.map((l) => ({ itemCode: l.itemCode, binId: l.binId ?? "", quantity: String(l.quantity), uom: l.uomCode, unitCost: l.unitCost === null ? "" : String(l.unitCost), reasonCode: l.reasonCode, note: l.note ?? "", lotNumber: l.lotNumber ?? "", expiresOn: l.expiresOn ?? "", serialNumbers: l.serialNumbers.join(", ") })),
   };
 }
@@ -63,6 +66,7 @@ function toRequest(companyId: string, f: AdjustmentForm): components["schemas"][
     postingDate: f.postingDate || null,
     reference: f.reference || null,
     notes: f.notes || null,
+    customFields: f.customFields,
     lines: f.lines
       .filter((l) => l.itemCode.trim())
       .map((l) => ({
@@ -184,7 +188,7 @@ export function AdjustmentsPage() {
     }
     setForm({ lines: editing.form.lines.map((line, i) => (i === index ? { ...line, ...patch } : line)) });
   };
-  const newForm = (): AdjustmentForm => ({ warehouseId: warehouses.data?.[0]?.id ?? "", kind: "positive", postingDate: today(), reference: "", notes: "", lines: [{ ...emptyLine }] });
+  const newForm = (): AdjustmentForm => ({ warehouseId: warehouses.data?.[0]?.id ?? "", kind: "positive", postingDate: today(), reference: "", notes: "", customFields: {}, lines: [{ ...emptyLine }] });
 
   return (
     <>
@@ -267,6 +271,7 @@ export function AdjustmentsPage() {
                   <TextField value={reason} onChange={(e) => { setReason(e.target.value); }} />
                 </Field>
               ) : null}
+              <CustomFieldValuesList entityType="stock_adjustment" values={detail.customFields} />
               <RecordActivity entityType="stock_adjustment" entityId={detail.id} />
               <DialogFooter>
                 {editable ? (
@@ -402,6 +407,7 @@ export function AdjustmentsPage() {
                   {t("accounting.addLine")}
                 </Button>
               </div>
+              <CustomFieldsFieldset entityType="stock_adjustment" values={editing.form.customFields} onChange={(customFields) => { setForm({ customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setEditing(null); }}>
                   {t("common.cancel")}

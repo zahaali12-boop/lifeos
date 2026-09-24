@@ -16,6 +16,7 @@ import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared
 import { ItemStatus, useBankAccounts, useOpenItems } from "../payables/shared";
 import { num, useSuppliers } from "../purchasing/shared";
 import { RecordActivity } from "../RecordDiscussion";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 
 type Payment = components["schemas"]["PaymentSummary"];
 
@@ -39,6 +40,7 @@ interface PaymentForm {
   onAccount: string;
   charges: string;
   bankAmount: string;
+  customFields: CustomFieldValues;
   lines: PaymentLineForm[];
 }
 
@@ -86,6 +88,7 @@ export function PaymentsPage() {
         charges: num(f.charges),
         bankAmount: f.bankAmount ? num(f.bankAmount) : null,
         applyWht: true,
+        customFields: f.customFields,
       };
       return f.id ? unwrap(await api.PUT("/api/v1/banking/payments/{paymentId}", { params: { path: { paymentId: f.id } }, body })) : unwrap(await api.POST("/api/v1/banking/payments", { body }));
     },
@@ -118,7 +121,7 @@ export function PaymentsPage() {
     [t],
   );
 
-  const blank = (): PaymentForm => ({ id: null, kind: "supplier_payment", partnerId: "", bankAccountId: "", paymentDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", lines: [] });
+  const blank = (): PaymentForm => ({ id: null, kind: "supplier_payment", partnerId: "", bankAccountId: "", paymentDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", customFields: {}, lines: [] });
   const patchLine = (index: number, amount: string): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, amount } : l)) }); } };
   const addItem = (id: string): void => {
     const row = (payable.data ?? []).find((o) => o.item.id === id);
@@ -260,6 +263,7 @@ export function PaymentsPage() {
                   </TableBody>
                 </Table>
               ) : null}
+              <CustomFieldsFieldset entityType="bank_payment" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setForm(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={save.isPending} disabled={!form.partnerId || !form.bankAccountId} data-testid="save-payment">{t("common.save")}</Button>
@@ -327,9 +331,10 @@ export function PaymentsPage() {
                   <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
                 </Field>
               ) : null}
+              <CustomFieldValuesList entityType="bank_payment" values={p.customFields} />
               <RecordActivity entityType="bank_payment" entityId={p.id} />
               <DialogFooter>
-                {p.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: p.id, kind: p.kind, partnerId: p.partnerId, bankAccountId: p.bankAccountId, paymentDate: p.paymentDate, method: p.method, reference: p.reference ?? "", currency: p.currency, exchangeRate: "", onAccount: p.onAccountTc ? String(p.onAccountTc) : "", charges: p.chargesBank ? String(p.chargesBank) : "", bankAmount: p.bankCurrency !== p.currency ? String(p.bankAmount) : "", lines: p.lines.map((l) => ({ openItemId: l.openItemId, label: `${l.documentNumber} · ${formatMoney(l.itemRemainingTc, p.currency)}`, remaining: Number(l.itemRemainingTc), amount: String(l.amountTc) })) }); }} data-testid="edit-payment">{t("common.edit")}</Button> : null}
+                {p.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: p.id, customFields: asCustomFieldValues(p.customFields), kind: p.kind, partnerId: p.partnerId, bankAccountId: p.bankAccountId, paymentDate: p.paymentDate, method: p.method, reference: p.reference ?? "", currency: p.currency, exchangeRate: "", onAccount: p.onAccountTc ? String(p.onAccountTc) : "", charges: p.chargesBank ? String(p.chargesBank) : "", bankAmount: p.bankCurrency !== p.currency ? String(p.bankAmount) : "", lines: p.lines.map((l) => ({ openItemId: l.openItemId, label: `${l.documentNumber} · ${formatMoney(l.itemRemainingTc, p.currency)}`, remaining: Number(l.itemRemainingTc), amount: String(l.amountTc) })) }); }} data-testid="edit-payment">{t("common.edit")}</Button> : null}
                 {p.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: p.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-payment">{t("purchasing.deleteDraft")}</Button> : null}
                 {p.status === "draft" ? <Button onClick={() => { act.mutate({ id: p.id, action: "post" }); }} loading={act.isPending} data-testid="post-payment">{t("banking.postPayment")}</Button> : null}
                 {p.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-payment">{t("purchasing.reverse")}</Button> : null}

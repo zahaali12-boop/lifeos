@@ -649,7 +649,7 @@ public sealed class PaymentService(
         payment.ApplyWht = request.ApplyWht;
         payment.WhtCodeId = withholdAtPayment ? whtCodeId : null;
         payment.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
-        payment.CustomFields = request.CustomFields is { ValueKind: JsonValueKind.Object } v ? v.GetRawText() : "{}";
+        payment.CustomFields = custom.Value;
         payment.Lines.AddRange(lines);
         return Result.Success();
     }
