@@ -72,7 +72,7 @@ public sealed class ReplenishmentService(
     IIncomingSupply incoming,
     ICurrentPrincipal principal,
     IAuditSink audit,
-    IClock clock)
+    IClock clock) : IReplenishmentSuggestions
 {
     private sealed class StockRow
     {
@@ -324,6 +324,40 @@ public sealed class ReplenishmentService(
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry("replenishment_suggestion", suggestion.Id, suggestion.Id.ToString("N")[^12..], AuditActions.Approved, After: new { quantity = suggestion.AcceptedQty, supplierId = suggestion.AcceptedSupplierId, note = suggestion.DecisionNote }, CompanyId: suggestion.CompanyId), cancellationToken);
         return await MapAsync(suggestion, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<SuggestionToOrder>> ForOrderingAsync(IReadOnlyCollection<Guid> suggestionIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(suggestionIds);
+        var ids = suggestionIds.Distinct().ToList();
+        var rows = await db.ReplenishmentSuggestions.AsNoTracking().Where(s => ids.Contains(s.Id)).ToListAsync(cancellationToken);
+        return rows.Select(static s => new SuggestionToOrder(s.Id, s.CompanyId, s.ItemId, s.WarehouseId, s.Status, s.AcceptedQty ?? s.SuggestedQty, s.AcceptedSupplierId ?? s.SuggestedSupplierId, s.NeededBy, s.PurchaseOrderLineId)).ToList();
+    }
+
+    public async Task<Result> MarkOrderedAsync(Guid suggestionId, decimal quantity, Guid supplierId, Guid purchaseOrderLineId, CancellationToken cancellationToken = default)
+    {
+        var suggestion = await db.ReplenishmentSuggestions.SingleOrDefaultAsync(s => s.Id == suggestionId, cancellationToken);
+        if (suggestion is null)
+        {
+            return Error.NotFound("replenishment_suggestion", suggestionId);
+        }
+
+        if (suggestion.Status is not ("open" or "accepted") || suggestion.PurchaseOrderLineId is not null)
+        {
+            return Error.Conflict("replenishment.not_orderable", "The suggestion was dismissed, superseded or already ordered.").WithWhy(("status", suggestion.Status), ("purchaseOrderLineId", suggestion.PurchaseOrderLineId));
+        }
+
+        var accepting = suggestion.Status == "open";
+        suggestion.Status = "accepted";
+        suggestion.AcceptedQty = quantity;
+        suggestion.AcceptedSupplierId = supplierId;
+        suggestion.PurchaseOrderLineId = purchaseOrderLineId;
+        suggestion.DecidedBy ??= principal.Principal?.UserId.Value;
+        suggestion.DecidedAt ??= clock.UtcNow;
+        suggestion.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry("replenishment_suggestion", suggestion.Id, suggestion.Id.ToString("N")[^12..], accepting ? AuditActions.Approved : AuditActions.Updated, After: new { quantity, supplierId, purchaseOrderLineId }, CompanyId: suggestion.CompanyId), cancellationToken);
+        return Result.Success();
     }
 
     public async Task<Result<ReplenishmentSuggestionSummary>> DismissAsync(Guid suggestionId, DismissSuggestionRequest request, CancellationToken cancellationToken)

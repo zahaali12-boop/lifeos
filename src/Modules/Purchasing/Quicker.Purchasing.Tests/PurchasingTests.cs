@@ -61,6 +61,63 @@ public sealed class PurchasingTests(ApiHostFixture host)
         new { companyId = s.CompanyId, partnerId, currency, warehouseId = s.WarehouseId, agreementId, lines };
 
     [Fact]
+    public async Task Replenishment_suggestions_become_draft_orders_per_supplier_at_the_last_price_and_stop_being_suggested_once_approved()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await owner.PostAsync($"/api/v1/items/{s.Tea}/suppliers", new { partnerId = s.SupplierA, leadTimeDays = 7, isPreferred = true });
+        await owner.PutAsync($"/api/v1/items/{s.Tea}/warehouse-settings/{s.WarehouseId}", new { reorderPoint = 50, maxQty = 200 });
+        await owner.PutAsync($"/api/v1/items/{s.Coffee}/warehouse-settings/{s.WarehouseId}", new { reorderPoint = 20, maxQty = 60 });
+
+        // Alpha last charged 12.50 a piece for tea, on an order since closed (an open one would count as supply).
+        var history = (await owner.PostAsync("/api/v1/purchasing/orders", Order(s, s.SupplierA, [Line(s.Tea, 10m, 12.5m)]))).GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/orders/{history}/submit", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/purchasing/orders/{history}/close", new { }, HttpStatusCode.OK);
+
+        // Nothing in stock: tea up to 200 from its preferred supplier, coffee up to 60 from nobody yet.
+        await owner.PostAsync("/api/v1/inventory/replenishment/run", new { companyId = s.CompanyId, asOf = "2026-09-10" }, HttpStatusCode.OK);
+        var suggestions = (await owner.GetOkAsync($"/api/v1/inventory/replenishment/suggestions?companyId={s.CompanyId}")).EnumerateArray().ToList();
+        var tea = suggestions.Single(x => x.GetProperty("itemId").GetGuid() == s.Tea);
+        var coffee = suggestions.Single(x => x.GetProperty("itemId").GetGuid() == s.Coffee);
+        tea.GetProperty("suggestedQty").GetDecimal().ShouldBe(200m);
+        coffee.GetProperty("suggestedQty").GetDecimal().ShouldBe(60m);
+        var both = new[] { tea.GetProperty("id").GetGuid(), coffee.GetProperty("id").GetGuid() };
+
+        var unsupplied = await owner.PostErrorAsync("/api/v1/purchasing/orders/from-suggestions", new { suggestionIds = both }, HttpStatusCode.UnprocessableEntity);
+        unsupplied.Code.ShouldBe("replenishment.supplier_missing");
+        unsupplied.Problem.GetProperty("why").GetProperty("item").GetString().ShouldBe("COFFEE");
+        (await owner.PostErrorAsync("/api/v1/purchasing/orders/from-suggestions", new { suggestionIds = new[] { Guid.NewGuid() } }, HttpStatusCode.NotFound)).Code.ShouldBe("replenishment_suggestion.not_found");
+
+        // Coffee goes to Beta: two drafts, one per supplier, in base units, wanted by the date the suggestion needs them.
+        var ordered = await owner.PostAsync("/api/v1/purchasing/orders/from-suggestions", new { suggestionIds = both, supplierId = s.SupplierB }, HttpStatusCode.OK);
+        var drafts = ordered.GetProperty("orders").EnumerateArray().ToList();
+        drafts.Count.ShouldBe(2);
+        var teaOrder = drafts.Single(o => o.GetProperty("partnerId").GetGuid() == s.SupplierA);
+        teaOrder.GetProperty("status").GetString().ShouldBe("draft");
+        teaOrder.GetProperty("warehouseId").GetGuid().ShouldBe(s.WarehouseId);
+        teaOrder.GetProperty("expectedDate").GetString().ShouldBe(tea.GetProperty("neededBy").GetString());
+        var teaLine = teaOrder.GetProperty("lines").Only();
+        (teaLine.GetProperty("quantity").GetDecimal(), teaLine.GetProperty("uomCode").GetString(), teaLine.GetProperty("unitPrice").GetDecimal()).ShouldBe((200m, "PCS", 12.5m));
+        var coffeeLine = drafts.Single(o => o.GetProperty("partnerId").GetGuid() == s.SupplierB).GetProperty("lines").Only();
+        (coffeeLine.GetProperty("quantity").GetDecimal(), coffeeLine.GetProperty("unitPrice").GetDecimal()).ShouldBe((60m, 0m), "Beta never sold coffee: the buyer prices it before submitting");
+
+        // The suggestions carry their order lines and cannot be ordered twice.
+        var decided = (await owner.GetOkAsync($"/api/v1/inventory/replenishment/suggestions?companyId={s.CompanyId}&status=accepted")).EnumerateArray().ToList();
+        decided.Count.ShouldBe(2);
+        decided.Single(x => x.GetProperty("itemId").GetGuid() == s.Tea).GetProperty("purchaseOrderLineId").GetGuid().ShouldBe(teaLine.GetProperty("id").GetGuid());
+        decided.Single(x => x.GetProperty("itemId").GetGuid() == s.Coffee).GetProperty("acceptedSupplierId").GetGuid().ShouldBe(s.SupplierB);
+        (await owner.PostErrorAsync("/api/v1/purchasing/orders/from-suggestions", new { suggestionIds = both }, HttpStatusCode.Conflict)).Code.ShouldBe("replenishment.not_orderable");
+
+        // Once approved, the tea order is incoming supply: the next run does not suggest tea again; the coffee draft is not supply yet.
+        await owner.PostAsync($"/api/v1/purchasing/orders/{teaOrder.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+        await owner.PostAsync("/api/v1/inventory/replenishment/run", new { companyId = s.CompanyId, asOf = "2026-09-11" }, HttpStatusCode.OK);
+        var open = (await owner.GetOkAsync($"/api/v1/inventory/replenishment/suggestions?companyId={s.CompanyId}")).EnumerateArray().Select(static x => x.GetProperty("itemId").GetGuid()).ToList();
+        open.ShouldBe([s.Coffee]);
+
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
     public async Task A_requisition_is_approved_and_becomes_one_purchase_order_per_supplier_whose_open_lines_are_incoming_supply()
     {
         var s = await SetUpAsync();

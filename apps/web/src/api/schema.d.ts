@@ -6477,6 +6477,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/orders/from-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Draft orders from replenishment suggestions: one per supplier and warehouse, at the supplier's last price for each item */
+        post: operations["postPurchasingOrdersFromSuggestions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/orders/{orderId}": {
         parameters: {
             query?: never;
@@ -10104,6 +10121,12 @@ export interface components {
         };
         OrdersCreated: {
             orders: components["schemas"]["PurchaseOrderSummary"][];
+        };
+        /** @description Replenishment suggestions to order; suggestions without a supplier take SupplierId. */
+        OrderSuggestionsRequest: {
+            suggestionIds: string[];
+            /** Format: uuid */
+            supplierId?: null | string;
         };
         /** @description A stored outbox row as the dispatcher and the operator UI see it. */
         OutboxMessage: {
@@ -14137,6 +14160,9 @@ export interface components {
             };
             /** Format: int32 */
             priority: number | string;
+        };
+        SuggestionsOrdered: {
+            orders: components["schemas"]["PurchaseOrderSummary"][];
         };
         /** @description The account as saved plus the effective terms once the group's defaults are applied. */
         SupplierAccountSummary: {
@@ -26765,6 +26791,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PurchaseOrderSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingOrdersFromSuggestions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderSuggestionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionsOrdered"];
                 };
             };
         };

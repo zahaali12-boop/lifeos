@@ -356,3 +356,16 @@ public interface IIncomingSupply
 {
     Task<IReadOnlyList<IncomingSupplyInfo>> IncomingAsync(Guid companyId, Guid warehouseId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>A replenishment suggestion as the buyer orders it: the quantity decided (or suggested) in the item's base unit, and the supplier decided (or suggested).</summary>
+public sealed record SuggestionToOrder(Guid Id, Guid CompanyId, Guid ItemId, Guid WarehouseId, string Status, decimal Quantity, Guid? SupplierId, DateOnly? NeededBy, Guid? PurchaseOrderLineId);
+
+/// <summary>Replenishment suggestions turned into purchase orders by the purchasing module.</summary>
+public interface IReplenishmentSuggestions
+{
+    /// <summary>The suggestions asked for that exist (open, accepted or already ordered: the caller decides).</summary>
+    Task<IReadOnlyList<SuggestionToOrder>> ForOrderingAsync(IReadOnlyCollection<Guid> suggestionIds, CancellationToken cancellationToken = default);
+
+    /// <summary>Records the order line a suggestion became (accepting it with that quantity and supplier when it was still open).</summary>
+    Task<Result> MarkOrderedAsync(Guid suggestionId, decimal quantity, Guid supplierId, Guid purchaseOrderLineId, CancellationToken cancellationToken = default);
+}

@@ -52,6 +52,7 @@ public static class InventoryModule
         services.AddScoped<SerialService>();
         services.AddScoped<CountService>();
         services.AddScoped<ReplenishmentService>();
+        services.AddScoped<IReplenishmentSuggestions>(static sp => sp.GetRequiredService<ReplenishmentService>());
         services.TryAddScoped<IIncomingSupply, NoIncomingSupply>();
         services.AddJobHandler<ReplenishmentJob, ReplenishmentPayload>();
         services.AddJobHandler<LotExpiryJob, LotExpiryPayload>();

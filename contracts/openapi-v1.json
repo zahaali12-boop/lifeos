@@ -18548,6 +18548,37 @@
         }
       }
     },
+    "/api/v1/purchasing/orders/from-suggestions": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Draft orders from replenishment suggestions: one per supplier and warehouse, at the supplier's last price for each item",
+        "operationId": "postPurchasingOrdersFromSuggestions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderSuggestionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionsOrdered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchasing/orders/{orderId}": {
       "get": {
         "tags": [
@@ -31962,6 +31993,29 @@
             }
           }
         }
+      },
+      "OrderSuggestionsRequest": {
+        "required": [
+          "suggestionIds"
+        ],
+        "type": "object",
+        "properties": {
+          "suggestionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "supplierId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "Replenishment suggestions to order; suggestions without a supplier take SupplierId."
       },
       "OutboxMessage": {
         "type": "object",
@@ -46351,6 +46405,20 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "SuggestionsOrdered": {
+        "required": [
+          "orders"
+        ],
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseOrderSummary"
+            }
           }
         }
       },

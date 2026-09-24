@@ -37,6 +37,7 @@ public static class PurchasingModule
         services.AddModuleDbContext<PurchasingDbContext>();
         services.AddScoped<RequisitionService>();
         services.AddScoped<DocumentFlowService>();
+        services.AddScoped<ReplenishmentOrderService>();
         services.AddScoped<RfqService>();
         services.AddScoped<BlanketAgreementService>();
         services.AddScoped<PurchaseOrderService>();

@@ -1,24 +1,32 @@
 import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableNumberCell, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Play } from "lucide-react";
+import { Play, ShoppingCart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
+import { recordRoute } from "../../lib/documents";
 import { formatDate, formatDateTime, localized } from "../../lib/format";
+import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { useSuppliers } from "../purchasing/shared";
 import { CompanyFilter, DocStatus, KeyValues, Qty, WarehouseSelect, plain, useCompanyContext, useWarehouses } from "./shared";
 
 type Suggestion = components["schemas"]["ReplenishmentSuggestionSummary"];
+type PurchaseOrder = components["schemas"]["PurchaseOrderSummary"];
+
+/** Open, or accepted without an order yet: what can still become a purchase order. */
+const orderable = (s: Suggestion): boolean => (s.status === "open" || s.status === "accepted") && !s.purchaseOrderLineId;
+const supplierOf = (s: Suggestion): string | null => s.acceptedSupplierId ?? s.suggestedSupplierId;
 
 const statuses = ["open", "accepted", "dismissed", "superseded", "all"];
 
-/** Replenishment (roadmap 3.7): run the planner, read why each suggestion exists, accept it (the purchase order lands with M4) or dismiss it with a reason. */
+/** Replenishment (roadmap 3.7): run the planner, read why each suggestion exists, turn suggestions into draft purchase orders, accept one with a different quantity or dismiss it with a reason. */
 export function ReplenishmentPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -32,6 +40,11 @@ export function ReplenishmentPage() {
   const [quantity, setQuantity] = useState("");
   const [note, setNote] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
+  const [ordering, setOrdering] = useState<{ ids: string[]; supplierId: string; clear: (() => void) | undefined } | null>(null);
+  const [ordered, setOrdered] = useState<PurchaseOrder[] | null>(null);
+  const can = useCan();
+  const canOrder = can("purchasing.order.manage");
+  const suppliers = useSuppliers(canOrder ? companyId : "");
   const openId = search.open;
 
   const suggestions = useQuery({
@@ -67,6 +80,21 @@ export function ReplenishmentPage() {
     onError: (error) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },
   });
 
+  const order = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/v1/purchasing/orders/from-suggestions", { body: { suggestionIds: ordering?.ids ?? [], supplierId: ordering && ordering.supplierId !== "" ? ordering.supplierId : null } })),
+    onSuccess: async (result) => { setProblem(null); ordering?.clear?.(); setOrdered(result.orders); await refresh(); await queryClient.invalidateQueries({ queryKey: ["orders"] }); },
+    onError: (error) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },
+  });
+  const startOrdering = (ids: string[], clear?: () => void): void => {
+    setProblem(null);
+    setOrdered(null);
+    const rows = suggestions.data ?? [];
+    setOrdering({ ids: ids.filter((id) => rows.some((s) => s.id === id && orderable(s))), supplierId: "", clear });
+  };
+  const chosen = (suggestions.data ?? []).filter((s) => ordering?.ids.includes(s.id));
+  const missingSupplier = chosen.filter((s) => !supplierOf(s)).length;
+  const supplierCode = useMemo(() => new Map((suppliers.data ?? []).map((s) => [s.partnerId, s.partnerCode])), [suppliers.data]);
+
   const columns = useMemo<ColumnDef<Suggestion, unknown>[]>(
     () => [
       { id: "item", accessorKey: "itemCode", header: t("inventory.item"), size: 130, cell: ({ row }) => <span dir="ltr">{row.original.itemCode}</span> },
@@ -74,9 +102,21 @@ export function ReplenishmentPage() {
       { id: "warehouse", accessorKey: "warehouseCode", header: t("inventory.warehouse"), size: 110 },
       { id: "qty", accessorKey: "suggestedQty", header: t("inventory.replenishment.suggested"), size: 120, cell: ({ row }) => <Qty value={row.original.suggestedQty} uom={row.original.baseUom} /> },
       { id: "neededBy", accessorKey: "neededBy", header: t("inventory.replenishment.neededBy"), size: 120, cell: ({ row }) => formatDate(row.original.neededBy) },
-      { id: "status", accessorKey: "status", header: t("common.status"), size: 120, cell: ({ row }) => <DocStatus status={row.original.status} /> },
+      { id: "supplier", accessorFn: (row) => { const id = supplierOf(row); return id ? (supplierCode.get(id) ?? "") : ""; }, header: t("partners.supplier"), size: 140, cell: ({ getValue }) => <span dir="ltr">{String(getValue()) || "—"}</span> },
+      {
+        id: "status",
+        accessorKey: "status",
+        header: t("common.status"),
+        size: 150,
+        cell: ({ row }) => (
+          <span className="flex items-center gap-2">
+            <DocStatus status={row.original.status} />
+            {row.original.purchaseOrderLineId ? <span className="text-xs text-fg-muted" data-testid="on-order">{t("inventory.replenishment.onOrder")}</span> : null}
+          </span>
+        ),
+      },
     ],
-    [t],
+    [t, supplierCode],
   );
 
   return (
@@ -108,7 +148,24 @@ export function ReplenishmentPage() {
         </Field>
       </div>
       <FormError message={problem && !openId ? problem.message : null} />
-      <DataGrid<Suggestion> label="nav.replenishment" columns={columns} data={suggestions.data ?? []} rowKey={(row) => row.id} loading={suggestions.isPending && Boolean(companyId)} emptyTitle={t("inventory.replenishment.emptyTitle")} emptyDescription={t("inventory.replenishment.emptyDescription")} onOpen={(row) => { open(row.id); }} height={400} />
+      <DataGrid<Suggestion>
+        label="nav.replenishment"
+        columns={columns}
+        data={suggestions.data ?? []}
+        rowKey={(row) => row.id}
+        loading={suggestions.isPending && Boolean(companyId)}
+        emptyTitle={t("inventory.replenishment.emptyTitle")}
+        emptyDescription={t("inventory.replenishment.emptyDescription")}
+        onOpen={(row) => { open(row.id); }}
+        height={400}
+        selectable={canOrder}
+        bulkActions={(selected, clear) => (
+          <Button size="sm" onClick={() => { startOrdering(selected, clear); }} disabled={!(suggestions.data ?? []).some((s) => selected.includes(s.id) && orderable(s))} data-testid="order-suggestions">
+            <ShoppingCart aria-hidden="true" />
+            {t("inventory.replenishment.createOrders")}
+          </Button>
+        )}
+      />
       <section className="mt-6">
         <h2 className="mb-2 text-base font-semibold">{t("inventory.replenishment.runs")}</h2>
         <Table>
@@ -170,6 +227,12 @@ export function ReplenishmentPage() {
                 </div>
               ) : null}
               <DialogFooter>
+                {canOrder && orderable(detail) ? (
+                  <Button variant="secondary" onClick={() => { open(null); startOrdering([detail.id]); }} data-testid="order-suggestion">
+                    <ShoppingCart aria-hidden="true" />
+                    {t("inventory.replenishment.createOrder")}
+                  </Button>
+                ) : null}
                 {detail.status === "open" ? (
                   <>
                     <Button variant="secondary" onClick={() => { decide.mutate("dismiss"); }} loading={decide.isPending} data-testid="dismiss-suggestion">
@@ -182,6 +245,53 @@ export function ReplenishmentPage() {
                 ) : null}
               </DialogFooter>
             </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(ordering)} onOpenChange={(isOpen) => { if (!isOpen) { setOrdering(null); setOrdered(null); setProblem(null); } }}>
+        <DialogContent closeLabel={t("common.close")} className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">{t("inventory.replenishment.orderTitle")}</DialogTitle>
+          </DialogHeader>
+          {ordered ? (
+            <div className="flex flex-col gap-3" data-testid="ordered">
+              <p className="text-sm">{t("inventory.replenishment.orderedHint")}</p>
+              <ul className="flex flex-col gap-1 text-sm">
+                {ordered.map((o) => {
+                  const route = recordRoute("purchase_order", o.id);
+                  return (
+                    <li key={o.id} className="flex flex-wrap items-center gap-2">
+                      {route ? <Link to={route.to} search={route.search} className="font-medium text-accent underline-offset-2 hover:underline" dir="ltr" data-testid="ordered-link">{o.number}</Link> : <span dir="ltr">{o.number}</span>}
+                      <span dir="auto">{o.partnerCode} · {localized(o.partnerName)}</span>
+                      <span className="text-fg-muted">{t("inventory.replenishment.lines", { count: o.lines.length })}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <DialogFooter>
+                <Button onClick={() => { setOrdering(null); setOrdered(null); }}>{t("common.close")}</Button>
+              </DialogFooter>
+            </div>
+          ) : ordering ? (
+            <form onSubmit={(event) => { event.preventDefault(); order.mutate(); }} className="flex flex-col gap-3">
+              <p className="text-sm">{t("inventory.replenishment.orderHint", { count: ordering.ids.length })}</p>
+              <FormError message={problem?.message ?? null} />
+              {missingSupplier > 0 ? (
+                <Field label={t("inventory.replenishment.supplierFor")} description={t("inventory.replenishment.supplierForHint", { count: missingSupplier })} required>
+                  <SelectField value={ordering.supplierId} onChange={(e) => { setOrdering({ ...ordering, supplierId: e.target.value }); }} required data-testid="order-supplier">
+                    <option value="">—</option>
+                    {(suppliers.data ?? []).map((s) => (
+                      <option key={s.partnerId} value={s.partnerId}>{s.partnerCode} · {localized(s.partnerName)}</option>
+                    ))}
+                  </SelectField>
+                </Field>
+              ) : null}
+              <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => { setOrdering(null); }}>{t("common.cancel")}</Button>
+                <Button type="submit" loading={order.isPending} disabled={ordering.ids.length === 0} data-testid="confirm-order">{t("inventory.replenishment.createOrders")}</Button>
+              </DialogFooter>
+            </form>
           ) : null}
         </DialogContent>
       </Dialog>
