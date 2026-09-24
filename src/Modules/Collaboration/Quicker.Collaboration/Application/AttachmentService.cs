@@ -34,9 +34,9 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
             return Error.Validation("attachment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
-        if (!access.MayRead(type))
+        if (await access.CheckAsync(type, entityId, cancellationToken) is { } withheld)
         {
-            return access.Refusal(type);
+            return withheld;
         }
 
         var name = Path.GetFileName(fileName?.Trim() ?? string.Empty);
@@ -94,9 +94,9 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
             return Error.Validation("attachment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
-        if (!access.MayRead(type))
+        if (await access.CheckAsync(type, entityId, cancellationToken) is { } withheld)
         {
-            return access.Refusal(type);
+            return withheld;
         }
 
         var rows = await db.Attachments.Where(a => a.EntityType == type && a.EntityId == entityId).OrderBy(static a => a.CreatedAt).ThenBy(static a => a.Id).ToListAsync(cancellationToken);
@@ -106,14 +106,14 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
     public async Task<AttachmentSummary?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var attachment = await db.Attachments.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
-        return attachment is null || !access.MayRead(attachment.EntityType) ? null : Map(attachment);
+        return attachment is null || !await access.MayReadAsync(attachment.EntityType, attachment.EntityId, cancellationToken) ? null : Map(attachment);
     }
 
     /// <summary>The attachment and its content stream; the caller disposes the stream.</summary>
     public async Task<Result<(AttachmentSummary Attachment, StoredObject Content)>> OpenAsync(Guid id, CancellationToken cancellationToken)
     {
         var attachment = await db.Attachments.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
-        if (attachment is null || !access.MayRead(attachment.EntityType))
+        if (attachment is null || !await access.MayReadAsync(attachment.EntityType, attachment.EntityId, cancellationToken))
         {
             return Error.NotFound("attachment", id);
         }
@@ -130,7 +130,7 @@ public sealed class AttachmentService(CollaborationDbContext db, IUnitOfWorkAcce
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var attachment = await db.Attachments.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
-        if (attachment is null || !access.MayRead(attachment.EntityType))
+        if (attachment is null || !await access.MayReadAsync(attachment.EntityType, attachment.EntityId, cancellationToken))
         {
             return Error.NotFound("attachment", id);
         }

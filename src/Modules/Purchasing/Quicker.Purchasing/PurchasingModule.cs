@@ -62,6 +62,8 @@ public static class PurchasingModule
             services.AddSingleton(new RecordReadPermission(documentType, permission));
         }
 
+        services.AddScoped<IRecordCompanies, PurchasingRecordCompanies>();
+
         return services;
     }
 }

@@ -24,6 +24,7 @@ public static class BankingModule
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("bank_payment", BankingPermissions.PaymentRead));
         services.AddSingleton(new RecordReadPermission("bank_account", BankingPermissions.BankAccountRead));
+        services.AddScoped<IRecordCompanies, BankingRecordCompanies>();
         return services;
     }
 }

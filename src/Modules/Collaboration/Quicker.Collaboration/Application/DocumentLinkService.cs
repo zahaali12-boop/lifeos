@@ -44,13 +44,20 @@ public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAc
             return Error.Validation("link.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
-        if (checkAccess && !access.MayRead(type))
+        if (checkAccess && await access.CheckAsync(type, entityId, cancellationToken) is { } withheld)
         {
-            return access.Refusal(type);
+            return withheld;
         }
 
         var rows = await db.Links.Where(l => (l.FromType == type && l.FromId == entityId) || (l.ToType == type && l.ToId == entityId)).OrderBy(static l => l.Id).ToListAsync(cancellationToken);
-        return rows.Where(l => !checkAccess || (access.MayRead(l.FromType) && access.MayRead(l.ToType))).Select(Map).ToList();
+        if (!checkAccess)
+        {
+            return rows.Select(Map).ToList();
+        }
+
+        // Links to records the member may not read (their type, or another company's) are left out.
+        var readable = await access.ReadableAsync(rows.SelectMany(static l => new[] { (l.FromType, l.FromId), (l.ToType, l.ToId) }), cancellationToken);
+        return rows.Where(l => readable.Contains((l.FromType, l.FromId)) && readable.Contains((l.ToType, l.ToId))).Select(Map).ToList();
     }
 
     private async Task<Result<(DocumentLink Link, bool Created)>> CreateAsync(LinkRequest request, bool checkAccess, CancellationToken cancellationToken)
@@ -71,9 +78,17 @@ public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAc
             return Error.Validation("link.self", "A document cannot be linked to itself.");
         }
 
-        if (checkAccess && (!access.MayRead(request.From.Type) || !access.MayRead(request.To.Type)))
+        if (checkAccess)
         {
-            return access.Refusal(access.MayRead(request.From.Type) ? request.To.Type : request.From.Type);
+            if (await access.CheckAsync(request.From.Type, request.From.Id, cancellationToken) is { } fromWithheld)
+            {
+                return fromWithheld;
+            }
+
+            if (await access.CheckAsync(request.To.Type, request.To.Id, cancellationToken) is { } toWithheld)
+            {
+                return toWithheld;
+            }
         }
 
         var existing = await db.Links.SingleOrDefaultAsync(l => l.FromType == request.From.Type && l.FromId == request.From.Id && l.ToType == request.To.Type && l.ToId == request.To.Id && l.Relation == request.Relation, cancellationToken);
@@ -104,7 +119,7 @@ public sealed class DocumentLinkService(CollaborationDbContext db, IUnitOfWorkAc
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var link = await db.Links.SingleOrDefaultAsync(l => l.Id == id, cancellationToken);
-        if (link is null || !access.MayRead(link.FromType) || !access.MayRead(link.ToType))
+        if (link is null || !await access.MayReadAsync(link.FromType, link.FromId, cancellationToken) || !await access.MayReadAsync(link.ToType, link.ToId, cancellationToken))
         {
             return Error.NotFound("link", id);
         }

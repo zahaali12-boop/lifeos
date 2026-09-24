@@ -36,9 +36,9 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
             return Error.Validation("comment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
-        if (!access.MayRead(type))
+        if (await access.CheckAsync(type, entityId, cancellationToken) is { } withheld)
         {
-            return access.Refusal(type);
+            return withheld;
         }
 
         var rows = await db.Comments.Where(c => c.EntityType == type && c.EntityId == entityId).OrderBy(static c => c.Id).ToListAsync(cancellationToken);
@@ -67,9 +67,9 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
             return Error.Validation("comment.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
-        if (!access.MayRead(type))
+        if (await access.CheckAsync(type, request.EntityId, cancellationToken) is { } withheld)
         {
-            return access.Refusal(type);
+            return withheld;
         }
 
         var body = Body(request.Body);
@@ -119,7 +119,7 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
     {
         ArgumentNullException.ThrowIfNull(request);
         var comment = await db.Comments.SingleOrDefaultAsync(c => c.Id == id && c.DeletedAt == null, cancellationToken);
-        if (comment is null || !access.MayRead(comment.EntityType))
+        if (comment is null || !await access.MayReadAsync(comment.EntityType, comment.EntityId, cancellationToken))
         {
             return Error.NotFound("comment", id);
         }
@@ -153,7 +153,7 @@ public sealed class CommentService(CollaborationDbContext db, IUnitOfWorkAccesso
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var comment = await db.Comments.SingleOrDefaultAsync(c => c.Id == id && c.DeletedAt == null, cancellationToken);
-        if (comment is null || !access.MayRead(comment.EntityType))
+        if (comment is null || !await access.MayReadAsync(comment.EntityType, comment.EntityId, cancellationToken))
         {
             return Error.NotFound("comment", id);
         }

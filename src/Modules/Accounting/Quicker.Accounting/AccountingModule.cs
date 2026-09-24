@@ -36,6 +36,7 @@ public static class AccountingModule
         services.AddJobHandler<AccountingDailyJob, AccountingDailyPayload>();
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("manual_journal", AccountingPermissions.JournalRead));
+        services.AddScoped<IRecordCompanies, AccountingRecordCompanies>();
         return services;
     }
 }

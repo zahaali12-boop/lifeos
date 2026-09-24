@@ -46,9 +46,9 @@ public sealed class ActivityService(CollaborationDbContext db, IUnitOfWorkAccess
             return Error.Validation("activity.entity_invalid", "entityType is a lower-case name such as sales_invoice and entityId a record id.");
         }
 
-        if (!access.MayRead(type))
+        if (await access.CheckAsync(type, entityId, cancellationToken) is { } withheld)
         {
-            return access.Refusal(type);
+            return withheld;
         }
 
         var paged = await KeysetPaging.ByIdDescendingAsync(db.Activities.Where(a => a.EntityType == type && a.EntityId == entityId), static a => a.Id, page, cancellationToken);

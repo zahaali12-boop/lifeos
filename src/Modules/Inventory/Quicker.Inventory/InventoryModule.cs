@@ -65,6 +65,7 @@ public static class InventoryModule
         services.AddSingleton(new RecordReadPermission("stock_assembly", InventoryPermissions.AssemblyRead));
         services.AddSingleton(new RecordReadPermission("stock_revaluation", InventoryPermissions.CostingRead));
         services.AddSingleton(new RecordReadPermission("warehouse", InventoryPermissions.WarehouseRead));
+        services.AddScoped<IRecordCompanies, InventoryRecordCompanies>();
         return services;
     }
 }

@@ -23,6 +23,7 @@ public static class PayablesModule
         services.AddScoped<IPayables>(static sp => sp.GetRequiredService<PayablesService>());
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("payment_proposal", PayablesPermissions.ProposalRead));
+        services.AddScoped<IRecordCompanies, PayablesRecordCompanies>();
         return services;
     }
 }
