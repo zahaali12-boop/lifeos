@@ -22,8 +22,11 @@ public sealed record DemoPurchasingOutcome(int Orders, int Receipts, int Invoice
 /// runs the whole procure-to-pay cycle through the modules' own services: an on-time supplier (received, invoiced,
 /// freight landed two weeks later, paid in full), a late one (received after the promised date, part of it sent
 /// back against a debit note, paid in part) and one still open (partly received, invoiced, unpaid, so the aging has
-/// something to show), plus an RFQ with three quotes waiting to be compared. Everything posts through the posting
-/// engine and the harness runs before the seed commits (ASSUMPTIONS A-115).
+/// something to show), plus an RFQ with three quotes waiting to be compared. Around them, the rest of the chain a
+/// buyer meets: a requisition turned into an order that arrives in two deliveries, each invoiced; a blanket agreement
+/// with its first release; an invoice five percent above the order price, blocked by the match for an override; and
+/// an approved requisition waiting to be ordered. Everything posts through the posting engine and the harness runs
+/// before the seed commits (ASSUMPTIONS A-115).
 /// </summary>
 internal static class DemoPurchasing
 {
@@ -56,6 +59,8 @@ internal static class DemoPurchasing
         var returnService = services.GetRequiredService<ReturnService>();
         var landedCostService = services.GetRequiredService<LandedCostService>();
         var rfqService = services.GetRequiredService<RfqService>();
+        var requisitionService = services.GetRequiredService<RequisitionService>();
+        var agreementService = services.GetRequiredService<BlanketAgreementService>();
         var bankAccountService = services.GetRequiredService<BankAccountService>();
         var paymentService = services.GetRequiredService<PaymentService>();
         var payables = services.GetRequiredService<IPayables>();
@@ -117,12 +122,12 @@ internal static class DemoPurchasing
                 return (order, receipt);
             }
 
-            async Task<InvoiceSummary> InvoiceAsync(int supplier, ReceiptSummary receipt, PurchaseOrderSummary order, DateOnly date)
+            async Task<InvoiceSummary> InvoiceAsync(int supplier, ReceiptSummary receipt, PurchaseOrderSummary order, DateOnly date, string? reference = null)
             {
                 var prices = order.Lines.ToDictionary(static l => l.Id, static l => l.UnitPrice);
                 var invoice = Require(await invoiceService.CreateAsync(new SaveInvoiceRequest(companyId, suppliers[supplier],
                     [.. receipt.Lines.Select(l => new SaveInvoiceLineRequest("receipt", l.Quantity, prices[l.OrderLineId], ReceiptLineId: l.Id))],
-                    SupplierInvoiceNumber: $"{plan.Company}-{order.Number}", DocumentDate: date, PostingDate: date, Currency: currency), cancellationToken));
+                    SupplierInvoiceNumber: reference ?? $"{plan.Company}-{order.Number}", DocumentDate: date, PostingDate: date, Currency: currency), cancellationToken));
                 Require(await invoiceService.SubmitAsync(invoice.Id, cancellationToken));
                 invoices++;
                 return Require(await invoiceService.PostAsync(invoice.Id, cancellationToken));
@@ -186,6 +191,55 @@ internal static class DemoPurchasing
                     [.. rfq.Lines.Select((l, i) => new SaveQuoteLineRequest(l.Id, Price(i == 0 ? 0 : 3, s, 0)))], SupplierReference: $"Q-{plan.Company}-{s + 1}",
                     ValidUntil: today.AddDays(30), LeadTimeDays: Suppliers[s].LeadTimeDays), cancellationToken));
             }
+
+            // A shelf restock requested by the warehouse, ordered from the suggested supplier (an order dated today, as the
+            // requisition service dates it) and delivered in two parts, each invoiced on its own.
+            var requisition = Require(await requisitionService.CreateAsync(new SaveRequisitionRequest(companyId,
+                [
+                    new SaveRequisitionLineRequest(ItemId: items[0], Quantity: 50m, Uom: "PCS", EstimatedPrice: Price(0, 0, 0), WarehouseId: warehouseId, SuggestedSupplierId: suppliers[0]),
+                    new SaveRequisitionLineRequest(ItemId: items[2], Quantity: 30m, Uom: "PCS", EstimatedPrice: Price(2, 0, 0), WarehouseId: warehouseId, SuggestedSupplierId: suppliers[0]),
+                ],
+                NeededBy: today.AddDays(10), Justification: "Shelf restock"), cancellationToken));
+            Require(await requisitionService.SubmitAsync(requisition.Id, cancellationToken));
+            var restock = Require(await requisitionService.CreateOrdersAsync(requisition.Id, new CreateOrdersFromRequisitionRequest(), cancellationToken)).Orders.Single();
+            restock = Require(await orderService.SubmitAsync(restock.Id, cancellationToken));
+            orders++;
+            var firstDelivery = restock.Lines.ToDictionary(static l => l.Id, static l => decimal.Floor(l.Quantity * 0.6m));
+            for (var delivery = 1; delivery <= 2; delivery++)
+            {
+                var part = delivery;
+                var receipt = Require(await receiptService.CreateAsync(new SaveReceiptRequest(restock.Id,
+                    [.. restock.Lines.Select(l => new SaveReceiptLineRequest(l.Id, part == 1 ? firstDelivery[l.Id] : l.Quantity - firstDelivery[l.Id]))],
+                    WarehouseId: warehouseId, PostingDate: today, SupplierDeliveryNote: $"DN-{restock.Number}-{part}"), cancellationToken));
+                receipt = Require(await receiptService.PostAsync(receipt.Id, cancellationToken));
+                receipts++;
+                await InvoiceAsync(0, receipt, restock, today, $"{plan.Company}-{restock.Number}-{part}");
+            }
+
+            // A half-year blanket agreement at a fixed price, and the first order released against it.
+            var agreement = Require(await agreementService.CreateAsync(new SaveBlanketAgreementRequest(companyId, suppliers[2], opening, opening.AddMonths(6).AddDays(-1),
+                [new SaveBlanketLineRequest(ItemId: items[1], AgreedQty: 600m, Uom: "PCS", AgreedPrice: Price(1, 2, 0))], Currency: currency, Notes: "Half-year supply at a fixed price"), cancellationToken));
+            agreement = Require(await agreementService.SetStatusAsync(agreement.Id, "activate", cancellationToken));
+            var release = Require(await orderService.CreateAsync(new SavePurchaseOrderRequest(companyId, suppliers[2],
+                [new SavePurchaseOrderLineRequest(ItemId: items[1], Quantity: 100m, Uom: "PCS", UnitPrice: agreement.Lines[0].AgreedPrice, BlanketLineId: agreement.Lines[0].Id)],
+                Currency: currency, OrderDate: opening, ExpectedDate: today.AddDays(Suppliers[2].LeadTimeDays), WarehouseId: warehouseId, AgreementId: agreement.Id), cancellationToken));
+            Require(await orderService.SubmitAsync(release.Id, cancellationToken));
+            orders++;
+
+            // An invoice five percent above the order price: the match blocks it until someone overrides or corrects it.
+            var (dearOrder, dearReceipt) = await ReceiveAsync(1, opening.AddDays(-2), opening.AddDays(5), Day(9), [3], 40m, 40m);
+            var dearPrices = dearOrder.Lines.ToDictionary(static l => l.Id, static l => l.UnitPrice);
+            var dear = Require(await invoiceService.CreateAsync(new SaveInvoiceRequest(companyId, suppliers[1],
+                [.. dearReceipt.Lines.Select(l => new SaveInvoiceLineRequest("receipt", l.Quantity, Rounding.Round(dearPrices[l.OrderLineId] * 1.05m, plan.Decimals), ReceiptLineId: l.Id))],
+                SupplierInvoiceNumber: $"{plan.Company}-{dearOrder.Number}", DocumentDate: Day(10), PostingDate: Day(10), Currency: currency), cancellationToken));
+            Require(await invoiceService.SubmitAsync(dear.Id, cancellationToken));
+            invoices++;
+
+            // A requisition approved and waiting for a buyer to turn it into an order.
+            var waiting = Require(await requisitionService.CreateAsync(new SaveRequisitionRequest(companyId,
+                [new SaveRequisitionLineRequest(ItemId: items[3], Quantity: 24m, Uom: "PCS", EstimatedPrice: Price(3, 1, 0), WarehouseId: warehouseId, SuggestedSupplierId: suppliers[1])],
+                NeededBy: today.AddDays(14), Justification: "Promotion next month"), cancellationToken));
+            Require(await requisitionService.SubmitAsync(waiting.Id, cancellationToken));
         }
 
         return new DemoPurchasingOutcome(orders, receipts, invoices, payments);
