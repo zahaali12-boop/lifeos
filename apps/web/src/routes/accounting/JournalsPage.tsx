@@ -2,12 +2,14 @@ import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Plus, Trash2 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Fragment, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
+import { currentLanguage } from "../../i18n";
+import { add, compare, isDecimal } from "../../lib/decimal";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { AttachmentsPanel } from "../AttachmentsPanel";
@@ -15,15 +17,21 @@ import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs } from "../inventory/shared";
 import { JournalImportDialog } from "./JournalImport";
+import { emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
 
 type Journal = components["schemas"]["ManualJournalSummary"];
 
-interface LineForm {
+interface LineForm extends LineDetails {
   accountCode: string;
   debit: string;
   credit: string;
+  /** The line's description in every language it has; the field edits the current language's. */
+  descriptionMap: Record<string, string>;
+  showDetails: boolean;
 }
+
+const emptyLine = (): LineForm => ({ accountCode: "", debit: "", credit: "", ...emptyDetails(), descriptionMap: {}, showDetails: false });
 
 interface JournalForm {
   kind: string;
@@ -40,7 +48,7 @@ const kinds = ["manual", "opening", "accrual", "allocation"];
 const statuses = ["", "draft", "pending_approval", "approved", "rejected", "posted", "cancelled"];
 
 function emptyForm(currency: string): JournalForm {
-  return { kind: "manual", postingDate: today(), currency, descriptionEn: "", descriptionAr: "", reference: "", autoReverseOn: "", lines: [{ accountCode: "", debit: "", credit: "" }, { accountCode: "", debit: "", credit: "" }] };
+  return { kind: "manual", postingDate: today(), currency, descriptionEn: "", descriptionAr: "", reference: "", autoReverseOn: "", lines: [emptyLine(), emptyLine()] };
 }
 
 function toForm(journal: Journal): JournalForm {
@@ -52,7 +60,17 @@ function toForm(journal: Journal): JournalForm {
     descriptionAr: journal.description.ar ?? "",
     reference: journal.reference ?? "",
     autoReverseOn: journal.autoReverseOn ?? "",
-    lines: (journal.lines ?? []).map((line) => ({ accountCode: line.accountCode, debit: Number(line.debit) > 0 ? String(line.debit) : "", credit: Number(line.credit) > 0 ? String(line.credit) : "" })),
+    lines: (journal.lines ?? []).map((line) => ({
+      accountCode: line.accountCode,
+      debit: compare(line.debit, 0) > 0 ? String(line.debit) : "",
+      credit: compare(line.credit, 0) > 0 ? String(line.credit) : "",
+      description: line.description[currentLanguage()] ?? "",
+      descriptionMap: line.description,
+      dimensions: { ...line.dimensions },
+      subledgerType: line.subledgerType ?? "",
+      subledgerRef: line.subledgerRef ?? "",
+      showDetails: false,
+    })),
   };
 }
 
@@ -66,12 +84,24 @@ function toRequest(form: JournalForm): components["schemas"]["SaveJournalRequest
     autoReverse: form.kind === "accrual" && Boolean(form.autoReverseOn),
     autoReverseOn: form.kind === "accrual" && form.autoReverseOn ? form.autoReverseOn : null,
     rateType: "spot",
-    lines: form.lines.filter((line) => line.accountCode.trim()).map((line) => ({ accountCode: line.accountCode.trim(), debit: line.debit || "0", credit: line.credit || "0" })),
+    lines: form.lines.filter((line) => line.accountCode.trim()).map((line) => {
+      const description = Object.fromEntries(Object.entries({ ...line.descriptionMap, [currentLanguage()]: line.description.trim() }).filter(([, text]) => text));
+      return {
+        accountCode: line.accountCode.trim(),
+        debit: line.debit || "0",
+        credit: line.credit || "0",
+        dimensions: Object.keys(line.dimensions).length > 0 ? line.dimensions : null,
+        subledgerType: line.subledgerRef ? line.subledgerType || null : null,
+        subledgerRef: line.subledgerRef || null,
+        description: Object.keys(description).length > 0 ? description : null,
+      };
+    }),
   };
 }
 
-function sum(lines: LineForm[], side: "debit" | "credit"): number {
-  return lines.reduce((total, line) => total + (Number(line[side]) || 0), 0);
+/** The side's total as an exact decimal; amounts still being typed (not yet a number) count as nothing. */
+function sum(lines: LineForm[], side: "debit" | "credit"): string {
+  return add("0", ...lines.map((line) => line[side].trim()).filter(isDecimal));
 }
 
 /** Manual journals: the list by status, a line editor, and the lifecycle actions (submit, approve, reject, post, cancel, correct). */
@@ -90,6 +120,17 @@ export function JournalsPage() {
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [detailTab, setDetailTab] = useState("lines");
   const openId = search.open;
+  const journal = useQuery({
+    queryKey: ["journal", openId],
+    enabled: Boolean(openId),
+    queryFn: async () => unwrap(await api.GET("/api/v1/accounting/journals/{journalId}", { params: { path: { journalId: openId ?? "" } } })),
+  });
+  const reference = useJournalReference(
+    companyId,
+    company?.chartId,
+    (journal.data?.lines ?? []).map((l) => l.accountId),
+    (editing?.form.lines ?? []).map((l) => l.accountCode),
+  );
 
   const journals = useInfiniteQuery({
     queryKey: ["journals", companyId, status],
@@ -98,12 +139,6 @@ export function JournalsPage() {
     initialPageParam: "",
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
-  const journal = useQuery({
-    queryKey: ["journal", openId],
-    enabled: Boolean(openId),
-    queryFn: async () => unwrap(await api.GET("/api/v1/accounting/journals/{journalId}", { params: { path: { journalId: openId ?? "" } } })),
-  });
-
   const refresh = async (id?: string | null): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["journals"] });
     if (id) {
@@ -277,6 +312,7 @@ export function JournalsPage() {
                       <TableCell>{String(line.lineNo)}</TableCell>
                       <TableCell>
                         <span dir="ltr">{line.accountCode}</span> {localized(line.accountName)}
+                        <LineDetailsSummary dimensions={line.dimensions} subledgerType={line.subledgerType} subledgerRef={line.subledgerRef} description={line.description} reference={reference} />
                       </TableCell>
                       <TableNumberCell><Amount value={line.debit} /></TableNumberCell>
                       <TableNumberCell><Amount value={line.credit} /></TableNumberCell>
@@ -391,10 +427,15 @@ export function JournalsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {editing.form.lines.map((line, index) => (
-                    <TableRow key={index}>
+                  {editing.form.lines.map((line, index) => {
+                    const account = reference.accounts.get(line.accountCode.trim());
+                    const extras = Object.keys(line.dimensions).length + (line.subledgerRef ? 1 : 0) + (line.description.trim() ? 1 : 0);
+                    return (
+                    <Fragment key={index}>
+                    <TableRow>
                       <TableCell>
-                        <TextField aria-label={t("accounting.accountCode")} value={line.accountCode} onChange={(e) => { updateLine(index, { accountCode: e.target.value }); }} dir="ltr" data-testid={`line-account-${index}`} />
+                        <TextField aria-label={t("accounting.accountCode")} value={line.accountCode} onChange={(e) => { updateLine(index, { accountCode: e.target.value, ...(reference.accounts.get(e.target.value.trim())?.subledgerType === line.subledgerType ? {} : { subledgerType: "", subledgerRef: "" }) }); }} dir="ltr" data-testid={`line-account-${index}`} />
+                        {account ? <p className="mt-0.5 truncate text-xs text-fg-muted">{localized(account.name)}</p> : null}
                       </TableCell>
                       <TableNumberCell>
                         <TextField aria-label={t("accounting.debit")} inputMode="decimal" value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value, credit: e.target.value ? "" : line.credit }); }} dir="ltr" className="text-end" data-testid={`line-debit-${index}`} />
@@ -403,15 +444,38 @@ export function JournalsPage() {
                         <TextField aria-label={t("accounting.credit")} inputMode="decimal" value={line.credit} onChange={(e) => { updateLine(index, { credit: e.target.value, debit: e.target.value ? "" : line.debit }); }} dir="ltr" className="text-end" data-testid={`line-credit-${index}`} />
                       </TableNumberCell>
                       <TableCell>
-                        <Button type="button" variant="ghost" size="icon" aria-label={t("accounting.removeLine")} onClick={() => { setEditing({ ...editing, form: { ...editing.form, lines: editing.form.lines.filter((_, i) => i !== index) } }); }}>
-                          <Trash2 aria-hidden="true" />
-                        </Button>
+                        <div className="flex items-center">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-expanded={line.showDetails}
+                            aria-label={t("accounting.lineDetails", { line: index + 1, count: extras })}
+                            onClick={() => { updateLine(index, { showDetails: !line.showDetails }); }}
+                            data-testid={`line-details-toggle-${index}`}
+                          >
+                            <ChevronDown aria-hidden="true" className={line.showDetails ? "rotate-180" : undefined} />
+                          </Button>
+                          {extras > 0 ? <span className="text-xs text-fg-muted" aria-hidden="true">{extras}</span> : null}
+                          <Button type="button" variant="ghost" size="icon" aria-label={t("accounting.removeLine")} onClick={() => { setEditing({ ...editing, form: { ...editing.form, lines: editing.form.lines.filter((_, i) => i !== index) } }); }}>
+                            <Trash2 aria-hidden="true" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    {line.showDetails ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="bg-surface-sunken/40">
+                          <LineDetailsEditor index={index} account={account} details={line} reference={reference} onChange={(patch) => { updateLine(index, patch); }} />
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                    </Fragment>
+                    );
+                  })}
                   <TableRow className="font-semibold">
                     <TableCell>
-                      <Button type="button" variant="secondary" onClick={() => { setEditing({ ...editing, form: { ...editing.form, lines: [...editing.form.lines, { accountCode: "", debit: "", credit: "" }] } }); }} data-testid="add-line">
+                      <Button type="button" variant="secondary" onClick={() => { setEditing({ ...editing, form: { ...editing.form, lines: [...editing.form.lines, emptyLine()] } }); }} data-testid="add-line">
                         <Plus aria-hidden="true" />
                         {t("accounting.addLine")}
                       </Button>

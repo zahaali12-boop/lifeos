@@ -1214,6 +1214,12 @@
     "emptyDescription": "Add a webhook to receive events at your URL."
   },
   "accounting": {
+    "lineDetails": "Dimensions and details of line {line}{count, plural, =0 {} one { (# set)} other { (# set)}}",
+    "lineDescription": "Line description",
+    "dimensionDefault": "— (default {value})",
+    "subledgerReference": "Subledger item",
+    "subledgerReferenceHint": "Item id",
+    "subledgerTypes": {"AP": "Supplier", "AR": "Customer", "BANK": "Bank transaction", "FA": "Fixed asset", "IC": "Intercompany partner", "PDC": "Post-dated cheque", "GRNI": "Goods receipt", "INV": "Stock item"},
     "lines": "Lines",
     "company": "Company",
     "loadFailed": "The report could not be loaded.",

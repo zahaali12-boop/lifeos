@@ -1214,6 +1214,12 @@
     "emptyDescription": "أضف ويب هوك لاستقبال الأحداث على عنوانك."
   },
   "accounting": {
+    "lineDetails": "أبعاد وتفاصيل البند {line}{count, plural, =0 {} other { (# محدّد)}}",
+    "lineDescription": "بيان البند",
+    "dimensionDefault": "— (الافتراضي {value})",
+    "subledgerReference": "عنصر الدفتر الفرعي",
+    "subledgerReferenceHint": "معرّف العنصر",
+    "subledgerTypes": {"AP": "المورد", "AR": "العميل", "BANK": "الحركة البنكية", "FA": "الأصل الثابت", "IC": "الطرف الشقيق", "PDC": "الشيك المؤجل", "GRNI": "استلام البضاعة", "INV": "صنف المخزون"},
     "lines": "البنود",
     "company": "الشركة",
     "loadFailed": "تعذّر تحميل التقرير.",
