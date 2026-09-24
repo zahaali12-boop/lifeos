@@ -59,13 +59,19 @@ public sealed class WebhookFanout(IntegrationDbContext db, WebhookService webhoo
             return;
         }
 
-        var subscriptions = (await db.Subscriptions.Where(static s => s.Active).ToListAsync(cancellationToken)).Where(s => s.Matches(message.EventType)).ToList();
-        if (subscriptions.Count == 0)
+        var candidates = (await db.Subscriptions.Where(static s => s.Active).ToListAsync(cancellationToken)).Where(s => s.Matches(message.EventType)).ToList();
+        if (candidates.Count == 0)
         {
             return;
         }
 
         using var data = JsonDocument.Parse(message.Payload);
+        var subscriptions = candidates.Where(s => s.Accepts(data.RootElement, message.AggregateType)).ToList();
+        if (subscriptions.Count == 0)
+        {
+            return;
+        }
+
         var envelope = new WebhookEnvelope(message.Id, message.EventType, message.EventVersion, message.OccurredAt, message.TenantId, message.AggregateType, message.AggregateId, data.RootElement.Clone());
         foreach (var subscription in subscriptions)
         {

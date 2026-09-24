@@ -93,7 +93,7 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin main
           git show origin/main:contracts/openapi-v1.json > /tmp/base-contract.json 2>/dev/null || rm -f /tmp/base-contract.json
-          pnpm --filter @quicker/tools check-api-contract /tmp/base-contract.json contracts/openapi-v1.json
+          pnpm --filter @quicker/tools check-api-contract /tmp/base-contract.json "$GITHUB_WORKSPACE/contracts/openapi-v1.json"
       - run: pnpm -r lint
       - run: pnpm -r typecheck
       - run: pnpm -r test

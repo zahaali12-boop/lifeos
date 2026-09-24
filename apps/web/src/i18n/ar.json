@@ -1268,6 +1268,10 @@
     "replay": "إعادة الإرسال",
     "noDeliveries": "لا تسليمات بعد.",
     "emptyTitle": "لا ويب هوك",
+    "url": "الرابط (URL)",
+    "filters": "عوامل التصفية",
+    "filtersHint": "اختيارية، واحدة في كل سطر بصيغة الاسم=القيمة: aggregateType=purchase_order، أو أي حقل في المستوى الأعلى من بيانات الحدث مثل companyId=…؛ لا يُرسل الحدث إلا إذا طابقها جميعًا.",
+    "statuses": { "pending": "قيد الانتظار", "delivered": "سُلّم", "failed": "فشل", "dead": "توقفت المحاولات" },
     "emptyDescription": "أضف ويب هوك لاستقبال الأحداث على عنوانك."
   },
   "accounting": {

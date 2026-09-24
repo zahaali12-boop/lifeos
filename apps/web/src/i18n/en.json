@@ -1268,6 +1268,10 @@
     "replay": "Replay",
     "noDeliveries": "No deliveries yet.",
     "emptyTitle": "No webhooks",
+    "url": "URL",
+    "filters": "Filters",
+    "filtersHint": "Optional, one per line as name=value: aggregateType=purchase_order, or any top-level field of the event's data such as companyId=…; an event is sent only when all of them match.",
+    "statuses": { "pending": "Pending", "delivered": "Delivered", "failed": "Failed", "dead": "Gave up" },
     "emptyDescription": "Add a webhook to receive events at your URL."
   },
   "accounting": {

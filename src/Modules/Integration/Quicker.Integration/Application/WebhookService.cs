@@ -130,6 +130,12 @@ public sealed class WebhookService(IntegrationDbContext db, IUnitOfWorkAccessor 
             return Error.Validation("webhook.event_types_invalid", "Event types are dotted names such as sales.invoice.posted, prefixes such as sales.*, or *.");
         }
 
+        var filters = request.Filters ?? new Dictionary<string, string>(StringComparer.Ordinal);
+        if (filters.Count > 10 || filters.Any(static f => !IsFilterKey(f.Key) || string.IsNullOrWhiteSpace(f.Value) || f.Value.Length > 200))
+        {
+            return Error.Validation("webhook.filters_invalid", "Up to 10 filters, each a property name (letters, digits, underscores) with a value of up to 200 characters.");
+        }
+
         if (await db.Subscriptions.AnyAsync(s => s.Name == name && s.Id != subscription.Id, cancellationToken))
         {
             return Error.Conflict("webhook.name_taken", $"A webhook named '{name}' already exists.");
@@ -138,10 +144,13 @@ public sealed class WebhookService(IntegrationDbContext db, IUnitOfWorkAccessor 
         subscription.Name = name;
         subscription.Url = url.ToString();
         subscription.EventTypes = types;
-        subscription.Filters = request.Filters is null ? new Dictionary<string, string>(StringComparer.Ordinal) : new Dictionary<string, string>(request.Filters, StringComparer.Ordinal);
+        subscription.Filters = filters.ToDictionary(static f => f.Key.Trim(), static f => f.Value.Trim(), StringComparer.Ordinal);
         subscription.Active = request.Active;
         return Result.Success();
     }
+
+    private static bool IsFilterKey(string key) =>
+        key.Length is > 0 and <= 64 && char.IsAsciiLetter(key[0]) && key.All(static c => char.IsAsciiLetterOrDigit(c) || c == '_');
 
     private static bool IsPattern(string type) =>
         type == "*" || type.Split('.').All(static part => part.Length > 0 && (part == "*" || part.All(static c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c == '_')));

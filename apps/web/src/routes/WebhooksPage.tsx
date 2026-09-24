@@ -9,17 +9,30 @@ import type { components } from "../api/schema";
 import { DataGrid } from "../grid/DataGrid";
 import { formatDateTime } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
-import { FormError, PageHeader, TextField } from "./common";
+import { FormError, PageHeader, TextareaField, TextField } from "./common";
 
 type Webhook = components["schemas"]["WebhookSummary"];
 
 const tones: Record<string, "success" | "warning" | "danger" | "neutral"> = { delivered: "success", pending: "warning", failed: "danger", dead: "danger" };
 
+/** Filters typed one per line as name=value; a line without "=" is sent as a name without a value, which the server refuses. */
+function parseFilters(text: string): Record<string, string> | null {
+  const entries = text.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+    const at = line.indexOf("=");
+    return at < 0 ? [line, ""] : [line.slice(0, at).trim(), line.slice(at + 1).trim()];
+  });
+  return entries.length > 0 ? Object.fromEntries(entries) as Record<string, string> : null;
+}
+
+function filtersText(filters: Record<string, string>): string {
+  return Object.entries(filters).map(([name, value]) => `${name}=${value}`).join("; ");
+}
+
 export function WebhooksPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", url: "", eventTypes: "*" });
+  const [form, setForm] = useState({ name: "", url: "", eventTypes: "*", filters: "" });
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<Webhook | null>(null);
@@ -32,12 +45,12 @@ export function WebhooksPage() {
   });
 
   const create = useMutation({
-    mutationFn: async () => unwrap(await api.POST("/api/v1/integration/webhooks", { body: { name: form.name, url: form.url, eventTypes: form.eventTypes.split(",").map((s) => s.trim()).filter(Boolean), filters: null, active: true } })),
+    mutationFn: async () => unwrap(await api.POST("/api/v1/integration/webhooks", { body: { name: form.name, url: form.url, eventTypes: form.eventTypes.split(",").map((s) => s.trim()).filter(Boolean), filters: parseFilters(form.filters), active: true } })),
     onSuccess: async (created) => {
       setOpen(false);
       setProblem(null);
       setSecret(created.secret);
-      setForm({ name: "", url: "", eventTypes: "*" });
+      setForm({ name: "", url: "", eventTypes: "*", filters: "" });
       await queryClient.invalidateQueries({ queryKey: ["webhooks"] });
     },
     onError: (error) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },
@@ -49,8 +62,9 @@ export function WebhooksPage() {
   const columns = useMemo<ColumnDef<Webhook, unknown>[]>(
     () => [
       { id: "name", accessorKey: "name", header: t("webhooks.name"), size: 180 },
-      { id: "url", accessorKey: "url", header: "URL", size: 300, cell: ({ row }) => <span dir="ltr" className="truncate">{row.original.url}</span> },
+      { id: "url", accessorKey: "url", header: t("webhooks.url"), size: 300, cell: ({ row }) => <span dir="ltr" className="truncate">{row.original.url}</span> },
       { id: "eventTypes", accessorFn: (row) => row.eventTypes.join(", "), header: t("webhooks.eventTypes"), size: 200, cell: ({ row }) => <span dir="ltr">{row.original.eventTypes.join(", ")}</span> },
+      { id: "filters", accessorFn: (row) => filtersText(row.filters), header: t("webhooks.filters"), size: 200, cell: ({ row }) => <span dir="ltr" className="truncate">{filtersText(row.original.filters)}</span> },
       { id: "active", accessorKey: "active", header: t("common.status"), size: 100, cell: ({ row }) => <Badge tone={row.original.active ? "success" : "neutral"}>{row.original.active ? t("common.active") : t("common.inactive")}</Badge> },
       { id: "createdAt", accessorKey: "createdAt", header: t("common.created"), size: 170, cell: ({ row }) => formatDateTime(row.original.createdAt) },
     ],
@@ -112,11 +126,14 @@ export function WebhooksPage() {
             <Field label={t("webhooks.name")} required error={problem?.fields.name}>
               <TextField value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); }} required />
             </Field>
-            <Field label="URL" required error={problem?.fields.url}>
+            <Field label={t("webhooks.url")} required error={problem?.fields.url}>
               <TextField type="url" value={form.url} onChange={(e) => { setForm({ ...form, url: e.target.value }); }} required dir="ltr" />
             </Field>
             <Field label={t("webhooks.eventTypes")} required description={t("webhooks.eventTypesHint")} error={problem?.fields.eventTypes}>
               <TextField value={form.eventTypes} onChange={(e) => { setForm({ ...form, eventTypes: e.target.value }); }} required dir="ltr" />
+            </Field>
+            <Field label={t("webhooks.filters")} description={t("webhooks.filtersHint")} error={problem?.fields.filters}>
+              <TextareaField value={form.filters} onChange={(e) => { setForm({ ...form, filters: e.target.value }); }} rows={3} dir="ltr" spellCheck={false} placeholder={"companyId=…\naggregateType=purchase_order"} data-testid="webhook-filters" />
             </Field>
             <DialogFooter>
               <Button type="button" variant="secondary" onClick={() => { setOpen(false); }}>
@@ -137,6 +154,7 @@ export function WebhooksPage() {
                 <DialogTitle className="text-lg font-semibold">{inspecting.name}</DialogTitle>
                 <DialogDescription className="text-sm text-fg-muted" dir="ltr">
                   {inspecting.url}
+                  {Object.keys(inspecting.filters).length > 0 ? <span className="block text-xs">{filtersText(inspecting.filters)}</span> : null}
                 </DialogDescription>
               </DialogHeader>
               <Table>
@@ -155,7 +173,7 @@ export function WebhooksPage() {
                     <TableRow key={delivery.id}>
                       <TableCell dir="ltr">{delivery.eventType}</TableCell>
                       <TableCell>
-                        <Badge tone={tones[delivery.status] ?? "neutral"}>{delivery.status}</Badge>
+                        <Badge tone={tones[delivery.status] ?? "neutral"}>{t(`webhooks.statuses.${delivery.status}`, { defaultValue: delivery.status })}</Badge>
                       </TableCell>
                       <TableCell className="tabular">{delivery.attempt}</TableCell>
                       <TableCell>{delivery.responseStatus ?? delivery.lastError ?? ""}</TableCell>

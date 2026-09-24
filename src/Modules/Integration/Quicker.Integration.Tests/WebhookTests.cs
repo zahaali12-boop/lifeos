@@ -80,6 +80,40 @@ public sealed class WebhookTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task Filters_narrow_a_subscription_to_the_events_whose_payload_or_record_matches()
+    {
+        host.Receiver.ResponseStatus = 200;
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        async Task<Guid> Subscribe(string name, object filters)
+        {
+            var created = await owner.PostAsJsonAsync("/api/v1/integration/webhooks", new { name, url = host.Receiver.BaseUrl + name, eventTypes = new[] { "test.order.*" }, filters }, Json);
+            created.StatusCode.ShouldBe(HttpStatusCode.Created, await created.Content.ReadAsStringAsync());
+            return (await created.ReadJsonAsync()).GetProperty("subscription").GetProperty("id").GetGuid();
+        }
+
+        var one = await Subscribe("one-order", new Dictionary<string, string> { ["OrderNumber"] = "so-7001" });
+        var orders = await Subscribe("sales-orders", new Dictionary<string, string> { ["aggregateType"] = "sales_order", ["quantity"] = "2" });
+        var invoices = await Subscribe("invoices-only", new Dictionary<string, string> { ["aggregateType"] = "sales_invoice" });
+        var missing = await Subscribe("by-company", new Dictionary<string, string> { ["companyId"] = Guid.NewGuid().ToString() });
+
+        await host.PublishAsync(ws.TenantId, new OrderShipped(Guid.NewGuid(), "SO-7001", 5m));
+        await host.PublishAsync(ws.TenantId, new OrderShipped(Guid.NewGuid(), "SO-7002", 2m));
+        await host.RunWorkerAsync();
+
+        async Task<List<string>> Delivered(Guid id) => (await (await owner.GetAsync($"/api/v1/integration/webhooks/{id}/deliveries")).ReadJsonAsync())
+            .GetProperty("items").EnumerateArray().Select(static d => d.GetProperty("payload").GetProperty("data").GetProperty("orderNumber").GetString()!).ToList();
+        (await Delivered(one)).ShouldBe(["SO-7001"], "matched by property, letter case ignored in name and value");
+        (await Delivered(orders)).ShouldBe(["SO-7002"], "every filter must hold; numbers compare as text");
+        (await Delivered(invoices)).ShouldBeEmpty();
+        (await Delivered(missing)).ShouldBeEmpty("an event without the property does not match");
+
+        // Filters are validated: a property name, a value, at most ten.
+        (await (await owner.PostAsJsonAsync("/api/v1/integration/webhooks", new { name = "bad", url = host.Receiver.BaseUrl, eventTypes = new[] { "*" }, filters = new Dictionary<string, string> { ["company id"] = "x" } }, Json)).ErrorCodeAsync()).ShouldBe("webhook.filters_invalid");
+        (await (await owner.PostAsJsonAsync("/api/v1/integration/webhooks", new { name = "bad", url = host.Receiver.BaseUrl, eventTypes = new[] { "*" }, filters = new Dictionary<string, string> { ["companyId"] = " " } }, Json)).ErrorCodeAsync()).ShouldBe("webhook.filters_invalid");
+    }
+
+    [Fact]
     public async Task Failed_deliveries_retry_with_backoff_keep_their_log_and_can_be_replayed_and_tested()
     {
         var ws = await Api.SignupAsync();
