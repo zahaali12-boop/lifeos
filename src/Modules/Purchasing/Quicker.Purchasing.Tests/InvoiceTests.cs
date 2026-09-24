@@ -163,6 +163,48 @@ public sealed class InvoiceTests(ApiHostFixture host)
         await owner.AssertInvariantsAsync();
     }
 
+    [Fact]
+    public async Task A_receipt_invoiced_in_two_parts_at_two_prices_is_stocked_at_what_the_supplier_billed_and_a_reversal_takes_back_its_part_only()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await owner.PutAsync($"/api/v1/partners/{s.Supplier}/supplier-accounts/{s.CompanyId}", new { currency = "USD", leadTimeDays = 7, qtyTolerancePct = 10m, priceTolerancePct = 60m });
+        var order = await owner.PostAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId = s.Supplier, warehouseId = s.WarehouseId, lines = new object[] { new { itemId = s.Tea, quantity = 10m, uom = "PCS", unitPrice = 2m } } });
+        var orderId = order.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/orders/{orderId}/submit", new { }, HttpStatusCode.OK);
+        var receipt = await owner.PostAsync("/api/v1/purchasing/receipts", new { orderId, postingDate = "2026-09-10", lines = new[] { new { orderLineId = order.GetProperty("lines").Only().GetProperty("id").GetGuid(), quantity = 10m } } });
+        var receiptId = receipt.GetProperty("id").GetGuid();
+        var receiptLine = (await owner.PostAsync($"/api/v1/purchasing/receipts/{receiptId}/post", new { }, HttpStatusCode.OK)).GetProperty("lines").Only().GetProperty("id").GetGuid();
+        (await RoleAsync(s, "Inventory")).ShouldBe(26000m); // 10 × 2.00 × 1300 expected
+
+        async Task<Guid> InvoiceAsync(string reference, decimal quantity, decimal price)
+        {
+            var invoice = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, supplierInvoiceNumber = reference, documentDate = "2026-09-20", applyWht = false, lines = new[] { new { kind = "receipt", receiptLineId = receiptLine, quantity, unitPrice = price } } });
+            var id = invoice.GetProperty("id").GetGuid();
+            (await owner.PostAsync($"/api/v1/purchasing/invoices/{id}/submit", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("approved");
+            await owner.PostAsync($"/api/v1/purchasing/invoices/{id}/post", new { }, HttpStatusCode.OK);
+            return id;
+        }
+
+        // Four at 2.50: those four at their price, the six not invoiced yet still at the expected 2.00.
+        await InvoiceAsync("P-1", 4m, 2.5m);
+        (await RoleAsync(s, "Inventory")).ShouldBe(13000m + 15600m);
+        (await GrniAsync(s, receiptId)).ShouldBe(15600m);
+        await owner.AssertInvariantsAsync();
+
+        // The other six at 3.00: the stock is what the supplier billed, and nothing is left waiting for an invoice.
+        var second = await InvoiceAsync("P-2", 6m, 3m);
+        (await RoleAsync(s, "Inventory")).ShouldBe(13000m + 23400m);
+        (await GrniAsync(s, receiptId)).ShouldBe(0m);
+        await owner.AssertInvariantsAsync();
+
+        // Reversing the second invoice takes back its six only; the first invoice's four keep their price.
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{second}/reverse", new { reason = "Wrong price" }, HttpStatusCode.OK);
+        (await RoleAsync(s, "Inventory")).ShouldBe(13000m + 15600m);
+        (await GrniAsync(s, receiptId)).ShouldBe(15600m);
+        await owner.AssertInvariantsAsync();
+    }
+
     private async Task<decimal> BookedAsync(Setup s, string sql, object? extra = null)
     {
         await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);

@@ -60,6 +60,73 @@ public sealed class StockDocumentTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task A_company_wide_write_down_measures_the_end_of_its_date_and_lands_in_each_warehouse_by_what_it_holds()
+    {
+        // I1: 100 in at 250, 30 moved to the branch and 2 counted missing on the same date, then written down to 200.
+        var s = await SetUpAsync("average");
+        var item = await ItemAsync(s, "WATER");
+        await ReceiveAsync(s, item, 100m, D(5), 250m);
+        var moved = await s.Owner.PostAsync("/api/v1/inventory/transfers", new { companyId = s.CompanyId, fromWarehouseId = s.Main, toWarehouseId = s.Branch, kind = "one_step", lines = new object[] { new { itemId = item, quantity = 30 } } });
+        await s.Owner.PostAsync($"/api/v1/inventory/transfers/{moved.GetProperty("id").GetGuid()}/ship", new { shipDate = "2026-09-05" }, HttpStatusCode.OK);
+        var counted = await host.PostStockAsync(s.Ws.TenantId, new StockPostingRequest(s.CompanyId, D(5), "test_document", Guid.CreateVersion7(), [new StockLine(item, StockEntryTypes.CountVariance, -2m, s.Main)]));
+        counted.Entries[0].CostAmount.ShouldBe(-500m);
+
+        var writeDown = await s.Owner.PostAsync("/api/v1/inventory/revaluations", new { companyId = s.CompanyId, kind = "nrv_writedown", postingDate = "2026-09-05", lines = new object[] { new { itemId = item, newUnitCost = 200 } } });
+        var posted = await s.Owner.PostAsync($"/api/v1/inventory/revaluations/{writeDown.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        posted.GetProperty("lines")[0].GetProperty("quantity").GetDecimal().ShouldBe(98m);
+        posted.GetProperty("totalAmount").GetDecimal().ShouldBe(-4900m);
+
+        // The same-day movements keep their cost before the write-down; the 98 on hand are worth 200 each, 19,600.
+        (await s.Owner.GetOkAsync($"/api/v1/inventory/costing/valuation?companyId={s.CompanyId}&asOf=2026-09-05")).GetProperty("totalValue").GetDecimal().ShouldBe(19600m);
+        (await BookedAsync(s, "Inventory")).ShouldBe(19600m);
+        (await BookedAsync(s, "InventoryWriteDown")).ShouldBe(4900m);
+        (await BookedAsync(s, "CountVariance")).ShouldBe(500m);
+
+        // Main holds 68 and the branch 30: each carries its own share of the write-down.
+        await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
+        await db.OpenAsync(TestContext.Current.CancellationToken);
+        var shares = (await db.QueryAsync<(Guid Warehouse, decimal Quantity, decimal Amount)>(
+            "SELECT warehouse_id, valued_quantity, cost_amount_actual FROM app.inv_stock_value_entries WHERE tenant_id = @t AND item_id = @item AND sle_id IS NULL", new { t = s.Ws.TenantId, item })).ToList();
+        shares.ShouldBe([(s.Main, 68m, -3400m), (s.Branch, 30m, -1500m)], ignoreOrder: true);
+
+        // The next day's issue costs the written-down 200.
+        var issued = await host.PostStockAsync(s.Ws.TenantId, new StockPostingRequest(s.CompanyId, D(6), "test_document", Guid.CreateVersion7(), [new StockLine(item, StockEntryTypes.SaleShipment, 10m, s.Main)]));
+        issued.Entries[0].CostAmount.ShouldBe(-2000m);
+        await s.Owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
+    public async Task Under_company_wide_average_cost_a_transfer_received_on_its_ship_date_settles_and_moves_value_without_changing_the_average()
+    {
+        // I3: each case used to abandon the receipt with costing.reapplication_diverged.
+        foreach (var (unitCost, received, shortage) in new[] { (30m, 35m, 0m), (1500m, 35m, 0m), (1500m, 20m, 5m) })
+        {
+            var s = await SetUpAsync("average");
+            var item = await ItemAsync(s, "WATER");
+            if (shortage > 0m)
+            {
+                await ReasonAsync(s, "LOST", "shortage", role: "InventoryWriteDown");
+            }
+
+            await ReceiveAsync(s, item, 50m, D(5), unitCost);
+            var transfer = await s.Owner.PostAsync("/api/v1/inventory/transfers", new { companyId = s.CompanyId, fromWarehouseId = s.Main, toWarehouseId = s.Branch, lines = new object[] { new { itemId = item, quantity = 35 } } });
+            var transferId = transfer.GetProperty("id").GetGuid();
+            var shipped = await s.Owner.PostAsync($"/api/v1/inventory/transfers/{transferId}/ship", new { shipDate = "2026-09-09" }, HttpStatusCode.OK);
+            var lineId = shipped.GetProperty("lines")[0].GetProperty("id").GetGuid();
+            object line = shortage > 0m ? new { lineId, quantity = received, shortage, shortageReasonCode = "LOST", shortageNote = "Short on arrival" } : new { lineId, quantity = received };
+            await s.Owner.PostAsync($"/api/v1/inventory/transfers/{transferId}/receive", new { receiveDate = "2026-09-09", lines = new[] { line } }, HttpStatusCode.OK);
+
+            // What moved kept its unit cost: every unit left is still worth what it cost, wherever it sits.
+            var remaining = 50m - shortage - (35m - received - shortage);
+            (await BookedAsync(s, "Inventory")).ShouldBe(remaining * unitCost, $"unit cost {unitCost}, {received} received of 35");
+            (await BookedAsync(s, "InventoryInTransit")).ShouldBe((35m - received - shortage) * unitCost);
+            var valuation = await s.Owner.GetOkAsync($"/api/v1/inventory/costing/valuation?companyId={s.CompanyId}&asOf=2026-09-09&itemId={item}");
+            valuation.GetRawText().ShouldNotContain("\"valuationPending\":true");
+            await s.Owner.AssertInvariantsAsync();
+        }
+    }
+
+    [Fact]
     public async Task Adjustments_carry_reason_codes_go_through_approval_when_the_company_asks_and_post_to_the_reasons_account()
     {
         var s = await SetUpAsync();

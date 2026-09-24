@@ -397,11 +397,17 @@ public sealed class InvoiceService(
 
         var returnCostFc = new Dictionary<Guid, decimal>();
 
-        // 1. The costing engine settles each receipt entry at the invoice price (in the company's currency, per received unit).
+        // 1. The costing engine settles each receipt entry (in the company's currency, per received unit): what the invoices
+        // so far bill at their prices, what is not invoiced yet at the expected cost, so a receipt invoiced in parts at
+        // different prices ends at what the supplier billed.
+        var invoicedSoFar = new Dictionary<Guid, (decimal Quantity, decimal Value)>();
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "receipt"))
         {
             var receiptLine = receiptLines[line.ReceiptLineId!.Value];
-            var actualUnitCost = line.UnitPrice * (1m - line.DiscountPct / 100m) * rate.Value;
+            var (quantityBefore, valueBefore) = invoicedSoFar.TryGetValue(receiptLine.Id, out var before) ? before : (receiptLine.QtyInvoiced, receiptLine.InvoicedCostAmount);
+            var invoiced = (Quantity: quantityBefore + line.Quantity, Value: valueBefore + (line.Quantity * line.UnitPrice * (1m - line.DiscountPct / 100m) * rate.Value));
+            invoicedSoFar[receiptLine.Id] = invoiced;
+            var actualUnitCost = BlendedUnitCost(receiptLine, invoiced.Quantity, invoiced.Value);
             foreach (var sleId in SleIds(receiptLine))
             {
                 var adjusted = await costing.AdjustInboundCostAsync(new InboundCostAdjustmentRequest(sleId, "invoice", DocumentType, invoice.Id, actualUnitCost, null, invoice.PostingDate, $"Supplier invoice {invoice.Number}", $"purchase_invoice:{invoice.Id}:{line.Id}:{sleId}"), cancellationToken);
@@ -658,9 +664,10 @@ public sealed class InvoiceService(
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "receipt"))
         {
             var receiptLine = receiptLines[line.ReceiptLineId!.Value];
+            var unitCostAfter = BlendedUnitCost(receiptLine, receiptLine.QtyInvoiced - line.Quantity, receiptLine.InvoicedCostAmount - line.NetAmountFc);
             foreach (var sleId in SleIds(receiptLine))
             {
-                var adjusted = await costing.AdjustInboundCostAsync(new InboundCostAdjustmentRequest(sleId, "invoice", DocumentType, invoice.Id, receiptLine.ExpectedUnitCost, null, reversed.Value.PostingDate, $"Supplier invoice {invoice.Number} reversed: {reason}", $"purchase_invoice_reversal:{invoice.Id}:{line.Id}:{sleId}"), cancellationToken);
+                var adjusted = await costing.AdjustInboundCostAsync(new InboundCostAdjustmentRequest(sleId, "invoice", DocumentType, invoice.Id, unitCostAfter, null, reversed.Value.PostingDate, $"Supplier invoice {invoice.Number} reversed: {reason}", $"purchase_invoice_reversal:{invoice.Id}:{line.Id}:{sleId}"), cancellationToken);
                 if (adjusted.IsFailure)
                 {
                     return adjusted.Error!.WithWhy(("lineNo", line.LineNo));
@@ -1182,6 +1189,10 @@ public sealed class InvoiceService(
     public async Task<Invoice?> LoadAsync(Guid id, CancellationToken cancellationToken) => await db.Invoices.AsNoTracking().Include(static i => i.Lines).SingleOrDefaultAsync(i => i.Id == id, cancellationToken);
 
     private static string Display(Invoice invoice) => $"{invoice.Number} · {invoice.TotalGross:0.##} {invoice.Currency}" + (invoice.SupplierInvoiceNumber is null ? string.Empty : $" · {invoice.SupplierInvoiceNumber}");
+
+    /// <summary>A received unit's cost once the invoices so far are settled: the invoiced value, and the rest of the receipt at its expected cost.</summary>
+    private static decimal BlendedUnitCost(ReceiptLine line, decimal invoicedQuantity, decimal invoicedValue) =>
+        line.Quantity == 0m ? line.ExpectedUnitCost : (invoicedValue + (Math.Max(0m, line.Quantity - invoicedQuantity) * line.ExpectedUnitCost)) / line.Quantity;
 
     private static IReadOnlyList<Guid> SleIds(ReceiptLine line)
     {

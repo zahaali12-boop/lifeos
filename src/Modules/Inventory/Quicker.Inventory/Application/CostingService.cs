@@ -58,6 +58,9 @@ public sealed class CostingService(
     /// <summary>How often one scope may be re-walked in a single run before the run is judged not to settle.</summary>
     private const int MaxWalksPerScope = 50;
 
+    /// <summary>The source of the loose value entries a standard-cost change creates.</summary>
+    private const string StandardCostDocument = "standard_cost";
+
     private static readonly string[] AdjustmentKinds = ["invoice", "landed_cost"];
 
     /// <summary>A cost scope: the company, the item and the warehouse when the company costs per warehouse (nil otherwise).</summary>
@@ -353,7 +356,9 @@ public sealed class CostingService(
             }
             else
             {
-                var delta = actualTotal - (expected == 0m ? actualPrimary : 0m);
+                // The invoice replaces the direct cost only: landed costs and revaluations already on the entry stay.
+                var directActual = existing.Where(static v => IsInventoryRole(v.AccountRole) && v.ValueType == ValueEntryTypes.DirectCost).Sum(static v => v.CostAmountActual);
+                var delta = actualTotal - (expected == 0m ? directActual : 0m);
                 if (delta != 0m || expected != 0m)
                 {
                     created.Add(NewValueEntry(entry, method, ValueEntryTypes.DirectCost, entry.Quantity, delta, 0m, AccountRoles.Inventory, AccountRoles.GRNI, entry.SourceDocumentId, glDate, reason, null, null));
@@ -436,7 +441,7 @@ public sealed class CostingService(
         {
             Trigger = new Trigger("standard_cost", "standard_cost", version.Id, null, version.Reason),
             InBackground = false,
-            DocumentType = "standard_cost",
+            DocumentType = StandardCostDocument,
             DocumentId = version.Id,
         };
         context.Companies[companyId] = company;
@@ -481,7 +486,7 @@ public sealed class CostingService(
                         AccountRole = AccountRoles.Inventory,
                         OffsetRole = AccountRoles.InventoryWriteDown,
                         ItemPostingGroupId = method.PostingGroupId,
-                        SourceDocumentType = "standard_cost",
+                        SourceDocumentType = StandardCostDocument,
                         SourceDocumentId = version.Id,
                         Reason = new Dictionary<string, object?>(StringComparer.Ordinal) { ["kind"] = "standard_cost", ["previousStandard"] = previous, ["newStandard"] = standardCost, ["quantityOnHand"] = quantity, ["note"] = version.Reason },
                         CreatedBy = principal.Principal?.UserId.Value,
@@ -634,9 +639,12 @@ public sealed class CostingService(
         var existingValues = (await db.ValueEntries.Where(v => v.SleId != null && ids.Contains(v.SleId.Value)).ToListAsync(cancellationToken))
             .Concat(context.PendingValueEntries.Where(v => v.SleId is not null && ids.Contains(v.SleId.Value)))
             .GroupBy(static v => v.SleId!.Value).ToDictionary(static g => g.Key, static g => g.ToList());
-        var looseValues = (await db.ValueEntries.Where(v => v.SleId == null && v.CompanyId == scope.CompanyId && v.ItemId == scope.ItemId && v.ValuationDate >= fromDate && (scope.WarehouseId == None || v.WarehouseId == scope.WarehouseId)).ToListAsync(cancellationToken))
-            .Concat(pendingLoose)
-            .GroupBy(static v => v.ValuationDate).ToDictionary(static g => g.Key, static g => g.Sum(static v => v.Amount));
+        // Loose values: a standard-cost change re-values the stock on hand at the start of its date, a revaluation document
+        // the stock on hand at the end of its date (what it measured), so the day's own movements leave at the cost before it.
+        var looseEntries = (await db.ValueEntries.Where(v => v.SleId == null && v.CompanyId == scope.CompanyId && v.ItemId == scope.ItemId && v.ValuationDate >= fromDate && (scope.WarehouseId == None || v.WarehouseId == scope.WarehouseId)).ToListAsync(cancellationToken))
+            .Concat(pendingLoose).ToList();
+        var looseValues = looseEntries.Where(static v => v.SourceDocumentType == StandardCostDocument).GroupBy(static v => v.ValuationDate).ToDictionary(static g => g.Key, static g => g.Sum(static v => v.Amount));
+        var looseAtEnd = looseEntries.Where(static v => v.SourceDocumentType != StandardCostDocument).GroupBy(static v => v.ValuationDate).ToDictionary(static g => g.Key, static g => g.Sum(static v => v.Amount));
         var previousApplications = await db.Applications.Where(a => a.SupersededBy == null && ids.Contains(a.OutboundSleId)).ToListAsync(cancellationToken);
         var touchesExisting = entries.Any(e => existingValues.ContainsKey(e.Id)) || previousApplications.Count > 0;
         if (touchesExisting && context.Run is null)
@@ -700,7 +708,7 @@ public sealed class CostingService(
         var newAmounts = new Dictionary<Guid, (decimal Amount, decimal UnitCost, bool AtExpected, List<ItemApplication> Applications)>();
         var now = clock.UtcNow;
         var byDay = entries.GroupBy(static e => e.PostingDate).ToDictionary(static g => g.Key, static g => g.ToList());
-        foreach (var date in byDay.Keys.Union(looseValues.Keys).Order())
+        foreach (var date in byDay.Keys.Union(looseValues.Keys).Union(looseAtEnd.Keys).Order())
         {
             if (looseValues.TryGetValue(date, out var loose))
             {
@@ -709,6 +717,31 @@ public sealed class CostingService(
 
             var day = byDay.GetValueOrDefault(date) ?? [];
             var ordered = day.Where(static e => e.Quantity > 0m).OrderBy(static e => e.Sequence).Concat(day.Where(static e => e.Quantity < 0m).OrderBy(static e => e.Sequence)).ToList();
+            var deferredPairs = new HashSet<Guid>();
+            if (method.Costing == CostingMethods.Average)
+            {
+                // A transfer between warehouses of one average pool moves value without changing the average (as Business
+                // Central's average cost leaves transfers out of it): the outbound half is valued at the average without its
+                // own inbound half, which takes that value right after, so the walk settles in one pass.
+                var outboundPairs = day.Where(static e => e.Quantity < 0m && e.TransferPairId is not null).Select(static e => e.TransferPairId!.Value).ToHashSet();
+                var deferred = day.Where(e => e.Quantity > 0m && e.EntryType == StockEntryTypes.TransferIn && e.TransferPairId is { } p && outboundPairs.Contains(p))
+                    .GroupBy(static e => e.TransferPairId!.Value).ToDictionary(static g => g.Key, static g => g.OrderBy(static e => e.Sequence).ToList());
+                if (deferred.Count > 0)
+                {
+                    deferredPairs.UnionWith(deferred.Keys);
+                    var reordered = day.Where(e => e.Quantity > 0m && !(e.EntryType == StockEntryTypes.TransferIn && e.TransferPairId is { } p && deferred.ContainsKey(p))).OrderBy(static e => e.Sequence).ToList();
+                    foreach (var outbound in day.Where(static e => e.Quantity < 0m).OrderBy(static e => e.Sequence))
+                    {
+                        reordered.Add(outbound);
+                        if (outbound.TransferPairId is { } pair && deferred.Remove(pair, out var inbound))
+                        {
+                            reordered.AddRange(inbound);
+                        }
+                    }
+
+                    ordered = reordered;
+                }
+            }
             foreach (var entry in ordered)
             {
                 context.EntriesWalked++;
@@ -912,7 +945,10 @@ public sealed class CostingService(
                     if (entry.EntryType == StockEntryTypes.TransferOut && entry.TransferPairId is { } pair)
                     {
                         context.PairAmounts[pair] = total;
-                        await EnqueuePairedInAsync(context, scope, pair, entry.Id, total, cancellationToken);
+                        if (!deferredPairs.Contains(pair))
+                        {
+                            await EnqueuePairedInAsync(context, scope, pair, entry.Id, total, cancellationToken);
+                        }
                     }
                     else if (entry.EntryType == StockEntryTypes.AssemblyConsumption)
                     {
@@ -923,6 +959,11 @@ public sealed class CostingService(
                     runningValue += newAmount;
                     newAmounts[entry.Id] = (newAmount, quantity == 0m ? 0m : total / quantity, atExpected, applications);
                 }
+            }
+
+            if (looseAtEnd.TryGetValue(date, out var closing))
+            {
+                runningValue += closing;
             }
 
             if (runningQuantity > 0m)
@@ -1473,40 +1514,50 @@ public sealed class CostingService(
             }
 
             delta = method.Rounding.Round(quantity * newUnitCost, method.Currency.MinorUnits) - value;
-            var warehouse = scope.WarehouseId == None ? await FirstWarehouseAsync(scope, cancellationToken) : scope.WarehouseId;
-            if (warehouse is null)
-            {
-                return Error.Validation("revaluation.nothing_on_hand", "There is no stock on hand to revalue at that date.").WithWhy(("itemId", itemId), ("date", date));
-            }
-
             if (delta == 0m)
             {
                 return (quantity, currentUnitCost, 0m, null);
             }
 
-            context.PendingValueEntries.Add(new StockValueEntry
+            // The write-down lands where the stock is: one share per warehouse holding it at the end of the date, by quantity.
+            var holdings = await HoldingsAsync(scope, date, cancellationToken);
+            if (holdings.Count == 0)
             {
-                Id = Guid.CreateVersion7(),
-                SleId = null,
-                CompanyId = companyId,
-                ItemId = itemId,
-                WarehouseId = warehouse.Value,
-                PostingDate = glDate,
-                ValuationDate = date,
-                ValueType = ValueEntryTypes.Revaluation,
-                ValuedQuantity = quantity,
-                UnitCost = newUnitCost - currentUnitCost,
-                CostAmountActual = delta,
-                Currency = method.Currency.Code,
-                AccountRole = AccountRoles.Inventory,
-                OffsetRole = offset,
-                ItemPostingGroupId = method.PostingGroupId,
-                SourceDocumentType = documentType,
-                SourceDocumentId = documentId,
-                Reason = reason,
-                CreatedBy = principal.Principal?.UserId.Value,
-                CreatedAt = clock.UtcNow,
-            });
+                return Error.Validation("revaluation.nothing_on_hand", "There is no stock on hand to revalue at that date.").WithWhy(("itemId", itemId), ("date", date));
+            }
+
+            var shares = method.Rounding.Allocate(new Money(delta, method.Currency), holdings.Select(static h => h.Quantity).ToList());
+            for (var i = 0; i < holdings.Count; i++)
+            {
+                if (shares[i].Amount == 0m)
+                {
+                    continue;
+                }
+
+                context.PendingValueEntries.Add(new StockValueEntry
+                {
+                    Id = Guid.CreateVersion7(),
+                    SleId = null,
+                    CompanyId = companyId,
+                    ItemId = itemId,
+                    WarehouseId = holdings[i].WarehouseId,
+                    PostingDate = glDate,
+                    ValuationDate = date,
+                    ValueType = ValueEntryTypes.Revaluation,
+                    ValuedQuantity = holdings[i].Quantity,
+                    UnitCost = newUnitCost - currentUnitCost,
+                    CostAmountActual = shares[i].Amount,
+                    Currency = method.Currency.Code,
+                    AccountRole = await InventoryRoleForAsync(holdings[i].WarehouseId, cancellationToken),
+                    OffsetRole = offset,
+                    ItemPostingGroupId = method.PostingGroupId,
+                    SourceDocumentType = documentType,
+                    SourceDocumentId = documentId,
+                    Reason = reason,
+                    CreatedBy = principal.Principal?.UserId.Value,
+                    CreatedAt = clock.UtcNow,
+                });
+            }
         }
 
         if (delta == 0m)
@@ -1533,10 +1584,12 @@ public sealed class CostingService(
     {
         var uow = unitOfWork.Current;
         var attached = await uow.Connection.ExecuteScalarAsync<decimal?>(new CommandDefinition("""
-            SELECT sum(v.cost_amount_actual / nullif(v.valued_quantity, 0))
-            FROM app.inv_stock_value_entries v
-            WHERE v.company_id = @company AND v.item_id = @item AND v.valuation_date <= @date AND v.value_type = 'revaluation' AND v.sle_id IS NULL
-              AND (@warehouse::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR v.warehouse_id = @warehouse)
+            SELECT sum(per_unit) FROM (
+              SELECT sum(v.cost_amount_actual) / nullif(sum(v.valued_quantity), 0) AS per_unit
+              FROM app.inv_stock_value_entries v
+              WHERE v.company_id = @company AND v.item_id = @item AND v.valuation_date <= @date AND v.value_type = 'revaluation' AND v.sle_id IS NULL
+                AND (@warehouse::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR v.warehouse_id = @warehouse)
+              GROUP BY v.source_document_type, v.source_document_id, v.valuation_date) per_document
             """, new { company = scope.CompanyId, item = scope.ItemId, warehouse = scope.WarehouseId, date }, uow.Transaction, cancellationToken: cancellationToken));
         var bucket = await db.ItemCosts.Where(c => c.CompanyId == scope.CompanyId && c.ItemId == scope.ItemId && c.WarehouseId == scope.WarehouseId && c.ValuationDate <= date)
             .OrderByDescending(static c => c.ValuationDate).FirstOrDefaultAsync(cancellationToken);
@@ -1546,6 +1599,21 @@ public sealed class CostingService(
         }
 
         return bucket.Value / bucket.Quantity - (attached ?? 0m);
+    }
+
+    /// <summary>Own stock on hand at the end of a date, per warehouse of the scope that holds some.</summary>
+    private async Task<IReadOnlyList<(Guid WarehouseId, decimal Quantity)>> HoldingsAsync(ScopeKey scope, DateOnly date, CancellationToken cancellationToken)
+    {
+        var uow = unitOfWork.Current;
+        return (await uow.Connection.QueryAsync<(Guid WarehouseId, decimal Quantity)>(new CommandDefinition("""
+            SELECT e.warehouse_id, sum(e.quantity)
+            FROM app.inv_stock_ledger_entries e
+            WHERE e.company_id = @company AND e.item_id = @item AND e.ownership = 'own' AND e.posting_date <= @date
+              AND (@warehouse::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.warehouse_id = @warehouse)
+            GROUP BY e.warehouse_id
+            HAVING sum(e.quantity) > 0
+            ORDER BY e.warehouse_id
+            """, new { company = scope.CompanyId, item = scope.ItemId, warehouse = scope.WarehouseId, date }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
     }
 
     private async Task<Guid?> FirstWarehouseAsync(ScopeKey scope, CancellationToken cancellationToken)
