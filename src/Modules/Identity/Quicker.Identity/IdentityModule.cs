@@ -52,7 +52,9 @@ public static class IdentityModule
             }, null!);
         });
         services.AddMemoryCache();
-        services.AddHttpClient("oidc");
+        // Providers are addresses a workspace administrator types in: discovery, keys and the token call stay on the public
+        // internet unless the operator allows an internal provider (Quicker:Outbound:AllowedPrivateNetworks).
+        services.AddHttpClient("oidc").RestrictToPublicNetworks();
         services.AddHttpClient<HibpBreachedPasswordChecker>();
         services.AddSingleton<IBreachedPasswordChecker>(static sp =>
             sp.GetRequiredService<AuthOptions>().BreachedPasswordCheck ? sp.GetRequiredService<HibpBreachedPasswordChecker>() : new NoBreachCheck());

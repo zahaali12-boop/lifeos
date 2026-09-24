@@ -4,6 +4,7 @@ using Quicker.Integration.Application;
 using Quicker.Integration.Persistence;
 using Quicker.Messaging;
 using Quicker.Persistence.EntityFramework;
+using Quicker.Web;
 
 namespace Quicker.Integration;
 
@@ -17,7 +18,7 @@ public static class IntegrationModule
         {
             client.Timeout = TimeSpan.FromSeconds(15);
             client.MaxResponseContentBufferSize = 1_048_576;
-        });
+        }).RestrictToPublicNetworks();
         services.AddModuleDbContext<IntegrationDbContext>();
         services.AddScoped<WebhookService>();
         services.AddIntegrationEventObserver<WebhookFanout>();

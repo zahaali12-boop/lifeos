@@ -148,4 +148,18 @@ public sealed class SsoTests(ApiHostFixture host)
         (await owner.PutAsJsonAsync("/api/v1/tenant/policy", Policy(true), Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await owner.DeleteAsync($"/api/v1/sso-connections/{id}")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
     }
+
+    [Fact]
+    public async Task A_provider_on_a_private_network_is_not_called_and_the_start_says_why()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var connection = new { code = "intranet", displayName = "Intranet SSO", authority = "https://10.20.30.40", clientId = "quicker", clientSecret = "s3cret", scopes = "openid email", emailDomains = new[] { "example.test" }, jitProvisioning = false, isActive = true };
+        (await owner.PostAsJsonAsync("/api/v1/sso-connections", connection, Json)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        var start = await Api.Client.GetAsync($"/api/v1/auth/sso/{ws.Slug}/intranet/start");
+        start.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await start.ErrorCodeAsync()).ShouldBe("sso.provider_unreachable");
+        (await start.Content.ReadAsStringAsync()).ShouldContain("not on the public internet (10.20.30.40)");
+    }
 }

@@ -14,6 +14,7 @@ using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Persistence;
 using Quicker.Tenancy.Contracts;
+using Quicker.Web;
 
 namespace Quicker.Identity.Application;
 
@@ -138,7 +139,13 @@ public sealed class SsoService(
             return Error.NotFound("sso_connection", connectionCode);
         }
 
-        var configuration = await DiscoverAsync(connection, cancellationToken);
+        var discovered = await DiscoverAsync(connection, cancellationToken);
+        if (discovered.IsFailure)
+        {
+            return discovered.Error!;
+        }
+
+        var configuration = discovered.Value;
         var state = Tokens.NewUrlSafe(24);
         var nonce = Tokens.NewUrlSafe(24);
         var verifier = Tokens.NewUrlSafe(48);
@@ -190,7 +197,13 @@ public sealed class SsoService(
 
         var connection = await db.SsoConnections.SingleAsync(c => c.Id == connectionId, cancellationToken);
         var tenant = (await tenants.FindByIdAsync(new TenantId(transaction.TenantId.Value), cancellationToken))!;
-        var configuration = await DiscoverAsync(connection, cancellationToken);
+        var discovered = await DiscoverAsync(connection, cancellationToken);
+        if (discovered.IsFailure)
+        {
+            return discovered.Error!;
+        }
+
+        var configuration = discovered.Value;
 
         // Exchange the code.
         var http = httpClientFactory.CreateClient("oidc");
@@ -207,7 +220,17 @@ public sealed class SsoService(
             form["client_secret"] = Encoding.UTF8.GetString(protector.Unprotect(connection.ClientSecretEnc));
         }
 
-        using var tokenResponse = await http.PostAsync(new Uri(configuration.TokenEndpoint), new FormUrlEncodedContent(form), cancellationToken);
+        HttpResponseMessage tokenResponse;
+        try
+        {
+            tokenResponse = await http.PostAsync(new Uri(configuration.TokenEndpoint), new FormUrlEncodedContent(form), cancellationToken);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ProviderUnreachable(connection, ex);
+        }
+
+        using var tokenResponseScope = tokenResponse;
         if (!tokenResponse.IsSuccessStatusCode)
         {
             return Error.Forbidden("sso.token_exchange_failed", "The identity provider rejected the sign-in.");
@@ -345,13 +368,43 @@ public sealed class SsoService(
 
     private string RedirectUri => $"{options.ApiOrigin}/api/v1/auth/sso/callback";
 
-    private async Task<OpenIdConnectConfiguration> DiscoverAsync(SsoConnection connection, CancellationToken cancellationToken)
+    private async Task<Result<OpenIdConnectConfiguration>> DiscoverAsync(SsoConnection connection, CancellationToken cancellationToken)
     {
         var manager = new ConfigurationManager<OpenIdConnectConfiguration>(
             $"{connection.Authority}/.well-known/openid-configuration",
             new OpenIdConnectConfigurationRetriever(),
             new HttpDocumentRetriever(httpClientFactory.CreateClient("oidc")) { RequireHttps = !new Uri(connection.Authority).IsLoopback });
-        return await manager.GetConfigurationAsync(cancellationToken);
+        try
+        {
+            return await manager.GetConfigurationAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or HttpRequestException)
+        {
+            return ProviderUnreachable(connection, ex);
+        }
+    }
+
+    // An unreachable provider, or one on a network the server may not call (see PublicNetworkPolicy), is the
+    // connection's fault, not a server error: the administrator fixes the issuer URL.
+    private static Error ProviderUnreachable(SsoConnection connection, Exception ex)
+    {
+        var refused = FindRefusal(ex);
+        return Error.Validation("sso.provider_unreachable", refused is not null
+            ? $"The identity provider for '{connection.Code}' is not on the public internet ({refused.Host}); ask the operator to allow its network."
+            : $"The identity provider for '{connection.Code}' could not be reached.").WithWhy(("authority", connection.Authority));
+    }
+
+    private static NonPublicDestinationException? FindRefusal(Exception? ex)
+    {
+        for (; ex is not null; ex = ex.InnerException)
+        {
+            if (ex is NonPublicDestinationException refused)
+            {
+                return refused;
+            }
+        }
+
+        return null;
     }
 
     private static string SafeReturnTo(string? returnTo) =>

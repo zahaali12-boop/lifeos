@@ -42,6 +42,7 @@ public sealed class ApiFixture : IAsyncDisposable
         fixture._factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Quicker:Api:RateLimit:Enabled", "false"); // budgets are exercised by their own tests; suites hammer the API from one address
+            builder.UseSetting("Quicker:Outbound:AllowedPrivateNetworks", "127.0.0.0/8"); // local webhook receivers and identity providers run on loopback
             configure?.Invoke(builder);
             builder.UseEnvironment("Development");
             builder.UseSetting("Quicker:Db:AppConnection", fixture.Db.AppConnectionString);

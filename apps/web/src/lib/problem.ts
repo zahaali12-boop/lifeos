@@ -23,7 +23,7 @@ export function toFormProblem(error: unknown, fallback: string): FormProblem {
     fields[`customFields.${whyField}`] = message;
   } else if (problem.code) {
     const [, rest] = problem.code.split(".", 2);
-    const match = rest ? /^([a-z0-9]+(?:_[a-z0-9]+)*?)_(taken|invalid|required|unknown|locked|missing|too_long|too_short)$/.exec(rest) : null;
+    const match = rest ? /^([a-z0-9]+(?:_[a-z0-9]+)*?)_(taken|invalid|required|unknown|locked|missing|blocked|too_long|too_short)$/.exec(rest) : null;
     if (match?.[1]) {
       fields[snakeToCamel(match[1])] = message;
     }

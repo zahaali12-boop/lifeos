@@ -12,6 +12,7 @@ using Quicker.Kernel.Time;
 using Quicker.Messaging.Jobs;
 using Quicker.Messaging.Outbox;
 using Quicker.Persistence;
+using Quicker.Web;
 
 namespace Quicker.Integration.Application;
 
@@ -127,6 +128,7 @@ public sealed class WebhookDeliveryJob(IUnitOfWorkFactory unitOfWorkFactory, ISe
         int? status = null;
         string? excerpt = null;
         string? error = null;
+        var retry = true;
         try
         {
             using var response = await httpClientFactory.CreateClient(HttpClientName).SendAsync(request, cancellationToken);
@@ -138,9 +140,21 @@ public sealed class WebhookDeliveryJob(IUnitOfWorkFactory unitOfWorkFactory, ISe
                 error = $"HTTP {status}";
             }
         }
+        catch (HttpRequestException ex) when (ex.InnerException is NonPublicDestinationException refused)
+        {
+            // Not a passing fault: retrying cannot change where the receiver's name points today.
+            error = refused.Message;
+            retry = false;
+        }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             error = $"{ex.GetType().Name}: {ex.Message}";
+        }
+
+        if (!retry)
+        {
+            await RecordAsync(delivery.Id, context.Attempt, status: "failed", responseStatus: null, excerpt: null, error, nextAttempt: null, cancellationToken);
+            return new { delivered = false, reason = "non_public_destination" };
         }
 
         var exhausted = context.Attempt >= WebhookService.DeliveryMaxAttempts;

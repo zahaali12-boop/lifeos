@@ -22,7 +22,7 @@ public sealed record WebhookCreated(WebhookSummary Subscription, string Secret);
 public sealed record DeliverySummary(Guid Id, Guid SubscriptionId, Guid EventId, string EventType, JsonElement Payload, int Attempt, string Status, int? ResponseStatus, string? ResponseExcerpt, string? LastError, Guid? JobId, DateTimeOffset CreatedAt, DateTimeOffset? AttemptedAt, DateTimeOffset? NextAttemptAt, DateTimeOffset? DeliveredAt);
 
 /// <summary>Webhook subscriptions and their delivery log (ADR-0012).</summary>
-public sealed class WebhookService(IntegrationDbContext db, IUnitOfWorkAccessor unitOfWork, ISecretProtector secrets, IJobQueue jobs, IClock clock)
+public sealed class WebhookService(IntegrationDbContext db, IUnitOfWorkAccessor unitOfWork, ISecretProtector secrets, IJobQueue jobs, IClock clock, PublicNetworkPolicy networks)
 {
     public const string DeliveryJobType = "integration.webhook.deliver";
 
@@ -114,6 +114,14 @@ public sealed class WebhookService(IntegrationDbContext db, IUnitOfWorkAccessor 
         if (!Uri.TryCreate(request.Url?.Trim(), UriKind.Absolute, out var url) || url.Scheme is not ("https" or "http") || string.IsNullOrEmpty(url.Host))
         {
             return Error.Validation("webhook.url_invalid", "The URL must be absolute with an http or https scheme.");
+        }
+
+        // Delivery refuses non-public destinations whatever the URL says; saying so now spares a day of failed retries.
+        var refused = await networks.RefusedAddressesAsync(url.Host, cancellationToken);
+        if (refused.Count > 0)
+        {
+            return Error.Validation("webhook.url_blocked", $"Webhooks are delivered only to public internet addresses; {url.Host} is {string.Join(", ", refused)}.")
+                .WithWhy(("host", url.Host), ("addresses", refused.Select(static a => a.ToString()).ToList()));
         }
 
         var types = (request.EventTypes ?? ["*"]).Select(static t => t.Trim().ToLowerInvariant()).Where(static t => t.Length > 0).Distinct(StringComparer.Ordinal).ToArray();
