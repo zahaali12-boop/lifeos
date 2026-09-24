@@ -61,6 +61,53 @@ public sealed class PurchasingTests(ApiHostFixture host)
         new { companyId = s.CompanyId, partnerId, currency, warehouseId = s.WarehouseId, agreementId, lines };
 
     [Fact]
+    public async Task The_purchase_analysis_totals_ordered_received_and_invoiced_in_the_company_currency_by_supplier_item_and_month()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await owner.PostAsync("/api/v1/organization/rates", new { rateType = "spot", fromCurrency = "USD", toCurrency = "IQD", validFrom = "2026-01-01", rate = 1300m });
+        var gamma = await SupplierAsync(owner, s.CompanyId, "SUP-G", "Gamma Imports", null, "USD");
+
+        async Task<JsonElement> ApprovedAsync(Guid partnerId, string date, params object[] lines)
+        {
+            var order = await owner.PostAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId, warehouseId = s.WarehouseId, orderDate = date, lines });
+            return await owner.PostAsync($"/api/v1/purchasing/orders/{order.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+        }
+
+        // August: ten tea from Alpha. September: five tea (received) and four coffee at 10 % off from Alpha, two coffee
+        // from Gamma in dollars; a cancelled and a draft order from Beta that do not count.
+        await ApprovedAsync(s.SupplierA, "2026-08-10", new { itemId = s.Tea, quantity = 10m, uom = "PCS", unitPrice = 100m });
+        var september = await ApprovedAsync(s.SupplierA, "2026-09-05", new { itemId = s.Tea, quantity = 5m, uom = "PCS", unitPrice = 100m }, new { itemId = s.Coffee, quantity = 4m, uom = "PCS", unitPrice = 50m, discountPct = 10m });
+        var teaLine = september.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("itemId").GetGuid() == s.Tea).GetProperty("id").GetGuid();
+        var receipt = await owner.PostAsync("/api/v1/purchasing/receipts", new { orderId = september.GetProperty("id").GetGuid(), postingDate = "2026-09-06", lines = new[] { new { orderLineId = teaLine, quantity = 5m } } });
+        await owner.PostAsync($"/api/v1/purchasing/receipts/{receipt.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        await ApprovedAsync(gamma, "2026-09-09", new { itemId = s.Coffee, quantity = 2m, uom = "PCS", unitPrice = 10m });
+        var cancelled = await ApprovedAsync(s.SupplierB, "2026-09-07", new { itemId = s.Coffee, quantity = 2m, uom = "PCS", unitPrice = 40m });
+        await owner.PostAsync($"/api/v1/purchasing/orders/{cancelled.GetProperty("id").GetGuid()}/cancel", new { }, HttpStatusCode.OK);
+        await owner.PostAsync("/api/v1/purchasing/orders", Order(s, s.SupplierB, [Line(s.Tea, 3m, 90m)]));
+
+        var period = $"companyId={s.CompanyId}&from=2026-08-01&to=2026-09-30";
+        var bySupplier = await owner.GetOkAsync($"/api/v1/purchasing/reports/analysis?{period}&groupBy=supplier");
+        (bySupplier.GetProperty("currency").GetString(), bySupplier.GetProperty("ordered").GetDecimal(), bySupplier.GetProperty("received").GetDecimal(), bySupplier.GetProperty("orders").GetInt32()).ShouldBe(("IQD", 27680m, 500m, 3));
+        var suppliers = bySupplier.GetProperty("rows").EnumerateArray().ToList();
+        suppliers.Select(static r => r.GetProperty("code").GetString()).ShouldBe(["SUP-G", "SUP-A"], "largest first: 2 × 10 USD at 1 300 is 26 000");
+        (suppliers[1].GetProperty("ordered").GetDecimal(), suppliers[1].GetProperty("received").GetDecimal(), suppliers[1].GetProperty("invoiced").GetDecimal(), suppliers[1].GetProperty("orders").GetInt32()).ShouldBe((1680m, 500m, 0m, 2));
+
+        var byItem = (await owner.GetOkAsync($"/api/v1/purchasing/reports/analysis?{period}&groupBy=item")).GetProperty("rows").EnumerateArray().ToList();
+        var coffee = byItem.Single(r => r.GetProperty("code").GetString() == "COFFEE");
+        (coffee.GetProperty("quantity").GetDecimal(), coffee.GetProperty("uomCode").GetString(), coffee.GetProperty("ordered").GetDecimal()).ShouldBe((6m, "PCS", 26180m));
+        var tea = byItem.Single(r => r.GetProperty("code").GetString() == "TEA");
+        (tea.GetProperty("quantity").GetDecimal(), tea.GetProperty("ordered").GetDecimal(), tea.GetProperty("received").GetDecimal()).ShouldBe((15m, 1500m, 500m));
+
+        var byMonth = (await owner.GetOkAsync($"/api/v1/purchasing/reports/analysis?{period}&groupBy=month")).GetProperty("rows").EnumerateArray().ToList();
+        byMonth.Select(static r => (r.GetProperty("key").GetString(), r.GetProperty("ordered").GetDecimal(), r.GetProperty("orders").GetInt32())).ShouldBe([("2026-08", 1000m, 1), ("2026-09", 26680m, 2)]);
+
+        (await owner.GetOkAsync($"/api/v1/purchasing/reports/analysis?{period}&groupBy=month&partnerId={gamma}")).GetProperty("ordered").GetDecimal().ShouldBe(26000m);
+        (await (await owner.GetAsync($"/api/v1/purchasing/reports/analysis?{period}&groupBy=day")).ErrorCodeAsync()).ShouldBe("report.group_by_invalid");
+        (await (await owner.GetAsync($"/api/v1/purchasing/reports/analysis?companyId={s.CompanyId}&from=2026-09-30&to=2026-08-01")).ErrorCodeAsync()).ShouldBe("report.period_invalid");
+    }
+
+    [Fact]
     public async Task Open_order_lines_show_what_is_still_to_arrive_at_the_net_price_and_flag_the_late_ones()
     {
         var s = await SetUpAsync();

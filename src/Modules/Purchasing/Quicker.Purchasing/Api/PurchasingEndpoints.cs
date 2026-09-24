@@ -98,6 +98,10 @@ public static class PurchasingEndpoints
             ApiProblems.Ok(await service.OpenOrderLinesAsync(companyId, partnerId, warehouseId, itemId, lateOnly ?? false, asOf, ct)))
             .RequirePermission(PurchasingPermissions.OrderRead)
             .WithSummary("Order lines with goods still to arrive, valued at the net order price, late ones counted");
+        purchasing.MapGet("/reports/analysis", async (Guid companyId, DateOnly from, DateOnly to, string? groupBy, Guid? partnerId, Guid? itemId, PurchasingReportService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.AnalysisAsync(companyId, from, to, groupBy, partnerId, itemId, ct)))
+            .RequirePermission(PurchasingPermissions.OrderRead)
+            .WithSummary("What was bought over a period by supplier, item or month: ordered, received and invoiced in the company's currency");
         orders.MapPost("/from-suggestions", async (OrderSuggestionsRequest request, ReplenishmentOrderService service, CancellationToken ct) => ApiProblems.Ok(await service.OrderAsync(request, ct)))
             .RequirePermission(PurchasingPermissions.OrderManage)
             .WithSummary("Draft orders from replenishment suggestions: one per supplier and warehouse, at the supplier's last price for each item");

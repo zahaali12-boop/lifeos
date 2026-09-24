@@ -248,6 +248,13 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await expect(page.getByTestId("open-lines-summary")).toContainText("6,000");
   await expectAccessible(page);
 
+  // The purchase analysis by supplier: Alpha's order at 12 × 1 500, eight of the twelve received.
+  await nav(page, "Purchase analysis");
+  await page.getByTestId("analysis-by-supplier").click();
+  await expect(page.getByTestId("analysis-row").filter({ hasText: "ALPHA" })).toContainText("18,000");
+  await expect(page.getByTestId("analysis-row").filter({ hasText: "ALPHA" })).toContainText("12,000");
+  await expectAccessible(page);
+
   // The order's smart buttons: everything that followed it, one click away. The one receipt opens directly; nothing
   // is left to invoice on the order once its receipt is billed.
   await nav(page, "Purchase orders");

@@ -41,6 +41,7 @@
     "landedCosts": "Landed costs",
     "returns": "Supplier returns",
     "openOrderLines": "Open order lines",
+    "purchaseAnalysis": "Purchase analysis",
     "supplierIntelligence": "Supplier intelligence",
     "payables": "Payables",
     "paymentProposals": "Payment proposals",
@@ -2418,6 +2419,19 @@
     }
   },
   "purchasing": {
+    "analysis": {
+      "description": "What was bought over a period: approved orders at the net order price in the company's currency, with how much has been received and invoiced.",
+      "from": "From",
+      "to": "To",
+      "by": { "month": "Month", "supplier": "Supplier", "item": "Item" },
+      "ordered": "Ordered",
+      "received": "Received",
+      "invoiced": "Invoiced",
+      "orders": "Orders",
+      "share": "Share",
+      "empty": "Nothing was ordered in this period.",
+      "legend": "Each bar is the row's ordered value against the largest row; the darker part is what has been received. Cancelled quantities and orders not yet approved are left out."
+    },
     "openLines": {
       "description": "What is still to arrive from suppliers: approved, sent and partly received order lines with goods open, valued at the net order price; late lines are flagged.",
       "late": "Late",

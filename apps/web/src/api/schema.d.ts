@@ -6147,6 +6147,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/reports/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What was bought over a period by supplier, item or month: ordered, received and invoiced in the company's currency */
+        get: operations["getPurchasingReportsAnalysis"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/requisitions": {
         parameters: {
             query?: never;
@@ -10890,6 +10907,44 @@ export interface components {
             approvedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        PurchaseAnalysis: {
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            groupBy: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            rows: components["schemas"]["PurchaseAnalysisRow"][];
+            /** Format: double */
+            ordered: number | string;
+            /** Format: double */
+            received: number | string;
+            /** Format: double */
+            invoiced: number | string;
+            /** Format: int32 */
+            orders: number | string;
+        };
+        /** @description One group of a purchase analysis: a supplier, an item or a month, with its orders and values in the company's currency. */
+        PurchaseAnalysisRow: {
+            key: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            orders: number | string;
+            /** Format: double */
+            quantity: null | number | string;
+            uomCode: null | string;
+            /** Format: double */
+            ordered: number | string;
+            /** Format: double */
+            received: number | string;
+            /** Format: double */
+            invoiced: number | string;
         };
         PurchaseOrderLineSummary: {
             /** Format: uuid */
@@ -26227,6 +26282,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpenOrderLinesReport"];
+                };
+            };
+        };
+    };
+    getPurchasingReportsAnalysis: {
+        parameters: {
+            query: {
+                companyId: string;
+                from: string;
+                to: string;
+                groupBy?: string;
+                partnerId?: string;
+                itemId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseAnalysis"];
                 };
             };
         };
