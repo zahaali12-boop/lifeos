@@ -7,6 +7,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
+import { compare, subtract } from "../../lib/decimal";
 import { followOn, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
@@ -294,7 +295,7 @@ export function PurchaseOrdersPage() {
               ) : null}
               <DialogFooter>
                 {receivable(o.status) && can("purchasing.receipt.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/receipts", search: followOn("purchase_order", o.id) }); }} data-testid="order-receive"><PackageCheck aria-hidden="true" />{t("documentFlow.receive")}</Button> : null}
-                {invoicable(o.status) && can("purchasing.invoice.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_order", o.id) }); }} data-testid="order-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
+                {invoicable(o.status) && o.lines.some((l) => compare(l.qtyInvoiced, subtract(l.quantity, l.qtyCancelled)) < 0) && can("purchasing.invoice.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_order", o.id) }); }} data-testid="order-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
                 {editable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o); }} data-testid="edit-order">{t("common.edit")}</Button> : null}
                 {editable(o.status) ? <Button onClick={() => { act.mutate({ id: o.id, action: "submit" }); }} loading={act.isPending} data-testid="submit-order">{t("purchasing.submit")}</Button> : null}
                 {changeable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o, true); }} data-testid="change-order">{t("purchasing.changeOrder")}</Button> : null}
