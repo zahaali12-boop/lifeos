@@ -287,7 +287,8 @@ public sealed class WorkflowTests(ApiHostFixture host)
                 Step("Approver", new { membershipIds = new[] { approver.MembershipId } }, timeoutHours: 4, escalation: new { membershipIds = new[] { escalationTarget.MembershipId } }),
                 Step("Owner", new { membershipIds = new[] { ws.MembershipId } }, allowDelegate: false))));
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // The server runs on the fixture's clock, not the wall clock: delegations are valid by its date.
+        var today = DateOnly.FromDateTime(Api.Clock.UtcNow.UtcDateTime);
         (await approver.Client.PostErrorAsync("/api/v1/workflow/delegations", new { toMembershipId = approver.MembershipId, validFrom = today, validTo = today }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("workflow.delegate_required");
         (await standIn.Client.PostErrorAsync("/api/v1/workflow/delegations", new { fromMembershipId = approver.MembershipId, toMembershipId = standIn.MembershipId, validFrom = today, validTo = today }, HttpStatusCode.Forbidden)).Code.ShouldBe("workflow.delegation_forbidden");
         var delegation = await approver.Client.PostAsync("/api/v1/workflow/delegations", new { toMembershipId = standIn.MembershipId, validFrom = today.AddDays(-1), validTo = today.AddDays(7), reason = "Leave" });

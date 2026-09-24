@@ -772,8 +772,9 @@ public sealed class SerialService(InventoryDbContext db, IUnitOfWorkAccessor uni
 
         var uow = unitOfWork.Current;
 
-        // In the order the events were written: one posting can write several in the same instant (a transfer ships
-        // out of one warehouse into transit), and ids made in the same millisecond are not ordered.
+        // In time order, and within one stock posting (which writes its events in the same instant, in no reliable
+        // insert order) what left a warehouse before what arrived: a transfer ships out of one warehouse into transit.
+        // Separate postings and status changes keep the order they were written in (seq).
         var rows = await uow.Connection.QueryAsync<HistoryRow>(new CommandDefinition("""
             SELECT ev.id, ev.at, ev.posting_date, ev.kind, ev.entry_type, ev.sle_id, ev.from_status, ev.to_status, ev.warehouse_id, w.code AS warehouse_code, ev.partner_id, ev.source_document_type, ev.source_document_id, ev.note, ev.actor_user_id,
                    e.quantity, (SELECT sum(v.cost_amount_actual + v.cost_amount_expected) FROM app.inv_stock_value_entries v WHERE v.tenant_id = ev.tenant_id AND v.sle_id = ev.sle_id AND v.account_role IN ('Inventory', 'InventoryInTransit')) AS cost_amount
@@ -781,7 +782,10 @@ public sealed class SerialService(InventoryDbContext db, IUnitOfWorkAccessor uni
             LEFT JOIN app.inv_warehouses w ON w.tenant_id = ev.tenant_id AND w.id = ev.warehouse_id
             LEFT JOIN app.inv_stock_ledger_entries e ON e.tenant_id = ev.tenant_id AND e.id = ev.sle_id
             WHERE ev.serial_id = @serial
-            ORDER BY ev.seq
+            ORDER BY ev.at,
+                     CASE WHEN e.posting_id IS NULL THEN ev.seq ELSE min(ev.seq) OVER (PARTITION BY e.posting_id) END,
+                     CASE WHEN e.quantity < 0 THEN 0 ELSE 1 END,
+                     ev.seq
             """, new { serial = serialId }, uow.Transaction, cancellationToken: cancellationToken));
         var events = rows.Select(static r => new SerialHistoryEvent(r.Id, r.At, r.PostingDate, r.Kind, r.EntryType, r.SleId, r.FromStatus, r.ToStatus, r.WarehouseId, r.WarehouseCode, r.PartnerId, r.SourceDocumentType, r.SourceDocumentId,
             r.Quantity is { } q ? ItemUomMath.Normalize(q) : null, r.CostAmount, r.Note, r.ActorUserId)).ToList();
