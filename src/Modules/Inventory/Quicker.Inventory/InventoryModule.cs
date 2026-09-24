@@ -38,6 +38,7 @@ public static class InventoryModule
         services.AddScoped<IStockReservations>(static sp => sp.GetRequiredService<ReservationService>());
         services.AddScoped<TransferService>();
         services.AddScoped<StockInquiryService>();
+        services.AddScoped<SlowMovingStockService>();
         services.AddSingleton(static sp => sp.GetRequiredService<IConfiguration>().GetSection(InventoryOptions.SectionName).Get<InventoryOptions>() ?? new InventoryOptions());
         services.AddScoped<CostingService>();
         services.AddScoped<IInventoryCosting>(static sp => sp.GetRequiredService<CostingService>());

@@ -187,6 +187,17 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await expect(page.getByTestId("valuation-totals")).toContainText("24,500");
   await expectAccessible(page);
 
+  // Slow-moving stock: nothing has been idle 90 days today; seen from a year and a half ahead, the water that was never
+  // sold is idle in both warehouses, worth the same 24,500.
+  await nav(page, "Slow-moving stock");
+  await expect(page.getByText("Nothing idle that long").first()).toBeVisible();
+  const ahead = new Date(Date.now() + 540 * 86_400_000).toISOString().slice(0, 10);
+  await page.getByTestId("slow-as-of").fill(ahead);
+  await expect(page.getByRole("grid").getByRole("row").filter({ hasText: "WATER" })).toHaveCount(2);
+  await expect(page.getByTestId("slow-total")).toContainText("24,500");
+  await expect(page.getByTestId("idle-days").first()).toContainText("days");
+  await expectAccessible(page);
+
   // Why a movement cost what it did: the opening adjustment of 100 at 250 explains itself as 25,000 of direct cost.
   await nav(page, "Stock");
   await page.getByTestId("tab-ledger").click();

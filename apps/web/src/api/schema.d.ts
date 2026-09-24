@@ -4074,6 +4074,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/stock/slow-moving": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Slow-moving stock: items on hand not sold or consumed for at least idleDays (default 90) at a date, the longest idle first, valued for those who may see costs */
+        get: operations["getInventoryStockSlowMoving"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inventory/stock/ledger": {
         parameters: {
             query?: never;
@@ -13949,6 +13966,47 @@ export interface components {
             /** @default en */
             language: string;
         };
+        /** @description Stock idle for at least int SlowMovingReport.MinIdleDays days at DateOnly SlowMovingReport.AsOf, the longest idle first; the value total only when costs may be seen. */
+        SlowMovingReport: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: int32 */
+            minIdleDays: number | string;
+            rows: components["schemas"]["SlowMovingRow"][];
+            /** Format: double */
+            totalValue: null | number | string;
+        };
+        /**
+         * @description One item's stock in one warehouse that has not been used for a while: what is on hand at the date, when it first and
+         *     last came in, when it was last sold or consumed, how many days it has been idle (since the last use, or since it
+         *     first came in when it never was) and, for those who may see costs, its value.
+         */
+        SlowMovingRow: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            baseUom: string;
+            /** Format: double */
+            onHand: number | string;
+            /** Format: date */
+            firstReceived: null | string;
+            /** Format: date */
+            lastReceived: null | string;
+            /** Format: date */
+            lastUsed: null | string;
+            /** Format: int32 */
+            idleDays: number | string;
+            /** Format: double */
+            value: null | number | string;
+        };
         SodConflict: {
             /** Format: uuid */
             ruleId: string;
@@ -22546,6 +22604,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StockAvailability"];
+                };
+            };
+        };
+    };
+    getInventoryStockSlowMoving: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf?: string;
+                idleDays?: number | string;
+                warehouseId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlowMovingReport"];
                 };
             };
         };

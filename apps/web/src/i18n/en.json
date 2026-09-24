@@ -26,6 +26,7 @@
     "company": "Companies"
   },
   "nav": {
+    "slowMoving": "Slow-moving stock",
     "groups": {
       "organization": "Organization",
       "accounting": "Accounting",
@@ -2073,6 +2074,22 @@
       "postHint": "Posting moves the difference between the inventory account and the write-down account, and re-applies any movements after the date.",
       "emptyTitle": "No revaluations",
       "emptyDescription": "Write stock down when it can no longer be sold at cost, or revalue it by hand."
+    },
+    "slowMoving": {
+      "description": "Stock on hand that has not been sold or consumed for a while, the longest idle first. Moves between warehouses, adjustments and counts do not count as use.",
+      "onHand": "On hand",
+      "firstReceived": "First received",
+      "lastReceived": "Last received",
+      "lastUsed": "Last sold or used",
+      "never": "Never",
+      "idle": "Idle",
+      "idleDays": "{count, plural, one {# day} other {# days}}",
+      "value": "Value",
+      "idleAtLeast": "Idle for at least",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "summary": "{lines, plural, =0 {Nothing idle that long} one {# line idle} other {# lines idle}}",
+      "emptyTitle": "Nothing idle that long",
+      "emptyDescription": "Every item with stock was sold or used within the period chosen."
     },
     "valuation": {
       "description": "What the stock is worth at any date by item and warehouse, equal to the inventory accounts; the cost runs the engine made.",

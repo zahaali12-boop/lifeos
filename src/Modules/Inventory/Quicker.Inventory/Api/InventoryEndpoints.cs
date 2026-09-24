@@ -52,6 +52,10 @@ public static class InventoryEndpoints
             TypedResults.Ok(await service.AvailabilityAsync(companyId, itemId, warehouseId, variantId, ct)))
             .RequirePermission(InventoryPermissions.StockRead)
             .WithSummary("Available to promise: on hand minus reservations and quality holds, with the quantity in transit to the warehouse");
+        stock.MapGet("/slow-moving", async (Guid companyId, DateOnly? asOf, int? idleDays, Guid? warehouseId, SlowMovingStockService service, IClock clock, CancellationToken ct) =>
+            ApiProblems.Ok(await service.ReportAsync(companyId, asOf ?? DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), idleDays ?? 90, warehouseId, ct)))
+            .RequirePermission(InventoryPermissions.StockRead)
+            .WithSummary("Slow-moving stock: items on hand not sold or consumed for at least idleDays (default 90) at a date, the longest idle first, valued for those who may see costs");
         stock.MapGet("/ledger", async (Guid companyId, Guid? itemId, Guid? warehouseId, DateOnly? from, DateOnly? to, string? sourceDocumentType, Guid? sourceDocumentId, int? limit, string? cursor, StockInquiryService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.LedgerAsync(companyId, itemId, warehouseId, from, to, sourceDocumentType, sourceDocumentId, new PageRequest(limit, cursor), ct)))
             .RequirePermission(InventoryPermissions.StockRead)

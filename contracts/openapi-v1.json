@@ -11473,6 +11473,66 @@
         }
       }
     },
+    "/api/v1/inventory/stock/slow-moving": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Slow-moving stock: items on hand not sold or consumed for at least idleDays (default 90) at a date, the longest idle first, valued for those who may see costs",
+        "operationId": "getInventoryStockSlowMoving",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "idleDays",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlowMovingReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/inventory/stock/ledger": {
       "get": {
         "tags": [
@@ -45644,6 +45704,139 @@
             "default": "en"
           }
         }
+      },
+      "SlowMovingReport": {
+        "required": [
+          "companyId",
+          "asOf",
+          "minIdleDays",
+          "rows",
+          "totalValue"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "minIdleDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlowMovingRow"
+            }
+          },
+          "totalValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Stock idle for at least int SlowMovingReport.MinIdleDays days at DateOnly SlowMovingReport.AsOf, the longest idle first; the value total only when costs may be seen."
+      },
+      "SlowMovingRow": {
+        "required": [
+          "itemId",
+          "itemCode",
+          "itemName",
+          "warehouseId",
+          "warehouseCode",
+          "baseUom",
+          "onHand",
+          "firstReceived",
+          "lastReceived",
+          "lastUsed",
+          "idleDays",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "baseUom": {
+            "type": "string"
+          },
+          "onHand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "firstReceived": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "lastReceived": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "lastUsed": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "idleDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One item's stock in one warehouse that has not been used for a while: what is on hand at the date, when it first and\nlast came in, when it was last sold or consumed, how many days it has been idle (since the last use, or since it\nfirst came in when it never was) and, for those who may see costs, its value."
       },
       "SodConflict": {
         "required": [

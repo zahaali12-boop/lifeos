@@ -1,4 +1,4 @@
-import { Anchor, ArrowRightLeft, ChartColumn, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Inbox, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Route, Ruler, Scale, ScanLine, Settings, Settings2, ShieldCheck, Shapes, ShoppingCart, SlidersHorizontal, TrendingDown, Truck, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, ArrowRightLeft, ChartColumn, Banknote, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, ReceiptText, Repeat, Route, Ruler, Scale, ScanLine, Settings, Settings2, ShieldCheck, Shapes, ShoppingCart, SlidersHorizontal, TrendingDown, Truck, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The sections of the sidebar, in order; each is labelled `nav.groups.<id>` and can be collapsed. */
 export const navigationGroups = ["organization", "accounting", "inventory", "purchasing", "finance", "administration"] as const;
@@ -45,6 +45,7 @@ export const navigation: NavigationItem[] = [
   { to: "/inventory/tracking", label: "nav.tracking", icon: Barcode, shortcut: "g z", permission: "inventory.stock.read", group: "inventory" },
   { to: "/inventory/counts", label: "nav.counts", icon: ClipboardCheck, shortcut: "g q", permission: "inventory.count.read", group: "inventory" },
   { to: "/inventory/replenishment", label: "nav.replenishment", icon: ShoppingCart, shortcut: "g g", permission: "inventory.replenishment.read", group: "inventory" },
+  { to: "/inventory/slow-moving", label: "nav.slowMoving", icon: Hourglass, shortcut: "g )", permission: "inventory.stock.read", group: "inventory" },
   { to: "/inventory/valuation", label: "nav.valuation", icon: Calculator, shortcut: "g 9", permission: "inventory.costing.read", group: "inventory" },
   { to: "/inventory/revaluations", label: "nav.revaluations", icon: TrendingDown, shortcut: "g `", permission: "inventory.costing.read", group: "inventory" },
   { to: "/m", label: "nav.mobile", icon: ScanLine, shortcut: "g s", permission: "inventory.count.enter", group: "inventory" },

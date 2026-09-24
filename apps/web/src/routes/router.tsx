@@ -37,6 +37,7 @@ import { RevaluationsPage } from "./inventory/RevaluationsPage";
 import { StockPage } from "./inventory/StockPage";
 import { TrackingPage } from "./inventory/TrackingPage";
 import { TransfersPage } from "./inventory/TransfersPage";
+import { SlowMovingPage } from "./inventory/SlowMovingPage";
 import { ValuationPage } from "./inventory/ValuationPage";
 import { WarehousesPage } from "./inventory/WarehousesPage";
 import { AgreementsPage } from "./purchasing/AgreementsPage";
@@ -120,6 +121,7 @@ const trackingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/in
 const countsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/counts", component: CountsPage, validateSearch: searchRecord });
 const replenishmentRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/replenishment", component: ReplenishmentPage, validateSearch: searchRecord });
 const valuationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/valuation", component: ValuationPage });
+const slowMovingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/slow-moving", component: SlowMovingPage });
 const revaluationsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/revaluations", component: RevaluationsPage, validateSearch: searchRecord });
 const suppliersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/suppliers", component: SuppliersPage, validateSearch: searchRecord });
 const purchasingSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/settings", component: PurchasingSettingsPage });
@@ -164,7 +166,7 @@ const routeTree = rootRoute.addChildren([
   shellRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
-    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, revaluationsRoute,
+    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),
