@@ -15,6 +15,8 @@ public static class NumberingModule
         PermissionCatalog.Register(NumberingPermissions.All);
         services.AddModuleDbContext<NumberingDbContext>();
         services.AddScoped<SeriesService>();
+        services.AddScoped<DocumentSearchService>();
+        services.AddScoped<IIssuedNumbers, IssuedNumbers>();
         services.AddScoped<NumberAllocator>();
         services.AddScoped<INumberAllocator>(static sp => sp.GetRequiredService<NumberAllocator>());
         return services;

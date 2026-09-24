@@ -104,6 +104,18 @@ public sealed class ReceiptTests(ApiHostFixture host)
         teaReceipt.GetProperty("expectedCostAmount").GetDecimal().ShouldBe(14040m);
         teaReceipt.GetProperty("sleId").ValueKind.ShouldBe(JsonValueKind.String);
         (await GrniAsync(s, receiptId)).ShouldBe(20540m);
+
+        // The entry, posted by the costing engine, names the receipt by the number it was issued, in the entry, the
+        // browser (found by that number too) and the ledger.
+        var receiptNumber = posted.GetProperty("number").GetString()!;
+        var entryId = posted.GetProperty("journalEntryId").GetGuid();
+        var entry = await owner.GetOkAsync($"/api/v1/accounting/journal-entries/{entryId}");
+        entry.GetProperty("sourceDocumentNumber").GetString().ShouldBe(receiptNumber);
+        var byNumber = (await owner.GetOkAsync($"/api/v1/accounting/companies/{s.CompanyId}/journal-entries?number={receiptNumber}")).GetProperty("items").EnumerateArray().ToList();
+        byNumber.Select(static e => e.GetProperty("id").GetGuid()).ShouldContain(entryId);
+        byNumber.ShouldAllBe(e => e.GetProperty("sourceDocumentNumber").GetString() == receiptNumber);
+        var ledger = await owner.GetOkAsync($"/api/v1/accounting/companies/{s.CompanyId}/reports/ledger?accountCode={entry.GetProperty("lines")[0].GetProperty("accountCode").GetString()}&from={entry.GetProperty("postingDate").GetString()}");
+        ledger.GetProperty("items").EnumerateArray().First(l => l.GetProperty("entryId").GetGuid() == entryId).GetProperty("sourceDocumentNumber").GetString().ShouldBe(receiptNumber);
         (await OnHandAsync(s, s.Tea)).ShouldBe(6m);
         (await OnHandAsync(s, s.Milk)).ShouldBe(5m);
         var afterFirst = await owner.GetOkAsync($"/api/v1/purchasing/orders/{orderId}");

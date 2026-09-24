@@ -6,6 +6,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
+import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
@@ -37,7 +38,7 @@ export function PurchaseOrdersPage() {
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [form, setForm] = useState<OrderForm | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenRecord("/purchasing/orders");
   const [tab, setTab] = useState("lines");
   const [sendTo, setSendTo] = useState<{ to: string; message: string } | null>(null);
   const suppliers = useSuppliers(companyId);

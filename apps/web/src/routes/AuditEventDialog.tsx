@@ -1,9 +1,11 @@
 import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
 import type { components } from "../api/schema";
+import { recordRoute } from "../lib/documents";
 import { formatDateTime } from "../lib/format";
 import { auditActionLabel, auditActionTone, auditChanges, auditEntityLabel, auditValue } from "./auditLabels";
 
@@ -62,9 +64,10 @@ export function AuditChangesTable({ diff }: { diff: unknown }) {
 
 /**
  * One audit event in full: who did what to which record, from where (request, address, client), the fields it
- * changed, the before and after snapshots, and its place in the tamper-evident chain.
+ * changed, the before and after snapshots, and its place in the tamper-evident chain. From the explorer it also opens
+ * the record itself on its screen (documents and the masters that have one).
  */
-export function AuditEventDialog({ eventId, onClose, onShowRecord }: { eventId: string | null; onClose: () => void; onShowRecord?: (event: AuditEvent) => void }) {
+export function AuditEventDialog({ eventId, onClose, onShowRecord, openRecord = false }: { eventId: string | null; onClose: () => void; onShowRecord?: (event: AuditEvent) => void; openRecord?: boolean }) {
   const { t } = useTranslation();
   const event = useQuery({
     queryKey: ["audit", "event", eventId],
@@ -72,6 +75,7 @@ export function AuditEventDialog({ eventId, onClose, onShowRecord }: { eventId: 
     enabled: eventId !== null,
   });
   const e = event.data;
+  const route = e && openRecord && e.action !== "deleted" ? recordRoute(e.entityType, e.entityId) : null;
 
   return (
     <Dialog open={eventId !== null} onOpenChange={(open) => { if (!open) { onClose(); } }}>
@@ -126,6 +130,13 @@ export function AuditEventDialog({ eventId, onClose, onShowRecord }: { eventId: 
             </>
           ) : null}
           <DialogFooter>
+            {route ? (
+              <Button variant="secondary" asChild>
+                <Link to={route.to} search={route.search} onClick={onClose} data-testid="audit-open-record">
+                  {t("audit.detail.openRecord")}
+                </Link>
+              </Button>
+            ) : null}
             {e && onShowRecord ? (
               <Button variant="secondary" onClick={() => { onShowRecord(e); }} data-testid="audit-show-record">
                 {t("audit.detail.showRecord")}

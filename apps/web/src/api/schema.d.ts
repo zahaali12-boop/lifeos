@@ -1791,6 +1791,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/numbering/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Find documents by number across modules ("PO-2026-00027", "00027", "PO-27"): only the types the member may read, in the companies their grant covers */
+        get: operations["getNumberingDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/numbering/drafts/{documentId}": {
         parameters: {
             query?: never;
@@ -8639,6 +8656,18 @@ export interface components {
             type: string;
             /** Format: uuid */
             id: string;
+        };
+        /** @description A numbered document found by its number: its type and id (to open it), the number, its company and when it was issued. */
+        DocumentSearchHit: {
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            number: string;
+            /** Format: uuid */
+            companyId: string;
+            companyCode: null | string;
+            /** Format: date-time */
+            issuedAt: string;
         };
         DocumentTypeRule: {
             documentType: string;
@@ -17571,6 +17600,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AllocatedNumber"];
+                };
+            };
+        };
+    };
+    getNumberingDocuments: {
+        parameters: {
+            query?: {
+                q?: string;
+                limit?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentSearchHit"][];
                 };
             };
         };

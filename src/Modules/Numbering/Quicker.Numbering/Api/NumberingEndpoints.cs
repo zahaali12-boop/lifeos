@@ -49,6 +49,9 @@ public static class NumberingEndpoints
             ApiProblems.Ok(await allocator.AllocateAsync(ToRequest(request), ct)))
             .RequirePermission(NumberingPermissions.Allocate)
             .WithSummary("Allocate a number for a document managed outside Quicker (integrations); documents inside Quicker allocate in their posting transaction");
+        numbering.MapGet("/documents", async (string? q, int? limit, DocumentSearchService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.SearchAsync(q, limit, ct)))
+            .WithSummary("Find documents by number across modules (\"PO-2026-00027\", \"00027\", \"PO-27\"): only the types the member may read, in the companies their grant covers");
         numbering.MapGet("/drafts/{documentId:guid}", (Guid documentId) => Results.Ok(new { documentId, identifier = DraftIdentifiers.For(documentId) }))
             .RequirePermission(NumberingPermissions.SeriesRead);
 

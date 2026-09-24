@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
+import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
@@ -51,7 +52,7 @@ export function InvoicesPage() {
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [form, setForm] = useState<InvoiceForm | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenRecord("/purchasing/invoices");
   const [tab, setTab] = useState("lines");
   const [reversal, setReversal] = useState<string | null>(null);
   const [credit, setCredit] = useState<{ invoiceItemId: string; amount: string } | null>(null);

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Inventory.Contracts;
+using Quicker.Numbering.Contracts;
 using Quicker.Persistence.EntityFramework;
 using Quicker.Purchasing.Application;
 using Quicker.Purchasing.Contracts;
@@ -18,6 +19,15 @@ public static class PurchasingModule
     {
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(PurchasingPermissions.All);
+        NumberedDocumentTypes.Register(
+            new(PurchaseDocumentTypes.Requisition, PurchasingPermissions.RequisitionRead),
+            new(PurchaseDocumentTypes.Rfq, PurchasingPermissions.RfqRead),
+            new(PurchaseDocumentTypes.BlanketAgreement, PurchasingPermissions.AgreementRead),
+            new(PurchaseDocumentTypes.Order, PurchasingPermissions.OrderRead),
+            new(PurchaseDocumentTypes.Receipt, PurchasingPermissions.ReceiptRead),
+            new(PurchaseDocumentTypes.Invoice, PurchasingPermissions.InvoiceRead),
+            new(PurchaseDocumentTypes.LandedCost, PurchasingPermissions.LandedCostRead),
+            new(PurchaseDocumentTypes.Return, PurchasingPermissions.ReturnRead));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Requisition, "app.pur_requisitions", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Order, "app.pur_orders", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Receipt, "app.pur_receipts", "custom_fields"));

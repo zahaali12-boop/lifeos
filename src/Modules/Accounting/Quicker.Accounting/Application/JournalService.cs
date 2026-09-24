@@ -5,6 +5,7 @@ using Quicker.Accounting.Persistence;
 using Quicker.Audit.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
+using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
 using Quicker.Persistence;
 using Quicker.Web;
@@ -12,7 +13,7 @@ using Quicker.Web;
 namespace Quicker.Accounting.Application;
 
 /// <summary>Reading journal entries and balances; rebuilding and verifying the derived balances (ADR-0007).</summary>
-public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IAuditSink audit)
+public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IAuditSink audit, IIssuedNumbers issuedNumbers)
 {
     private static readonly Guid NoDimensions = Guid.Empty;
 
@@ -27,7 +28,7 @@ public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor u
         var links = await db.Set<EntryLink>().Where(l => l.FromEntryId == entryId || l.ToEntryId == entryId).ToListAsync(cancellationToken);
         var ids = entry.Lines.Select(static l => l.AccountId).Distinct().ToList();
         var accounts = await db.Accounts.Where(a => ids.Contains(a.Id)).ToDictionaryAsync(static a => a.Id, cancellationToken);
-        return Map(entry, links, accounts);
+        return Map(entry, links, accounts, await SourceNumbersAsync([entry], cancellationToken));
     }
 
     public async Task<Result<Page<JournalEntrySummary>>> ListEntriesAsync(Guid companyId, DateOnly? from, DateOnly? to, string? sourceDocumentType, PageRequest page, CancellationToken cancellationToken, JournalBrowserFilter? filter = null)
@@ -43,7 +44,8 @@ public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor u
             if (!string.IsNullOrWhiteSpace(filter.Number))
             {
                 var pattern = filter.Number.Trim() + "%";
-                query = query.Where(e => EF.Functions.ILike(e.Number, pattern) || (e.SourceDocumentNumber != null && EF.Functions.ILike(e.SourceDocumentNumber, pattern)));
+                var numbered = await issuedNumbers.DocumentsNumberedAsync(filter.Number, cancellationToken: cancellationToken);
+                query = query.Where(e => EF.Functions.ILike(e.Number, pattern) || (e.SourceDocumentNumber != null && EF.Functions.ILike(e.SourceDocumentNumber, pattern)) || numbered.Contains(e.SourceDocumentId));
             }
 
             if (filter.AccountId is { } account)
@@ -99,7 +101,8 @@ public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor u
 
         var entryIds = result.Value.Items.Select(static e => e.Id).ToList();
         var links = await db.Set<EntryLink>().Where(l => entryIds.Contains(l.FromEntryId) || entryIds.Contains(l.ToEntryId)).ToListAsync(cancellationToken);
-        return result.Value.Map(e => Map(e, links.Where(l => l.FromEntryId == e.Id || l.ToEntryId == e.Id).ToList(), null));
+        var numbers = await SourceNumbersAsync(result.Value.Items, cancellationToken);
+        return result.Value.Map(e => Map(e, links.Where(l => l.FromEntryId == e.Id || l.ToEntryId == e.Id).ToList(), null, numbers));
     }
 
     public async Task<Result<IReadOnlyList<BalanceRow>>> BalancesAsync(Guid companyId, Guid? periodId, Guid? accountId, CancellationToken cancellationToken)
@@ -194,7 +197,14 @@ public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor u
             new(key.Company, key.Account, key.Period, key.Currency, key.DimensionSet, 0m, 0m, 0m, 0m, 0m, 0m);
     }
 
-    private static JournalEntrySummary Map(JournalEntry e, List<EntryLink> links, Dictionary<Guid, Account>? accounts)
+    /// <summary>
+    /// The numbers of source documents that posted without passing theirs (the stock postings of the costing engine), read
+    /// from what numbering issued them, so every entry names its source document by number.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, string>> SourceNumbersAsync(IEnumerable<JournalEntry> entries, CancellationToken cancellationToken) =>
+        await issuedNumbers.NumbersOfAsync(entries.Where(static e => e.SourceDocumentNumber is null).Select(static e => e.SourceDocumentId).Distinct().ToList(), cancellationToken);
+
+    private static JournalEntrySummary Map(JournalEntry e, List<EntryLink> links, Dictionary<Guid, Account>? accounts, IReadOnlyDictionary<Guid, string> sourceNumbers)
     {
         var reversedBy = links.FirstOrDefault(l => l.ToEntryId == e.Id && l.Relation == EntryRelations.Reverses)?.FromEntryId;
         var reverses = links.FirstOrDefault(l => l.FromEntryId == e.Id && l.Relation == EntryRelations.Reverses)?.ToEntryId;
@@ -205,7 +215,7 @@ public sealed class JournalService(AccountingDbContext db, IUnitOfWorkAccessor u
                 l.DebitTc, l.CreditTc, l.DebitFc, l.CreditFc, l.DebitRc, l.CreditRc, l.DimensionSetId == NoDimensions ? null : l.DimensionSetId, l.BranchId, l.PartnerId, l.SubledgerType, l.SubledgerRef,
                 l.Description.Values, l.DueDate, l.IsRounding);
         }).ToList();
-        return new JournalEntrySummary(e.Id, e.CompanyId, e.Number, e.PostingDate, e.DocumentDate, e.FiscalYearId, e.FiscalPeriodId, e.SourceModule, e.SourceDocumentType, e.SourceDocumentId, e.SourceDocumentNumber,
+        return new JournalEntrySummary(e.Id, e.CompanyId, e.Number, e.PostingDate, e.DocumentDate, e.FiscalYearId, e.FiscalPeriodId, e.SourceModule, e.SourceDocumentType, e.SourceDocumentId, e.SourceDocumentNumber ?? sourceNumbers.GetValueOrDefault(e.SourceDocumentId),
             e.Description.Values, e.IsReversal, e.IsAutoReversal, e.AutoReverseOn, e.IsClosingEntry, e.IsOpeningEntry, e.IsManual, e.CurrencyTc, e.CurrencyFc, e.CurrencyRc, e.RateType, e.RateTcFc, e.RateFcRc,
             e.PostingProfileId, e.LineCount, e.PostedBy, e.PostedAt, reversedBy, reverses, e.Lines.Sum(static l => l.DebitTc), e.Lines.Sum(static l => l.DebitFc), lines,
             links.Select(static l => new EntryLinkSummary(l.FromEntryId, l.ToEntryId, l.Relation, l.Reason)).ToList());

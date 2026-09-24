@@ -132,6 +132,7 @@ export function AuditPage() {
         </Button>
       ) : null}
       <AuditEventDialog
+        openRecord
         eventId={open}
         onClose={() => { setOpen(null); }}
         onShowRecord={(e) => { setRecord({ entityType: e.entityType, entityId: e.entityId, display: e.entityDisplay }); setOpen(null); }}

@@ -7,6 +7,7 @@ using Quicker.Inventory.Application;
 using Quicker.Inventory.Contracts;
 using Quicker.Inventory.Persistence;
 using Quicker.Messaging;
+using Quicker.Numbering.Contracts;
 using Quicker.Persistence.EntityFramework;
 using Quicker.Workflow.Contracts;
 
@@ -18,6 +19,12 @@ public static class InventoryModule
     {
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(InventoryPermissions.All);
+        NumberedDocumentTypes.Register(
+            new(AdjustmentService.DocumentType, InventoryPermissions.AdjustmentRead),
+            new(RevaluationService.DocumentType, InventoryPermissions.CostingRead),
+            new(AssemblyService.DocumentType, InventoryPermissions.AssemblyRead),
+            new(TransferService.DocumentType, InventoryPermissions.TransferRead),
+            new(CountService.DocumentType, InventoryPermissions.CountRead));
         CustomFieldHosts.Register(new CustomFieldHost("stock_transfer", "app.inv_transfers", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost("stock_adjustment", "app.inv_adjustments", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost("lot", "app.inv_lots", "custom_fields"));

@@ -4,6 +4,7 @@ using Quicker.Accounting.Contracts;
 using Quicker.Accounting.Persistence;
 using Quicker.Identity.Contracts;
 using Quicker.Messaging;
+using Quicker.Numbering.Contracts;
 using Quicker.Persistence.EntityFramework;
 
 namespace Quicker.Accounting;
@@ -14,6 +15,9 @@ public static class AccountingModule
     {
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(AccountingPermissions.All);
+        NumberedDocumentTypes.Register(
+            new(ManualJournalService.EntityType, AccountingPermissions.JournalRead),
+            new(PostingService.JournalDocumentType, AccountingPermissions.JournalRead));
         services.AddModuleDbContext<AccountingDbContext>();
         services.AddScoped<ChartService>();
         services.AddScoped<IChartOfAccounts>(static sp => sp.GetRequiredService<ChartService>());

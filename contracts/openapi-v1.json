@@ -4497,6 +4497,51 @@
         }
       }
     },
+    "/api/v1/numbering/documents": {
+      "get": {
+        "tags": [
+          "Numbering"
+        ],
+        "summary": "Find documents by number across modules (\"PO-2026-00027\", \"00027\", \"PO-27\"): only the types the member may read, in the companies their grant covers",
+        "operationId": "getNumberingDocuments",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentSearchHit"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/numbering/drafts/{documentId}": {
       "get": {
         "tags": [
@@ -26312,6 +26357,44 @@
             "format": "uuid"
           }
         }
+      },
+      "DocumentSearchHit": {
+        "required": [
+          "documentType",
+          "documentId",
+          "number",
+          "companyId",
+          "companyCode",
+          "issuedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A numbered document found by its number: its type and id (to open it), the number, its company and when it was issued."
       },
       "DocumentTypeRule": {
         "required": [

@@ -1,9 +1,11 @@
 import { Badge } from "@quicker/ui";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
+import { recordRoute } from "../../lib/documents";
 import { formatNumber, localized } from "../../lib/format";
 import { Field, SelectField } from "../common";
 
@@ -101,4 +103,17 @@ export function withFilters<T extends object>(base: T, filters: Record<string, s
 
 export function dimensionFilters(search: Record<string, string | undefined>): Record<string, string> {
   return Object.fromEntries(Object.entries(search).filter((pair): pair is [string, string] => pair[0].startsWith("d.") && typeof pair[1] === "string"));
+}
+
+/** A journal line's source document by its number, linked to the document's screen when it has one (purchase invoices, receipts, stock documents, payments, manual journals…). */
+export function SourceDocument({ type, id, number }: { type: string; id: string; number: string | null }) {
+  const route = recordRoute(type, id);
+  const label = number ?? type;
+  return route ? (
+    <Link to={route.to} search={route.search} className="underline-offset-2 hover:underline" data-testid="source-document">
+      {label}
+    </Link>
+  ) : (
+    <>{label}</>
+  );
 }

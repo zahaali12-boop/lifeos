@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Identity.Contracts;
+using Quicker.Numbering.Contracts;
 using Quicker.Payables.Application;
 using Quicker.Payables.Contracts;
 using Quicker.Payables.Persistence;
@@ -13,6 +14,7 @@ public static class PayablesModule
     {
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(PayablesPermissions.All);
+        NumberedDocumentTypes.Register(new NumberedDocumentType(PayablesDocumentTypes.Proposal, PayablesPermissions.ProposalRead));
         services.AddModuleDbContext<PayablesDbContext>();
         services.AddScoped<PayablesService>();
         services.AddScoped<SettlementService>();

@@ -5,20 +5,10 @@ import { Download } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
-import type { components } from "../../api/schema";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, TextField } from "../common";
-import { Amount, CompanySelect, dimensionFilters, saveFile, today, useCompanies, useCompanySelection, withFilters } from "./shared";
-
-type LedgerItem = components["schemas"]["LedgerItem"];
-
-/** Where a ledger line's source document opens in the app; the API's sourceLink says which document it is. */
-export function sourceRoute(item: Pick<LedgerItem, "sourceDocumentType" | "sourceDocumentId" | "entryId">): { to: "/accounting/journals" | "/accounting/journal-entries"; search: Record<string, string> } {
-  return item.sourceDocumentType === "manual_journal"
-    ? { to: "/accounting/journals", search: { open: item.sourceDocumentId } }
-    : { to: "/accounting/journal-entries", search: { open: item.entryId } };
-}
+import { Amount, CompanySelect, dimensionFilters, saveFile, SourceDocument, today, useCompanies, useCompanySelection, withFilters } from "./shared";
 
 /** The account ledger: opening, every line with its running balance and source document, closing; paged with the balance carried across pages. */
 export function LedgerPage() {
@@ -132,13 +122,7 @@ export function LedgerPage() {
                     </Link>
                   </TableCell>
                   <TableCell dir="ltr">
-                    {item.sourceLink ? (
-                      <Link {...sourceRoute(item)} className="underline-offset-2 hover:underline">
-                        {item.sourceDocumentNumber ?? item.sourceDocumentType}
-                      </Link>
-                    ) : (
-                      (item.sourceDocumentNumber ?? item.sourceDocumentType)
-                    )}
+                    <SourceDocument type={item.sourceDocumentType} id={item.sourceDocumentId} number={item.sourceDocumentNumber} />
                   </TableCell>
                   <TableCell>{localized(item.description)}</TableCell>
                   <TableNumberCell><Amount value={item.debit} /></TableNumberCell>

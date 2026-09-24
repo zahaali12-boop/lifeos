@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
+import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
@@ -33,7 +34,7 @@ export function ProposalsPage() {
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [form, setForm] = useState<ProposalForm | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenRecord("/payables/proposals");
   const [edits, setEdits] = useState<Record<string, { selected: boolean; amount: string }>>({});
   const [payFrom, setPayFrom] = useState<string | null>(null);
   const suppliers = useSuppliers(companyId);

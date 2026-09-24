@@ -6,6 +6,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
+import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
@@ -29,7 +30,7 @@ export function AgreementsPage() {
   const { companies, companyId, setCompanyId } = useCompanyContext();
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [form, setForm] = useState<AgreementForm | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenRecord("/purchasing/agreements");
   const suppliers = useSuppliers(companyId);
   const list = useAgreements(companyId);
   const detail = useQuery({

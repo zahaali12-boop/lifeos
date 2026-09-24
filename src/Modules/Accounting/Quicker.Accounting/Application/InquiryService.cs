@@ -8,6 +8,7 @@ using Quicker.Audit.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
+using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
 using Quicker.Persistence;
 using Quicker.Web;
@@ -22,7 +23,7 @@ namespace Quicker.Accounting.Application;
 /// read from the journal lines (functional or reporting currency), so the figures agree with the derived balances
 /// only when those are intact; the invariant harness checks that.
 /// </summary>
-public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IDimensionDirectory dimensions, IAuditSink audit, IClock clock)
+public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IDimensionDirectory dimensions, IAuditSink audit, IClock clock, IIssuedNumbers issuedNumbers)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly IReadOnlyDictionary<string, Guid> NoFilters = new Dictionary<string, Guid>(StringComparer.Ordinal);
@@ -186,12 +187,14 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
             rows.RemoveAt(rows.Count - 1);
         }
 
+        // Stock postings of the costing engine carry no source number; the one numbering issued the document is shown.
+        var sourceNumbers = await issuedNumbers.NumbersOfAsync(rows.Where(static r => r.SourceDocumentNumber is null).Select(static r => r.SourceDocumentId).Distinct().ToList(), cancellationToken);
         var items = new List<LedgerItem>(rows.Count);
         var balance = balanceBefore;
         foreach (var row in rows)
         {
             balance += row.Debit - row.Credit;
-            items.Add(new LedgerItem(row.LineId, row.EntryId, row.Number, row.PostingDate, row.DocumentDate, row.SourceModule, row.SourceDocumentType, row.SourceDocumentId, row.SourceDocumentNumber,
+            items.Add(new LedgerItem(row.LineId, row.EntryId, row.Number, row.PostingDate, row.DocumentDate, row.SourceModule, row.SourceDocumentType, row.SourceDocumentId, row.SourceDocumentNumber ?? sourceNumbers.GetValueOrDefault(row.SourceDocumentId),
                 SourceDocumentLinks.For(row.SourceDocumentType, row.SourceDocumentId, row.EntryId), Text(row.Description), row.CurrencyTc, row.DebitTc, row.CreditTc, row.Debit, row.Credit, balance,
                 Dimensions(row.Dimensions), row.BranchId, row.PartnerId, row.SubledgerType, row.SubledgerRef, row.IsReversal, row.IsRounding));
         }

@@ -10,7 +10,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
-import { Amount, CompanySelect, useCompanies, useCompanySelection } from "./shared";
+import { Amount, CompanySelect, SourceDocument, useCompanies, useCompanySelection } from "./shared";
 
 type Entry = components["schemas"]["JournalEntrySummary"];
 
@@ -115,13 +115,7 @@ export function JournalBrowserPage() {
               <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2" data-testid="entry-detail">
                 <dt className="text-fg-muted">{t("accounting.source")}</dt>
                 <dd dir="ltr">
-                  {detail.sourceDocumentType === "manual_journal" ? (
-                    <Link to="/accounting/journals" search={{ open: detail.sourceDocumentId }} className="underline-offset-2 hover:underline">
-                      {detail.sourceDocumentNumber ?? detail.sourceDocumentType}
-                    </Link>
-                  ) : (
-                    (detail.sourceDocumentNumber ?? detail.sourceDocumentType)
-                  )}
+                  <SourceDocument type={detail.sourceDocumentType} id={detail.sourceDocumentId} number={detail.sourceDocumentNumber} />
                 </dd>
                 <dt className="text-fg-muted">{t("accounting.description")}</dt>
                 <dd>{localized(detail.description)}</dd>

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 
@@ -32,6 +33,19 @@ public interface INumberAllocator
     Task<Result<Guid>> EnsureDefaultSeriesAsync(string documentType, CompanyId companyId, string code, string template, string resetPolicy = "yearly", CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// The numbers issued to documents, read by other modules that show a document by its number without owning it (a
+/// journal entry's source document). Read-only; a document without an issued number is absent.
+/// </summary>
+public interface IIssuedNumbers
+{
+    /// <summary>The number issued to each of the documents (the latest, should one have been renumbered).</summary>
+    Task<IReadOnlyDictionary<Guid, string>> NumbersOfAsync(IReadOnlyCollection<Guid> documentIds, CancellationToken cancellationToken = default);
+
+    /// <summary>The documents whose number starts with the prefix (case-insensitive), at most <paramref name="limit"/>.</summary>
+    Task<IReadOnlyList<Guid>> DocumentsNumberedAsync(string prefix, int limit = 500, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Drafts and unposted documents show this instead of a legal number and are never printed as invoices.</summary>
 public static class DraftIdentifiers
 {
@@ -40,4 +54,28 @@ public static class DraftIdentifiers
     public static string For(Guid documentId) => Prefix + documentId.ToString("N")[..8].ToUpperInvariant();
 
     public static bool IsDraft(string? number) => number is not null && number.StartsWith(Prefix, StringComparison.Ordinal);
+}
+
+/// <summary>A numbered document type and the permission that lets a member read the document.</summary>
+public sealed record NumberedDocumentType(string DocumentType, string ReadPermission);
+
+/// <summary>
+/// The document types modules number through this module, with their read permissions. The document search
+/// (GET /numbering/documents) lists a number only for the types registered here whose permission the member holds,
+/// so a number is never shown to someone who could not open its document; an unregistered type is never listed.
+/// </summary>
+public static class NumberedDocumentTypes
+{
+    private static readonly ConcurrentDictionary<string, NumberedDocumentType> Registry = new(StringComparer.Ordinal);
+
+    public static void Register(params NumberedDocumentType[] types)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+        foreach (var type in types)
+        {
+            Registry[type.DocumentType] = type;
+        }
+    }
+
+    public static IReadOnlyCollection<NumberedDocumentType> All => Registry.Values.OrderBy(static t => t.DocumentType, StringComparer.Ordinal).ToList();
 }

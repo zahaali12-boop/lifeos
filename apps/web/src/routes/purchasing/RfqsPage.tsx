@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
+import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, TextField } from "../common";
@@ -38,7 +39,7 @@ export function RfqsPage() {
   const { companies, companyId, setCompanyId } = useCompanyContext();
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [form, setForm] = useState<RfqForm | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useOpenRecord("/purchasing/rfqs");
   const [tab, setTab] = useState("lines");
   const [quote, setQuote] = useState<QuoteForm | null>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
