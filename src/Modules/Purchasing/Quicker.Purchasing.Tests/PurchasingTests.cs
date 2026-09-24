@@ -186,12 +186,16 @@ public sealed class PurchasingTests(ApiHostFixture host)
         unsupplied.Problem.GetProperty("why").GetProperty("item").GetString().ShouldBe("COFFEE");
         (await owner.PostErrorAsync("/api/v1/purchasing/orders/from-suggestions", new { suggestionIds = new[] { Guid.NewGuid() } }, HttpStatusCode.NotFound)).Code.ShouldBe("replenishment_suggestion.not_found");
 
+        // Orders require a delivery priority; with a default, the drafts made for the buyer carry it instead of being refused.
+        await owner.PostAsync("/api/v1/collaboration/custom-fields", new { entityType = "purchase_order", key = "priority", label = Name("Priority", "الأولوية"), type = "select", required = true, options = new[] { new { value = "normal", label = Name("Normal", "عادية") }, new { value = "urgent", label = Name("Urgent", "عاجلة") } }, defaultValue = "normal" });
+
         // Coffee goes to Beta: two drafts, one per supplier, in base units, wanted by the date the suggestion needs them.
         var ordered = await owner.PostAsync("/api/v1/purchasing/orders/from-suggestions", new { suggestionIds = both, supplierId = s.SupplierB }, HttpStatusCode.OK);
         var drafts = ordered.GetProperty("orders").EnumerateArray().ToList();
         drafts.Count.ShouldBe(2);
         var teaOrder = drafts.Single(o => o.GetProperty("partnerId").GetGuid() == s.SupplierA);
         teaOrder.GetProperty("status").GetString().ShouldBe("draft");
+        teaOrder.GetProperty("customFields").GetProperty("priority").GetString().ShouldBe("normal");
         teaOrder.GetProperty("warehouseId").GetGuid().ShouldBe(s.WarehouseId);
         teaOrder.GetProperty("expectedDate").GetString().ShouldBe(tea.GetProperty("neededBy").GetString());
         var teaLine = teaOrder.GetProperty("lines").Only();

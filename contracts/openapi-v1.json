@@ -26166,7 +26166,8 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
-          }
+          },
+          "defaultValue": { }
         }
       },
       "DeferralLineSummary": {
@@ -40801,7 +40802,8 @@
             "additionalProperties": {
               "type": "string"
             }
-          }
+          },
+          "defaultValue": { }
         }
       },
       "SaveDeferralRequest": {

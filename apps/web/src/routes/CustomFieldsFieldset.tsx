@@ -86,7 +86,14 @@ export function CustomFieldControl({ definition, value, onChange, disabled }: { 
  * control per active field, required ones marked, the API's refusal of a value shown under its field.
  */
 export function CustomFieldsFieldset({ entityType, values, onChange, errors, disabled }: { entityType: string; values: CustomFieldValues; onChange: (next: CustomFieldValues) => void; errors?: Record<string, string> | undefined; disabled?: boolean | undefined }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const list = new Intl.ListFormat(i18n.language, { style: "narrow", type: "conjunction" });
+  // What a field left empty becomes, said under it, so nobody is surprised by a value they did not type.
+  const describe = (definition: CustomFieldDefinition): string | undefined => {
+    const own = localized(definition.description);
+    const fallback = definition.defaultValue === undefined || definition.defaultValue === null ? "" : t("customFields.leftEmpty", { value: display(definition, definition.defaultValue, t("common.yes"), t("common.no"), list) });
+    return [own, fallback].filter(Boolean).join(" · ") || undefined;
+  };
   const definitions = useCustomFieldDefinitions(entityType);
   const active = definitions.data ?? [];
   if (active.length === 0) {
@@ -96,7 +103,7 @@ export function CustomFieldsFieldset({ entityType, values, onChange, errors, dis
     <fieldset className="grid gap-4 rounded-md border border-border p-4 sm:grid-cols-2" data-testid={`custom-fields-${entityType}`}>
       <legend className="px-1 text-sm font-medium">{t("customFields.title")}</legend>
       {active.map((definition) => (
-        <Field key={definition.id} label={localized(definition.label)} required={definition.required} error={errors?.[`customFields.${definition.key}`]} description={localized(definition.description) || undefined}>
+        <Field key={definition.id} label={localized(definition.label)} required={definition.required} error={errors?.[`customFields.${definition.key}`]} description={describe(definition)}>
           <CustomFieldControl
             definition={definition}
             value={values[definition.key]}

@@ -25,6 +25,37 @@ public sealed class CustomFieldTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task A_default_fills_a_field_left_empty_and_must_be_a_value_the_field_accepts()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var options = new[] { new { value = "north", label = new { en = "North" } }, new { value = "south", label = new { en = "South" } } };
+
+        // A default the field would refuse is refused with the field's own reason.
+        var wrong = await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "company", key = "region", label = new { en = "Region" }, type = "select", required = true, options, defaultValue = "east" }, Json);
+        wrong.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await wrong.ErrorCodeAsync()).ShouldBe("custom_field.default_invalid");
+
+        var defined = await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "company", key = "region", label = new { en = "Region" }, type = "select", required = true, options, defaultValue = "north" }, Json);
+        defined.StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await defined.ReadJsonAsync()).GetProperty("defaultValue").GetString().ShouldBe("north");
+        (await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "company", key = "headcount", label = new { en = "Headcount" }, type = "number", defaultValue = 10 }, Json)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // A company saved without the required field gets the default rather than a refusal; a value given wins.
+        var plain = await (await owner.PostAsJsonAsync("/api/v1/organization/companies", new { code = "DEF", legalName = new { en = "Default Co" }, country = "IQ", functionalCurrency = "IQD", timeZone = "Asia/Baghdad" }, Json)).ReadJsonAsync();
+        plain.GetProperty("customFields").GetProperty("region").GetString().ShouldBe("north");
+        plain.GetProperty("customFields").GetProperty("headcount").GetDecimal().ShouldBe(10m);
+        var given = await (await owner.PostAsJsonAsync("/api/v1/organization/companies", new { code = "GIV", legalName = new { en = "Given Co" }, country = "IQ", functionalCurrency = "IQD", timeZone = "Asia/Baghdad", customFields = new { region = "south", headcount = 250 } }, Json)).ReadJsonAsync();
+        given.GetProperty("customFields").GetProperty("region").GetString().ShouldBe("south");
+        given.GetProperty("customFields").GetProperty("headcount").GetDecimal().ShouldBe(250m);
+
+        // The published schema carries the default and no longer lists the field as one a client must send.
+        var schema = await (await owner.GetAsync("/api/v1/collaboration/custom-fields/company/schema")).ReadJsonAsync();
+        schema.GetProperty("properties").GetProperty("region").GetProperty("default").GetString().ShouldBe("north");
+        schema.GetProperty("required").EnumerateArray().Select(static r => r.GetString()).ShouldNotContain("region");
+    }
+
+    [Fact]
     public async Task Definitions_validate_company_values_index_the_host_column_and_publish_a_schema()
     {
         var ws = await Api.SignupAsync();

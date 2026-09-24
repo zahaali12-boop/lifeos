@@ -77,6 +77,7 @@ public sealed class CollaborationDbContext(DbContextOptions<CollaborationDbConte
             b.Property(static f => f.Description).HasColumnName("description_i18n");
             b.Property(static f => f.Options).HasColumnType("jsonb");
             b.Property(static f => f.Rules).HasColumnType("jsonb");
+            b.Property(static f => f.DefaultValue).HasColumnType("jsonb");
             b.HasAuditTrail("custom_field", static f => f.EntityType + "." + f.Key);
         });
 

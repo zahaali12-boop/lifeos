@@ -8614,6 +8614,7 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            defaultValue?: unknown;
         };
         DeferralLineSummary: {
             /** Format: int32 */
@@ -12516,6 +12517,7 @@ export interface components {
             description?: null | {
                 [key: string]: string;
             };
+            defaultValue?: unknown;
         };
         SaveDeferralRequest: {
             kind: string;

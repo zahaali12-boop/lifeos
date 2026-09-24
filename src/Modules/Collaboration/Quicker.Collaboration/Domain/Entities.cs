@@ -222,6 +222,9 @@ public sealed class CustomFieldDefinition : ITenantEntity
 
     public string Rules { get; set; } = "{}";
 
+    /// <summary>The value filled in when a record is saved without one (JSON, normalised by the type); null for none.</summary>
+    public string? DefaultValue { get; set; }
+
     public bool Indexed { get; set; }
 
     public int Position { get; set; }

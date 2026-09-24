@@ -10,13 +10,14 @@ import { DataGrid } from "../grid/DataGrid";
 import { localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { CustomFieldControl } from "./CustomFieldsFieldset";
 
 type CustomField = components["schemas"]["CustomFieldView"];
 
 /** Entity types that carry custom fields today; each host registers itself on the API as it lands. */
 const types = ["text", "number", "date", "boolean", "select", "multi_select", "reference"] as const;
 
-const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof types)[number], required: false, indexed: false, options: "", min: "", max: "", maxLength: "", pattern: "", referenceType: "" };
+const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof types)[number], required: false, indexed: false, options: "", min: "", max: "", maxLength: "", pattern: "", referenceType: "", defaultValue: undefined as unknown };
 
 export function CustomFieldsPage() {
   const { t } = useTranslation();
@@ -44,6 +45,7 @@ export function CustomFieldsPage() {
         position: 0,
         active: true,
         description: null,
+        defaultValue: f.defaultValue ?? null,
       };
       return input.id ? unwrap(await api.PUT("/api/v1/collaboration/custom-fields/{fieldId}", { params: { path: { fieldId: input.id } }, body })) : unwrap(await api.POST("/api/v1/collaboration/custom-fields", { body }));
     },
@@ -88,6 +90,7 @@ export function CustomFieldsPage() {
         maxLength: field.rules.maxLength == null ? "" : String(field.rules.maxLength),
         pattern: field.rules.pattern ?? "",
         referenceType: field.rules.referenceType ?? "",
+        defaultValue: field.defaultValue ?? undefined,
       },
     });
   };
@@ -152,7 +155,7 @@ export function CustomFieldsPage() {
                   <TextField value={form.key} onChange={(e) => { setForm({ key: e.target.value }); }} required disabled={isEdit} dir="ltr" pattern="[a-z][a-z0-9_]{0,39}" />
                 </Field>
                 <Field label={t("customFields.type")} required error={problem?.fields.type}>
-                  <SelectField value={form.type} onChange={(e) => { setForm({ type: e.target.value as (typeof types)[number] }); }} disabled={isEdit}>
+                  <SelectField value={form.type} onChange={(e) => { setForm({ type: e.target.value as (typeof types)[number], defaultValue: undefined }); }} disabled={isEdit}>
                     {types.map((type) => (
                       <option key={type} value={type}>
                         {t(`customFields.types.${type}`)}
@@ -196,6 +199,28 @@ export function CustomFieldsPage() {
                     <TextField value={form.referenceType} onChange={(e) => { setForm({ referenceType: e.target.value }); }} required dir="ltr" />
                   </Field>
                 ) : null}
+                <Field label={t("customFields.defaultValue")} description={t("customFields.defaultValueHint")} error={problem?.fields[`customFields.${form.key}`]} className="sm:col-span-2">
+                  <CustomFieldControl
+                    definition={{
+                      id: "default",
+                      entityType,
+                      key: "default_value",
+                      label: { en: t("customFields.defaultValue") },
+                      description: {},
+                      type: form.type,
+                      required: false,
+                      options: form.options.split(",").map((o) => o.trim()).filter(Boolean).map((value) => ({ value, label: { en: value } })),
+                      rules: { maxLength: form.maxLength ? Number(form.maxLength) : null, referenceType: form.referenceType || null },
+                      indexed: false,
+                      position: 0,
+                      active: true,
+                      createdAt: "",
+                      updatedAt: "",
+                    }}
+                    value={form.defaultValue}
+                    onChange={(next) => { setForm({ defaultValue: next }); }}
+                  />
+                </Field>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.required} onChange={(e) => { setForm({ required: e.target.checked }); }} />
                   {t("customFields.required")}

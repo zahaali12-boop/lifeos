@@ -98,10 +98,12 @@ test("English: fields added to purchase orders are filled on the order form, enf
   await page.getByLabel(/^Key/).fill("shelf");
   await page.getByLabel(/Label \(English\)/).fill("Shelf");
   await page.getByLabel(/Label \(Arabic\)/).fill("الرف");
+  await page.getByTestId("cf-default_value").fill("MAIN");
   await page.getByTestId("save-custom-field").click();
   await expect(page.getByRole("grid")).toContainText("shelf");
   await page.goto(`/inventory/items?open=${item.id}`);
   await page.getByTestId("edit-item").click();
+  await expect(page.getByTestId("custom-fields-item")).toContainText("Left empty: MAIN");
   await page.getByTestId("cf-shelf").fill("A-12");
   await page.getByTestId("save-item").click();
   await expect(page.getByTestId("cf-value-shelf")).toHaveText("A-12");

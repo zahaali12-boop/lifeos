@@ -31,12 +31,13 @@ public sealed record SaveCustomFieldRequest(
     bool Indexed = false,
     int Position = 0,
     bool Active = true,
-    IReadOnlyDictionary<string, string>? Description = null);
+    IReadOnlyDictionary<string, string>? Description = null,
+    JsonElement? DefaultValue = null);
 
 /// <summary>The record types that carry custom fields, in code order.</summary>
 public sealed record CustomFieldHostList(IReadOnlyCollection<string> EntityTypes);
 
-public sealed record CustomFieldView(Guid Id, string EntityType, string Key, IReadOnlyDictionary<string, string> Label, IReadOnlyDictionary<string, string> Description, string Type, bool Required, IReadOnlyList<CustomFieldOption> Options, CustomFieldRules Rules, bool Indexed, int Position, bool Active, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+public sealed record CustomFieldView(Guid Id, string EntityType, string Key, IReadOnlyDictionary<string, string> Label, IReadOnlyDictionary<string, string> Description, string Type, bool Required, IReadOnlyList<CustomFieldOption> Options, CustomFieldRules Rules, bool Indexed, int Position, bool Active, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt, JsonElement? DefaultValue = null);
 
 public static class CustomFieldTypes
 {
@@ -246,6 +247,20 @@ public sealed class CustomFieldService(CollaborationDbContext db, IUnitOfWorkAcc
             return Error.Conflict("custom_field.key_taken", $"{type} already has a custom field '{key}'.");
         }
 
+        // A default must be a value the field accepts; it is kept as the validator would keep it.
+        string? defaultValue = null;
+        if (request.DefaultValue is { ValueKind: not (JsonValueKind.Null or JsonValueKind.Undefined) } given)
+        {
+            var probe = new CustomFieldDefinition { Key = key, Type = fieldType, Options = JsonSerializer.Serialize(options, Json), Rules = JsonSerializer.Serialize(rules, Json) };
+            var normalized = Normalize(probe, given);
+            if (normalized.IsFailure)
+            {
+                return Error.Validation("custom_field.default_invalid", "The default value is not a value this field accepts: " + normalized.Error!.Message).WithWhy(("field", key));
+            }
+
+            defaultValue = normalized.Value?.ToJsonString(Json);
+        }
+
         field.EntityType = type;
         field.Key = key;
         field.Label = label;
@@ -257,6 +272,7 @@ public sealed class CustomFieldService(CollaborationDbContext db, IUnitOfWorkAcc
         field.Indexed = request.Indexed;
         field.Position = request.Position;
         field.Active = request.Active;
+        field.DefaultValue = defaultValue;
         return Result.Success();
     }
 
@@ -282,6 +298,12 @@ public sealed class CustomFieldService(CollaborationDbContext db, IUnitOfWorkAcc
         foreach (var definition in definitions.OrderBy(static d => d.Position).ThenBy(static d => d.Key, StringComparer.Ordinal))
         {
             var present = given is { } g && g.TryGetProperty(definition.Key, out var raw) && raw.ValueKind is not JsonValueKind.Null;
+            if (!present && definition.DefaultValue is { } fallback)
+            {
+                result[definition.Key] = JsonNode.Parse(fallback);
+                continue;
+            }
+
             if (!present)
             {
                 if (definition.Required)
@@ -440,8 +462,14 @@ public sealed class CustomFieldService(CollaborationDbContext db, IUnitOfWorkAcc
                     break;
             }
 
+            // A field with a default is filled by the server, so a client need not send it.
+            if (field.DefaultValue is { } fallback)
+            {
+                property["default"] = JsonNode.Parse(fallback.GetRawText());
+            }
+
             properties[field.Key] = property;
-            if (field.Required)
+            if (field.Required && field.DefaultValue is null)
             {
                 required.Add(field.Key);
             }
@@ -463,5 +491,6 @@ public sealed class CustomFieldService(CollaborationDbContext db, IUnitOfWorkAcc
         f.Id, f.EntityType, f.Key, f.Label.Values, f.Description.Values, f.Type, f.Required,
         JsonSerializer.Deserialize<List<CustomFieldOption>>(f.Options, Json) ?? [],
         JsonSerializer.Deserialize<CustomFieldRules>(f.Rules, Json) ?? new CustomFieldRules(),
-        f.Indexed, f.Position, f.Active, f.CreatedAt, f.UpdatedAt);
+        f.Indexed, f.Position, f.Active, f.CreatedAt, f.UpdatedAt,
+        f.DefaultValue is null ? null : JsonDocument.Parse(f.DefaultValue).RootElement.Clone());
 }
