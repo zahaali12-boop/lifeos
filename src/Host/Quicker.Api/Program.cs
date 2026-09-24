@@ -71,7 +71,7 @@ builder.Services.AddQuickerResponseShaping();
 var allowedOrigins = (builder.Configuration["Quicker:Api:AllowedOrigins"] ?? builder.Configuration["Quicker:Auth:PublicOrigin"] ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
-    policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("ETag", "Idempotent-Replayed", "Retry-After", "Location")));
+    policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("ETag", "Idempotent-Replayed", "Retry-After", "Location", "Content-Disposition")));
 // Behind a reverse proxy the client's address arrives in X-Forwarded-For. Only the proxies named in
 // Quicker:Api:TrustedProxies (addresses or CIDR ranges, comma-separated) are believed, so network allow-lists, rate
 // limits and the audit trail see the real client; with none configured the connection's own address is used.
@@ -147,6 +147,7 @@ api.MapAuditEndpoints();
 api.MapOrganizationEndpoints();
 api.MapNumberingEndpoints();
 api.MapPlatformEndpoints();
+api.MapExportEndpoints();
 api.MapIntegrationEndpoints();
 api.MapCollaborationEndpoints();
 api.MapAccountingEndpoints();

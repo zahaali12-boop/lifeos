@@ -591,6 +591,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/exports/table": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Writes the rows a list shows as CSV (UTF-8) or XLSX; checks the role may export the document type and records the export in the audit trail */
+        post: operations["postExportsTable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles": {
         parameters: {
             query?: never;
@@ -14102,6 +14119,23 @@ export interface components {
             receivedAt: string;
             lines: components["schemas"]["QuoteLineSummary"][];
         };
+        /** @description A column of a table export: its header and how its cells are typed (text, number or date). */
+        TableExportColumn: {
+            header: string;
+            type?: null | string;
+        };
+        /**
+         * @description A table the web client already shows (a list's visible columns and rows, in its order), to be written as CSV or XLSX.
+         *     `documentType` names the kind of record listed, so a role that may not export that kind is refused.
+         */
+        TableExportRequest: {
+            format: string;
+            name: null | string;
+            documentType: null | string;
+            rightToLeft: boolean;
+            columns: components["schemas"]["TableExportColumn"][];
+            rows: unknown[][];
+        };
         TaxRegistrationSummary: {
             /** Format: uuid */
             id: string;
@@ -15422,6 +15456,28 @@ export interface operations {
         responses: {
             /** @description No Content */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postExportsTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TableExportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

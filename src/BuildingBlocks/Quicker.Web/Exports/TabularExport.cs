@@ -92,10 +92,18 @@ public static class TabularExport
             DateTimeOffset at => at.ToString("O", CultureInfo.InvariantCulture),
             bool b => b ? "true" : "false",
             Guid g => g.ToString("D"),
-            _ => value.ToString() ?? string.Empty,
+            string str => Inert(str),
+            _ => Inert(value.ToString() ?? string.Empty),
         };
         return text.IndexOfAny([',', '"', '\n', '\r']) >= 0 ? "\"" + text.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"" : text;
     }
+
+    /// <summary>
+    /// Text a spreadsheet would read as a formula (=, +, -, @, tab or carriage return first) gets a leading apostrophe,
+    /// so a name typed as "=HYPERLINK(...)" is shown, not run, when the CSV is opened (CSV injection). Numbers are written
+    /// from their values and are unaffected; XLSX cells are typed as text and need no guard.
+    /// </summary>
+    private static string Inert(string text) => text.Length > 0 && text[0] is '=' or '+' or '-' or '@' or '\t' or '\r' ? "'" + text : text;
 
     private static string Sheet(IReadOnlyList<ExportColumn> columns, IEnumerable<IReadOnlyList<object?>> rows, bool rightToLeft)
     {

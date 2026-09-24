@@ -1014,6 +1014,30 @@
         }
       }
     },
+    "/api/v1/exports/table": {
+      "post": {
+        "tags": [
+          "Exports"
+        ],
+        "summary": "Writes the rows a list shows as CSV (UTF-8) or XLSX; checks the role may export the document type and records the export in the audit trail",
+        "operationId": "postExportsTable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/roles": {
       "get": {
         "tags": [
@@ -46218,6 +46242,68 @@
           }
         }
       },
+      "TableExportColumn": {
+        "required": [
+          "header"
+        ],
+        "type": "object",
+        "properties": {
+          "header": {
+            "type": "string"
+          },
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A column of a table export: its header and how its cells are typed (text, number or date)."
+      },
+      "TableExportRequest": {
+        "required": [
+          "format",
+          "name",
+          "documentType",
+          "rightToLeft",
+          "columns",
+          "rows"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "documentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rightToLeft": {
+            "type": "boolean"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableExportColumn"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          }
+        },
+        "description": "A table the web client already shows (a list's visible columns and rows, in its order), to be written as CSV or XLSX.\n`documentType` names the kind of record listed, so a role that may not export that kind is refused."
+      },
       "TaxRegistrationSummary": {
         "required": [
           "id",
@@ -47961,6 +48047,9 @@
     },
     {
       "name": "Members"
+    },
+    {
+      "name": "Exports"
     },
     {
       "name": "Roles"

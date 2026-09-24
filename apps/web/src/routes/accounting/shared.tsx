@@ -81,20 +81,7 @@ export function StatusBadge({ status, label }: { status: string; label: string }
   return <Badge tone={tones[status] ?? "neutral"}>{label}</Badge>;
 }
 
-/** Saves a download from the API (the bearer token travels with the client, so a plain link would not do). */
-export function saveFile(blob: Blob, headers: Headers, fallbackName: string): void {
-  const disposition = headers.get("content-disposition") ?? "";
-  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
-  const name = match?.[1] ? decodeURIComponent(match[1]) : fallbackName;
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = name;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
+export { saveFile } from "../../lib/download";
 
 /** Query pairs beyond the typed ones (dimension filters `d.CODE=valueId`) merged without losing the typed shape. */
 export function withFilters<T extends object>(base: T, filters: Record<string, string>): T {

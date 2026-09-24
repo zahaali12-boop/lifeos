@@ -168,7 +168,13 @@
     "selectAll": "تحديد كل الصفوف",
     "selectRow": "تحديد الصف",
     "selected": "{count, plural, zero {لا شيء محدد} one {عنصر واحد محدد} two {عنصران محددان} few {# عناصر محددة} many {# عنصراً محدداً} other {# عنصر محدد}}",
-    "rowCount": "{count, plural, zero {لا صفوف} one {صف واحد} two {صفان} few {# صفوف} many {# صفاً} other {# صف}}"
+    "rowCount": "{count, plural, zero {لا صفوف} one {صف واحد} two {صفان} few {# صفوف} many {# صفاً} other {# صف}}",
+    "export": "تصدير",
+    "exportAll": "{count, plural, zero {لا صفوف} one {الصف المعروض} two {الصفان المعروضان} few {الصفوف الـ# المعروضة} many {الصفوف الـ# المعروضة} other {الصفوف الـ# المعروضة}}",
+    "exportSelected": "{count, plural, zero {لا صفوف محددة} one {الصف المحدد} two {الصفان المحددان} few {الصفوف الـ# المحددة} many {الصفوف الـ# المحددة} other {الصفوف الـ# المحددة}}",
+    "exportXlsx": "مصنف Excel ‏(.xlsx)",
+    "exportCsv": "ملف CSV ‏(.csv)",
+    "exportFailed": "تعذّر التصدير؛ حاول مرة أخرى."
   },
   "companies": {
     "policies": {

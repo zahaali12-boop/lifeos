@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -62,6 +63,14 @@ test("English: workspace, custom field, company, member invitation, announcement
   await page.getByTestId("save-company").click();
   await expect(page.getByRole("grid")).toContainText("MAIN");
   await expectAccessible(page);
+
+  // The list exports what it shows: its visible columns, in its order, as CSV (UTF-8 with a byte order mark).
+  await page.getByTestId("grid-export").click();
+  const [csv] = await Promise.all([page.waitForEvent("download"), page.getByTestId("grid-export-csv").click()]);
+  expect(csv.suggestedFilename()).toMatch(/^Companies-\d{8}-\d{4}\.csv$/);
+  const csvText = readFileSync(await csv.path(), "utf8");
+  expect(csvText.startsWith("\uFEFFCode,Legal name,Country,Functional currency,Time zone,Status,Updated\r\n")).toBeTruthy();
+  expect(csvText).toContain("\r\nMAIN,Main Trading Co.,");
 
   // A branch for the company; it becomes a value of the branch dimension.
   await page.getByRole("grid").getByText("MAIN", { exact: true }).dblclick();
@@ -159,6 +168,11 @@ test("Arabic: the same journey renders right-to-left and stays accessible", asyn
   await page.getByTestId("save-company").click();
   await expect(page.getByRole("grid")).toContainText("شركة الاختبار");
   await expectAccessible(page);
+  // An Excel export of the Arabic list: a workbook whose sheet reads right to left.
+  await page.getByTestId("grid-export").click();
+  const [xlsx] = await Promise.all([page.waitForEvent("download"), page.getByTestId("grid-export-xlsx").click()]);
+  expect(xlsx.suggestedFilename()).toMatch(/\.xlsx$/);
+  expect(readFileSync(await xlsx.path()).subarray(0, 2).toString("latin1")).toBe("PK");
   await nav(page, "سلاسل الترقيم");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("سلاسل الترقيم");
   await expectAccessible(page);

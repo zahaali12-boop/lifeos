@@ -1,11 +1,25 @@
 import { Button, Checkbox, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, EmptyState, Spinner, cn } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable, type ColumnDef, type SortingState, type VisibilityState } from "@tanstack/react-table";
+import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable, type Column, type ColumnDef, type RowData, type SortingState, type VisibilityState } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, Bookmark, Columns3 } from "lucide-react";
+import { ArrowDown, ArrowUp, Bookmark, Columns3, Download } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
+import { saveFile } from "../lib/download";
+import { localized } from "../lib/format";
+import { toFormProblem } from "../lib/problem";
+
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the generic parameters must match the library's declaration
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** How an export types the column's cells; inferred from the values when not given. */
+    exportType?: "text" | "number" | "date";
+  }
+}
+
+type ExportFormat = "csv" | "xlsx";
+type ExportValue = string | number | null;
 
 export interface DataGridProps<T> {
   columns: ColumnDef<T, unknown>[];
@@ -24,8 +38,51 @@ export interface DataGridProps<T> {
   emptyAction?: ReactNode;
   /** Pixel height of the scrolling body; the grid virtualizes rows so 100k rows render smoothly. */
   height?: number;
-  /** Translation key used for the accessible name of the grid. */
+  /** Translation key used for the accessible name of the grid (and the export's file name). */
   label: string;
+  /** The kind of record listed, checked against the role's export rules; defaults to the saved-views entity type. */
+  documentType?: string;
+  /** Hides the export menu (lists whose rows are not records, or that export through a report of their own). */
+  exportable?: boolean;
+}
+
+/** A cell's value as a spreadsheet should hold it: numbers stay numbers, texts in the reader's language, lists joined. */
+function exportValue(value: unknown, yes: string, no: string): ExportValue {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "number" || typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "boolean") {
+    return value ? yes : no;
+  }
+  if (Array.isArray(value)) {
+    return value.map((v) => exportValue(v, yes, no)).filter((v) => v !== null).join(", ");
+  }
+  if (typeof value === "object") {
+    const text = value as Record<string, unknown>;
+    if (typeof text.en === "string" || typeof text.ar === "string") {
+      return localized(text as Record<string, string>);
+    }
+  }
+  return JSON.stringify(value);
+}
+
+function inferType(values: ExportValue[]): "text" | "number" | "date" {
+  const present = values.filter((v) => v !== null && v !== "");
+  if (present.length === 0) {
+    return "text";
+  }
+  if (present.every((v) => typeof v === "number")) {
+    return "number";
+  }
+  return present.every((v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) ? "date" : "text";
+}
+
+function headerText<T>(column: Column<T>): string {
+  const header = column.columnDef.header;
+  return typeof header === "string" && header.trim() ? header : column.id;
 }
 
 interface ViewDefinition {
@@ -39,7 +96,7 @@ const ROW_HEIGHT = 40;
  * Data grid v1 (ADR-0013): TanStack Table for state, TanStack Virtual for rows, column chooser, sortable headers,
  * multi-select with bulk actions, saved views (private or shared) and j/k/Enter keyboard navigation.
  */
-export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selectable = false, bulkActions, toolbar, loading = false, emptyTitle, emptyDescription, emptyAction, height = 560, label }: DataGridProps<T>) {
+export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selectable = false, bulkActions, toolbar, loading = false, emptyTitle, emptyDescription, emptyAction, height = 560, label, documentType, exportable = true }: DataGridProps<T>) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -125,6 +182,28 @@ export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selecta
 
   const clearSelection = useCallback(() => { setSelected(new Set()); }, []);
 
+  // Export what the grid shows: its visible data columns in their order, the selected rows (or all) in the current sort.
+  const exportTable = useMutation({
+    mutationFn: async (format: ExportFormat) => {
+      const exported = table.getVisibleLeafColumns().filter((column) => column.id !== "__select" && Boolean(column.accessorFn));
+      const source = selected.size > 0 ? rows.filter((row) => selected.has(rowKey(row.original))) : rows;
+      const values = source.map((row) => exported.map((column) => exportValue(row.getValue(column.id), t("common.yes"), t("common.no"))));
+      const name = t(label);
+      const result = await api.POST("/api/v1/exports/table", {
+        body: {
+          format,
+          name,
+          documentType: documentType ?? entityType ?? null,
+          rightToLeft: document.documentElement.dir === "rtl",
+          columns: exported.map((column, index) => ({ header: headerText(column), type: column.columnDef.meta?.exportType ?? inferType(values.map((row) => row[index] ?? null)) })),
+          rows: values,
+        },
+        parseAs: "blob",
+      });
+      saveFile(unwrap(result), result.response.headers, `${name}.${format}`);
+    },
+  });
+
   useEffect(() => {
     if (activeIndex >= rows.length) {
       setActiveIndex(Math.max(0, rows.length - 1));
@@ -174,6 +253,25 @@ export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selecta
           </div>
         ) : null}
         <div className="ms-auto flex items-center gap-1">
+          {exportable && rows.length > 0 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="sm" loading={exportTable.isPending} aria-label={t("grid.export")} data-testid="grid-export">
+                  <Download aria-hidden="true" />
+                  <span className="hidden sm:inline">{t("grid.export")}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{selected.size > 0 ? t("grid.exportSelected", { count: selected.size }) : t("grid.exportAll", { count: rows.length })}</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={() => { exportTable.mutate("xlsx"); }} data-testid="grid-export-xlsx">
+                  {t("grid.exportXlsx")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => { exportTable.mutate("csv"); }} data-testid="grid-export-csv">
+                  {t("grid.exportCsv")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
           {entityType ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -318,6 +416,11 @@ export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selecta
       <p className="text-xs text-fg-subtle" aria-live="polite">
         {t("grid.rowCount", { count: rows.length })}
       </p>
+      {exportTable.isError ? (
+        <p className="text-xs text-danger" role="alert" data-testid="grid-export-error">
+          {toFormProblem(exportTable.error, t("grid.exportFailed")).message}
+        </p>
+      ) : null}
     </div>
   );
 }

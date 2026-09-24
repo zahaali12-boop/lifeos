@@ -103,6 +103,10 @@ jobs:
     name: Browser journeys (EN and AR, axe)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Downloads named in Arabic need a UTF-8 locale, or the browser saves them as "download".
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     services:
       postgres:
         image: postgres:17-alpine

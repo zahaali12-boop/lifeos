@@ -168,7 +168,13 @@
     "selectAll": "Select all rows",
     "selectRow": "Select row",
     "selected": "{count, plural, one {# selected} other {# selected}}",
-    "rowCount": "{count, plural, =0 {No rows} one {# row} other {# rows}}"
+    "rowCount": "{count, plural, =0 {No rows} one {# row} other {# rows}}",
+    "export": "Export",
+    "exportAll": "{count, plural, one {The # row shown} other {All # rows shown}}",
+    "exportSelected": "{count, plural, one {The # selected row} other {The # selected rows}}",
+    "exportXlsx": "Excel workbook (.xlsx)",
+    "exportCsv": "CSV file (.csv)",
+    "exportFailed": "The export failed; try again."
   },
   "companies": {
     "policies": {
