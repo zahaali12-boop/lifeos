@@ -2276,6 +2276,20 @@
     "emptyTermsDescription": "Create the first entry."
   },
   "payables": {
+    "statement": {
+      "title": "Statement",
+      "chooseSupplier": "Choose a supplier to see their statement.",
+      "empty": "Nothing was booked for this supplier up to the end of the period.",
+      "opening": "Owed at the start",
+      "increases": "Invoiced",
+      "decreases": "Credited and paid",
+      "closing": "Owed at the end",
+      "date": "Date",
+      "amount": "Amount",
+      "balance": "Balance",
+      "broughtForward": "Brought forward",
+      "reversal": "Reversal"
+    },
     "description": "What is owed per supplier: invoice instalments, debit notes, advances and payments on account; aged at any date from the items and their settlements; held, applied and unapplied.",
     "openItems": "Open items",
     "aging": "Aging",

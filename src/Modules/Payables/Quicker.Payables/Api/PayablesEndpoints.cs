@@ -21,6 +21,9 @@ public static class PayablesEndpoints
         items.MapGet("/aging", async (Guid companyId, DateOnly? asOf, Guid? partnerId, PayablesService service, CancellationToken ct) => ApiProblems.Ok(await service.AgingAsync(companyId, asOf, partnerId, ct)))
             .RequirePermission(PayablesPermissions.OpenItemRead)
             .WithSummary("Aging at any date, per supplier, in the company's currency: computed from the items and the settlements dated up to it.");
+        payables.MapGet("/statement", async (Guid companyId, Guid partnerId, DateOnly? from, DateOnly? to, PayablesService service, CancellationToken ct) => ApiProblems.Ok(await service.StatementAsync(companyId, partnerId, from, to, ct)))
+            .RequirePermission(PayablesPermissions.OpenItemRead)
+            .WithSummary("A supplier's statement over a period, per document currency: opening balance, documents and reversals with a running balance, closing balance.");
         items.MapGet("/{itemId:guid}", async (Guid itemId, PayablesService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(itemId, ct)))
             .RequirePermission(PayablesPermissions.OpenItemRead);
         items.MapPost("/{itemId:guid}/hold", async (Guid itemId, HoldOpenItemRequest request, PayablesService service, CancellationToken ct) => ApiProblems.Ok(await service.HoldAsync(itemId, request, ct)))

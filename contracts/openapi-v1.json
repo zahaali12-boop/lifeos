@@ -16683,6 +16683,63 @@
         }
       }
     },
+    "/api/v1/payables/statement": {
+      "get": {
+        "tags": [
+          "Payables"
+        ],
+        "summary": "A supplier's statement over a period, per document currency: opening balance, documents and reversals with a running balance, closing balance.",
+        "operationId": "getPayablesStatement",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierStatement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payables/settlements": {
       "get": {
         "tags": [
@@ -45918,6 +45975,128 @@
           }
         }
       },
+      "StatementCurrency": {
+        "required": [
+          "currency",
+          "opening",
+          "increases",
+          "decreases",
+          "closing",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "opening": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "increases": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "decreases": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closing": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementLine"
+            }
+          }
+        },
+        "description": "The account in one of the documents' currencies: what was owed before the period, the period's movements and what is owed at its end."
+      },
+      "StatementLine": {
+        "required": [
+          "date",
+          "kind",
+          "documentType",
+          "documentId",
+          "documentNumber",
+          "supplierReference",
+          "dueDate",
+          "reversal",
+          "amount",
+          "balance"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "supplierReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reversal": {
+            "type": "boolean"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "balance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One movement on a supplier's account: a document booked (what we owe goes up for an invoice, down for a debit note or a payment) or its reversal."
+      },
       "StatutoryAccount": {
         "required": [
           "code",
@@ -47279,6 +47458,51 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/QuoteLineSummary"
+            }
+          }
+        }
+      },
+      "SupplierStatement": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "from",
+          "to",
+          "currencies"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "currencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementCurrency"
             }
           }
         }

@@ -5845,6 +5845,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payables/statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A supplier's statement over a period, per document currency: opening balance, documents and reversals with a running balance, closing balance. */
+        get: operations["getPayablesStatement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payables/settlements": {
         parameters: {
             query?: never;
@@ -14015,6 +14032,37 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        /** @description The account in one of the documents' currencies: what was owed before the period, the period's movements and what is owed at its end. */
+        StatementCurrency: {
+            currency: string;
+            /** Format: double */
+            opening: number | string;
+            /** Format: double */
+            increases: number | string;
+            /** Format: double */
+            decreases: number | string;
+            /** Format: double */
+            closing: number | string;
+            lines: components["schemas"]["StatementLine"][];
+        };
+        /** @description One movement on a supplier's account: a document booked (what we owe goes up for an invoice, down for a debit note or a payment) or its reversal. */
+        StatementLine: {
+            /** Format: date */
+            date: string;
+            kind: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            documentNumber: string;
+            supplierReference: null | string;
+            /** Format: date */
+            dueDate: null | string;
+            reversal: boolean;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            balance: number | string;
+        };
         StatutoryAccount: {
             code: string;
             /** Format: int32 */
@@ -14385,6 +14433,21 @@ export interface components {
             /** Format: date-time */
             receivedAt: string;
             lines: components["schemas"]["QuoteLineSummary"][];
+        };
+        SupplierStatement: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            currencies: components["schemas"]["StatementCurrency"][];
         };
         /** @description A column of a table export: its header and how its cells are typed (text, number or date). */
         TableExportColumn: {
@@ -25692,6 +25755,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpenItemSummary"];
+                };
+            };
+        };
+    };
+    getPayablesStatement: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierStatement"];
                 };
             };
         };

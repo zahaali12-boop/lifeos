@@ -13,6 +13,14 @@ public sealed record AgingTotals(decimal NotDue, decimal Days1To30, decimal Days
 
 public sealed record AgingReport(Guid CompanyId, DateOnly AsOf, string FunctionalCurrency, IReadOnlyList<AgingRow> Rows, AgingTotals Totals);
 
+/// <summary>One movement on a supplier's account: a document booked (what we owe goes up for an invoice, down for a debit note or a payment) or its reversal.</summary>
+public sealed record StatementLine(DateOnly Date, string Kind, string DocumentType, Guid DocumentId, string DocumentNumber, string? SupplierReference, DateOnly? DueDate, bool Reversal, decimal Amount, decimal Balance);
+
+/// <summary>The account in one of the documents' currencies: what was owed before the period, the period's movements and what is owed at its end.</summary>
+public sealed record StatementCurrency(string Currency, decimal Opening, decimal Increases, decimal Decreases, decimal Closing, IReadOnlyList<StatementLine> Lines);
+
+public sealed record SupplierStatement(Guid CompanyId, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, DateOnly From, DateOnly To, IReadOnlyList<StatementCurrency> Currencies);
+
 /// <summary>Applies a debit note, a payment on account or an advance to an invoice open item of the same supplier and currency.</summary>
 public sealed record ApplyRequest(Guid SettlingItemId, Guid SettledItemId, decimal Amount, DateOnly? SettlementDate = null, string? Reason = null);
 

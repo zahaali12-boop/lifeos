@@ -321,6 +321,62 @@ public sealed class PayablesService(PayablesDbContext db, ICompanyDirectory comp
         return new AgingReport(companyId, asOf, company.FunctionalCurrency.Code, rows, totals);
     }
 
+    /// <summary>
+    /// A supplier's statement over a period, per document currency: the balance owed before it, every document booked in
+    /// it (invoices raise it; debit notes, payments and advances lower it) and every reversal in it (the document's
+    /// amount taken back on the day it was reversed), with the running balance. Settlements only match documents
+    /// against each other, so they move nothing here; the closing balance is what the open items still hold.
+    /// </summary>
+    public async Task<Result<SupplierStatement>> StatementAsync(Guid companyId, Guid partnerId, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken)
+    {
+        if (principal.Required.ScopesFor(PayablesPermissions.OpenItemRead) is not { } scopes || !scopes.AllowsCompany(companyId))
+        {
+            return Error.Forbidden("statement.company_forbidden", "You may not read this company's payables.").WithWhy(("companyId", companyId));
+        }
+
+        var company = await companies.FindAsync(new CompanyId(companyId), cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", companyId);
+        }
+
+        var partner = (await PartnersAsync([partnerId], cancellationToken)).GetValueOrDefault(partnerId);
+        if (partner is null)
+        {
+            return Error.NotFound("partner", partnerId);
+        }
+
+        var to = toDate ?? clock.TodayIn(company.TimeZone);
+        var from = fromDate ?? new DateOnly(to.Year, to.Month, 1);
+        if (to < from)
+        {
+            return Error.Validation("statement.period_invalid", "The period ends on or after it starts.").WithWhy(("from", from), ("to", to));
+        }
+
+        var items = await db.OpenItems.AsNoTracking().Where(i => i.CompanyId == companyId && i.PartnerId == partnerId && i.PostingDate <= to).ToListAsync(cancellationToken);
+        var movements = items.Select(static i => (Date: i.PostingDate, Item: i, Reversal: false))
+            .Concat(items.Where(i => i.ReversedOn is { } r && r <= to).Select(static i => (Date: i.ReversedOn!.Value, Item: i, Reversal: true)))
+            .ToList();
+        var currencies = new List<StatementCurrency>();
+        foreach (var currency in movements.GroupBy(static m => m.Item.Currency, StringComparer.Ordinal).OrderBy(static g => g.Key, StringComparer.Ordinal))
+        {
+            decimal Signed((DateOnly Date, Domain.ApOpenItem Item, bool Reversal) m) => m.Reversal ? -m.Item.OriginalTc : m.Item.OriginalTc;
+            var opening = currency.Where(m => m.Date < from).Sum(Signed);
+            var balance = opening;
+            var lines = new List<StatementLine>();
+            foreach (var m in currency.Where(m => m.Date >= from).OrderBy(static m => m.Date).ThenBy(static m => m.Reversal).ThenBy(static m => m.Item.CreatedAt).ThenBy(static m => m.Item.Id))
+            {
+                var amount = Signed(m);
+                balance += amount;
+                lines.Add(new StatementLine(m.Date, m.Item.Kind, m.Item.DocumentType, m.Item.DocumentId, m.Item.DocumentNumber, m.Item.SupplierReference, m.Reversal ? null : m.Item.DueDate, m.Reversal, amount, balance));
+            }
+
+            currencies.Add(new StatementCurrency(currency.Key, opening, lines.Where(static l => l.Amount > 0m).Sum(static l => l.Amount), -lines.Where(static l => l.Amount < 0m).Sum(static l => l.Amount), balance, lines));
+        }
+
+        return new SupplierStatement(companyId, partnerId, partner.Code, partner.LegalName.Values, from, to, currencies);
+    }
+
     public async Task<Result<OpenItemSummary>> HoldAsync(Guid id, HoldOpenItemRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);

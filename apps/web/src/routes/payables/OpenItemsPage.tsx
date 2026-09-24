@@ -12,6 +12,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, useSuppliers } from "../purchasing/shared";
 import { ItemStatus, kindLabel, useOpenItems, type OpenItemRow } from "./shared";
+import { SupplierStatement } from "./SupplierStatement";
 
 /** Payable open items (roadmap 4.7): what is owed per supplier, aged at any date from the items and their settlements; holds; credits, advances and payments on account applied to invoices. */
 export function OpenItemsPage() {
@@ -22,6 +23,7 @@ export function OpenItemsPage() {
   const [status, setStatus] = useState("live");
   const [tab, setTab] = useState("items");
   const [asOf, setAsOf] = useState(today());
+  const [statementFrom, setStatementFrom] = useState(`${today().slice(0, 7)}-01`);
   const [openId, setOpenId] = useState<string | null>(null);
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [hold, setHold] = useState<string | null>(null);
@@ -103,16 +105,26 @@ export function OpenItemsPage() {
               ))}
             </SelectField>
           </Field>
+        ) : tab === "statement" ? (
+          <>
+            <Field label={t("purchasing.analysis.from")}>
+              <TextField type="date" value={statementFrom} onChange={(e) => { setStatementFrom(e.target.value); }} dir="ltr" data-testid="statement-from" />
+            </Field>
+            <Field label={t("purchasing.analysis.to")}>
+              <TextField type="date" value={asOf} onChange={(e) => { setAsOf(e.target.value); }} dir="ltr" data-testid="statement-to" />
+            </Field>
+          </>
         ) : (
           <Field label={t("payables.asOf")}>
             <TextField type="date" value={asOf} onChange={(e) => { setAsOf(e.target.value); }} dir="ltr" data-testid="aging-as-of" />
           </Field>
         )}
       </div>
-      <Tabs tabs={[{ id: "items", label: t("payables.openItems"), testId: "tab-items" }, { id: "aging", label: t("payables.aging"), testId: "tab-aging" }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ id: "items", label: t("payables.openItems"), testId: "tab-items" }, { id: "aging", label: t("payables.aging"), testId: "tab-aging" }, { id: "statement", label: t("payables.statement.title"), testId: "tab-statement" }]} value={tab} onChange={setTab} />
+      {tab === "statement" ? <SupplierStatement companyId={companyId} partnerId={partnerId} from={statementFrom} to={asOf} /> : null}
       {tab === "items" ? (
         <DataGrid<OpenItemRow> label="nav.payables" columns={columns} data={list.data ?? []} rowKey={(row) => row.item.id} loading={list.isPending && Boolean(companyId)} emptyTitle={t("payables.emptyItems")} emptyDescription={t("payables.emptyItemsDescription")} onOpen={(row) => { setProblem(null); setHold(null); setApply(null); setOpenId(row.item.id); }} />
-      ) : (
+      ) : tab === "aging" ? (
         <div className="mt-3" data-testid="aging-report">
           {aging.data ? (
             <Table>
@@ -155,7 +167,7 @@ export function OpenItemsPage() {
             </Table>
           ) : <p className="text-sm text-fg-muted">{companyId ? t("common.loading") : t("payables.chooseCompany")}</p>}
         </div>
-      )}
+      ) : null}
 
       <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); } }}>
         <DialogContent closeLabel={t("common.close")} className="max-w-3xl">

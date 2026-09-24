@@ -134,6 +134,15 @@ test("English: an invoice paid in part, the remainder on account applied, the re
   await expect(page.getByTestId("aging-total")).toContainText("3,000");
   await expectAccessible(page);
 
+  // Alpha's statement ends at the same 3 000: the invoice, the payment and the payment on account on the way.
+  await page.getByTestId("tab-statement").click();
+  await expect(page.getByTestId("statement-choose")).toBeVisible();
+  await page.getByTestId("supplier-filter").selectOption({ label: "ALPHA · Alpha Supplies" });
+  await page.getByTestId("statement-from").fill("2026-01-01");
+  await expect(page.getByTestId("statement-closing")).toContainText("3,000");
+  await expect(page.getByTestId("statement-line").first()).toContainText("PI-2026-00001");
+  await expectAccessible(page);
+
   // A proposal for what is left, approved and drafted into a payment.
   await nav(page, "Payment proposals");
   await expect(page.getByText("No proposals yet")).toBeVisible();

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using Dapper;
 using Npgsql;
 using Quicker.Identity.TestSupport;
@@ -29,6 +30,16 @@ public sealed class PayablesTests(ApiHostFixture host)
         return new Setup(ws, owner, companyId, supplier, other);
     }
 
+    private async Task<HttpClient> InviteAsync(Setup s, string roleCode, params string[] grants)
+    {
+        var role = await s.Owner.PostAsync("/api/v1/roles", new { code = roleCode, name = Name(roleCode, roleCode), description = "", grants });
+        var email = $"{roleCode}-{s.Ws.Slug}@example.test";
+        await s.Owner.PostAsync("/api/v1/users/invite", new { email, displayName = roleCode, roleIds = new[] { role.GetProperty("id").GetGuid() } });
+        var token = Api.Emails.LastTo(email).ShouldNotBeNull().TextBody.Split("token=")[1].Trim();
+        var accepted = await (await Api.Client.PostAsJsonAsync("/api/v1/auth/invitations/accept", new { token, password = "member-passphrase-long-enough" }, ApiFixture.Json)).ReadJsonAsync();
+        return Api.ClientFor(accepted.GetProperty("accessToken").GetString()!);
+    }
+
     private static async Task<Guid> InvoiceAsync(Setup s, Guid partner, string reference, string date, decimal amount)
     {
         var invoice = await s.Owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = partner, kind = "expense", supplierInvoiceNumber = reference, documentDate = date, lines = new[] { new { kind = "expense", quantity = 1m, unitPrice = amount, description = "Rent" } } });
@@ -43,6 +54,51 @@ public sealed class PayablesTests(ApiHostFixture host)
         await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
         await db.OpenAsync(TestContext.Current.CancellationToken);
         return await db.ExecuteScalarAsync<decimal>("SELECT coalesce(sum(l.credit_fc - l.debit_fc), 0) FROM app.gl_journal_lines l WHERE l.tenant_id = @t AND l.company_id = @c AND l.account_role = 'AP' AND l.posting_date <= @d::date", new { t = s.Ws.TenantId, c = s.CompanyId, d = asOf });
+    }
+
+    [Fact]
+    public async Task A_supplier_statement_carries_the_balance_forward_lists_documents_and_reversals_and_ends_at_what_the_open_items_hold()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await InvoiceAsync(s, s.Supplier, "A-08", "2026-08-01", 300_000m);
+        await InvoiceAsync(s, s.Supplier, "A-09", "2026-09-10", 120_000m);
+        var note = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "debit_note", supplierInvoiceNumber = "CN-1", documentDate = "2026-09-12", lines = new[] { new { kind = "expense", quantity = 1m, unitPrice = 20_000m, description = "Rent overcharged" } } });
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{note.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{note.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        var wrong = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "expense", supplierInvoiceNumber = "A-WRONG", documentDate = "2026-09-15", lines = new[] { new { kind = "expense", quantity = 1m, unitPrice = 50_000m, description = "Billed twice" } } });
+        var wrongId = wrong.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{wrongId}/submit", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{wrongId}/post", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{wrongId}/reverse", new { reason = "Billed twice" }, HttpStatusCode.OK);
+        await InvoiceAsync(s, s.Other, "B-09", "2026-09-20", 80_000m);
+
+        // September for Alpha: 300 000 owed from August; the September invoice, the debit note, the wrong invoice and its reversal.
+        var statement = await owner.GetOkAsync($"/api/v1/payables/statement?companyId={s.CompanyId}&partnerId={s.Supplier}&from=2026-09-01&to=2026-09-30");
+        statement.GetProperty("partnerCode").GetString().ShouldBe("SUP-A");
+        var iqd = statement.GetProperty("currencies").Only();
+        (iqd.GetProperty("currency").GetString(), iqd.GetProperty("opening").GetDecimal(), iqd.GetProperty("increases").GetDecimal(), iqd.GetProperty("decreases").GetDecimal(), iqd.GetProperty("closing").GetDecimal()).ShouldBe(("IQD", 300_000m, 170_000m, 70_000m, 400_000m));
+        var lines = iqd.GetProperty("lines").EnumerateArray().Select(static l => (l.GetProperty("kind").GetString(), l.GetProperty("reversal").GetBoolean(), l.GetProperty("amount").GetDecimal(), l.GetProperty("balance").GetDecimal())).ToList();
+        lines.ShouldBe([("invoice", false, 120_000m, 420_000m), ("debit_note", false, -20_000m, 400_000m), ("invoice", false, 50_000m, 450_000m), ("invoice", true, -50_000m, 400_000m)]);
+        iqd.GetProperty("lines")[0].GetProperty("supplierReference").GetString().ShouldBe("A-09");
+
+        // The closing balance is what Alpha's open items still hold.
+        var held = (await owner.GetOkAsync($"/api/v1/payables/open-items?companyId={s.CompanyId}&partnerId={s.Supplier}")).EnumerateArray()
+            .Where(static i => i.GetProperty("item").GetProperty("status").GetString() != "reversed").Sum(static i => i.GetProperty("item").GetProperty("remainingTc").GetDecimal());
+        held.ShouldBe(400_000m);
+
+        // By default the current month (today is the 22nd); August alone shows only the first invoice.
+        var current = await owner.GetOkAsync($"/api/v1/payables/statement?companyId={s.CompanyId}&partnerId={s.Supplier}");
+        (current.GetProperty("from").GetString(), current.GetProperty("to").GetString()).ShouldBe(("2026-09-01", "2026-09-22"));
+        var august = (await owner.GetOkAsync($"/api/v1/payables/statement?companyId={s.CompanyId}&partnerId={s.Supplier}&from=2026-08-01&to=2026-08-31")).GetProperty("currencies").Only();
+        (august.GetProperty("opening").GetDecimal(), august.GetProperty("closing").GetDecimal(), august.GetProperty("lines").GetArrayLength()).ShouldBe((0m, 300_000m, 1));
+        (await owner.GetOkAsync($"/api/v1/payables/statement?companyId={s.CompanyId}&partnerId={s.Supplier}&from=2026-07-01&to=2026-07-31")).GetProperty("currencies").GetArrayLength().ShouldBe(0);
+        (await owner.GetAsync($"/api/v1/payables/statement?companyId={s.CompanyId}&partnerId={s.Supplier}&from=2026-09-30&to=2026-09-01")).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+
+        // Reading it takes the permission to read open items.
+        var clerk = await InviteAsync(s, "clerk", "inventory.item.read");
+        (await clerk.GetAsync($"/api/v1/payables/statement?companyId={s.CompanyId}&partnerId={s.Supplier}")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]
