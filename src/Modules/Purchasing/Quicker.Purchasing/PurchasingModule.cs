@@ -36,6 +36,7 @@ public static class PurchasingModule
         CustomFieldHosts.Register(new CustomFieldHost(PurchaseDocumentTypes.Return, "app.pur_returns", "custom_fields"));
         services.AddModuleDbContext<PurchasingDbContext>();
         services.AddScoped<RequisitionService>();
+        services.AddScoped<DocumentFlowService>();
         services.AddScoped<RfqService>();
         services.AddScoped<BlanketAgreementService>();
         services.AddScoped<PurchaseOrderService>();

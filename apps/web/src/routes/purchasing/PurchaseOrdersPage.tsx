@@ -1,17 +1,20 @@
 import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Plus } from "lucide-react";
+import { FileText, PackageCheck, Plus } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { followOn, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
+import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, orderLineBodies, PurchaseStatus, useAgreements, useSuppliers, type LineForm, type PurchaseOrder } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 interface OrderForm {
@@ -29,11 +32,15 @@ interface OrderForm {
 
 const editable = (status: string): boolean => status === "draft" || status === "rejected";
 const changeable = (status: string): boolean => status === "approved" || status === "sent";
+const receivable = (status: string): boolean => status === "approved" || status === "sent" || status === "partially_received";
+const invoicable = (status: string): boolean => receivable(status) || status === "received";
 
 /** Purchase orders (roadmap 4.2): drafted in the supplier's currency, submitted through the workflow, sent by email, changed through revisions, cancelled or closed. */
 export function PurchaseOrdersPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const can = useCan();
   const { companies, companyId, setCompanyId } = useCompanyContext();
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
@@ -212,6 +219,7 @@ export function PurchaseOrdersPage() {
                   <PurchaseStatus status={o.status} />
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="purchase_order" documentId={o.id} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("partners.supplier"), `${o.partnerCode} · ${localized(o.partnerName)}`],
@@ -285,6 +293,8 @@ export function PurchaseOrdersPage() {
                 </div>
               ) : null}
               <DialogFooter>
+                {receivable(o.status) && can("purchasing.receipt.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/receipts", search: followOn("purchase_order", o.id) }); }} data-testid="order-receive"><PackageCheck aria-hidden="true" />{t("documentFlow.receive")}</Button> : null}
+                {invoicable(o.status) && can("purchasing.invoice.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_order", o.id) }); }} data-testid="order-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
                 {editable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o); }} data-testid="edit-order">{t("common.edit")}</Button> : null}
                 {editable(o.status) ? <Button onClick={() => { act.mutate({ id: o.id, action: "submit" }); }} loading={act.isPending} data-testid="submit-order">{t("purchasing.submit")}</Button> : null}
                 {changeable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o, true); }} data-testid="change-order">{t("purchasing.changeOrder")}</Button> : null}

@@ -17473,6 +17473,46 @@
         }
       }
     },
+    "/api/v1/purchasing/document-flow/{documentType}/{documentId}": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "The purchasing documents connected to one: requisitions, requests for quotation, agreements and orders it came from; receipts, returns, landed costs and invoices that followed",
+        "operationId": "getPurchasingDocumentFlowByDocumentTypeByDocumentId",
+        "parameters": [
+          {
+            "name": "documentType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentFlow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchasing/requisitions": {
       "get": {
         "tags": [
@@ -26683,6 +26723,34 @@
           }
         }
       },
+      "DocumentFlow": {
+        "required": [
+          "documentType",
+          "documentId",
+          "documents",
+          "truncated"
+        ],
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlowDocument"
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "description": "The purchasing documents connected to one document: where it came from (requisition, request for quotation,\nblanket agreement, order) and what followed (receipts, returns, landed costs, invoices and debit notes), limited to\nwhat the member may read. bool DocumentFlow.Truncated says the chain was cut at int DocumentFlowService.MaxOrders orders."
+      },
       "DocumentLink": {
         "required": [
           "id",
@@ -27132,6 +27200,72 @@
             }
           }
         }
+      },
+      "FlowDocument": {
+        "required": [
+          "documentType",
+          "id",
+          "number",
+          "status",
+          "date",
+          "amount",
+          "currency",
+          "companyId",
+          "kind",
+          "isCurrent"
+        ],
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isCurrent": {
+            "type": "boolean"
+          }
+        },
+        "description": "One document of a purchasing flow, as the smart buttons and the flow list show it."
       },
       "ForgotPasswordRequest": {
         "required": [
@@ -27868,6 +28002,27 @@
               "null",
               "string"
             ]
+          },
+          "receiptId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "returnId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "landedCostId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         },
         "description": "What can still be invoiced for a supplier: posted receipt lines with an uninvoiced quantity and open service lines of orders."

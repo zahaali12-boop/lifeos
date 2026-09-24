@@ -13,6 +13,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, num, PurchaseStatus, useSuppliers, type LineForm, type Rfq } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type Comparison = components["schemas"]["QuoteComparison"];
@@ -192,6 +193,7 @@ export function RfqsPage() {
                   <PurchaseStatus status={r.status} />
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="purchase_rfq" documentId={r.id} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[[t("purchasing.title"), r.title ?? "—"], [t("purchasing.dueOn"), formatDate(r.dueOn) || "—"]]} />
               <Tabs tabs={[{ id: "lines", label: t("purchasing.lines"), testId: "tab-lines" }, { id: "suppliers", label: t("purchasing.suppliersInvited"), testId: "tab-suppliers" }, { id: "quotes", label: t("purchasing.quotes"), testId: "tab-quotes" }, { id: "discussion", label: t("comments.tab"), testId: "tab-discussion" }, { id: "history", label: t("history.tab"), testId: "tab-history" }]} value={tab} onChange={setTab} />

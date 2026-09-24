@@ -14,6 +14,12 @@ public static class PurchasingEndpoints
         ArgumentNullException.ThrowIfNull(api);
         var purchasing = api.MapGroup("/purchasing").WithTags("Purchasing").RequireAuthorization();
 
+        // Read permission is checked per document type and company inside: the flow shows only what the member may read.
+        purchasing.MapGet("/document-flow/{documentType}/{documentId:guid}", async (string documentType, Guid documentId, DocumentFlowService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.FlowAsync(documentType, documentId, ct)))
+            .Produces<DocumentFlow>()
+            .WithSummary("The purchasing documents connected to one: requisitions, requests for quotation, agreements and orders it came from; receipts, returns, landed costs and invoices that followed");
+
         var requisitions = purchasing.MapGroup("/requisitions");
         requisitions.MapGet("/", async (Guid? companyId, string? status, RequisitionService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
             .RequirePermission(PurchasingPermissions.RequisitionRead);

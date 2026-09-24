@@ -387,7 +387,7 @@ public sealed class LandedCostService(
                           select new { Charge = c, Doc = d }).ToListAsync(cancellationToken);
         var types = await db.ChargeTypes.AsNoTracking().ToDictionaryAsync(static t => t.Id, cancellationToken);
         return rows.Select(x => new InvoicableLine("charge", null, null, null, null, null, x.Charge.LineNo, null, types.GetValueOrDefault(x.Charge.ChargeTypeId)?.Code ?? string.Empty, types.GetValueOrDefault(x.Charge.ChargeTypeId)?.Name.Values ?? Empty(), null, string.Empty,
-            1m, 0m, 1m, x.Charge.Amount, x.Doc.Currency, x.Doc.PostingDate, x.Charge.Id, x.Doc.Number)).ToList();
+            1m, 0m, 1m, x.Charge.Amount, x.Doc.Currency, x.Doc.PostingDate, x.Charge.Id, x.Doc.Number, LandedCostId: x.Doc.Id)).ToList();
     }
 
     // ------------------------------------------------------------------ internals

@@ -14,6 +14,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useChargeTypes, useSuppliers } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type LandedCost = components["schemas"]["LandedCostSummary"];
@@ -332,6 +333,7 @@ export function LandedCostsPage() {
                   <PurchaseStatus status={d.status} />
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="landed_cost_document" documentId={d.id} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("purchasing.postingDate"), formatDate(d.postingDate)],

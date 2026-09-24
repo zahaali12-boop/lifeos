@@ -103,7 +103,7 @@ public sealed class InvoiceService(
         {
             var (item, uom) = await ItemAsync(row.Line.ItemId, row.Line.UomId, cancellationToken);
             result.Add(new InvoicableLine("receipt", row.Line.Id, row.Receipt.Number, row.OrderLine.Id, row.Order.Number, row.Order.Id, row.Line.LineNo, row.Line.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? Empty(), row.Line.UomId, uom?.UomCode ?? string.Empty,
-                row.Line.Quantity, row.Line.QtyInvoiced, row.Line.Quantity - row.Line.QtyInvoiced - row.Line.QtyReturned, row.Line.UnitPrice, row.Receipt.Currency, row.Receipt.PostingDate));
+                row.Line.Quantity, row.Line.QtyInvoiced, row.Line.Quantity - row.Line.QtyInvoiced - row.Line.QtyReturned, row.Line.UnitPrice, row.Receipt.Currency, row.Receipt.PostingDate, ReceiptId: row.Receipt.Id));
         }
 
         var orderRows = await (from l in db.OrderLines.AsNoTracking()

@@ -1,19 +1,22 @@
 import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Plus } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { FileText, Plus, Undo2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { followOn, useFollowOnSource, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
+import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordActivity } from "../RecordDiscussion";
 
 type Receipt = components["schemas"]["ReceiptSummary"];
@@ -36,6 +39,8 @@ interface ReceiptForm {
   lines: ReceiptLineForm[];
 }
 
+const receiptLine = (l: Receivable): ReceiptLineForm => ({ orderLineId: l.orderLineId, quantity: String(l.remaining), lotNumber: "", expiresOn: "", serialNumbers: "" });
+
 /** Goods receipts (roadmap 4.3): open order lines received within the supplier's tolerance, posted into stock at the expected cost against GRNI, reversed as a whole. */
 export function ReceiptsPage() {
   const { t } = useTranslation();
@@ -46,6 +51,11 @@ export function ReceiptsPage() {
   const [form, setForm] = useState<ReceiptForm | null>(null);
   const [openId, setOpenId] = useOpenRecord("/purchasing/receipts");
   const [reversal, setReversal] = useState<string | null>(null);
+  const [from, clearFrom] = useFollowOnSource("/purchasing/receipts");
+  const [pendingOrder, setPendingOrder] = useState<string | null>(null);
+  const started = useRef<string | null>(null);
+  const navigate = useNavigate();
+  const can = useCan();
   const warehouses = useWarehouses(companyId);
 
   const list = useQuery({
@@ -63,8 +73,13 @@ export function ReceiptsPage() {
     enabled: Boolean(openId),
     queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/receipts/{receiptId}", { params: { path: { receiptId: openId ?? "" } } })),
   });
+  const sourceOrder = useQuery({
+    queryKey: ["order", from?.id ?? ""],
+    enabled: from?.type === "purchase_order",
+    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/orders/{orderId}", { params: { path: { orderId: from?.id ?? "" } } })),
+  });
   const refresh = async (): Promise<void> => {
-    await Promise.all([["receipts"], ["receipt"], ["receivable"], ["orders"], ["order"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    await Promise.all([["receipts"], ["receipt"], ["receivable"], ["orders"], ["order"], ["document-flow"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
@@ -115,8 +130,36 @@ export function ReceiptsPage() {
     }
     const lines = (receivable.data ?? []).filter((l) => l.orderId === orderId);
     const only = (warehouses.data ?? []).length === 1 ? warehouses.data?.[0]?.id : undefined;
-    setForm({ ...form, orderId, warehouseId: lines[0]?.warehouseId ?? (form.warehouseId || only) ?? "", lines: lines.map((l) => ({ orderLineId: l.orderLineId, quantity: String(l.remaining), lotNumber: "", expiresOn: "", serialNumbers: "" })) });
+    setForm({ ...form, orderId, warehouseId: lines[0]?.warehouseId ?? (form.warehouseId || only) ?? "", lines: lines.map(receiptLine) });
   };
+  // "Receive" on an order: a new receipt for that order's open lines, in the order's company.
+  const source = sourceOrder.data;
+  useEffect(() => {
+    if (!from || source?.id !== from.id || started.current === from.id) {
+      return;
+    }
+    started.current = from.id;
+    clearFrom();
+    if (source.companyId !== companyId) {
+      setCompanyId(source.companyId);
+    }
+    setProblem(null);
+    setForm({ id: null, orderId: "", warehouseId: source.warehouseId ?? "", postingDate: today(), supplierDeliveryNote: "", lines: [] });
+    setPendingOrder(source.id);
+  }, [from, source, clearFrom, companyId, setCompanyId]);
+  useEffect(() => {
+    if (!pendingOrder || !form || !warehouses.data || receivable.isFetching || !receivable.isFetchedAfterMount) {
+      return;
+    }
+    setPendingOrder(null);
+    const lines = (receivable.data ?? []).filter((l) => l.orderId === pendingOrder);
+    if (lines.length > 0) {
+      const only = warehouses.data.length === 1 ? warehouses.data[0]?.id : undefined;
+      setForm({ ...form, orderId: pendingOrder, warehouseId: lines[0]?.warehouseId ?? (form.warehouseId || only) ?? "", lines: lines.map(receiptLine) });
+    } else {
+      setProblem({ message: t("documentFlow.nothingToReceive"), fields: {} });
+    }
+  }, [pendingOrder, form, warehouses.data, receivable.isFetching, receivable.isFetchedAfterMount, receivable.data, t]);
   const patchLine = (index: number, change: Partial<ReceiptLineForm>): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, ...change } : l)) }); } };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
   const orders = useMemo(() => {
@@ -235,6 +278,7 @@ export function ReceiptsPage() {
                   <PurchaseStatus status={r.status} />
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="purchase_receipt" documentId={r.id} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("nav.purchaseOrders"), r.orderNumber],
@@ -279,6 +323,8 @@ export function ReceiptsPage() {
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, orderId: r.orderId, warehouseId: r.warehouseId, postingDate: r.postingDate, supplierDeliveryNote: r.supplierDeliveryNote ?? "", lines: r.lines.map((l) => ({ orderLineId: l.orderLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", expiresOn: l.expiresOn ?? "", serialNumbers: l.serialNumbers.join(" ") })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-receipt">{t("purchasing.deleteDraft")}</Button> : null}
                 {r.status === "draft" ? <Button onClick={() => { act.mutate({ id: r.id, action: "post" }); }} loading={act.isPending} data-testid="post-receipt">{t("purchasing.postReceipt")}</Button> : null}
+                {r.status === "posted" && can("purchasing.invoice.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_receipt", r.id) }); }} data-testid="receipt-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
+                {r.status === "posted" && can("purchasing.return.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/returns", search: followOn("purchase_receipt", r.id) }); }} data-testid="receipt-return-goods"><Undo2 aria-hidden="true" />{t("documentFlow.returnGoods")}</Button> : null}
                 {r.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-receipt">{t("purchasing.reverse")}</Button> : null}
                 {reversal !== null ? <Button onClick={() => { act.mutate({ id: r.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse">{t("purchasing.reverseNow")}</Button> : null}
               </DialogFooter>

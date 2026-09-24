@@ -6096,6 +6096,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/document-flow/{documentType}/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The purchasing documents connected to one: requisitions, requests for quotation, agreements and orders it came from; receipts, returns, landed costs and invoices that followed */
+        get: operations["getPurchasingDocumentFlowByDocumentTypeByDocumentId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/requisitions": {
         parameters: {
             query?: never;
@@ -8728,6 +8745,18 @@ export interface components {
         DismissSuggestionRequest: {
             reason: string;
         };
+        /**
+         * @description The purchasing documents connected to one document: where it came from (requisition, request for quotation,
+         *     blanket agreement, order) and what followed (receipts, returns, landed costs, invoices and debit notes), limited to
+         *     what the member may read. bool DocumentFlow.Truncated says the chain was cut at int DocumentFlowService.MaxOrders orders.
+         */
+        DocumentFlow: {
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            documents: components["schemas"]["FlowDocument"][];
+            truncated: boolean;
+        };
         DocumentLink: {
             /** Format: uuid */
             id: string;
@@ -8850,6 +8879,23 @@ export interface components {
             endsOn: string;
             status: string;
             periods: components["schemas"]["FiscalPeriodSummary"][];
+        };
+        /** @description One document of a purchasing flow, as the smart buttons and the flow list show it. */
+        FlowDocument: {
+            documentType: string;
+            /** Format: uuid */
+            id: string;
+            number: string;
+            status: string;
+            /** Format: date */
+            date: null | string;
+            /** Format: double */
+            amount: null | number | string;
+            currency: null | string;
+            /** Format: uuid */
+            companyId: string;
+            kind: null | string;
+            isCurrent: boolean;
         };
         ForgotPasswordRequest: {
             email: string;
@@ -9036,6 +9082,12 @@ export interface components {
             /** Format: uuid */
             returnLineId?: null | string;
             returnNumber?: null | string;
+            /** Format: uuid */
+            receiptId?: null | string;
+            /** Format: uuid */
+            returnId?: null | string;
+            /** Format: uuid */
+            landedCostId?: null | string;
         };
         InvoiceLineSummary: {
             /** Format: uuid */
@@ -25987,6 +26039,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingDocumentFlowByDocumentTypeByDocumentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFlow"];
                 };
             };
         };

@@ -143,14 +143,14 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await page.getByTestId("tab-revisions").click();
   await expect(page.getByTestId("revision-row")).toHaveCount(1);
   await expect(page.getByTestId("revision-row")).toContainText("Two more cartons");
-  await closeDialog(page);
 
-  // A goods receipt against the order: 8 of 12 arrive, posted into stock at the expected cost.
-  await nav(page, "Goods receipts");
-  await expect(page.getByText("No goods receipts yet")).toBeVisible();
-  await page.getByTestId("new-receipt").click();
-  await page.getByTestId("receipt-order").selectOption({ index: 1 });
+  // A goods receipt started from the order with one click: the order and its open line are filled in; 8 of 12
+  // arrive, posted into stock at the expected cost.
+  await expect(page.getByTestId("order-detail").getByTestId("flow-requisitions")).toContainText("1");
+  await page.getByTestId("order-receive").click();
+  await expect(page).toHaveURL(/\/purchasing\/receipts$/);
   await expect(page.getByTestId("receipt-line")).toHaveCount(1);
+  await expect(page.getByTestId("receipt-order")).not.toHaveValue("");
   await expect(page.getByTestId("receipt-warehouse")).not.toHaveValue("");
   await page.getByTestId("receive-qty-0").fill("8");
   await page.getByTestId("receipt-delivery-note").fill("DN-1001");
@@ -161,19 +161,16 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await expect(page.getByTestId("receipt-value")).toContainText("12,000");
   await page.getByTestId("post-receipt").click();
   await expect(page.getByTestId("receipt-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await expect(page.getByTestId("flow-orders")).toContainText("1");
   await expectAccessible(page);
-  await closeDialog(page);
-  await nav(page, "Purchase orders");
-  await expect(page.getByRole("grid")).toContainText("Partially received");
 
-  // The supplier's invoice for the 8 received, at the order price: matched, approved at once, posted with one payable.
-  await nav(page, "Supplier invoices");
-  await expect(page.getByText("No supplier invoices yet")).toBeVisible();
-  await page.getByTestId("new-invoice").click();
-  await page.getByTestId("invoice-supplier").selectOption({ label: "ALPHA · Alpha Supplies" });
-  await page.getByTestId("invoice-reference").fill("A-1001");
-  await page.getByTestId("add-invoicable-TEA").click();
+  // The supplier's invoice for the 8 received, started from the receipt: the supplier and the receipt's line are
+  // filled in; at the order price it is matched, approved at once and posted with one payable.
+  await page.getByTestId("receipt-create-invoice").click();
+  await expect(page).toHaveURL(/\/purchasing\/invoices$/);
   await expect(page.getByTestId("invoice-line")).toHaveCount(1);
+  await expect(page.getByTestId("invoice-supplier")).not.toHaveValue("");
+  await page.getByTestId("invoice-reference").fill("A-1001");
   await expectAccessible(page);
   await page.getByTestId("save-invoice").click();
   await expect(page.getByTestId("invoice-detail")).toBeVisible();
@@ -222,15 +219,12 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await expect(page.getByTestId("return-detail").getByTestId("doc-status").first()).toContainText("Posted");
   await expect(page.getByTestId("return-value")).toContainText("3,060");
   await expectAccessible(page);
-  await closeDialog(page);
 
-  await nav(page, "Supplier invoices");
-  await page.getByTestId("new-invoice").click();
-  await page.getByTestId("invoice-supplier").selectOption({ label: "ALPHA · Alpha Supplies" });
-  await page.getByTestId("invoice-kind").selectOption("debit_note");
-  await page.getByTestId("invoice-reference").fill("CN-1");
-  await page.getByTestId("add-invoicable-TEA-return").click();
+  // The debit note started from the return: a debit note for the supplier with the returned line.
+  await page.getByTestId("return-create-debit-note").click();
+  await expect(page.getByTestId("invoice-kind")).toHaveValue("debit_note");
   await expect(page.getByTestId("invoice-line")).toHaveCount(1);
+  await page.getByTestId("invoice-reference").fill("CN-1");
   await page.getByTestId("save-invoice").click();
   await expect(page.getByTestId("invoice-detail")).toBeVisible();
   await expect(page.getByTestId("invoice-total")).toContainText("3,000");
@@ -245,6 +239,29 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await page.getByTestId("confirm-apply-credit").click();
   await expect(page.getByTestId("settlement-row")).toHaveCount(1);
   await expect(page.getByTestId("open-item-remaining")).toContainText("0");
+  await closeDialog(page);
+
+  // The order's smart buttons: everything that followed it, one click away. The one receipt opens directly; nothing
+  // is left to invoice on the order once its receipt is billed.
+  await nav(page, "Purchase orders");
+  await expect(page.getByRole("grid")).toContainText("Partially received");
+  await page.getByRole("grid").getByRole("row").filter({ hasText: "PO-" }).first().dblclick();
+  const flow = page.getByTestId("order-detail").getByTestId("document-flow");
+  await expect(flow.getByTestId("flow-requisitions")).toContainText("1");
+  await expect(flow.getByTestId("flow-receipts")).toContainText("1");
+  await expect(flow.getByTestId("flow-returns")).toContainText("1");
+  await expect(flow.getByTestId("flow-landed-costs")).toContainText("1");
+  await expect(flow.getByTestId("flow-invoices")).toContainText("1");
+  await expect(flow.getByTestId("flow-debit-notes")).toContainText("1");
+  await expectAccessible(page);
+  await page.getByTestId("order-create-invoice").click();
+  await expect(page.getByText("Nothing is left to invoice on this document.")).toBeVisible();
+  await closeDialog(page);
+  await nav(page, "Purchase orders");
+  await page.getByRole("grid").getByRole("row").filter({ hasText: "PO-" }).first().dblclick();
+  await page.getByTestId("order-detail").getByTestId("flow-receipts").click();
+  await expect(page.getByTestId("receipt-detail")).toContainText("GRN-");
+  await expect(page.getByTestId("receipt-detail").getByTestId("flow-invoices")).toContainText("1");
   await closeDialog(page);
 
   // Supplier intelligence: Alpha is scored from its receipt, invoice and return; its lead time and prices are listed.

@@ -13,6 +13,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, num, PurchaseStatus, useAgreements, useSuppliers, type Agreement, type LineForm } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordActivity } from "../RecordDiscussion";
 
 interface AgreementForm {
@@ -157,6 +158,7 @@ export function AgreementsPage() {
                   <PurchaseStatus status={a.status} />
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="purchase_agreement" documentId={a.id} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("partners.supplier"), `${a.partnerCode} · ${localized(a.partnerName)}`],

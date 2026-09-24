@@ -2,18 +2,19 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, Dialo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { useFollowOnSource, useOpenRecord, type FollowOnSource } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useSuppliers } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type Invoice = components["schemas"]["InvoiceSummary"];
@@ -44,6 +45,17 @@ interface InvoiceForm {
 
 const editable = (status: string): boolean => status === "draft" || status === "rejected" || status === "blocked";
 
+/** Whether an open line belongs to the document an invoice is started from: an order's receipts and service lines, a receipt's lines, a return's lines. */
+const belongsTo = (line: Invoicable, source: FollowOnSource): boolean =>
+  source.type === "purchase_order" ? line.orderId === source.id && (line.kind === "receipt" || line.kind === "order")
+    : source.type === "purchase_receipt" ? line.kind === "receipt" && line.receiptId === source.id
+      : line.kind === "return" && line.returnId === source.id;
+
+function lineFrom(line: Invoicable): InvoiceLineForm {
+  const label = line.kind === "charge" ? `${line.landedCostNumber ?? ""} · ${line.itemCode}` : `${line.itemCode} · ${line.returnNumber ?? line.receiptNumber ?? line.orderNumber ?? ""}`;
+  return { kind: line.kind, receiptLineId: line.kind === "return" ? "" : (line.receiptLineId ?? ""), orderLineId: line.orderLineId ?? "", landedCostChargeId: line.landedCostChargeId ?? "", returnLineId: line.returnLineId ?? "", label, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "" };
+}
+
 /** Supplier invoices (roadmap 4.4): lines picked from uninvoiced receipts and open service lines or entered as expenses, matched against tolerances, blocked breaches waiting for an override, approved, posted and reversed. */
 export function InvoicesPage() {
   const { t } = useTranslation();
@@ -56,6 +68,9 @@ export function InvoicesPage() {
   const [tab, setTab] = useState("lines");
   const [reversal, setReversal] = useState<string | null>(null);
   const [credit, setCredit] = useState<{ invoiceItemId: string; amount: string } | null>(null);
+  const [from, clearFrom] = useFollowOnSource("/purchasing/invoices");
+  const [pendingSource, setPendingSource] = useState<FollowOnSource | null>(null);
+  const started = useRef<string | null>(null);
   const suppliers = useSuppliers(companyId);
 
   const list = useQuery({
@@ -83,8 +98,20 @@ export function InvoicesPage() {
     enabled: Boolean(companyId) && detail.data?.status === "posted" && detail.data.openItems.length > 0,
     queryFn: async () => unwrap(await api.GET("/api/v1/payables/settlements", { params: { query: { companyId, openItemId: detail.data?.openItems[0]?.id ?? "" } } })),
   });
+  // "Create invoice" on an order or receipt, "Create debit note" on a return: the supplier, currency and company come from the source document.
+  const sourceDocument = useQuery({
+    queryKey: ["follow-on", from?.type ?? "", from?.id ?? ""],
+    enabled: from?.type === "purchase_order" || from?.type === "purchase_receipt" || from?.type === "purchase_return",
+    queryFn: async () => {
+      const id = from?.id ?? "";
+      const doc = from?.type === "purchase_order" ? unwrap(await api.GET("/api/v1/purchasing/orders/{orderId}", { params: { path: { orderId: id } } }))
+        : from?.type === "purchase_receipt" ? unwrap(await api.GET("/api/v1/purchasing/receipts/{receiptId}", { params: { path: { receiptId: id } } }))
+          : unwrap(await api.GET("/api/v1/purchasing/returns/{returnId}", { params: { path: { returnId: id } } }));
+      return { id: doc.id, companyId: doc.companyId, partnerId: doc.partnerId, currency: doc.currency };
+    },
+  });
   const refresh = async (): Promise<void> => {
-    await Promise.all([["invoices"], ["invoice"], ["invoicable"], ["orders"], ["order"], ["receipts"], ["receipt"], ["returns"], ["return"], ["open-items"], ["settlements"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    await Promise.all([["invoices"], ["invoice"], ["invoicable"], ["orders"], ["order"], ["receipts"], ["receipt"], ["returns"], ["return"], ["open-items"], ["settlements"], ["document-flow"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
@@ -149,9 +176,34 @@ export function InvoicesPage() {
     if (!form || form.lines.some((l) => (line.kind === "receipt" ? l.receiptLineId === line.receiptLineId : line.kind === "charge" ? l.landedCostChargeId === line.landedCostChargeId : line.kind === "return" ? l.returnLineId === line.returnLineId : l.kind === "order" && l.orderLineId === line.orderLineId))) {
       return;
     }
-    const label = line.kind === "charge" ? `${line.landedCostNumber ?? ""} · ${line.itemCode}` : `${line.itemCode} · ${line.returnNumber ?? line.receiptNumber ?? line.orderNumber ?? ""}`;
-    setForm({ ...form, currency: form.currency || line.currency, lines: [...form.lines, { kind: line.kind, receiptLineId: line.kind === "return" ? "" : (line.receiptLineId ?? ""), orderLineId: line.orderLineId ?? "", landedCostChargeId: line.landedCostChargeId ?? "", returnLineId: line.returnLineId ?? "", label, quantity: String(line.remaining), unitPrice: String(line.unitPrice), description: "" }] });
+    setForm({ ...form, currency: form.currency || line.currency, lines: [...form.lines, lineFrom(line)] });
   };
+  const source = sourceDocument.data;
+  useEffect(() => {
+    if (!from || source?.id !== from.id || started.current === from.id) {
+      return;
+    }
+    started.current = from.id;
+    clearFrom();
+    if (source.companyId !== companyId) {
+      setCompanyId(source.companyId);
+    }
+    setProblem(null);
+    setForm({ id: null, kind: from.type === "purchase_return" ? "debit_note" : "invoice", partnerId: source.partnerId, supplierInvoiceNumber: "", documentDate: today(), currency: source.currency, applyWht: true, lines: [] });
+    setPendingSource(from);
+  }, [from, source, clearFrom, companyId, setCompanyId]);
+  useEffect(() => {
+    if (!pendingSource || !form || invoicable.isFetching || !invoicable.isFetchedAfterMount) {
+      return;
+    }
+    setPendingSource(null);
+    const picked = (invoicable.data ?? []).filter((line) => belongsTo(line, pendingSource));
+    if (picked.length > 0) {
+      setForm({ ...form, lines: picked.map(lineFrom) });
+    } else {
+      setProblem({ message: t("documentFlow.nothingToInvoice"), fields: {} });
+    }
+  }, [pendingSource, form, invoicable.isFetching, invoicable.isFetchedAfterMount, invoicable.data, t]);
   const addExpense = (): void => { if (form) { setForm({ ...form, lines: [...form.lines, { kind: "expense", receiptLineId: "", orderLineId: "", landedCostChargeId: "", returnLineId: "", label: "", quantity: "1", unitPrice: "", description: "" }] }); } };
   const offered = (invoicable.data ?? []).filter((line) => (form?.kind === "debit_note" ? line.kind === "return" : line.kind !== "return"));
   const patchLine = (index: number, change: Partial<InvoiceLineForm>): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, ...change } : l)) }); } };
@@ -288,6 +340,7 @@ export function InvoicesPage() {
                   {i.blockKind ? <Badge tone="danger" data-testid="invoice-block">{t(`purchasing.matchStatuses.${i.blockKind}`, { defaultValue: i.blockKind })}</Badge> : null}
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="purchase_invoice" documentId={i.id} />
               <FormError message={problem?.message ?? null} />
               {i.blockReason ? <p className="text-sm text-warning" data-testid="block-reason">{i.blockReason}</p> : null}
               <KeyValues entries={[

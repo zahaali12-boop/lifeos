@@ -337,7 +337,7 @@ public sealed class ReturnService(
             var item = await items.FindAsync(row.Line.ItemId, cancellationToken);
             var uom = item is null ? null : (await items.UomsAsync(row.Line.ItemId, cancellationToken)).FirstOrDefault(u => u.UomId == row.Line.UomId);
             result.Add(new InvoicableLine("return", row.Line.ReceiptLineId, null, null, null, null, row.Line.LineNo, row.Line.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? Empty(), row.Line.UomId, uom?.UomCode ?? string.Empty,
-                row.Line.Quantity, row.Line.QtyCredited, row.Line.Quantity - row.Line.QtyCredited, row.ReceiptLine.UnitPrice, row.Return.Currency, row.Return.PostingDate, null, null, row.Line.Id, row.Return.Number));
+                row.Line.Quantity, row.Line.QtyCredited, row.Line.Quantity - row.Line.QtyCredited, row.ReceiptLine.UnitPrice, row.Return.Currency, row.Return.PostingDate, null, null, row.Line.Id, row.Return.Number, ReturnId: row.Return.Id));
         }
 
         return result;

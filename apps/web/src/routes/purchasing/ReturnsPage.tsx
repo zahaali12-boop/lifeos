@@ -1,19 +1,23 @@
 import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Plus } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { FileMinus, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { compare } from "../../lib/decimal";
+import { followOn, useFollowOnSource, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
+import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordActivity } from "../RecordDiscussion";
 
 type Return = components["schemas"]["ReturnSummary"];
@@ -36,6 +40,8 @@ interface ReturnForm {
   lines: ReturnLineForm[];
 }
 
+const returnLine = (l: Returnable): ReturnLineForm => ({ receiptLineId: l.receiptLineId, quantity: "", lotNumber: l.lotNumber ?? "", serialNumbers: "", reason: "" });
+
 /** Supplier returns (roadmap 4.6): quantities of a posted receipt sent back at their exact cost, GRNI relieved under the return's reference, credited by the supplier's debit note, reversed while nothing has been credited. */
 export function ReturnsPage() {
   const { t } = useTranslation();
@@ -46,6 +52,11 @@ export function ReturnsPage() {
   const [form, setForm] = useState<ReturnForm | null>(null);
   const [openId, setOpenId] = useOpenRecord("/purchasing/returns");
   const [reversal, setReversal] = useState<string | null>(null);
+  const [from, clearFrom] = useFollowOnSource("/purchasing/returns");
+  const [pendingReceipt, setPendingReceipt] = useState<string | null>(null);
+  const started = useRef<string | null>(null);
+  const navigate = useNavigate();
+  const can = useCan();
 
   const list = useQuery({
     queryKey: ["returns", companyId, status],
@@ -62,8 +73,13 @@ export function ReturnsPage() {
     enabled: Boolean(openId),
     queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/returns/{returnId}", { params: { path: { returnId: openId ?? "" } } })),
   });
+  const sourceReceipt = useQuery({
+    queryKey: ["receipt", from?.id ?? ""],
+    enabled: from?.type === "purchase_receipt",
+    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/receipts/{receiptId}", { params: { path: { receiptId: from?.id ?? "" } } })),
+  });
   const refresh = async (): Promise<void> => {
-    await Promise.all([["returns"], ["return"], ["returnable"], ["receipts"], ["receipt"], ["invoicable"], ["stock"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    await Promise.all([["returns"], ["return"], ["returnable"], ["receipts"], ["receipt"], ["invoicable"], ["stock"], ["document-flow"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
@@ -113,8 +129,35 @@ export function ReturnsPage() {
       return;
     }
     const lines = (returnable.data ?? []).filter((l) => l.receiptId === receiptId);
-    setForm({ ...form, receiptId, lines: lines.map((l) => ({ receiptLineId: l.receiptLineId, quantity: "", lotNumber: l.lotNumber ?? "", serialNumbers: "", reason: "" })) });
+    setForm({ ...form, receiptId, lines: lines.map(returnLine) });
   };
+  // "Return" on a posted receipt: a new return of that receipt's lines, in the receipt's company.
+  const source = sourceReceipt.data;
+  useEffect(() => {
+    if (!from || source?.id !== from.id || started.current === from.id) {
+      return;
+    }
+    started.current = from.id;
+    clearFrom();
+    if (source.companyId !== companyId) {
+      setCompanyId(source.companyId);
+    }
+    setProblem(null);
+    setForm({ id: null, receiptId: "", postingDate: today(), reason: "", supplierRma: "", lines: [] });
+    setPendingReceipt(source.id);
+  }, [from, source, clearFrom, companyId, setCompanyId]);
+  useEffect(() => {
+    if (!pendingReceipt || !form || returnable.isFetching || !returnable.isFetchedAfterMount) {
+      return;
+    }
+    setPendingReceipt(null);
+    const lines = (returnable.data ?? []).filter((l) => l.receiptId === pendingReceipt);
+    if (lines.length > 0) {
+      setForm({ ...form, receiptId: pendingReceipt, lines: lines.map(returnLine) });
+    } else {
+      setProblem({ message: t("documentFlow.nothingToReturn"), fields: {} });
+    }
+  }, [pendingReceipt, form, returnable.isFetching, returnable.isFetchedAfterMount, returnable.data, t]);
   const patchLine = (index: number, change: Partial<ReturnLineForm>): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, ...change } : l)) }); } };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
   const receipts = useMemo(() => {
@@ -233,6 +276,7 @@ export function ReturnsPage() {
                   <PurchaseStatus status={r.status} />
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="purchase_return" documentId={r.id} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("nav.receipts"), r.receiptNumber],
@@ -278,6 +322,7 @@ export function ReturnsPage() {
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, receiptId: r.receiptId, postingDate: r.postingDate, reason: r.reason ?? "", supplierRma: r.supplierRma ?? "", lines: r.lines.map((l) => ({ receiptLineId: l.receiptLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", serialNumbers: l.serialNumbers.join(" "), reason: l.reason ?? "" })) }); }} data-testid="edit-return">{t("common.edit")}</Button> : null}
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-return">{t("purchasing.deleteDraft")}</Button> : null}
                 {r.status === "draft" ? <Button onClick={() => { act.mutate({ id: r.id, action: "post" }); }} loading={act.isPending} data-testid="post-return">{t("purchasing.postReturn")}</Button> : null}
+                {r.status === "posted" && can("purchasing.invoice.manage") && r.lines.some((l) => compare(l.qtyCredited, l.quantity) < 0) ? <Button onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_return", r.id) }); }} data-testid="return-create-debit-note"><FileMinus aria-hidden="true" />{t("documentFlow.createDebitNote")}</Button> : null}
                 {r.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-return">{t("purchasing.reverse")}</Button> : null}
                 {reversal !== null ? <Button onClick={() => { act.mutate({ id: r.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse">{t("purchasing.reverseNow")}</Button> : null}
               </DialogFooter>

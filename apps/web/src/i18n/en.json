@@ -380,6 +380,18 @@
     "active": "Active",
     "save": "Save branch"
   },
+  "documentFlow": {
+    "label": "Related documents",
+    "debitNotes": "Debit notes",
+    "truncated": "Showing the documents of the first 50 orders.",
+    "receive": "Receive",
+    "createInvoice": "Create invoice",
+    "returnGoods": "Return goods",
+    "createDebitNote": "Create debit note",
+    "nothingToReceive": "Nothing is left to receive on this order.",
+    "nothingToInvoice": "Nothing is left to invoice on this document.",
+    "nothingToReturn": "Nothing is left to return on this receipt."
+  },
   "dimensions": {
     "description": "The analysis axes that journals and documents carry — cost centre, department, project and any you add — and their values. Branch values come from the branches of each company.",
     "new": "New dimension",

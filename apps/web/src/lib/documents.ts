@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 /** The list screens that open one record from the URL (?open=id). */
 export type RecordScreen =
@@ -65,4 +65,28 @@ export function useOpenRecord(screen: RecordScreen): [string | null, (id: string
   const navigate = useNavigate();
   const setOpen = useCallback((id: string | null) => { void navigate({ to: screen, search: id ? { open: id } : {} }); }, [navigate, screen]);
   return [search.open ?? null, setOpen];
+}
+
+/** A document started from another one: a receipt from its order, an invoice from an order or receipt, a return from a receipt, a debit note from a return. */
+export interface FollowOnSource {
+  type: string;
+  id: string;
+}
+
+/** The search that opens a new document filled from its source (?from=type:id). */
+export function followOn(type: string, id: string): { from: string } {
+  return { from: `${type}:${id}` };
+}
+
+/** The source a list screen was asked to start a new document from, and a way to clear it once the form is filled. */
+export function useFollowOnSource(screen: RecordScreen): [FollowOnSource | null, () => void] {
+  const search: { from?: string } = useSearch({ strict: false });
+  const navigate = useNavigate();
+  const raw = search.from;
+  const source = useMemo(() => {
+    const at = raw?.indexOf(":") ?? -1;
+    return raw && at > 0 && at < raw.length - 1 ? { type: raw.slice(0, at), id: raw.slice(at + 1) } : null;
+  }, [raw]);
+  const clear = useCallback(() => { void navigate({ to: screen, search: {}, replace: true }); }, [navigate, screen]);
+  return [source, clear];
 }

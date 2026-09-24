@@ -12,6 +12,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, num, optionalNum, PurchaseStatus, useSuppliers, type LineForm, type Requisition } from "./shared";
+import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordActivity } from "../RecordDiscussion";
 
 interface RequisitionForm {
@@ -159,6 +160,7 @@ export function RequisitionsPage() {
                   <PurchaseStatus status={r.status} />
                 </DialogTitle>
               </DialogHeader>
+              <DocumentFlowBar documentType="purchase_requisition" documentId={r.id} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("purchasing.requester"), r.requesterName ?? "—"],
