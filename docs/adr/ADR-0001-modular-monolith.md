@@ -37,3 +37,13 @@ Module list and responsibilities are in `ARCHITECTURE.md` §6. Extraction of a m
 * One database transaction can span modules, which is exactly what posting needs.
 * Compile-time and test-time enforcement of boundaries; violations cannot merge.
 * Slightly more ceremony (Contracts projects, DTO mapping) in exchange for a codebase that a new engineer or session can navigate by module.
+
+## Amendment 2026-09-24 (post-M4 routine pass, as built)
+
+The rules are enforced by `tests/Architecture/Quicker.Architecture.Tests`, part of the solution and so of every CI run. It checks the project files (what a change declares) and the compiled assemblies the API host loads (what the code uses) with plain reflection rather than ArchUnitNET: every rule here is about which assembly may reference which, and reflection answers that without another dependency. As built:
+
+* **Rule 1** holds: a module references only the kernel, the building blocks, its own projects and other modules' `.Contracts`; production code never references test support. The building blocks know no module except `Identity.Contracts`, the caller (principal, grants, scopes), which the request pipeline, the permission filters and the outbox's actor need.
+* **Rule 4** holds: contracts reference only the kernel (no EF Core, Npgsql, Dapper or `Quicker.Persistence`).
+* **Rule 3** follows from rule 1: no module can reach the posting engine's implementation, only `IPostingService` in `Accounting.Contracts`.
+* **Rules 2 and 5** are a ratchet. Two dependencies point against the tiers on purpose (Inventory → Workflow, because stock adjustments are approved through the workflow engine; Numbering → Organization, because series are per company and fiscal period) and two pairs of modules use each other's contracts (Audit ↔ Identity, Inventory ↔ Items); there is no assembly cycle, since contracts reference only the kernel. The test names each with its reason, fails on any new one, and fails when a named one disappears so the list stays true.
+

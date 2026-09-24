@@ -13,7 +13,7 @@ Every milestone ships with unit, integration and end-to-end tests including its 
 | Layer | Tooling | What it proves |
 |-------|---------|----------------|
 | Unit | xUnit, FsCheck property tests | Kernel types (Money, Quantity, rounding, allocation, UoM), pricing pipeline, tax computation, costing re-application on in-memory sequences, expression grammar |
-| Architecture | ArchUnitNET | Module boundaries, no floating point, no direct GL writes, Contracts purity |
+| Architecture | Reflection tests (`tests/Architecture`), Roslyn analyzers (`Quicker.Analyzers`) | Module boundaries, dependency direction and cycles, no direct GL writes, Contracts purity (tests); no floating point (analyzer) |
 | Integration | xUnit + Testcontainers (real PostgreSQL), per-module | Repositories, RLS, posting engine, numbering, locks, outbox, projections, migrations |
 | Scenario (API-level e2e) | xUnit over the in-process API with a real database; one test class per hard scenario | The 18 hard scenarios and every module's acceptance criteria, exercised through the public API only |
 | Browser e2e | Playwright (EN and AR/RTL) | Critical user journeys, accessibility (axe), keyboard navigation, print preview |

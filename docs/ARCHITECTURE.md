@@ -26,7 +26,7 @@ This document is the map. Each major decision has an Architecture Decision Recor
 | PDF | HTML/CSS templates (Scriban) rendered by headless Chromium (Playwright) in the worker | ADR-0022 |
 | Front end | React 19, TypeScript, Vite, TanStack Router/Query/Table/Virtual/Form, Radix primitives, Tailwind v4 with design tokens, i18next + ICU, ECharts | ADR-0013 |
 | Auth | Built-in identity (Argon2id, TOTP, WebAuthn) + OIDC federation; JWT access tokens (10 min) + rotating refresh tokens | ADR-0014 |
-| Testing | xUnit, FsCheck (property tests), Testcontainers (real PostgreSQL), ArchUnitNET (boundaries), Playwright (e2e), Vitest + Testing Library, axe (a11y), k6 (load) | ADR-0029 |
+| Testing | xUnit, FsCheck (property tests), Testcontainers (real PostgreSQL), architecture tests by reflection (boundaries), Playwright (e2e), Vitest + Testing Library, axe (a11y), k6 (load) | ADR-0029 |
 | Observability | OpenTelemetry traces/metrics/logs, Serilog structured logs, health endpoints | ADR-0025 |
 | Delivery | Docker images; Docker Compose for local and on-premise; Helm chart for Kubernetes SaaS; GitHub Actions CI | ADR-0024 |
 
@@ -147,7 +147,7 @@ flowchart TB
   edge --> core
 ```
 
-Rules enforced by ArchUnitNET tests:
+Rules enforced by the architecture tests (`tests/Architecture`: reflection over the project files and the compiled assemblies; the ADR-0001 amendment names the deliberate exceptions to rule 4; rule 5 waits for the Reporting module):
 
 1. A module may reference only `Quicker.Kernel`, the building blocks and other modules' `.Contracts` projects.
 2. `Accounting.Ledger` write operations are `internal`; the only public entry is `IPostingService` in `Accounting.Contracts`. No other module can create a journal entry.
