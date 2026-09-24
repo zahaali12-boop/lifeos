@@ -3039,6 +3039,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounting/companies/{companyId}/routine-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The daily routines' runs for the company, newest first: who or what started each, for which date, what it posted or generated and what waited and why */
+        get: operations["getAccountingCompaniesByCompanyIdRoutineRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounting/companies/{companyId}/recurring-templates": {
         parameters: {
             query?: never;
@@ -11690,6 +11707,21 @@ export interface components {
             producedNumber: null | string;
             problem: null | string;
         };
+        /**
+         * @description One item of a logged run: `kind` reversal (target: the entry reversed), recurring (the template; produces a
+         *     journal) or deferral (the schedule; produces an entry), the target's number or code when it has one, and the outcome.
+         */
+        RoutineRunItem: {
+            kind: string;
+            /** Format: uuid */
+            targetId: string;
+            targetRef: null | string;
+            outcome: string;
+            /** Format: uuid */
+            producedId: null | string;
+            producedNumber: null | string;
+            problem: null | string;
+        };
         /** @description What one run of the daily routines did for a company (or a tenant when Guid? RoutineRunResult.CompanyId is null). */
         RoutineRunResult: {
             /** Format: uuid */
@@ -11699,6 +11731,26 @@ export interface components {
             autoReversals: components["schemas"]["RoutineOutcome"][];
             recurringJournals: components["schemas"]["RoutineOutcome"][];
             deferralPostings: components["schemas"]["RoutineOutcome"][];
+        };
+        /** @description A logged run of the daily routines for one company. */
+        RoutineRunSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            asOf: string;
+            trigger: string;
+            /** Format: uuid */
+            runBy: null | string;
+            runByName: null | string;
+            /** Format: date-time */
+            ranAt: string;
+            /** Format: int32 */
+            posted: number | string;
+            /** Format: int32 */
+            waiting: number | string;
+            items: components["schemas"]["RoutineRunItem"][];
         };
         RuleSummary: {
             /** Format: uuid */
@@ -19989,6 +20041,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JournalImportResult"];
+                };
+            };
+        };
+    };
+    getAccountingCompaniesByCompanyIdRoutineRuns: {
+        parameters: {
+            query?: {
+                limit?: number | string;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutineRunSummary"][];
                 };
             };
         };

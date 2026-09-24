@@ -8006,6 +8006,53 @@
         }
       }
     },
+    "/api/v1/accounting/companies/{companyId}/routine-runs": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "The daily routines' runs for the company, newest first: who or what started each, for which date, what it posted or generated and what waited and why",
+        "operationId": "getAccountingCompaniesByCompanyIdRoutineRuns",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoutineRunSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/accounting/companies/{companyId}/recurring-templates": {
       "get": {
         "tags": [
@@ -37976,6 +38023,56 @@
         },
         "description": "One item the routine handled: what it targeted, what it produced, or why it waited."
       },
+      "RoutineRunItem": {
+        "required": [
+          "kind",
+          "targetId",
+          "targetRef",
+          "outcome",
+          "producedId",
+          "producedNumber",
+          "problem"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetRef": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "producedId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "producedNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One item of a logged run: `kind` reversal (target: the entry reversed), recurring (the template; produces a\njournal) or deferral (the schedule; produces an entry), the target's number or code when it has one, and the outcome."
+      },
       "RoutineRunResult": {
         "required": [
           "companyId",
@@ -38017,6 +38114,78 @@
           }
         },
         "description": "What one run of the daily routines did for a company (or a tenant when Guid? RoutineRunResult.CompanyId is null)."
+      },
+      "RoutineRunSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "asOf",
+          "trigger",
+          "runBy",
+          "runByName",
+          "ranAt",
+          "posted",
+          "waiting",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "runBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "runByName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ranAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "posted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "waiting": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutineRunItem"
+            }
+          }
+        },
+        "description": "A logged run of the daily routines for one company."
       },
       "RuleSummary": {
         "required": [

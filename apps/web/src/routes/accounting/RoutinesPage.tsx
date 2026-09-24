@@ -11,6 +11,7 @@ import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { FormError, PageHeader, SelectField, TextField } from "../common";
 import { DocStatus, KeyValues, Tabs } from "../inventory/shared";
+import { RoutineRuns } from "./RoutineRuns";
 import { Amount, CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
 
 type Template = components["schemas"]["RecurringTemplateSummary"];
@@ -137,6 +138,7 @@ export function RoutinesPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["recurring"] });
       await queryClient.invalidateQueries({ queryKey: ["deferrals"] });
+      await queryClient.invalidateQueries({ queryKey: ["routine-runs"] });
     },
   });
 
@@ -199,7 +201,7 @@ export function RoutinesPage() {
               <Play aria-hidden="true" />
               {t("routines.runNow")}
             </Button>
-            {tab === "recurring" ? (
+            {tab === "runs" ? null : tab === "recurring" ? (
               <Button onClick={() => { setProblem(null); setEditing({ id: null, form: newTemplate() }); }} disabled={!companyId} data-testid="new-template">
                 <Plus aria-hidden="true" />
                 {t("routines.newTemplate")}
@@ -227,9 +229,12 @@ export function RoutinesPage() {
         tabs={[
           { id: "recurring", label: t("routines.recurring"), testId: "tab-recurring" },
           { id: "deferrals", label: t("routines.deferrals"), testId: "tab-deferrals" },
+          { id: "runs", label: t("routines.runs"), testId: "tab-runs" },
         ]}
       />
-      {tab === "recurring" ? (
+      {tab === "runs" ? (
+        <RoutineRuns companyId={companyId} />
+      ) : tab === "recurring" ? (
         <DataGrid<Template> label="routines.recurring" columns={templateColumns} data={templates.data ?? []} rowKey={(row) => row.id} loading={templates.isPending && Boolean(companyId)} onOpen={(row) => { setProblem(null); generate.reset(); setOpenTemplate(row.id); }} emptyTitle={t("routines.noTemplates")} emptyDescription={t("routines.noTemplatesHint")} />
       ) : (
         <DataGrid<Schedule> label="routines.deferrals" columns={scheduleColumns} data={schedules.data ?? []} rowKey={(row) => row.id} loading={schedules.isPending && Boolean(companyId)} onOpen={(row) => { setProblem(null); setOpenSchedule(row.id); }} emptyTitle={t("routines.noDeferrals")} emptyDescription={t("routines.noDeferralsHint")} />

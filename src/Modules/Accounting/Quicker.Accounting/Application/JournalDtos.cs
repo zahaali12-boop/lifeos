@@ -178,6 +178,15 @@ public sealed record RoutineRunResult(
     IReadOnlyList<RoutineOutcome> RecurringJournals,
     IReadOnlyList<RoutineOutcome> DeferralPostings);
 
+/// <summary>
+/// One item of a logged run: <c>kind</c> reversal (target: the entry reversed), recurring (the template; produces a
+/// journal) or deferral (the schedule; produces an entry), the target's number or code when it has one, and the outcome.
+/// </summary>
+public sealed record RoutineRunItem(string Kind, Guid TargetId, string? TargetRef, string Outcome, Guid? ProducedId, string? ProducedNumber, string? Problem);
+
+/// <summary>A logged run of the daily routines for one company.</summary>
+public sealed record RoutineRunSummary(Guid Id, Guid CompanyId, DateOnly AsOf, string Trigger, Guid? RunBy, string? RunByName, DateTimeOffset RanAt, int Posted, int Waiting, IReadOnlyList<RoutineRunItem> Items);
+
 /// <summary>One item the routine handled: what it targeted, what it produced, or why it waited.</summary>
 public sealed record RoutineOutcome(Guid TargetId, string Outcome, Guid? ProducedId, string? ProducedNumber, string? Problem);
 

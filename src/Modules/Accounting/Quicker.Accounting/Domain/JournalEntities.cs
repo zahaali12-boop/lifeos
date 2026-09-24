@@ -230,3 +230,38 @@ public sealed class DeferralLine : ITenantEntity
 
     public string Status { get; set; } = "planned";
 }
+
+/// <summary>One run of the daily routines for one company: what it posted or generated and what waited (append-only).</summary>
+public sealed class RoutineRun : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public DateOnly AsOf { get; set; }
+
+    /// <summary><c>schedule</c> (the platform's daily job) or <c>manual</c> (someone ran them now).</summary>
+    public string Trigger { get; set; } = RoutineTriggers.Schedule;
+
+    public Guid? RunBy { get; set; }
+
+    public string? RunByName { get; set; }
+
+    public DateTimeOffset RanAt { get; set; }
+
+    public int Posted { get; set; }
+
+    public int Waiting { get; set; }
+
+    /// <summary>JSON array of <see cref="Application.RoutineRunItem"/>.</summary>
+    public string Items { get; set; } = "[]";
+}
+
+public static class RoutineTriggers
+{
+    public const string Schedule = "schedule";
+    public const string Manual = "manual";
+}
+

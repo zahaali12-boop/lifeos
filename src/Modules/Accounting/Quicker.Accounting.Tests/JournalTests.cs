@@ -145,6 +145,22 @@ public sealed class JournalTests(ApiHostFixture host)
         reversalEntry.GetProperty("links").EnumerateArray().Select(static l => l.GetProperty("relation").GetString()).ShouldBe(["auto_reversal_of", "reverses"], ignoreOrder: true);
         (await owner.PostAsync($"/api/v1/accounting/routines/run?companyId={companyId}&asOf=2026-10-02", new { }, HttpStatusCode.OK)).GetProperty("autoReversals").GetArrayLength().ShouldBe(0, "reversed once");
 
+        // Every run is logged for the company, newest first: who ran it, for which date, and what it did.
+        var runs = (await owner.GetOkAsync($"/api/v1/accounting/companies/{companyId}/routine-runs")).EnumerateArray().ToList();
+        runs.Select(static r => r.GetProperty("asOf").GetString()).ShouldBe(["2026-10-02", "2026-10-01", "2026-09-30"]);
+        runs.ShouldAllBe(static r => r.GetProperty("trigger").GetString() == "manual");
+        runs[0].GetProperty("runBy").GetGuid().ShouldBe(ws.UserId);
+        runs[0].GetProperty("runByName").GetString()!.ShouldStartWith("Owner");
+        runs[0].GetProperty("posted").GetInt32().ShouldBe(0);
+        runs[0].GetProperty("items").GetArrayLength().ShouldBe(0);
+        runs[1].GetProperty("posted").GetInt32().ShouldBe(1);
+        runs[1].GetProperty("waiting").GetInt32().ShouldBe(0);
+        var logged = runs[1].GetProperty("items").EnumerateArray().Single();
+        logged.GetProperty("kind").GetString().ShouldBe("reversal");
+        logged.GetProperty("targetId").GetGuid().ShouldBe(accrualEntryId);
+        logged.GetProperty("targetRef").GetString().ShouldBe((await owner.GetOkAsync($"/api/v1/accounting/journal-entries/{accrualEntryId}")).GetProperty("number").GetString());
+        logged.GetProperty("producedNumber").GetString().ShouldBe(reversalEntry.GetProperty("number").GetString());
+
         await owner.AssertInvariantsAsync();
     }
 
@@ -182,6 +198,10 @@ public sealed class JournalTests(ApiHostFixture host)
         october.GetProperty("postingDate").GetString().ShouldBe("2026-10-01");
         october.GetProperty("templateId").GetGuid().ShouldBe(templateId);
         (await owner.GetOkAsync($"/api/v1/accounting/recurring-templates/{templateId}")).GetProperty("nextRunOn").GetString().ShouldBe("2026-12-01");
+        var logged = (await owner.GetOkAsync($"/api/v1/accounting/companies/{companyId}/routine-runs?limit=1")).EnumerateArray().Single();
+        logged.GetProperty("posted").GetInt32().ShouldBe(2);
+        logged.GetProperty("items").EnumerateArray().Select(static i => (i.GetProperty("kind").GetString(), i.GetProperty("targetRef").GetString(), i.GetProperty("producedId").GetGuid()))
+            .ShouldBe(generated.Select(g => ((string?)"recurring", (string?)"RENT", g.GetProperty("producedId").GetGuid())));
 
         // A percentage template distributes a base amount and lands the rounding on the last credit line; it waits for review.
         var split = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/recurring-templates", new

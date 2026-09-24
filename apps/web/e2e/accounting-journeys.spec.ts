@@ -134,6 +134,15 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await expectAccessible(page);
   await page.keyboard.press("Escape");
 
+  // Running the routines now is logged for the company: who ran them, for which date, and what went out.
+  await page.getByTestId("run-routines").click();
+  await expect(page.getByTestId("routines-result")).toBeVisible();
+  await page.getByTestId("tab-runs").click();
+  const run = page.getByTestId("routine-run");
+  await expect(run).toHaveCount(1);
+  await expect(run).toContainText("run now");
+  await expectAccessible(page);
+
   // Period control: the current period is hard-closed, then reopened with a reason.
   await nav(page, "Period control");
   await expect(page.getByTestId("period-row").first()).toBeVisible();

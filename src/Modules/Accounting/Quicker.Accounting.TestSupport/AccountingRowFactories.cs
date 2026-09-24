@@ -74,6 +74,13 @@ public static class AccountingRowFactories
             await c.ExecuteAsync("INSERT INTO app.gl_recurring_templates (tenant_id, id, company_id, code, name_i18n, cron, time_zone, currency) VALUES (@t, @id, @company, @code, '{}', '0 0 1 * *', 'Asia/Baghdad', 'IQD')", new { t, id, company, code = "R" + id.ToString("N")[^8..].ToUpperInvariant() }, tx);
             return new RowRef("app.gl_recurring_templates", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.gl_routine_runs", static async (c, tx, t) =>
+        {
+            var (company, _) = await CompanyAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.gl_routine_runs (tenant_id, id, company_id, as_of, trigger) VALUES (@t, @id, @company, '2026-01-31', 'schedule')", new { t, id, company }, tx);
+            return new RowRef("app.gl_routine_runs", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.gl_deferral_schedules", static async (c, tx, t) => new RowRef("app.gl_deferral_schedules", $"id = '{await DeferralAsync(c, tx, t)}'"));
         IsolationRegistry.Register("app.gl_deferral_lines", static async (c, tx, t) =>
         {

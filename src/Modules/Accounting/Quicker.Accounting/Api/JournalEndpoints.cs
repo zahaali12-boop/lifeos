@@ -53,6 +53,10 @@ public static class JournalEndpoints
             .Produces<JournalImportResult>()
             .RequirePermission(AccountingPermissions.JournalManage)
             .WithSummary("Drafts from a batch: JSON journals or CSV rows grouped by journal_ref (columns: journal_ref, posting_date, currency, account_code, debit, credit, description); all or nothing");
+        company.MapGet("/routine-runs", async (Guid companyId, int? limit, AccountingRoutines routines, CancellationToken ct) =>
+            TypedResults.Ok(await routines.RunsAsync(companyId, limit ?? 50, ct)))
+            .RequirePermission(AccountingPermissions.JournalRead)
+            .WithSummary("The daily routines' runs for the company, newest first: who or what started each, for which date, what it posted or generated and what waited and why");
         company.MapGet("/recurring-templates", async (Guid companyId, RecurringService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.ListAsync(companyId, ct)))
             .RequirePermission(AccountingPermissions.JournalRead);
@@ -134,8 +138,9 @@ public static class JournalEndpoints
             ApiProblems.Ok(await service.CancelAsync(scheduleId, ct)))
             .RequirePermission(AccountingPermissions.JournalManage);
 
-        accounting.MapPost("/routines/run", async (Guid? companyId, DateOnly? asOf, AccountingRoutines routines, CancellationToken ct) =>
-            TypedResults.Ok(await routines.RunAsync(companyId, asOf ?? (companyId is { } c ? await routines.TodayForAsync(c, ct) : null), ct)))
+        accounting.MapPost("/routines/run", async (Guid? companyId, DateOnly? asOf, CurrentPrincipal current, AccountingRoutines routines, CancellationToken ct) =>
+            TypedResults.Ok(await routines.RunAsync(companyId, asOf ?? (companyId is { } c ? await routines.TodayForAsync(c, ct) : null),
+                RoutineRunner.Manual(current.Required.UserId.Value, current.Required.DisplayName), ct)))
             .RequirePermission(AccountingPermissions.RoutinesRun)
             .WithSummary("Runs the daily routines now for the tenant (or one company): automatic reversals, recurring journals, deferral postings; what waited says why");
 

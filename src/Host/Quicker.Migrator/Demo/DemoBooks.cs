@@ -263,7 +263,7 @@ internal static class DemoBooks
         }
 
         // The daily routine as of today: every rent due, every insurance and contract line due, every accrual whose reversal date has come.
-        var run = await routines.RunAsync(null, today, cancellationToken);
+        var run = await routines.RunAsync(null, today, RoutineRunner.Schedule, cancellationToken);
         posted += run.RecurringJournals.Count(static r => r.Outcome != "waiting");
         var waiting = run.AutoReversals.Concat(run.RecurringJournals).Concat(run.DeferralPostings).Where(static r => r.Outcome == "waiting").ToList();
         if (waiting.Count > 0)

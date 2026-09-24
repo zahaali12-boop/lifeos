@@ -36,6 +36,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<DeferralSchedule> Deferrals => Set<DeferralSchedule>();
 
+    public DbSet<RoutineRun> RoutineRuns => Set<RoutineRun>();
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private static readonly ValueConverter<Dictionary<string, Guid>, string> GuidMapConverter = new(
@@ -163,6 +165,13 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
             b.Property(static t => t.Description).HasColumnName("description_i18n");
             b.Property(static t => t.Lines).HasColumnType("jsonb");
             b.HasAuditTrail("gl_recurring_template", static t => t.Code);
+        });
+
+        modelBuilder.Entity<RoutineRun>(b =>
+        {
+            b.ToTable("gl_routine_runs", "app");
+            b.HasKey(static r => new { r.TenantId, r.Id });
+            b.Property(static r => r.Items).HasColumnType("jsonb");
         });
 
         modelBuilder.Entity<DeferralSchedule>(b =>
