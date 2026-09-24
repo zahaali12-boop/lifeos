@@ -72,6 +72,9 @@ function toRequest(form: AccountForm): components["schemas"]["SaveAccountRequest
 }
 
 /** The chart of accounts of a company as a tree, the account editor, and the dimension rules of an account. */
+/** The account form's fields that show their own error; any other problem (a header or company change refused) shows above the form. */
+const accountFormFields = new Set(["code", "parentCode", "name", "type", "subledgerType", "defaultRole", "currencyRestriction"]);
+
 export function ChartPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -325,7 +328,7 @@ export function ChartPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold">{editing.id ? t("accounting.editAccount") : t("accounting.newAccount")}</DialogTitle>
               </DialogHeader>
-              <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
+              <FormError message={problem && !Object.keys(problem.fields).some((field) => accountFormFields.has(field)) ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("accounting.accountCode")} required error={problem?.fields.code}>
                   <TextField value={editing.form.code} onChange={(e) => { setForm({ code: e.target.value }); }} required dir="ltr" data-testid="account-code" />
@@ -339,7 +342,7 @@ export function ChartPage() {
                 <Field label={t("accounting.nameAr")}>
                   <TextField value={editing.form.nameAr} onChange={(e) => { setForm({ nameAr: e.target.value }); }} dir="rtl" />
                 </Field>
-                <Field label={t("accounting.type")} required>
+                <Field label={t("accounting.type")} required error={problem?.fields.type}>
                   <SelectField value={editing.form.type} onChange={(e) => { setForm({ type: e.target.value }); }}>
                     {types.map((type) => (
                       <option key={type} value={type}>

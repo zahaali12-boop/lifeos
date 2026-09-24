@@ -165,6 +165,63 @@ public sealed class JournalTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task Once_an_account_has_postings_its_meaning_is_fixed_but_its_name_and_grouping_are_not()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var companyId = await CompanyReadyAsync(owner, "PAG", "IQD");
+        var chartId = (await owner.GetOkAsync($"/api/v1/organization/companies/{companyId}")).GetProperty("chartId").GetGuid();
+        var accounts = (await owner.GetOkAsync($"/api/v1/accounting/charts/{chartId}?expand=accounts")).GetProperty("accounts").EnumerateArray().ToList();
+        var rent = accounts.Single(static a => a.GetProperty("code").GetString() == "6110");
+        var rentId = rent.GetProperty("id").GetGuid();
+        object Body(string type = "expense", bool isHeader = false, bool isControl = false, string? subledgerType = null, string? currencyRestriction = null, string en = "Rent") => new
+        {
+            code = "6110",
+            name = new { en, ar = "الإيجار" },
+            type,
+            parentId = rent.GetProperty("parentId").GetGuid(),
+            isHeader,
+            isControl,
+            subledgerType,
+            currencyRestriction,
+            allowManualPosting = true,
+            isActive = true,
+        };
+
+        // Before any posting the account is free to change its meaning.
+        (await owner.PutAsync($"/api/v1/accounting/accounts/{rentId}", Body(currencyRestriction: "USD"))).GetProperty("currencyRestriction").GetString().ShouldBe("USD");
+        (await owner.PutAsync($"/api/v1/accounting/accounts/{rentId}", Body())).GetProperty("currencyRestriction").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        var journal = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/journals", new
+        {
+            postingDate = "2026-09-22",
+            currency = "IQD",
+            description = new { en = "Rent", ar = "الإيجار" },
+            lines = new[] { Line("6110", debit: 500000m), Line("2170", credit: 500000m) },
+        });
+        await owner.PostAsync($"/api/v1/accounting/journals/{journal.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+
+        var url = $"/api/v1/accounting/accounts/{rentId}";
+        var type = await owner.PutErrorAsync(url, Body(type: "asset"), HttpStatusCode.Conflict);
+        type.Code.ShouldBe("account.type_locked");
+        (await owner.PutErrorAsync(url, Body(isHeader: true), HttpStatusCode.Conflict)).Code.ShouldBe("account.is_header_locked");
+        (await owner.PutErrorAsync(url, Body(isControl: true, subledgerType: "AP"), HttpStatusCode.Conflict)).Code.ShouldBe("account.subledger_type_locked");
+        (await owner.PutErrorAsync(url, Body(currencyRestriction: "USD"), HttpStatusCode.Conflict)).Code.ShouldBe("account.currency_restriction_locked");
+
+        // A chart import is held to the same rule, and names the row.
+        (await owner.PostErrorAsync($"/api/v1/accounting/charts/{chartId}/import", new[] { new { code = "6110" } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("import.body_required", "a bare array is not the import body");
+        var import = await owner.PostErrorAsync($"/api/v1/accounting/charts/{chartId}/import", new { accounts = new[] { new { code = "6110", name = new { en = "Rent", ar = "الإيجار" }, type = "liability", parentCode = rent.GetProperty("parentCode").GetString() } } }, HttpStatusCode.Conflict);
+        import.Code.ShouldBe("account.type_locked");
+        import.Problem.GetProperty("why").GetProperty("code").GetString().ShouldBe("6110");
+
+        // Its name, and a restriction its lines already satisfy, still change.
+        var renamed = await owner.PutAsync(url, Body(en: "Office rent", currencyRestriction: "IQD"));
+        renamed.GetProperty("name").GetProperty("en").GetString().ShouldBe("Office rent");
+        renamed.GetProperty("currencyRestriction").GetString().ShouldBe("IQD");
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
     public async Task Recurring_templates_generate_on_schedule_and_prepayments_amortise_to_the_cent()
     {
         var ws = await Api.SignupAsync();

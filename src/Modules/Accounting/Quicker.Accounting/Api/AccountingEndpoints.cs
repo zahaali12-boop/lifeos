@@ -75,7 +75,16 @@ public static class AccountingEndpoints
             }
             else
             {
-                var body = await http.ReadFromJsonAsync<ImportRequest>(ct);
+                ImportRequest? body;
+                try
+                {
+                    body = await http.ReadFromJsonAsync<ImportRequest>(ct);
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    body = null;
+                }
+
                 if (body is null)
                 {
                     return ApiProblems.From(Error.Validation("import.body_required", "Send text/csv or a JSON body {accounts: [...]}."));

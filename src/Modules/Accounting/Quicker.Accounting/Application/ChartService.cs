@@ -262,6 +262,12 @@ public sealed class ChartService(
             return Error.NotFound("account", accountId);
         }
 
+        var posted = await PostedChangeAsync(account, request, cancellationToken);
+        if (posted.IsFailure)
+        {
+            return posted.Error!;
+        }
+
         var chart = await db.Charts.SingleAsync(c => c.Id == account.ChartId, cancellationToken);
         var all = await db.Accounts.Where(a => a.ChartId == account.ChartId).ToListAsync(cancellationToken);
         var applied = await ApplyAsync(chart, account, request, all, cancellationToken);
@@ -272,6 +278,59 @@ public sealed class ChartService(
 
         await db.SaveChangesAsync(cancellationToken);
         return (await GetAccountAsync(account.Id, cancellationToken))!;
+    }
+
+    /// <summary>
+    /// Once an account carries journal lines, what those lines mean is fixed: its type (which statement the balance
+    /// belongs to), whether it can hold postings at all, whether and to which subledger it reconciles, and any currency
+    /// or company restriction the lines would break. Names, grouping, category, flags for future postings and
+    /// activation stay editable. A change of meaning is a new account and a reclassifying journal, so history keeps
+    /// adding up the way it was posted.
+    /// </summary>
+    private async Task<Result> PostedChangeAsync(Account account, SaveAccountRequest request, CancellationToken cancellationToken)
+    {
+        var lines = db.Set<JournalLine>().Where(l => l.AccountId == account.Id);
+        var count = await lines.CountAsync(cancellationToken);
+        if (count == 0)
+        {
+            return Result.Success();
+        }
+
+        Error Locked(string field, string what) =>
+            Error.Conflict($"account.{field}_locked", $"'{account.Code}' has {count} posted line(s), so its {what} cannot change; open a new account and move the balance with a journal.").WithWhy(("lines", count));
+
+        if (!string.Equals(request.Type?.Trim(), account.Type, StringComparison.Ordinal))
+        {
+            return Locked("type", "type");
+        }
+
+        if (request.IsHeader && !account.IsHeader)
+        {
+            return Locked("is_header", "ability to hold postings");
+        }
+
+        var subledger = string.IsNullOrWhiteSpace(request.SubledgerType) ? null : request.SubledgerType.Trim();
+        if (request.IsControl != account.IsControl || !string.Equals(subledger, account.SubledgerType, StringComparison.Ordinal))
+        {
+            return Locked("subledger_type", "subledger reconciliation");
+        }
+
+        var currency = string.IsNullOrWhiteSpace(request.CurrencyRestriction) ? null : request.CurrencyRestriction.Trim().ToUpperInvariant();
+        if (currency is not null && !string.Equals(currency, account.CurrencyRestriction, StringComparison.Ordinal))
+        {
+            var others = await lines.Where(l => l.CurrencyTc != currency).Select(static l => l.CurrencyTc).Distinct().OrderBy(static c => c).ToListAsync(cancellationToken);
+            if (others.Count > 0)
+            {
+                return Error.Conflict("account.currency_restriction_locked", $"'{account.Code}' has lines in {string.Join(", ", others)}, so it cannot be restricted to {currency}.").WithWhy(("currencies", others));
+            }
+        }
+
+        if (request.CompanyId is { } company && company != account.CompanyId && await lines.AnyAsync(l => l.CompanyId != company, cancellationToken))
+        {
+            return Error.Conflict("account.company_id_locked", $"'{account.Code}' has lines of other companies, so it cannot be limited to one.").WithWhy(("lines", count));
+        }
+
+        return Result.Success();
     }
 
     /// <summary>Every rule an account must satisfy; <paramref name="all"/> holds the chart's accounts (tracked, so the current one is among them on update).</summary>
@@ -563,6 +622,15 @@ public sealed class ChartService(
             var isNew = account is null;
             account ??= new Account { Id = Guid.CreateVersion7(), ChartId = chartId, CreatedAt = now };
             var fingerprint = isNew ? null : Fingerprint(account);
+            if (!isNew)
+            {
+                var posted = await PostedChangeAsync(account, row, cancellationToken);
+                if (posted.IsFailure)
+                {
+                    return posted.Error!.WithWhy(("row", position), ("code", row.Code));
+                }
+            }
+
             var applied = await ApplyAsync(chart, account, row, all, cancellationToken);
             if (applied.IsFailure)
             {
