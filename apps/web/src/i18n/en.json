@@ -1212,6 +1212,28 @@
       "dead": "Dead"
     }
   },
+  "outbox": {
+    "title": "Undelivered events (operators)",
+    "hint": "An event the worker could not deliver holds back its record's later events. Retry it once the fault is fixed, or discard it with a reason when its effect is not wanted or was applied by hand.",
+    "event": "Event",
+    "aggregate": "Record",
+    "workspace": "Workspace",
+    "occurred": "When",
+    "discarded": "Discarded",
+    "discard": "Discard",
+    "discardTitle": "Discard this event",
+    "discardHint": "Its handlers will never run, and the later events of its record will be delivered. The reason and your name stay on the event.",
+    "states": {
+      "dead": "Dead letters",
+      "discarded": "Discarded",
+      "pending": "Waiting"
+    },
+    "empty": {
+      "dead": "No dead letters: every event was delivered or is still being tried.",
+      "discarded": "No events have been discarded.",
+      "pending": "Nothing is waiting."
+    }
+  },
   "webhooks": {
     "description": "Send events to other systems; every delivery is signed and logged.",
     "new": "New webhook",

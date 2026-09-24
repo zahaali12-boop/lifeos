@@ -126,6 +126,13 @@ public sealed class OutboxMessage
 
     public DateTimeOffset? DeadAt { get; set; }
 
+    /// <summary>When an operator discarded the dead letter; its aggregate's later events no longer wait for it.</summary>
+    public DateTimeOffset? DiscardedAt { get; set; }
+
+    public string? DiscardedBy { get; set; }
+
+    public string? DiscardReason { get; set; }
+
     public TenantContext ContextFor(string requestId) =>
         (TenantId is { } tenant ? TenantContext.System(new TenantId(tenant), requestId) : TenantContext.Anonymous(requestId)) with { CorrelationId = CorrelationId };
 }

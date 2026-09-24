@@ -1,3 +1,6 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Identity.TestSupport;
@@ -195,5 +198,67 @@ public sealed class OutboxTests(ApiHostFixture host)
         var removed = await Api.Services.GetRequiredService<OutboxAdmin>().ArchiveAsync(30, CancellationToken.None);
         removed.ShouldBeGreaterThanOrEqualTo(1);
         (await TenantWork.QueryOwnerAsync<long>(Api, "SELECT count(*) FROM ops.outbox_messages WHERE tenant_id = @t", new { t = ws.TenantId })).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task An_operator_discards_a_dead_letter_with_a_reason_and_its_aggregate_moves_on()
+    {
+        TestGates.Reset();
+        var ws = await Api.SignupAsync();
+        var aggregate = Guid.NewGuid();
+        await TenantWork.InTenantAsync(Api, ws.TenantId, async (sp, _) =>
+        {
+            var outbox = sp.GetRequiredService<IOutbox>();
+            await outbox.PublishAsync(new ThingHappened(aggregate, 1, "act"));
+            await outbox.PublishAsync(new ThingHappened(aggregate, 2, "ok"));
+        });
+
+        // Event 1 fails twice and is dead-lettered; event 2 waits behind it.
+        TestGates.Arm(failures: 2);
+        await DrainAsync();
+        await Task.Delay(TimeSpan.FromSeconds(1.2));
+        await DrainAsync();
+        var admin = Api.Services.GetRequiredService<OutboxAdmin>();
+        var letter = (await admin.ListAsync("dead", ws.TenantId, 10, CancellationToken.None)).ShouldHaveSingleItem();
+        (await Effects.ReadAsync(Api, ws.TenantId, "test.event.")).ShouldBeEmpty();
+
+        // Only platform operators act on the outbox, and a reason is required.
+        using var member = Api.ClientFor(ws.AccessToken);
+        (await (await member.PostAsJsonAsync($"/api/v1/platform/ops/outbox/{letter.Id}/discard", new { reason = "not needed" }, ApiFixture.Json)).ErrorCodeAsync()).ShouldBe("auth.operator_required");
+        await TenantWork.ExecuteOwnerAsync(Api, "UPDATE control.users SET is_platform_operator = true WHERE id = @id", new { id = ws.UserId });
+        var login = await (await Api.Client.PostAsJsonAsync("/api/v1/auth/login", new { email = ws.OwnerEmail, password = ws.OwnerPassword }, ApiFixture.Json)).ReadJsonAsync();
+        using var operatorClient = Api.ClientFor(login.GetProperty("tokens").GetProperty("accessToken").GetString()!);
+        var unexplained = await operatorClient.PostAsJsonAsync($"/api/v1/platform/ops/outbox/{letter.Id}/discard", new { reason = "  " }, ApiFixture.Json);
+        unexplained.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await unexplained.ErrorCodeAsync()).ShouldBe("outbox.reason_required");
+
+        var discard = await operatorClient.PostAsJsonAsync($"/api/v1/platform/ops/outbox/{letter.Id}/discard", new { reason = "Effect applied by hand (ticket OPS-42)" }, ApiFixture.Json);
+        discard.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await (await operatorClient.PostAsJsonAsync($"/api/v1/platform/ops/outbox/{letter.Id}/discard", new { reason = "again" }, ApiFixture.Json)).ErrorCodeAsync()).ShouldBe("outbox.not_dead");
+        (await (await operatorClient.PostAsync($"/api/v1/platform/ops/outbox/{letter.Id}/retry", null)).ErrorCodeAsync()).ShouldBe("outbox.not_dead");
+
+        // It leaves the dead letters, keeps who, when and why, and the aggregate's next event is delivered; event 1's handler never ran.
+        (await admin.ListAsync("dead", ws.TenantId, 10, CancellationToken.None)).ShouldBeEmpty();
+        var discarded = (await (await operatorClient.GetAsync($"/api/v1/platform/ops/outbox?state=discarded&tenantId={ws.TenantId}")).ReadJsonAsync()).EnumerateArray().ShouldHaveSingleItem();
+        discarded.GetProperty("id").GetGuid().ShouldBe(letter.Id);
+        discarded.GetProperty("discardReason").GetString().ShouldBe("Effect applied by hand (ticket OPS-42)");
+        discarded.GetProperty("discardedBy").GetString()!.ShouldContain(ws.OwnerEmail);
+        discarded.GetProperty("discardedAt").ValueKind.ShouldBe(JsonValueKind.String);
+        await DrainAsync();
+        var effects = await Effects.ReadAsync(Api, ws.TenantId, "test.event.");
+        effects.Count.ShouldBe(1);
+        TestGates.HandledOrder.Where(h => h.Aggregate == aggregate).Select(static h => h.Sequence).ShouldBe([1, 1, 2]);
+
+        // Discarded messages are archived with the published ones once past the retention.
+        await TenantWork.ExecuteOwnerAsync(Api, "UPDATE ops.outbox_messages SET discarded_at = now() - interval '40 days' WHERE id = @id", new { id = letter.Id });
+        await admin.ArchiveAsync(30, CancellationToken.None);
+        (await TenantWork.QueryOwnerAsync<long>(Api, "SELECT count(*) FROM ops.outbox_messages WHERE id = @id", new { id = letter.Id })).ShouldBe(0);
+    }
+
+    private async Task DrainAsync()
+    {
+        while (await Dispatcher.RunOnceAsync(CancellationToken.None) > 0)
+        {
+        }
     }
 }

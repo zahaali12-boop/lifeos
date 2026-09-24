@@ -1962,7 +1962,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Outbox messages by state: dead (default), pending, published, all */
+        /** Outbox messages by state: dead (default), discarded, pending, published, all */
         get: operations["getPlatformOpsOutbox"];
         put?: never;
         post?: never;
@@ -1982,6 +1982,23 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["postPlatformOpsOutboxByMessageIdRetry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/ops/outbox/{messageId}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Give up on a dead letter (reason required): its handlers never run and its aggregate's later events flow */
+        post: operations["postPlatformOpsOutboxByMessageIdDiscard"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8656,6 +8673,10 @@ export interface components {
             validTo: null | string;
             isActive: boolean;
         };
+        /** @description Why an operator gives up on a dead letter; kept on the message. */
+        DiscardOutboxMessageRequest: {
+            reason: string;
+        };
         DismissSuggestionRequest: {
             reason: string;
         };
@@ -9990,6 +10011,13 @@ export interface components {
             lastError?: null | string;
             /** Format: date-time */
             deadAt?: null | string;
+            /**
+             * Format: date-time
+             * @description When an operator discarded the dead letter; its aggregate's later events no longer wait for it.
+             */
+            discardedAt?: null | string;
+            discardedBy?: null | string;
+            discardReason?: null | string;
         };
         OverrideSummary: {
             /** Format: uuid */
@@ -17940,6 +17968,30 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPlatformOpsOutboxByMessageIdDiscard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                messageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscardOutboxMessageRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

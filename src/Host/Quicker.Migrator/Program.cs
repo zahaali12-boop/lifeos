@@ -14,6 +14,7 @@ namespace Quicker.Migrator;
 ///   demo     migrate, seed, then rebuild the demo tenant from scratch (ADR-0029)
 ///   all      migrate, seed, and create the demo tenant only when it is missing
 ///   rebuild-balances --tenant SLUG [--company CODE]   recompute gl_balances from the journal lines (ADR-0007)
+///   operator --email ADDRESS [--revoke]   make a person a platform operator, or no longer one
 /// Configuration: QUICKER__DB__OWNERCONNECTION, QUICKER__DB__APPPASSWORD, QUICKER__DB__APPCONNECTION (env) or appsettings.json.
 /// (A named entry point rather than top-level statements: test support references this host next to the API host.)
 /// </summary>
@@ -74,8 +75,11 @@ internal static class MigratorProgram
             case "rebuild-balances":
                 return await RebuildBalances.RunAsync(ownerConnection, appConnection, Option(args, "--tenant"), Option(args, "--company"));
 
+            case "operator":
+                return await PlatformOperators.RunAsync(ownerConnection, Option(args, "--email"), args.Contains("--revoke", StringComparer.Ordinal));
+
             default:
-                Console.Error.WriteLine($"Unknown command '{command}'. Use migrate, seed, demo, status, all or rebuild-balances --tenant <slug> [--company <code>].");
+                Console.Error.WriteLine($"Unknown command '{command}'. Use migrate, seed, demo, status, all, rebuild-balances --tenant <slug> [--company <code>] or operator --email <address> [--revoke].");
                 return 2;
         }
     }

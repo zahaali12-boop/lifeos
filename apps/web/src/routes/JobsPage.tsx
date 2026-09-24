@@ -9,18 +9,20 @@ import type { components } from "../api/schema";
 import { DataGrid } from "../grid/DataGrid";
 import { formatDateTime, formatNumber } from "../lib/format";
 import { PageHeader } from "./common";
+import { OutboxPanel } from "./OutboxPanel";
 
 type Job = components["schemas"]["JobRecord"];
 
 const tones: Record<string, "success" | "accent" | "danger" | "warning" | "neutral"> = { succeeded: "success", running: "accent", queued: "neutral", failed: "warning", dead: "danger" };
 
-/** Background work: the job queue with retry/cancel, and the tenant's schedules. */
+/** Background work: the job queue with retry/cancel, the tenant's schedules, and for platform operators the outbox's undelivered events. */
 export function JobsPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [state, setState] = useState("");
   const jobs = useQuery({ queryKey: ["jobs", state], queryFn: async () => unwrap(await api.GET("/api/v1/platform/jobs", { params: { query: { limit: 500, ...(state ? { state } : {}) } } })), refetchInterval: 15_000 });
   const schedules = useQuery({ queryKey: ["schedules"], queryFn: async () => unwrap(await api.GET("/api/v1/platform/schedules")) });
+  const me = useQuery({ queryKey: ["me"], queryFn: async () => unwrap(await api.GET("/api/v1/me")), staleTime: 60_000 });
   const retry = useMutation({ mutationFn: async (id: string) => unwrap(await api.POST("/api/v1/platform/jobs/{jobId}/retry", { params: { path: { jobId: id } } })), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }) });
   const cancel = useMutation({ mutationFn: async (id: string) => unwrap(await api.POST("/api/v1/platform/jobs/{jobId}/cancel", { params: { path: { jobId: id } } })), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }) });
 
@@ -111,6 +113,7 @@ export function JobsPage() {
           ) : null}
         </TableBody>
       </Table>
+      {me.data?.user.isPlatformOperator ? <OutboxPanel /> : null}
     </>
   );
 }

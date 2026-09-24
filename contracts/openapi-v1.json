@@ -4863,7 +4863,7 @@
         "tags": [
           "Platform"
         ],
-        "summary": "Outbox messages by state: dead (default), pending, published, all",
+        "summary": "Outbox messages by state: dead (default), discarded, pending, published, all",
         "operationId": "getPlatformOpsOutbox",
         "parameters": [
           {
@@ -4928,6 +4928,41 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/ops/outbox/{messageId}/discard": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Give up on a dead letter (reason required): its handlers never run and its aggregate's later events flow",
+        "operationId": "postPlatformOpsOutboxByMessageIdDiscard",
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscardOutboxMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -26351,6 +26386,18 @@
           }
         }
       },
+      "DiscardOutboxMessageRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "description": "Why an operator gives up on a dead letter; kept on the message."
+      },
       "DismissSuggestionRequest": {
         "required": [
           "reason"
@@ -31542,6 +31589,26 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "discardedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When an operator discarded the dead letter; its aggregate's later events no longer wait for it.",
+            "format": "date-time"
+          },
+          "discardedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "discardReason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "description": "A stored outbox row as the dispatcher and the operator UI see it."

@@ -46,9 +46,25 @@ public static class PlatformEndpoints
         var ops = platform.MapGroup("/ops").RequireOperator();
         ops.MapGet("/outbox", async (string? state, Guid? tenantId, int? limit, OutboxAdmin outbox, CancellationToken ct) =>
             TypedResults.Ok(await outbox.ListAsync(state ?? "dead", tenantId, limit ?? 100, ct)))
-            .WithSummary("Outbox messages by state: dead (default), pending, published, all");
+            .WithSummary("Outbox messages by state: dead (default), discarded, pending, published, all");
         ops.MapPost("/outbox/{messageId:guid}/retry", async (Guid messageId, OutboxAdmin outbox, CancellationToken ct) =>
-            await outbox.RetryAsync(messageId, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("outbox.not_dead", "Only dead-lettered messages can be retried.")));
+            await outbox.RetryAsync(messageId, ct) ? Results.NoContent() : ApiProblems.From(Error.Conflict("outbox.not_dead", "Only dead-lettered messages that were not discarded can be retried.")));
+        ops.MapPost("/outbox/{messageId:guid}/discard", async (Guid messageId, DiscardOutboxMessageRequest request, CurrentPrincipal current, OutboxAdmin outbox, ILogger<OutboxAdmin> logger, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Trim().Length > 500)
+            {
+                return ApiProblems.From(Error.Validation("outbox.reason_required", "Say why the message is discarded, in up to 500 characters."));
+            }
+
+            var by = $"{current.Required.UserId.Value} {current.Required.Email}";
+            if (!await outbox.DiscardAsync(messageId, request.Reason, by, ct))
+            {
+                return ApiProblems.From(Error.Conflict("outbox.not_dead", "Only dead-lettered messages that were not discarded can be discarded."));
+            }
+
+            logger.LogWarning("Outbox message {EventId} discarded by {Operator}: {Reason}", messageId, by, request.Reason);
+            return Results.NoContent();
+        }).WithSummary("Give up on a dead letter (reason required): its handlers never run and its aggregate's later events flow");
         ops.MapPut("/schedules", async (SaveScheduleRequest request, Scheduler scheduler, JobAdmin admin, CancellationToken ct) =>
             ApiProblems.Ok(await scheduler.SaveAsync(null, request, admin.JobTypes, ct)))
             .WithSummary("Create or replace a platform-wide schedule (no tenant)");
@@ -56,3 +72,6 @@ public static class PlatformEndpoints
         return api;
     }
 }
+
+/// <summary>Why an operator gives up on a dead letter; kept on the message.</summary>
+public sealed record DiscardOutboxMessageRequest(string Reason);
