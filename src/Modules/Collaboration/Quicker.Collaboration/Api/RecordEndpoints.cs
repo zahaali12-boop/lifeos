@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Quicker.Collaboration.Application;
+using Quicker.Collaboration.Contracts;
 using Quicker.Web;
 
 namespace Quicker.Collaboration.Api;
@@ -65,6 +66,8 @@ public static class RecordEndpoints
         fields.MapGet("/", async (string? entityType, CustomFieldService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.ListAsync(entityType, ct)))
             .WithSummary("Custom-field definitions of an entity type (any member: forms are rendered from them)");
+        fields.MapGet("/hosts", () => TypedResults.Ok(new CustomFieldHostList(CustomFieldHosts.EntityTypes)))
+            .WithSummary("The record types custom fields can be defined for (each module registers the tables that carry them)");
         fields.MapGet("/{entityType}/schema", async (string entityType, CustomFieldService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.SchemaAsync(entityType, ct)))
             .WithSummary("JSON Schema of the entity's custom fields");

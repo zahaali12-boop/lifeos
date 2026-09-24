@@ -1003,7 +1003,7 @@ public sealed class InvoiceService(
         invoice.TotalPayable = invoice.TotalGross - totalWht;
         invoice.Notes = Shared.Trim(request.Notes);
         invoice.BranchId = request.BranchId;
-        invoice.CustomFields = Shared.JsonOrEmpty(request.CustomFields);
+        invoice.CustomFields = custom.Value;
         invoice.Lines.AddRange(lines);
         var instalments = await InstalmentsAsync(invoice, cancellationToken);
         if (instalments.IsFailure)

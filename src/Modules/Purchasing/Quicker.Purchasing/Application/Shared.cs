@@ -69,8 +69,6 @@ internal static class Shared
 
     public static decimal Round(decimal amount, Currency currency) => RoundingPolicy.Default.Round(amount, currency.MinorUnits);
 
-    public static string JsonOrEmpty(JsonElement? value) => value is { ValueKind: JsonValueKind.Object } v ? v.GetRawText() : "{}";
-
     public static JsonElement Parse(string json) => JsonDocument.Parse(json).RootElement.Clone();
 
     public static string? Trim(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useSuppliers } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type Invoice = components["schemas"]["InvoiceSummary"];
@@ -34,6 +35,7 @@ interface InvoiceLineForm {
 
 interface InvoiceForm {
   id: string | null;
+  customFields: CustomFieldValues;
   kind: string;
   partnerId: string;
   supplierInvoiceNumber: string;
@@ -118,6 +120,7 @@ export function InvoicesPage() {
   const save = useMutation({
     mutationFn: async (f: InvoiceForm) => {
       const body = {
+        customFields: f.customFields,
         companyId,
         partnerId: f.partnerId,
         kind: f.kind,
@@ -167,10 +170,10 @@ export function InvoicesPage() {
     [t],
   );
 
-  const openNew = (): void => { setProblem(null); setForm({ id: null, kind: "invoice", partnerId: "", supplierInvoiceNumber: "", documentDate: today(), currency: "", applyWht: true, lines: [] }); };
+  const openNew = (): void => { setProblem(null); setForm({ id: null, customFields: {}, kind: "invoice", partnerId: "", supplierInvoiceNumber: "", documentDate: today(), currency: "", applyWht: true, lines: [] }); };
   const openEdit = (i: Invoice): void => {
     setProblem(null);
-    setForm({ id: i.id, kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", landedCostChargeId: l.landedCostChargeId ?? "", returnLineId: l.returnLineId ?? "", label: l.kind === "expense" ? "" : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "" })) });
+    setForm({ id: i.id, customFields: asCustomFieldValues(i.customFields), kind: i.kind, partnerId: i.partnerId, supplierInvoiceNumber: i.supplierInvoiceNumber ?? "", documentDate: i.documentDate, currency: i.currency, applyWht: Boolean(i.whtCodeId) || i.totalWht !== 0, lines: i.lines.map((l) => ({ kind: l.kind, receiptLineId: l.receiptLineId ?? "", orderLineId: l.orderLineId ?? "", landedCostChargeId: l.landedCostChargeId ?? "", returnLineId: l.returnLineId ?? "", label: l.kind === "expense" ? "" : l.kind === "charge" ? `${l.landedCostNumber ?? ""} · ${l.description ?? ""}` : `${l.itemCode ?? ""} · ${l.returnNumber ?? l.receiptNumber ?? l.orderNumber ?? ""}`, quantity: String(l.quantity), unitPrice: String(l.unitPrice), description: l.description ?? "" })) });
   };
   const addInvoicable = (line: Invoicable): void => {
     if (!form || form.lines.some((l) => (line.kind === "receipt" ? l.receiptLineId === line.receiptLineId : line.kind === "charge" ? l.landedCostChargeId === line.landedCostChargeId : line.kind === "return" ? l.returnLineId === line.returnLineId : l.kind === "order" && l.orderLineId === line.orderLineId))) {
@@ -189,7 +192,7 @@ export function InvoicesPage() {
       setCompanyId(source.companyId);
     }
     setProblem(null);
-    setForm({ id: null, kind: from.type === "purchase_return" ? "debit_note" : "invoice", partnerId: source.partnerId, supplierInvoiceNumber: "", documentDate: today(), currency: source.currency, applyWht: true, lines: [] });
+    setForm({ id: null, customFields: {}, kind: from.type === "purchase_return" ? "debit_note" : "invoice", partnerId: source.partnerId, supplierInvoiceNumber: "", documentDate: today(), currency: source.currency, applyWht: true, lines: [] });
     setPendingSource(from);
   }, [from, source, clearFrom, companyId, setCompanyId]);
   useEffect(() => {
@@ -320,6 +323,7 @@ export function InvoicesPage() {
                   </TableBody>
                 </Table>
               ) : <p className="text-xs text-fg-muted">{t("purchasing.noLines")}</p>}
+              <CustomFieldsFieldset entityType="purchase_invoice" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setForm(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={save.isPending} disabled={!form.partnerId || form.lines.length === 0} data-testid="save-invoice">{t("common.save")}</Button>
@@ -341,6 +345,7 @@ export function InvoicesPage() {
                 </DialogTitle>
               </DialogHeader>
               <DocumentFlowBar documentType="purchase_invoice" documentId={i.id} />
+              <CustomFieldValuesList entityType="purchase_invoice" values={i.customFields} />
               <FormError message={problem?.message ?? null} />
               {i.blockReason ? <p className="text-sm text-warning" data-testid="block-reason">{i.blockReason}</p> : null}
               <KeyValues entries={[

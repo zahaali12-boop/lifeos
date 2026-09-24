@@ -33,6 +33,9 @@ public sealed record SaveCustomFieldRequest(
     bool Active = true,
     IReadOnlyDictionary<string, string>? Description = null);
 
+/// <summary>The record types that carry custom fields, in code order.</summary>
+public sealed record CustomFieldHostList(IReadOnlyCollection<string> EntityTypes);
+
 public sealed record CustomFieldView(Guid Id, string EntityType, string Key, IReadOnlyDictionary<string, string> Label, IReadOnlyDictionary<string, string> Description, string Type, bool Required, IReadOnlyList<CustomFieldOption> Options, CustomFieldRules Rules, bool Indexed, int Position, bool Active, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
 
 public static class CustomFieldTypes

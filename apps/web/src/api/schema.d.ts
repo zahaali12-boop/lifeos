@@ -2472,6 +2472,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/collaboration/custom-fields/hosts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The record types custom fields can be defined for (each module registers the tables that carry them) */
+        get: operations["getCollaborationCustomFieldsHosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/collaboration/custom-fields/{entityType}/schema": {
         parameters: {
             query?: never;
@@ -8552,6 +8569,10 @@ export interface components {
             currency: string;
             /** Format: double */
             amount: number | string;
+        };
+        /** @description The record types that carry custom fields, in code order. */
+        CustomFieldHostList: {
+            entityTypes: string[];
         };
         CustomFieldOption: {
             value: string;
@@ -19380,6 +19401,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CustomFieldView"];
+                };
+            };
+        };
+    };
+    getCollaborationCustomFieldsHosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomFieldHostList"];
                 };
             };
         };

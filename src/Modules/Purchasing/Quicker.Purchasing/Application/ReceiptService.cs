@@ -485,7 +485,7 @@ public sealed class ReceiptService(
         receipt.SupplierDeliveryNote = Shared.Trim(request.SupplierDeliveryNote);
         receipt.Notes = Shared.Trim(request.Notes);
         receipt.BranchId = request.BranchId ?? order.BranchId;
-        receipt.CustomFields = Shared.JsonOrEmpty(request.CustomFields);
+        receipt.CustomFields = custom.Value;
         receipt.ExchangeRate = rate;
         receipt.TotalExpectedCost = lines.Sum(static x => x.ExpectedCostAmount);
         receipt.Lines.AddRange(lines);

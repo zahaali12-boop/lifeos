@@ -432,7 +432,7 @@ public sealed class ReturnService(
         ret.Reason = Shared.Trim(request.Reason);
         ret.SupplierRma = Shared.Trim(request.SupplierRma);
         ret.Notes = Shared.Trim(request.Notes);
-        ret.CustomFields = Shared.JsonOrEmpty(request.CustomFields);
+        ret.CustomFields = custom.Value;
         ret.Lines.AddRange(lines);
         return Result.Success();
     }

@@ -546,7 +546,7 @@ public sealed class LandedCostService(
         doc.ExchangeRate = rate;
         doc.Reference = Shared.Trim(request.Reference);
         doc.Notes = Shared.Trim(request.Notes);
-        doc.CustomFields = Shared.JsonOrEmpty(request.CustomFields);
+        doc.CustomFields = custom.Value;
         doc.TotalAmount = charges.Sum(static c => c.Amount);
         doc.TotalAmountFc = charges.Sum(static c => c.AmountFc);
         doc.OnHandPortionFc = 0m;

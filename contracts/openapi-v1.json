@@ -6367,6 +6367,27 @@
         }
       }
     },
+    "/api/v1/collaboration/custom-fields/hosts": {
+      "get": {
+        "tags": [
+          "Collaboration"
+        ],
+        "summary": "The record types custom fields can be defined for (each module registers the tables that carry them)",
+        "operationId": "getCollaborationCustomFieldsHosts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomFieldHostList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/collaboration/custom-fields/{entityType}/schema": {
       "get": {
         "tags": [
@@ -25989,6 +26010,21 @@
             "format": "double"
           }
         }
+      },
+      "CustomFieldHostList": {
+        "required": [
+          "entityTypes"
+        ],
+        "type": "object",
+        "properties": {
+          "entityTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "The record types that carry custom fields, in code order."
       },
       "CustomFieldOption": {
         "required": [

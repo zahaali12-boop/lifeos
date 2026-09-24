@@ -13,9 +13,9 @@ import { toFormProblem, type FormProblem } from "../lib/problem";
 import { rememberRecent } from "../shell/CommandPalette";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { CompanyBranches } from "./CompanyBranches";
+import { CustomFieldsFieldset } from "./CustomFieldsFieldset";
 
 type Company = components["schemas"]["CompanySummary"];
-type CustomField = components["schemas"]["CustomFieldView"];
 
 interface CompanyForm {
   code: string;
@@ -98,37 +98,6 @@ function toForm(company: Company): CompanyForm {
   };
 }
 
-/** Renders one custom-field control from its definition; values are validated by the API (custom_field.* problems map back here). */
-function CustomFieldControl({ definition, value, onChange }: { definition: CustomField; value: unknown; onChange: (next: unknown) => void }) {
-  const control = { name: `cf-${definition.key}` };
-  switch (definition.type) {
-    case "boolean":
-      return (
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={Boolean(value)} onChange={(e) => { onChange(e.target.checked); }} {...control} />
-          {localized(definition.label)}
-        </label>
-      );
-    case "select":
-      return (
-        <SelectField value={typeof value === "string" ? value : ""} onChange={(e) => { onChange(e.target.value || undefined); }} {...control}>
-          <option value="">—</option>
-          {definition.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {localized(option.label)}
-            </option>
-          ))}
-        </SelectField>
-      );
-    case "number":
-      return <TextField type="number" inputMode="decimal" value={typeof value === "number" || typeof value === "string" ? String(value) : ""} onChange={(e) => { onChange(e.target.value === "" ? undefined : Number(e.target.value)); }} {...control} dir="ltr" />;
-    case "date":
-      return <TextField type="date" value={typeof value === "string" ? value : ""} onChange={(e) => { onChange(e.target.value || undefined); }} {...control} dir="ltr" />;
-    default:
-      return <TextField value={typeof value === "string" ? value : ""} onChange={(e) => { onChange(e.target.value || undefined); }} {...control} />;
-  }
-}
-
 export function CompaniesPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -151,7 +120,6 @@ export function CompaniesPage() {
     queryFn: async () => unwrap(await api.GET("/api/v1/organization/companies", { params: { query: filter ? { filter } : {} } })),
   });
   const currencies = useQuery({ queryKey: ["currencies"], queryFn: async () => unwrap(await api.GET("/api/v1/organization/currencies")) });
-  const fields = useQuery({ queryKey: ["custom-fields", "company"], queryFn: async () => unwrap(await api.GET("/api/v1/collaboration/custom-fields", { params: { query: { entityType: "company" } } })) });
 
   useEffect(() => {
     if (search.new) {
@@ -308,16 +276,7 @@ export function CompaniesPage() {
                   </Field>
                 ))}
               </fieldset>
-              {(fields.data ?? []).filter((f) => f.active).length > 0 ? (
-                <fieldset className="grid gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
-                  <legend className="px-1 text-sm font-medium">{t("customFields.title")}</legend>
-                  {(fields.data ?? []).filter((f) => f.active).map((definition) => (
-                    <Field key={definition.id} label={localized(definition.label)} required={definition.required} error={problem?.fields[`customFields.${definition.key}`]} description={localized(definition.description) || undefined}>
-                      <CustomFieldControl definition={definition} value={form.customFields[definition.key]} onChange={(next) => { setForm({ customFields: { ...form.customFields, [definition.key]: next } }); }} />
-                    </Field>
-                  ))}
-                </fieldset>
-              ) : null}
+              <CustomFieldsFieldset entityType="company" values={form.customFields} onChange={(customFields) => { setForm({ customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setEditing(null); }}>
                   {t("common.cancel")}

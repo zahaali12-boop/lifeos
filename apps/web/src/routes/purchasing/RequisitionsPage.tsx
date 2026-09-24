@@ -13,11 +13,13 @@ import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } f
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, num, optionalNum, PurchaseStatus, useSuppliers, type LineForm, type Requisition } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
+import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordActivity } from "../RecordDiscussion";
 
 interface RequisitionForm {
   neededBy: string;
   justification: string;
+  customFields: CustomFieldValues;
   lines: LineForm[];
 }
 
@@ -55,6 +57,7 @@ export function RequisitionsPage() {
           companyId,
           neededBy: f.neededBy || null,
           justification: f.justification || null,
+          customFields: f.customFields,
           lines: f.lines.map((l) => ({ itemCode: l.itemCode, description: l.description || null, quantity: num(l.quantity), uom: l.uom || null, estimatedPrice: optionalNum(l.price), suggestedSupplierId: l.supplierId || null })),
         },
       })),
@@ -95,7 +98,7 @@ export function RequisitionsPage() {
     [t],
   );
 
-  const openNew = (): void => { setProblem(null); setForm({ neededBy: "", justification: "", lines: [emptyLine()] }); };
+  const openNew = (): void => { setProblem(null); setForm({ neededBy: "", justification: "", customFields: {}, lines: [emptyLine()] }); };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { create.mutate(form); } };
   const r = detail.data;
 
@@ -140,6 +143,7 @@ export function RequisitionsPage() {
                   <TextareaField value={form.justification} onChange={(e) => { setForm({ ...form, justification: e.target.value }); }} rows={2} data-testid="requisition-justification" />
                 </Field>
               </div>
+              <CustomFieldsFieldset entityType="purchase_requisition" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
               <LinesEditor lines={form.lines} onChange={(lines) => { setForm({ ...form, lines }); }} priceLabel={t("purchasing.estimatedPrice")} suppliers={suppliers.data ?? []} showDescription />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setForm(null); }}>{t("common.cancel")}</Button>
@@ -161,6 +165,7 @@ export function RequisitionsPage() {
                 </DialogTitle>
               </DialogHeader>
               <DocumentFlowBar documentType="purchase_requisition" documentId={r.id} />
+              <CustomFieldValuesList entityType="purchase_requisition" values={r.customFields} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("purchasing.requester"), r.requesterName ?? "—"],

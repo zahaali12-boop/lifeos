@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useChargeTypes, useSuppliers } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 type LandedCost = components["schemas"]["LandedCostSummary"];
@@ -29,6 +30,7 @@ interface ChargeForm {
 
 interface LandedCostForm {
   id: string | null;
+  customFields: CustomFieldValues;
   postingDate: string;
   currency: string;
   reference: string;
@@ -77,6 +79,7 @@ export function LandedCostsPage() {
   const save = useMutation({
     mutationFn: async (f: LandedCostForm) => {
       const body = {
+        customFields: f.customFields,
         companyId,
         postingDate: f.postingDate || null,
         currency: f.currency || null,
@@ -124,10 +127,10 @@ export function LandedCostsPage() {
     [t],
   );
 
-  const openNew = (): void => { setProblem(null); setForm({ id: null, postingDate: today(), currency: "", reference: "", receiptLineIds: [], charges: [{ chargeTypeId: "", partnerId: "", amount: "", allocationBasis: "", description: "" }] }); };
+  const openNew = (): void => { setProblem(null); setForm({ id: null, customFields: {}, postingDate: today(), currency: "", reference: "", receiptLineIds: [], charges: [{ chargeTypeId: "", partnerId: "", amount: "", allocationBasis: "", description: "" }] }); };
   const openEdit = (d: LandedCost): void => {
     setProblem(null);
-    setForm({ id: d.id, postingDate: d.postingDate, currency: d.currency, reference: d.reference ?? "", receiptLineIds: [...new Set(d.allocations.map((a) => a.receiptLineId))], charges: d.charges.map((c) => ({ chargeTypeId: c.chargeTypeId, partnerId: c.partnerId ?? "", amount: String(c.amount), allocationBasis: c.allocationBasis, description: c.description ?? "" })) });
+    setForm({ id: d.id, customFields: asCustomFieldValues(d.customFields), postingDate: d.postingDate, currency: d.currency, reference: d.reference ?? "", receiptLineIds: [...new Set(d.allocations.map((a) => a.receiptLineId))], charges: d.charges.map((c) => ({ chargeTypeId: c.chargeTypeId, partnerId: c.partnerId ?? "", amount: String(c.amount), allocationBasis: c.allocationBasis, description: c.description ?? "" })) });
   };
   const patchCharge = (index: number, change: Partial<ChargeForm>): void => { if (form) { setForm({ ...form, charges: form.charges.map((c, i) => (i === index ? { ...c, ...change } : c)) }); } };
   const toggleLine = (id: string): void => { if (form) { setForm({ ...form, receiptLineIds: form.receiptLineIds.includes(id) ? form.receiptLineIds.filter((x) => x !== id) : [...form.receiptLineIds, id] }); } };
@@ -314,6 +317,7 @@ export function LandedCostsPage() {
                   ))}
                 </ul>
               )}
+              <CustomFieldsFieldset entityType="landed_cost_document" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setForm(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={save.isPending} disabled={form.receiptLineIds.length === 0 || form.charges.length === 0} data-testid="save-landed-cost">{t("common.save")}</Button>
@@ -334,6 +338,7 @@ export function LandedCostsPage() {
                 </DialogTitle>
               </DialogHeader>
               <DocumentFlowBar documentType="landed_cost_document" documentId={d.id} />
+              <CustomFieldValuesList entityType="landed_cost_document" values={d.customFields} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("purchasing.postingDate"), formatDate(d.postingDate)],

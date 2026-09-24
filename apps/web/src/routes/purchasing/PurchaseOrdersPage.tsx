@@ -16,6 +16,7 @@ import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } f
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, orderLineBodies, PurchaseStatus, useAgreements, useSuppliers, type LineForm, type PurchaseOrder } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 
 interface OrderForm {
@@ -26,6 +27,7 @@ interface OrderForm {
   warehouseId: string;
   agreementId: string;
   notes: string;
+  customFields: CustomFieldValues;
   lines: LineForm[];
   change: boolean;
   reason: string;
@@ -73,7 +75,7 @@ export function PurchaseOrdersPage() {
 
   const save = useMutation({
     mutationFn: async (f: OrderForm) => {
-      const order = { companyId, partnerId: f.partnerId, currency: f.currency || null, expectedDate: f.expectedDate || null, warehouseId: f.warehouseId || null, agreementId: f.agreementId || null, notes: f.notes || null, lines: orderLineBodies(f.lines) };
+      const order = { companyId, partnerId: f.partnerId, currency: f.currency || null, expectedDate: f.expectedDate || null, warehouseId: f.warehouseId || null, agreementId: f.agreementId || null, notes: f.notes || null, customFields: f.customFields, lines: orderLineBodies(f.lines) };
       if (!f.id) {
         return unwrap(await api.POST("/api/v1/purchasing/orders", { body: order }));
       }
@@ -113,8 +115,8 @@ export function PurchaseOrdersPage() {
   const openForm = (o: PurchaseOrder | null, change = false): void => {
     setProblem(null);
     setForm(o
-      ? { id: o.id, partnerId: o.partnerId, currency: o.currency, expectedDate: o.expectedDate ?? "", warehouseId: o.warehouseId ?? "", agreementId: o.agreementId ?? "", notes: o.notes ?? "", change, reason: "", lines: o.lines.map((l) => ({ itemCode: l.itemCode, description: l.description ?? "", quantity: String(l.quantity), uom: l.uomCode, price: String(l.unitPrice), supplierId: "", blanketLineId: l.blanketLineId ?? "" })) }
-      : { id: null, partnerId: "", currency: "", expectedDate: "", warehouseId: "", agreementId: "", notes: "", change: false, reason: "", lines: [emptyLine()] });
+      ? { id: o.id, partnerId: o.partnerId, currency: o.currency, expectedDate: o.expectedDate ?? "", warehouseId: o.warehouseId ?? "", agreementId: o.agreementId ?? "", notes: o.notes ?? "", customFields: asCustomFieldValues(o.customFields), change, reason: "", lines: o.lines.map((l) => ({ itemCode: l.itemCode, description: l.description ?? "", quantity: String(l.quantity), uom: l.uomCode, price: String(l.unitPrice), supplierId: "", blanketLineId: l.blanketLineId ?? "" })) }
+      : { id: null, partnerId: "", currency: "", expectedDate: "", warehouseId: "", agreementId: "", notes: "", customFields: {}, change: false, reason: "", lines: [emptyLine()] });
   };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
   const o = detail.data;
@@ -185,6 +187,7 @@ export function PurchaseOrdersPage() {
                   </Field>
                 ) : null}
               </div>
+              <CustomFieldsFieldset entityType="purchase_order" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
               <LinesEditor lines={form.lines} onChange={(lines) => { setForm({ ...form, lines }); }} showDescription />
               {form.agreementId ? (
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -221,6 +224,7 @@ export function PurchaseOrdersPage() {
                 </DialogTitle>
               </DialogHeader>
               <DocumentFlowBar documentType="purchase_order" documentId={o.id} />
+              <CustomFieldValuesList entityType="purchase_order" values={o.customFields} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("partners.supplier"), `${o.partnerCode} · ${localized(o.partnerName)}`],

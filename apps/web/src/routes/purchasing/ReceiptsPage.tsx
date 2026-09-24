@@ -17,6 +17,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordActivity } from "../RecordDiscussion";
 
 type Receipt = components["schemas"]["ReceiptSummary"];
@@ -32,6 +33,7 @@ interface ReceiptLineForm {
 
 interface ReceiptForm {
   id: string | null;
+  customFields: CustomFieldValues;
   orderId: string;
   warehouseId: string;
   postingDate: string;
@@ -86,6 +88,7 @@ export function ReceiptsPage() {
   const save = useMutation({
     mutationFn: async (f: ReceiptForm) => {
       const body = {
+        customFields: f.customFields,
         orderId: f.orderId,
         warehouseId: f.warehouseId || null,
         postingDate: f.postingDate || null,
@@ -123,7 +126,7 @@ export function ReceiptsPage() {
     [t],
   );
 
-  const openNew = (): void => { setProblem(null); setForm({ id: null, orderId: "", warehouseId: "", postingDate: today(), supplierDeliveryNote: "", lines: [] }); };
+  const openNew = (): void => { setProblem(null); setForm({ id: null, customFields: {}, orderId: "", warehouseId: "", postingDate: today(), supplierDeliveryNote: "", lines: [] }); };
   const chooseOrder = (orderId: string): void => {
     if (!form) {
       return;
@@ -144,7 +147,7 @@ export function ReceiptsPage() {
       setCompanyId(source.companyId);
     }
     setProblem(null);
-    setForm({ id: null, orderId: "", warehouseId: source.warehouseId ?? "", postingDate: today(), supplierDeliveryNote: "", lines: [] });
+    setForm({ id: null, customFields: {}, orderId: "", warehouseId: source.warehouseId ?? "", postingDate: today(), supplierDeliveryNote: "", lines: [] });
     setPendingOrder(source.id);
   }, [from, source, clearFrom, companyId, setCompanyId]);
   useEffect(() => {
@@ -259,6 +262,7 @@ export function ReceiptsPage() {
               ) : (
                 <p className="text-xs text-fg-muted">{form.orderId ? t("purchasing.nothingReceivable") : t("purchasing.chooseOrder")}</p>
               )}
+              <CustomFieldsFieldset entityType="purchase_receipt" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setForm(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={save.isPending} disabled={!form.orderId} data-testid="save-receipt">{t("common.save")}</Button>
@@ -279,6 +283,7 @@ export function ReceiptsPage() {
                 </DialogTitle>
               </DialogHeader>
               <DocumentFlowBar documentType="purchase_receipt" documentId={r.id} />
+              <CustomFieldValuesList entityType="purchase_receipt" values={r.customFields} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("nav.purchaseOrders"), r.orderNumber],
@@ -320,7 +325,7 @@ export function ReceiptsPage() {
               ) : null}
               <RecordActivity entityType="purchase_receipt" entityId={r.id} />
               <DialogFooter>
-                {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, orderId: r.orderId, warehouseId: r.warehouseId, postingDate: r.postingDate, supplierDeliveryNote: r.supplierDeliveryNote ?? "", lines: r.lines.map((l) => ({ orderLineId: l.orderLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", expiresOn: l.expiresOn ?? "", serialNumbers: l.serialNumbers.join(" ") })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
+                {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, customFields: asCustomFieldValues(r.customFields), orderId: r.orderId, warehouseId: r.warehouseId, postingDate: r.postingDate, supplierDeliveryNote: r.supplierDeliveryNote ?? "", lines: r.lines.map((l) => ({ orderLineId: l.orderLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", expiresOn: l.expiresOn ?? "", serialNumbers: l.serialNumbers.join(" ") })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-receipt">{t("purchasing.deleteDraft")}</Button> : null}
                 {r.status === "draft" ? <Button onClick={() => { act.mutate({ id: r.id, action: "post" }); }} loading={act.isPending} data-testid="post-receipt">{t("purchasing.postReceipt")}</Button> : null}
                 {r.status === "posted" && can("purchasing.invoice.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_receipt", r.id) }); }} data-testid="receipt-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}

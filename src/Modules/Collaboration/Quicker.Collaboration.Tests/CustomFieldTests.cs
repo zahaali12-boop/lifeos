@@ -48,6 +48,11 @@ public sealed class CustomFieldTests(ApiHostFixture host)
 
         // Definition validation.
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "sales_invoice", key = "x", label = new { en = "X" }, type = "text" }, Json)).ErrorCodeAsync()).ShouldBe("custom_field.entity_unsupported");
+        var hosts = (await (await owner.GetAsync("/api/v1/collaboration/custom-fields/hosts")).ReadJsonAsync()).GetProperty("entityTypes").EnumerateArray().Select(static h => h.GetString()!).ToList();
+        hosts.ShouldContain("company");
+        hosts.ShouldContain("purchase_order");
+        hosts.ShouldNotContain("sales_invoice");
+        hosts.ShouldBe([.. hosts.Order(StringComparer.Ordinal)]);
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "company", key = "Region", label = new { en = "X" }, type = "text" }, Json)).ErrorCodeAsync()).ShouldBe("custom_field.key_invalid");
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "company", key = "region", label = new { en = "X" }, type = "text" }, Json)).ErrorCodeAsync()).ShouldBe("custom_field.key_taken");
         (await (await owner.PostAsJsonAsync("/api/v1/collaboration/custom-fields", new { entityType = "company", key = "size", label = new { en = "X" }, type = "select" }, Json)).ErrorCodeAsync()).ShouldBe("custom_field.options_invalid");

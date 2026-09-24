@@ -18,6 +18,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
+import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordActivity } from "../RecordDiscussion";
 
 type Return = components["schemas"]["ReturnSummary"];
@@ -33,6 +34,7 @@ interface ReturnLineForm {
 
 interface ReturnForm {
   id: string | null;
+  customFields: CustomFieldValues;
   receiptId: string;
   postingDate: string;
   reason: string;
@@ -86,6 +88,7 @@ export function ReturnsPage() {
   const save = useMutation({
     mutationFn: async (f: ReturnForm) => {
       const body = {
+        customFields: f.customFields,
         receiptId: f.receiptId,
         postingDate: f.postingDate || null,
         reason: f.reason || null,
@@ -123,7 +126,7 @@ export function ReturnsPage() {
     [t],
   );
 
-  const openNew = (): void => { setProblem(null); setForm({ id: null, receiptId: "", postingDate: today(), reason: "", supplierRma: "", lines: [] }); };
+  const openNew = (): void => { setProblem(null); setForm({ id: null, customFields: {}, receiptId: "", postingDate: today(), reason: "", supplierRma: "", lines: [] }); };
   const chooseReceipt = (receiptId: string): void => {
     if (!form) {
       return;
@@ -143,7 +146,7 @@ export function ReturnsPage() {
       setCompanyId(source.companyId);
     }
     setProblem(null);
-    setForm({ id: null, receiptId: "", postingDate: today(), reason: "", supplierRma: "", lines: [] });
+    setForm({ id: null, customFields: {}, receiptId: "", postingDate: today(), reason: "", supplierRma: "", lines: [] });
     setPendingReceipt(source.id);
   }, [from, source, clearFrom, companyId, setCompanyId]);
   useEffect(() => {
@@ -257,6 +260,7 @@ export function ReturnsPage() {
               ) : (
                 <p className="text-xs text-fg-muted">{form.receiptId ? t("purchasing.nothingReturnable") : t("purchasing.chooseReceipt")}</p>
               )}
+              <CustomFieldsFieldset entityType="purchase_return" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setForm(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={save.isPending} disabled={!form.receiptId} data-testid="save-return">{t("common.save")}</Button>
@@ -277,6 +281,7 @@ export function ReturnsPage() {
                 </DialogTitle>
               </DialogHeader>
               <DocumentFlowBar documentType="purchase_return" documentId={r.id} />
+              <CustomFieldValuesList entityType="purchase_return" values={r.customFields} />
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("nav.receipts"), r.receiptNumber],
@@ -319,7 +324,7 @@ export function ReturnsPage() {
               ) : null}
               <RecordActivity entityType="purchase_return" entityId={r.id} />
               <DialogFooter>
-                {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, receiptId: r.receiptId, postingDate: r.postingDate, reason: r.reason ?? "", supplierRma: r.supplierRma ?? "", lines: r.lines.map((l) => ({ receiptLineId: l.receiptLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", serialNumbers: l.serialNumbers.join(" "), reason: l.reason ?? "" })) }); }} data-testid="edit-return">{t("common.edit")}</Button> : null}
+                {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, customFields: asCustomFieldValues(r.customFields), receiptId: r.receiptId, postingDate: r.postingDate, reason: r.reason ?? "", supplierRma: r.supplierRma ?? "", lines: r.lines.map((l) => ({ receiptLineId: l.receiptLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", serialNumbers: l.serialNumbers.join(" "), reason: l.reason ?? "" })) }); }} data-testid="edit-return">{t("common.edit")}</Button> : null}
                 {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-return">{t("purchasing.deleteDraft")}</Button> : null}
                 {r.status === "draft" ? <Button onClick={() => { act.mutate({ id: r.id, action: "post" }); }} loading={act.isPending} data-testid="post-return">{t("purchasing.postReturn")}</Button> : null}
                 {r.status === "posted" && can("purchasing.invoice.manage") && r.lines.some((l) => compare(l.qtyCredited, l.quantity) < 0) ? <Button onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_return", r.id) }); }} data-testid="return-create-debit-note"><FileMinus aria-hidden="true" />{t("documentFlow.createDebitNote")}</Button> : null}

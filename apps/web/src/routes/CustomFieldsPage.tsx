@@ -14,7 +14,6 @@ import { FormError, PageHeader, SelectField, TextField } from "./common";
 type CustomField = components["schemas"]["CustomFieldView"];
 
 /** Entity types that carry custom fields today; each host registers itself on the API as it lands. */
-const hosts = ["company"] as const;
 const types = ["text", "number", "date", "boolean", "select", "multi_select", "reference"] as const;
 
 const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof types)[number], required: false, indexed: false, options: "", min: "", max: "", maxLength: "", pattern: "", referenceType: "" };
@@ -22,7 +21,9 @@ const emptyForm = { key: "", labelEn: "", labelAr: "", type: "text" as (typeof t
 export function CustomFieldsPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [entityType, setEntityType] = useState<(typeof hosts)[number]>("company");
+  const [entityType, setEntityType] = useState("company");
+  const hostList = useQuery({ queryKey: ["custom-field-hosts"], queryFn: async () => unwrap(await api.GET("/api/v1/collaboration/custom-fields/hosts")), staleTime: Infinity });
+  const hosts = hostList.data?.entityTypes ?? ["company"];
   const [editing, setEditing] = useState<{ id: string | null; form: typeof emptyForm } | null>(null);
   const [problem, setProblem] = useState<FormProblem | null>(null);
 
@@ -108,10 +109,10 @@ export function CustomFieldsPage() {
         description={t("customFields.description")}
         actions={
           <>
-            <SelectField value={entityType} onChange={(e) => { setEntityType(e.target.value as (typeof hosts)[number]); }} aria-label={t("customFields.entityType")} className="w-48">
+            <SelectField value={entityType} onChange={(e) => { setEntityType(e.target.value); }} aria-label={t("customFields.entityType")} className="w-56" data-testid="custom-field-host">
               {hosts.map((host) => (
                 <option key={host} value={host}>
-                  {t(`entities.${host}`)}
+                  {t(`customFields.hosts.${host}`, { defaultValue: host })}
                 </option>
               ))}
             </SelectField>

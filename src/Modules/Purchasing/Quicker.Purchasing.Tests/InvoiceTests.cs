@@ -53,6 +53,45 @@ public sealed class InvoiceTests(ApiHostFixture host)
         return new Member(Api.ClientFor(accepted.GetProperty("accessToken").GetString()!), invited.GetProperty("membershipId").GetGuid());
     }
 
+    [Fact]
+    public async Task Receipts_returns_and_invoices_keep_their_custom_fields_as_validated()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        var reference = Guid.NewGuid();
+        foreach (var entityType in new[] { "purchase_receipt", "purchase_return", "purchase_invoice" })
+        {
+            await owner.PostAsync("/api/v1/collaboration/custom-fields", new { entityType, key = "channels", label = Name("Channels", "القنوات"), type = "multi_select", options = new[] { new { value = "email", label = Name("Email", "بريد") }, new { value = "portal", label = Name("Portal", "بوابة") } } });
+            await owner.PostAsync("/api/v1/collaboration/custom-fields", new { entityType, key = "note", label = Name("Note", "ملاحظة"), type = "text" });
+            await owner.PostAsync("/api/v1/collaboration/custom-fields", new { entityType, key = "contract", label = Name("Contract", "العقد"), type = "reference", rules = new { referenceType = "contract" } });
+        }
+
+        // What is stored is what the validator returns: no nulls, each option once, the id in its canonical form.
+        var given = new Dictionary<string, object?> { ["channels"] = new[] { "email", "email", "portal" }, ["note"] = null, ["contract"] = reference.ToString().ToUpperInvariant() };
+        static void Kept(System.Text.Json.JsonElement document)
+        {
+            var fields = document.GetProperty("customFields");
+            fields.EnumerateObject().Select(static p => p.Name).Order(StringComparer.Ordinal).ShouldBe(["channels", "contract"]);
+            fields.GetProperty("channels").EnumerateArray().Select(static c => c.GetString()).ShouldBe(["email", "portal"]);
+        }
+
+        var order = await owner.PostAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId = s.Supplier, warehouseId = s.WarehouseId, lines = new object[] { new { itemId = s.Tea, quantity = 10m, uom = "PCS", unitPrice = 2m } } });
+        var orderId = order.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/orders/{orderId}/submit", new { }, HttpStatusCode.OK);
+        var receipt = await owner.PostAsync("/api/v1/purchasing/receipts", new { orderId, postingDate = "2026-09-10", lines = new[] { new { orderLineId = order.GetProperty("lines").Only().GetProperty("id").GetGuid(), quantity = 10m } }, customFields = given });
+        Kept(receipt);
+        receipt.GetProperty("customFields").GetProperty("contract").GetString().ShouldBe(reference.ToString());
+        var posted = await owner.PostAsync($"/api/v1/purchasing/receipts/{receipt.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        Kept(posted);
+
+        var ret = await owner.PostAsync("/api/v1/purchasing/returns", new { receiptId = receipt.GetProperty("id").GetGuid(), postingDate = "2026-09-11", reason = "Damaged", lines = new[] { new { receiptLineId = posted.GetProperty("lines").Only().GetProperty("id").GetGuid(), quantity = 1m } }, customFields = given });
+        Kept(ret);
+
+        var invoice = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, kind = "expense", supplierInvoiceNumber = "CF-1", applyWht = false, lines = new[] { new { kind = "expense", description = "Courier", quantity = 1m, unitPrice = 50m } }, customFields = given });
+        Kept(invoice);
+        Kept(await owner.GetOkAsync($"/api/v1/purchasing/invoices/{invoice.GetProperty("id").GetGuid()}"));
+    }
+
     private async Task<decimal> BookedAsync(Setup s, string sql, object? extra = null)
     {
         await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
