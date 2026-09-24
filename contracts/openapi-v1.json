@@ -612,6 +612,27 @@
         }
       }
     },
+    "/api/v1/me/step-up/webauthn/options": {
+      "post": {
+        "tags": [
+          "My account"
+        ],
+        "summary": "Challenge for re-proving identity with a security key",
+        "operationId": "postMeStepUpWebauthnOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebAuthnAssertionOptionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me/sessions": {
       "get": {
         "tags": [
@@ -45495,7 +45516,15 @@
               "null",
               "string"
             ]
-          }
+          },
+          "webAuthnOptionsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "webAuthnResponse": { }
         }
       },
       "StockAvailability": {

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { api, unwrap } from "../api";
 import { setLanguage } from "../i18n";
@@ -22,6 +23,14 @@ interface Seen {
   path: string;
   authorization: string | null;
   body: string;
+}
+
+function renderDialog() {
+  return render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <StepUpDialog />
+    </QueryClientProvider>,
+  );
 }
 
 /** A fake API: sensitive writes need a token issued by step-up; step-up accepts one password. */
@@ -62,7 +71,7 @@ describe("StepUpDialog", () => {
 
   it("asks for the password on auth.step_up_required, then replays the same request with the fresh token", async () => {
     const seen = stubApi();
-    render(<StepUpDialog />);
+    renderDialog();
 
     const pending = api.POST("/api/v1/api-keys", { body: { name: "bridge", scopes: [], expiresAt: null, ipAllowlist: [] } });
     const password = await screen.findByLabelText(/Password/);
@@ -89,7 +98,7 @@ describe("StepUpDialog", () => {
 
   it("returns the original refusal when the person cancels", async () => {
     stubApi();
-    render(<StepUpDialog />);
+    renderDialog();
 
     const pending = api.POST("/api/v1/api-keys", { body: { name: "bridge", scopes: [], expiresAt: null, ipAllowlist: [] } });
     await screen.findByRole("dialog");

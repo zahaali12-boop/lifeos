@@ -352,6 +352,11 @@ public sealed class AuthService(
         {
             proved = await VerifyTotpAsync(user, request.Code, cancellationToken) is not null;
         }
+        else if (request.WebAuthnOptionsId is { } optionsId && request.WebAuthnResponse is { } assertion)
+        {
+            // A security key proves the second factor, so people whose only method is a key can step up too.
+            proved = (await webAuthn.VerifyAssertionAsync(user, optionsId, assertion, cancellationToken)).IsSuccess;
+        }
         else if (!string.IsNullOrEmpty(request.Password) && user.PasswordHash is not null)
         {
             proved = hasher.Verify(request.Password, user.PasswordHash) && !user.HasMfa;
@@ -361,7 +366,7 @@ public sealed class AuthService(
         {
             unitOfWork.Current.CommitOnFailure = true;
             await audit.RecordAsync(new AuditEntry("user", user.Id, user.Email, "step_up_failed"), cancellationToken);
-            return Error.Validation("auth.step_up_failed", user.HasMfa ? "Enter a valid authenticator code." : "The password is not valid.");
+            return Error.Validation("auth.step_up_failed", user.HasMfa ? "Enter a valid authenticator code or use your security key." : "The password is not valid.");
         }
 
         var membership = user.Memberships.Single(m => m.Id == session.MembershipId);

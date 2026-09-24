@@ -212,3 +212,33 @@ test("English: a workspace that requires two-step verification has a member with
   await openAccount(page);
   await expect(page.getByTestId("two-step-status")).toHaveText("On");
 });
+
+test("English: someone whose only second factor is a security key confirms a sensitive action with it", async ({ page }) => {
+  // The step-up window is one minute at its shortest, so this journey waits for it to pass once.
+  test.setTimeout(150_000);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("WebAuthn.enable");
+  await cdp.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true } });
+  await signup(page);
+  await page.getByRole("navigation").getByRole("link", { name: "Security", exact: true }).click();
+  await page.getByTestId("tab-policy").click();
+  await page.getByTestId("policy-stepUpWindowMinutes").fill("1");
+  await page.getByTestId("save-policy").click();
+  await expect(page.getByTestId("save-policy")).toBeDisabled();
+
+  await openAccount(page);
+  await page.getByTestId("add-key").click();
+  await page.getByTestId("key-name").fill("Phone passkey");
+  await page.getByTestId("key-register").click();
+  await expect(page.getByTestId("two-step-status")).toHaveText("On");
+
+  // After the window, new recovery codes need a fresh confirmation: the password no longer suffices and there is no
+  // authenticator app, so the dialog offers the key alone, and the key confirms it.
+  await page.waitForTimeout(61_000);
+  await page.getByTestId("new-recovery-codes").click();
+  await expect(page.getByTestId("step-up")).toBeVisible();
+  await expect(page.getByTestId("step-up-secret")).toHaveCount(0);
+  await expectAccessible(page);
+  await page.getByTestId("step-up-key").click();
+  await expect(page.getByTestId("recovery-code")).toHaveCount(10);
+});

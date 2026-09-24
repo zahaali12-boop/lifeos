@@ -16,7 +16,7 @@ public sealed record RefreshRequest(string RefreshToken);
 
 public sealed record LogoutRequest(string? RefreshToken = null, bool AllSessions = false);
 
-public sealed record StepUpRequest(string? Password = null, string? Code = null);
+public sealed record StepUpRequest(string? Password = null, string? Code = null, Guid? WebAuthnOptionsId = null, System.Text.Json.JsonElement? WebAuthnResponse = null);
 
 public sealed record ForgotPasswordRequest(string Email);
 

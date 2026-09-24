@@ -123,6 +123,12 @@ public static class IdentityEndpoints
             ApiProblems.Ok(await service.StepUpAsync(SessionId(http) ?? Guid.Empty, current.Required.UserId.Value, request, Client(http), ct)))
             .WithSummary("Re-prove identity for sensitive actions");
 
+        me.MapPost("/step-up/webauthn/options", async (CurrentPrincipal current, AuthService service, WebAuthnService webAuthn, CancellationToken ct) =>
+        {
+            var user = (await service.LoadUserAsync(current.Required.UserId.Value, ct))!;
+            return ApiProblems.Ok(await webAuthn.AssertionOptionsAsync(user, ct));
+        }).WithSummary("Challenge for re-proving identity with a security key");
+
         me.MapGet("/sessions", async (HttpContext http, CurrentPrincipal current, AuthService service, CancellationToken ct) =>
             TypedResults.Ok(await service.ListSessionsAsync(current.Required.UserId.Value, SessionId(http) ?? Guid.Empty, ct)));
 

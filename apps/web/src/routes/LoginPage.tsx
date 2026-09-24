@@ -102,7 +102,7 @@ export function LoginPage() {
     void run(async () => { await proceed(unwrap(await api.POST("/api/v1/auth/mfa/verify", { body: { challengeToken: step.challengeToken, ...proof } }))); });
   };
 
-  const useKey = (): void => {
+  const signInWithKey = (): void => {
     if (step.kind !== "mfa") {
       return;
     }
@@ -170,7 +170,7 @@ export function LoginPage() {
             <FormError message={error} />
             {step.methods.includes("webauthn") ? (
               <>
-                <Button type="button" onClick={useKey} loading={busy} disabled={!webAuthnAvailable()} className="w-full" data-testid="mfa-use-key">
+                <Button type="button" onClick={signInWithKey} loading={busy} disabled={!webAuthnAvailable()} className="w-full" data-testid="mfa-use-key">
                   <KeyRound aria-hidden="true" />
                   {t("auth.useKey")}
                 </Button>

@@ -337,6 +337,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/step-up/webauthn/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Challenge for re-proving identity with a security key */
+        post: operations["postMeStepUpWebauthnOptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/sessions": {
         parameters: {
             query?: never;
@@ -13887,6 +13904,9 @@ export interface components {
         StepUpRequest: {
             password?: null | string;
             code?: null | string;
+            /** Format: uuid */
+            webAuthnOptionsId?: null | string;
+            webAuthnResponse?: unknown;
         };
         StockAvailability: {
             /** Format: uuid */
@@ -15225,6 +15245,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+        };
+    };
+    postMeStepUpWebauthnOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebAuthnAssertionOptionsResponse"];
                 };
             };
         };
