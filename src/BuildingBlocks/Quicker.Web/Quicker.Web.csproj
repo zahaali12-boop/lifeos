@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>HTTP conventions: problem details with stable codes, unit-of-work per request, principal resolution, permission filters (ADR-0012).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../Quicker.Observability/Quicker.Observability.csproj" />
+    <ProjectReference Include="../../Modules/Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

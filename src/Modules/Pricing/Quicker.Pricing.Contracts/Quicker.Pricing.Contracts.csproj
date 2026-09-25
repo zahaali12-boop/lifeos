@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>What other modules may know about pricing: a basket priced for a customer on a date with the explanation of every price, and the promotion usage a confirmed document records (roadmap 5.2, ADR-0030).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+</Project>

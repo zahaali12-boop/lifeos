@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Numbering module: series with templates, gapless and non-gapless allocation under a row lock, reset policies, counters, allocation log and gapless audit (ADR-0016).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Numbering.Contracts/Quicker.Numbering.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+
+</Project>

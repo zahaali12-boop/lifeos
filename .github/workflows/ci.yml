@@ -1,0 +1,212 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  QUICKER_TEST_CONNECTION: Host=127.0.0.1;Port=5432;Database=postgres;Username=quicker_owner;Password=quicker
+  QUICKER_TEST_S3_ENDPOINT: http://127.0.0.1:9000
+  QUICKER_TEST_S3_ACCESS_KEY: minioadmin
+  QUICKER_TEST_S3_SECRET_KEY: minioadmin
+
+jobs:
+  dotnet:
+    name: .NET build, analyzers, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quicker_owner
+          POSTGRES_PASSWORD: quicker
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U quicker_owner -d postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Start MinIO (S3 provider tests)
+        run: |
+          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:9000/minio/health/live && break; sleep 1; done
+          curl -sf http://127.0.0.1:9000/minio/health/live
+
+      - name: Prepare database roles
+        run: |
+          PGPASSWORD=quicker psql -h 127.0.0.1 -U quicker_owner -d postgres -v ON_ERROR_STOP=1 -c "
+            DO \$\$ BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='quicker_app') THEN
+                CREATE ROLE quicker_app LOGIN PASSWORD 'quicker' NOSUPERUSER NOBYPASSRLS;
+              END IF;
+            END \$\$;"
+
+      # The backup and restore drill runs pg_dump and pg_restore, which must be at least the server's version (17);
+      # the runner image ships an older client.
+      - name: PostgreSQL 17 client tools
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          /usr/lib/postgresql/17/bin/pg_dump --version
+
+      - name: Restore
+        run: dotnet restore Quicker.sln
+
+      - name: Format check
+        run: dotnet format Quicker.sln --verify-no-changes --no-restore
+
+      - name: Build (warnings as errors, analyzers)
+        run: dotnet build Quicker.sln --no-restore --configuration Release
+
+      - name: API contract is committed (contracts/openapi-v1.json is generated at build)
+        run: git diff --exit-code -- contracts/
+
+      - name: Test
+        run: dotnet test --solution Quicker.sln --no-build --configuration Release
+
+  web:
+    name: Web lint, type check, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typed client matches the committed contract
+        run: pnpm --filter @quicker/web generate:api && git diff --exit-code -- apps/web/src/api/schema.d.ts
+      - name: API contract has no breaking change against main
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          git show origin/main:contracts/openapi-v1.json > /tmp/base-contract.json 2>/dev/null || rm -f /tmp/base-contract.json
+          pnpm --filter @quicker/tools check-api-contract /tmp/base-contract.json "$GITHUB_WORKSPACE/contracts/openapi-v1.json"
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
+      - run: pnpm -r build
+
+  e2e:
+    name: Browser journeys (EN and AR, axe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Downloads named in Arabic need a UTF-8 locale, or the browser saves them as "download".
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: quicker_owner
+          POSTGRES_PASSWORD: quicker
+          POSTGRES_DB: quicker
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U quicker_owner -d postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prepare database roles and schema
+        run: |
+          PGPASSWORD=quicker psql -h 127.0.0.1 -U quicker_owner -d postgres -v ON_ERROR_STOP=1 -c "
+            DO \$\$ BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='quicker_app') THEN
+                CREATE ROLE quicker_app LOGIN PASSWORD 'quicker' NOSUPERUSER NOBYPASSRLS;
+              END IF;
+            END \$\$;"
+          dotnet run --project src/Host/Quicker.Migrator -c Release
+        env:
+          QUICKER__DB__OWNERCONNECTION: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+          QUICKER__DB__APPPASSWORD: quicker
+      - name: Start the API
+        run: |
+          nohup dotnet run --project src/Host/Quicker.Api -c Release --no-launch-profile > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8080/health/ready && break; sleep 2; done
+          curl -sf http://127.0.0.1:8080/health/ready
+        env:
+          ASPNETCORE_URLS: http://127.0.0.1:8080
+          ASPNETCORE_ENVIRONMENT: Development
+          Quicker__Db__OwnerConnection: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+          Quicker__Db__AppConnection: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+          # Security keys need a domain name, so the account journeys run the app on localhost; the others use the address.
+          Quicker__Auth__PublicOrigin: http://localhost:5173
+          Quicker__Api__AllowedOrigins: http://127.0.0.1:5173,http://localhost:5173
+          Quicker__Auth__ApiOrigin: http://127.0.0.1:8080
+          # No separate worker process here: the API runs the dispatcher itself, as on a single-node install, so the
+          # events the demo seed wrote are published and readiness reflects a draining outbox.
+          Quicker__Worker__Embedded: "true"
+          # An absolute anchor store, so the harness below reads the anchors the API wrote.
+          Quicker__Audit__Anchoring__Store: file
+          Quicker__Audit__Anchoring__Path: ${{ github.workspace }}/.data/audit-anchors
+      - run: pnpm --filter @quicker/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @quicker/web e2e
+        env:
+          CI: "1"
+          E2E_API_URL: http://127.0.0.1:8080
+      # The books every journey left behind must still agree: the invariant harness over every workspace they created.
+      - name: Invariant harness over the journeys' workspaces
+        run: dotnet run --project src/Host/Quicker.Migrator -c Release -- verify
+        env:
+          QUICKER__DB__OWNERCONNECTION: Host=127.0.0.1;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+          QUICKER__DB__APPPASSWORD: quicker
+          QUICKER__AUDIT__ANCHORING__STORE: file
+          QUICKER__AUDIT__ANCHORING__PATH: ${{ github.workspace }}/.data/audit-anchors
+      - name: API log on failure
+        if: failure()
+        run: tail -n 200 api.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/test-results
+          if-no-files-found: ignore
+
+  docs:
+    name: Docs diagrams parse
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @quicker/tools check-diagrams docs

@@ -1,0 +1,78 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Quicker.Accounting.Contracts;
+using Quicker.Collaboration.Contracts;
+using Quicker.Identity.Contracts;
+using Quicker.Inventory.Application;
+using Quicker.Inventory.Contracts;
+using Quicker.Inventory.Persistence;
+using Quicker.Messaging;
+using Quicker.Numbering.Contracts;
+using Quicker.Organization.Contracts;
+using Quicker.Persistence.EntityFramework;
+using Quicker.Workflow.Contracts;
+namespace Quicker.Inventory;
+
+public static class InventoryModule
+{
+    public static IServiceCollection AddInventoryModule(this IServiceCollection services)
+    {
+        // Entries of this module belong to its documents, which keep their own subledger (A-140).
+        services.AddSingleton(new PostingDocumentModule("inventory"));
+        ArgumentNullException.ThrowIfNull(services);
+        PermissionCatalog.Register(InventoryPermissions.All);
+        NumberedDocumentTypes.Register(
+            new(AdjustmentService.DocumentType, InventoryPermissions.AdjustmentRead),
+            new(RevaluationService.DocumentType, InventoryPermissions.CostingRead),
+            new(AssemblyService.DocumentType, InventoryPermissions.AssemblyRead),
+            new(TransferService.DocumentType, InventoryPermissions.TransferRead),
+            new(CountService.DocumentType, InventoryPermissions.CountRead));
+        CustomFieldHosts.Register(new CustomFieldHost("stock_transfer", "app.inv_transfers", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost("stock_adjustment", "app.inv_adjustments", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost("lot", "app.inv_lots", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost("serial", "app.inv_serials", "custom_fields"));
+        services.AddModuleDbContext<InventoryDbContext>();
+        services.AddScoped<WarehouseService>();
+        services.AddScoped<IWarehouseDirectory>(static sp => sp.GetRequiredService<WarehouseService>());
+        services.AddScoped<StockPostingService>();
+        services.AddScoped<IInventoryPosting>(static sp => sp.GetRequiredService<StockPostingService>());
+        services.AddScoped<ReservationService>();
+        services.AddScoped<IStockReservations>(static sp => sp.GetRequiredService<ReservationService>());
+        services.AddScoped<TransferService>();
+        services.AddScoped<StockInquiryService>();
+        services.AddScoped<StockActivity>();
+        services.AddScoped<IStockActivity>(static sp => sp.GetRequiredService<StockActivity>());
+        services.AddScoped<ICompanyCostingGuard>(static sp => sp.GetRequiredService<StockActivity>());
+        services.AddScoped<SlowMovingStockService>();
+        services.AddSingleton(static sp => sp.GetRequiredService<IConfiguration>().GetSection(InventoryOptions.SectionName).Get<InventoryOptions>() ?? new InventoryOptions());
+        services.AddScoped<CostingService>();
+        services.AddScoped<IInventoryCosting>(static sp => sp.GetRequiredService<CostingService>());
+        services.AddScoped<CostInquiryService>();
+        services.AddScoped<ReasonCodeService>();
+        services.AddScoped<AdjustmentService>();
+        services.AddScoped<IWorkflowSubjectProvider, AdjustmentWorkflowSubject>();
+        services.AddScoped<RevaluationService>();
+        services.AddScoped<AssemblyService>();
+        services.AddScoped<TrackingResolver>();
+        services.AddScoped<LotService>();
+        services.AddScoped<SerialService>();
+        services.AddScoped<CountService>();
+        services.AddScoped<ReplenishmentService>();
+        services.AddScoped<IReplenishmentSuggestions>(static sp => sp.GetRequiredService<ReplenishmentService>());
+        services.TryAddScoped<IIncomingSupply, NoIncomingSupply>();
+        services.AddJobHandler<ReplenishmentJob, ReplenishmentPayload>();
+        services.AddJobHandler<LotExpiryJob, LotExpiryPayload>();
+        services.AddJobHandler<ReservationExpiryJob, ReservationExpiryPayload>();
+        services.AddJobHandler<CostRecostJob, CostRecostPayload>();
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("stock_adjustment", InventoryPermissions.AdjustmentRead));
+        services.AddSingleton(new RecordReadPermission("stock_transfer", InventoryPermissions.TransferRead));
+        services.AddSingleton(new RecordReadPermission("stock_count", InventoryPermissions.CountRead));
+        services.AddSingleton(new RecordReadPermission("stock_assembly", InventoryPermissions.AssemblyRead));
+        services.AddSingleton(new RecordReadPermission("stock_revaluation", InventoryPermissions.CostingRead));
+        services.AddSingleton(new RecordReadPermission("warehouse", InventoryPermissions.WarehouseRead));
+        services.AddScoped<IRecordCompanies, InventoryRecordCompanies>();
+        return services;
+    }
+}

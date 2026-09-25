@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Tax module: regimes loaded from versioned country templates, codes with dated rates, item and partner tax groups, the determination matrix, exemptions, the tax calculator, the tax ledger documents write as they post, return periods and returns reconciled to the general ledger, UBL 2.1 export (roadmap 5.3, ADR-0018, DOMAIN_MODEL §12).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Templates/*.json" LogicalName="Quicker.Tax.Templates.%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Tax.Contracts/Quicker.Tax.Contracts.csproj" />
+    <ProjectReference Include="../../Accounting/Quicker.Accounting.Contracts/Quicker.Accounting.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Items/Quicker.Items.Contracts/Quicker.Items.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Partners/Quicker.Partners.Contracts/Quicker.Partners.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+</Project>

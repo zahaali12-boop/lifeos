@@ -1,0 +1,28 @@
+# Local observability profile (ADR-0025): one container with the OTLP collector, Tempo (traces), Prometheus
+# (metrics), Loki (logs) and Grafana on http://localhost:3000 (admin/admin). Used by `make observe`, which layers
+# this file over docker-compose.yml so the API and worker export over OTLP.
+services:
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+  api:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    depends_on:
+      otel-lgtm:
+        condition: service_started
+
+  worker:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    depends_on:
+      otel-lgtm:
+        condition: service_started

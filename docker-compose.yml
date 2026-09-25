@@ -1,0 +1,124 @@
+# Local development topology (ADR-0024). `make up` is the one command.
+name: quicker
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: quicker_owner
+      POSTGRES_PASSWORD: quicker
+      POSTGRES_DB: quicker
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=all", "-c", "log_min_duration_statement=250ms"]
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quicker_owner -d quicker"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: quicker
+      MINIO_ROOT_PASSWORD: quickerquicker
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  migrator:
+    build:
+      context: .
+      dockerfile: deploy/docker/migrator.Dockerfile
+    environment:
+      QUICKER__DB__OWNERCONNECTION: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      QUICKER__DB__APPPASSWORD: quicker
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/docker/api.Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
+      Quicker__Storage__Endpoint: http://minio:9000
+      Quicker__Storage__AccessKey: quicker
+      Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
+      Quicker__Email__SmtpHost: mailpit
+      Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+    ports:
+      - "8080:8080"
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+      dockerfile: deploy/docker/worker.Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8081
+      Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
+      Quicker__Storage__Endpoint: http://minio:9000
+      Quicker__Storage__AccessKey: quicker
+      Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
+      Quicker__Email__SmtpHost: mailpit
+      Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+    ports:
+      - "8081:8081"
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/docker/web.Dockerfile
+      target: dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/web:/workspace/apps/web
+      - ./packages:/workspace/packages
+      - /workspace/node_modules
+
+volumes:
+  pgdata:
+  miniodata:
+  auditanchors:

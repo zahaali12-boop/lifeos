@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Test infrastructure for the Audit module: row factories for the isolation suite and helpers to tamper with chains.</Description>
+    <NoWarn>$(NoWarn);CA1515;CA1812;CA1861;QK0003</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Testing/Quicker.Testing.csproj" />
+  </ItemGroup>
+
+</Project>

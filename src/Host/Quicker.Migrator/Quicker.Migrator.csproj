@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>Runs versioned and repeatable SQL migrations, reference seeds (ADR-0003) and the deterministic demo tenant (ADR-0029).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The demo seeder drives the modules' own services (sign-up, companies, rates), which are built for the ASP.NET Core host. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="dbup-postgresql" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Dapper" />
+    <ProjectReference Include="../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Messaging/Quicker.Messaging.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Quicker.Storage/Quicker.Storage.csproj" />
+    <ProjectReference Include="../../Modules/Tenancy/Quicker.Tenancy/Quicker.Tenancy.csproj" />
+    <ProjectReference Include="../../Modules/Audit/Quicker.Audit/Quicker.Audit.csproj" />
+    <ProjectReference Include="../../Modules/Identity/Quicker.Identity/Quicker.Identity.csproj" />
+    <ProjectReference Include="../../Modules/Organization/Quicker.Organization/Quicker.Organization.csproj" />
+    <ProjectReference Include="../../Modules/Numbering/Quicker.Numbering/Quicker.Numbering.csproj" />
+    <ProjectReference Include="../../Modules/Integration/Quicker.Integration/Quicker.Integration.csproj" />
+    <ProjectReference Include="../../Modules/Collaboration/Quicker.Collaboration/Quicker.Collaboration.csproj" />
+    <ProjectReference Include="../../Modules/Accounting/Quicker.Accounting/Quicker.Accounting.csproj" />
+    <ProjectReference Include="../../Modules/Integrity/Quicker.Integrity/Quicker.Integrity.csproj" />
+    <ProjectReference Include="../../Modules/Items/Quicker.Items/Quicker.Items.csproj" />
+    <ProjectReference Include="../../Modules/Inventory/Quicker.Inventory/Quicker.Inventory.csproj" />
+    <ProjectReference Include="../../Modules/Workflow/Quicker.Workflow/Quicker.Workflow.csproj" />
+    <ProjectReference Include="../../Modules/Partners/Quicker.Partners/Quicker.Partners.csproj" />
+    <ProjectReference Include="../../Modules/Pricing/Quicker.Pricing/Quicker.Pricing.csproj" />
+    <ProjectReference Include="../../Modules/Tax/Quicker.Tax/Quicker.Tax.csproj" />
+    <ProjectReference Include="../../Modules/Banking/Quicker.Banking/Quicker.Banking.csproj" />
+    <ProjectReference Include="../../Modules/Payables/Quicker.Payables/Quicker.Payables.csproj" />
+    <ProjectReference Include="../../Modules/Purchasing/Quicker.Purchasing/Quicker.Purchasing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(RepoRoot)db/migrations/**/*.sql" LogicalName="migrations.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(RepoRoot)db/repeatable/**/*.sql" LogicalName="repeatable.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(RepoRoot)db/seed/**/*.sql" LogicalName="seed.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

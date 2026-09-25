@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The database contract suite: every tenant table of every module, verified against the migrated schema. -->
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <ProjectReference Include="../../../src/BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../src/BuildingBlocks/Quicker.Testing/Quicker.Testing.csproj" />
+    <ProjectReference Include="../../../src/Host/Quicker.Migrator/Quicker.Migrator.csproj" />
+    <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Audit/Quicker.Audit.TestSupport/Quicker.Audit.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Organization/Quicker.Organization.TestSupport/Quicker.Organization.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Numbering/Quicker.Numbering.TestSupport/Quicker.Numbering.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Integration/Quicker.Integration.TestSupport/Quicker.Integration.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Collaboration/Quicker.Collaboration.TestSupport/Quicker.Collaboration.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Accounting/Quicker.Accounting.TestSupport/Quicker.Accounting.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Items/Quicker.Items.TestSupport/Quicker.Items.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Inventory/Quicker.Inventory.TestSupport/Quicker.Inventory.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Workflow/Quicker.Workflow.TestSupport/Quicker.Workflow.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Partners/Quicker.Partners.TestSupport/Quicker.Partners.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Banking/Quicker.Banking.TestSupport/Quicker.Banking.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Payables/Quicker.Payables.TestSupport/Quicker.Payables.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Pricing/Quicker.Pricing.TestSupport/Quicker.Pricing.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Tax/Quicker.Tax.TestSupport/Quicker.Tax.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Purchasing/Quicker.Purchasing.TestSupport/Quicker.Purchasing.TestSupport.csproj" />
+  </ItemGroup>
+
+</Project>

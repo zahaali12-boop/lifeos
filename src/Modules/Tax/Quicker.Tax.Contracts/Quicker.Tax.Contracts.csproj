@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>What other modules may know about tax: the code and rate a document line takes, the tax a line carries on either price basis, the tax entries a posted document writes, and the clearance providers of e-invoicing schemes (roadmap 5.3, ADR-0018).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+</Project>

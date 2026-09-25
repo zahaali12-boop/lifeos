@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The invariant harness (roadmap 2.6): passes on intact books, fails on a corrupted balance row, a tampered chain or an unbalanced entry, and runs as the platform job. -->
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <ProjectReference Include="../../../src/Modules/Integrity/Quicker.Integrity/Quicker.Integrity.csproj" />
+    <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Audit/Quicker.Audit.TestSupport/Quicker.Audit.TestSupport.csproj" />
+  </ItemGroup>
+
+</Project>

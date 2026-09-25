@@ -1,0 +1,25 @@
+/* The app's stylesheet: the design system tokens plus the fonts; Tailwind scans the ui package for classes. */
+@import "@fontsource-variable/inter";
+@import "@fontsource/ibm-plex-sans-arabic/400.css";
+@import "@fontsource/ibm-plex-sans-arabic/500.css";
+@import "@fontsource/ibm-plex-sans-arabic/600.css";
+@import "@quicker/ui/styles.css";
+
+@source "../../../../packages/ui/src";
+
+/* Skip link for keyboard users: visible only when focused. */
+.skip-link {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  transform: translateY(-120%);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}

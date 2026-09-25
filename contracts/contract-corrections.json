@@ -1,0 +1,152 @@
+[
+  {
+    "change": "response property removed: GET /api/v1/items/categories 200 $[].statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories 200 $[].sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories 200 $[].isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: POST /api/v1/items/categories 201 $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: POST /api/v1/items/categories 201 $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: POST /api/v1/items/categories 201 $.isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "new required request property: POST /api/v1/items/categories $.code",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: POST /api/v1/items/categories $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: POST /api/v1/items/categories $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories/{categoryId} 200 $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories/{categoryId} 200 $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: GET /api/v1/items/categories/{categoryId} 200 $.isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: PUT /api/v1/items/categories/{categoryId} 200 $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: PUT /api/v1/items/categories/{categoryId} 200 $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response property removed: PUT /api/v1/items/categories/{categoryId} 200 $.isSystem",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "new required request property: PUT /api/v1/items/categories/{categoryId} $.code",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: PUT /api/v1/items/categories/{categoryId} $.statement",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "request property removed: PUT /api/v1/items/categories/{categoryId} $.sortOrder",
+    "reason": "The item category endpoints were published with the account category's schema: two request/response types shared the simple name CategorySummary / SaveCategoryRequest and the OpenAPI generator merged them. The server never accepted or returned these properties on the item endpoints; the item types are now ItemCategorySummary / SaveItemCategoryRequest and the document describes what the server does. Schema-id collisions now fail the build (SchemaReferenceIds).",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "path removed: /api/v1/purchasing/invoices/open-items",
+    "reason": "The payable open items and settlements were published under the purchasing invoice resource while the payables subledger lived inside the purchasing module (4.4, 4.6). Slice 4.7 gives the subledger its own module, and its endpoints move to /api/v1/payables (open-items, open-items/aging, settlements, settlements/apply, proposals) with the same shapes; the purchasing paths served for two days of the unreleased M4 milestone and had no external consumer. The invoice's payables tab reads the payables module.",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "path removed: /api/v1/purchasing/invoices/open-items/apply",
+    "reason": "The payable open items and settlements were published under the purchasing invoice resource while the payables subledger lived inside the purchasing module (4.4, 4.6). Slice 4.7 gives the subledger its own module, and its endpoints move to /api/v1/payables (open-items, open-items/aging, settlements, settlements/apply, proposals) with the same shapes; the purchasing paths served for two days of the unreleased M4 milestone and had no external consumer. The invoice's payables tab reads the payables module.",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "path removed: /api/v1/purchasing/invoices/settlements",
+    "reason": "The payable open items and settlements were published under the purchasing invoice resource while the payables subledger lived inside the purchasing module (4.4, 4.6). Slice 4.7 gives the subledger its own module, and its endpoints move to /api/v1/payables (open-items, open-items/aging, settlements, settlements/apply, proposals) with the same shapes; the purchasing paths served for two days of the unreleased M4 milestone and had no external consumer. The invoice's payables tab reads the payables module.",
+    "recorded": "2026-09-23"
+  },
+  {
+    "change": "response 200 removed: POST /api/v1/auth/password/forgot",
+    "reason": "The server has always answered 202 Accepted with no body; the handler returned an untyped result, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: GET /api/v1/auth/sso/{tenantSlug}/{connectionCode}/start",
+    "reason": "The server has always answered with a 302 redirect to the identity provider; the handler returned an untyped result, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: POST /api/v1/me/logout",
+    "reason": "The server has always answered 204 No Content; the handler returned an untyped result, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: POST /api/v1/sod/exceptions",
+    "reason": "The server has always answered 201 Created with the new exception's id; the handler returned an anonymous object, so the document fell back to an empty 200. The response is now declared as it is sent, with its schema.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: POST /api/v1/platform/jobs/{jobId}/retry",
+    "reason": "The server has always answered 204 No Content (or a problem); the handler chose between results at run time, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: POST /api/v1/platform/jobs/{jobId}/cancel",
+    "reason": "The server has always answered 204 No Content (or a problem); the handler chose between results at run time, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: DELETE /api/v1/platform/schedules/{scheduleId}",
+    "reason": "The server has always answered 204 No Content (or a problem); the handler chose between results at run time, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: POST /api/v1/platform/ops/outbox/{messageId}/retry",
+    "reason": "The server has always answered 204 No Content (or a problem); the handler chose between results at run time, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  },
+  {
+    "change": "response 200 removed: POST /api/v1/platform/ops/outbox/{messageId}/discard",
+    "reason": "The server has always answered 204 No Content (or a problem); the handler chose between results at run time, so the document fell back to an empty 200. The response is now declared as it is sent.",
+    "recorded": "2026-09-24"
+  }
+]

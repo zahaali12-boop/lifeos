@@ -1,0 +1,62 @@
+namespace Quicker.Audit.Contracts;
+
+/// <summary>Well-known audit actions. Modules may add their own strings; these keep the common ones consistent.</summary>
+public static class AuditActions
+{
+    public const string Created = "created";
+    public const string Updated = "updated";
+    public const string Deleted = "deleted";
+    public const string StateChanged = "state_changed";
+    public const string Posted = "posted";
+    public const string Reversed = "reversed";
+    public const string Approved = "approved";
+    public const string Rejected = "rejected";
+    public const string Revoked = "revoked";
+    public const string Invited = "invited";
+    public const string Override = "override";
+    public const string Login = "login";
+    public const string LoginFailed = "login_failed";
+    public const string Logout = "logout";
+    public const string MfaEnrolled = "mfa_enrolled";
+    public const string MfaRemoved = "mfa_removed";
+    public const string PasswordChanged = "password_changed";
+    public const string PermissionChanged = "permission_changed";
+    public const string Exported = "exported";
+    public const string Printed = "printed";
+    public const string ViewedSensitive = "viewed_sensitive";
+}
+
+/// <summary>
+/// One audit event: who did what to which record, with before/after values and a reason when policy requires one.
+/// Written inside the caller's unit of work so it commits with the change it describes. Row changes tracked by EF
+/// are captured automatically for audited entities; an explicit entry for the same record in the same unit of work
+/// takes precedence and inherits the captured before/after/diff, so services record the business action (posted,
+/// revoked, invited) and never lose the field-level change.
+/// </summary>
+public sealed record AuditEntry(
+    string EntityType,
+    Guid EntityId,
+    string EntityDisplay,
+    string Action,
+    object? Before = null,
+    object? After = null,
+    string? Reason = null,
+    Guid? CompanyId = null,
+    IReadOnlyDictionary<string, object?>? Details = null);
+
+public interface IAuditSink
+{
+    Task RecordAsync(AuditEntry entry, CancellationToken cancellationToken = default);
+}
+
+/// <summary>The outcome of walking the current tenant's audit chain link by link (ADR-0015): status ok, empty, broken, truncated or anchor_mismatch.</summary>
+public sealed record AuditChainStatus(string Status, long FromSeq, long ToSeq, long? FirstBrokenSeq, string? Message)
+{
+    public bool Intact => Status is "ok" or "empty";
+}
+
+/// <summary>Chain verification for other modules (the invariant harness): recomputes every link of the current tenant's chain.</summary>
+public interface IAuditChainVerifier
+{
+    Task<AuditChainStatus> VerifyTenantChainAsync(CancellationToken cancellationToken = default);
+}
