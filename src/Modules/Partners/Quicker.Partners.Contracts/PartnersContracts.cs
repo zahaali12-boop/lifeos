@@ -83,8 +83,14 @@ public sealed record PaymentSchedule(Guid PaymentTermsId, string Code, DateOnly 
 }
 
 /// <summary>Read access to partners for the modules that buy from and pay them; the supplier side of the master (roadmap 4.1).</summary>
+/// <summary>A partner, a customer group or payment terms named by id, as other modules' screens show references to them.</summary>
+public sealed record PartnerRecordRef(Guid Id, string Kind, string Code, LocalizedText Name);
+
 public interface IPartnerDirectory
 {
+    /// <summary>The partners, customer groups and payment terms among the ids, keyed by id (ids that name none are left out).</summary>
+    Task<IReadOnlyDictionary<Guid, PartnerRecordRef>> DescribeAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
+
     Task<PartnerInfo?> FindAsync(Guid partnerId, CancellationToken cancellationToken = default);
 
     Task<PartnerInfo?> FindByCodeAsync(string code, CancellationToken cancellationToken = default);

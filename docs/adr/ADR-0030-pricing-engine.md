@@ -46,3 +46,12 @@ Every line stores `price_breakdown jsonb`: the ordered list of steps with the ca
 
 * Sales reps and customers get a printable explanation for every price; disputes are resolved from data.
 * Purchasing reuses the same engine with supplier price lists and agreements, so price history and comparison are consistent.
+
+## Amendment 2026-09-25 (slice 5.2, A-144)
+
+* **Ties never break by id.** The last tie-break of competing rules is the rule's code (unique per company), not the lowest id: ids are time-ordered, so "lowest id" would make the result depend on the order rules were created, which the determinism guarantee forbids. Price-list entries and agreements cannot tie at all: their natural keys (item, variant, unit, break, start) are unique in the database.
+* **Where pricing lives.** Pricing is a core module of its own (`Quicker.Pricing`), so sales and purchasing both call it and neither owns it. Price lists are assigned to customers and groups by `prc_price_list_assignments` (the "scope" of the model above) rather than by a column on the customer account, so the partner module never depends on pricing.
+* **Precision.** Unit prices keep two decimals more than the currency's minor unit; amounts round to the minor unit at every step; list rounding rules round to a multiple of an increment through `RoundingPolicy.RoundToMultiple`.
+* **Promotions.** Exclusive promotions compete greedily on the basket (greatest benefit first, re-evaluated on the lines still free); stackable ones follow on the lines no exclusive promotion took. Goods given away are their own line at the regular price with the promotion's discount.
+* **Steps 6 and 8 until the tax engine.** Until 5.3 supplies line tax rates, a price on the other tax basis than the document's is refused (`pricing.tax_basis_mismatch`) rather than converted, and floors compare on the price's own basis. Floor breaches are reported by the engine; routing a block to approval belongs to the sales documents (5.4).
+

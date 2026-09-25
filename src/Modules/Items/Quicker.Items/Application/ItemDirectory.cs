@@ -183,6 +183,38 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         return settings is null ? null : new ItemCompanyPolicy(itemId, companyId, settings.CostingMethodOverride, settings.StandardCost, settings.ItemPostingGroupOverride, settings.DefaultWarehouseId, settings.AllowNegativeStock);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, CatalogRef>> DescribeAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<Guid, CatalogRef>();
+        if (ids.Count == 0)
+        {
+            return result;
+        }
+
+        var wanted = ids.Distinct().ToArray();
+        foreach (var i in await db.Items.AsNoTracking().Where(i => wanted.Contains(i.Id)).Select(static i => new { i.Id, i.Code, i.Name }).ToListAsync(cancellationToken))
+        {
+            result[i.Id] = new CatalogRef(i.Id, "item", i.Code, i.Name);
+        }
+
+        foreach (var v in await db.Variants.AsNoTracking().Where(v => wanted.Contains(v.Id)).Select(static v => new { v.Id, v.Sku, v.Name }).ToListAsync(cancellationToken))
+        {
+            result[v.Id] = new CatalogRef(v.Id, "variant", v.Sku, v.Name);
+        }
+
+        foreach (var c in await db.Categories.AsNoTracking().Where(c => wanted.Contains(c.Id)).Select(static c => new { c.Id, c.Code, c.Name }).ToListAsync(cancellationToken))
+        {
+            result[c.Id] = new CatalogRef(c.Id, "category", c.Code, c.Name);
+        }
+
+        foreach (var b in await db.Brands.AsNoTracking().Where(b => wanted.Contains(b.Id)).Select(static b => new { b.Id, b.Code, b.Name }).ToListAsync(cancellationToken))
+        {
+            result[b.Id] = new CatalogRef(b.Id, "brand", b.Code, b.Name);
+        }
+
+        return result;
+    }
+
     /// <summary>Forgets memoised items and units; the item service calls it after it changes an item.</summary>
     public void Forget(Guid itemId)
     {
@@ -204,7 +236,8 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         }
 
         return new ItemInfo(item.Id, item.Code, item.Name, item.Type, item.Tracking, item.ExpiryRequired, item.ShelfLifeDays, item.Fefo, item.BaseUomId, baseUom.Code, baseUom.Precision,
-            item.SalesUomId, item.PurchaseUomId, item.CategoryId, item.ItemPostingGroupId, item.ItemTaxGroupId, costing, item.HasVariants, item.IsActive, item.WeightKg, item.VolumeM3);
+            item.SalesUomId, item.PurchaseUomId, item.CategoryId, item.ItemPostingGroupId, item.ItemTaxGroupId, costing, item.HasVariants, item.IsActive, item.WeightKg, item.VolumeM3,
+            item.BrandId, item.ListPrice, item.ListPriceCurrency);
     }
 }
 

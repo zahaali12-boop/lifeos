@@ -25,13 +25,19 @@ public sealed record ItemInfo(
     bool HasVariants,
     bool IsActive,
     decimal? WeightKg = null,
-    decimal? VolumeM3 = null)
+    decimal? VolumeM3 = null,
+    Guid? BrandId = null,
+    decimal? ListPrice = null,
+    string? ListPriceCurrency = null)
 {
     public bool IsStockItem => Type is "stock" or "kit" or "assembly";
 }
 
 /// <summary>An item category as other modules match against it (commission rules, reporting).</summary>
 public sealed record ItemCategoryInfo(Guid Id, string Code, LocalizedText Name, Guid? ParentId, bool IsActive);
+
+/// <summary>An item, a variant (its SKU as the code), a category or a brand named by id, as screens show references to the catalogue.</summary>
+public sealed record CatalogRef(Guid Id, string Kind, string Code, LocalizedText Name);
 
 public sealed record ItemVariantInfo(Guid Id, Guid ItemId, string Sku, LocalizedText Name, bool IsActive);
 
@@ -93,6 +99,9 @@ public interface IItemDirectory
 
     /// <summary>The category followed by its ancestors, nearest first; empty when the category does not exist.</summary>
     Task<IReadOnlyList<ItemCategoryInfo>> CategoryLineageAsync(Guid categoryId, CancellationToken cancellationToken = default);
+
+    /// <summary>The items, variants, categories and brands among the ids, keyed by id (ids that name none are left out); a handful of queries whatever the count.</summary>
+    Task<IReadOnlyDictionary<Guid, CatalogRef>> DescribeAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

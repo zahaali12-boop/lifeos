@@ -122,6 +122,7 @@ flowchart TB
     Partners
     Items
     Inventory
+    Pricing[Pricing: price lists, agreements, discounts, promotions, floors]
     Tax
   end
   subgraph flows [Process modules]

@@ -11,6 +11,33 @@ namespace Quicker.Partners.Application;
 /// <summary>What purchasing, receiving, invoicing and payments read from the supplier master (roadmap 4.1).</summary>
 public sealed class PartnerDirectory(PartnersDbContext db, SupplierService suppliers, ICompanyDirectory companies, IWorkingDayCalendar calendar) : IPartnerDirectory
 {
+    public async Task<IReadOnlyDictionary<Guid, PartnerRecordRef>> DescribeAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<Guid, PartnerRecordRef>();
+        if (ids.Count == 0)
+        {
+            return result;
+        }
+
+        var wanted = ids.Distinct().ToArray();
+        foreach (var p in await db.Partners.AsNoTracking().Where(p => wanted.Contains(p.Id)).Select(static p => new { p.Id, p.Code, p.LegalName }).ToListAsync(cancellationToken))
+        {
+            result[p.Id] = new PartnerRecordRef(p.Id, "partner", p.Code, p.LegalName);
+        }
+
+        foreach (var g in await db.CustomerGroups.AsNoTracking().Where(g => wanted.Contains(g.Id)).Select(static g => new { g.Id, g.Code, g.Name }).ToListAsync(cancellationToken))
+        {
+            result[g.Id] = new PartnerRecordRef(g.Id, "customer_group", g.Code, g.Name);
+        }
+
+        foreach (var t in await db.PaymentTerms.AsNoTracking().Where(t => wanted.Contains(t.Id)).Select(static t => new { t.Id, t.Code, t.Name }).ToListAsync(cancellationToken))
+        {
+            result[t.Id] = new PartnerRecordRef(t.Id, "payment_terms", t.Code, t.Name);
+        }
+
+        return result;
+    }
+
     public async Task<PartnerInfo?> FindAsync(Guid partnerId, CancellationToken cancellationToken = default)
     {
         var p = await db.Partners.AsNoTracking().SingleOrDefaultAsync(x => x.Id == partnerId, cancellationToken);

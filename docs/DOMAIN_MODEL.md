@@ -2009,6 +2009,9 @@ erDiagram
   sls_commission_entries }o--|| ptr_commission_plans : "under"
   prc_price_lists ||--|{ prc_price_list_items : "has"
   prc_price_lists ||--o{ prc_price_lists : "derived from"
+  prc_price_lists ||--o{ prc_price_list_assignments : "for"
+  prc_promotions ||--o{ prc_promotion_components : "bundles"
+  prc_promotions ||--o{ prc_promotion_tiers : "tiers"
   prc_discount_rules }o--o{ sls_order_lines : "applied in breakdown"
   prc_promotions ||--o{ prc_promotion_usages : "used"
 
@@ -2266,16 +2269,24 @@ erDiagram
     uuid company_id
     text code
     i18n name
-    text type "sales | purchase"
     text currency
-    bool tax_inclusive
+    bool prices_include_tax
     uuid parent_list_id FK
     numeric parent_adjustment_pct
-    text rounding_rule
+    numeric rounding_increment
+    text rounding_mode "nearest | up | down"
+    numeric price_surcharge
     date valid_from
     date valid_to
-    int priority
-    bool is_default
+    int priority "lower first"
+    bool is_default "one per company"
+    bool is_active
+  }
+  prc_price_list_assignments {
+    uuid id PK
+    uuid price_list_id FK
+    uuid partner_id "a customer, or"
+    uuid customer_group_id "a customer group"
   }
   prc_price_list_items {
     uuid id PK
@@ -2283,22 +2294,24 @@ erDiagram
     uuid item_id
     uuid variant_id
     uuid uom_id
-    numeric min_quantity
+    numeric min_quantity "the break"
     numeric price
     date valid_from
     date valid_to
   }
   prc_customer_price_agreements {
     uuid id PK
-    uuid customer_account_id
+    uuid company_id
+    uuid partner_id
+    text reference
     uuid item_id
     uuid variant_id
     uuid category_id
     uuid uom_id
     numeric min_quantity
-    numeric price
-    numeric discount_pct
+    numeric price "or"
     text currency
+    numeric discount_pct
     date valid_from
     date valid_to
   }
@@ -2308,10 +2321,19 @@ erDiagram
     text code
     i18n name
     text level "line | document"
-    jsonb scope "item category brand customer group channel terms"
-    jsonb condition "min qty min amount weekday"
+    uuid item_id
+    uuid category_id
+    uuid brand_id
+    uuid partner_id
+    uuid customer_group_id
+    text channel
+    uuid payment_terms_id
+    numeric min_quantity
+    numeric min_amount
+    int_array weekdays
     text value_type "percentage | amount | fixed_price"
     numeric value
+    text currency
     text combination "exclusive | stackable"
     int priority
     date valid_from
@@ -2324,19 +2346,47 @@ erDiagram
     text code
     i18n name
     text kind "buy_x_get_y | bundle | volume_tier | coupon"
-    jsonb definition
-    int priority
+    text coupon_code
+    uuid item_id "scope"
+    uuid category_id "scope"
+    uuid brand_id "scope"
+    uuid partner_id
+    uuid customer_group_id
+    text channel
+    numeric buy_quantity
+    uuid get_item_id
+    numeric get_quantity
+    numeric get_discount_pct
+    int max_applications
+    numeric bundle_price
+    text currency
+    numeric discount_pct
     text combination
+    int priority
     int usage_limit
+    int usage_limit_per_customer
     date valid_from
     date valid_to
     bool is_active
   }
-  prc_promotion_usages {
+  prc_promotion_components {
     uuid promotion_id FK
-    uuid customer_account_id
+    uuid item_id
+    numeric quantity
+  }
+  prc_promotion_tiers {
+    uuid promotion_id FK
+    numeric min_quantity
+    numeric discount_pct
+  }
+  prc_promotion_usages {
+    uuid id PK
+    uuid promotion_id FK
+    uuid partner_id
+    text document_type
     uuid document_id
     timestamptz used_at
+    timestamptz released_at
   }
   prc_price_floors {
     uuid id PK
@@ -2344,8 +2394,10 @@ erDiagram
     uuid item_id
     uuid category_id
     numeric min_price
+    text currency
     numeric min_margin_pct
     text on_breach "block | warn"
+    bool is_active
   }
 ```
 

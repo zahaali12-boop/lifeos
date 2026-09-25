@@ -10,6 +10,29 @@ public class MoneyTests
     private static readonly RoundingPolicy Policy = RoundingPolicy.Default;
 
     [Fact]
+    public void A_price_rounds_to_a_multiple_of_its_increment_in_the_rule_s_direction()
+    {
+        Policy.RoundToMultiple(2_300m, 250m, RoundingDirection.Nearest).ShouldBe(2_250m);
+        Policy.RoundToMultiple(2_375m, 250m, RoundingDirection.Nearest).ShouldBe(2_500m);
+        Policy.RoundToMultiple(0.687024m, 0.05m, RoundingDirection.Up).ShouldBe(0.70m);
+        Policy.RoundToMultiple(0.687024m, 0.05m, RoundingDirection.Down).ShouldBe(0.65m);
+        Policy.RoundToMultiple(-0.687024m, 0.05m, RoundingDirection.Up).ShouldBe(-0.65m);
+        new RoundingPolicy(RoundingMode.HalfEven).RoundToMultiple(2_375m, 250m, RoundingDirection.Nearest).ShouldBe(2_500m);
+        new RoundingPolicy(RoundingMode.HalfEven).RoundToMultiple(2_125m, 250m, RoundingDirection.Nearest).ShouldBe(2_000m);
+        Should.Throw<ArgumentOutOfRangeException>(() => Policy.RoundToMultiple(1m, 0m, RoundingDirection.Up));
+    }
+
+    [Fact]
+    public void Whole_times_counts_complete_parts_only()
+    {
+        RoundingPolicy.WholeTimes(25m, 10m).ShouldBe(2m);
+        RoundingPolicy.WholeTimes(9.99m, 10m).ShouldBe(0m);
+        RoundingPolicy.WholeTimes(-5m, 10m).ShouldBe(0m);
+        RoundingPolicy.WholeTimes(1.5m, 0.5m).ShouldBe(3m);
+        Should.Throw<ArgumentOutOfRangeException>(() => RoundingPolicy.WholeTimes(1m, 0m));
+    }
+
+    [Fact]
     public void Adding_different_currencies_is_refused()
     {
         var usd = Money.Of(10m, Currency.USD);

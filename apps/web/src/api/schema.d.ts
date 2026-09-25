@@ -6181,6 +6181,238 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pricing/calculate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Prices a basket for a customer on a date: every line's price with its explanation (the source that won and the ones considered, currency, discounts, promotions, document discounts, floor), deterministic for the same inputs and rules */
+        post: operations["postPricingCalculate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/price-lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPricingPriceLists"];
+        put?: never;
+        /** A price list: currency, tax basis, validity, priority, the customers and groups it is for; its own prices or its parent's adjusted by a percentage and a rounding rule */
+        post: operations["postPricingPriceLists"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/price-lists/{listId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPricingPriceListsByListId"];
+        put: operations["putPricingPriceListsByListId"];
+        post?: never;
+        delete: operations["deletePricingPriceListsByListId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/price-lists/{listId}/adjust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Changes every price of the list by a percentage (a yearly increase), rounded to an increment or to the currency's price decimals */
+        post: operations["postPricingPriceListsByListIdAdjust"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/price-lists/{listId}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPricingPriceListsByListIdItems"];
+        put?: never;
+        /** A price of an item (or one variant) per unit in the list, from a quantity (the break) and a date */
+        post: operations["postPricingPriceListsByListIdItems"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/price-lists/{listId}/items/{entryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPricingPriceListsByListIdItemsByEntryId"];
+        post?: never;
+        delete: operations["deletePricingPriceListsByListIdItemsByEntryId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/agreements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPricingAgreements"];
+        put?: never;
+        /** A price agreed with a customer for an item (per unit, from a quantity) or a discount on an item or a category, for a period */
+        post: operations["postPricingAgreements"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/agreements/{agreementId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPricingAgreementsByAgreementId"];
+        post?: never;
+        delete: operations["deletePricingAgreementsByAgreementId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/discount-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPricingDiscountRules"];
+        put?: never;
+        /** A line or document discount: its scope (item, category, brand, customer, group, channel, terms), conditions (minimum quantity or amount, weekdays), value and whether it competes (exclusive) or stacks */
+        post: operations["postPricingDiscountRules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/discount-rules/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPricingDiscountRulesByRuleId"];
+        post?: never;
+        delete: operations["deletePricingDiscountRulesByRuleId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/promotions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPricingPromotions"];
+        put?: never;
+        /** A promotion: buy X get Y, a bundle price, volume tiers or a coupon; optionally for a customer, group or channel, behind a coupon code, with usage limits */
+        post: operations["postPricingPromotions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/promotions/{promotionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPricingPromotionsByPromotionId"];
+        post?: never;
+        delete: operations["deletePricingPromotionsByPromotionId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/floors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPricingFloors"];
+        put?: never;
+        /** The lowest price, or the thinnest margin over expected cost, an item or a category may sell at; a breach blocks or warns */
+        post: operations["postPricingFloors"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pricing/floors/{floorId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putPricingFloorsByFloorId"];
+        post?: never;
+        delete: operations["deletePricingFloorsByFloorId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payables/open-items": {
         parameters: {
             query?: never;
@@ -7709,6 +7941,18 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        /** @description Every price in a list changed by a percentage (a yearly increase), rounded to an increment when one is given. */
+        AdjustPriceListRequest: {
+            /** Format: double */
+            pct: number | string;
+            /** Format: double */
+            roundingIncrement?: null | number | string;
+            roundingMode?: null | string;
+        };
+        AdjustPriceListResult: {
+            /** Format: int32 */
+            changed: number | string;
+        };
         AgingReport: {
             /** Format: uuid */
             companyId: string;
@@ -7864,6 +8108,16 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             revokedAt: null | string;
+        };
+        AppliedPromotion: {
+            /** Format: uuid */
+            promotionId: string;
+            code: string;
+            kind: string;
+            combination: string;
+            /** Format: double */
+            benefit: number | string;
+            lineKeys: string[];
         };
         /** @description Applies a debit note, a payment on account or an advance to an invoice open item of the same supplier and currency. */
         ApplyRequest: {
@@ -9490,6 +9744,43 @@ export interface components {
         /** @description Why an operator gives up on a dead letter; kept on the message. */
         DiscardOutboxMessageRequest: {
             reason: string;
+        };
+        DiscountRuleSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            level: string;
+            valueType: string;
+            /** Format: double */
+            value: number | string;
+            currency: null | string;
+            combination: string;
+            /** Format: int32 */
+            priority: number | string;
+            item: null | components["schemas"]["RecordRef"];
+            category: null | components["schemas"]["RecordRef"];
+            brand: null | components["schemas"]["RecordRef"];
+            partner: null | components["schemas"]["RecordRef"];
+            customerGroup: null | components["schemas"]["RecordRef"];
+            channel: null | string;
+            paymentTerms: null | components["schemas"]["RecordRef"];
+            /** Format: double */
+            minQuantity: null | number | string;
+            /** Format: double */
+            minAmount: null | number | string;
+            weekdays: null | (number | string)[];
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
         };
         DismissSuggestionRequest: {
             reason: string;
@@ -11637,10 +11928,202 @@ export interface components {
             inApp: boolean;
             email: boolean;
         };
+        PriceAgreementSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            partner: components["schemas"]["RecordRef"];
+            reference: null | string;
+            item: null | components["schemas"]["RecordRef"];
+            /** Format: uuid */
+            variantId: null | string;
+            variantSku: null | string;
+            category: null | components["schemas"]["RecordRef"];
+            /** Format: uuid */
+            uomId: null | string;
+            uomCode: null | string;
+            /** Format: double */
+            minQuantity: number | string;
+            /** Format: double */
+            price: null | number | string;
+            currency: null | string;
+            /** Format: double */
+            discountPct: null | number | string;
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+            isActive: boolean;
+            notes: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description A rule or source the engine looked at for a step and what became of it. */
+        PriceCandidate: {
+            source: string;
+            refType: null | string;
+            /** Format: uuid */
+            refId: null | string;
+            refCode: null | string;
+            outcome: string;
+            /** Format: double */
+            amount?: null | number | string;
+            detail?: null | string;
+        };
+        PricedLine: {
+            key: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            baseQuantity: number | string;
+            priceSource: null | string;
+            pricesIncludeTax: null | boolean;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            grossAmount: number | string;
+            /** Format: double */
+            lineDiscountAmount: number | string;
+            /** Format: double */
+            promotionDiscountAmount: number | string;
+            /** Format: double */
+            documentDiscountAmount: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: double */
+            netUnitPrice: number | string;
+            /** Format: double */
+            effectiveDiscountPct: number | string;
+            isFreeGoods: boolean;
+            /** Format: uuid */
+            promotionId: null | string;
+            promotionCode: null | string;
+            freeGoodsForKey: null | string;
+            floor: null | components["schemas"]["PriceFloorCheck"];
+            problem: null | components["schemas"]["PriceProblem"];
+            steps: components["schemas"]["PriceStep"][];
+        };
+        /** @description A fact behind a step (a rate, a quantity break, a rounding), as an invariant string for display. */
+        PriceFact: {
+            key: string;
+            value: string;
+        };
+        /** @description The line's price against the floor that governs it (the item's, else its nearest category's). */
+        PriceFloorCheck: {
+            /** Format: uuid */
+            floorId: string;
+            scope: string;
+            /** Format: uuid */
+            scopeId: string;
+            /** Format: double */
+            minPrice: null | number | string;
+            /** Format: double */
+            minMarginPct: null | number | string;
+            /** Format: double */
+            netPerBaseUnit: number | string;
+            /** Format: double */
+            unitCost: null | number | string;
+            /** Format: double */
+            marginPct: null | number | string;
+            breached: boolean;
+            onBreach: string;
+            reason: null | string;
+        };
+        PriceFloorSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            item: null | components["schemas"]["RecordRef"];
+            category: null | components["schemas"]["RecordRef"];
+            /** Format: double */
+            minPrice: null | number | string;
+            currency: null | string;
+            /** Format: double */
+            minMarginPct: null | number | string;
+            onBreach: string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         PriceHistory: {
             functionalCurrency: string;
             points: components["schemas"]["PricePoint"][];
             summary: components["schemas"]["PriceSummaryRow"][];
+        };
+        PriceListItemSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            priceListId: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            variantSku: null | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            minQuantity: number | string;
+            /** Format: double */
+            price: number | string;
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PriceListSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            currency: string;
+            pricesIncludeTax: boolean;
+            /** Format: uuid */
+            parentListId: null | string;
+            parentCode: null | string;
+            /** Format: double */
+            parentAdjustmentPct: null | number | string;
+            /** Format: double */
+            roundingIncrement: null | number | string;
+            roundingMode: string;
+            /** Format: double */
+            priceSurcharge: number | string;
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+            /** Format: int32 */
+            priority: number | string;
+            isDefault: boolean;
+            isActive: boolean;
+            notes: null | string;
+            /** Format: int32 */
+            items: number | string;
+            customers: components["schemas"]["RecordRef"][];
+            customerGroups: components["schemas"]["RecordRef"][];
+            /** Format: date-time */
+            updatedAt: string;
         };
         PricePoint: {
             /** Format: date */
@@ -11658,6 +12141,32 @@ export interface components {
             currency: string;
             /** Format: double */
             unitPriceFc: null | number | string;
+        };
+        /** @description Why a line could not be priced; the steps before the problem stay in the explanation. */
+        PriceProblem: {
+            code: string;
+            message: string;
+        };
+        /**
+         * @description One step of a line's price (ADR-0030): what it started from and ended at (unit price for the price steps, the line's
+         *     running net for the discount steps), the amount it took off, the rule or source that decided it, the facts behind it
+         *     and the other candidates considered.
+         */
+        PriceStep: {
+            kind: string;
+            source: null | string;
+            refType: null | string;
+            /** Format: uuid */
+            refId: null | string;
+            refCode: null | string;
+            /** Format: double */
+            before: null | number | string;
+            /** Format: double */
+            after: null | number | string;
+            /** Format: double */
+            amount: null | number | string;
+            facts: components["schemas"]["PriceFact"][];
+            candidates: components["schemas"]["PriceCandidate"][];
         };
         PriceSummaryRow: {
             /** Format: uuid */
@@ -11678,6 +12187,144 @@ export interface components {
             maxPriceFc: number | string;
             /** Format: double */
             averagePriceFc: number | string;
+        };
+        /** @description One line to price: an item (or one of its variants) in one of its units; no unit means the item's sales unit, else its base unit. */
+        PricingLineRequest: {
+            key: string;
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            uomId: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            manualUnitPrice?: null | number | string;
+            /** Format: double */
+            manualDiscountPct?: null | number | string;
+        };
+        /**
+         * @description A basket to price for a customer (or no one in particular) in a company on a date. The currency defaults to the
+         *     customer's account currency, else the company's; the pricing date to today in the company; the tax basis to the
+         *     basis of the prices found.
+         */
+        PricingRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: null | string;
+            currency: null | string;
+            /** Format: date */
+            pricingDate: null | string;
+            lines: components["schemas"]["PricingLineRequest"][];
+            /** Format: uuid */
+            priceListId?: null | string;
+            channel?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            pricesIncludeTax?: null | boolean;
+            couponCodes?: null | string[];
+            /** Format: double */
+            documentDiscountPct?: null | number | string;
+            rateType?: null | string;
+        };
+        /** @description A priced basket: every line with its explanation, the promotions and document discounts applied, and the totals. */
+        PricingResult: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: null | string;
+            currency: string;
+            /** Format: date */
+            pricingDate: string;
+            rateType: string;
+            pricesIncludeTax: null | boolean;
+            lines: components["schemas"]["PricedLine"][];
+            promotions: components["schemas"]["AppliedPromotion"][];
+            documentSteps: components["schemas"]["PriceStep"][];
+            /** Format: double */
+            grossAmount: number | string;
+            /** Format: double */
+            discountAmount: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: int32 */
+            unpricedLines: number | string;
+            hasFloorBlocks: boolean;
+            hasFloorWarnings: boolean;
+        };
+        PromotionComponentDto: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: double */
+            quantity: number | string;
+        };
+        PromotionComponentSummary: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            quantity: number | string;
+        };
+        PromotionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            couponCode: null | string;
+            item: null | components["schemas"]["RecordRef"];
+            category: null | components["schemas"]["RecordRef"];
+            brand: null | components["schemas"]["RecordRef"];
+            partner: null | components["schemas"]["RecordRef"];
+            customerGroup: null | components["schemas"]["RecordRef"];
+            channel: null | string;
+            /** Format: double */
+            buyQuantity: null | number | string;
+            getItem: null | components["schemas"]["RecordRef"];
+            /** Format: double */
+            getQuantity: null | number | string;
+            /** Format: double */
+            getDiscountPct: null | number | string;
+            /** Format: int32 */
+            maxApplications: null | number | string;
+            /** Format: double */
+            bundlePrice: null | number | string;
+            currency: null | string;
+            /** Format: double */
+            discountPct: null | number | string;
+            combination: string;
+            /** Format: int32 */
+            priority: number | string;
+            /** Format: int32 */
+            usageLimit: null | number | string;
+            /** Format: int32 */
+            usageLimitPerCustomer: null | number | string;
+            /** Format: int32 */
+            used: number | string;
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+            isActive: boolean;
+            components: components["schemas"]["PromotionComponentSummary"][];
+            tiers: components["schemas"]["PromotionTierDto"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PromotionTierDto: {
+            /** Format: double */
+            minQuantity: number | string;
+            /** Format: double */
+            discountPct: number | string;
         };
         ProposalLineChange: {
             /** Format: uuid */
@@ -12161,6 +12808,15 @@ export interface components {
             /** Format: date */
             receiveDate?: null | string;
             lines?: null | components["schemas"]["TransferQuantityRequest"][];
+        };
+        /** @description A record another module owns, as a pricing screen shows it. */
+        RecordRef: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
         };
         /** @description Record scopes attached to a principal's grants; an empty set for a scope type means "all". */
         RecordScopes: {
@@ -13536,6 +14192,49 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveDiscountRuleRequest: {
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            level: string;
+            valueType: string;
+            /** Format: double */
+            value: number | string;
+            currency?: null | string;
+            combination?: null | string;
+            /**
+             * Format: int32
+             * @default 100
+             */
+            priority: number | string;
+            /** Format: uuid */
+            itemId?: null | string;
+            /** Format: uuid */
+            categoryId?: null | string;
+            /** Format: uuid */
+            brandId?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: uuid */
+            customerGroupId?: null | string;
+            channel?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: double */
+            minQuantity?: null | number | string;
+            /** Format: double */
+            minAmount?: null | number | string;
+            weekdays?: null | (number | string)[];
+            /** Format: date */
+            validFrom?: null | string;
+            /** Format: date */
+            validTo?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
         SavedViewView: {
             /** Format: uuid */
             id: string;
@@ -13940,6 +14639,161 @@ export interface components {
             };
             /** Format: date */
             validFrom?: null | string;
+        };
+        SavePriceAgreementRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            reference: null | string;
+            /** Format: uuid */
+            itemId: null | string;
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            categoryId: null | string;
+            /** Format: uuid */
+            uomId: null | string;
+            /** Format: double */
+            minQuantity: number | string;
+            /** Format: double */
+            price: null | number | string;
+            currency: null | string;
+            /** Format: double */
+            discountPct: null | number | string;
+            /** Format: date */
+            validFrom?: null | string;
+            /** Format: date */
+            validTo?: null | string;
+            /** @default true */
+            isActive: boolean;
+            notes?: null | string;
+        };
+        SavePriceFloorRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            itemId: null | string;
+            /** Format: uuid */
+            categoryId: null | string;
+            /** Format: double */
+            minPrice: null | number | string;
+            currency: null | string;
+            /** Format: double */
+            minMarginPct: null | number | string;
+            /** @default block */
+            onBreach: string;
+            /** @default true */
+            isActive: boolean;
+        };
+        SavePriceListItemRequest: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            uomId: null | string;
+            /** Format: double */
+            minQuantity: number | string;
+            /** Format: double */
+            price: number | string;
+            /** Format: date */
+            validFrom?: null | string;
+            /** Format: date */
+            validTo?: null | string;
+        };
+        SavePriceListRequest: {
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            currency: string;
+            /** @default false */
+            pricesIncludeTax: boolean;
+            /** Format: uuid */
+            parentListId?: null | string;
+            /** Format: double */
+            parentAdjustmentPct?: null | number | string;
+            /** Format: double */
+            roundingIncrement?: null | number | string;
+            roundingMode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            priceSurcharge: number | string;
+            /** Format: date */
+            validFrom?: null | string;
+            /** Format: date */
+            validTo?: null | string;
+            /**
+             * Format: int32
+             * @default 100
+             */
+            priority: number | string;
+            /** @default false */
+            isDefault: boolean;
+            /** @default true */
+            isActive: boolean;
+            notes?: null | string;
+            partnerIds?: null | string[];
+            customerGroupIds?: null | string[];
+        };
+        SavePromotionRequest: {
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            couponCode?: null | string;
+            /** Format: uuid */
+            itemId?: null | string;
+            /** Format: uuid */
+            categoryId?: null | string;
+            /** Format: uuid */
+            brandId?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: uuid */
+            customerGroupId?: null | string;
+            channel?: null | string;
+            /** Format: double */
+            buyQuantity?: null | number | string;
+            /** Format: uuid */
+            getItemId?: null | string;
+            /** Format: double */
+            getQuantity?: null | number | string;
+            /** Format: double */
+            getDiscountPct?: null | number | string;
+            /** Format: int32 */
+            maxApplications?: null | number | string;
+            /** Format: double */
+            bundlePrice?: null | number | string;
+            currency?: null | string;
+            /** Format: double */
+            discountPct?: null | number | string;
+            combination?: null | string;
+            /**
+             * Format: int32
+             * @default 100
+             */
+            priority: number | string;
+            /** Format: int32 */
+            usageLimit?: null | number | string;
+            /** Format: int32 */
+            usageLimitPerCustomer?: null | number | string;
+            /** Format: date */
+            validFrom?: null | string;
+            /** Format: date */
+            validTo?: null | string;
+            /** @default true */
+            isActive: boolean;
+            components?: null | components["schemas"]["PromotionComponentDto"][];
+            tiers?: null | components["schemas"]["PromotionTierDto"][];
         };
         SaveProposalRequest: {
             /** Format: uuid */
@@ -27467,6 +28321,637 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CustomerAccountSummary"];
                 };
+            };
+        };
+    };
+    postPricingCalculate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PricingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingResult"];
+                };
+            };
+        };
+    };
+    getPricingPriceLists: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListSummary"][];
+                };
+            };
+        };
+    };
+    postPricingPriceLists: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceListRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListSummary"];
+                };
+            };
+        };
+    };
+    getPricingPriceListsByListId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListSummary"];
+                };
+            };
+        };
+    };
+    putPricingPriceListsByListId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceListRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListSummary"];
+                };
+            };
+        };
+    };
+    deletePricingPriceListsByListId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postPricingPriceListsByListIdAdjust: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustPriceListRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustPriceListResult"];
+                };
+            };
+        };
+    };
+    getPricingPriceListsByListIdItems: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path: {
+                listId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListItemSummary"][];
+                };
+            };
+        };
+    };
+    postPricingPriceListsByListIdItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceListItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListItemSummary"];
+                };
+            };
+        };
+    };
+    putPricingPriceListsByListIdItemsByEntryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceListItemRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceListItemSummary"];
+                };
+            };
+        };
+    };
+    deletePricingPriceListsByListIdItemsByEntryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listId: string;
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPricingAgreements: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceAgreementSummary"][];
+                };
+            };
+        };
+    };
+    postPricingAgreements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceAgreementRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceAgreementSummary"];
+                };
+            };
+        };
+    };
+    putPricingAgreementsByAgreementId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceAgreementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceAgreementSummary"];
+                };
+            };
+        };
+    };
+    deletePricingAgreementsByAgreementId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPricingDiscountRules: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscountRuleSummary"][];
+                };
+            };
+        };
+    };
+    postPricingDiscountRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDiscountRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscountRuleSummary"];
+                };
+            };
+        };
+    };
+    putPricingDiscountRulesByRuleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDiscountRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscountRuleSummary"];
+                };
+            };
+        };
+    };
+    deletePricingDiscountRulesByRuleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPricingPromotions: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionSummary"][];
+                };
+            };
+        };
+    };
+    postPricingPromotions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePromotionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionSummary"];
+                };
+            };
+        };
+    };
+    putPricingPromotionsByPromotionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                promotionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePromotionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionSummary"];
+                };
+            };
+        };
+    };
+    deletePricingPromotionsByPromotionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                promotionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPricingFloors: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceFloorSummary"][];
+                };
+            };
+        };
+    };
+    postPricingFloors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceFloorRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceFloorSummary"];
+                };
+            };
+        };
+    };
+    putPricingFloorsByFloorId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                floorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePriceFloorRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceFloorSummary"];
+                };
+            };
+        };
+    };
+    deletePricingFloorsByFloorId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                floorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

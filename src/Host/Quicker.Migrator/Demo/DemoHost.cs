@@ -21,6 +21,7 @@ using Quicker.Organization;
 using Quicker.Partners;
 using Quicker.Payables;
 using Quicker.Persistence;
+using Quicker.Pricing;
 using Quicker.Purchasing;
 using Quicker.Storage;
 using Quicker.Tenancy;
@@ -91,6 +92,7 @@ internal static class DemoHost
         services.AddInventoryModule();
         services.AddWorkflowModule();
         services.AddPartnersModule();
+        services.AddPricingModule();
         services.AddPayablesModule();
         services.AddBankingModule();
         services.AddPurchasingModule();

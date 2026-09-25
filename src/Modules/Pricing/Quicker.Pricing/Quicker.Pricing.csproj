@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Pricing module: price lists (quantity breaks, validity, tax inclusivity, derived lists), customer agreements, discount rules, promotions and price floors, and the deterministic engine that prices a basket and explains every price (roadmap 5.2, ADR-0030, DOMAIN_MODEL §11).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Pricing.Contracts/Quicker.Pricing.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Inventory/Quicker.Inventory.Contracts/Quicker.Inventory.Contracts.csproj" />
+    <ProjectReference Include="../../Items/Quicker.Items.Contracts/Quicker.Items.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Partners/Quicker.Partners.Contracts/Quicker.Partners.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+</Project>

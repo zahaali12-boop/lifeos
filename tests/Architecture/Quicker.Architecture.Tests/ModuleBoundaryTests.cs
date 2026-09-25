@@ -143,6 +143,7 @@ public sealed class ModuleBoundaryTests
         ["Partners"] = 1,
         ["Items"] = 1,
         ["Inventory"] = 1,
+        ["Pricing"] = 1,
         ["Purchasing"] = 2,
         ["Payables"] = 2,
         ["Banking"] = 2,
