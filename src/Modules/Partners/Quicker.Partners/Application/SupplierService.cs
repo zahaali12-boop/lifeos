@@ -16,7 +16,7 @@ namespace Quicker.Partners.Application;
 /// Supplier accounts per company (terms, tolerances, holds, posting) and the configuration they draw on: supplier
 /// groups, payment terms with instalments, delivery terms and withholding tax codes.
 /// </summary>
-public sealed class SupplierService(PartnersDbContext db, ICompanyDirectory companies, IPostingGroupDirectory postingGroups, ITaxGroupDirectory taxGroups, ICurrentPrincipal principal, IClock clock)
+public sealed class SupplierService(PartnersDbContext db, ICompanyDirectory companies, IPostingGroupDirectory postingGroups, ITaxDirectory taxGroups, ICurrentPrincipal principal, IClock clock)
 {
     public const string SupplierPostingGroupKind = "partner_supplier";
 

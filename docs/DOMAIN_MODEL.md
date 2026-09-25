@@ -2575,6 +2575,8 @@ erDiagram
 
 Items (`itm_items.item_tax_group_id`, else the category's) and customer and supplier accounts (`tax_group_id`) point at tax groups of their kind. Withholding tax codes already live with the partners (`ptr_wht_codes`, M4).
 
+Purchase order and supplier invoice lines keep the engine's decision (`tax_code_id`, `tax_rate_pct`, `tax_amount`, `tax_reverse_charge`, `tax_recoverable`, `tax_reason`) and their documents the `tax_rounding_level` used; invoices also total the self-assessed tax (`total_reverse_charge_tax`). `gl_journal_lines.tax_code_id` references `tax_codes` (A-147).
+
 ## 13. Receivables and payables (subledgers and settlement)
 
 ```mermaid

@@ -15,7 +15,8 @@ namespace Quicker.Tax.Application;
 /// <summary>
 /// Picks the code of every document line (ADR-0018, A-146). The company's registration on the tax date names the regime;
 /// without one the company charges and recovers no tax. On a sale, a partner's exemption certificate valid on the date
-/// relieves the tax a line would otherwise carry. Otherwise the matrix row that matches the line most specifically wins:
+/// relieves the tax a line would otherwise carry. An item without a tax group (its own or its category's) is refused.
+/// Otherwise the matrix row that matches the line most specifically wins:
 /// an item group counts 8, a partner group 4, where goods ship from 2 and to 1, then the latest start; a line no row
 /// matches is refused with the facts that were looked up, never taxed by guess.
 /// </summary>
@@ -102,7 +103,7 @@ public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory c
             {
                 var from = line.ShipFromCountry ?? request.ShipFromCountry ?? (request.Direction == TaxDirections.Sales ? scope.Company.Country : null);
                 var to = line.ShipToCountry ?? request.ShipToCountry ?? (request.Direction == TaxDirections.Purchase ? scope.Company.Country : null);
-                determined = await DetermineAsync(scope, itemGroup, partnerGroup, from, to, cancellationToken);
+                determined = await DetermineAsync(scope, itemGroup, partnerGroup, from, to, cancellationToken, unclassified: line.ItemId is not null && itemGroup is null);
             }
 
             if (determined.IsFailure)
@@ -168,11 +169,17 @@ public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory c
         return new Scope(company, regime, direction, taxDate, rules, exemption);
     }
 
-    private async Task<Result<TaxDetermination>> DetermineAsync(Scope scope, Guid? itemGroup, Guid? partnerGroup, string? from, string? to, CancellationToken cancellationToken)
+    private async Task<Result<TaxDetermination>> DetermineAsync(Scope scope, Guid? itemGroup, Guid? partnerGroup, string? from, string? to, CancellationToken cancellationToken, bool unclassified = false)
     {
         if (scope.Regime is null)
         {
             return new TaxDetermination(null, TaxReasons.NotRegistered, null, null);
+        }
+
+        // An item always says how it is taxed; only lines without an item (expenses, charges) fall to the rows for any item.
+        if (unclassified)
+        {
+            return Error.Validation("tax.item_unclassified", "The item has no tax group, nor has its category; give one of them a tax group.").WithWhy(("regime", scope.Regime.Code));
         }
 
         var rule = scope.Rules

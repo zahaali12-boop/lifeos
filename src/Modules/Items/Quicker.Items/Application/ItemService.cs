@@ -31,7 +31,7 @@ public sealed class ItemService(
     IWarehouseDirectory warehouses,
     ICustomFieldValidator customFields,
     IStockActivity stock,
-    ITaxGroupDirectory taxGroups,
+    ITaxDirectory taxGroups,
     IAuditSink audit,
     IClock clock)
 {

@@ -19,6 +19,7 @@ using Quicker.Partners.Contracts;
 using Quicker.Purchasing.Contracts;
 using Quicker.Purchasing.Domain;
 using Quicker.Purchasing.Persistence;
+using Quicker.Tax.Contracts;
 using Quicker.Workflow.Contracts;
 using Scriban;
 using Scriban.Runtime;
@@ -47,6 +48,8 @@ public sealed class PurchaseOrderService(
     IAuditSink audit,
     IClock clock,
     BlanketAgreementService agreements,
+    ITaxDetermination tax,
+    ITaxDirectory taxDirectory,
     IServiceProvider services)
 {
     public const string DocumentType = PurchaseDocumentTypes.Order;
@@ -220,6 +223,7 @@ public sealed class PurchaseOrderService(
         }
 
         var lines = new List<PurchaseOrderLine>();
+        var taxLines = new List<TaxDocumentLine>();
         var lineNo = 0;
         var totalNet = 0m;
         foreach (var line in request.Lines)
@@ -279,6 +283,7 @@ public sealed class PurchaseOrderService(
 
             var net = Shared.Round(line.Quantity * unitPrice.Value * (1m - line.DiscountPct / 100m), currency.Value);
             totalNet += net;
+            taxLines.Add(new TaxDocumentLine(lineNo.ToString(CultureInfo.InvariantCulture), net, item.Id, TaxCodeId: line.TaxCodeId));
             lines.Add(new PurchaseOrderLine
             {
                 Id = Guid.CreateVersion7(),
@@ -302,6 +307,23 @@ public sealed class PurchaseOrderService(
             });
         }
 
+        // Tax on the order date, as the supplier will charge it (A-147); the invoice taxes again on its own date.
+        var taxed = await tax.CalculateAsync(new TaxDocumentRequest(company.Id.Value, TaxDirections.Purchase, orderDate, currency.Value.Code, false, taxLines, request.PartnerId), cancellationToken);
+        if (taxed.IsFailure)
+        {
+            return taxed.Error!;
+        }
+
+        TaxLines.Apply(taxed.Value, lines, static l => l.LineNo, static (l, t, d) =>
+        {
+            l.TaxCodeId = t.TaxCodeId;
+            l.TaxAmount = t.Tax;
+            l.TaxRatePct = t.RatePct;
+            l.TaxReverseCharge = t.IsReverseCharge;
+            l.TaxRecoverable = t.IsRecoverable;
+            l.TaxReason = d.Reason;
+        });
+
         var expectedDate = request.ExpectedDate ?? (supplier.LeadTimeDays > 0 ? orderDate.AddDays(supplier.LeadTimeDays) : null);
         order.PartnerId = request.PartnerId;
         order.BranchId = request.BranchId;
@@ -316,8 +338,9 @@ public sealed class PurchaseOrderService(
         order.Notes = Shared.Trim(request.Notes);
         order.CustomFields = validated.Value;
         order.TotalNet = totalNet;
-        order.TotalTax = 0m;
-        order.TotalGross = totalNet;
+        order.TotalTax = taxed.Value.Document.Tax;
+        order.TotalGross = taxed.Value.Document.Gross;
+        order.TaxRoundingLevel = taxed.Value.Document.RoundingLevel;
         order.SupplierSnapshot = JsonSerializer.Serialize(new { supplier.PartnerCode, name = supplier.PartnerName.Values, supplier.Currency, supplier.PaymentTermsCode, supplier.DeliveryTermsCode, supplier.LeadTimeDays, supplier.PriceTolerancePct, supplier.QtyTolerancePct, supplier.RequiresPo }, Shared.Json);
         order.Lines.Clear();
         order.Lines.AddRange(lines);
@@ -739,11 +762,13 @@ public sealed class PurchaseOrderService(
         var warehouse = o.WarehouseId is { } w ? await warehouses.FindAsync(w, cancellationToken) : null;
         var company = (await companies.FindAsync(new CompanyId(o.CompanyId), cancellationToken))!;
         var lines = new List<PurchaseOrderLineSummary>(o.Lines.Count);
+        var taxCodes = await taxDirectory.DescribeCodesAsync(o.Lines.Where(static l => l.TaxCodeId is not null).Select(static l => l.TaxCodeId!.Value).ToList(), cancellationToken);
         foreach (var l in o.Lines.OrderBy(static l => l.LineNo))
         {
             var item = await items.FindAsync(l.ItemId, cancellationToken);
             var unit = item is null ? null : (await items.UomsAsync(item.Id, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
-            lines.Add(new PurchaseOrderLineSummary(l.Id, l.LineNo, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Description, l.Quantity, l.UomId, unit?.UomCode ?? string.Empty, l.QuantityBase, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.ExpectedDate, l.WarehouseId, l.DimensionSetId, l.QtyReceived, l.QtyInvoiced, l.QtyCancelled, l.RequisitionLineId, l.BlanketLineId, l.Status));
+            lines.Add(new PurchaseOrderLineSummary(l.Id, l.LineNo, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Description, l.Quantity, l.UomId, unit?.UomCode ?? string.Empty, l.QuantityBase, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.ExpectedDate, l.WarehouseId, l.DimensionSetId, l.QtyReceived, l.QtyInvoiced, l.QtyCancelled, l.RequisitionLineId, l.BlanketLineId, l.Status,
+                l.TaxCodeId, l.TaxCodeId is { } code ? taxCodes.GetValueOrDefault(code)?.Code : null, l.TaxRatePct, l.TaxReverseCharge, l.TaxRecoverable, l.TaxReason));
         }
 
         var revisions = withHistory
@@ -757,7 +782,7 @@ public sealed class PurchaseOrderService(
         return new PurchaseOrderSummary(o.Id, o.CompanyId, o.Number, o.Revision, o.Status, o.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal),
             o.Currency, o.ExchangeRate, o.OrderDate, o.ExpectedDate, o.PaymentTermsId, paymentTermsCode, o.DeliveryTermsId, deliveryTermsCode, o.WarehouseId, warehouse?.Code,
             o.TotalNet, o.TotalTax, o.TotalGross, Shared.Round(o.TotalGross * o.ExchangeRate, company.FunctionalCurrency), o.ApprovalRequestId, o.RejectionReason, o.RequisitionId, o.RfqId, o.AgreementId, o.Notes, Shared.Parse(o.CustomFields),
-            o.SubmittedAt, o.ApprovedAt, o.SentAt, o.SentTo, lines, revisions, commitments, o.UpdatedAt);
+            o.SubmittedAt, o.ApprovedAt, o.SentAt, o.SentTo, lines, revisions, commitments, o.UpdatedAt, o.TaxRoundingLevel);
     }
 
     private async Task<string?> TermsCodeAsync(string kind, Guid id, CancellationToken cancellationToken)

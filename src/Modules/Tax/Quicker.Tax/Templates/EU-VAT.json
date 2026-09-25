@@ -283,6 +283,15 @@
       "code": "EU-O",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "EU-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "EU-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

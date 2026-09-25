@@ -284,6 +284,15 @@
       "code": "OM-O",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

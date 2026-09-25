@@ -302,6 +302,8 @@ public sealed class PurchaseOrder : ITenantEntity
 
     public decimal TotalGross { get; set; }
 
+    public string TaxRoundingLevel { get; set; } = "line";
+
     public string SupplierSnapshot { get; set; } = "{}";
 
     public Guid? ApprovalRequestId { get; set; }
@@ -368,6 +370,16 @@ public sealed class PurchaseOrderLine : ITenantEntity
     public decimal NetAmount { get; set; }
 
     public decimal TaxAmount { get; set; }
+
+    public decimal TaxRatePct { get; set; }
+
+    /// <summary>The company self-assesses this tax (reverse charge); the supplier does not charge it.</summary>
+    public bool TaxReverseCharge { get; set; }
+
+    public bool TaxRecoverable { get; set; } = true;
+
+    /// <summary>Why the line has its code: exemption, rule, chosen or not_registered (A-146).</summary>
+    public string? TaxReason { get; set; }
 
     public DateOnly? ExpectedDate { get; set; }
 
@@ -595,6 +607,11 @@ public sealed class Invoice : ITenantEntity
 
     public decimal TotalTax { get; set; }
 
+    /// <summary>Tax the company self-assesses on the invoice (reverse charge): reported and posted, never paid to the supplier.</summary>
+    public decimal TotalReverseChargeTax { get; set; }
+
+    public string TaxRoundingLevel { get; set; } = "line";
+
     public decimal TotalWht { get; set; }
 
     public decimal TotalGross { get; set; }
@@ -682,6 +699,16 @@ public sealed class InvoiceLine : ITenantEntity
     public decimal NetAmount { get; set; }
 
     public decimal TaxAmount { get; set; }
+
+    public decimal TaxRatePct { get; set; }
+
+    /// <summary>The company self-assesses this tax (reverse charge); the supplier does not charge it.</summary>
+    public bool TaxReverseCharge { get; set; }
+
+    public bool TaxRecoverable { get; set; } = true;
+
+    /// <summary>Why the line has its code: exemption, rule, chosen or not_registered (A-146).</summary>
+    public string? TaxReason { get; set; }
 
     public decimal WhtAmount { get; set; }
 

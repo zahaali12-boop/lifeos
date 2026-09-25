@@ -10458,6 +10458,19 @@ export interface components {
             dimensions?: null | {
                 [key: string]: string;
             };
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            taxCode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            taxRatePct: number | string;
+            /** @default false */
+            taxReverseCharge: boolean;
+            /** @default true */
+            taxRecoverable: boolean;
+            taxReason?: null | string;
         };
         InvoiceSummary: {
             /** Format: uuid */
@@ -10523,6 +10536,13 @@ export interface components {
             postedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            totalReverseChargeTax: number | string;
+            /** @default line */
+            taxRoundingLevel: string;
         };
         ItemCategorySummary: {
             /** Format: uuid */
@@ -12740,6 +12760,19 @@ export interface components {
             /** Format: uuid */
             blanketLineId: null | string;
             status: string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            taxCode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            taxRatePct: number | string;
+            /** @default false */
+            taxReverseCharge: boolean;
+            /** @default true */
+            taxRecoverable: boolean;
+            taxReason?: null | string;
         };
         PurchaseOrderRevisionSummary: {
             /** Format: int32 */
@@ -12813,6 +12846,8 @@ export interface components {
             commitments: components["schemas"]["CommitmentSummary"][];
             /** Format: date-time */
             updatedAt: string;
+            /** @default line */
+            taxRoundingLevel: string;
         };
         QuantityConversion: {
             /** Format: double */
@@ -14578,6 +14613,8 @@ export interface components {
             dimensions?: null | {
                 [key: string]: string;
             };
+            /** Format: uuid */
+            taxCodeId?: null | string;
         };
         SaveInvoiceRequest: {
             /** Format: uuid */
@@ -15121,6 +15158,8 @@ export interface components {
             requisitionLineId?: null | string;
             /** Format: uuid */
             blanketLineId?: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
         };
         SavePurchaseOrderRequest: {
             /** Format: uuid */

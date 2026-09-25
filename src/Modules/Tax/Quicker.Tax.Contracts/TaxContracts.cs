@@ -50,10 +50,17 @@ public static class TaxGroupKinds
 
 public sealed record TaxGroupInfo(Guid Id, string Kind, string Code, LocalizedText Name, bool IsActive);
 
-/// <summary>The tax groups other modules point at, so an item, a category or an account names one that exists and is of its kind.</summary>
-public interface ITaxGroupDirectory
+public sealed record TaxCodeRef(Guid Id, string Code, LocalizedText Name, string Treatment, string? ExemptionReasonCode, LocalizedText ExemptionReason);
+
+/// <summary>
+/// The tax groups other modules point at (so an item, a category or an account names one that exists and is of its
+/// kind) and the codes their documents show.
+/// </summary>
+public interface ITaxDirectory
 {
     Task<TaxGroupInfo?> FindGroupAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, TaxCodeRef>> DescribeCodesAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
 }
 
 /// <summary>A tax code as a document line takes it, with the rate in force on the tax date.</summary>

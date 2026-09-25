@@ -291,6 +291,15 @@
       "code": "TR-O",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

@@ -165,6 +165,7 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.DiscountPct).HasPrecision(9, 6);
             b.Property(static x => x.NetAmount).HasPrecision(24, 6);
             b.Property(static x => x.TaxAmount).HasPrecision(24, 6);
+            b.Property(static x => x.TaxRatePct).HasPrecision(9, 4);
             b.Property(static x => x.QtyReceived).HasPrecision(24, 9);
             b.Property(static x => x.QtyInvoiced).HasPrecision(24, 9);
             b.Property(static x => x.QtyCancelled).HasPrecision(24, 9);
@@ -226,6 +227,7 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.ExchangeRate).HasPrecision(24, 12);
             b.Property(static x => x.TotalNet).HasPrecision(24, 6);
             b.Property(static x => x.TotalTax).HasPrecision(24, 6);
+            b.Property(static x => x.TotalReverseChargeTax).HasPrecision(24, 6);
             b.Property(static x => x.TotalWht).HasPrecision(24, 6);
             b.Property(static x => x.TotalGross).HasPrecision(24, 6);
             b.Property(static x => x.TotalPayable).HasPrecision(24, 6);
@@ -243,6 +245,7 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.DiscountPct).HasPrecision(9, 6);
             b.Property(static x => x.NetAmount).HasPrecision(24, 6);
             b.Property(static x => x.TaxAmount).HasPrecision(24, 6);
+            b.Property(static x => x.TaxRatePct).HasPrecision(9, 4);
             b.Property(static x => x.WhtAmount).HasPrecision(24, 6);
             b.Property(static x => x.NetAmountFc).HasPrecision(24, 6);
             b.Property(static x => x.ExpectedUnitPrice).HasPrecision(24, 6);

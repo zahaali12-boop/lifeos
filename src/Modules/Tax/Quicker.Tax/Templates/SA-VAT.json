@@ -324,6 +324,15 @@
       "code": "SA-IMP",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

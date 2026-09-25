@@ -23,7 +23,7 @@ public sealed class CustomerService(
     ICompanyDirectory companies,
     IPostingGroupDirectory postingGroups,
     IWarehouseDirectory warehouses,
-    ITaxGroupDirectory taxGroups,
+    ITaxDirectory taxGroups,
     ICurrentPrincipal principal,
     IClock clock)
 {

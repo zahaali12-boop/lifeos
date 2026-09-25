@@ -283,6 +283,15 @@
       "code": "JO-O",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "JO-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "JO-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

@@ -283,6 +283,15 @@
       "code": "EG-O",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "EG-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "EG-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

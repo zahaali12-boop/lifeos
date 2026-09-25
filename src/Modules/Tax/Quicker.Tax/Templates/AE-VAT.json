@@ -313,6 +313,15 @@
       "code": "AE-IMP",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

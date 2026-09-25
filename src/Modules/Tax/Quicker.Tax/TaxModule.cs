@@ -18,7 +18,7 @@ public static class TaxModule
         services.AddScoped<TaxSetupService>();
         services.AddScoped<TaxDeterminationService>();
         services.AddScoped<ITaxDetermination>(static sp => sp.GetRequiredService<TaxDeterminationService>());
-        services.AddScoped<ITaxGroupDirectory, TaxGroupDirectory>();
+        services.AddScoped<ITaxDirectory, TaxDirectory>();
         services.AddScoped<TaxLedgerService>();
         services.AddScoped<ITaxLedger>(static sp => sp.GetRequiredService<TaxLedgerService>());
         return services;

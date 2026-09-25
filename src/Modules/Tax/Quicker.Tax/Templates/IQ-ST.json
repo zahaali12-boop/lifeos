@@ -175,6 +175,16 @@
       "direction": "sales",
       "code": "IQ-ST20",
       "itemGroup": "TELECOM"
+    },
+    {
+      "direction": "purchase",
+      "code": "IQ-ST10",
+      "itemGroup": "HOSPITALITY"
+    },
+    {
+      "direction": "purchase",
+      "code": "IQ-ST20",
+      "itemGroup": "TELECOM"
     }
   ]
 }

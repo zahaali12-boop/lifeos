@@ -293,6 +293,15 @@
       "code": "BH-O",
       "itemGroup": "STANDARD",
       "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-RC",
+      "partnerGroup": "FOREIGN"
     }
   ]
 }

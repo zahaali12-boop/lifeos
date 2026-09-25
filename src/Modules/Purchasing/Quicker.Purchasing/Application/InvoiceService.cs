@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Quicker.Accounting.Contracts;
@@ -18,6 +19,7 @@ using Quicker.Payables.Contracts;
 using Quicker.Purchasing.Contracts;
 using Quicker.Purchasing.Domain;
 using Quicker.Purchasing.Persistence;
+using Quicker.Tax.Contracts;
 using Quicker.Workflow.Contracts;
 
 namespace Quicker.Purchasing.Application;
@@ -46,6 +48,9 @@ public sealed class InvoiceService(
     ReturnService returns,
     IPayables payables,
     IDimensionSets dimensionSets,
+    ITaxDetermination tax,
+    ITaxDirectory taxDirectory,
+    ITaxLedger taxLedger,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
@@ -405,7 +410,7 @@ public sealed class InvoiceService(
         {
             var receiptLine = receiptLines[line.ReceiptLineId!.Value];
             var (quantityBefore, valueBefore) = invoicedSoFar.TryGetValue(receiptLine.Id, out var before) ? before : (receiptLine.QtyInvoiced, receiptLine.InvoicedCostAmount);
-            var invoiced = (Quantity: quantityBefore + line.Quantity, Value: valueBefore + (line.Quantity * line.UnitPrice * (1m - line.DiscountPct / 100m) * rate.Value));
+            var invoiced = (Quantity: quantityBefore + line.Quantity, Value: valueBefore + (((line.Quantity * line.UnitPrice * (1m - line.DiscountPct / 100m)) + NonRecoverableTax(line)) * rate.Value));
             invoicedSoFar[receiptLine.Id] = invoiced;
             var actualUnitCost = BlendedUnitCost(receiptLine, invoiced.Quantity, invoiced.Value);
             foreach (var sleId in SleIds(receiptLine))
@@ -450,21 +455,21 @@ public sealed class InvoiceService(
                         var receiptLine = receiptLines[line.ReceiptLineId!.Value];
                         var receipt = receipts[receiptLine.ReceiptId];
                         var item = await items.FindAsync(receiptLine.ItemId, cancellationToken);
-                        postingLines.Add(new PostingLine(AccountRoles.GRNI, line.NetAmount, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: receipt.WarehouseId), SubledgerType: SubledgerTypes.GoodsReceivedNotInvoiced, SubledgerRef: receipt.Id, PartnerId: invoice.PartnerId));
+                        postingLines.Add(new PostingLine(AccountRoles.GRNI, CostAmount(line), new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: receipt.WarehouseId), SubledgerType: SubledgerTypes.GoodsReceivedNotInvoiced, SubledgerRef: receipt.Id, PartnerId: invoice.PartnerId));
                         break;
                     }
 
                 case "order":
                     {
                         var item = line.ItemId is { } itemId ? await items.FindAsync(itemId, cancellationToken) : null;
-                        postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, line.NetAmount, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
+                        postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, CostAmount(line), new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
                         break;
                     }
 
                 case "charge":
                     {
                         var charge = await db.LandedCostCharges.AsNoTracking().SingleAsync(x => x.Id == line.LandedCostChargeId, cancellationToken);
-                        postingLines.Add(new PostingLine(AccountRoles.LandedCostClearing, line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), SubledgerType: SubledgerTypes.GoodsReceivedNotInvoiced, SubledgerRef: charge.LandedCostId, PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
+                        postingLines.Add(new PostingLine(AccountRoles.LandedCostClearing, CostAmount(line), new PostingKeys(DocumentType, null, supplier?.PostingGroupId), SubledgerType: SubledgerTypes.GoodsReceivedNotInvoiced, SubledgerRef: charge.LandedCostId, PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
                         break;
                     }
 
@@ -481,7 +486,7 @@ public sealed class InvoiceService(
                         var costTc = sameCurrency ? costShareFc : Shared.Round(costShareFc / rate.Value, currency.Value);
                         returnCostFc[line.Id] = costShareFc;
                         postingLines.Add(new PostingLine(AccountRoles.GRNI, -costTc, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: ret.WarehouseId), SubledgerType: SubledgerTypes.GoodsReceivedNotInvoiced, SubledgerRef: ret.Id, PartnerId: invoice.PartnerId));
-                        var variance = line.NetAmount - costTc;
+                        var variance = CostAmount(line) - costTc;
                         if (variance != 0m)
                         {
                             postingLines.Add(new PostingLine(AccountRoles.PurchasePriceVariance, -variance, new PostingKeys(DocumentType, item?.ItemPostingGroupId, supplier?.PostingGroupId, WarehouseId: ret.WarehouseId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: LocalizedText.Bilingual($"Return {ret.Number} credited at {line.UnitPrice:0.##} against cost", $"إشعار على المرتجع {ret.Number} بسعر {line.UnitPrice:0.##} مقابل الكلفة")));
@@ -491,14 +496,38 @@ public sealed class InvoiceService(
                     }
 
                 default:
-                    postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, sign * line.NetAmount, new PostingKeys(DocumentType, null, supplier?.PostingGroupId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
+                    postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.PurchaseExpense, sign * CostAmount(line), new PostingKeys(DocumentType, null, supplier?.PostingGroupId), Dimensions: await DimensionsOf(line), PartnerId: invoice.PartnerId, Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
                     break;
             }
         }
 
-        if (invoice.TotalTax > 0m)
+        // Tax per code (A-147): recoverable tax to input tax, whether the supplier charged it or the company self-assesses
+        // it; self-assessed tax also to output tax; tax that cannot be recovered is already in the lines' cost. Each line's
+        // tax in the company's currency is rounded once, and the journal takes their sum, so the tax ledger ties to it.
+        var taxFc = invoice.Lines.Where(static l => l.TaxCodeId is not null).ToDictionary(static l => l.Id, l => sameCurrency ? l.TaxAmount : Shared.Round(l.TaxAmount * rate.Value, company.FunctionalCurrency));
+        foreach (var byCode in invoice.Lines.Where(static l => l.TaxCodeId is not null && l.TaxAmount != 0m).GroupBy(static l => l.TaxCodeId!.Value).OrderBy(static g => g.Key))
         {
-            postingLines.Add(new PostingLine(AccountRoles.InputTax, sign * invoice.TotalTax, new PostingKeys(DocumentType), PartnerId: invoice.PartnerId));
+            var code = await tax.FindCodeAsync(byCode.Key, invoice.DocumentDate, cancellationToken);
+            if (code.IsFailure)
+            {
+                return code.Error!;
+            }
+
+            foreach (var part in byCode.GroupBy(static l => (l.TaxRecoverable, l.TaxReverseCharge)))
+            {
+                var amount = part.Sum(static l => l.TaxAmount);
+                var amountFc = part.Sum(l => taxFc[l.Id]);
+                var basis = sign * part.Sum(static l => l.NetAmount);
+                if (part.Key.TaxRecoverable)
+                {
+                    postingLines.Add(new PostingLine(code.Value.InputAccountRole, sign * amount, new PostingKeys(DocumentType), PartnerId: invoice.PartnerId, TaxCodeId: byCode.Key, TaxBase: basis, AmountFc: sameCurrency ? null : sign * amountFc));
+                }
+
+                if (part.Key.TaxReverseCharge)
+                {
+                    postingLines.Add(new PostingLine(code.Value.OutputAccountRole, -sign * amount, new PostingKeys(DocumentType), PartnerId: invoice.PartnerId, TaxCodeId: byCode.Key, TaxBase: basis, AmountFc: sameCurrency ? null : -sign * amountFc));
+                }
+            }
         }
 
         if (invoice.TotalWht > 0m)
@@ -516,6 +545,17 @@ public sealed class InvoiceService(
         if (posted.IsFailure)
         {
             return posted.Error!;
+        }
+
+        // The tax ledger: one entry per taxed line, refused when the posting date falls in a filed return period.
+        var taxEntries = invoice.Lines.Where(static l => l.TaxCodeId is not null)
+            .Select(l => new TaxEntryRequest(l.TaxCodeId!.Value, TaxDirections.Purchase, l.TaxRatePct, sign * l.NetAmount, sign * l.TaxAmount,
+                sign * (sameCurrency ? l.NetAmount : Shared.Round(l.NetAmount * rate.Value, company.FunctionalCurrency)), sign * taxFc[l.Id], l.TaxReverseCharge, l.TaxRecoverable, l.Id))
+            .ToList();
+        var recorded = await taxLedger.RecordAsync(new TaxPostingRequest(invoice.CompanyId, invoice.PostingDate, invoice.DocumentDate, "purchasing", DocumentType, invoice.Id, invoice.Number, posted.Value.EntryId, invoice.PartnerId, invoice.Currency, taxEntries), cancellationToken);
+        if (recorded.IsFailure)
+        {
+            return recorded.Error!;
         }
 
         // 3. Receipt lines: what this invoice settled, allocated from the GRNI lines actually booked so the invariant holds to the minor unit.
@@ -539,12 +579,12 @@ public sealed class InvoiceService(
         {
             var orderLine = orderLines[line.OrderLineId!.Value];
             orderLine.QtyInvoiced += line.Quantity;
-            line.NetAmountFc = Shared.Round(line.NetAmount * rate.Value, company.FunctionalCurrency);
+            line.NetAmountFc = Shared.Round(CostAmount(line) * rate.Value, company.FunctionalCurrency);
         }
 
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "expense"))
         {
-            line.NetAmountFc = Shared.Round(line.NetAmount * rate.Value, company.FunctionalCurrency);
+            line.NetAmountFc = Shared.Round(CostAmount(line) * rate.Value, company.FunctionalCurrency);
         }
 
         // Return lines: what the supplier credited, allocated from the GRNI credits actually booked per return.
@@ -567,8 +607,8 @@ public sealed class InvoiceService(
         foreach (var group in invoice.Lines.Where(static l => l.Kind == "charge").GroupBy(static l => l.LandedCostChargeId!.Value))
         {
             var chargeLines = group.ToList();
-            var bookedFc = Shared.Round(chargeLines.Sum(static l => l.NetAmount) * rate.Value, company.FunctionalCurrency);
-            var shares = RoundingPolicy.Default.Allocate(new Money(bookedFc, company.FunctionalCurrency), chargeLines.Select(static l => l.NetAmount).ToList());
+            var bookedFc = Shared.Round(chargeLines.Sum(static l => CostAmount(l)) * rate.Value, company.FunctionalCurrency);
+            var shares = RoundingPolicy.Default.Allocate(new Money(bookedFc, company.FunctionalCurrency), chargeLines.Select(static l => CostAmount(l)).ToList());
             for (var i = 0; i < chargeLines.Count; i++)
             {
                 chargeLines[i].NetAmountFc = shares[i].Amount;
@@ -655,6 +695,12 @@ public sealed class InvoiceService(
         if (reversed.IsFailure)
         {
             return reversed.Error!;
+        }
+
+        var taxReversed = await taxLedger.ReverseAsync(DocumentType, invoice.Id, reversed.Value.PostingDate, reversed.Value.EntryId, cancellationToken);
+        if (taxReversed.IsFailure)
+        {
+            return taxReversed.Error!;
         }
 
         var receiptLineIds = invoice.Lines.Where(static l => l.ReceiptLineId is not null).Select(static l => l.ReceiptLineId!.Value).ToList();
@@ -1029,12 +1075,38 @@ public sealed class InvoiceService(
             }
 
             line.NetAmount = Shared.Round(l.Quantity * l.UnitPrice * (1m - l.DiscountPct / 100m), currency.Value);
-            line.TaxAmount = 0m;
             lines.Add(line);
         }
 
+        // Tax on the supplier's invoice date (A-147): a line takes the code it names, else the code its order line
+        // chose, else the engine's; the supplier charges it or, under reverse charge, the company self-assesses it.
+        var receiptOrderLines = await ReceiptOrderLinesAsync(lines, cancellationToken);
+        var sourceOrderLines = lines.Select(l => l.OrderLineId ?? (l.ReceiptLineId is { } r ? receiptOrderLines.GetValueOrDefault(r) : null)).OfType<Guid>().Distinct().ToList();
+        var chosenOnOrder = await db.OrderLines.AsNoTracking().Where(o => sourceOrderLines.Contains(o.Id) && o.TaxReason == TaxReasons.Chosen && o.TaxCodeId != null).ToDictionaryAsync(static o => o.Id, static o => o.TaxCodeId!.Value, cancellationToken);
+        var taxLines = lines.Select((line, i) =>
+        {
+            var orderLineId = line.OrderLineId ?? (line.ReceiptLineId is { } r ? receiptOrderLines.GetValueOrDefault(r) : null);
+            var chosen = request.Lines[i].TaxCodeId ?? (orderLineId is { } o && chosenOnOrder.TryGetValue(o, out var code) ? code : null);
+            return new TaxDocumentLine(line.LineNo.ToString(CultureInfo.InvariantCulture), line.NetAmount, line.ItemId, TaxCodeId: chosen);
+        }).ToList();
+        var taxed = await tax.CalculateAsync(new TaxDocumentRequest(request.CompanyId, TaxDirections.Purchase, documentDate, currency.Value.Code, false, taxLines, request.PartnerId), cancellationToken);
+        if (taxed.IsFailure)
+        {
+            return taxed.Error!;
+        }
+
+        TaxLines.Apply(taxed.Value, lines, static l => l.LineNo, static (l, t, d) =>
+        {
+            l.TaxCodeId = t.TaxCodeId;
+            l.TaxAmount = t.Tax;
+            l.TaxRatePct = t.RatePct;
+            l.TaxReverseCharge = t.IsReverseCharge;
+            l.TaxRecoverable = t.IsRecoverable;
+            l.TaxReason = d.Reason;
+        });
+
         var totalNet = lines.Sum(static x => x.NetAmount);
-        var totalTax = lines.Sum(static x => x.TaxAmount);
+        var totalTax = taxed.Value.Document.Tax;
         var totalWht = 0m;
         if (wht is not null && wht.WithholdAt == WithholdingPoints.Invoice)
         {
@@ -1060,6 +1132,8 @@ public sealed class InvoiceService(
         invoice.WhtCodeId = totalWht > 0m ? whtCodeId : null;
         invoice.TotalNet = totalNet;
         invoice.TotalTax = totalTax;
+        invoice.TotalReverseChargeTax = lines.Where(static x => x.TaxReverseCharge).Sum(static x => x.TaxAmount);
+        invoice.TaxRoundingLevel = taxed.Value.Document.RoundingLevel;
         invoice.TotalWht = totalWht;
         invoice.TotalGross = totalNet + totalTax;
         invoice.TotalPayable = invoice.TotalGross - totalWht;
@@ -1191,6 +1265,19 @@ public sealed class InvoiceService(
     private static string Display(Invoice invoice) => $"{invoice.Number} · {invoice.TotalGross:0.##} {invoice.Currency}" + (invoice.SupplierInvoiceNumber is null ? string.Empty : $" · {invoice.SupplierInvoiceNumber}");
 
     /// <summary>A received unit's cost once the invoices so far are settled: the invoiced value, and the rest of the receipt at its expected cost.</summary>
+    /// <summary>Tax the company cannot recover is part of what the line cost (IAS 2, IAS 16): it goes where the line's net goes.</summary>
+    private static decimal NonRecoverableTax(InvoiceLine line) => line.TaxCodeId is not null && !line.TaxRecoverable ? line.TaxAmount : 0m;
+
+    private static decimal CostAmount(InvoiceLine line) => line.NetAmount + NonRecoverableTax(line);
+
+    private async Task<Dictionary<Guid, Guid?>> ReceiptOrderLinesAsync(IReadOnlyList<InvoiceLine> lines, CancellationToken cancellationToken)
+    {
+        var ids = lines.Where(static l => l.ReceiptLineId is not null).Select(static l => l.ReceiptLineId!.Value).Distinct().ToList();
+        return ids.Count == 0
+            ? []
+            : await db.ReceiptLines.AsNoTracking().Where(r => ids.Contains(r.Id)).ToDictionaryAsync(static r => r.Id, static r => (Guid?)r.OrderLineId, cancellationToken);
+    }
+
     private static decimal BlendedUnitCost(ReceiptLine line, decimal invoicedQuantity, decimal invoicedValue) =>
         line.Quantity == 0m ? line.ExpectedUnitCost : (invoicedValue + (Math.Max(0m, line.Quantity - invoicedQuantity) * line.ExpectedUnitCost)) / line.Quantity;
 
@@ -1224,19 +1311,22 @@ public sealed class InvoiceService(
         var returnLineIds = i.Lines.Where(static l => l.ReturnLineId is not null).Select(static l => l.ReturnLineId!.Value).ToList();
         var returnNumbers = returnLineIds.Count == 0 ? new Dictionary<Guid, string>() : await (from l in db.ReturnLines.AsNoTracking() join r in db.Returns.AsNoTracking() on new { l.TenantId, Id = l.ReturnId } equals new { r.TenantId, r.Id } where returnLineIds.Contains(l.Id) select new { l.Id, r.Number }).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
         var lines = new List<InvoiceLineSummary>(i.Lines.Count);
+        var taxCodes = await taxDirectory.DescribeCodesAsync(i.Lines.Where(static l => l.TaxCodeId is not null).Select(static l => l.TaxCodeId!.Value).ToList(), cancellationToken);
         foreach (var l in i.Lines.OrderBy(static l => l.LineNo))
         {
             var (item, uom) = l.ItemId is { } itemId && l.UomId is { } uomId ? await ItemAsync(itemId, uomId, cancellationToken) : (null, null);
             lines.Add(new InvoiceLineSummary(l.Id, l.LineNo, l.Kind, l.ReceiptLineId, l.ReceiptLineId is { } rl ? receiptNumbers.GetValueOrDefault(rl) : null, l.OrderLineId, l.OrderLineId is { } ol ? orderNumbers.GetValueOrDefault(ol) : null, l.ItemId, item?.Code, item?.Name.Values, l.AccountRole, l.Description,
                 l.Quantity, l.UomId, uom?.UomCode, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.WhtAmount, l.ExpectedUnitPrice, l.PriceVariancePct, l.QtyVariance, l.DimensionSetId, l.LandedCostChargeId, l.LandedCostChargeId is { } ch ? chargeDocs.GetValueOrDefault(ch) : null,
                 l.ReturnLineId, l.ReturnLineId is { } rt ? returnNumbers.GetValueOrDefault(rt) : null,
-                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
+                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null,
+                l.TaxCodeId, l.TaxCodeId is { } code ? taxCodes.GetValueOrDefault(code)?.Code : null, l.TaxRatePct, l.TaxReverseCharge, l.TaxRecoverable, l.TaxReason));
         }
 
         var matches = (await db.MatchResults.AsNoTracking().Where(m => m.InvoiceId == i.Id).OrderByDescending(static m => m.MatchedAt).ToListAsync(cancellationToken))
             .Select(static m => new MatchResultSummary(m.Id, m.Status, m.PriceTolerancePct, m.QtyTolerancePct, m.PriceVarianceAmount, m.PriceVariancePct, m.QtyVariance, Shared.Parse(m.Details), m.OverrideId, m.MatchedAt)).ToList();
         var openItems = await payables.ItemsOfAsync(DocumentType, i.Id, cancellationToken);
         return new InvoiceSummary(i.Id, i.CompanyId, i.Number, i.Kind, i.Status, i.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? Empty(), i.SupplierInvoiceNumber, i.DocumentDate, i.PostingDate, i.DueDate, i.Currency, i.ExchangeRate, company?.FunctionalCurrency.Code ?? i.Currency,
-            i.PaymentTermsId, terms, i.WhtCodeId, wht?.Code, i.TotalNet, i.TotalTax, i.TotalWht, i.TotalGross, i.TotalPayable, i.BlockKind, i.BlockReason, i.BlockId, i.ApprovalRequestId, i.RejectionReason, i.JournalEntryId, i.ReversalEntryId, i.ReversalReason, i.Notes, Shared.Parse(i.CustomFields), lines, matches, openItems, i.SubmittedAt, i.PostedAt, i.UpdatedAt);
+            i.PaymentTermsId, terms, i.WhtCodeId, wht?.Code, i.TotalNet, i.TotalTax, i.TotalWht, i.TotalGross, i.TotalPayable, i.BlockKind, i.BlockReason, i.BlockId, i.ApprovalRequestId, i.RejectionReason, i.JournalEntryId, i.ReversalEntryId, i.ReversalReason, i.Notes, Shared.Parse(i.CustomFields), lines, matches, openItems, i.SubmittedAt, i.PostedAt, i.UpdatedAt,
+            i.TotalReverseChargeTax, i.TaxRoundingLevel);
     }
 }

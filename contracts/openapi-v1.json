@@ -32677,6 +32677,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "taxReverseCharge": {
+            "type": "boolean",
+            "default": false
+          },
+          "taxRecoverable": {
+            "type": "boolean",
+            "default": true
+          },
+          "taxReason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -32952,6 +32988,19 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "totalReverseChargeTax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "taxRoundingLevel": {
+            "type": "string",
+            "default": "line"
           }
         }
       },
@@ -41591,6 +41640,42 @@
           },
           "status": {
             "type": "string"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "taxReverseCharge": {
+            "type": "boolean",
+            "default": false
+          },
+          "taxRecoverable": {
+            "type": "boolean",
+            "default": true
+          },
+          "taxReason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -41895,6 +41980,10 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "taxRoundingLevel": {
+            "type": "string",
+            "default": "line"
           }
         }
       },
@@ -48135,6 +48224,13 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         },
         "description": "A line: against a posted receipt line (three-way), an order line without a receipt (services, two-way) or a free expense line on an account role; quantity and price in the invoice currency."
@@ -49973,6 +50069,13 @@
             "format": "uuid"
           },
           "blanketLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCodeId": {
             "type": [
               "null",
               "string"

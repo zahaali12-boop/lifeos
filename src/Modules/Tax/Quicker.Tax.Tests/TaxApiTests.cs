@@ -128,11 +128,16 @@ public sealed class TaxApiTests(ApiHostFixture host)
         Amounts(Line(inclusive, "1")).ShouldBe((4_000m, 600m, 4_600m));
         Amounts(Line(inclusive, "2")).ShouldBe((86.95m, 13.04m, 99.99m));
 
-        // An item with no tax group anywhere is refused with what was looked up, never taxed by guess.
+        // An item with no tax group anywhere is refused, never taxed by guess.
         var (code, problem) = await owner.PostErrorAsync("/api/v1/tax/calculate", new { companyId = s.CompanyId, direction = "sales", taxDate = "2026-09-25", currency = "SAR", pricesIncludeTax = false, partnerId = s.Domestic, lines = new[] { new { key = "misc", amount = 10m, itemId = s.Unclassified } } }, HttpStatusCode.UnprocessableEntity);
-        code.ShouldBe("tax.no_determination");
+        code.ShouldBe("tax.item_unclassified");
         problem.GetProperty("why").GetProperty("line").GetString().ShouldBe("misc");
         problem.GetProperty("why").GetProperty("regime").GetString().ShouldBe("SA-VAT");
+
+        // A sale without an item matches no row (the templates have none for sales), so the line must name its code.
+        (code, problem) = await owner.PostErrorAsync("/api/v1/tax/calculate", new { companyId = s.CompanyId, direction = "sales", taxDate = "2026-09-25", currency = "SAR", pricesIncludeTax = false, partnerId = s.Domestic, lines = new[] { new { key = "fee", amount = 10m } } }, HttpStatusCode.UnprocessableEntity);
+        code.ShouldBe("tax.no_determination");
+        problem.GetProperty("why").GetProperty("direction").GetString().ShouldBe("sales");
 
         await owner.AssertInvariantsAsync();
     }

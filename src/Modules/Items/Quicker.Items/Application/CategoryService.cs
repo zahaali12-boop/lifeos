@@ -10,7 +10,7 @@ using Quicker.Tax.Contracts;
 namespace Quicker.Items.Application;
 
 /// <summary>Item categories as a tree with a materialised path, so a subtree is one prefix query and a move rewrites its paths.</summary>
-public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory postingGroups, ITaxGroupDirectory taxGroups, IStockActivity stock, IClock clock)
+public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory postingGroups, ITaxDirectory taxGroups, IStockActivity stock, IClock clock)
 {
     public async Task<IReadOnlyList<ItemCategorySummary>> ListAsync(CancellationToken cancellationToken)
     {
