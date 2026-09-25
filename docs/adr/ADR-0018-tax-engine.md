@@ -51,3 +51,10 @@ Iraq (selective sales tax codes, contractor withholding), Saudi Arabia, UAE, Bah
 * **Rounding.** Per line unless the regime or the company asks for per document (ADR-0005); the document level used travels with the calculated document.
 * **Templates reuse groups.** Installing a country reuses the tenant's item and partner tax groups by code, so companies in several countries share one set of item groups.
 
+## Amendment 2026-09-25 (slice 5.3c, A-149)
+
+* **The return is computed, not stored.** No `tax_returns` table: a preview is a fresh query over `tax_entries` for a company, regime and period, so it is always current; filing is what persists (`tax_return_periods.totals`), booking the exact figures a later ledger change must never rewrite.
+* **Reconciliation crosses the module boundary through a contract.** `Accounting.Contracts` gains `ILedgerReader.TaxMovementAsync`, the read access the tax module needs into the general ledger's tax accounts without reaching into Accounting's own tables; the two sides agree by construction, so a difference is a genuine signal, not noise to filter.
+* **Filing's lock, not a status flag.** A posting's tax-ledger write already share-locks the company's registration (`FOR SHARE`, since 5.3a); filing takes the same row exclusively (`FOR UPDATE`) instead of adding a separate "filing in progress" flag, so PostgreSQL's own row locking serialises the two operations with no window for a torn state.
+* **Clearance is wired, not simulated.** `ITaxClearanceRegistry` resolves a regime's `einvoicing_scheme` to a registered `ITaxClearanceProvider`; since no adapter ships yet, every regime that names a scheme is refused with `tax.clearance_not_configured` rather than a placeholder success, and a regime naming none needs no clearance at all. The generic UBL 2.1 export works regardless, built from a document's tax ledger entries at the header and tax-summary level; full line detail is the print pipeline's job (5.9).
+

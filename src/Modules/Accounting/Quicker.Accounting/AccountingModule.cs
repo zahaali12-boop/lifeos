@@ -34,6 +34,7 @@ public static class AccountingModule
         services.AddScoped<DeferralService>();
         services.AddScoped<AccountingRoutines>();
         services.AddScoped<InquiryService>();
+        services.AddScoped<ILedgerReader, LedgerReader>();
         services.AddJobHandler<AccountingDailyJob, AccountingDailyPayload>();
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("manual_journal", AccountingPermissions.JournalRead));

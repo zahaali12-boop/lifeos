@@ -21,6 +21,10 @@ public static class TaxModule
         services.AddScoped<ITaxDirectory, TaxDirectory>();
         services.AddScoped<TaxLedgerService>();
         services.AddScoped<ITaxLedger>(static sp => sp.GetRequiredService<TaxLedgerService>());
+        services.AddScoped<TaxReturnService>();
+        services.AddScoped<UblExportService>();
+        services.AddScoped<ClearanceService>();
+        services.AddSingleton<ITaxClearanceRegistry, TaxClearanceRegistry>();
         return services;
     }
 }

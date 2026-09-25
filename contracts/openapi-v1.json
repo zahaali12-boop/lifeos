@@ -19343,6 +19343,288 @@
         }
       }
     },
+    "/api/v1/tax/returns": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "The open and filed return periods, newest first",
+        "operationId": "getTaxReturns",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "regimeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxReturnPeriodSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/returns/preview": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "The return for a period computed from the tax ledger: its boxes, reconciled to the tax accounts of the general ledger, and the net amount owed or due back; not yet filed",
+        "operationId": "getTaxReturnsPreview",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "regimeId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "periodStart",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "periodEnd",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxReturnPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/returns/drilldown": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "The tax entries behind one box of the return, each with the document it came from",
+        "operationId": "getTaxReturnsDrilldown",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "regimeId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "periodStart",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "periodEnd",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "box",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxReturnDrillDownLine"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/returns/file": {
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "Files the period: locks it against further postings, refuses an unreconciled return, and books the figures filed",
+        "operationId": "postTaxReturnsFile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileTaxReturnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxReturnPeriodSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/documents/{sourceDocumentType}/{sourceDocumentId}/ubl": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "The document's generic UBL 2.1 export (header, parties and tax summary), built from its tax ledger entries",
+        "operationId": "getTaxDocumentsBySourceDocumentTypeBySourceDocumentIdUbl",
+        "parameters": [
+          {
+            "name": "sourceDocumentType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceDocumentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/documents/{sourceDocumentType}/{sourceDocumentId}/clearance/submit": {
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "Submits the document's UBL export to its regime's clearance scheme, when a provider is registered for it (none ship yet: zatca, peppol and eta are later adapters)",
+        "operationId": "postTaxDocumentsBySourceDocumentTypeBySourceDocumentIdClearanceSubmit",
+        "parameters": [
+          {
+            "name": "sourceDocumentType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceDocumentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClearanceSubmission"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payables/open-items": {
       "get": {
         "tags": [
@@ -27282,6 +27564,42 @@
           }
         }
       },
+      "ClearanceSubmission": {
+        "required": [
+          "scheme",
+          "status",
+          "submissionId",
+          "qrPayload",
+          "messages"
+        ],
+        "type": "object",
+        "properties": {
+          "scheme": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submissionId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "qrPayload": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "CommentView": {
         "required": [
           "id",
@@ -31485,6 +31803,39 @@
           },
           "access": {
             "type": "string"
+          }
+        }
+      },
+      "FileTaxReturnRequest": {
+        "required": [
+          "companyId",
+          "regimeId",
+          "periodStart",
+          "periodEnd"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -55702,6 +56053,54 @@
         },
         "description": "A table the web client already shows (a list's visible columns and rows, in its order), to be written as CSV or XLSX.\n`documentType` names the kind of record listed, so a role that may not export that kind is refused."
       },
+      "TaxCodeReconciliation": {
+        "required": [
+          "taxCodeId",
+          "taxCode",
+          "accountRole",
+          "ledgerMovement",
+          "entriesMovement",
+          "difference"
+        ],
+        "type": "object",
+        "properties": {
+          "taxCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "ledgerMovement": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "entriesMovement": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "difference": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "A tax code's ledger movement on one account role against what the tax entries say it should be; a difference means a posting outside the tax module touched the account."
+      },
       "TaxCodeSummary": {
         "required": [
           "id",
@@ -56466,6 +56865,265 @@
             "format": "date-time"
           }
         }
+      },
+      "TaxReturnBox": {
+        "required": [
+          "code",
+          "baseAmount",
+          "taxAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "baseAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One figure of a return: a box's taxable base and the tax on it, in the company's functional currency."
+      },
+      "TaxReturnDrillDownLine": {
+        "required": [
+          "id",
+          "kind",
+          "direction",
+          "postingDate",
+          "sourceModule",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "sourceDocumentNumber",
+          "taxCodeId",
+          "taxCode",
+          "ratePct",
+          "baseFc",
+          "taxFc",
+          "isReversal"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sourceModule": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceDocumentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "baseFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isReversal": {
+            "type": "boolean"
+          }
+        },
+        "description": "One tax entry behind a box figure, for the return's drill-down."
+      },
+      "TaxReturnPeriodSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "regimeId",
+          "regimeCode",
+          "periodStart",
+          "periodEnd",
+          "status",
+          "filedAt",
+          "filedBy",
+          "reference",
+          "netPayable"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeCode": {
+            "type": "string"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "filedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "filedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "netPayable": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "TaxReturnPreview": {
+        "required": [
+          "companyId",
+          "regimeId",
+          "regimeCode",
+          "regimeName",
+          "periodStart",
+          "periodEnd",
+          "currency",
+          "boxes",
+          "reconciliation",
+          "reconciled",
+          "netPayable"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeCode": {
+            "type": "string"
+          },
+          "regimeName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "boxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxReturnBox"
+            }
+          },
+          "reconciliation": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxCodeReconciliation"
+            }
+          },
+          "reconciled": {
+            "type": "boolean"
+          },
+          "netPayable": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "A return computed from the tax ledger for a company, regime and period (ADR-0018): the boxes it reports, reconciled\nto the tax accounts of the general ledger, and the net amount owed (positive) or due back (negative)."
       },
       "TaxRuleSummary": {
         "required": [

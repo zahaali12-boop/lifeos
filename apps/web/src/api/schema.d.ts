@@ -6662,6 +6662,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tax/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The open and filed return periods, newest first */
+        get: operations["getTaxReturns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tax/returns/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The return for a period computed from the tax ledger: its boxes, reconciled to the tax accounts of the general ledger, and the net amount owed or due back; not yet filed */
+        get: operations["getTaxReturnsPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tax/returns/drilldown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tax entries behind one box of the return, each with the document it came from */
+        get: operations["getTaxReturnsDrilldown"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tax/returns/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Files the period: locks it against further postings, refuses an unreconciled return, and books the figures filed */
+        post: operations["postTaxReturnsFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tax/documents/{sourceDocumentType}/{sourceDocumentId}/ubl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The document's generic UBL 2.1 export (header, parties and tax summary), built from its tax ledger entries */
+        get: operations["getTaxDocumentsBySourceDocumentTypeBySourceDocumentIdUbl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tax/documents/{sourceDocumentType}/{sourceDocumentId}/clearance/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submits the document's UBL export to its regime's clearance scheme, when a provider is registered for it (none ship yet: zatca, peppol and eta are later adapters) */
+        post: operations["postTaxDocumentsBySourceDocumentTypeBySourceDocumentIdClearanceSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payables/open-items": {
         parameters: {
             query?: never;
@@ -9039,6 +9141,13 @@ export interface components {
                 [key: string]: string;
             };
         };
+        ClearanceSubmission: {
+            scheme: string;
+            status: string;
+            submissionId: null | string;
+            qrPayload: null | string;
+            messages: string[];
+        };
         CommentView: {
             /** Format: uuid */
             id: string;
@@ -10158,6 +10267,17 @@ export interface components {
             entityType: string;
             field: string;
             access: string;
+        };
+        FileTaxReturnRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            regimeId: string;
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            reference?: null | string;
         };
         FiscalCalendarSummary: {
             /** Format: uuid */
@@ -16753,6 +16873,19 @@ export interface components {
             columns: components["schemas"]["TableExportColumn"][];
             rows: unknown[][];
         };
+        /** @description A tax code's ledger movement on one account role against what the tax entries say it should be; a difference means a posting outside the tax module touched the account. */
+        TaxCodeReconciliation: {
+            /** Format: uuid */
+            taxCodeId: string;
+            taxCode: string;
+            accountRole: string;
+            /** Format: double */
+            ledgerMovement: number | string;
+            /** Format: double */
+            entriesMovement: number | string;
+            /** Format: double */
+            difference: number | string;
+        };
         TaxCodeSummary: {
             /** Format: uuid */
             id: string;
@@ -16956,6 +17089,83 @@ export interface components {
             validTo: null | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description One figure of a return: a box's taxable base and the tax on it, in the company's functional currency. */
+        TaxReturnBox: {
+            code: string;
+            /** Format: double */
+            baseAmount: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+        };
+        /** @description One tax entry behind a box figure, for the return's drill-down. */
+        TaxReturnDrillDownLine: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            direction: string;
+            /** Format: date */
+            postingDate: string;
+            sourceModule: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            sourceDocumentNumber: null | string;
+            /** Format: uuid */
+            taxCodeId: string;
+            taxCode: string;
+            /** Format: double */
+            ratePct: number | string;
+            /** Format: double */
+            baseFc: number | string;
+            /** Format: double */
+            taxFc: number | string;
+            isReversal: boolean;
+        };
+        TaxReturnPeriodSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            regimeId: string;
+            regimeCode: string;
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            status: string;
+            /** Format: date-time */
+            filedAt: null | string;
+            /** Format: uuid */
+            filedBy: null | string;
+            reference: null | string;
+            /** Format: double */
+            netPayable: null | number | string;
+        };
+        /**
+         * @description A return computed from the tax ledger for a company, regime and period (ADR-0018): the boxes it reports, reconciled
+         *     to the tax accounts of the general ledger, and the net amount owed (positive) or due back (negative).
+         */
+        TaxReturnPreview: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            regimeId: string;
+            regimeCode: string;
+            regimeName: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            currency: string;
+            boxes: components["schemas"]["TaxReturnBox"][];
+            reconciliation: components["schemas"]["TaxCodeReconciliation"][];
+            reconciled: boolean;
+            /** Format: double */
+            netPayable: number | string;
         };
         TaxRuleSummary: {
             /** Format: uuid */
@@ -30084,6 +30294,150 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getTaxReturns: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                regimeId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxReturnPeriodSummary"][];
+                };
+            };
+        };
+    };
+    getTaxReturnsPreview: {
+        parameters: {
+            query: {
+                companyId: string;
+                regimeId: string;
+                periodStart: string;
+                periodEnd: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxReturnPreview"];
+                };
+            };
+        };
+    };
+    getTaxReturnsDrilldown: {
+        parameters: {
+            query: {
+                companyId: string;
+                regimeId: string;
+                periodStart: string;
+                periodEnd: string;
+                box: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxReturnDrillDownLine"][];
+                };
+            };
+        };
+    };
+    postTaxReturnsFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileTaxReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxReturnPeriodSummary"];
+                };
+            };
+        };
+    };
+    getTaxDocumentsBySourceDocumentTypeBySourceDocumentIdUbl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sourceDocumentType: string;
+                sourceDocumentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/xml": string;
+                };
+            };
+        };
+    };
+    postTaxDocumentsBySourceDocumentTypeBySourceDocumentIdClearanceSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sourceDocumentType: string;
+                sourceDocumentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClearanceSubmission"];
+                };
             };
         };
     };

@@ -2405,7 +2405,7 @@ Every priced line stores `price_breakdown` (ADR-0030): the ordered steps, candid
 
 ## 12. Tax
 
-Built in slice 5.3 (ADR-0018 amended, A-146): regimes installed from versioned country templates, codes with dated rates and return boxes, tax groups, the determination matrix, company registrations (partners' registration numbers stay in `ptr_partner_tax_registrations`), exemption certificates, the tax ledger documents write as they post, and return periods. Returns with their box figures, e-invoice submissions and withholding certificates are planned (5.3c and later) and shown last.
+Built in slices 5.3a–5.3c (ADR-0018 amended twice, A-146, A-149): regimes installed from versioned country templates, codes with dated rates and return boxes, tax groups, the determination matrix, company registrations (partners' registration numbers stay in `ptr_partner_tax_registrations`), exemption certificates, the tax ledger documents write as they post, purchase order and supplier invoice lines taxed by the engine (A-147), and return periods, filed with the figures booked into `totals` (there is no separate `tax_returns` table: a return is computed fresh from `tax_entries` each time it is previewed, `Application/TaxReturnService.cs`) and the generic UBL 2.1 export built from a document's tax entries. Persisted e-invoice clearance submissions and withholding certificates are planned (5.3d and later) and shown last.
 
 ```mermaid
 erDiagram
@@ -2421,7 +2421,6 @@ erDiagram
   tax_codes ||--o{ tax_exemptions : "exempt code"
   tax_codes ||--o{ tax_entries : "recorded"
   tax_regimes ||--o{ tax_return_periods : "periods"
-  tax_return_periods ||--o| tax_returns : "filed (planned)"
   tax_einvoice_submissions }o--|| sls_invoices : "clears (planned)"
 
   tax_regimes {
@@ -2535,15 +2534,7 @@ erDiagram
     timestamptz filed_at
     uuid filed_by
     text reference
-    jsonb totals
-  }
-  tax_returns {
-    uuid id PK
-    uuid period_id FK
-    jsonb boxes
-    numeric net_payable
-    uuid settlement_journal_id
-    uuid attachment_id
+    jsonb totals "the boxes, netPayable and currency filed (A-149); computed fresh on every preview before filing"
   }
   tax_einvoice_submissions {
     uuid id PK

@@ -83,6 +83,30 @@ public static class TaxEndpoints
         tax.MapDelete("/exemptions/{exemptionId:guid}", async (Guid exemptionId, TaxSetupService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteExemptionAsync(exemptionId, ct)))
             .RequirePermission(TaxPermissions.SetupManage);
 
+        // ------------------------------------------------------------------ returns
+        tax.MapGet("/returns", async (Guid? companyId, Guid? regimeId, TaxReturnService service, CancellationToken ct) => TypedResults.Ok(await service.ListPeriodsAsync(companyId, regimeId, ct)))
+            .RequirePermission(TaxPermissions.ReturnRead)
+            .WithSummary("The open and filed return periods, newest first");
+        tax.MapGet("/returns/preview", async (Guid companyId, Guid regimeId, DateOnly periodStart, DateOnly periodEnd, TaxReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.PreviewAsync(companyId, regimeId, periodStart, periodEnd, ct)))
+            .RequirePermission(TaxPermissions.ReturnRead)
+            .WithSummary("The return for a period computed from the tax ledger: its boxes, reconciled to the tax accounts of the general ledger, and the net amount owed or due back; not yet filed");
+        tax.MapGet("/returns/drilldown", async (Guid companyId, Guid regimeId, DateOnly periodStart, DateOnly periodEnd, string box, TaxReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.DrillDownAsync(companyId, regimeId, periodStart, periodEnd, box, ct)))
+            .RequirePermission(TaxPermissions.ReturnRead)
+            .WithSummary("The tax entries behind one box of the return, each with the document it came from");
+        tax.MapPost("/returns/file", async (FileTaxReturnRequest request, TaxReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.FileAsync(request, ct)))
+            .RequirePermission(TaxPermissions.ReturnFile)
+            .WithSummary("Files the period: locks it against further postings, refuses an unreconciled return, and books the figures filed");
+
+        // ------------------------------------------------------------------ e-invoicing
+        tax.MapGet("/documents/{sourceDocumentType}/{sourceDocumentId:guid}/ubl", async (string sourceDocumentType, Guid sourceDocumentId, UblExportService service, CancellationToken ct) =>
+                ApiProblems.From(await service.ExportAsync(sourceDocumentType, sourceDocumentId, ct), static ubl => Results.Text(ubl.Xml, ubl.ContentType)))
+            .RequirePermission(TaxPermissions.ReturnRead)
+            .Produces<string>(StatusCodes.Status200OK, "application/xml")
+            .WithSummary("The document's generic UBL 2.1 export (header, parties and tax summary), built from its tax ledger entries");
+        tax.MapPost("/documents/{sourceDocumentType}/{sourceDocumentId:guid}/clearance/submit", async (string sourceDocumentType, Guid sourceDocumentId, ClearanceService service, CancellationToken ct) => ApiProblems.Ok(await service.SubmitAsync(sourceDocumentType, sourceDocumentId, ct)))
+            .RequirePermission(TaxPermissions.ReturnFile)
+            .WithSummary("Submits the document's UBL export to its regime's clearance scheme, when a provider is registered for it (none ship yet: zatca, peppol and eta are later adapters)");
+
         return tax;
     }
 }

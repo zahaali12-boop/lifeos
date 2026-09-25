@@ -187,6 +187,19 @@ public interface IJournalSubledger
     Task<Result> ReverseAsync(Guid entryId, DateOnly reversalDate, CancellationToken cancellationToken = default);
 }
 
+/// <summary>One account role's net movement (debit − credit, in the company's functional currency) on a tax code posted in a period (for reconciling a tax return to the books).</summary>
+public sealed record TaxAccountMovement(Guid TaxCodeId, string AccountRole, decimal AmountFc);
+
+/// <summary>
+/// Read access to the ledger's tax movement, for the tax module to reconcile a return to the books without reaching
+/// into Accounting's own tables (module boundary; ADR-0018).
+/// </summary>
+public interface ILedgerReader
+{
+    /// <summary>Every account role and tax code posted with a tax code in the period, net debit − credit in functional currency.</summary>
+    Task<IReadOnlyList<TaxAccountMovement>> TaxMovementAsync(Guid companyId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
+}
+
 /// <summary>Lets a module that owns a keyed account (a bank account, later an asset category) register the rule that routes a role to it, so its documents keep posting by role (ADR-0006).</summary>
 public interface IPostingRules
 {
