@@ -123,7 +123,7 @@ flowchart TB
     Items
     Inventory
     Pricing[Pricing: price lists, agreements, discounts, promotions, floors]
-    Tax
+    Tax[Tax: regimes from country templates, codes and rates, determination, tax ledger, returns]
   end
   subgraph flows [Process modules]
     Sales

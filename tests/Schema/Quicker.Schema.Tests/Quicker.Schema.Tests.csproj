@@ -21,6 +21,7 @@
     <ProjectReference Include="../../../src/Modules/Banking/Quicker.Banking.TestSupport/Quicker.Banking.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Payables/Quicker.Payables.TestSupport/Quicker.Payables.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Pricing/Quicker.Pricing.TestSupport/Quicker.Pricing.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Tax/Quicker.Tax.TestSupport/Quicker.Tax.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Purchasing/Quicker.Purchasing.TestSupport/Quicker.Purchasing.TestSupport.csproj" />
   </ItemGroup>
 

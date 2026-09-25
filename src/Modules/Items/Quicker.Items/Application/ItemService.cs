@@ -13,6 +13,7 @@ using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Organization.Contracts;
 using Quicker.Persistence;
+using Quicker.Tax.Contracts;
 using Quicker.Web;
 
 namespace Quicker.Items.Application;
@@ -30,6 +31,7 @@ public sealed class ItemService(
     IWarehouseDirectory warehouses,
     ICustomFieldValidator customFields,
     IStockActivity stock,
+    ITaxGroupDirectory taxGroups,
     IAuditSink audit,
     IClock clock)
 {
@@ -210,6 +212,11 @@ public sealed class ItemService(
         if (postingGroup.IsFailure)
         {
             return postingGroup.Error!;
+        }
+
+        if (request.ItemTaxGroupId is { } taxGroupId && await taxGroups.FindGroupAsync(taxGroupId, cancellationToken) is not { Kind: TaxGroupKinds.Item })
+        {
+            return Error.Validation("item.tax_group_invalid", "The tax group must be an item tax group.").WithWhy(("itemTaxGroupId", taxGroupId));
         }
 
         // Units: the base unit is required on create and immutable once the item has other units (their factors are

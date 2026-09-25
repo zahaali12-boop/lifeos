@@ -3,7 +3,10 @@ using Quicker.Kernel.Text;
 
 namespace Quicker.Items.Contracts;
 
-/// <summary>What the rest of the system needs to know about an item to move, price or cost it.</summary>
+/// <summary>
+/// What the rest of the system needs to know about an item to move, price, tax or cost it. The tax group and the costing
+/// override are the ones in force: the item's own, else its category's.
+/// </summary>
 public sealed record ItemInfo(
     Guid Id,
     string Code,

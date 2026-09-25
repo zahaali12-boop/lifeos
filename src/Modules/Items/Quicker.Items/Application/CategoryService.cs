@@ -5,11 +5,12 @@ using Quicker.Items.Domain;
 using Quicker.Items.Persistence;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
+using Quicker.Tax.Contracts;
 
 namespace Quicker.Items.Application;
 
 /// <summary>Item categories as a tree with a materialised path, so a subtree is one prefix query and a move rewrites its paths.</summary>
-public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory postingGroups, IStockActivity stock, IClock clock)
+public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory postingGroups, ITaxGroupDirectory taxGroups, IStockActivity stock, IClock clock)
 {
     public async Task<IReadOnlyList<ItemCategorySummary>> ListAsync(CancellationToken cancellationToken)
     {
@@ -161,6 +162,11 @@ public sealed class CategoryService(ItemsDbContext db, IPostingGroupDirectory po
             {
                 return Error.Validation("category.posting_group_invalid", "The posting group must be an item posting group.").WithWhy(("itemPostingGroupId", groupId));
             }
+        }
+
+        if (request.ItemTaxGroupId is { } taxGroupId && await taxGroups.FindGroupAsync(taxGroupId, cancellationToken) is not { Kind: TaxGroupKinds.Item })
+        {
+            return Error.Validation("category.tax_group_invalid", "The tax group must be an item tax group.").WithWhy(("itemTaxGroupId", taxGroupId));
         }
 
         ItemCategory? parent = null;

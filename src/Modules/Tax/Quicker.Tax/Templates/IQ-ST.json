@@ -1,0 +1,180 @@
+{
+  "code": "IQ-ST",
+  "country": "IQ",
+  "version": "2026.1",
+  "name": {
+    "en": "Iraq sales tax",
+    "ar": "ضريبة المبيعات - العراق"
+  },
+  "family": "sales_tax",
+  "roundingLevel": "line",
+  "taxPoint": "invoice",
+  "returnFrequency": "monthly",
+  "einvoicingScheme": null,
+  "itemGroups": [
+    {
+      "code": "STANDARD",
+      "name": {
+        "en": "Standard-rated goods and services",
+        "ar": "سلع وخدمات بالنسبة الأساسية"
+      }
+    },
+    {
+      "code": "ZERO",
+      "name": {
+        "en": "Zero-rated supplies",
+        "ar": "توريدات بنسبة صفر"
+      }
+    },
+    {
+      "code": "EXEMPT",
+      "name": {
+        "en": "Exempt supplies",
+        "ar": "توريدات معفاة"
+      }
+    },
+    {
+      "code": "SERVICES",
+      "name": {
+        "en": "Services",
+        "ar": "خدمات"
+      }
+    },
+    {
+      "code": "OUT",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      }
+    },
+    {
+      "code": "HOSPITALITY",
+      "name": {
+        "en": "Hotel and restaurant services",
+        "ar": "خدمات الفنادق والمطاعم"
+      }
+    },
+    {
+      "code": "TELECOM",
+      "name": {
+        "en": "Mobile and internet top-up",
+        "ar": "تعبئة الهاتف النقال والإنترنت"
+      }
+    }
+  ],
+  "partnerGroups": [
+    {
+      "code": "DOMESTIC",
+      "name": {
+        "en": "Domestic, registered",
+        "ar": "محلي مسجل"
+      }
+    },
+    {
+      "code": "DOMESTIC_UNREG",
+      "name": {
+        "en": "Domestic, not registered",
+        "ar": "محلي غير مسجل"
+      }
+    },
+    {
+      "code": "GCC",
+      "name": {
+        "en": "GCC registered",
+        "ar": "مسجل في دول الخليج"
+      }
+    },
+    {
+      "code": "FOREIGN",
+      "name": {
+        "en": "Outside the country",
+        "ar": "خارج الدولة"
+      }
+    }
+  ],
+  "codes": [
+    {
+      "code": "IQ-O",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      },
+      "kind": "vat",
+      "treatment": "out_of_scope",
+      "rates": [
+        {
+          "from": "2015-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {}
+    },
+    {
+      "code": "IQ-ST10",
+      "name": {
+        "en": "Sales tax on hotel and restaurant services",
+        "ar": "ضريبة المبيعات على خدمات الفنادق والمطاعم"
+      },
+      "kind": "sales_tax",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2015-01-01",
+          "pct": 10
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": false,
+      "appliesTo": "services",
+      "boxes": {
+        "salesBase": "1",
+        "salesTax": "1"
+      }
+    },
+    {
+      "code": "IQ-ST20",
+      "name": {
+        "en": "Sales tax on mobile and internet top-up",
+        "ar": "ضريبة المبيعات على تعبئة الهاتف والإنترنت"
+      },
+      "kind": "sales_tax",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2015-01-01",
+          "pct": 20
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": false,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "2",
+        "salesTax": "2"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "direction": "sales",
+      "code": "IQ-O"
+    },
+    {
+      "direction": "purchase",
+      "code": "IQ-O"
+    },
+    {
+      "direction": "sales",
+      "code": "IQ-ST10",
+      "itemGroup": "HOSPITALITY"
+    },
+    {
+      "direction": "sales",
+      "code": "IQ-ST20",
+      "itemGroup": "TELECOM"
+    }
+  ]
+}

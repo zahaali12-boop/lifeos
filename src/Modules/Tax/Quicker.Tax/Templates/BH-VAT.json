@@ -1,0 +1,298 @@
+{
+  "code": "BH-VAT",
+  "country": "BH",
+  "version": "2026.1",
+  "name": {
+    "en": "Bahrain VAT",
+    "ar": "ضريبة القيمة المضافة - البحرين"
+  },
+  "family": "vat",
+  "roundingLevel": "line",
+  "taxPoint": "invoice",
+  "returnFrequency": "quarterly",
+  "einvoicingScheme": null,
+  "itemGroups": [
+    {
+      "code": "STANDARD",
+      "name": {
+        "en": "Standard-rated goods and services",
+        "ar": "سلع وخدمات بالنسبة الأساسية"
+      }
+    },
+    {
+      "code": "ZERO",
+      "name": {
+        "en": "Zero-rated supplies",
+        "ar": "توريدات بنسبة صفر"
+      }
+    },
+    {
+      "code": "EXEMPT",
+      "name": {
+        "en": "Exempt supplies",
+        "ar": "توريدات معفاة"
+      }
+    },
+    {
+      "code": "SERVICES",
+      "name": {
+        "en": "Services",
+        "ar": "خدمات"
+      }
+    },
+    {
+      "code": "OUT",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      }
+    }
+  ],
+  "partnerGroups": [
+    {
+      "code": "DOMESTIC",
+      "name": {
+        "en": "Domestic, registered",
+        "ar": "محلي مسجل"
+      }
+    },
+    {
+      "code": "DOMESTIC_UNREG",
+      "name": {
+        "en": "Domestic, not registered",
+        "ar": "محلي غير مسجل"
+      }
+    },
+    {
+      "code": "GCC",
+      "name": {
+        "en": "GCC registered",
+        "ar": "مسجل في دول الخليج"
+      }
+    },
+    {
+      "code": "FOREIGN",
+      "name": {
+        "en": "Outside the country",
+        "ar": "خارج الدولة"
+      }
+    }
+  ],
+  "codes": [
+    {
+      "code": "BH-S",
+      "name": {
+        "en": "Standard rate",
+        "ar": "النسبة الأساسية"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 5
+        },
+        {
+          "from": "2022-01-01",
+          "pct": 10
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "1",
+        "salesTax": "1",
+        "purchaseBase": "8",
+        "purchaseTax": "8"
+      }
+    },
+    {
+      "code": "BH-Z",
+      "name": {
+        "en": "Zero rate",
+        "ar": "نسبة الصفر"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "3",
+        "purchaseBase": "11"
+      }
+    },
+    {
+      "code": "BH-E",
+      "name": {
+        "en": "Exempt",
+        "ar": "معفى"
+      },
+      "kind": "vat",
+      "treatment": "exempt",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "5",
+        "purchaseBase": "12"
+      }
+    },
+    {
+      "code": "BH-X",
+      "name": {
+        "en": "Export (zero rate)",
+        "ar": "تصدير (نسبة الصفر)"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "4"
+      }
+    },
+    {
+      "code": "BH-RC",
+      "name": {
+        "en": "Reverse charge on imported services",
+        "ar": "احتساب عكسي على الخدمات المستوردة"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 5
+        },
+        {
+          "from": "2022-01-01",
+          "pct": 10
+        }
+      ],
+      "reverseCharge": true,
+      "recoverable": true,
+      "appliesTo": "services",
+      "boxes": {
+        "salesTax": "10",
+        "purchaseBase": "10",
+        "purchaseTax": "10"
+      }
+    },
+    {
+      "code": "BH-O",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      },
+      "kind": "vat",
+      "treatment": "out_of_scope",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {}
+    }
+  ],
+  "rules": [
+    {
+      "direction": "sales",
+      "code": "BH-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "sales",
+      "code": "BH-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "sales",
+      "code": "BH-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "sales",
+      "code": "BH-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "sales",
+      "code": "BH-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "sales",
+      "code": "BH-X",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "sales",
+      "code": "BH-X",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-RC",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "BH-O",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    }
+  ]
+}

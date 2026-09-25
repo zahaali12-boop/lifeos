@@ -18618,6 +18618,731 @@
         }
       }
     },
+    "/api/v1/tax/calculate": {
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "Taxes a document for a company on a date: every line's code and why (exemption, matrix row, chosen, not registered), its net, tax and gross on either price basis, the tax per code and the totals",
+        "operationId": "postTaxCalculate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxedDocumentResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/templates": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "The country templates shipped with the product and whether each is installed",
+        "operationId": "getTaxTemplates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxTemplateSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/templates/{templateCode}/install": {
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "Installs a country template: its regime, codes with dated rates and return boxes, item and partner tax groups (reusing the tenant's by code) and its determination matrix",
+        "operationId": "postTaxTemplatesByTemplateCodeInstall",
+        "parameters": [
+          {
+            "name": "templateCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxRegimeDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/regimes": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "getTaxRegimes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxRegimeSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/regimes/{regimeId}": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "A regime with its codes (rates by date, treatment, accounts, return boxes) and its determination matrix",
+        "operationId": "getTaxRegimesByRegimeId",
+        "parameters": [
+          {
+            "name": "regimeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxRegimeDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "putTaxRegimesByRegimeId",
+        "parameters": [
+          {
+            "name": "regimeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxRegimeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxRegimeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/regimes/{regimeId}/codes": {
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "A tax code: kind, treatment, rates by date, recoverable or not, reverse charge, the exemption reason printed, the account roles it posts to and the return boxes of its base and tax",
+        "operationId": "postTaxRegimesByRegimeIdCodes",
+        "parameters": [
+          {
+            "name": "regimeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxCodeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/regimes/{regimeId}/codes/{codeId}": {
+      "put": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "putTaxRegimesByRegimeIdCodesByCodeId",
+        "parameters": [
+          {
+            "name": "regimeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "codeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxCodeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/regimes/{regimeId}/rules": {
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "A row of the determination matrix: for sales or purchases, an item group, a partner group and where goods ship from and to (each blank for any), from a date, the code a line takes",
+        "operationId": "postTaxRegimesByRegimeIdRules",
+        "parameters": [
+          {
+            "name": "regimeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxRuleSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/regimes/{regimeId}/rules/{ruleId}": {
+      "put": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "putTaxRegimesByRegimeIdRulesByRuleId",
+        "parameters": [
+          {
+            "name": "regimeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxRuleSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "deleteTaxRegimesByRegimeIdRulesByRuleId",
+        "parameters": [
+          {
+            "name": "regimeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/tax/groups": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "Item tax groups (items and categories point at them) and partner tax groups (customer and supplier accounts point at them)",
+        "operationId": "getTaxGroups",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxGroupSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "postTaxGroups",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/groups/{groupId}": {
+      "put": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "putTaxGroupsByGroupId",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxGroupSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/registrations": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "getTaxRegistrations",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyTaxRegistrationSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "A company's registration in a regime: its tax number and from when; without one the company charges and recovers no tax",
+        "operationId": "postTaxRegistrations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCompanyTaxRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyTaxRegistrationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/registrations/{registrationId}": {
+      "put": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "putTaxRegistrationsByRegistrationId",
+        "parameters": [
+          {
+            "name": "registrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCompanyTaxRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyTaxRegistrationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/exemptions": {
+      "get": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "getTaxExemptions",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaxExemptionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tax"
+        ],
+        "summary": "A customer's exemption certificate in a regime: while valid, the lines it would be taxed on take the exempt code it names",
+        "operationId": "postTaxExemptions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxExemptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxExemptionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax/exemptions/{exemptionId}": {
+      "put": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "putTaxExemptionsByExemptionId",
+        "parameters": [
+          {
+            "name": "exemptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTaxExemptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxExemptionSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tax"
+        ],
+        "operationId": "deleteTaxExemptionsByExemptionId",
+        "parameters": [
+          {
+            "name": "exemptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/v1/payables/open-items": {
       "get": {
         "tags": [
@@ -27407,6 +28132,63 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "CompanyTaxRegistrationSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "regimeId",
+          "regimeCode",
+          "regimeName",
+          "registrationNumber",
+          "registeredFrom",
+          "isPrimary",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeCode": {
+            "type": "string"
+          },
+          "regimeName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "registrationNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "registeredFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -46271,6 +47053,42 @@
           }
         }
       },
+      "SaveCompanyTaxRegistrationRequest": {
+        "required": [
+          "companyId",
+          "regimeId",
+          "registrationNumber",
+          "registeredFrom"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "registrationNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "registeredFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "isPrimary": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveContactRequest": {
         "required": [
           "name"
@@ -50684,6 +51502,209 @@
           }
         }
       },
+      "SaveTaxCodeRequest": {
+        "required": [
+          "code",
+          "name",
+          "kind",
+          "treatment",
+          "rates"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "treatment": {
+            "type": "string"
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRateDto"
+            }
+          },
+          "isRecoverable": {
+            "type": "boolean",
+            "default": true
+          },
+          "isReverseCharge": {
+            "type": "boolean",
+            "default": false
+          },
+          "appliesTo": {
+            "type": "string",
+            "default": "both"
+          },
+          "exemptionReasonCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exemptionReason": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "outputAccountRole": {
+            "type": "string",
+            "default": "OutputTax"
+          },
+          "inputAccountRole": {
+            "type": "string",
+            "default": "InputTax"
+          },
+          "salesBaseBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesTaxBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purchaseBaseBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purchaseTaxBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveTaxExemptionRequest": {
+        "required": [
+          "partnerId",
+          "regimeId",
+          "taxCodeId",
+          "certificateNumber",
+          "validFrom"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taxCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "certificateNumber": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SaveTaxGroupRequest": {
+        "required": [
+          "kind",
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveTaxRegimeRequest": {
+        "required": [
+          "name",
+          "roundingLevel",
+          "taxPoint",
+          "returnFrequency",
+          "einvoicingScheme"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "roundingLevel": {
+            "type": "string"
+          },
+          "taxPoint": {
+            "type": "string"
+          },
+          "returnFrequency": {
+            "type": "string"
+          },
+          "einvoicingScheme": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveTaxRegistrationRequest": {
         "required": [
           "country",
@@ -50700,6 +51721,62 @@
           },
           "number": {
             "type": "string"
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "SaveTaxRuleRequest": {
+        "required": [
+          "direction",
+          "taxCodeId"
+        ],
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string"
+          },
+          "taxCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shipFromCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shipToCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "validFrom": {
             "type": [
@@ -54522,6 +55599,721 @@
         },
         "description": "A table the web client already shows (a list's visible columns and rows, in its order), to be written as CSV or XLSX.\n`documentType` names the kind of record listed, so a role that may not export that kind is refused."
       },
+      "TaxCodeSummary": {
+        "required": [
+          "id",
+          "regimeId",
+          "code",
+          "name",
+          "kind",
+          "treatment",
+          "isRecoverable",
+          "isReverseCharge",
+          "appliesTo",
+          "exemptionReasonCode",
+          "exemptionReason",
+          "outputAccountRole",
+          "inputAccountRole",
+          "salesBaseBox",
+          "salesTaxBox",
+          "purchaseBaseBox",
+          "purchaseTaxBox",
+          "isActive",
+          "currentRatePct",
+          "rates"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "treatment": {
+            "type": "string"
+          },
+          "isRecoverable": {
+            "type": "boolean"
+          },
+          "isReverseCharge": {
+            "type": "boolean"
+          },
+          "appliesTo": {
+            "type": "string"
+          },
+          "exemptionReasonCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exemptionReason": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "outputAccountRole": {
+            "type": "string"
+          },
+          "inputAccountRole": {
+            "type": "string"
+          },
+          "salesBaseBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesTaxBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purchaseBaseBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purchaseTaxBox": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "currentRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRateDto"
+            }
+          }
+        }
+      },
+      "TaxDocumentLine": {
+        "required": [
+          "key",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shipFromCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shipToCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A document line to tax: its amount on the document's basis, and either its item (whose tax group, the item's or its\ncategory's, determines the code), an item tax group, or a code it names. Countries override the document's."
+      },
+      "TaxDocumentRequest": {
+        "required": [
+          "companyId",
+          "direction",
+          "taxDate",
+          "currency",
+          "pricesIncludeTax",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "taxDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxDocumentLine"
+            }
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shipFromCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shipToCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A whole document to tax. The partner's tax group is its customer (sales) or supplier (purchase) account's in the\ncompany unless given; goods ship from the company's country on a sale and to it on a purchase unless given."
+      },
+      "TaxedDocument": {
+        "required": [
+          "lines",
+          "byCode",
+          "net",
+          "tax",
+          "gross",
+          "roundingLevel",
+          "pricesIncludeTax"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxedLine"
+            }
+          },
+          "byCode": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxSummary"
+            }
+          },
+          "net": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "tax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "gross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "roundingLevel": {
+            "type": "string"
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TaxedDocumentResult": {
+        "required": [
+          "document",
+          "determinations",
+          "regimeId",
+          "regimeCode",
+          "partnerTaxGroupId"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/TaxedDocument"
+          },
+          "determinations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxLineDetermination"
+            }
+          },
+          "regimeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "regimeCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "A document taxed: its lines, per-code summary and totals, and why each line took its code. The rounding level is the regime's or the company's, whichever asks for document level (ADR-0005)."
+      },
+      "TaxedLine": {
+        "required": [
+          "key",
+          "taxCodeId",
+          "taxCode",
+          "ratePct",
+          "net",
+          "tax",
+          "gross",
+          "isReverseCharge",
+          "isRecoverable"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "net": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "tax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "gross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isReverseCharge": {
+            "type": "boolean"
+          },
+          "isRecoverable": {
+            "type": "boolean"
+          }
+        },
+        "description": "A line's net, tax and gross; reverse charge lines carry the tax self-assessed on both sides but add nothing to the gross."
+      },
+      "TaxExemptionSummary": {
+        "required": [
+          "id",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "regimeId",
+          "regimeCode",
+          "taxCodeId",
+          "taxCode",
+          "certificateNumber",
+          "validFrom",
+          "validTo",
+          "notes",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeCode": {
+            "type": "string"
+          },
+          "taxCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "certificateNumber": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TaxGroupSummary": {
+        "required": [
+          "id",
+          "kind",
+          "code",
+          "name",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TaxLineDetermination": {
+        "required": [
+          "key",
+          "reason",
+          "taxCodeId",
+          "taxCode",
+          "ruleId",
+          "certificateNumber",
+          "itemTaxGroupId"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ruleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "certificateNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "TaxRateDto": {
+        "required": [
+          "validFrom",
+          "ratePct"
+        ],
+        "type": "object",
+        "properties": {
+          "validFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "TaxRegimeDetail": {
+        "required": [
+          "regime",
+          "codes",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "regime": {
+            "$ref": "#/components/schemas/TaxRegimeSummary"
+          },
+          "codes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxCodeSummary"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaxRuleSummary"
+            }
+          }
+        }
+      },
+      "TaxRegimeSummary": {
+        "required": [
+          "id",
+          "code",
+          "country",
+          "name",
+          "family",
+          "roundingLevel",
+          "taxPoint",
+          "returnFrequency",
+          "einvoicingScheme",
+          "templateCode",
+          "templateVersion",
+          "isActive",
+          "codes",
+          "rules",
+          "registrations",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "family": {
+            "type": "string"
+          },
+          "roundingLevel": {
+            "type": "string"
+          },
+          "taxPoint": {
+            "type": "string"
+          },
+          "returnFrequency": {
+            "type": "string"
+          },
+          "einvoicingScheme": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "templateCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "templateVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "codes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rules": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "registrations": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "TaxRegistrationSummary": {
         "required": [
           "id",
@@ -54569,6 +56361,201 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "TaxRuleSummary": {
+        "required": [
+          "id",
+          "regimeId",
+          "direction",
+          "itemTaxGroupId",
+          "itemTaxGroupCode",
+          "partnerTaxGroupId",
+          "partnerTaxGroupCode",
+          "shipFromCountry",
+          "shipToCountry",
+          "validFrom",
+          "validTo",
+          "taxCodeId",
+          "taxCode",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "itemTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemTaxGroupCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerTaxGroupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerTaxGroupCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shipFromCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shipToCountry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "taxCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TaxSummary": {
+        "required": [
+          "taxCodeId",
+          "taxCode",
+          "ratePct",
+          "net",
+          "tax",
+          "isReverseCharge"
+        ],
+        "type": "object",
+        "properties": {
+          "taxCodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": "string"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "net": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "tax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isReverseCharge": {
+            "type": "boolean"
+          }
+        },
+        "description": "A document's tax per code (for printing and posting) and its totals."
+      },
+      "TaxTemplateSummary": {
+        "required": [
+          "code",
+          "country",
+          "version",
+          "name",
+          "family",
+          "codes",
+          "rules",
+          "installed"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "family": {
+            "type": "string"
+          },
+          "codes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rules": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "installed": {
+            "type": "boolean"
           }
         }
       },
@@ -56424,6 +58411,9 @@
     },
     {
       "name": "Pricing"
+    },
+    {
+      "name": "Tax"
     },
     {
       "name": "Payables"

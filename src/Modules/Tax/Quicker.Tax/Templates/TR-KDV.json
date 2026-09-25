@@ -1,0 +1,296 @@
+{
+  "code": "TR-KDV",
+  "country": "TR",
+  "version": "2026.1",
+  "name": {
+    "en": "Türkiye VAT (KDV)",
+    "ar": "ضريبة القيمة المضافة - تركيا"
+  },
+  "family": "vat",
+  "roundingLevel": "line",
+  "taxPoint": "invoice",
+  "returnFrequency": "monthly",
+  "einvoicingScheme": null,
+  "itemGroups": [
+    {
+      "code": "STANDARD",
+      "name": {
+        "en": "Standard-rated goods and services",
+        "ar": "سلع وخدمات بالنسبة الأساسية"
+      }
+    },
+    {
+      "code": "ZERO",
+      "name": {
+        "en": "Zero-rated supplies",
+        "ar": "توريدات بنسبة صفر"
+      }
+    },
+    {
+      "code": "EXEMPT",
+      "name": {
+        "en": "Exempt supplies",
+        "ar": "توريدات معفاة"
+      }
+    },
+    {
+      "code": "SERVICES",
+      "name": {
+        "en": "Services",
+        "ar": "خدمات"
+      }
+    },
+    {
+      "code": "OUT",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      }
+    }
+  ],
+  "partnerGroups": [
+    {
+      "code": "DOMESTIC",
+      "name": {
+        "en": "Domestic, registered",
+        "ar": "محلي مسجل"
+      }
+    },
+    {
+      "code": "DOMESTIC_UNREG",
+      "name": {
+        "en": "Domestic, not registered",
+        "ar": "محلي غير مسجل"
+      }
+    },
+    {
+      "code": "GCC",
+      "name": {
+        "en": "GCC registered",
+        "ar": "مسجل في دول الخليج"
+      }
+    },
+    {
+      "code": "FOREIGN",
+      "name": {
+        "en": "Outside the country",
+        "ar": "خارج الدولة"
+      }
+    }
+  ],
+  "codes": [
+    {
+      "code": "TR-S",
+      "name": {
+        "en": "Standard rate",
+        "ar": "النسبة الأساسية"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 18
+        },
+        {
+          "from": "2023-07-10",
+          "pct": 20
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "S",
+        "salesTax": "S",
+        "purchaseBase": "P",
+        "purchaseTax": "P"
+      }
+    },
+    {
+      "code": "TR-Z",
+      "name": {
+        "en": "Zero rate",
+        "ar": "نسبة الصفر"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "Z"
+      }
+    },
+    {
+      "code": "TR-E",
+      "name": {
+        "en": "Exempt",
+        "ar": "معفى"
+      },
+      "kind": "vat",
+      "treatment": "exempt",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "E"
+      }
+    },
+    {
+      "code": "TR-X",
+      "name": {
+        "en": "Export (zero rate)",
+        "ar": "تصدير (نسبة الصفر)"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "X"
+      }
+    },
+    {
+      "code": "TR-RC",
+      "name": {
+        "en": "Reverse charge on imported services",
+        "ar": "احتساب عكسي على الخدمات المستوردة"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 18
+        },
+        {
+          "from": "2023-07-10",
+          "pct": 20
+        }
+      ],
+      "reverseCharge": true,
+      "recoverable": true,
+      "appliesTo": "services",
+      "boxes": {
+        "salesTax": "RC",
+        "purchaseBase": "RC",
+        "purchaseTax": "RC"
+      }
+    },
+    {
+      "code": "TR-O",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      },
+      "kind": "vat",
+      "treatment": "out_of_scope",
+      "rates": [
+        {
+          "from": "2019-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {}
+    }
+  ],
+  "rules": [
+    {
+      "direction": "sales",
+      "code": "TR-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "sales",
+      "code": "TR-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "sales",
+      "code": "TR-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "sales",
+      "code": "TR-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "sales",
+      "code": "TR-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "sales",
+      "code": "TR-X",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "sales",
+      "code": "TR-X",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-RC",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "TR-O",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    }
+  ]
+}

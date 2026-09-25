@@ -26,6 +26,7 @@
     <ProjectReference Include="../../Modules/Workflow/Quicker.Workflow/Quicker.Workflow.csproj" />
     <ProjectReference Include="../../Modules/Partners/Quicker.Partners/Quicker.Partners.csproj" />
     <ProjectReference Include="../../Modules/Pricing/Quicker.Pricing/Quicker.Pricing.csproj" />
+    <ProjectReference Include="../../Modules/Tax/Quicker.Tax/Quicker.Tax.csproj" />
     <ProjectReference Include="../../Modules/Banking/Quicker.Banking/Quicker.Banking.csproj" />
     <ProjectReference Include="../../Modules/Payables/Quicker.Payables/Quicker.Payables.csproj" />
     <ProjectReference Include="../../Modules/Purchasing/Quicker.Purchasing/Quicker.Purchasing.csproj" />

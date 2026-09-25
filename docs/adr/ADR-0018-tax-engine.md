@@ -41,3 +41,13 @@ Iraq (selective sales tax codes, contractor withholding), Saudi Arabia, UAE, Bah
 
 * New regimes are data plus, where clearance is required, an adapter.
 * Tax reporting reconciles to the ledger by construction.
+
+## Amendment 2026-09-25 (slice 5.3, A-146)
+
+* **A tax ledger instead of `tax_lines`.** Each document keeps its lines' tax on its own lines (sales and purchasing tables), as it keeps their prices; the tax module keeps `tax_entries`, an append-only ledger that documents write as they post (one row per line and code, in transaction and functional currency, with the journal entry), through `ITaxLedger` in the posting transaction. The return is computed from the ledger and reconciled to the movement on the tax accounts of the general ledger. A write dated in a filed return period is refused; a reversal writes the opposite rows on its own date.
+* **Treatment instead of `is_exempt`.** A code is standard, zero-rated, exempt (with the reason printed) or out of scope, because zero-rated and exempt supplies go in different boxes and only exempt ones make input tax irrecoverable. Each code names the boxes of its base and tax on the sales and on the purchase side of the return, so a reverse charge reports in both.
+* **The matrix is by direction.** Determination rows are for sales or for purchases rather than by document type: no template needs more, and every sales document then taxes a line alike. The most specific row wins by fixed weights (item group 8, partner group 4, ship-from 2, ship-to 1), then the latest start; rows are unique per combination and start, so there is no priority to set and no tie. A customer's exemption certificate relieves the tax a line would otherwise carry; a line the matrix already puts at zero keeps its code.
+* **Registration decides.** A company charges and recovers tax only in a regime it is registered in; unregistered, its lines carry no code, which the calculation says.
+* **Rounding.** Per line unless the regime or the company asks for per document (ADR-0005); the document level used travels with the calculated document.
+* **Templates reuse groups.** Installing a country reuses the tenant's item and partner tax groups by code, so companies in several countries share one set of item groups.
+

@@ -8,6 +8,7 @@ using Quicker.Organization.Contracts;
 using Quicker.Partners.Contracts;
 using Quicker.Partners.Domain;
 using Quicker.Partners.Persistence;
+using Quicker.Tax.Contracts;
 
 namespace Quicker.Partners.Application;
 
@@ -15,7 +16,7 @@ namespace Quicker.Partners.Application;
 /// Supplier accounts per company (terms, tolerances, holds, posting) and the configuration they draw on: supplier
 /// groups, payment terms with instalments, delivery terms and withholding tax codes.
 /// </summary>
-public sealed class SupplierService(PartnersDbContext db, ICompanyDirectory companies, IPostingGroupDirectory postingGroups, ICurrentPrincipal principal, IClock clock)
+public sealed class SupplierService(PartnersDbContext db, ICompanyDirectory companies, IPostingGroupDirectory postingGroups, ITaxGroupDirectory taxGroups, ICurrentPrincipal principal, IClock clock)
 {
     public const string SupplierPostingGroupKind = "partner_supplier";
 
@@ -92,6 +93,11 @@ public sealed class SupplierService(PartnersDbContext db, ICompanyDirectory comp
         if (checks.IsFailure)
         {
             return checks.Error!;
+        }
+
+        if (request.TaxGroupId is { } taxGroupId && await taxGroups.FindGroupAsync(taxGroupId, cancellationToken) is not { Kind: TaxGroupKinds.Partner })
+        {
+            return Error.Validation("supplier.tax_group_invalid", "The tax group must be a partner tax group.").WithWhy(("taxGroupId", taxGroupId));
         }
 
         if (request.LeadTimeDays < 0)

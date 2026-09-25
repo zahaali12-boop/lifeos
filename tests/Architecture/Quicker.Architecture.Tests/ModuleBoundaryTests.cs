@@ -144,6 +144,7 @@ public sealed class ModuleBoundaryTests
         ["Items"] = 1,
         ["Inventory"] = 1,
         ["Pricing"] = 1,
+        ["Tax"] = 1,
         ["Purchasing"] = 2,
         ["Payables"] = 2,
         ["Banking"] = 2,
@@ -162,6 +163,8 @@ public sealed class ModuleBoundaryTests
     {
         ["Audit ↔ Identity"] = "identity's changes are audited, and the audit trail names and filters by the caller",
         ["Inventory ↔ Items"] = "stock reads the item master, and the item master's per-warehouse settings check the warehouse",
+        ["Items ↔ Tax"] = "an item or category names its tax group, which tax owns; tax reads the item's group to determine a line's code",
+        ["Partners ↔ Tax"] = "a customer or supplier account names its tax group, which tax owns; tax reads the account's group and the partner behind an exemption",
     };
 
     [Fact]

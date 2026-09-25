@@ -2405,6 +2405,8 @@ Every priced line stores `price_breakdown` (ADR-0030): the ordered steps, candid
 
 ## 12. Tax
 
+Built in slice 5.3 (ADR-0018 amended, A-146): regimes installed from versioned country templates, codes with dated rates and return boxes, tax groups, the determination matrix, company registrations (partners' registration numbers stay in `ptr_partner_tax_registrations`), exemption certificates, the tax ledger documents write as they post, and return periods. Returns with their box figures, e-invoice submissions and withholding certificates are planned (5.3c and later) and shown last.
+
 ```mermaid
 erDiagram
   tax_regimes ||--o{ tax_codes : "defines"
@@ -2413,107 +2415,127 @@ erDiagram
   tax_groups ||--o{ tax_determination_rules : "item group"
   tax_groups ||--o{ tax_determination_rules : "partner group"
   tax_codes ||--o{ tax_determination_rules : "yields"
-  tax_codes ||--o{ tax_lines : "applied"
-  tax_return_periods ||--o{ tax_returns : "filed"
+  tax_regimes ||--o{ tax_registrations : "registered in"
+  org_companies ||--o{ tax_registrations : "registers"
   tax_exemptions }o--|| ptr_partners : "certifies"
-  tax_einvoice_submissions }o--|| sls_invoices : "clears"
+  tax_codes ||--o{ tax_exemptions : "exempt code"
+  tax_codes ||--o{ tax_entries : "recorded"
+  tax_regimes ||--o{ tax_return_periods : "periods"
+  tax_return_periods ||--o| tax_returns : "filed (planned)"
+  tax_einvoice_submissions }o--|| sls_invoices : "clears (planned)"
 
   tax_regimes {
     uuid id PK
-    text code "IQ SA AE BH OM QA KW JO EG TR EU"
+    text code "SA-VAT AE-VAT ... unique"
+    text country "ISO code or EU"
     i18n name
-    text country
-    text tax_family "vat | gst | sales_tax | none"
-    text rounding_mode "line | document"
+    text family "vat | gst | sales_tax | none"
+    text rounding_level "line | document"
     text tax_point "invoice | payment | delivery"
-    text einvoice_scheme "none | zatca | peppol | eta"
-    jsonb return_boxes
-    date validated_on
+    text return_frequency "monthly | quarterly | annual"
+    text einvoicing_scheme "zatca | fta | ... | null"
+    text template_code
+    text template_version
+    bool is_active
   }
   tax_codes {
     uuid id PK
     uuid regime_id FK
-    text code
+    text code "unique per regime"
     i18n name
-    text kind "vat gst sales_tax withholding excise"
+    text kind "vat gst sales_tax excise withholding"
+    text treatment "standard | zero_rated | exempt | out_of_scope"
     bool is_recoverable
     bool is_reverse_charge
-    bool is_exempt
-    text exemption_reason_code
     text applies_to "goods | services | both"
-    text withhold_at "invoice | payment"
-    text input_account_role
+    text exemption_reason_code
+    i18n exemption_reason
     text output_account_role
-    text return_box
+    text input_account_role
+    text sales_base_box
+    text sales_tax_box
+    text purchase_base_box
+    text purchase_tax_box
     bool is_active
   }
   tax_rates {
-    uuid tax_code_id FK
-    date valid_from
+    uuid tax_code_id PK
+    date valid_from PK
     numeric rate_pct
   }
   tax_groups {
     uuid id PK
     text kind "item | partner"
-    text code
+    text code "unique per kind"
     i18n name
+    bool is_active
   }
   tax_determination_rules {
     uuid id PK
     uuid regime_id FK
-    uuid item_tax_group_id FK
-    uuid partner_tax_group_id FK
-    text ship_from_country
-    text ship_to_country
-    text document_family "sales | purchase | journal | expense"
-    uuid tax_code_id FK
+    text direction "sales | purchase"
+    uuid item_tax_group_id FK "null = any"
+    uuid partner_tax_group_id FK "null = any"
+    text ship_from_country "null = any"
+    text ship_to_country "null = any"
     date valid_from
     date valid_to
-    int priority
+    uuid tax_code_id FK
+  }
+  tax_registrations {
+    uuid id PK
+    uuid company_id FK
+    uuid regime_id FK
+    text registration_number
+    date registered_from
+    bool is_primary "one per company"
   }
   tax_exemptions {
     uuid id PK
     uuid partner_id FK
-    uuid regime_id
+    uuid regime_id FK
+    uuid tax_code_id FK "exempt, zero or out of scope"
     text certificate_number
-    text reason_code
     date valid_from
     date valid_to
-    uuid attachment_id
+    text notes
   }
-  tax_lines {
-    uuid id PK
-    text document_type
-    uuid document_id
-    uuid document_line_id
+  tax_entries {
+    uuid id PK "append-only"
+    uuid company_id FK
+    uuid regime_id FK
     uuid tax_code_id FK
+    text direction "sales | purchase"
+    date posting_date
+    date document_date
+    text source_module
+    text source_document_type
+    uuid source_document_id
+    text source_document_number
+    uuid source_line_ref
+    uuid journal_entry_id
+    uuid partner_id FK
+    text currency
     numeric rate_pct
     numeric base_tc
-    numeric amount_tc
+    numeric tax_tc
     numeric base_fc
-    numeric amount_fc
-    bool inclusive
-    bool reverse_charge
-    bool withholding
-    text return_box
-    uuid return_period_id
-  }
-  tax_registrations {
-    uuid id PK
-    text holder_type "company | branch | partner"
-    uuid holder_id
-    uuid regime_id
-    text number
-    date valid_from
-    text scheme_credentials_ref
+    numeric tax_fc
+    bool is_reverse_charge
+    bool is_recoverable
+    uuid reverses_entry_id
   }
   tax_return_periods {
     uuid id PK
-    uuid company_id
-    uuid regime_id
-    date starts_on
-    date ends_on
-    text status "open | locked | filed"
+    uuid company_id FK
+    uuid regime_id FK
+    date period_start
+    date period_end
+    text status "open | filed"
+    timestamptz filed_at
+    uuid filed_by
+    text reference
+    jsonb totals
   }
   tax_returns {
     uuid id PK
@@ -2521,8 +2543,6 @@ erDiagram
     jsonb boxes
     numeric net_payable
     uuid settlement_journal_id
-    uuid filed_by
-    timestamptz filed_at
     uuid attachment_id
   }
   tax_einvoice_submissions {
@@ -2552,6 +2572,8 @@ erDiagram
     uuid attachment_id
   }
 ```
+
+Items (`itm_items.item_tax_group_id`, else the category's) and customer and supplier accounts (`tax_group_id`) point at tax groups of their kind. Withholding tax codes already live with the partners (`ptr_wht_codes`, M4).
 
 ## 13. Receivables and payables (subledgers and settlement)
 

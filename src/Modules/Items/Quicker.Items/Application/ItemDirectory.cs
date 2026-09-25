@@ -230,13 +230,16 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         var byId = await UomsByIdAsync(cancellationToken);
         var baseUom = byId[item.BaseUomId];
         var costing = item.CostingMethodOverrideOrNull();
-        if (costing is null && item.CategoryId is { } categoryId)
+        var taxGroup = item.ItemTaxGroupId;
+        if ((costing is null || taxGroup is null) && item.CategoryId is { } categoryId)
         {
-            costing = await db.Categories.Where(c => c.Id == categoryId).Select(static c => c.CostingMethodOverride).SingleOrDefaultAsync(cancellationToken);
+            var category = await db.Categories.Where(c => c.Id == categoryId).Select(static c => new { c.CostingMethodOverride, c.ItemTaxGroupId }).SingleOrDefaultAsync(cancellationToken);
+            costing ??= category?.CostingMethodOverride;
+            taxGroup ??= category?.ItemTaxGroupId;
         }
 
         return new ItemInfo(item.Id, item.Code, item.Name, item.Type, item.Tracking, item.ExpiryRequired, item.ShelfLifeDays, item.Fefo, item.BaseUomId, baseUom.Code, baseUom.Precision,
-            item.SalesUomId, item.PurchaseUomId, item.CategoryId, item.ItemPostingGroupId, item.ItemTaxGroupId, costing, item.HasVariants, item.IsActive, item.WeightKg, item.VolumeM3,
+            item.SalesUomId, item.PurchaseUomId, item.CategoryId, item.ItemPostingGroupId, taxGroup, costing, item.HasVariants, item.IsActive, item.WeightKg, item.VolumeM3,
             item.BrandId, item.ListPrice, item.ListPriceCurrency);
     }
 }

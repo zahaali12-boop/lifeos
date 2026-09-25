@@ -9,6 +9,7 @@ using Quicker.Organization.Contracts;
 using Quicker.Partners.Contracts;
 using Quicker.Partners.Domain;
 using Quicker.Partners.Persistence;
+using Quicker.Tax.Contracts;
 
 namespace Quicker.Partners.Application;
 
@@ -22,6 +23,7 @@ public sealed class CustomerService(
     ICompanyDirectory companies,
     IPostingGroupDirectory postingGroups,
     IWarehouseDirectory warehouses,
+    ITaxGroupDirectory taxGroups,
     ICurrentPrincipal principal,
     IClock clock)
 {
@@ -133,6 +135,11 @@ public sealed class CustomerService(
         if (checks.IsFailure)
         {
             return checks.Error!;
+        }
+
+        if (request.TaxGroupId is { } taxGroupId && await taxGroups.FindGroupAsync(taxGroupId, cancellationToken) is not { Kind: TaxGroupKinds.Partner })
+        {
+            return Error.Validation("customer.tax_group_invalid", "The tax group must be a partner tax group.").WithWhy(("taxGroupId", taxGroupId));
         }
 
         if (request.SalesRepId is { } repId)
