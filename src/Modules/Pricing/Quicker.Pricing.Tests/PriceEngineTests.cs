@@ -335,4 +335,28 @@ public sealed class PriceEngineTests
         LineOf(taxed.Run([Line("tea", Tea, 3m)], includesTax: false), "tea").Problem!.Code.ShouldBe("pricing.tax_basis_mismatch");
         taxed.Run([Line("tea", Tea, 3m)]).PricesIncludeTax.ShouldBe(true);
     }
+
+    [Fact]
+    public void A_price_on_the_other_tax_basis_is_converted_at_the_line_tax_rate_and_says_so()
+    {
+        // A-148: a shelf price of 1,150 including 15% is 1,000 before tax; a trade price of 1,000 is 1,150 with it.
+        var w = new EngineWorld();
+        w.Price(w.List("SHELF", isDefault: true, includesTax: true), Tea, 1_150m);
+        w.TaxRates[Tea] = new EngineTaxRate("SA-S", 15m);
+        var exclusive = LineOf(w.Run([Line("tea", Tea, 2m)], includesTax: false), "tea");
+        exclusive.UnitPrice.ShouldBe(1_000m);
+        exclusive.NetAmount.ShouldBe(2_000m);
+        var step = exclusive.Steps.Single(static s => s.Kind == PriceStepKinds.TaxBasis);
+        (step.Before, step.After).ShouldBe((1_150m, 1_000m));
+        step.Facts.Select(static f => (f.Key, f.Value)).ShouldBe([("fromBasis", "inclusive"), ("toBasis", "exclusive"), ("taxRate", "15"), ("taxCode", "SA-S")]);
+
+        var trade = new EngineWorld();
+        trade.Price(trade.List("TRADE", isDefault: true), Tea, 1_000m);
+        trade.TaxRates[Tea] = new EngineTaxRate("SA-S", 15m);
+        LineOf(trade.Run([Line("tea", Tea, 1m)], includesTax: true), "tea").UnitPrice.ShouldBe(1_150m);
+
+        // A company that charges no tax converts at zero: the price stays what it is.
+        trade.TaxRates[Tea] = new EngineTaxRate(null, 0m);
+        LineOf(trade.Run([Line("tea", Tea, 1m)], includesTax: true), "tea").UnitPrice.ShouldBe(1_000m);
+    }
 }

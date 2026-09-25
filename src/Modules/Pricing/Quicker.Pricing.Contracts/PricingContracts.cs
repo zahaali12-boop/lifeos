@@ -76,6 +76,7 @@ public static class PriceStepKinds
     public const string Derivation = "derivation";
     public const string Unit = "unit";
     public const string Currency = "currency";
+    public const string TaxBasis = "tax_basis";
     public const string LineDiscount = "line_discount";
     public const string Promotion = "promotion";
     public const string DocumentDiscount = "document_discount";

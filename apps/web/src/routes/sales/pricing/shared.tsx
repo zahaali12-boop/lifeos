@@ -64,11 +64,11 @@ export function Validity({ from, to }: { from?: string | null; to?: string | nul
 
 const enumeratedFacts = new Set(["rateMethod", "combination", "valueType", "roundingMode", "onBreach", "scope", "rateType"]);
 const dateFacts = new Set(["rateDate", "validFrom", "validTo"]);
-const textFacts = new Set(["currency", "from", "to", "uom", "fromUom", "toUom", "parentList", "derivedFrom"]);
+const textFacts = new Set(["currency", "from", "to", "uom", "fromUom", "toUom", "parentList", "derivedFrom", "taxCode"]);
 
 function FactValue({ name, value }: { name: string; value: string }) {
   const { t } = useTranslation();
-  if (name === "taxBasis") {
+  if (name === "taxBasis" || name === "fromBasis" || name === "toBasis") {
     return <>{t(value === "inclusive" ? "pricing.inclusive" : "pricing.exclusive")}</>;
   }
   if (enumeratedFacts.has(name)) {

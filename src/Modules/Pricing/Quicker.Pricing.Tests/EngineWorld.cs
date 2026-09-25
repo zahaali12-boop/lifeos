@@ -43,6 +43,9 @@ internal sealed class EngineWorld
 
     public Dictionary<Guid, decimal> Costs { get; } = [];
 
+
+    public Dictionary<Guid, EngineTaxRate> TaxRates { get; } = [];
+
     public Dictionary<Guid, EngineItem> Items { get; } = new()
     {
         [Tea] = new EngineItem(Tea, "TEA", Pc, 0, null, [TeaCategory, Beverages], Brand, null, null, [new EngineUom(Pc, "PC", 1m, 1m), new EngineUom(Box, "BOX", 12m, 1m)], true),
@@ -87,7 +90,7 @@ internal sealed class EngineWorld
     {
         var context = new PricingContext(Company, "IQD", partner, group, Terms, channel, currency == "USD" ? Currency.USD : Currency.IQD, date ?? Today, "spot", documentList, includesTax,
             (coupons ?? []).Select(static c => c.ToUpperInvariant()).ToHashSet(StringComparer.Ordinal), documentDiscount, RoundingPolicy.Default);
-        return new PricingInput(context, lines, Items, new PricingRuleSet(Lists, ListItems, Agreements, Rules, Promotions, Floors), Rates, Costs);
+        return new PricingInput(context, lines, Items, new PricingRuleSet(Lists, ListItems, Agreements, Rules, Promotions, Floors), Rates, Costs, TaxRates);
     }
 
     public static EngineLine Line(string key, Guid item, decimal quantity, Guid? uom = null, decimal? manualPrice = null, decimal? manualDiscount = null, Guid? variant = null) =>

@@ -55,3 +55,7 @@ Every line stores `price_breakdown jsonb`: the ordered list of steps with the ca
 * **Promotions.** Exclusive promotions compete greedily on the basket (greatest benefit first, re-evaluated on the lines still free); stackable ones follow on the lines no exclusive promotion took. Goods given away are their own line at the regular price with the promotion's discount.
 * **Steps 6 and 8 until the tax engine.** Until 5.3 supplies line tax rates, a price on the other tax basis than the document's is refused (`pricing.tax_basis_mismatch`) rather than converted, and floors compare on the price's own basis. Floor breaches are reported by the engine; routing a block to approval belongs to the sales documents (5.4).
 
+## Amendment 2026-09-25 (slice 5.3b, A-148)
+
+* **Tax basis.** Step 6 now converts a price on the other tax basis at the item's sales tax rate for the customer on the pricing date, which the pricing service reads from the tax engine before calling the pure engine; only an item the tax engine cannot determine is still refused.
+

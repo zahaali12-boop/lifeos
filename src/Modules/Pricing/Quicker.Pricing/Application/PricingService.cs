@@ -13,6 +13,7 @@ using Quicker.Pricing.Contracts;
 using Quicker.Pricing.Domain;
 using Quicker.Pricing.Engine;
 using Quicker.Pricing.Persistence;
+using Quicker.Tax.Contracts;
 
 namespace Quicker.Pricing.Application;
 
@@ -30,6 +31,7 @@ public sealed class PricingService(
     IItemDirectory items,
     IExchangeRateResolver rates,
     IInventoryCosting costing,
+    ITaxDetermination tax,
     PricingAccess access,
     IClock clock) : IPricing
 {
@@ -155,6 +157,7 @@ public sealed class PricingService(
         var functional = company.FunctionalCurrency.Code;
         var engineRates = await ReadRatesAsync(company.Id, currency.Code, functional, date, rateType, ruleSet, engineItems.Values, cancellationToken);
         var unitCosts = await ReadCostsAsync(company.Id.Value, date, floors, engineItems.Values, cancellationToken);
+        var taxRates = await ReadTaxRatesAsync(company.Id.Value, request.PartnerId, date, currency.Code, engineItems.Keys, cancellationToken);
         var context = new PricingContext(
             company.Id.Value,
             functional,
@@ -176,8 +179,29 @@ public sealed class PricingService(
             engineItems,
             ruleSet,
             engineRates,
-            unitCosts);
+            unitCosts,
+            taxRates);
         return PriceEngine.Price(input);
+    }
+
+    /// <summary>
+    /// Each item's sales tax for the customer on the pricing date (A-148), so a price on the other tax basis can be
+    /// converted; an item the tax engine cannot determine is left out, and a price of it on the other basis stays refused.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, EngineTaxRate>> ReadTaxRatesAsync(Guid companyId, Guid? partnerId, DateOnly date, string currency, IEnumerable<Guid> itemIds, CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<Guid, EngineTaxRate>();
+        foreach (var itemId in itemIds)
+        {
+            var taxed = await tax.CalculateAsync(new TaxDocumentRequest(companyId, TaxDirections.Sales, date, currency, false, [new TaxDocumentLine("1", 0m, itemId)], partnerId), cancellationToken);
+            if (taxed.IsSuccess)
+            {
+                var line = taxed.Value.Document.Lines[0];
+                result[itemId] = new EngineTaxRate(line.TaxCode, line.RatePct);
+            }
+        }
+
+        return result;
     }
 
     public async Task<Result> RecordPromotionUsageAsync(PromotionUsageRequest request, CancellationToken cancellationToken = default)

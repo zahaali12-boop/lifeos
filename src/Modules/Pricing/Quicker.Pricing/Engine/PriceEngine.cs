@@ -40,6 +40,7 @@ internal sealed class PricingRun(PricingInput input)
 
     private readonly PricingContext _ctx = input.Context;
     private readonly PricingRuleSet _rules = input.Rules;
+    private readonly IReadOnlyDictionary<Guid, EngineTaxRate> _taxRates = input.TaxRates ?? new Dictionary<Guid, EngineTaxRate>();
     private readonly List<LineState> _lines = [];
     private readonly List<PriceStep> _documentSteps = [];
     private readonly List<AppliedPromotion> _applied = [];
@@ -171,10 +172,27 @@ internal sealed class PricingRun(PricingInput input)
             _documentBasis ??= basis;
             if (basis != _documentBasis)
             {
-                line.Fail("pricing.tax_basis_mismatch", basis
-                    ? "The price found includes tax but the document's prices exclude it; converting needs the line's tax rate."
-                    : "The price found excludes tax but the document's prices include it; converting needs the line's tax rate.");
-                return false;
+                // A-148: a price on the other basis is converted at the line's tax rate: gross = net × (100 + rate) ÷ 100.
+                if (_taxRates.GetValueOrDefault(line.ItemId) is not { } tax)
+                {
+                    line.Fail("pricing.tax_basis_mismatch", basis
+                        ? "The price found includes tax but the document's prices exclude it, and the line has no tax rate to convert it with."
+                        : "The price found excludes tax but the document's prices include it, and the line has no tax rate to convert it with.");
+                    return false;
+                }
+
+                var converted = basis
+                    ? _ctx.Rounding.Round(quote.Price * 100m / (100m + tax.RatePct), PriceDecimals)
+                    : _ctx.Rounding.Round(quote.Price * (100m + tax.RatePct) / 100m, PriceDecimals);
+                var facts = new List<PriceFact> { Fact("fromBasis", basis ? "inclusive" : "exclusive"), Fact("toBasis", basis ? "exclusive" : "inclusive"), Fact("taxRate", tax.RatePct) };
+                if (tax.Code is not null)
+                {
+                    facts.Add(Fact("taxCode", tax.Code));
+                }
+
+                line.Steps.Add(Step(PriceStepKinds.TaxBasis, null, null, null, null, quote.Price, converted, null, facts, []));
+                quote = quote with { Price = converted, IncludesTax = _documentBasis };
+                line.IncludesTax = _documentBasis;
             }
         }
 

@@ -150,7 +150,8 @@ public sealed record EngineLine(string Key, Guid ItemId, Guid? VariantId, Guid? 
 
 /// <summary>
 /// Everything one pricing needs, already read: the engine does no I/O, so the same input always gives the same answer.
-/// Rates are keyed <c>FROM&gt;TO</c>; unit costs are per base unit in the company's functional currency.
+/// Rates are keyed <c>FROM&gt;TO</c>; unit costs are per base unit in the company's functional currency. Tax rates
+/// are each item's sales tax for the customer on the pricing date (A-148); an item without one cannot change basis.
 /// </summary>
 public sealed record PricingInput(
     PricingContext Context,
@@ -158,4 +159,8 @@ public sealed record PricingInput(
     IReadOnlyDictionary<Guid, EngineItem> Items,
     PricingRuleSet Rules,
     IReadOnlyDictionary<string, EngineRate> Rates,
-    IReadOnlyDictionary<Guid, decimal> UnitCosts);
+    IReadOnlyDictionary<Guid, decimal> UnitCosts,
+    IReadOnlyDictionary<Guid, EngineTaxRate>? TaxRates = null);
+
+/// <summary>The tax a line's item takes for the customer on the pricing date: its code and rate (0 when the company charges none).</summary>
+public sealed record EngineTaxRate(string? Code, decimal RatePct);
