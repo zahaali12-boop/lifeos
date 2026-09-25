@@ -150,6 +150,15 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(DISTINCT stage_id) FROM app.ptr_opportunities WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(6, "a deal in every stage");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ptr_crm_activities WHERE tenant_id = @t AND status = 'open' AND due_at < now()", new { t = DemoData.TenantId })).ShouldBeGreaterThan(0, "some next steps are already late");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ptr_opportunity_stage_changes WHERE tenant_id = @t AND changed_at < now() - interval '30 days'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(10, "the pipeline's history is dated over the past months");
+
+        // Pricing (roadmap 5.2): a standard list per company and the lists derived from it for groups, Basra Oil's
+        // contract with its carton break, discount rules, promotions and floors.
+        (first.PriceLists, first.Promotions).ShouldBe((7, 4));
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_price_lists WHERE tenant_id = @t AND is_default", new { t = DemoData.TenantId })).ShouldBe(3, "one default list per company");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_price_lists WHERE tenant_id = @t AND parent_list_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(4);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_price_list_items WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThan(180);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_customer_price_agreements WHERE tenant_id = @t AND reference LIKE 'BOS-2026%'", new { t = DemoData.TenantId })).ShouldBe(10);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_price_floors WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3);
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
@@ -174,6 +183,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (third.Items, third.Variants, third.Lots, third.Serials, third.StockLines).ShouldBe((first.Items, first.Variants, first.Lots, first.Serials, first.StockLines), "the item master and the stock are deterministic");
         (third.PurchaseOrders, third.SupplierInvoices, third.SupplierPayments).ShouldBe((first.PurchaseOrders, first.SupplierInvoices, first.SupplierPayments), "the year of buying is deterministic");
         (third.Customers, third.Opportunities).ShouldBe((first.Customers, first.Opportunities), "the customers and the pipeline are deterministic");
+        (third.PriceLists, third.Promotions).ShouldBe((first.PriceLists, first.Promotions), "the pricing is deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);
