@@ -159,6 +159,11 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_price_list_items WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThan(180);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_customer_price_agreements WHERE tenant_id = @t AND reference LIKE 'BOS-2026%'", new { t = DemoData.TenantId })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.prc_price_floors WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3);
+
+        // Tax (roadmap 5.3d): Iraq sales tax for IQT and USI, UAE VAT for AEG, each company registered.
+        (first.TaxRegimes, first.TaxRegistrations).ShouldBe((2, 3));
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.tax_regimes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(2);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.tax_registrations WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3);
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
@@ -184,6 +189,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (third.PurchaseOrders, third.SupplierInvoices, third.SupplierPayments).ShouldBe((first.PurchaseOrders, first.SupplierInvoices, first.SupplierPayments), "the year of buying is deterministic");
         (third.Customers, third.Opportunities).ShouldBe((first.Customers, first.Opportunities), "the customers and the pipeline are deterministic");
         (third.PriceLists, third.Promotions).ShouldBe((first.PriceLists, first.Promotions), "the pricing is deterministic");
+        (third.TaxRegimes, third.TaxRegistrations).ShouldBe((first.TaxRegimes, first.TaxRegistrations), "the tax set-up is deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);
