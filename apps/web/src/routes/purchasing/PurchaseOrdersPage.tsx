@@ -3,12 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { FileText, PackageCheck, Plus } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
 import { compare, subtract } from "../../lib/decimal";
-import { followOn, useOpenRecord } from "../../lib/documents";
+import { followOn, useFollowOnSource, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -55,6 +55,53 @@ export function PurchaseOrdersPage() {
   const warehouses = useWarehouses(companyId);
   const agreements = useAgreements(companyId);
 
+  // A drop-ship line's own "create purchase order" button (roadmap 5.4c, A-152): the order screen sends the sales
+  // order and line here as a follow-on source; once this new order is saved, its first line links back automatically.
+  const [dropShipFrom, clearDropShipFrom] = useFollowOnSource("/purchasing/orders");
+  const dropShipSource = dropShipFrom?.type === "sales_order_line" ? dropShipFrom.id.split(":") : null;
+  const dropShipOrderId = dropShipSource?.length === 2 ? dropShipSource[0] : undefined;
+  const dropShipLineId = dropShipSource?.length === 2 ? dropShipSource[1] : undefined;
+  const [pendingDropShipLink, setPendingDropShipLink] = useState<{ salesOrderId: string; salesLineId: string } | null>(null);
+  const dropShipStarted = useRef<string | null>(null);
+  const salesOrderForDropShip = useQuery({
+    queryKey: ["sales-order-for-drop-ship", dropShipOrderId],
+    enabled: Boolean(dropShipOrderId),
+    queryFn: async () => unwrap(await api.GET("/api/v1/sales/orders/{orderId}", { params: { path: { orderId: dropShipOrderId ?? "" } } })),
+  });
+  const linkDropShip = useMutation({
+    mutationFn: async (input: { salesOrderId: string; salesLineId: string; purchaseOrderLineId: string }) => unwrap(await api.POST("/api/v1/sales/orders/{orderId}/lines/{lineId}/purchase-order", { params: { path: { orderId: input.salesOrderId, lineId: input.salesLineId } }, body: { purchaseOrderLineId: input.purchaseOrderLineId } })),
+  });
+  useEffect(() => {
+    const salesOrder = salesOrderForDropShip.data;
+    if (!dropShipOrderId || !dropShipLineId || !salesOrder || dropShipStarted.current === dropShipLineId) {
+      return;
+    }
+    const line = salesOrder.lines.find((l) => l.id === dropShipLineId);
+    if (!line) {
+      return;
+    }
+    dropShipStarted.current = dropShipLineId;
+    clearDropShipFrom();
+    if (salesOrder.companyId !== companyId) {
+      setCompanyId(salesOrder.companyId);
+    }
+    setProblem(null);
+    setPendingDropShipLink({ salesOrderId: dropShipOrderId, salesLineId: dropShipLineId });
+    setForm({
+      id: null,
+      partnerId: "",
+      currency: salesOrder.currency,
+      expectedDate: "",
+      warehouseId: salesOrder.warehouseId,
+      agreementId: "",
+      notes: t("purchasing.dropShipNoteFor", { number: salesOrder.number }),
+      customFields: {},
+      change: false,
+      reason: "",
+      lines: [{ itemCode: line.itemCode, description: line.description ?? "", quantity: String(line.quantity), uom: line.uomCode, price: String(line.unitPrice), supplierId: "", blanketLineId: "" }],
+    });
+  }, [dropShipOrderId, dropShipLineId, salesOrderForDropShip.data, clearDropShipFrom, companyId, setCompanyId, t]);
+
   const list = useQuery({
     queryKey: ["orders", companyId, status],
     enabled: Boolean(companyId),
@@ -83,7 +130,27 @@ export function PurchaseOrdersPage() {
         ? unwrap(await api.POST("/api/v1/purchasing/orders/{orderId}/change", { params: { path: { orderId: f.id } }, body: { order, reason: f.reason } }))
         : unwrap(await api.PUT("/api/v1/purchasing/orders/{orderId}", { params: { path: { orderId: f.id } }, body: order }));
     },
-    onSuccess: async (saved) => { setProblem(null); setForm(null); setOpenId(saved.id); await refresh(); },
+    onSuccess: async (saved, variables) => {
+      setProblem(null);
+      setForm(null);
+      setOpenId(saved.id);
+      await refresh();
+      const link = pendingDropShipLink;
+      const firstLine = saved.lines[0];
+      if (link && !variables.id && firstLine) {
+        setPendingDropShipLink(null);
+        try {
+          await linkDropShip.mutateAsync({ salesOrderId: link.salesOrderId, salesLineId: link.salesLineId, purchaseOrderLineId: firstLine.id });
+        } catch (error) {
+          fail(error);
+          return;
+        }
+        // The linked sales order is cached from the screen we came from; without this it shows stale on the way back.
+        await queryClient.invalidateQueries({ queryKey: ["sales-order"] });
+        await queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+        void navigate({ to: "/sales/orders", search: { open: link.salesOrderId } });
+      }
+    },
     onError: fail,
   });
   const act = useMutation({

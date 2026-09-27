@@ -63,6 +63,8 @@ export const navigation: NavigationItem[] = [
   { to: "/purchasing/analysis", label: "nav.purchaseAnalysis", icon: ChartColumn, shortcut: "g (", permission: "purchasing.order.read", group: "purchasing" },
   { to: "/purchasing/intelligence", label: "nav.supplierIntelligence", icon: Gauge, shortcut: "g ]", permission: "purchasing.intelligence.read", group: "purchasing" },
   { to: "/sales/customers", label: "nav.customers", icon: Contact, shortcut: "s c", permission: "partners.customer.read", group: "sales" },
+  { to: "/sales/quotations", label: "nav.quotations", icon: FileSignature, shortcut: "s q", permission: "sales.quote.read", group: "sales" },
+  { to: "/sales/orders", label: "nav.salesOrders", icon: ShoppingCart, shortcut: "s o", permission: "sales.order.read", group: "sales" },
   { to: "/sales/pipeline", label: "nav.pipeline", icon: Kanban, shortcut: "s p", permission: "partners.customer.read", group: "sales" },
   { to: "/sales/activities", label: "nav.crmActivities", icon: ListTodo, shortcut: "s a", permission: "partners.customer.read", group: "sales" },
   { to: "/sales/price-lists", label: "nav.priceLists", icon: Tags, shortcut: "s l", permission: "pricing.price.read", group: "sales" },

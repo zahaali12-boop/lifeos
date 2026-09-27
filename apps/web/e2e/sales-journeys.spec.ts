@@ -193,3 +193,239 @@ test("English: sales set-up, a customer with credit, a deal through the pipeline
   await expect(page.getByTestId("plan-card")).toContainText("STD");
   await expectAccessible(page);
 });
+
+/**
+ * The quotation-to-order journey of 5.4: a quotation priced for a customer is sent, accepted and converted to an
+ * order with its lines frozen; confirming reserves stock (a short line backorders, then is retried once more arrives),
+ * a line is part-cancelled; a large order is held for the customer's credit limit; a drop-ship line skips reservation
+ * and its purchase order is raised and linked from the order screen itself. Then the screens in Arabic, right-to-left.
+ */
+test("English: a quotation converts to an order, reserves and backorders stock, holds for credit, and drop-ships a line to a purchase order; then Arabic", async ({ page }) => {
+  test.setTimeout(120_000);
+  const slug = `sod-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
+  await page.goto("/signup");
+  await page.getByLabel(/Workspace name/).fill("Sales Orders " + slug);
+  await page.getByLabel(/^Slug/).fill(slug);
+  await page.getByLabel(/Your name/).fill("Owner");
+  await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
+  await page.getByLabel(/^Password/).fill(password);
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  // Signing up provisions a whole workspace, slow on a cold API.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
+
+  await nav(page, "Companies");
+  await page.getByTestId("new-company").click();
+  await page.getByLabel(/^Code/).fill("SOD");
+  await page.getByLabel(/Legal name \(English\)/).fill("Sales Orders Co.");
+  await page.getByTestId("save-company").click();
+  await expect(page.getByRole("grid")).toContainText("SOD");
+  await nav(page, "Chart of accounts");
+  await page.getByTestId("create-chart").click();
+  await expect(page.getByTestId("account-row").first()).toBeVisible();
+
+  // A stocked item (TEA), a drop-ship-only item (PLUG, never given stock), a warehouse, a reason code and 20 TEA on
+  // hand; a supplier to raise the drop-ship purchase order against; a customer with a credit limit of 1,000,000.
+  await nav(page, "Items");
+  await page.getByTestId("new-item").click();
+  await page.getByTestId("item-code").fill("TEA");
+  await page.getByTestId("item-name-en").fill("Tea");
+  await page.getByTestId("item-name-ar").fill("شاي");
+  await page.getByTestId("save-item").click();
+  await expect(page.getByTestId("item-detail")).toBeVisible();
+  await closeDialog(page);
+  await page.getByTestId("new-item").click();
+  await page.getByTestId("item-code").fill("PLUG");
+  await page.getByTestId("item-name-en").fill("Plug");
+  await page.getByTestId("item-name-ar").fill("قابس");
+  await page.getByTestId("save-item").click();
+  await expect(page.getByTestId("item-detail")).toBeVisible();
+  await closeDialog(page);
+
+  await nav(page, "Warehouses");
+  await page.getByTestId("new-warehouse").click();
+  await page.getByTestId("warehouse-code").fill("MAIN");
+  await page.getByTestId("warehouse-name-en").fill("Main warehouse");
+  await page.getByTestId("save-warehouse").click();
+  await expect(page.getByTestId("warehouse-detail")).toBeVisible();
+  await closeDialog(page);
+
+  await nav(page, "Adjustments");
+  await page.getByTestId("reason-codes").click();
+  await page.getByTestId("reason-code").fill("INIT");
+  await page.getByTestId("reason-name-en").fill("Opening stock");
+  await page.getByTestId("save-reason").click();
+  await expect(page.getByTestId("reason-row")).toHaveCount(1);
+  await closeDialog(page);
+  await page.getByTestId("new-adjustment").click();
+  await page.getByTestId("adjustment-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("20");
+  await page.getByTestId("line-cost-0").fill("5000");
+  await page.getByTestId("line-reason-0").selectOption({ label: "INIT · Opening stock" });
+  await page.getByTestId("save-adjustment").click();
+  await expect(page.getByTestId("adjustment-detail")).toBeVisible();
+  await page.getByTestId("submit-adjustment").click();
+  await expect(page.getByTestId("adjustment-detail").getByTestId("doc-status")).toContainText("Posted");
+  await closeDialog(page);
+
+  await nav(page, "Suppliers");
+  await page.getByTestId("new-supplier").click();
+  await page.getByTestId("partner-code").fill("ACME");
+  await page.getByTestId("partner-legal-name-en").fill("Acme Fittings");
+  await page.getByTestId("partner-legal-name-ar").fill("أكمي للتجهيزات");
+  await page.getByTestId("partner-email").fill("sales@acme.example.test");
+  await page.getByTestId("save-supplier").click();
+  await expect(page.getByTestId("supplier-detail")).toBeVisible();
+  await closeDialog(page);
+
+  await nav(page, "Customers");
+  await page.getByTestId("new-customer").click();
+  await page.getByTestId("partner-code").fill("CUST");
+  await page.getByTestId("partner-legal-name-en").fill("Sales Customer LLC");
+  await page.getByTestId("partner-legal-name-ar").fill("شركة عميل المبيعات");
+  await page.getByTestId("credit-limit").fill("1000000");
+  await page.getByTestId("save-customer").click();
+  await expect(page.getByTestId("customer-360")).toBeVisible();
+  await closeDialog(page);
+
+  // A quotation for 5 TEA is sent, accepted and converted to an order with the same frozen line.
+  await nav(page, "Quotations");
+  await page.getByTestId("new-quotation").click();
+  await page.getByTestId("quotation-customer").selectOption({ label: "CUST · Sales Customer LLC" });
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("5");
+  await page.getByTestId("line-price-0").fill("10000");
+  await page.getByTestId("save-quotation").click();
+  await expect(page.getByTestId("quotation-detail")).toBeVisible();
+  await expect(page.getByTestId("quotation-detail").getByTestId("doc-status").first()).toContainText("Draft");
+  await expectAccessible(page);
+  await page.getByTestId("send-quotation").click();
+  await expect(page.getByTestId("quotation-detail").getByTestId("doc-status").first()).toContainText("Sent");
+  await page.getByTestId("accept-quotation").click();
+  await expect(page.getByTestId("quotation-detail").getByTestId("doc-status").first()).toContainText("Accepted");
+  await page.getByTestId("start-convert-quotation").click();
+  await page.getByTestId("convert-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("confirm-convert-quotation").click();
+
+  // The order carries the frozen line; confirming reserves all 5 of the 20 on hand.
+  await expect(page.getByTestId("order-detail")).toBeVisible();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Draft");
+  await expect(page.getByTestId("order-total")).toContainText("50,000");
+  await page.getByTestId("confirm-order").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Confirmed");
+  await expect(page.getByTestId("doc-line").filter({ hasText: "TEA" })).toContainText("Open");
+  await expectAccessible(page);
+
+  // Cancelling 2 of the 5 releases them; the line stays open for the remaining 3.
+  await page.getByTestId(/cancel-line-\d+/).click();
+  await page.getByTestId(/cancel-line-qty-\d+/).fill("2");
+  await page.getByTestId(/confirm-cancel-line-\d+/).click();
+  await expect(page.getByTestId("doc-line").filter({ hasText: "TEA" })).toContainText("Open");
+  await closeDialog(page);
+
+  // A second order for 30 TEA: most of the 20 on hand is already reserved above, so it backorders the rest.
+  await nav(page, "Orders");
+  await page.getByTestId("new-order").click();
+  await page.getByTestId("order-customer").selectOption({ label: "CUST · Sales Customer LLC" });
+  await page.getByTestId("order-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("30");
+  await page.getByTestId("line-price-0").fill("10000");
+  await page.getByTestId("save-order").click();
+  await expect(page.getByTestId("order-detail")).toBeVisible();
+  await page.getByTestId("confirm-order").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Confirmed");
+  await expect(page.getByTestId("doc-line").filter({ hasText: "TEA" })).toContainText("Backordered");
+  const backorderNumber = await page.locator('[data-testid="order-detail"] span[dir="ltr"]').first().innerText();
+  await expectAccessible(page);
+  await closeDialog(page);
+
+  // 20 more TEA arrive; retrying backorders on that same order reserves the rest, so the line opens.
+  await nav(page, "Adjustments");
+  await page.getByTestId("new-adjustment").click();
+  await page.getByTestId("adjustment-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("20");
+  await page.getByTestId("line-cost-0").fill("5000");
+  await page.getByTestId("line-reason-0").selectOption({ label: "INIT · Opening stock" });
+  await page.getByTestId("save-adjustment").click();
+  await page.getByTestId("submit-adjustment").click();
+  await expect(page.getByTestId("adjustment-detail").getByTestId("doc-status")).toContainText("Posted");
+  await closeDialog(page);
+  await nav(page, "Orders");
+  await page.getByRole("grid").getByText(backorderNumber, { exact: true }).dblclick();
+  await page.getByTestId("retry-backorders").click();
+  await expect(page.getByTestId("doc-line").filter({ hasText: "TEA" })).toContainText("Open");
+  await closeDialog(page);
+
+  // A third order of 1,000,000 pushes exposure well past the 1,000,000 limit: held for credit, with the reason shown
+  // and a link to the approvals inbox; cancelled with a reason instead of overridden.
+  await page.getByTestId("new-order").click();
+  await page.getByTestId("order-customer").selectOption({ label: "CUST · Sales Customer LLC" });
+  await page.getByTestId("order-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("100");
+  await page.getByTestId("line-price-0").fill("10000");
+  await page.getByTestId("save-order").click();
+  await page.getByTestId("confirm-order").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("On hold");
+  await expect(page.getByTestId("credit-hold-banner")).toContainText("Credit limit exceeded");
+  await expectAccessible(page);
+  const heldNumber = await page.locator('[data-testid="order-detail"] span[dir="ltr"]').first().innerText();
+  await page.getByTestId("open-approvals").click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Approvals");
+  await nav(page, "Orders");
+  await page.getByRole("grid").getByText(heldNumber, { exact: true }).dblclick();
+  await page.getByTestId("start-cancel-order").click();
+  await page.getByTestId("cancel-reason").fill("Held for credit; will not proceed");
+  await page.getByTestId("confirm-cancel-order").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Cancelled");
+  await closeDialog(page);
+
+  // A fourth order drop-ships a PLUG (never given stock): confirming opens the line at once with nothing reserved.
+  // Its own "create purchase order" button pre-fills a new purchase order for ACME; saving it links back automatically.
+  await page.getByTestId("new-order").click();
+  await page.getByTestId("order-customer").selectOption({ label: "CUST · Sales Customer LLC" });
+  await page.getByTestId("order-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("PLUG");
+  await page.getByTestId("line-qty-0").fill("5");
+  await page.getByTestId("line-price-0").fill("20000");
+  await page.getByTestId("line-drop-ship-0").check();
+  await page.getByTestId("save-order").click();
+  await page.getByTestId("confirm-order").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Confirmed");
+  await expect(page.getByTestId("doc-line").filter({ hasText: "PLUG" })).toContainText("Open");
+  await expect(page.getByTestId("doc-line").filter({ hasText: "PLUG" })).toContainText("Drop-ship");
+  await expectAccessible(page);
+
+  await page.getByTestId("create-purchase-order").click();
+  // A new purchase order pre-filled from the sales order's drop-ship line: the item, its quantity, its warehouse.
+  await expect(page.getByRole("dialog")).toContainText("New purchase order");
+  await expect(page.getByTestId("line-item-0")).toHaveValue("PLUG");
+  await expect(page.getByTestId("line-qty-0")).toHaveValue("5");
+  await page.getByTestId("order-supplier").selectOption({ label: "ACME · Acme Fittings" });
+  await page.getByTestId("save-order").click();
+  // Once the purchase order is saved, its first line links back to the sales order line and the browser returns
+  // there; a client-side route change, so "commit" (not the default "load") is what actually fires.
+  await page.waitForURL(/\/sales\/orders/u, { waitUntil: "commit" });
+  await expect(page.getByTestId("order-detail")).toBeVisible();
+
+  // Back on the sales order automatically once the purchase order is saved: the line shows it is now linked.
+  await expect(page.getByTestId("doc-line").filter({ hasText: "PLUG" })).toContainText("Linked to a purchase order");
+  await expectAccessible(page);
+  const dropShipNumber = await page.locator('[data-testid="order-detail"] span[dir="ltr"]').first().innerText();
+  await closeDialog(page);
+
+  // Arabic: the nav labels, the order screen and the drop-ship link read right-to-left; the quotations grid too.
+  await page.getByTestId("language-menu").click();
+  await page.getByTestId("language-ar").click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await page.getByRole("grid").getByText(dropShipNumber, { exact: true }).dblclick();
+  await expect(page.getByTestId("doc-line").filter({ hasText: "PLUG" })).toContainText("مرتبط بأمر شراء");
+  await expectAccessible(page);
+  await closeDialog(page);
+  await nav(page, "عروض الأسعار");
+  await expect(page.getByRole("grid")).toContainText("CUST");
+  await expectAccessible(page);
+});
