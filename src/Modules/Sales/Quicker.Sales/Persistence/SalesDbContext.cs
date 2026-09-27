@@ -11,6 +11,10 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
 
     public DbSet<SalesQuotationLine> QuotationLines => Set<SalesQuotationLine>();
 
+    public DbSet<SalesOrder> Orders => Set<SalesOrder>();
+
+    public DbSet<SalesOrderLine> OrderLines => Set<SalesOrderLine>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -27,6 +31,23 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
         modelBuilder.Entity<SalesQuotationLine>(b =>
         {
             b.ToTable("sls_quotation_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.PriceBreakdown).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<SalesOrder>(b =>
+        {
+            b.ToTable("sls_orders", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.CustomerSnapshot).HasColumnType("jsonb");
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.OrderId });
+            b.HasAuditTrail("sls_order", static x => x.Number);
+        });
+
+        modelBuilder.Entity<SalesOrderLine>(b =>
+        {
+            b.ToTable("sls_order_lines", "app");
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.PriceBreakdown).HasColumnType("jsonb");
         });

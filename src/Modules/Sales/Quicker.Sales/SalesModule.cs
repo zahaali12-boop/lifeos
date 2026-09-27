@@ -3,6 +3,7 @@ using Quicker.Identity.Contracts;
 using Quicker.Persistence.EntityFramework;
 using Quicker.Sales.Application;
 using Quicker.Sales.Persistence;
+using Quicker.Workflow.Contracts;
 
 namespace Quicker.Sales;
 
@@ -14,6 +15,8 @@ public static class SalesModule
         PermissionCatalog.Register(SalesPermissions.All);
         services.AddModuleDbContext<SalesDbContext>();
         services.AddScoped<QuotationService>();
+        services.AddScoped<OrderService>();
+        services.AddScoped<IWorkflowSubjectProvider, SalesOrderWorkflowSubject>();
         return services;
     }
 }

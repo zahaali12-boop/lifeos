@@ -1989,11 +1989,13 @@ Landed costs may be posted **before** the charge invoices exist (`is_estimate` a
 
 ## 11. Sales (order to cash) and pricing
 
-`sls_quotations` is built (roadmap 5.4a) and keyed by `partner_id`, not the `customer_account_id` this sketch
-originally used: `ICustomerDirectory` (built in 5.1) never introduced a separate customer-account id, so a sales
-document names its customer the same way `pur_orders` names its supplier — by partner (A-151). The other `sls_*`
-tables below are still the Phase-0 sketch, not yet built; expect the same `customer_account_id` → `partner_id`
-correction on each as it is implemented.
+`sls_quotations` and `sls_orders` are built (roadmap 5.4a, 5.4b) and keyed by `partner_id`, not the
+`customer_account_id` this sketch originally used: `ICustomerDirectory` (built in 5.1) never introduced a separate
+customer-account id, so a sales document names its customer the same way `pur_orders` names its supplier — by
+partner (A-151). `sls_orders` also drops the sketch's `sls_credit_holds` table for the credit check, reusing the
+generic workflow block/override mechanism `pur_invoices` already uses for match variance instead (A-152). The other
+`sls_*` tables below are still the Phase-0 sketch, not yet built; expect the same corrections on each as it is
+implemented.
 
 ```mermaid
 erDiagram
@@ -2010,7 +2012,6 @@ erDiagram
   sls_shipment_lines ||--o{ sls_return_lines : "returned from"
   sls_returns ||--o| sls_invoices : "credited by"
   sls_recurring_templates ||--o{ sls_invoices : "generates"
-  sls_credit_holds }o--|| ptr_customer_accounts : "on"
   sls_invoice_lines ||--o{ sls_commission_entries : "earns"
   sls_commission_entries }o--|| ptr_commission_plans : "under"
   prc_price_lists ||--|{ prc_price_list_items : "has"
@@ -2061,7 +2062,7 @@ erDiagram
     uuid company_id
     uuid branch_id
     text number
-    uuid customer_account_id
+    uuid partner_id
     uuid quotation_id
     text channel
     text currency
@@ -2076,13 +2077,15 @@ erDiagram
     uuid warehouse_id
     uuid sales_rep_id
     uuid ship_to_address_id
-    text status "draft | pending_approval | on_hold | confirmed | partially_shipped | shipped | invoiced | closed | cancelled"
-    text hold_reason
+    text status "draft | on_hold | confirmed | partially_shipped | shipped | invoiced | closed | cancelled"
+    text block_kind "credit_limit, once any block is raised (A-152)"
+    uuid block_id "app.wf_blocks row; app.wf_overrides already logs who released it and when"
+    text block_reason
+    uuid override_id
     numeric total_net
     numeric total_tax
     numeric total_gross
     jsonb customer_snapshot
-    uuid approval_request_id
     jsonb custom_fields
   }
   sls_order_lines {
@@ -2099,6 +2102,10 @@ erDiagram
     numeric discount_pct
     numeric discount_amount
     uuid tax_code_id
+    numeric tax_rate_pct "frozen at save (A-147/A-151)"
+    boolean tax_reverse_charge "frozen at save"
+    boolean tax_recoverable "frozen at save"
+    text tax_reason "frozen at save"
     numeric net_amount
     numeric tax_amount
     uuid warehouse_id
@@ -2107,11 +2114,11 @@ erDiagram
     uuid purchase_order_line_id
     uuid promotion_id
     uuid bundle_parent_line_id
-    numeric qty_reserved
-    numeric qty_shipped
-    numeric qty_invoiced
-    numeric qty_cancelled
-    numeric qty_returned
+    numeric qty_reserved "item's base unit, not this line's own (A-152)"
+    numeric qty_shipped "base unit"
+    numeric qty_invoiced "base unit"
+    numeric qty_cancelled "base unit"
+    numeric qty_returned "base unit"
     uuid dimension_set_id
     jsonb price_breakdown
     text status "open | backordered | fulfilled | cancelled"
@@ -2249,20 +2256,6 @@ erDiagram
     jsonb lines
     bool auto_post
     bool auto_email
-  }
-  sls_credit_holds {
-    uuid id PK
-    uuid customer_account_id FK
-    text source_document_type
-    uuid source_document_id
-    text reason "limit_exceeded | overdue | manual"
-    numeric exposure
-    numeric limit_at_time
-    jsonb why
-    text status "held | released | rejected"
-    uuid override_id
-    uuid released_by
-    timestamptz released_at
   }
   sls_commission_entries {
     uuid id PK
@@ -2411,7 +2404,7 @@ erDiagram
   }
 ```
 
-Every priced line stores `price_breakdown` (ADR-0030): the ordered steps, candidates, winner, rate and rounding, frozen at posting. The credit check writes a `sls_credit_holds` row with the `why` (exposure components) and, when released, the `wf_overrides` id.
+Every priced line stores `price_breakdown` (ADR-0030): the ordered steps, candidates, winner, rate and rounding, frozen at posting. The credit check reuses the generic workflow block/override mechanism (ADR-0020) rather than a bespoke table: `sls_orders.block_kind`/`block_id`/`block_reason` point at the `wf_blocks` row it raised, and `app.wf_overrides` already logs the exposure it was raised with, who released it, when and why (A-152).
 
 ## 12. Tax
 

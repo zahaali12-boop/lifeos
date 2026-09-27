@@ -8191,6 +8191,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/quotations/{quotationId}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A draft sales order with the accepted quotation's frozen lines carried over as they were quoted */
+        post: operations["postSalesQuotationsByQuotationIdConvert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales orders, newest first, filtered by company, status or customer */
+        get: operations["getSalesOrders"];
+        put?: never;
+        /** A draft sales order with lines priced by the pricing engine and taxed for the customer on the pricing date */
+        post: operations["postSalesOrders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/orders/{orderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The order with its priced, taxed lines and their reservation and cancellation state */
+        get: operations["getSalesOrdersByOrderId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/orders/{orderId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reserves what stock is available per line (a short line is backordered) and checks the customer's credit exposure; an excess holds the order for an authorized approver's override (hard scenario 6) */
+        post: operations["postSalesOrdersByOrderIdConfirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/orders/{orderId}/retry-backorders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-attempts reservation for every backordered line of a confirmed order */
+        post: operations["postSalesOrdersByOrderIdRetryBackorders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/orders/{orderId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels the whole order with a reason, releasing every reservation */
+        post: operations["postSalesOrdersByOrderIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/orders/{orderId}/lines/{lineId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels part of a line's remaining, unshipped quantity */
+        post: operations["postSalesOrdersByOrderIdLinesByLineIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9105,6 +9225,13 @@ export interface components {
             isSystem: boolean;
             holidays: components["schemas"]["HolidaySummary"][];
         };
+        CancelOrderLineRequest: {
+            /** Format: double */
+            quantity: number | string;
+        };
+        CancelOrderRequest: {
+            reason: string;
+        };
         CancelRequest: {
             reason: string;
         };
@@ -9528,6 +9655,12 @@ export interface components {
             toUom: string;
             /** Format: double */
             result: number | string;
+        };
+        ConvertQuotationRequest: {
+            /** Format: uuid */
+            warehouseId: string;
+            /** Format: date */
+            orderDate?: null | string;
         };
         /** @description The replacement of an entry (its lines as a posting request; the company is the original's) and why. */
         CorrectEntryRequest: {
@@ -11742,6 +11875,63 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        OrderLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            /** Format: uuid */
+            promotionId: null | string;
+            promotionCode: null | string;
+            /** Format: uuid */
+            warehouseId: null | string;
+            /** Format: double */
+            qtyReserved: number | string;
+            /** Format: double */
+            qtyShipped: number | string;
+            /** Format: double */
+            qtyInvoiced: number | string;
+            /** Format: double */
+            qtyCancelled: number | string;
+            status: string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            taxCode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            taxRatePct: number | string;
+            /** @default false */
+            taxReverseCharge: boolean;
+            /** @default true */
+            taxRecoverable: boolean;
+            taxReason?: null | string;
+        };
         OrdersCreated: {
             orders: components["schemas"]["PurchaseOrderSummary"][];
         };
@@ -11750,6 +11940,49 @@ export interface components {
             suggestionIds: string[];
             /** Format: uuid */
             supplierId?: null | string;
+        };
+        OrderSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            quotationId: null | string;
+            currency: string;
+            /** Format: date */
+            orderDate: string;
+            /** Format: date */
+            pricingDate: string;
+            /** Format: uuid */
+            priceListId: null | string;
+            /** Format: uuid */
+            warehouseId: string;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalTax: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            blockKind: null | string;
+            blockReason: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            confirmedAt: null | string;
+            /** Format: date-time */
+            cancelledAt: null | string;
+            cancelReason: null | string;
+            lines: components["schemas"]["OrderLineSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
         };
         /** @description A stored outbox row as the dispatcher and the operator UI see it. */
         OutboxMessage: {
@@ -15104,6 +15337,53 @@ export interface components {
             supplierLot?: null | string;
             /** Format: uuid */
             supplierPartnerId?: null | string;
+            customFields?: unknown;
+        };
+        SaveOrderLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            description?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: double */
+            unitPrice?: null | number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            discountPct: number | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            /** Format: uuid */
+            warehouseId?: null | string;
+        };
+        SaveOrderRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            lines: components["schemas"]["SaveOrderLineRequest"][];
+            currency?: null | string;
+            /** Format: date */
+            orderDate?: null | string;
+            /** Format: date */
+            pricingDate?: null | string;
+            /** Format: uuid */
+            priceListId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            notes?: null | string;
             customFields?: unknown;
         };
         SavePartnerRequest: {
@@ -33411,6 +33691,199 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuotationSummary"];
+                };
+            };
+        };
+    };
+    postSalesQuotationsByQuotationIdConvert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConvertQuotationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    getSalesOrders: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"][];
+                };
+            };
+        };
+    };
+    postSalesOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    getSalesOrdersByOrderId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    postSalesOrdersByOrderIdConfirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    postSalesOrdersByOrderIdRetryBackorders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    postSalesOrdersByOrderIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    postSalesOrdersByOrderIdLinesByLineIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelOrderLineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
                 };
             };
         };

@@ -20,6 +20,27 @@ public static class SalesRowFactories
 
         IsolationRegistry.Register("app.sls_quotations", static async (c, tx, t) => new RowRef("app.sls_quotations", $"id = '{(await QuotationAsync(c, tx, t)).Quotation}'"));
         IsolationRegistry.Register("app.sls_quotation_lines", static async (c, tx, t) => new RowRef("app.sls_quotation_lines", $"id = '{(await QuotationAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.sls_orders", static async (c, tx, t) => new RowRef("app.sls_orders", $"id = '{(await OrderAsync(c, tx, t)).Order}'"));
+        IsolationRegistry.Register("app.sls_order_lines", static async (c, tx, t) => new RowRef("app.sls_order_lines", $"id = '{(await OrderAsync(c, tx, t)).Line}'"));
+    }
+
+    private static async Task<(Guid Order, Guid Line, Guid Company)> OrderAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var company = await CompanyAsync(c, tx, t);
+        var partner = await PartnerAsync(c, tx, t);
+        var warehouse = await WarehouseAsync(c, tx, t, company);
+        var id = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.sls_orders (tenant_id, id, company_id, number, partner_id, currency, order_date, pricing_date, warehouse_id) VALUES (@t, @id, @company, @number, @partner, 'IQD', '2026-09-22', '2026-09-22', @warehouse)", new { t, id, company, number = Suffix(id), partner, warehouse }, tx);
+        await c.ExecuteAsync("INSERT INTO app.sls_order_lines (tenant_id, id, order_id, line_no, item_id, quantity, uom_id, quantity_base, unit_price) VALUES (@t, @line, @id, 1, @item, 1, @uom, 1, 10)", new { t, line, id, item = Guid.CreateVersion7(), uom = Guid.CreateVersion7() }, tx);
+        return (id, line, company);
+    }
+
+    private static async Task<Guid> WarehouseAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t, Guid company)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.inv_warehouses (tenant_id, id, company_id, code, name_i18n) VALUES (@t, @id, @company, @code, '{}')", new { t, id, company, code = Suffix(id) }, tx);
+        return id;
     }
 
     private static async Task<(Guid Quotation, Guid Line, Guid Company)> QuotationAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
