@@ -19,6 +19,7 @@ using Quicker.Payables;
 using Quicker.Persistence;
 using Quicker.Pricing;
 using Quicker.Purchasing;
+using Quicker.Sales;
 using Quicker.Storage;
 using Quicker.Tax;
 using Quicker.Tenancy;
@@ -60,6 +61,7 @@ builder.Services.AddTaxModule();
 builder.Services.AddPayablesModule();
 builder.Services.AddBankingModule();
 builder.Services.AddPurchasingModule();
+builder.Services.AddSalesModule();
 
 var app = builder.Build();
 

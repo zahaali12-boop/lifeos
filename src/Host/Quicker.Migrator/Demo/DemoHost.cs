@@ -23,6 +23,7 @@ using Quicker.Payables;
 using Quicker.Persistence;
 using Quicker.Pricing;
 using Quicker.Purchasing;
+using Quicker.Sales;
 using Quicker.Storage;
 using Quicker.Tax;
 using Quicker.Tenancy;
@@ -98,6 +99,7 @@ internal static class DemoHost
         services.AddPayablesModule();
         services.AddBankingModule();
         services.AddPurchasingModule();
+        services.AddSalesModule();
 
         // The seed stores no secrets (no bank account numbers, no provider keys), and the migrator is not given the
         // platform key: a protector that refuses keeps it that way instead of encrypting under a key the API would not

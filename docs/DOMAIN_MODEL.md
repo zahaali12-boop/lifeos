@@ -1989,6 +1989,12 @@ Landed costs may be posted **before** the charge invoices exist (`is_estimate` a
 
 ## 11. Sales (order to cash) and pricing
 
+`sls_quotations` is built (roadmap 5.4a) and keyed by `partner_id`, not the `customer_account_id` this sketch
+originally used: `ICustomerDirectory` (built in 5.1) never introduced a separate customer-account id, so a sales
+document names its customer the same way `pur_orders` names its supplier — by partner (A-151). The other `sls_*`
+tables below are still the Phase-0 sketch, not yet built; expect the same `customer_account_id` → `partner_id`
+correction on each as it is implemented.
+
 ```mermaid
 erDiagram
   sls_quotations ||--|{ sls_quotation_lines : "has"
@@ -2020,7 +2026,7 @@ erDiagram
     uuid company_id
     uuid branch_id
     text number
-    uuid customer_account_id
+    uuid partner_id
     uuid opportunity_id
     text currency
     date quote_date
@@ -2043,6 +2049,10 @@ erDiagram
     numeric unit_price
     numeric discount_pct
     uuid tax_code_id
+    numeric tax_rate_pct "frozen at save (A-147/A-151)"
+    boolean tax_reverse_charge "frozen at save"
+    boolean tax_recoverable "frozen at save"
+    text tax_reason "frozen at save"
     numeric net_amount
     jsonb price_breakdown
   }

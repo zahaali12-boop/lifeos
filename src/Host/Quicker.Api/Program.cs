@@ -36,6 +36,8 @@ using Quicker.Pricing;
 using Quicker.Pricing.Api;
 using Quicker.Purchasing;
 using Quicker.Purchasing.Api;
+using Quicker.Sales;
+using Quicker.Sales.Api;
 using Quicker.Storage;
 using Quicker.Tax;
 using Quicker.Tax.Api;
@@ -124,6 +126,7 @@ builder.Services.AddTaxModule();
 builder.Services.AddPayablesModule();
 builder.Services.AddBankingModule();
 builder.Services.AddPurchasingModule();
+builder.Services.AddSalesModule();
 
 var app = builder.Build();
 
@@ -167,6 +170,7 @@ api.MapTaxEndpoints();
 api.MapPayablesEndpoints();
 api.MapBankingEndpoints();
 api.MapPurchasingEndpoints();
+api.MapSalesEndpoints();
 
 app.Run();
 

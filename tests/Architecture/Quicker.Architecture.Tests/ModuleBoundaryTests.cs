@@ -149,6 +149,7 @@ public sealed class ModuleBoundaryTests
         ["Payables"] = 2,
         ["Banking"] = 2,
         ["Workflow"] = 2,
+        ["Sales"] = 2,
     };
 
     /// <summary>Dependencies against the tiers that exist on purpose; a new one fails, and one that disappears must be removed here.</summary>
