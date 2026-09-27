@@ -8104,6 +8104,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quotations, newest first, filtered by company, status or customer */
+        get: operations["getSalesQuotations"];
+        put?: never;
+        /** A draft quotation with lines priced by the pricing engine (customer agreements, price lists, promotions) and taxed for the customer on the pricing date */
+        post: operations["postSalesQuotations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/quotations/{quotationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The quotation with its priced, taxed lines */
+        get: operations["getSalesQuotationsByQuotationId"];
+        /** Re-prices and re-taxes a draft quotation's lines; only a draft is edited */
+        put: operations["putSalesQuotationsByQuotationId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/quotations/{quotationId}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks a draft quotation sent to the customer */
+        post: operations["postSalesQuotationsByQuotationIdSend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/quotations/{quotationId}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accepts a sent quotation; refused once its validity has passed (quotation.expired) */
+        post: operations["postSalesQuotationsByQuotationIdAccept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/quotations/{quotationId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rejects a sent quotation with a reason */
+        post: operations["postSalesQuotationsByQuotationIdReject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -12982,6 +13069,97 @@ export interface components {
             denominator: number | string;
             method: string;
         };
+        QuotationLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            /** Format: uuid */
+            promotionId: null | string;
+            promotionCode: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            taxCode?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            taxRatePct: number | string;
+            /** @default false */
+            taxReverseCharge: boolean;
+            /** @default true */
+            taxRecoverable: boolean;
+            taxReason?: null | string;
+        };
+        QuotationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            opportunityId: null | string;
+            currency: string;
+            /** Format: date */
+            quoteDate: string;
+            /** Format: date */
+            validUntil: null | string;
+            /** Format: date */
+            pricingDate: string;
+            /** Format: uuid */
+            priceListId: null | string;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalTax: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            rejectionReason: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            sentAt: null | string;
+            /** Format: date-time */
+            decidedAt: null | string;
+            /** Format: uuid */
+            orderId: null | string;
+            lines: components["schemas"]["QuotationLineSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
+            /** @default false */
+            isExpired: boolean;
+        };
         QuoteComparison: {
             /** Format: uuid */
             rfqId: string;
@@ -13304,6 +13482,9 @@ export interface components {
             refreshToken: string;
         };
         RejectJournalRequest: {
+            reason: string;
+        };
+        RejectQuotationRequest: {
             reason: string;
         };
         RejectRequest: {
@@ -15300,6 +15481,53 @@ export interface components {
             warehouseId?: null | string;
             /** Format: uuid */
             agreementId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
+        };
+        SaveQuotationLineRequest: {
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            description?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: double */
+            unitPrice?: null | number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            discountPct: number | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+        };
+        SaveQuotationRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            lines: components["schemas"]["SaveQuotationLineRequest"][];
+            currency?: null | string;
+            /** Format: date */
+            quoteDate?: null | string;
+            /** Format: date */
+            validUntil?: null | string;
+            /** Format: date */
+            pricingDate?: null | string;
+            /** Format: uuid */
+            priceListId?: null | string;
+            /** Format: uuid */
+            opportunityId?: null | string;
             /** Format: uuid */
             branchId?: null | string;
             notes?: null | string;
@@ -33017,6 +33245,172 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LandedCostSummary"];
+                };
+            };
+        };
+    };
+    getSalesQuotations: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationSummary"][];
+                };
+            };
+        };
+    };
+    postSalesQuotations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveQuotationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationSummary"];
+                };
+            };
+        };
+    };
+    getSalesQuotationsByQuotationId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationSummary"];
+                };
+            };
+        };
+    };
+    putSalesQuotationsByQuotationId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveQuotationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationSummary"];
+                };
+            };
+        };
+    };
+    postSalesQuotationsByQuotationIdSend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationSummary"];
+                };
+            };
+        };
+    };
+    postSalesQuotationsByQuotationIdAccept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationSummary"];
+                };
+            };
+        };
+    };
+    postSalesQuotationsByQuotationIdReject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectQuotationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotationSummary"];
                 };
             };
         };
