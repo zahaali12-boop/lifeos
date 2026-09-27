@@ -8311,6 +8311,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/orders/{orderId}/lines/{lineId}/purchase-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Records the purchase order line raised for a drop-ship line, once */
+        post: operations["postSalesOrdersByOrderIdLinesByLineIdPurchaseOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -11405,6 +11422,10 @@ export interface components {
             isReversal: boolean;
             isRounding: boolean;
         };
+        LinkPurchaseOrderLineRequest: {
+            /** Format: uuid */
+            purchaseOrderLineId: string;
+        };
         LinkRequest: {
             from: components["schemas"]["DocumentRef"];
             to: components["schemas"]["DocumentRef"];
@@ -11918,6 +11939,10 @@ export interface components {
             /** Format: double */
             qtyCancelled: number | string;
             status: string;
+            /** @default false */
+            dropShip: boolean;
+            /** Format: uuid */
+            purchaseOrderLineId?: null | string;
             /** Format: uuid */
             taxCodeId?: null | string;
             taxCode?: null | string;
@@ -15365,6 +15390,8 @@ export interface components {
             taxCodeId?: null | string;
             /** Format: uuid */
             warehouseId?: null | string;
+            /** @default false */
+            dropShip: boolean;
         };
         SaveOrderRequest: {
             /** Format: uuid */
@@ -33874,6 +33901,33 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CancelOrderLineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    postSalesOrdersByOrderIdLinesByLineIdPurchaseOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkPurchaseOrderLineRequest"];
             };
         };
         responses: {

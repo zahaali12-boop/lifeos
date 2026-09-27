@@ -64,6 +64,9 @@ public static class SalesEndpoints
         orders.MapPost("/{orderId:guid}/lines/{lineId:guid}/cancel", async (Guid orderId, Guid lineId, CancelOrderLineRequest request, OrderService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelLineAsync(orderId, lineId, request, ct)))
             .RequirePermission(SalesPermissions.OrderManage)
             .WithSummary("Cancels part of a line's remaining, unshipped quantity");
+        orders.MapPost("/{orderId:guid}/lines/{lineId:guid}/purchase-order", async (Guid orderId, Guid lineId, LinkPurchaseOrderLineRequest request, OrderService service, CancellationToken ct) => ApiProblems.Ok(await service.LinkPurchaseOrderLineAsync(orderId, lineId, request, ct)))
+            .RequirePermission(SalesPermissions.OrderManage)
+            .WithSummary("Records the purchase order line raised for a drop-ship line, once");
 
         return api;
     }

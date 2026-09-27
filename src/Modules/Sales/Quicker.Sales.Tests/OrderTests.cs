@@ -137,6 +137,33 @@ public sealed class OrderTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task A_drop_ship_line_skips_reservation_and_takes_a_purchase_order_line_once()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        // No stock at all: a drop-ship line never touches the warehouse, so confirmation still succeeds.
+        var order = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = s.Tea, quantity = 5m, dropShip = true } } });
+        var orderId = order.GetProperty("id").GetGuid();
+        var lineId = order.GetProperty("lines")[0].GetProperty("id").GetGuid();
+        order.GetProperty("lines")[0].GetProperty("dropShip").GetBoolean().ShouldBeTrue();
+
+        var confirmed = await owner.PostAsync($"/api/v1/sales/orders/{orderId}/confirm", new { }, HttpStatusCode.OK);
+        confirmed.GetProperty("status").GetString().ShouldBe("confirmed");
+        var line = confirmed.GetProperty("lines")[0];
+        line.GetProperty("status").GetString().ShouldBe("open");
+        line.GetProperty("qtyReserved").GetDecimal().ShouldBe(0m);
+
+        var purchaseOrderLineId = Guid.CreateVersion7();
+        var linked = await owner.PostAsync($"/api/v1/sales/orders/{orderId}/lines/{lineId}/purchase-order", new { purchaseOrderLineId }, HttpStatusCode.OK);
+        linked.GetProperty("lines")[0].GetProperty("purchaseOrderLineId").GetGuid().ShouldBe(purchaseOrderLineId);
+
+        var (code, _) = await owner.PostErrorAsync($"/api/v1/sales/orders/{orderId}/lines/{lineId}/purchase-order", new { purchaseOrderLineId = Guid.CreateVersion7() }, HttpStatusCode.Conflict);
+        code.ShouldBe("order.line_already_linked");
+
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
     public async Task A_customer_over_their_credit_limit_is_held_and_released_only_by_an_authorized_overrides_approval()
     {
         var s = await SetUpAsync();

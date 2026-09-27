@@ -24278,6 +24278,57 @@
           }
         }
       }
+    },
+    "/api/v1/sales/orders/{orderId}/lines/{lineId}/purchase-order": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Records the purchase order line raised for a drop-ship line, once",
+        "operationId": "postSalesOrdersByOrderIdLinesByLineIdPurchaseOrder",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkPurchaseOrderLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -35979,6 +36030,18 @@
           }
         }
       },
+      "LinkPurchaseOrderLineRequest": {
+        "required": [
+          "purchaseOrderLineId"
+        ],
+        "type": "object",
+        "properties": {
+          "purchaseOrderLineId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "LinkRequest": {
         "required": [
           "from",
@@ -37955,6 +38018,17 @@
           },
           "status": {
             "type": "string"
+          },
+          "dropShip": {
+            "type": "boolean",
+            "default": false
+          },
+          "purchaseOrderLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           },
           "taxCodeId": {
             "type": [
@@ -50667,6 +50741,10 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "dropShip": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

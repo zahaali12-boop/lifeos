@@ -93,7 +93,8 @@ public sealed record SaveOrderLineRequest(
     decimal? UnitPrice = null,
     decimal DiscountPct = 0m,
     Guid? TaxCodeId = null,
-    Guid? WarehouseId = null);
+    Guid? WarehouseId = null,
+    bool DropShip = false);
 
 public sealed record SaveOrderRequest(
     Guid CompanyId,
@@ -113,6 +114,8 @@ public sealed record ConvertQuotationRequest(Guid WarehouseId, DateOnly? OrderDa
 public sealed record CancelOrderRequest(string Reason);
 
 public sealed record CancelOrderLineRequest(decimal Quantity);
+
+public sealed record LinkPurchaseOrderLineRequest(Guid PurchaseOrderLineId);
 
 public sealed record OrderLineSummary(
     Guid Id,
@@ -138,6 +141,8 @@ public sealed record OrderLineSummary(
     decimal QtyInvoiced,
     decimal QtyCancelled,
     string Status,
+    bool DropShip = false,
+    Guid? PurchaseOrderLineId = null,
     Guid? TaxCodeId = null,
     string? TaxCode = null,
     decimal TaxRatePct = 0m,

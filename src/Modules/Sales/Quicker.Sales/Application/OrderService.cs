@@ -278,6 +278,13 @@ public sealed class OrderService(
 
         foreach (var line in order.Lines.Where(static l => l.Status != "cancelled"))
         {
+            if (line.DropShip)
+            {
+                // The supplier ships straight to the customer: nothing to reserve from the company's own warehouse.
+                line.Status = "open";
+                continue;
+            }
+
             var reserved = await ReserveLineAsync(order, line, cancellationToken);
             if (reserved.IsFailure)
             {
@@ -439,7 +446,7 @@ public sealed class OrderService(
         {
             line.Status = "cancelled";
         }
-        else if (order.Status == "confirmed")
+        else if (order.Status == "confirmed" && !line.DropShip)
         {
             var reserved = await ReserveLineAsync(order, line, cancellationToken);
             if (reserved.IsFailure)
@@ -458,6 +465,41 @@ public sealed class OrderService(
         order.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry(DocumentType, order.Id, order.Number, AuditActions.StateChanged, After: new { lineId, cancelledQuantity = request.Quantity }, CompanyId: order.CompanyId), cancellationToken);
+        return (await MapManyAsync([order], cancellationToken))[0];
+    }
+
+    /// <summary>Records the purchase order line raised for a drop-ship line, once, so the order shows what will
+    /// fulfil it (DOMAIN_MODEL §11); creating that purchase order itself is a web-layer "next step" (5.4c), the same
+    /// pattern Purchasing's own document flow already uses to pre-fill one document's screen from another's.</summary>
+    public async Task<Result<OrderSummary>> LinkPurchaseOrderLineAsync(Guid id, Guid lineId, LinkPurchaseOrderLineRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var order = await db.Orders.Include(static o => o.Lines).SingleOrDefaultAsync(o => o.Id == id, cancellationToken);
+        if (order is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        var line = order.Lines.SingleOrDefault(l => l.Id == lineId);
+        if (line is null)
+        {
+            return Error.NotFound("order line", lineId);
+        }
+
+        if (!line.DropShip)
+        {
+            return Error.Conflict("order.line_not_drop_ship", "Only a drop-ship line takes a purchase order line.");
+        }
+
+        if (line.PurchaseOrderLineId is not null)
+        {
+            return Error.Conflict("order.line_already_linked", "The line already names a purchase order line.").WithWhy(("purchaseOrderLineId", line.PurchaseOrderLineId));
+        }
+
+        line.PurchaseOrderLineId = request.PurchaseOrderLineId;
+        order.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, order.Id, order.Number, AuditActions.Updated, After: new { lineId, purchaseOrderLineId = request.PurchaseOrderLineId }, CompanyId: order.CompanyId), cancellationToken);
         return (await MapManyAsync([order], cancellationToken))[0];
     }
 
@@ -590,7 +632,7 @@ public sealed class OrderService(
 
         var pricingDate = request.PricingDate ?? orderDate;
         var pricingLines = new List<PricingLineRequest>();
-        var resolvedItems = new List<(Guid ItemId, Guid? VariantId, string? Description, Guid? TaxCodeId, Guid? WarehouseId)>();
+        var resolvedItems = new List<(Guid ItemId, Guid? VariantId, string? Description, Guid? TaxCodeId, Guid? WarehouseId, bool DropShip)>();
         var lineNo = 0;
         foreach (var line in request.Lines)
         {
@@ -627,7 +669,7 @@ public sealed class OrderService(
 
             var key = lineNo.ToString(CultureInfo.InvariantCulture);
             pricingLines.Add(new PricingLineRequest(key, item.Id, line.VariantId, unit.UomId, line.Quantity, line.UnitPrice, line.DiscountPct > 0m ? line.DiscountPct : null));
-            resolvedItems.Add((item.Id, line.VariantId, Shared.Trim(line.Description), line.TaxCodeId, line.WarehouseId));
+            resolvedItems.Add((item.Id, line.VariantId, Shared.Trim(line.Description), line.TaxCodeId, line.WarehouseId, line.DropShip));
         }
 
         var priced = await pricing.PriceAsync(new PricingRequest(company.Id.Value, request.PartnerId, currency.Value.Code, pricingDate, pricingLines, request.PriceListId), cancellationToken);
@@ -677,7 +719,7 @@ public sealed class OrderService(
             var key = (i + 1).ToString(CultureInfo.InvariantCulture);
             var p = pricedByKey[key];
             var t = taxedByKey[key];
-            var (itemId, variantId, description, taxCodeId, lineWarehouseId) = resolvedItems[i];
+            var (itemId, variantId, description, taxCodeId, lineWarehouseId, dropShip) = resolvedItems[i];
             var line = request.Lines[i];
             var net = Shared.Round(p.NetAmount, currency.Value);
             var taxAmount = Shared.Round(t.Tax, currency.Value);
@@ -706,6 +748,7 @@ public sealed class OrderService(
                 PromotionId = p.PromotionId,
                 PriceBreakdown = JsonSerializer.Serialize(p.Steps),
                 WarehouseId = lineWarehouseId,
+                DropShip = dropShip,
             });
         }
 
@@ -790,6 +833,8 @@ public sealed class OrderService(
                     line.QtyInvoiced,
                     line.QtyCancelled,
                     line.Status,
+                    line.DropShip,
+                    line.PurchaseOrderLineId,
                     line.TaxCodeId,
                     taxCode,
                     line.TaxRatePct,

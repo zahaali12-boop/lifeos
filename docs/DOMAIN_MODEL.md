@@ -2110,8 +2110,8 @@ erDiagram
     numeric tax_amount
     uuid warehouse_id
     date promised_date
-    bool drop_ship
-    uuid purchase_order_line_id
+    bool drop_ship "skips reservation on confirmation (5.4c, A-152)"
+    uuid purchase_order_line_id "set once, by the order screen's own next step"
     uuid promotion_id
     uuid bundle_parent_line_id
     numeric qty_reserved "item's base unit, not this line's own (A-152)"

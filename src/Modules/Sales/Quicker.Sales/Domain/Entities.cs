@@ -232,4 +232,8 @@ public sealed class SalesOrderLine : ITenantEntity
     public decimal QtyCancelled { get; set; }
 
     public string Status { get; set; } = "open";
+
+    public bool DropShip { get; set; }
+
+    public Guid? PurchaseOrderLineId { get; set; }
 }
