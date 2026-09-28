@@ -55919,6 +55919,7 @@
           "uomCode",
           "binId",
           "lotNumber",
+          "serialNumbers",
           "cogsAmount"
         ],
         "type": "object",
@@ -55986,6 +55987,12 @@
               "null",
               "string"
             ]
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "cogsAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",

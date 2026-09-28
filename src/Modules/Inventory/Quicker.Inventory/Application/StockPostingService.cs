@@ -336,26 +336,25 @@ public sealed class StockPostingService(
             return tracked.Error!;
         }
 
-        if (tracked.Value.SerialIds.Count > 0)
-        {
-            // One unit, one serial, one entry: each serial keeps its own balance row, cost and history.
-            var perUnit = Math.Sign(baseQuantity);
-            var unitLines = new List<ResolvedLine>(tracked.Value.SerialIds.Count);
-            foreach (var serialId in tracked.Value.SerialIds)
-            {
-                var unitLine = line with { Quantity = sign == 0 ? perUnit : 1m, UomId = item.BaseUomId, LotId = tracked.Value.LotId, SerialId = serialId, SerialNumbers = null, ReservationId = null };
-                var unitKey = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, tracked.Value.LotId ?? Guid.Empty, serialId);
-                unitLines.Add(new ResolvedLine(unitLine, item, warehouse, perUnit, item.BaseUomId, item.BaseUomCode, null, unitKey, null));
-            }
-
-            return unitLines;
-        }
-
-        line = line with { LotId = tracked.Value.LotId };
         Reservation? reservation = null;
         if (line.ReservationId is { } reservationId)
         {
+            // Locked first: two postings racing the same reservation must serialise here, not on the balance row
+            // below, or the loser reads the remaining quantity before the winner's commit, consumes it a second
+            // time, and only finds out when its own balance update violates the "reserved never negative" check.
+            var uow = unitOfWork.Current;
+            await uow.Connection.QueryAsync<Guid>(new CommandDefinition(
+                "SELECT id FROM app.inv_reservations WHERE tenant_id = @tenant AND id = @id FOR UPDATE",
+                new { tenant = uow.Context.TenantId.Value, id = reservationId }, uow.Transaction, cancellationToken: cancellationToken));
             reservation = await db.Reservations.SingleOrDefaultAsync(r => r.Id == reservationId, cancellationToken);
+            if (reservation is not null)
+            {
+                // The caller (e.g. ShipmentService, picking which reservations to draw from) may already have
+                // loaded and be tracking this same row earlier in this request; EF's identity map would otherwise
+                // hand back that stale in-memory instance instead of what the lock above just waited to see.
+                await db.Entry(reservation).ReloadAsync(cancellationToken);
+            }
+
             if (reservation is null || reservation.Status != "active")
             {
                 return Error.Conflict("stock.reservation_invalid", "The reservation does not exist or is no longer active.").WithWhy(("reservationId", reservationId));
@@ -367,7 +366,7 @@ public sealed class StockPostingService(
             }
 
             if (reservation.CompanyId != company.Id.Value || reservation.ItemId != item.Id || reservation.WarehouseId != warehouse.Id || reservation.VariantId != line.VariantId
-                || (reservation.BinId is not null && reservation.BinId != line.BinId) || (reservation.LotId is not null && reservation.LotId != line.LotId) || (reservation.SerialId is not null && reservation.SerialId != line.SerialId))
+                || (reservation.BinId is not null && reservation.BinId != line.BinId) || (reservation.LotId is not null && reservation.LotId != tracked.Value.LotId))
             {
                 return Error.Conflict("stock.reservation_mismatch", "The reservation is for other stock than the line moves.").WithWhy(("reservationId", reservationId), ("item", item.Code), ("warehouse", warehouse.Code));
             }
@@ -378,6 +377,25 @@ public sealed class StockPostingService(
             }
         }
 
+        if (tracked.Value.SerialIds.Count > 0)
+        {
+            // One unit, one serial, one entry: each serial keeps its own balance row, cost and history. Every unit
+            // shares the line's one reservation (and the row its hold lives on), so consuming N units credits it N
+            // units at once -- exactly as consuming the whole line in a single entry would.
+            var perUnit = Math.Sign(baseQuantity);
+            var reservationKeyForUnits = reservation is null ? null : new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, reservation.LotId ?? Guid.Empty, reservation.SerialId ?? Guid.Empty);
+            var unitLines = new List<ResolvedLine>(tracked.Value.SerialIds.Count);
+            foreach (var serialId in tracked.Value.SerialIds)
+            {
+                var unitLine = line with { Quantity = sign == 0 ? perUnit : 1m, UomId = item.BaseUomId, LotId = tracked.Value.LotId, SerialId = serialId, SerialNumbers = null, ReservationId = null };
+                var unitKey = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, tracked.Value.LotId ?? Guid.Empty, serialId);
+                unitLines.Add(new ResolvedLine(unitLine, item, warehouse, perUnit, item.BaseUomId, item.BaseUomCode, reservation, unitKey, reservationKeyForUnits));
+            }
+
+            return unitLines;
+        }
+
+        line = line with { LotId = tracked.Value.LotId };
         var key = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, line.LotId ?? Guid.Empty, line.SerialId ?? Guid.Empty);
         var reservationKey = reservation is null ? null : key with { LotId = reservation.LotId ?? Guid.Empty, SerialId = reservation.SerialId ?? Guid.Empty };
         return new List<ResolvedLine> { new(line, item, warehouse, baseQuantity, converted.Value.EnteredUomId, converted.Value.EnteredUomCode, reservation, key, reservationKey) };

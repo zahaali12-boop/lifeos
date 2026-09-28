@@ -16920,6 +16920,7 @@ export interface components {
             /** Format: uuid */
             binId: null | string;
             lotNumber: null | string;
+            serialNumbers: string[];
             /** Format: double */
             cogsAmount: number | string;
         };

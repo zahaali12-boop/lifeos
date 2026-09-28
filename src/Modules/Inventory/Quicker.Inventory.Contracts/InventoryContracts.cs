@@ -181,6 +181,15 @@ public interface IFefoSuggestions
     Task<IReadOnlyList<FefoSuggestion>> SuggestAsync(Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly asOf, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Which of an item's own on-hand serials in a warehouse a shipment's automatic pick (roadmap 5.5b) would
+/// take, oldest received first (first in, first out -- serials carry no expiry the way a lot does, so receipt order
+/// is the natural stand-in) -- a suggestion only; nothing is consumed by asking. Fewer than requested come back if
+/// fewer are on hand; the caller decides whether that is enough.</summary>
+public interface ISerialSuggestions
+{
+    Task<IReadOnlyList<string>> SuggestAsync(Guid itemId, Guid warehouseId, int quantity, CancellationToken cancellationToken = default);
+}
+
 public sealed record WarehouseInfo(Guid Id, Guid CompanyId, Guid? BranchId, string Code, LocalizedText Name, string Kind, bool BinsEnabled, bool? AllowNegativeStock, bool IsActive);
 
 public sealed record BinInfo(Guid Id, Guid WarehouseId, string Code, string? Zone, string Kind, bool IsActive);

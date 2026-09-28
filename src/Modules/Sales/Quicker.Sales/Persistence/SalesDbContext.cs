@@ -70,6 +70,7 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
             b.ToTable("sls_shipment_lines", "app");
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.SleIds).HasColumnType("jsonb");
+            b.Property(static x => x.SerialNumbers).HasColumnType("jsonb");
         });
 
         base.OnModelCreating(modelBuilder);

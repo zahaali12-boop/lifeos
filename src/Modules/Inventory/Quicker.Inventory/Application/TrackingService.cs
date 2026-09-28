@@ -658,8 +658,15 @@ public sealed record SerialHistoryEvent(Guid Id, DateTimeOffset At, DateOnly? Po
 /// <summary>The serial and everything that happened to it, oldest first (hard scenario 13: one screen, one query).</summary>
 public sealed record SerialHistory(SerialInfo Serial, IReadOnlyList<SerialHistoryEvent> Events);
 
-public sealed class SerialService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, IItemDirectory items, IWarehouseDirectory warehouses, ICurrentPrincipal principal, IAuditSink audit, IClock clock)
+public sealed class SerialService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, IItemDirectory items, IWarehouseDirectory warehouses, ICurrentPrincipal principal, IAuditSink audit, IClock clock) : ISerialSuggestions
 {
+    public async Task<IReadOnlyList<string>> SuggestAsync(Guid itemId, Guid warehouseId, int quantity, CancellationToken cancellationToken = default) =>
+        // Ordered by id, not CreatedAt: every id is UUIDv7 (ARCHITECTURE.md's own convention), so it already sorts
+        // by creation instant at finer resolution than the timestamp column -- two serials received moments apart
+        // in the same receipt never tie the way a millisecond-rounded timestamp can.
+        await db.Serials.Where(s => s.ItemId == itemId && s.CurrentWarehouseId == warehouseId && s.Status == SerialStatuses.InStock)
+            .OrderBy(static s => s.Id).Take(quantity).Select(static s => s.SerialNumber).ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<SerialInfo>> ListAsync(Guid? itemId, string? status, Guid? warehouseId, Guid? lotId, string? q, CancellationToken cancellationToken)
     {
         var query = db.Serials.AsQueryable();

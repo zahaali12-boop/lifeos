@@ -58,6 +58,7 @@ public static class InventoryModule
         services.AddScoped<LotService>();
         services.AddScoped<IFefoSuggestions>(static sp => sp.GetRequiredService<LotService>());
         services.AddScoped<SerialService>();
+        services.AddScoped<ISerialSuggestions>(static sp => sp.GetRequiredService<SerialService>());
         services.AddScoped<CountService>();
         services.AddScoped<ReplenishmentService>();
         services.AddScoped<IReplenishmentSuggestions>(static sp => sp.GetRequiredService<ReplenishmentService>());

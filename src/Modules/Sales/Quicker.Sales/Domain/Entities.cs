@@ -323,6 +323,8 @@ public sealed class SalesShipmentLine : ITenantEntity
 
     public string? LotNumber { get; set; }
 
+    public string SerialNumbers { get; set; } = "[]";
+
     public decimal CogsAmount { get; set; }
 
     public Guid? SleId { get; set; }

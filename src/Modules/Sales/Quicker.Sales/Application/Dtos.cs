@@ -206,6 +206,7 @@ public sealed record ShipmentLineSummary(
     string UomCode,
     Guid? BinId,
     string? LotNumber,
+    IReadOnlyList<string> SerialNumbers,
     decimal CogsAmount);
 
 public sealed record ShipmentSummary(

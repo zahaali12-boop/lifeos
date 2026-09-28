@@ -286,12 +286,12 @@ public sealed class ShipmentTests(ApiHostFixture host)
     }
 
     [Fact]
-    public async Task A_quantity_no_single_lot_covers_is_refused_and_a_serial_tracked_item_is_refused_outright()
+    public async Task A_quantity_no_single_lot_covers_is_refused_and_a_lot_and_serial_tracked_item_is_refused_outright()
     {
         var s = await SetUpAsync();
         var owner = s.Owner;
         var milk = (await owner.PostAsync("/api/v1/items", new { code = "MILK", name = Name("Milk 1L", "حليب ١ لتر"), baseUom = "PCS", tracking = "lot", expiryRequired = true, listPrice = 5m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
-        var phone = (await owner.PostAsync("/api/v1/items", new { code = "PHONE", name = Name("Phone", "هاتف"), baseUom = "PCS", tracking = "serial", listPrice = 500m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
+        var serum = (await owner.PostAsync("/api/v1/items", new { code = "SERUM", name = Name("Vaccine", "لقاح"), baseUom = "PCS", tracking = "lot_and_serial", expiryRequired = true, listPrice = 500m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
 
         async Task AdjustAsync(Guid itemId, string? lotNumber, DateOnly? expiresOn, decimal quantity, IReadOnlyList<string>? serialNumbers = null)
         {
@@ -309,14 +309,73 @@ public sealed class ShipmentTests(ApiHostFixture host)
         var (milkCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = milkOrderId, lines = new object[] { new { orderLineId = milkLineId, quantity = 8m } } }, HttpStatusCode.Conflict);
         milkCode.ShouldBe("shipment.no_single_lot_covers_quantity");
 
-        // Serial-tracked items are refused outright, whatever is on hand.
-        await AdjustAsync(phone, null, null, 2m, ["SN-1", "SN-2"]);
-        var phoneOrder = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = phone, quantity = 1m } } });
-        var phoneOrderId = phoneOrder.GetProperty("id").GetGuid();
-        var phoneLineId = phoneOrder.GetProperty("lines")[0].GetProperty("id").GetGuid();
-        await owner.PostAsync($"/api/v1/sales/orders/{phoneOrderId}/confirm", new { }, HttpStatusCode.OK);
-        var (phoneCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = phoneOrderId, lines = new object[] { new { orderLineId = phoneLineId, quantity = 1m } } }, HttpStatusCode.UnprocessableEntity);
-        phoneCode.ShouldBe("shipment.serial_tracked_unsupported");
+        // A lot-and-serial-tracked item is refused outright, whatever is on hand (5.5b still defers it).
+        await AdjustAsync(serum, "LOT-V1", new DateOnly(2026, 10, 1), 2m, ["SN-1", "SN-2"]);
+        var serumOrder = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = serum, quantity = 1m } } });
+        var serumOrderId = serumOrder.GetProperty("id").GetGuid();
+        var serumLineId = serumOrder.GetProperty("lines")[0].GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/orders/{serumOrderId}/confirm", new { }, HttpStatusCode.OK);
+        var (serumCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = serumOrderId, lines = new object[] { new { orderLineId = serumLineId, quantity = 1m } } }, HttpStatusCode.UnprocessableEntity);
+        serumCode.ShouldBe("shipment.serial_tracked_unsupported");
+
+        await owner.AssertInvariantsAsync();
+    }
+
+    /// <summary>Roadmap 5.5b (part 2): a serial-tracked item ships the item's own on-hand serials in the line's
+    /// warehouse, oldest received first, refuses a quantity with too few serials on hand, and a reversal returns
+    /// the exact serials shipped back to stock.</summary>
+    [Fact]
+    public async Task A_serial_tracked_item_ships_its_oldest_on_hand_serials_and_a_reversal_returns_them()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        var phone = (await owner.PostAsync("/api/v1/items", new { code = "PHONE", name = Name("Phone", "هاتف"), baseUom = "PCS", tracking = "serial", listPrice = 500m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
+
+        async Task<Guid> AdjustAsync(IReadOnlyList<string> serialNumbers)
+        {
+            var adjustment = await owner.PostAsync("/api/v1/inventory/adjustments", new { companyId = s.CompanyId, warehouseId = s.Warehouse, kind = "opening", lines = new object[] { new { itemId = phone, quantity = (decimal)serialNumbers.Count, unitCost = 200m, reasonCode = "FOUND", serialNumbers } } });
+            var id = adjustment.GetProperty("id").GetGuid();
+            await owner.PostAsync($"/api/v1/inventory/adjustments/{id}/submit", new { }, HttpStatusCode.OK);
+            return id;
+        }
+
+        // Two separate receipts, so the earlier one's serials are the ones a FIFO pick should choose.
+        await AdjustAsync(["SN-OLD-1", "SN-OLD-2"]);
+        await AdjustAsync(["SN-NEW-1", "SN-NEW-2", "SN-NEW-3"]);
+
+        var order = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = phone, quantity = 2m } } });
+        var orderId = order.GetProperty("id").GetGuid();
+        var lineId = order.GetProperty("lines")[0].GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/orders/{orderId}/confirm", new { }, HttpStatusCode.OK);
+
+        var draft = await owner.PostAsync("/api/v1/sales/shipments", new { orderId, lines = new object[] { new { orderLineId = lineId, quantity = 2m } } });
+        var draftSerials = draft.GetProperty("lines")[0].GetProperty("serialNumbers").EnumerateArray().Select(static e => e.GetString()).ToList();
+        draftSerials.ShouldBe(["SN-OLD-1", "SN-OLD-2"]);
+
+        var posted = await owner.PostAsync($"/api/v1/sales/shipments/{draft.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        var postedLine = posted.GetProperty("lines")[0];
+        postedLine.GetProperty("serialNumbers").EnumerateArray().Select(static e => e.GetString()).ToList().ShouldBe(["SN-OLD-1", "SN-OLD-2"]);
+        postedLine.GetProperty("cogsAmount").GetDecimal().ShouldBe(400m);
+
+        var soldSerial = await owner.GetOkAsync($"/api/v1/inventory/serials/by-number?itemId={phone}&serialNumber=SN-OLD-1");
+        soldSerial.GetProperty("status").GetString().ShouldBe("sold");
+
+        // The three remaining serials cover a fresh order of 3 -- reservation is a quantity, blind to which units --
+        // but one of them goes for repair before shipping, so only two are actually in stock to pick from.
+        var order2 = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = phone, quantity = 3m } } });
+        var order2Id = order2.GetProperty("id").GetGuid();
+        var line2Id = order2.GetProperty("lines")[0].GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/orders/{order2Id}/confirm", new { }, HttpStatusCode.OK);
+        var newSerial1Id = (await owner.GetOkAsync($"/api/v1/inventory/serials/by-number?itemId={phone}&serialNumber=SN-NEW-1")).GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/inventory/serials/{newSerial1Id}/status", new { status = "in_repair" }, HttpStatusCode.OK);
+        var (shortCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = order2Id, lines = new object[] { new { orderLineId = line2Id, quantity = 3m } } }, HttpStatusCode.Conflict);
+        shortCode.ShouldBe("shipment.not_enough_serials_on_hand");
+        await owner.PostAsync($"/api/v1/inventory/serials/{newSerial1Id}/status", new { status = "in_stock" }, HttpStatusCode.OK);
+
+        var reversed = await owner.PostAsync($"/api/v1/sales/shipments/{draft.GetProperty("id").GetGuid()}/reverse", new { reason = "Wrong customer" }, HttpStatusCode.OK);
+        reversed.GetProperty("status").GetString().ShouldBe("reversed");
+        var returnedSerial = await owner.GetOkAsync($"/api/v1/inventory/serials/by-number?itemId={phone}&serialNumber=SN-OLD-1");
+        returnedSerial.GetProperty("status").GetString().ShouldBe("returned");
 
         await owner.AssertInvariantsAsync();
     }

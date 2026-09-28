@@ -25,9 +25,11 @@ namespace Quicker.Sales.Application;
 /// leaves the remainder reserved for a later one (partial shipments, roadmap 5.5 acceptance). A lot-tracked item
 /// ships from the single earliest-expiring lot with enough available stock to cover the whole line
 /// (<see cref="IFefoSuggestions"/>, roadmap 5.5b: a quantity no single lot covers is refused, asking for a smaller
-/// quantity or a second shipment, rather than splitting one line across lots). Serial-tracked lines are still
-/// refused; a real pick-list document with bin-sequence ordering, a mobile picking screen and packages follow later
-/// in 5.5b/5.5c.
+/// quantity or a second shipment, rather than splitting one line across lots). A serial-tracked item ships the
+/// item's own on-hand serials in the line's warehouse, oldest received first (<see cref="ISerialSuggestions"/>);
+/// not enough on hand is refused. A lot-and-serial item (both tracked at once) is still refused -- it needs a lot
+/// chosen first and then serials from within it, deferred along with a real pick-list document with bin-sequence
+/// ordering, a mobile picking screen and packages.
 /// </summary>
 public sealed class ShipmentService(
     SalesDbContext db,
@@ -37,6 +39,7 @@ public sealed class ShipmentService(
     IStockReservations reservations,
     IInventoryPosting inventory,
     IFefoSuggestions fefo,
+    ISerialSuggestions serials,
     INumberAllocator numbering,
     ICustomFieldValidator customFields,
     ICurrentPrincipal principal,
@@ -205,6 +208,8 @@ public sealed class ShipmentService(
         {
             var orderLine = order.Lines.Single(l => l.Id == line.OrderLineId);
             var warehouseId = orderLine.WarehouseId ?? order.WarehouseId;
+            var lineSerials = Serials(line.SerialNumbers);
+            var serialsTaken = 0;
             var remaining = line.Quantity;
             foreach (var reservation in activeReservations.Where(r => r.SourceLineId == line.OrderLineId))
             {
@@ -219,8 +224,15 @@ public sealed class ShipmentService(
                     continue;
                 }
 
+                IReadOnlyList<string>? takeSerials = null;
+                if (lineSerials.Count > 0)
+                {
+                    takeSerials = lineSerials.Skip(serialsTaken).Take((int)take).ToList();
+                    serialsTaken += takeSerials.Count;
+                }
+
                 stockLines.Add(new StockLine(line.ItemId, StockEntryTypes.SaleShipment, take, warehouseId, VariantId: line.VariantId, BinId: line.BinId,
-                    SourceLineId: line.Id, ReservationId: reservation.Id, PartnerId: order.PartnerId, LotNumber: line.LotNumber));
+                    SourceLineId: line.Id, ReservationId: reservation.Id, PartnerId: order.PartnerId, LotNumber: line.LotNumber, SerialNumbers: takeSerials));
                 remaining -= take;
             }
 
@@ -293,7 +305,7 @@ public sealed class ShipmentService(
 
         var order = await db.Orders.Include(static o => o.Lines).SingleAsync(o => o.Id == shipment.OrderId, cancellationToken);
         var stockLines = shipment.Lines.Select(l => new StockLine(l.ItemId, StockEntryTypes.SaleReturn, l.Quantity, order.Lines.Single(ol => ol.Id == l.OrderLineId).WarehouseId ?? order.WarehouseId,
-            VariantId: l.VariantId, BinId: l.BinId, SourceLineId: l.Id, AppliesToSleId: l.SleId, PartnerId: shipment.PartnerId, LotNumber: l.LotNumber)).ToList();
+            VariantId: l.VariantId, BinId: l.BinId, SourceLineId: l.Id, AppliesToSleId: l.SleId, PartnerId: shipment.PartnerId, LotNumber: l.LotNumber, SerialNumbers: Serials(l.SerialNumbers))).ToList();
         var posted = await inventory.PostAsync(new StockPostingRequest(shipment.CompanyId, reversalDate, DocumentType, shipment.Id, stockLines, IdempotencyKey: $"sales_shipment_reversal:{shipment.Id}"), cancellationToken);
         if (posted.IsFailure)
         {
@@ -385,9 +397,9 @@ public sealed class ShipmentService(
                 return Error.NotFound("item", orderLine.ItemId);
             }
 
-            if (item.Tracking is "serial" or "lot_and_serial")
+            if (item.Tracking == "lot_and_serial")
             {
-                return Error.Validation("shipment.serial_tracked_unsupported", "Serial-tracked items are not shipped from this screen yet (5.5b).").WithWhy(("lineNo", lineNo), ("item", item.Code), ("tracking", item.Tracking));
+                return Error.Validation("shipment.serial_tracked_unsupported", "Lot-and-serial items are not shipped from this screen yet (5.5b).").WithWhy(("lineNo", lineNo), ("item", item.Code), ("tracking", item.Tracking));
             }
 
             var reserved = activeReservations.Where(r => r.SourceLineId == orderLine.Id).Sum(static r => r.Remaining);
@@ -396,10 +408,11 @@ public sealed class ShipmentService(
                 return Error.Conflict("shipment.exceeds_reserved", "The shipment exceeds what the order line has reserved.").WithWhy(("lineNo", lineNo), ("orderLineNo", orderLine.LineNo), ("reserved", reserved), ("requested", l.Quantity));
             }
 
+            var lineWarehouseId = orderLine.WarehouseId ?? order.WarehouseId;
             string? lotNumber = null;
+            IReadOnlyList<string>? serialNumbers = null;
             if (item.Tracking == "lot")
             {
-                var lineWarehouseId = orderLine.WarehouseId ?? order.WarehouseId;
                 var suggestions = await fefo.SuggestAsync(order.CompanyId, item.Id, lineWarehouseId, l.Quantity, postingDate, cancellationToken);
                 var chosen = suggestions.FirstOrDefault(s => s.Available >= l.Quantity);
                 if (chosen is null)
@@ -408,6 +421,21 @@ public sealed class ShipmentService(
                 }
 
                 lotNumber = chosen.LotNumber;
+            }
+            else if (item.Tracking == "serial")
+            {
+                if (l.Quantity != decimal.Truncate(l.Quantity))
+                {
+                    return Error.Validation("shipment.serial_quantity_not_whole", "A serial-tracked item ships in whole units.").WithWhy(("lineNo", lineNo), ("item", item.Code), ("quantity", l.Quantity));
+                }
+
+                var picked = await serials.SuggestAsync(item.Id, lineWarehouseId, (int)l.Quantity, cancellationToken);
+                if (picked.Count < l.Quantity)
+                {
+                    return Error.Conflict("shipment.not_enough_serials_on_hand", "Not enough serialised units are on hand to cover this quantity.").WithWhy(("lineNo", lineNo), ("item", item.Code), ("available", picked.Count), ("requested", l.Quantity));
+                }
+
+                serialNumbers = picked;
             }
 
             lines.Add(new SalesShipmentLine
@@ -424,6 +452,7 @@ public sealed class ShipmentService(
                 QuantityBase = l.Quantity,
                 BinId = l.BinId,
                 LotNumber = lotNumber,
+                SerialNumbers = JsonSerializer.Serialize(serialNumbers ?? []),
                 CreatedAt = clock.UtcNow,
             });
         }
@@ -542,10 +571,12 @@ public sealed class ShipmentService(
         {
             var item = await items.FindAsync(l.ItemId, cancellationToken);
             var uom = (await items.UomsAsync(l.ItemId, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
-            lines.Add(new ShipmentLineSummary(l.Id, l.LineNo, l.OrderLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Quantity, l.UomId, uom?.UomCode ?? string.Empty, l.BinId, l.LotNumber, l.CogsAmount));
+            lines.Add(new ShipmentLineSummary(l.Id, l.LineNo, l.OrderLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Quantity, l.UomId, uom?.UomCode ?? string.Empty, l.BinId, l.LotNumber, Serials(l.SerialNumbers), l.CogsAmount));
         }
 
         return new ShipmentSummary(s.Id, s.CompanyId, s.Number, s.OrderId, order.Number, s.PartnerId, partner?.PartnerCode ?? string.Empty, partner?.PartnerName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal),
             s.WarehouseId, s.PostingDate, s.Status, s.Carrier, s.TrackingNumber, lines.Sum(static l => l.CogsAmount), s.Notes, Shared.Parse(s.CustomFields), s.ReversalReason, s.PostedAt, lines, s.UpdatedAt);
     }
+
+    private static IReadOnlyList<string> Serials(string json) => JsonSerializer.Deserialize<List<string>>(json) ?? [];
 }
