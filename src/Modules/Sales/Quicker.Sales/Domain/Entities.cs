@@ -237,3 +237,95 @@ public sealed class SalesOrderLine : ITenantEntity
 
     public Guid? PurchaseOrderLineId { get; set; }
 }
+
+/// <summary>A shipment of a confirmed order's reserved lines (roadmap 5.5a): posts as
+/// <c>StockEntryTypes.SaleShipment</c>, consuming the reservation and letting the costing engine value and book cost
+/// of goods sold exactly as it already does for every outbound movement (ADR-0008); nothing new there, only this
+/// document. A partial shipment leaves the remainder reserved for a later one.</summary>
+public sealed class SalesShipment : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? BranchId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public Guid OrderId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    public string? Carrier { get; set; }
+
+    public string? TrackingNumber { get; set; }
+
+    public Guid? StockPostingId { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalPostingId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public string? Notes { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<SalesShipmentLine> Lines { get; } = [];
+}
+
+public sealed class SalesShipmentLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ShipmentId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid OrderLineId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid UomId { get; set; }
+
+    public decimal QuantityBase { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public decimal CogsAmount { get; set; }
+
+    public Guid? SleId { get; set; }
+
+    public string SleIds { get; set; } = "[]";
+
+    public DateTimeOffset CreatedAt { get; set; }
+}

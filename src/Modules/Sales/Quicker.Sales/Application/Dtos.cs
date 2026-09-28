@@ -176,3 +176,55 @@ public sealed record OrderSummary(
     string? CancelReason,
     IReadOnlyList<OrderLineSummary> Lines,
     DateTimeOffset UpdatedAt);
+
+/// <summary>A shipment line's quantity is always the item's base unit, exactly like the reservation and
+/// <c>qty_shipped</c> it consumes (A-152's own reasoning extended here) -- there is no unit to convert.</summary>
+public sealed record SaveShipmentLineRequest(Guid OrderLineId, decimal Quantity, Guid? BinId = null);
+
+public sealed record SaveShipmentRequest(
+    Guid OrderId,
+    IReadOnlyList<SaveShipmentLineRequest> Lines,
+    DateOnly? PostingDate = null,
+    string? Carrier = null,
+    string? TrackingNumber = null,
+    string? Notes = null,
+    Guid? BranchId = null,
+    JsonElement? CustomFields = null);
+
+public sealed record ReverseShipmentRequest(string Reason, DateOnly? ReversalDate = null);
+
+public sealed record ShipmentLineSummary(
+    Guid Id,
+    int LineNo,
+    Guid OrderLineId,
+    Guid ItemId,
+    string ItemCode,
+    IReadOnlyDictionary<string, string> ItemName,
+    Guid? VariantId,
+    decimal Quantity,
+    Guid UomId,
+    string UomCode,
+    Guid? BinId,
+    decimal CogsAmount);
+
+public sealed record ShipmentSummary(
+    Guid Id,
+    Guid CompanyId,
+    string Number,
+    Guid OrderId,
+    string OrderNumber,
+    Guid PartnerId,
+    string PartnerCode,
+    IReadOnlyDictionary<string, string> PartnerName,
+    Guid WarehouseId,
+    DateOnly PostingDate,
+    string Status,
+    string? Carrier,
+    string? TrackingNumber,
+    decimal TotalCogs,
+    string? Notes,
+    JsonElement CustomFields,
+    string? ReversalReason,
+    DateTimeOffset? PostedAt,
+    IReadOnlyList<ShipmentLineSummary> Lines,
+    DateTimeOffset UpdatedAt);

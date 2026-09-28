@@ -16,6 +16,7 @@ public static class SalesModule
         services.AddModuleDbContext<SalesDbContext>();
         services.AddScoped<QuotationService>();
         services.AddScoped<OrderService>();
+        services.AddScoped<ShipmentService>();
         services.AddScoped<IWorkflowSubjectProvider, SalesOrderWorkflowSubject>();
         return services;
     }

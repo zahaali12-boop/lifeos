@@ -8328,6 +8328,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Shipments, newest first, filtered by company, status or order */
+        get: operations["getSalesShipments"];
+        put?: never;
+        /** A draft shipment of a confirmed order's reserved lines, in full or in part */
+        post: operations["postSalesShipments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/shipments/{shipmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The shipment with its lines and, once posted, their booked cost of goods sold */
+        get: operations["getSalesShipmentsByShipmentId"];
+        /** Re-validates a draft shipment's lines against the order's reservations; only a draft is edited */
+        put: operations["putSalesShipmentsByShipmentId"];
+        post?: never;
+        /** Deletes a draft shipment; a posted one is reversed instead */
+        delete: operations["deleteSalesShipmentsByShipmentId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/shipments/{shipmentId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the shipment: consumes the order lines' reservations, moves the stock out and books cost of goods sold */
+        post: operations["postSalesShipmentsByShipmentIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/shipments/{shipmentId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted shipment with a reason: the stock returns and re-reserves for the order */
+        post: operations["postSalesShipmentsByShipmentIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -14235,6 +14306,11 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        ReverseShipmentRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         RevokeSodExceptionRequest: {
             reason: string;
         };
@@ -16167,6 +16243,31 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        /**
+         * @description A shipment line's quantity is always the item's base unit, exactly like the reservation and
+         *                 `qty_shipped` it consumes (A-152's own reasoning extended here) -- there is no unit to convert.
+         */
+        SaveShipmentLineRequest: {
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            binId?: null | string;
+        };
+        SaveShipmentRequest: {
+            /** Format: uuid */
+            orderId: string;
+            lines: components["schemas"]["SaveShipmentLineRequest"][];
+            /** Format: date */
+            postingDate?: null | string;
+            carrier?: null | string;
+            trackingNumber?: null | string;
+            notes?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            customFields?: unknown;
+        };
         SaveSodRuleRequest: {
             permissionA: string;
             permissionB: string;
@@ -16794,6 +16895,64 @@ export interface components {
             status: string;
             /** Format: date-time */
             createdAt: string;
+        };
+        ShipmentLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: uuid */
+            binId: null | string;
+            /** Format: double */
+            cogsAmount: number | string;
+        };
+        ShipmentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: uuid */
+            orderId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            /** Format: date */
+            postingDate: string;
+            status: string;
+            carrier: null | string;
+            trackingNumber: null | string;
+            /** Format: double */
+            totalCogs: number | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            reversalReason: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
+            lines: components["schemas"]["ShipmentLineSummary"][];
+            /** Format: date-time */
+            updatedAt: string;
         };
         ShipTransferRequest: {
             /** Format: date */
@@ -33938,6 +34097,170 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderSummary"];
+                };
+            };
+        };
+    };
+    getSalesShipments: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                orderId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"][];
+                };
+            };
+        };
+    };
+    postSalesShipments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    getSalesShipmentsByShipmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    putSalesShipmentsByShipmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    deleteSalesShipmentsByShipmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postSalesShipmentsByShipmentIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    postSalesShipmentsByShipmentIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
                 };
             };
         };

@@ -68,6 +68,29 @@ public static class SalesEndpoints
             .RequirePermission(SalesPermissions.OrderManage)
             .WithSummary("Records the purchase order line raised for a drop-ship line, once");
 
+        var shipments = sales.MapGroup("/shipments");
+        shipments.MapGet("/", async (Guid? companyId, string? status, Guid? orderId, ShipmentService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, orderId, ct)))
+            .RequirePermission(SalesPermissions.ShipmentRead)
+            .WithSummary("Shipments, newest first, filtered by company, status or order");
+        shipments.MapPost("/", async (SaveShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static s => $"/api/v1/sales/shipments/{s.Id}"))
+            .RequirePermission(SalesPermissions.ShipmentManage)
+            .WithSummary("A draft shipment of a confirmed order's reserved lines, in full or in part");
+        shipments.MapGet("/{shipmentId:guid}", async (Guid shipmentId, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(shipmentId, ct)))
+            .RequirePermission(SalesPermissions.ShipmentRead)
+            .WithSummary("The shipment with its lines and, once posted, their booked cost of goods sold");
+        shipments.MapPut("/{shipmentId:guid}", async (Guid shipmentId, SaveShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(shipmentId, request, ct)))
+            .RequirePermission(SalesPermissions.ShipmentManage)
+            .WithSummary("Re-validates a draft shipment's lines against the order's reservations; only a draft is edited");
+        shipments.MapDelete("/{shipmentId:guid}", async (Guid shipmentId, ShipmentService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(shipmentId, ct)))
+            .RequirePermission(SalesPermissions.ShipmentManage)
+            .WithSummary("Deletes a draft shipment; a posted one is reversed instead");
+        shipments.MapPost("/{shipmentId:guid}/post", async (Guid shipmentId, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(shipmentId, ct)))
+            .RequirePermission(SalesPermissions.ShipmentPost)
+            .WithSummary("Posts the shipment: consumes the order lines' reservations, moves the stock out and books cost of goods sold");
+        shipments.MapPost("/{shipmentId:guid}/reverse", async (Guid shipmentId, ReverseShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(shipmentId, request, ct)))
+            .RequirePermission(SalesPermissions.ShipmentPost)
+            .WithSummary("Reverses a posted shipment with a reason: the stock returns and re-reserves for the order");
+
         return api;
     }
 }

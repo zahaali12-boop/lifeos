@@ -1993,9 +1993,12 @@ Landed costs may be posted **before** the charge invoices exist (`is_estimate` a
 `customer_account_id` this sketch originally used: `ICustomerDirectory` (built in 5.1) never introduced a separate
 customer-account id, so a sales document names its customer the same way `pur_orders` names its supplier — by
 partner (A-151). `sls_orders` also drops the sketch's `sls_credit_holds` table for the credit check, reusing the
-generic workflow block/override mechanism `pur_invoices` already uses for match variance instead (A-152). The other
-`sls_*` tables below are still the Phase-0 sketch, not yet built; expect the same corrections on each as it is
-implemented.
+generic workflow block/override mechanism `pur_invoices` already uses for match variance instead (A-152).
+`sls_shipments`/`sls_shipment_lines` are also built (roadmap 5.5a, A-153), keyed by `order_id`/`partner_id` rather
+than the sketch's `customer_account_id`/`ship_to_address_id`, without the sketch's `picked`/`packed` statuses or
+per-line `tracking` (lot/serial-tracked items are refused for this slice, `shipment.tracked_item_unsupported`) —
+picking and packages (`sls_packages`, still just the sketch below) follow in 5.5b. The other `sls_*` tables below are
+still the Phase-0 sketch, not yet built; expect the same corrections on each as it is implemented.
 
 ```mermaid
 erDiagram
@@ -2128,14 +2131,17 @@ erDiagram
     uuid company_id
     uuid branch_id
     text number
-    uuid customer_account_id
+    uuid order_id FK
+    uuid partner_id
     uuid warehouse_id
     date posting_date
-    uuid ship_to_address_id
     text carrier
     text tracking_number
-    text status "draft | picked | packed | posted | reversed"
+    text status "draft | posted | reversed"
+    uuid stock_posting_id
     uuid journal_entry_id
+    uuid reversal_posting_id
+    text reversal_reason
     jsonb custom_fields
   }
   sls_shipment_lines {
@@ -2144,15 +2150,13 @@ erDiagram
     uuid order_line_id FK
     uuid item_id
     uuid variant_id
-    numeric quantity
+    numeric quantity "base unit (roadmap 5.5a: no entered-unit conversion yet)"
     uuid uom_id
     numeric quantity_base
     uuid bin_id
-    jsonb tracking
-    numeric qty_invoiced
-    numeric qty_returned
+    numeric cogs_amount
     uuid sle_id
-    numeric cogs_amount_fc
+    jsonb sle_ids
   }
   sls_packages {
     uuid id PK

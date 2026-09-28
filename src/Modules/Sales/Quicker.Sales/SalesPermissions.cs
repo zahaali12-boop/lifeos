@@ -11,6 +11,9 @@ public static class SalesPermissions
     public const string QuoteManage = "sales.quote.manage";
     public const string OrderRead = "sales.order.read";
     public const string OrderManage = "sales.order.manage";
+    public const string ShipmentRead = "sales.shipment.read";
+    public const string ShipmentManage = "sales.shipment.manage";
+    public const string ShipmentPost = "sales.shipment.post";
 
     // Forward-declared for the default SoD rule (RoleTemplates.cs) pairing it with receivables.writeoff.post: no
     // invoice endpoint checks it yet (5.6), but once any sales.* permission ships, a rule naming a sales.* key it
@@ -24,6 +27,9 @@ public static class SalesPermissions
         new(QuoteManage, "sales", "Create, edit, send, accept and reject sales quotations"),
         new(OrderRead, "sales", "Read sales orders"),
         new(OrderManage, "sales", "Create, confirm, cancel and convert sales orders from quotations"),
+        new(ShipmentRead, "sales", "Read sales shipments"),
+        new(ShipmentManage, "sales", "Create and edit draft sales shipments"),
+        new(ShipmentPost, "sales", "Post sales shipments into stock and reverse them"),
         new(InvoicePost, "sales", "Post sales invoices into the books and reverse them"),
     ];
 }
