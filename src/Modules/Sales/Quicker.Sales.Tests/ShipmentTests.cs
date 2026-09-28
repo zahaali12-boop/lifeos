@@ -203,4 +203,44 @@ public sealed class ShipmentTests(ApiHostFixture host)
         var (code, _) = await reader.Client.PostErrorAsync("/api/v1/sales/shipments", new { orderId, lines = new object[] { new { orderLineId = lineId, quantity = 5m } } }, HttpStatusCode.Forbidden);
         code.ShouldNotBeNull();
     }
+
+    /// <summary>Roadmap 5.5's own acceptance criterion (hard scenario 4 on the sales path, 200 parallel rounds):
+    /// the product brief's scenario is two users selling the last unit at the same moment, so this repeats that
+    /// exact race two hundred times over -- a fresh single unit of stock and two draft shipments contending for its
+    /// one reservation, posted at the same moment -- rather than needing two hundred simultaneous contenders in one
+    /// round, which would only test the sandbox's connection budget rather than the engine's correctness. Every
+    /// round leaves exactly one shipment posted, one refused, and the balance back at zero.</summary>
+    [Fact]
+    public async Task Two_users_race_the_last_unit_two_hundred_times_over_and_exactly_one_wins_every_round()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        var wins = 0;
+        var losses = 0;
+        for (var round = 0; round < 200; round++)
+        {
+            await StockAsync(owner, s.CompanyId, s.Warehouse, s.Tea, 1m);
+            var (orderId, lineId) = await ConfirmedOrderAsync(s, 1m);
+            var firstShipment = (await owner.PostAsync("/api/v1/sales/shipments", new { orderId, lines = new object[] { new { orderLineId = lineId, quantity = 1m } } })).GetProperty("id").GetGuid();
+            var secondShipment = (await owner.PostAsync("/api/v1/sales/shipments", new { orderId, lines = new object[] { new { orderLineId = lineId, quantity = 1m } } })).GetProperty("id").GetGuid();
+
+            var posts = new[] { firstShipment, secondShipment }.Select(async id =>
+            {
+                using var client = Api.ClientFor(s.Ws.AccessToken);
+                var response = await client.PostAsJsonAsync($"/api/v1/sales/shipments/{id}/post", new { }, ApiFixture.Json);
+                return response.StatusCode;
+            });
+            var outcomes = await Task.WhenAll(posts);
+            var roundWins = outcomes.Count(static c => c == HttpStatusCode.OK);
+            roundWins.ShouldBe(1, $"round {round}: exactly one of the two racing shipments posts the last unit");
+            wins += roundWins;
+            losses += outcomes.Length - roundWins;
+
+            (await OnHandAsync(s, s.Tea)).ShouldBe(0m, $"round {round}: the one unit ships and nothing is left over");
+        }
+
+        wins.ShouldBe(200);
+        losses.ShouldBe(200);
+        await owner.AssertInvariantsAsync();
+    }
 }
