@@ -10560,6 +10560,7 @@ export interface components {
             position: null | number | string;
             fields: string[];
         };
+        /** @description One lot a first-expiry-first-out plan would take from, and how much (roadmap 3.5). */
         FefoSuggestion: {
             /** Format: uuid */
             lotId: string;
@@ -16918,6 +16919,7 @@ export interface components {
             uomCode: string;
             /** Format: uuid */
             binId: null | string;
+            lotNumber: null | string;
             /** Format: double */
             cogsAmount: number | string;
         };

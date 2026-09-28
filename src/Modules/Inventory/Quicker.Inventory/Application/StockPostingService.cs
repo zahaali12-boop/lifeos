@@ -45,7 +45,10 @@ public sealed class StockPostingService(
         public string LockOrder => $"{CompanyId:N}{ItemId:N}{VariantId:N}{WarehouseId:N}{BinId:N}{LotId:N}{SerialId:N}";
     }
 
-    private sealed record ResolvedLine(StockLine Source, ItemInfo Item, WarehouseInfo Warehouse, decimal BaseQuantity, Guid EnteredUomId, string EnteredUomCode, Reservation? Reservation, BalanceKey Key);
+    /// <summary>ReservationKey is the balance row the reservation's own hold lives on -- the same as Key, unless the
+    /// reservation did not name a lot or serial (an "any lot" hold) but the line resolved to one of the item's own
+    /// lots or serials, in which case the hold to release is still on the "any lot" row.</summary>
+    private sealed record ResolvedLine(StockLine Source, ItemInfo Item, WarehouseInfo Warehouse, decimal BaseQuantity, Guid EnteredUomId, string EnteredUomCode, Reservation? Reservation, BalanceKey Key, BalanceKey? ReservationKey);
 
     private sealed record LockedBalance(decimal OnHand, decimal Reserved, decimal QualityHold);
 
@@ -96,14 +99,15 @@ public sealed class StockPostingService(
             resolved.AddRange(result.Value);
         }
 
-        // Reservations consumed by this posting, so the availability check counts them as ours.
-        var consumedByKey = resolved.Where(static l => l.Reservation is not null).GroupBy(static l => l.Key).ToDictionary(static g => g.Key, static g => g.Sum(static l => -l.BaseQuantity));
+        // Reservations consumed by this posting, so the availability check counts them as ours -- on the row the
+        // hold actually lives on, which for an "any lot" reservation is not the lot the line resolved to.
+        var consumedByKey = resolved.Where(static l => l.Reservation is not null).GroupBy(static l => l.ReservationKey ?? l.Key).ToDictionary(static g => g.Key, static g => g.Sum(static l => -l.BaseQuantity));
         var deltas = resolved.GroupBy(static l => l.Key).ToDictionary(static g => g.Key, static g => g.Sum(static l => l.BaseQuantity));
         var now = clock.UtcNow;
         var uow = unitOfWork.Current;
-        foreach (var balanceKey in deltas.Keys.OrderBy(static k => k.LockOrder, StringComparer.Ordinal))
+        foreach (var balanceKey in deltas.Keys.Union(consumedByKey.Keys).OrderBy(static k => k.LockOrder, StringComparer.Ordinal))
         {
-            var delta = deltas[balanceKey];
+            var delta = deltas.GetValueOrDefault(balanceKey);
             var locked = await LockAsync(uow, balanceKey, cancellationToken);
             var consumed = consumedByKey.GetValueOrDefault(balanceKey);
             var availableForThis = locked.OnHand - locked.Reserved - locked.QualityHold + consumed;
@@ -341,7 +345,7 @@ public sealed class StockPostingService(
             {
                 var unitLine = line with { Quantity = sign == 0 ? perUnit : 1m, UomId = item.BaseUomId, LotId = tracked.Value.LotId, SerialId = serialId, SerialNumbers = null, ReservationId = null };
                 var unitKey = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, tracked.Value.LotId ?? Guid.Empty, serialId);
-                unitLines.Add(new ResolvedLine(unitLine, item, warehouse, perUnit, item.BaseUomId, item.BaseUomCode, null, unitKey));
+                unitLines.Add(new ResolvedLine(unitLine, item, warehouse, perUnit, item.BaseUomId, item.BaseUomCode, null, unitKey, null));
             }
 
             return unitLines;
@@ -375,7 +379,8 @@ public sealed class StockPostingService(
         }
 
         var key = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, line.LotId ?? Guid.Empty, line.SerialId ?? Guid.Empty);
-        return new List<ResolvedLine> { new(line, item, warehouse, baseQuantity, converted.Value.EnteredUomId, converted.Value.EnteredUomCode, reservation, key) };
+        var reservationKey = reservation is null ? null : key with { LotId = reservation.LotId ?? Guid.Empty, SerialId = reservation.SerialId ?? Guid.Empty };
+        return new List<ResolvedLine> { new(line, item, warehouse, baseQuantity, converted.Value.EnteredUomId, converted.Value.EnteredUomCode, reservation, key, reservationKey) };
     }
 
     private async Task<Result<PeriodState>> PeriodForAsync(CompanyInfo company, DateOnly date, CancellationToken cancellationToken)

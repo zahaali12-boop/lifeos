@@ -3099,6 +3099,7 @@
     "trackingNumber": "Tracking number",
     "reserved": "Reserved",
     "toShip": "To ship",
+    "lot": "Lot",
     "cogsAmount": "Cost of goods sold",
     "totalCogs": "Total cost of goods sold",
     "post": "Post",

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using Quicker.Identity.TestSupport;
@@ -241,6 +242,82 @@ public sealed class ShipmentTests(ApiHostFixture host)
 
         wins.ShouldBe(200);
         losses.ShouldBe(200);
+        await owner.AssertInvariantsAsync();
+    }
+
+    /// <summary>Roadmap 5.5b (part 1): a lot-tracked item ships from the single earliest-expiring lot with enough
+    /// available stock to cover the whole line (first-expiry-first-out), refuses a quantity no single lot covers,
+    /// and still refuses a serial-tracked item outright.</summary>
+    [Fact]
+    public async Task A_lot_tracked_item_ships_from_the_earliest_expiring_lot_that_covers_the_quantity()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        var milk = (await owner.PostAsync("/api/v1/items", new { code = "MILK", name = Name("Milk 1L", "حليب ١ لتر"), baseUom = "PCS", tracking = "lot", expiryRequired = true, listPrice = 5m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
+
+        async Task<Guid> AdjustAsync(string lotNumber, DateOnly expiresOn, decimal quantity)
+        {
+            var adjustment = await owner.PostAsync("/api/v1/inventory/adjustments", new { companyId = s.CompanyId, warehouseId = s.Warehouse, kind = "opening", lines = new object[] { new { itemId = milk, quantity, unitCost = 10m, reasonCode = "FOUND", lotNumber, expiresOn = expiresOn.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) } } });
+            await owner.PostAsync($"/api/v1/inventory/adjustments/{adjustment.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+            return adjustment.GetProperty("id").GetGuid();
+        }
+
+        // The newer lot has plenty of stock but expires later; the older one, expiring sooner, has just enough.
+        await AdjustAsync("LOT-NEW", new DateOnly(2026, 12, 1), 20m);
+        await AdjustAsync("LOT-OLD", new DateOnly(2026, 10, 1), 5m);
+
+        var order = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = milk, quantity = 5m } } });
+        var orderId = order.GetProperty("id").GetGuid();
+        var lineId = order.GetProperty("lines")[0].GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/orders/{orderId}/confirm", new { }, HttpStatusCode.OK);
+
+        var draft = await owner.PostAsync("/api/v1/sales/shipments", new { orderId, lines = new object[] { new { orderLineId = lineId, quantity = 5m } } });
+        draft.GetProperty("lines")[0].GetProperty("lotNumber").GetString().ShouldBe("LOT-OLD");
+        var posted = await owner.PostAsync($"/api/v1/sales/shipments/{draft.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
+        posted.GetProperty("lines")[0].GetProperty("lotNumber").GetString().ShouldBe("LOT-OLD");
+        posted.GetProperty("lines")[0].GetProperty("cogsAmount").GetDecimal().ShouldBe(50m);
+
+        var lots = await owner.GetOkAsync($"/api/v1/inventory/lots?itemId={milk}");
+        var oldLot = lots.EnumerateArray().Single(l => l.GetProperty("lotNumber").GetString() == "LOT-OLD");
+        // LOT-OLD's own 5 units are gone; LOT-NEW's 20 are untouched.
+        (await owner.GetOkAsync($"/api/v1/inventory/lots/{oldLot.GetProperty("id").GetGuid()}/trace")).GetProperty("onHand").GetArrayLength().ShouldBe(0);
+
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
+    public async Task A_quantity_no_single_lot_covers_is_refused_and_a_serial_tracked_item_is_refused_outright()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        var milk = (await owner.PostAsync("/api/v1/items", new { code = "MILK", name = Name("Milk 1L", "حليب ١ لتر"), baseUom = "PCS", tracking = "lot", expiryRequired = true, listPrice = 5m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
+        var phone = (await owner.PostAsync("/api/v1/items", new { code = "PHONE", name = Name("Phone", "هاتف"), baseUom = "PCS", tracking = "serial", listPrice = 500m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
+
+        async Task AdjustAsync(Guid itemId, string? lotNumber, DateOnly? expiresOn, decimal quantity, IReadOnlyList<string>? serialNumbers = null)
+        {
+            var adjustment = await owner.PostAsync("/api/v1/inventory/adjustments", new { companyId = s.CompanyId, warehouseId = s.Warehouse, kind = "opening", lines = new object[] { new { itemId, quantity, unitCost = 10m, reasonCode = "FOUND", lotNumber, expiresOn = expiresOn?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), serialNumbers } } });
+            await owner.PostAsync($"/api/v1/inventory/adjustments/{adjustment.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+        }
+
+        // Two lots of 5 each: enough in total for an order of 8, but no single lot covers it.
+        await AdjustAsync(milk, "LOT-A", new DateOnly(2026, 10, 1), 5m);
+        await AdjustAsync(milk, "LOT-B", new DateOnly(2026, 11, 1), 5m);
+        var milkOrder = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = milk, quantity = 8m } } });
+        var milkOrderId = milkOrder.GetProperty("id").GetGuid();
+        var milkLineId = milkOrder.GetProperty("lines")[0].GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/orders/{milkOrderId}/confirm", new { }, HttpStatusCode.OK);
+        var (milkCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = milkOrderId, lines = new object[] { new { orderLineId = milkLineId, quantity = 8m } } }, HttpStatusCode.Conflict);
+        milkCode.ShouldBe("shipment.no_single_lot_covers_quantity");
+
+        // Serial-tracked items are refused outright, whatever is on hand.
+        await AdjustAsync(phone, null, null, 2m, ["SN-1", "SN-2"]);
+        var phoneOrder = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = phone, quantity = 1m } } });
+        var phoneOrderId = phoneOrder.GetProperty("id").GetGuid();
+        var phoneLineId = phoneOrder.GetProperty("lines")[0].GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/orders/{phoneOrderId}/confirm", new { }, HttpStatusCode.OK);
+        var (phoneCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = phoneOrderId, lines = new object[] { new { orderLineId = phoneLineId, quantity = 1m } } }, HttpStatusCode.UnprocessableEntity);
+        phoneCode.ShouldBe("shipment.serial_tracked_unsupported");
+
         await owner.AssertInvariantsAsync();
     }
 }

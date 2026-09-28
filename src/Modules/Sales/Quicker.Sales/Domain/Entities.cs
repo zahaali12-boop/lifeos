@@ -321,6 +321,8 @@ public sealed class SalesShipmentLine : ITenantEntity
 
     public Guid? BinId { get; set; }
 
+    public string? LotNumber { get; set; }
+
     public decimal CogsAmount { get; set; }
 
     public Guid? SleId { get; set; }

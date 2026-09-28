@@ -331,8 +331,6 @@ public sealed class TrackingResolver(InventoryDbContext db, IUnitOfWorkAccessor 
     }
 }
 
-public sealed record FefoSuggestion(Guid LotId, string LotNumber, DateOnly? ExpiresOn, decimal Available, decimal Take);
-
 // ------------------------------------------------------------------ lots
 
 public sealed record SaveLotRequest(Guid ItemId, string LotNumber, DateOnly? ManufacturedOn = null, DateOnly? ExpiresOn = null, string? SupplierLot = null, Guid? SupplierPartnerId = null, JsonElement? CustomFields = null);
@@ -350,7 +348,7 @@ public sealed record LotTracePartner(Guid PartnerId, decimal Quantity, int Shipm
 /// <summary>Where a lot came from, where it went, where it is, and who received it (hard scenario 12).</summary>
 public sealed record LotTrace(LotInfo Lot, IReadOnlyList<LotTraceMovement> Inbound, IReadOnlyList<LotTraceMovement> Outbound, IReadOnlyList<LotTraceBalance> OnHand, IReadOnlyList<LotTracePartner> ShippedTo, IReadOnlyList<SerialInfo> Serials);
 
-public sealed class LotService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, TrackingResolver tracking, ReservationService reservations, IItemDirectory items, IWarehouseDirectory warehouses, ICustomFieldValidator customFields, IAuditSink audit, IClock clock)
+public sealed class LotService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, TrackingResolver tracking, ReservationService reservations, IItemDirectory items, IWarehouseDirectory warehouses, ICustomFieldValidator customFields, IAuditSink audit, IClock clock) : IFefoSuggestions
 {
     public async Task<IReadOnlyList<LotInfo>> ListAsync(Guid? itemId, string? status, DateOnly? expiringBefore, string? q, CancellationToken cancellationToken)
     {
@@ -579,6 +577,9 @@ public sealed class LotService(InventoryDbContext db, IUnitOfWorkAccessor unitOf
 
     public Task<IReadOnlyList<FefoSuggestion>> SuggestAsync(Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly? asOf, CancellationToken cancellationToken) =>
         tracking.SuggestAsync(companyId, itemId, warehouseId, quantity, asOf ?? DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), cancellationToken);
+
+    Task<IReadOnlyList<FefoSuggestion>> IFefoSuggestions.SuggestAsync(Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly asOf, CancellationToken cancellationToken) =>
+        SuggestAsync(companyId, itemId, warehouseId, quantity, asOf, cancellationToken);
 
     /// <summary>Lots past their expiry date become expired and their stock goes on hold; returns how many.</summary>
     public async Task<int> ExpireAsync(DateOnly today, CancellationToken cancellationToken)

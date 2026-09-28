@@ -86,11 +86,19 @@ public sealed class ReservationService(InventoryDbContext db, IUnitOfWorkAccesso
         var quantity = converted.Value.Quantity;
         var uow = unitOfWork.Current;
         var locked = await LockAsync(uow, request, cancellationToken);
-        var available = locked.OnHand - locked.Reserved - locked.QualityHold;
+        var (onHand, reserved, hold) = (locked.OnHand, locked.Reserved, locked.QualityHold);
+        if (request.LotId is null && request.SerialId is null && item.Tracking is "lot" or "serial" or "lot_and_serial")
+        {
+            // A lot/serial-tracked item's stock never sits on this "any lot" row -- it lives on each lot's or
+            // serial's own balance row -- so a reservation that does not name one checks the item's total instead.
+            (onHand, reserved, hold) = await LockAllForItemAsync(uow, request, cancellationToken);
+        }
+
+        var available = onHand - reserved - hold;
         if (available < quantity)
         {
             return Error.Conflict("stock.insufficient_to_reserve", $"Only {ItemUomMath.Normalize(available)} {item.BaseUomCode} of {item.Code} is available in {warehouse.Code}.")
-                .WithWhy(("item", item.Code), ("warehouse", warehouse.Code), ("onHand", ItemUomMath.Normalize(locked.OnHand)), ("reserved", ItemUomMath.Normalize(locked.Reserved)), ("available", ItemUomMath.Normalize(available)), ("requested", ItemUomMath.Normalize(quantity)));
+                .WithWhy(("item", item.Code), ("warehouse", warehouse.Code), ("onHand", ItemUomMath.Normalize(onHand)), ("reserved", ItemUomMath.Normalize(reserved)), ("available", ItemUomMath.Normalize(available)), ("requested", ItemUomMath.Normalize(quantity)));
         }
 
         await uow.Connection.ExecuteAsync(new CommandDefinition("""
@@ -235,6 +243,27 @@ public sealed class ReservationService(InventoryDbContext db, IUnitOfWorkAccesso
             WHERE tenant_id = @tenant AND company_id = @company AND item_id = @item AND variant_id = @variant AND warehouse_id = @warehouse AND bin_id = @bin AND lot_id = @lot AND serial_id = @serial
             FOR UPDATE
             """, parameters, uow.Transaction, cancellationToken: cancellationToken));
+    }
+
+    /// <summary>Locks and sums every balance row of this item (every lot and serial, plus the "any lot" row) in
+    /// this warehouse/bin/variant -- what a reservation that does not name a lot or serial must check against.</summary>
+    private static async Task<LockedBalance> LockAllForItemAsync(IUnitOfWork uow, ReservationRequest request, CancellationToken cancellationToken)
+    {
+        var rows = await uow.Connection.QueryAsync<LockedBalance>(new CommandDefinition("""
+            SELECT on_hand AS OnHand, reserved AS Reserved, quality_hold AS QualityHold
+            FROM app.inv_stock_balances
+            WHERE tenant_id = @tenant AND company_id = @company AND item_id = @item AND variant_id = @variant AND warehouse_id = @warehouse AND bin_id = @bin
+            FOR UPDATE
+            """, new
+        {
+            tenant = uow.Context.TenantId.Value,
+            company = request.CompanyId,
+            item = request.ItemId,
+            variant = request.VariantId ?? Guid.Empty,
+            warehouse = request.WarehouseId,
+            bin = request.BinId ?? Guid.Empty,
+        }, uow.Transaction, cancellationToken: cancellationToken));
+        return new LockedBalance(rows.Sum(static r => r.OnHand), rows.Sum(static r => r.Reserved), rows.Sum(static r => r.QualityHold));
     }
 
     private static object Keys(IUnitOfWork uow, ReservationRequest request, decimal quantity) => new

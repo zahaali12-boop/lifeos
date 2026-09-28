@@ -22,9 +22,12 @@ namespace Quicker.Sales.Application;
 /// <see cref="StockEntryTypes.SaleShipment"/> -- which consumes the reservation exactly as much as it ships and lets
 /// the costing engine (roadmap 3.3) value and book cost of goods sold, nothing new to wire there -- and reversed as a
 /// whole, returning the stock and re-reserving it for the order. A short shipment against a line's reservation
-/// leaves the remainder reserved for a later one (partial shipments, roadmap 5.5 acceptance). Lot- and
-/// serial-tracked lines are refused for this slice; picking, packages and carrier detail beyond a plain reference
-/// follow in 5.5b.
+/// leaves the remainder reserved for a later one (partial shipments, roadmap 5.5 acceptance). A lot-tracked item
+/// ships from the single earliest-expiring lot with enough available stock to cover the whole line
+/// (<see cref="IFefoSuggestions"/>, roadmap 5.5b: a quantity no single lot covers is refused, asking for a smaller
+/// quantity or a second shipment, rather than splitting one line across lots). Serial-tracked lines are still
+/// refused; a real pick-list document with bin-sequence ordering, a mobile picking screen and packages follow later
+/// in 5.5b/5.5c.
 /// </summary>
 public sealed class ShipmentService(
     SalesDbContext db,
@@ -33,6 +36,7 @@ public sealed class ShipmentService(
     ICustomerDirectory customers,
     IStockReservations reservations,
     IInventoryPosting inventory,
+    IFefoSuggestions fefo,
     INumberAllocator numbering,
     ICustomFieldValidator customFields,
     ICurrentPrincipal principal,
@@ -216,7 +220,7 @@ public sealed class ShipmentService(
                 }
 
                 stockLines.Add(new StockLine(line.ItemId, StockEntryTypes.SaleShipment, take, warehouseId, VariantId: line.VariantId, BinId: line.BinId,
-                    SourceLineId: line.Id, ReservationId: reservation.Id, PartnerId: order.PartnerId));
+                    SourceLineId: line.Id, ReservationId: reservation.Id, PartnerId: order.PartnerId, LotNumber: line.LotNumber));
                 remaining -= take;
             }
 
@@ -289,7 +293,7 @@ public sealed class ShipmentService(
 
         var order = await db.Orders.Include(static o => o.Lines).SingleAsync(o => o.Id == shipment.OrderId, cancellationToken);
         var stockLines = shipment.Lines.Select(l => new StockLine(l.ItemId, StockEntryTypes.SaleReturn, l.Quantity, order.Lines.Single(ol => ol.Id == l.OrderLineId).WarehouseId ?? order.WarehouseId,
-            VariantId: l.VariantId, BinId: l.BinId, SourceLineId: l.Id, AppliesToSleId: l.SleId, PartnerId: shipment.PartnerId)).ToList();
+            VariantId: l.VariantId, BinId: l.BinId, SourceLineId: l.Id, AppliesToSleId: l.SleId, PartnerId: shipment.PartnerId, LotNumber: l.LotNumber)).ToList();
         var posted = await inventory.PostAsync(new StockPostingRequest(shipment.CompanyId, reversalDate, DocumentType, shipment.Id, stockLines, IdempotencyKey: $"sales_shipment_reversal:{shipment.Id}"), cancellationToken);
         if (posted.IsFailure)
         {
@@ -341,6 +345,7 @@ public sealed class ShipmentService(
             return custom.Error!;
         }
 
+        var postingDate = request.PostingDate ?? clock.TodayIn(company.TimeZone);
         var activeReservations = (await reservations.ForDocumentAsync(OrderService.DocumentType, order.Id, cancellationToken)).Where(static r => r.Status == "active").ToList();
         var seenOrderLines = new HashSet<Guid>();
         var lines = new List<SalesShipmentLine>();
@@ -380,15 +385,29 @@ public sealed class ShipmentService(
                 return Error.NotFound("item", orderLine.ItemId);
             }
 
-            if (item.Tracking != "none")
+            if (item.Tracking is "serial" or "lot_and_serial")
             {
-                return Error.Validation("shipment.tracked_item_unsupported", "Lot- and serial-tracked items are not shipped from this screen yet (5.5b).").WithWhy(("lineNo", lineNo), ("item", item.Code), ("tracking", item.Tracking));
+                return Error.Validation("shipment.serial_tracked_unsupported", "Serial-tracked items are not shipped from this screen yet (5.5b).").WithWhy(("lineNo", lineNo), ("item", item.Code), ("tracking", item.Tracking));
             }
 
             var reserved = activeReservations.Where(r => r.SourceLineId == orderLine.Id).Sum(static r => r.Remaining);
             if (l.Quantity > reserved)
             {
                 return Error.Conflict("shipment.exceeds_reserved", "The shipment exceeds what the order line has reserved.").WithWhy(("lineNo", lineNo), ("orderLineNo", orderLine.LineNo), ("reserved", reserved), ("requested", l.Quantity));
+            }
+
+            string? lotNumber = null;
+            if (item.Tracking == "lot")
+            {
+                var lineWarehouseId = orderLine.WarehouseId ?? order.WarehouseId;
+                var suggestions = await fefo.SuggestAsync(order.CompanyId, item.Id, lineWarehouseId, l.Quantity, postingDate, cancellationToken);
+                var chosen = suggestions.FirstOrDefault(s => s.Available >= l.Quantity);
+                if (chosen is null)
+                {
+                    return Error.Conflict("shipment.no_single_lot_covers_quantity", "No single lot has enough available stock for this quantity (first-expiry-first-out); ship a smaller quantity or in more than one shipment.").WithWhy(("lineNo", lineNo), ("item", item.Code), ("requested", l.Quantity));
+                }
+
+                lotNumber = chosen.LotNumber;
             }
 
             lines.Add(new SalesShipmentLine
@@ -404,6 +423,7 @@ public sealed class ShipmentService(
                 UomId = item.BaseUomId,
                 QuantityBase = l.Quantity,
                 BinId = l.BinId,
+                LotNumber = lotNumber,
                 CreatedAt = clock.UtcNow,
             });
         }
@@ -412,7 +432,7 @@ public sealed class ShipmentService(
         shipment.OrderId = order.Id;
         shipment.PartnerId = order.PartnerId;
         shipment.WarehouseId = order.WarehouseId;
-        shipment.PostingDate = request.PostingDate ?? clock.TodayIn(company.TimeZone);
+        shipment.PostingDate = postingDate;
         shipment.Carrier = Shared.Trim(request.Carrier);
         shipment.TrackingNumber = Shared.Trim(request.TrackingNumber);
         shipment.Notes = Shared.Trim(request.Notes);
@@ -522,7 +542,7 @@ public sealed class ShipmentService(
         {
             var item = await items.FindAsync(l.ItemId, cancellationToken);
             var uom = (await items.UomsAsync(l.ItemId, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
-            lines.Add(new ShipmentLineSummary(l.Id, l.LineNo, l.OrderLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Quantity, l.UomId, uom?.UomCode ?? string.Empty, l.BinId, l.CogsAmount));
+            lines.Add(new ShipmentLineSummary(l.Id, l.LineNo, l.OrderLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Quantity, l.UomId, uom?.UomCode ?? string.Empty, l.BinId, l.LotNumber, l.CogsAmount));
         }
 
         return new ShipmentSummary(s.Id, s.CompanyId, s.Number, s.OrderId, order.Number, s.PartnerId, partner?.PartnerCode ?? string.Empty, partner?.PartnerName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal),

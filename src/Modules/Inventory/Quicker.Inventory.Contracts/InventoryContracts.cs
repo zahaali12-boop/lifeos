@@ -170,6 +170,17 @@ public interface IStockReservations
     Task<StockAvailability> AvailabilityAsync(Guid companyId, Guid itemId, Guid warehouseId, Guid? variantId = null, CancellationToken cancellationToken = default);
 }
 
+/// <summary>One lot a first-expiry-first-out plan would take from, and how much (roadmap 3.5).</summary>
+public sealed record FefoSuggestion(Guid LotId, string LotNumber, DateOnly? ExpiresOn, decimal Available, decimal Take);
+
+/// <summary>First expiry, first out (roadmap 3.5, consumed by 5.5b's automatic lot pick on shipment): the lots of an
+/// item with available stock in a warehouse, earliest expiry first, and how much a plan for the quantity would take
+/// from each -- a suggestion only; nothing is reserved or consumed by asking.</summary>
+public interface IFefoSuggestions
+{
+    Task<IReadOnlyList<FefoSuggestion>> SuggestAsync(Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly asOf, CancellationToken cancellationToken = default);
+}
+
 public sealed record WarehouseInfo(Guid Id, Guid CompanyId, Guid? BranchId, string Code, LocalizedText Name, string Kind, bool BinsEnabled, bool? AllowNegativeStock, bool IsActive);
 
 public sealed record BinInfo(Guid Id, Guid WarehouseId, string Code, string? Zone, string Kind, bool IsActive);

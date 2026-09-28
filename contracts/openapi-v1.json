@@ -32694,7 +32694,8 @@
             ],
             "format": "double"
           }
-        }
+        },
+        "description": "One lot a first-expiry-first-out plan would take from, and how much (roadmap 3.5)."
       },
       "FieldRule": {
         "required": [
@@ -55917,6 +55918,7 @@
           "uomId",
           "uomCode",
           "binId",
+          "lotNumber",
           "cogsAmount"
         ],
         "type": "object",
@@ -55978,6 +55980,12 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "cogsAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",

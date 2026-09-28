@@ -248,6 +248,7 @@ export function ShipmentsPage() {
                     <TableHead>#</TableHead>
                     <TableHead>{t("sales.item")}</TableHead>
                     <TableHead>{t("sales.quantity")}</TableHead>
+                    {s.lines.some((l) => l.lotNumber) ? <TableHead>{t("sales.lot")}</TableHead> : null}
                     {s.status === "posted" ? <TableHead>{t("sales.cogsAmount")}</TableHead> : null}
                   </TableRow>
                 </TableHeader>
@@ -257,6 +258,7 @@ export function ShipmentsPage() {
                       <TableCell>{String(l.lineNo)}</TableCell>
                       <TableCell dir="auto">{l.itemCode}</TableCell>
                       <TableCell className="tabular" dir="ltr">{formatNumber(l.quantity, { maximumFractionDigits: 3 })} {l.uomCode}</TableCell>
+                      {s.lines.some((x) => x.lotNumber) ? <TableCell dir="ltr">{l.lotNumber ?? "—"}</TableCell> : null}
                       {s.status === "posted" ? <TableCell className="tabular" dir="ltr">{formatNumber(l.cogsAmount, { maximumFractionDigits: 2 })}</TableCell> : null}
                     </TableRow>
                   ))}
