@@ -30,6 +30,7 @@
     "customers": "العملاء",
     "quotations": "عروض الأسعار",
     "salesOrders": "أوامر البيع",
+    "shipments": "الشحنات",
     "pipeline": "الفرص",
     "crmActivities": "أنشطة المبيعات",
     "salesSetup": "إعداد المبيعات",
@@ -3086,6 +3087,24 @@
     "purchaseOrderLineId": "معرّف بند أمر الشراء",
     "purchaseOrderLineIdPlaceholder": "الصق معرّف بند أمر الشراء",
     "openApprovals": "فتح الموافقات",
+    "order": "الأمر",
+    "createShipment": "إنشاء شحنة",
+    "shipmentsDescription": "بنود الأمر المحجوزة تُشحن كاملة أو جزئيًا: يُحرِّك محرك المخزون الكمية ويُثبت تكلفة البضاعة المباعة.",
+    "newShipment": "شحنة جديدة",
+    "emptyShipments": "لا توجد شحنات بعد",
+    "emptyShipmentsDescription": "اشحن بنود أمر مؤكَّد المحجوزة، كاملة أو جزئيًا.",
+    "noShippableLines": "لا شيء في هذا الأمر محجوز وجاهز للشحن.",
+    "postingDate": "تاريخ الترحيل",
+    "carrier": "شركة الشحن",
+    "trackingNumber": "رقم التتبع",
+    "reserved": "المحجوز",
+    "toShip": "المراد شحنه",
+    "cogsAmount": "تكلفة البضاعة المباعة",
+    "totalCogs": "إجمالي تكلفة البضاعة المباعة",
+    "post": "ترحيل",
+    "reverse": "عكس",
+    "confirmReverse": "تأكيد العكس",
+    "reversalReason": "سبب العكس",
     "blockKinds": {
       "credit_limit": "تجاوز حد الائتمان"
     },
@@ -3099,7 +3118,12 @@
       "on_hold": "معلَّق",
       "cancelled": "ملغى",
       "open": "مفتوح",
-      "backordered": "طلب متأخر"
+      "backordered": "طلب متأخر",
+      "partially_shipped": "شُحن جزئيًا",
+      "shipped": "تم الشحن",
+      "fulfilled": "مُنفَّذ",
+      "posted": "مُرحَّل",
+      "reversed": "معكوس"
     }
   },
   "pricing": {

@@ -14,6 +14,7 @@ export type RecordScreen =
   | "/purchasing/suppliers"
   | "/sales/quotations"
   | "/sales/orders"
+  | "/sales/shipments"
   | "/inventory/adjustments"
   | "/inventory/revaluations"
   | "/inventory/assemblies"
@@ -39,6 +40,7 @@ const screens: Record<string, RecordScreen> = {
   purchase_return: "/purchasing/returns",
   sales_quotation: "/sales/quotations",
   sales_order: "/sales/orders",
+  sales_shipment: "/sales/shipments",
   stock_adjustment: "/inventory/adjustments",
   stock_revaluation: "/inventory/revaluations",
   stock_assembly: "/inventory/assemblies",

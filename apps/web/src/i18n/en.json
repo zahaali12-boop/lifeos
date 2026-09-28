@@ -30,6 +30,7 @@
     "customers": "Customers",
     "quotations": "Quotations",
     "salesOrders": "Orders",
+    "shipments": "Shipments",
     "pipeline": "Pipeline",
     "crmActivities": "Sales activities",
     "salesSetup": "Sales set-up",
@@ -3086,6 +3087,24 @@
     "purchaseOrderLineId": "Purchase order line ID",
     "purchaseOrderLineIdPlaceholder": "Paste the purchase order line's ID",
     "openApprovals": "Open approvals",
+    "order": "Order",
+    "createShipment": "Create shipment",
+    "shipmentsDescription": "A confirmed order's reserved lines, shipped in full or in part: the stock engine moves the stock and books cost of goods sold.",
+    "newShipment": "New shipment",
+    "emptyShipments": "No shipments yet",
+    "emptyShipmentsDescription": "Ship a confirmed order's reserved lines, in full or in part.",
+    "noShippableLines": "Nothing on this order is reserved and ready to ship.",
+    "postingDate": "Posting date",
+    "carrier": "Carrier",
+    "trackingNumber": "Tracking number",
+    "reserved": "Reserved",
+    "toShip": "To ship",
+    "cogsAmount": "Cost of goods sold",
+    "totalCogs": "Total cost of goods sold",
+    "post": "Post",
+    "reverse": "Reverse",
+    "confirmReverse": "Confirm reversal",
+    "reversalReason": "Reversal reason",
     "blockKinds": {
       "credit_limit": "Credit limit exceeded"
     },
@@ -3099,7 +3118,12 @@
       "on_hold": "On hold",
       "cancelled": "Cancelled",
       "open": "Open",
-      "backordered": "Backordered"
+      "backordered": "Backordered",
+      "partially_shipped": "Partially shipped",
+      "shipped": "Shipped",
+      "fulfilled": "Fulfilled",
+      "posted": "Posted",
+      "reversed": "Reversed"
     }
   },
   "pricing": {

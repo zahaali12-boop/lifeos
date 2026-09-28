@@ -22,6 +22,8 @@ export type Quotation = components["schemas"]["QuotationSummary"];
 export type QuotationLine = components["schemas"]["QuotationLineSummary"];
 export type SalesOrder = components["schemas"]["OrderSummary"];
 export type SalesOrderLine = components["schemas"]["OrderLineSummary"];
+export type Shipment = components["schemas"]["ShipmentSummary"];
+export type ShipmentLine = components["schemas"]["ShipmentLineSummary"];
 
 export function useCustomerGroups() {
   return useQuery({ queryKey: ["customer-groups"], queryFn: async () => unwrap(await api.GET("/api/v1/partners/customer-groups")) });
@@ -127,6 +129,8 @@ const docTones: Record<string, "neutral" | "info" | "success" | "warning" | "dan
   draft: "neutral", sent: "info", accepted: "success", rejected: "danger", converted: "neutral",
   confirmed: "success", on_hold: "danger", cancelled: "neutral",
   open: "info", backordered: "warning",
+  partially_shipped: "warning", shipped: "success", fulfilled: "success",
+  posted: "success", reversed: "neutral",
 };
 
 export function SalesStatus({ status }: { status: string }) {

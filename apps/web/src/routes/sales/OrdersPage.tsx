@@ -2,7 +2,7 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, Dialo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Plus, RefreshCw, Truck } from "lucide-react";
+import { PackageCheck, Plus, RefreshCw, Truck } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
@@ -129,7 +129,7 @@ export function OrdersPage() {
         <Field label={t("common.status")}>
           <SelectField value={status} onChange={(e) => { setStatus(e.target.value); }} data-testid="status-filter">
             <option value="">{t("common.all")}</option>
-            {["draft", "confirmed", "on_hold", "cancelled"].map((s) => (
+            {["draft", "confirmed", "on_hold", "partially_shipped", "shipped", "cancelled"].map((s) => (
               <option key={s} value={s}>{t(`sales.statuses.${s}`)}</option>
             ))}
           </SelectField>
@@ -248,6 +248,12 @@ export function OrdersPage() {
               <DialogFooter>
                 {o.status === "draft" && canManage ? <Button onClick={() => { act.mutate({ id: o.id, action: "confirm" }); }} loading={act.isPending} data-testid="confirm-order">{t("sales.confirmOrder")}</Button> : null}
                 {o.status === "confirmed" && hasBackorders && canManage ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "retry" }); }} loading={act.isPending} data-testid="retry-backorders"><RefreshCw aria-hidden="true" />{t("sales.retryBackorders")}</Button> : null}
+                {(o.status === "confirmed" || o.status === "partially_shipped") && can("sales.shipment.manage") ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/shipments", search: followOn("sales_order", o.id) }); }} data-testid="create-shipment">
+                    <PackageCheck aria-hidden="true" />
+                    {t("sales.createShipment")}
+                  </Button>
+                ) : null}
                 {o.status !== "cancelled" && canManage && !cancelling ? <Button variant="secondary" onClick={() => { setCancelling(true); setCancelReason(""); }} data-testid="start-cancel-order">{t("sales.cancelOrder")}</Button> : null}
                 {cancelling ? <Button onClick={() => { act.mutate({ id: o.id, action: "cancel", reason: cancelReason }); }} loading={act.isPending} data-testid="confirm-cancel-order">{t("sales.confirmCancel")}</Button> : null}
               </DialogFooter>

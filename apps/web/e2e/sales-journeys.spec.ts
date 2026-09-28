@@ -429,3 +429,156 @@ test("English: a quotation converts to an order, reserves and backorders stock, 
   await expect(page.getByRole("grid")).toContainText("CUST");
   await expectAccessible(page);
 });
+
+/**
+ * The shipment journey of 5.5a: a confirmed order's "Create shipment" button opens the Shipments screen pre-filled
+ * with its reserved line; a partial shipment posts, moving stock and booking cost of goods sold, and leaves the
+ * order partially shipped; a second shipment for the remainder posts it fully shipped; reversing that second
+ * shipment gives the stock and the reservation back. Then the screens in Arabic, right-to-left.
+ */
+test("English: a confirmed order ships in two parts through its own screen, posting cost of goods sold, and a reversal gives the stock back; then Arabic", async ({ page }) => {
+  test.setTimeout(120_000);
+  const slug = `shp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
+  await page.goto("/signup");
+  await page.getByLabel(/Workspace name/).fill("Shipments " + slug);
+  await page.getByLabel(/^Slug/).fill(slug);
+  await page.getByLabel(/Your name/).fill("Owner");
+  await page.getByLabel(/^Email/).fill(`owner-${slug}@example.test`);
+  await page.getByLabel(/^Password/).fill(password);
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome", { timeout: 20_000 });
+
+  await nav(page, "Companies");
+  await page.getByTestId("new-company").click();
+  await page.getByLabel(/^Code/).fill("SHP");
+  await page.getByLabel(/Legal name \(English\)/).fill("Shipping Co.");
+  await page.getByTestId("save-company").click();
+  await expect(page.getByRole("grid")).toContainText("SHP");
+  await nav(page, "Chart of accounts");
+  await page.getByTestId("create-chart").click();
+  await expect(page.getByTestId("account-row").first()).toBeVisible();
+
+  await nav(page, "Items");
+  await page.getByTestId("new-item").click();
+  await page.getByTestId("item-code").fill("TEA");
+  await page.getByTestId("item-name-en").fill("Tea");
+  await page.getByTestId("item-name-ar").fill("شاي");
+  await page.getByTestId("save-item").click();
+  await expect(page.getByTestId("item-detail")).toBeVisible();
+  await closeDialog(page);
+
+  await nav(page, "Warehouses");
+  await page.getByTestId("new-warehouse").click();
+  await page.getByTestId("warehouse-code").fill("MAIN");
+  await page.getByTestId("warehouse-name-en").fill("Main warehouse");
+  await page.getByTestId("save-warehouse").click();
+  await expect(page.getByTestId("warehouse-detail")).toBeVisible();
+  await closeDialog(page);
+
+  await nav(page, "Adjustments");
+  await page.getByTestId("reason-codes").click();
+  await page.getByTestId("reason-code").fill("INIT");
+  await page.getByTestId("reason-name-en").fill("Opening stock");
+  await page.getByTestId("save-reason").click();
+  await expect(page.getByTestId("reason-row")).toHaveCount(1);
+  await closeDialog(page);
+  await page.getByTestId("new-adjustment").click();
+  await page.getByTestId("adjustment-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("20");
+  await page.getByTestId("line-cost-0").fill("5000");
+  await page.getByTestId("line-reason-0").selectOption({ label: "INIT · Opening stock" });
+  await page.getByTestId("save-adjustment").click();
+  await expect(page.getByTestId("adjustment-detail")).toBeVisible();
+  await page.getByTestId("submit-adjustment").click();
+  await expect(page.getByTestId("adjustment-detail").getByTestId("doc-status")).toContainText("Posted");
+  await closeDialog(page);
+
+  await nav(page, "Customers");
+  await page.getByTestId("new-customer").click();
+  await page.getByTestId("partner-code").fill("CUST");
+  await page.getByTestId("partner-legal-name-en").fill("Shipping Customer LLC");
+  await page.getByTestId("partner-legal-name-ar").fill("شركة عميل الشحن");
+  await page.getByTestId("save-customer").click();
+  await expect(page.getByTestId("customer-360")).toBeVisible();
+  await closeDialog(page);
+
+  // A confirmed order for 10 TEA reserves all 10 of the 20 on hand.
+  await nav(page, "Orders");
+  await page.getByTestId("new-order").click();
+  await page.getByTestId("order-customer").selectOption({ label: "CUST · Shipping Customer LLC" });
+  await page.getByTestId("order-warehouse").selectOption({ label: "MAIN · Main warehouse" });
+  await page.getByTestId("line-item-0").fill("TEA");
+  await page.getByTestId("line-qty-0").fill("10");
+  await page.getByTestId("line-price-0").fill("10000");
+  await page.getByTestId("save-order").click();
+  await page.getByTestId("confirm-order").click();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Confirmed");
+  await expectAccessible(page);
+
+  // Its own "create shipment" button opens the Shipments screen with the order pre-filled.
+  await page.getByTestId("create-shipment").click();
+  await page.waitForURL(/\/sales\/shipments/u, { waitUntil: "commit" });
+  await expect(page.getByRole("dialog")).toContainText("New shipment");
+  await expect(page.getByTestId("shipment-order")).not.toHaveValue("");
+  // Ship only 6 of the 10 reserved: a partial shipment.
+  await page.getByTestId("shipment-line-qty-TEA").fill("6");
+  await page.getByTestId("save-shipment").click();
+  await expect(page.getByTestId("shipment-detail")).toBeVisible();
+  await expect(page.getByTestId("shipment-detail").getByTestId("doc-status").first()).toContainText("Draft");
+  await expectAccessible(page);
+  await page.getByTestId("post-shipment").click();
+  await expect(page.getByTestId("shipment-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  await expect(page.getByTestId("shipment-lines")).toContainText("TEA");
+  const firstShipmentNumber = await page.locator('[data-testid="shipment-detail"] span[dir="ltr"]').first().innerText();
+  await expectAccessible(page);
+  await closeDialog(page);
+
+  // The order is only partially shipped: the line still shows some quantity reserved for a later shipment.
+  await nav(page, "Orders");
+  await page.getByRole("grid").getByText("SO-", { exact: false }).first().dblclick();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Partially shipped");
+  await page.getByTestId("create-shipment").click();
+  await page.waitForURL(/\/sales\/shipments/u, { waitUntil: "commit" });
+  // The remaining 4 are offered by default; ship them all.
+  await expect(page.getByTestId("shipment-line-qty-TEA")).toHaveValue("4");
+  await page.getByTestId("save-shipment").click();
+  await page.getByTestId("post-shipment").click();
+  await expect(page.getByTestId("shipment-detail").getByTestId("doc-status").first()).toContainText("Posted");
+  const secondShipmentNumber = await page.locator('[data-testid="shipment-detail"] span[dir="ltr"]').first().innerText();
+  await closeDialog(page);
+
+  // The order is now fully shipped.
+  await nav(page, "Orders");
+  await page.getByRole("grid").getByText("SO-", { exact: false }).first().dblclick();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Shipped");
+  await expectAccessible(page);
+  await closeDialog(page);
+
+  // Reversing the second shipment gives its 4 units back to stock and re-reserves them for the order.
+  await nav(page, "Shipments");
+  await page.getByRole("grid").getByText(secondShipmentNumber, { exact: true }).dblclick();
+  await page.getByTestId("start-reverse-shipment").click();
+  await page.getByTestId("reversal-reason").fill("Customer asked to delay the rest");
+  await page.getByTestId("confirm-reverse-shipment").click();
+  await expect(page.getByTestId("shipment-detail").getByTestId("doc-status").first()).toContainText("Reversed");
+  await expectAccessible(page);
+  await closeDialog(page);
+
+  await nav(page, "Orders");
+  await page.getByRole("grid").getByText("SO-", { exact: false }).first().dblclick();
+  await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Partially shipped");
+  await closeDialog(page);
+
+  // Arabic: the shipments list and a shipment's own reversed status read right-to-left.
+  await page.getByTestId("language-menu").click();
+  await page.getByTestId("language-ar").click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await nav(page, "الشحنات");
+  await expect(page.getByRole("grid")).toContainText(firstShipmentNumber);
+  await expectAccessible(page);
+  await page.getByRole("grid").getByText(secondShipmentNumber, { exact: true }).dblclick();
+  await expect(page.getByTestId("shipment-detail").getByTestId("doc-status").first()).toContainText("معكوس");
+  await expectAccessible(page);
+});

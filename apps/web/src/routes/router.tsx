@@ -64,6 +64,7 @@ import { OrdersPage } from "./sales/OrdersPage";
 import { PipelinePage } from "./sales/PipelinePage";
 import { QuotationsPage } from "./sales/QuotationsPage";
 import { SalesSetupPage } from "./sales/SalesSetupPage";
+import { ShipmentsPage } from "./sales/ShipmentsPage";
 import { PriceCheckPage } from "./sales/pricing/PriceCheckPage";
 import { PriceListPage } from "./sales/pricing/PriceListPage";
 import { PriceListsPage } from "./sales/pricing/PriceListsPage";
@@ -153,6 +154,7 @@ const customersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/s
 const customer360Route = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers/$partnerId", component: Customer360Page });
 const quotationsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/quotations", component: QuotationsPage, validateSearch: searchRecord });
 const salesOrdersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/orders", component: OrdersPage, validateSearch: searchRecord });
+const shipmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/shipments", component: ShipmentsPage, validateSearch: searchRecord });
 const pipelineRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pipeline", component: PipelinePage, validateSearch: searchRecord });
 const crmActivitiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/activities", component: ActivitiesPage });
 const salesSetupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/setup", component: SalesSetupPage });
@@ -193,7 +195,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),
 ]);
