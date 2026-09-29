@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <ProjectReference Include="../Quicker.Organization/Quicker.Organization.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Testing/Quicker.Testing.csproj" />
+  </ItemGroup>
+
+</Project>

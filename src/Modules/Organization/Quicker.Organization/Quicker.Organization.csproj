@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Organization module: companies, branches, fiscal calendars, currencies and rates, dimensions, units of measure, business calendars and settings (M1.6).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Tenancy/Quicker.Tenancy.Contracts/Quicker.Tenancy.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+
+</Project>

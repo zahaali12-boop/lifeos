@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Organization contracts: company, branch, calendar, currency, exchange rate, dimension, unit of measure, business calendar and settings APIs.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+
+</Project>
