@@ -68,6 +68,10 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
 
     public DbSet<ReplenishmentSuggestion> ReplenishmentSuggestions => Set<ReplenishmentSuggestion>();
 
+    public DbSet<PickList> PickLists => Set<PickList>();
+
+    public DbSet<PickLine> PickLines => Set<PickLine>();
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private static readonly ValueConverter<Dictionary<string, string>, string> StringMapConverter = new(
@@ -344,6 +348,23 @@ public sealed class InventoryDbContext(DbContextOptions<InventoryDbContext> opti
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.StandardCost).HasPrecision(24, 10);
             b.HasAuditTrail("standard_cost", static x => $"{x.ItemId:N}@{x.EffectiveFrom:yyyy-MM-dd}");
+        });
+
+        modelBuilder.Entity<PickList>(b =>
+        {
+            b.ToTable("inv_pick_lists", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.PickListId });
+        });
+
+        modelBuilder.Entity<PickLine>(b =>
+        {
+            b.ToTable("inv_pick_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.QtyToPick).HasPrecision(24, 9);
+            b.Property(static x => x.QtyPicked).HasPrecision(24, 9);
+            b.Property(static x => x.SerialNumbers).HasColumnType("jsonb");
+            b.Property(static x => x.PickedSerialNumbers).HasColumnType("jsonb");
         });
 
         base.OnModelCreating(modelBuilder);

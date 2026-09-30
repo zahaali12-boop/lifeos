@@ -348,7 +348,7 @@ public sealed record LotTracePartner(Guid PartnerId, decimal Quantity, int Shipm
 /// <summary>Where a lot came from, where it went, where it is, and who received it (hard scenario 12).</summary>
 public sealed record LotTrace(LotInfo Lot, IReadOnlyList<LotTraceMovement> Inbound, IReadOnlyList<LotTraceMovement> Outbound, IReadOnlyList<LotTraceBalance> OnHand, IReadOnlyList<LotTracePartner> ShippedTo, IReadOnlyList<SerialInfo> Serials);
 
-public sealed class LotService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, TrackingResolver tracking, ReservationService reservations, IItemDirectory items, IWarehouseDirectory warehouses, ICustomFieldValidator customFields, IAuditSink audit, IClock clock) : IFefoSuggestions
+public sealed class LotService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, TrackingResolver tracking, ReservationService reservations, IItemDirectory items, IWarehouseDirectory warehouses, ICustomFieldValidator customFields, IAuditSink audit, IClock clock)
 {
     public async Task<IReadOnlyList<LotInfo>> ListAsync(Guid? itemId, string? status, DateOnly? expiringBefore, string? q, CancellationToken cancellationToken)
     {
@@ -578,9 +578,6 @@ public sealed class LotService(InventoryDbContext db, IUnitOfWorkAccessor unitOf
     public Task<IReadOnlyList<FefoSuggestion>> SuggestAsync(Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly? asOf, CancellationToken cancellationToken) =>
         tracking.SuggestAsync(companyId, itemId, warehouseId, quantity, asOf ?? DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), cancellationToken);
 
-    Task<IReadOnlyList<FefoSuggestion>> IFefoSuggestions.SuggestAsync(Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly asOf, CancellationToken cancellationToken) =>
-        SuggestAsync(companyId, itemId, warehouseId, quantity, asOf, cancellationToken);
-
     /// <summary>Lots past their expiry date become expired and their stock goes on hold; returns how many.</summary>
     public async Task<int> ExpireAsync(DateOnly today, CancellationToken cancellationToken)
     {
@@ -658,15 +655,8 @@ public sealed record SerialHistoryEvent(Guid Id, DateTimeOffset At, DateOnly? Po
 /// <summary>The serial and everything that happened to it, oldest first (hard scenario 13: one screen, one query).</summary>
 public sealed record SerialHistory(SerialInfo Serial, IReadOnlyList<SerialHistoryEvent> Events);
 
-public sealed class SerialService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, IItemDirectory items, IWarehouseDirectory warehouses, ICurrentPrincipal principal, IAuditSink audit, IClock clock) : ISerialSuggestions
+public sealed class SerialService(InventoryDbContext db, IUnitOfWorkAccessor unitOfWork, IItemDirectory items, IWarehouseDirectory warehouses, ICurrentPrincipal principal, IAuditSink audit, IClock clock)
 {
-    public async Task<IReadOnlyList<string>> SuggestAsync(Guid itemId, Guid warehouseId, int quantity, CancellationToken cancellationToken = default) =>
-        // Ordered by id, not CreatedAt: every id is UUIDv7 (ARCHITECTURE.md's own convention), so it already sorts
-        // by creation instant at finer resolution than the timestamp column -- two serials received moments apart
-        // in the same receipt never tie the way a millisecond-rounded timestamp can.
-        await db.Serials.Where(s => s.ItemId == itemId && s.CurrentWarehouseId == warehouseId && s.Status == SerialStatuses.InStock)
-            .OrderBy(static s => s.Id).Take(quantity).Select(static s => s.SerialNumber).ToListAsync(cancellationToken);
-
     public async Task<IReadOnlyList<SerialInfo>> ListAsync(Guid? itemId, string? status, Guid? warehouseId, Guid? lotId, string? q, CancellationToken cancellationToken)
     {
         var query = db.Serials.AsQueryable();

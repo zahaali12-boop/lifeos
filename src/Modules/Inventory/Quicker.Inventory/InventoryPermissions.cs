@@ -32,6 +32,9 @@ public static class InventoryPermissions
     public const string CountPost = "inventory.count.post";
     public const string ReplenishmentRead = "inventory.replenishment.read";
     public const string ReplenishmentManage = "inventory.replenishment.manage";
+    public const string PickRead = "inventory.pick.read";
+    public const string PickExecute = "inventory.pick.execute";
+    public const string PickManage = "inventory.pick.manage";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -63,5 +66,8 @@ public static class InventoryPermissions
         new(CountPost, "inventory", "Post count variances (moves stock and posts the journal)"),
         new(ReplenishmentRead, "inventory", "Read replenishment runs and purchase suggestions"),
         new(ReplenishmentManage, "inventory", "Run the replenishment planner, accept and dismiss suggestions"),
+        new(PickRead, "inventory", "Read pick lists and their progress"),
+        new(PickExecute, "inventory", "Take a pick list and confirm what was picked, line by line (the handheld picking screen)"),
+        new(PickManage, "inventory", "Assign pick lists to pickers, pick on lists assigned to others and cancel pick lists"),
     ];
 }

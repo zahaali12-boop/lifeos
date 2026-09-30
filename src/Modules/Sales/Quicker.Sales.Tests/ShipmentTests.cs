@@ -245,15 +245,14 @@ public sealed class ShipmentTests(ApiHostFixture host)
         await owner.AssertInvariantsAsync();
     }
 
-    /// <summary>Roadmap 5.5b (part 1): a lot-tracked item ships from the single earliest-expiring lot with enough
-    /// available stock to cover the whole line (first-expiry-first-out), refuses a quantity no single lot covers,
-    /// and still refuses a serial-tracked item outright.</summary>
+    /// <summary>Roadmap 5.5b: a lot-tracked item that uses FEFO ships from the earliest-expiring lot first, even one
+    /// received after a later-expiring lot (splitting across lots, and lot-and-serial items: <see cref="PickingTests"/>).</summary>
     [Fact]
     public async Task A_lot_tracked_item_ships_from_the_earliest_expiring_lot_that_covers_the_quantity()
     {
         var s = await SetUpAsync();
         var owner = s.Owner;
-        var milk = (await owner.PostAsync("/api/v1/items", new { code = "MILK", name = Name("Milk 1L", "حليب ١ لتر"), baseUom = "PCS", tracking = "lot", expiryRequired = true, listPrice = 5m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
+        var milk = (await owner.PostAsync("/api/v1/items", new { code = "MILK", name = Name("Milk 1L", "حليب ١ لتر"), baseUom = "PCS", tracking = "lot", expiryRequired = true, fefo = true, listPrice = 5m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
 
         async Task<Guid> AdjustAsync(string lotNumber, DateOnly expiresOn, decimal quantity)
         {
@@ -281,42 +280,6 @@ public sealed class ShipmentTests(ApiHostFixture host)
         var oldLot = lots.EnumerateArray().Single(l => l.GetProperty("lotNumber").GetString() == "LOT-OLD");
         // LOT-OLD's own 5 units are gone; LOT-NEW's 20 are untouched.
         (await owner.GetOkAsync($"/api/v1/inventory/lots/{oldLot.GetProperty("id").GetGuid()}/trace")).GetProperty("onHand").GetArrayLength().ShouldBe(0);
-
-        await owner.AssertInvariantsAsync();
-    }
-
-    [Fact]
-    public async Task A_quantity_no_single_lot_covers_is_refused_and_a_lot_and_serial_tracked_item_is_refused_outright()
-    {
-        var s = await SetUpAsync();
-        var owner = s.Owner;
-        var milk = (await owner.PostAsync("/api/v1/items", new { code = "MILK", name = Name("Milk 1L", "حليب ١ لتر"), baseUom = "PCS", tracking = "lot", expiryRequired = true, listPrice = 5m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
-        var serum = (await owner.PostAsync("/api/v1/items", new { code = "SERUM", name = Name("Vaccine", "لقاح"), baseUom = "PCS", tracking = "lot_and_serial", expiryRequired = true, listPrice = 500m, listPriceCurrency = "USD" })).GetProperty("id").GetGuid();
-
-        async Task AdjustAsync(Guid itemId, string? lotNumber, DateOnly? expiresOn, decimal quantity, IReadOnlyList<string>? serialNumbers = null)
-        {
-            var adjustment = await owner.PostAsync("/api/v1/inventory/adjustments", new { companyId = s.CompanyId, warehouseId = s.Warehouse, kind = "opening", lines = new object[] { new { itemId, quantity, unitCost = 10m, reasonCode = "FOUND", lotNumber, expiresOn = expiresOn?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), serialNumbers } } });
-            await owner.PostAsync($"/api/v1/inventory/adjustments/{adjustment.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
-        }
-
-        // Two lots of 5 each: enough in total for an order of 8, but no single lot covers it.
-        await AdjustAsync(milk, "LOT-A", new DateOnly(2026, 10, 1), 5m);
-        await AdjustAsync(milk, "LOT-B", new DateOnly(2026, 11, 1), 5m);
-        var milkOrder = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = milk, quantity = 8m } } });
-        var milkOrderId = milkOrder.GetProperty("id").GetGuid();
-        var milkLineId = milkOrder.GetProperty("lines")[0].GetProperty("id").GetGuid();
-        await owner.PostAsync($"/api/v1/sales/orders/{milkOrderId}/confirm", new { }, HttpStatusCode.OK);
-        var (milkCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = milkOrderId, lines = new object[] { new { orderLineId = milkLineId, quantity = 8m } } }, HttpStatusCode.Conflict);
-        milkCode.ShouldBe("shipment.no_single_lot_covers_quantity");
-
-        // A lot-and-serial-tracked item is refused outright, whatever is on hand (5.5b still defers it).
-        await AdjustAsync(serum, "LOT-V1", new DateOnly(2026, 10, 1), 2m, ["SN-1", "SN-2"]);
-        var serumOrder = await owner.PostAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = serum, quantity = 1m } } });
-        var serumOrderId = serumOrder.GetProperty("id").GetGuid();
-        var serumLineId = serumOrder.GetProperty("lines")[0].GetProperty("id").GetGuid();
-        await owner.PostAsync($"/api/v1/sales/orders/{serumOrderId}/confirm", new { }, HttpStatusCode.OK);
-        var (serumCode, _) = await owner.PostErrorAsync("/api/v1/sales/shipments", new { orderId = serumOrderId, lines = new object[] { new { orderLineId = serumLineId, quantity = 1m } } }, HttpStatusCode.UnprocessableEntity);
-        serumCode.ShouldBe("shipment.serial_tracked_unsupported");
 
         await owner.AssertInvariantsAsync();
     }

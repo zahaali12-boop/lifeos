@@ -14428,6 +14428,310 @@
         }
       }
     },
+    "/api/v1/inventory/pick-lists": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "The picking work queue: pick lists with their progress; status 'live' lists every list still being picked, mine=true the caller's own",
+        "operationId": "getInventoryPickLists",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assignedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PickListRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/pick-lists/{pickListId}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "A pick list in walking order: per line the bin, lot and serials planned, and what was picked",
+        "operationId": "getInventoryPickListsByPickListId",
+        "parameters": [
+          {
+            "name": "pickListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickListInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/pick-lists/{pickListId}/claim": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Takes an unassigned pick list for the caller",
+        "operationId": "postInventoryPickListsByPickListIdClaim",
+        "parameters": [
+          {
+            "name": "pickListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickListInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/pick-lists/{pickListId}/assign": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Hands a pick list to a picker, or back to the queue when no member is named",
+        "operationId": "postInventoryPickListsByPickListIdAssign",
+        "parameters": [
+          {
+            "name": "pickListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignPickListRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickListInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/pick-lists/{pickListId}/lines/{lineId}/pick": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Confirms a line: the quantity picked and, when it differs from the plan, the bin, lot or serials it came from; less than planned is a short pick with its reason; sent again, it replaces the confirmation",
+        "operationId": "postInventoryPickListsByPickListIdLinesByLineIdPick",
+        "parameters": [
+          {
+            "name": "pickListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickListInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/pick-lists/{pickListId}/lines/{lineId}/reset": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Takes a line's confirmation back: the line is open again",
+        "operationId": "postInventoryPickListsByPickListIdLinesByLineIdReset",
+        "parameters": [
+          {
+            "name": "pickListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickListInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/pick-lists/{pickListId}/cancel": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Cancels a pick list; its stock is free for other lists and its document can be released again",
+        "operationId": "postInventoryPickListsByPickListIdCancel",
+        "parameters": [
+          {
+            "name": "pickListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPickListRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickListInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workflow/catalogue": {
       "get": {
         "tags": [
@@ -24576,6 +24880,164 @@
           }
         }
       }
+    },
+    "/api/v1/sales/shipments/{shipmentId}/release": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Releases a draft for picking: the warehouse gets a pick list in walking order (lots first expiry first out, bins in pick sequence) and the shipment waits until every line is picked",
+        "operationId": "postSalesShipmentsByShipmentIdRelease",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/shipments/{shipmentId}/cancel-picking": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Takes a shipment back from picking: its pick list is cancelled and the shipment is a draft again",
+        "operationId": "postSalesShipmentsByShipmentIdCancelPicking",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelPickingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/shipments/{shipmentId}/packages": {
+      "put": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Replaces the shipment's packages: type, weight, dimensions, tracking number and which order lines each holds how much of; allowed until the shipment is reversed",
+        "operationId": "putSalesShipmentsByShipmentIdPackages",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePackagesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/shipments/{shipmentId}/carrier": {
+      "put": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Sets the carrier and its tracking reference, also after posting",
+        "operationId": "putSalesShipmentsByShipmentIdCarrier",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCarrierRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -26316,6 +26778,18 @@
           }
         }
       },
+      "AssignPickListRequest": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "AssignRoleRequest": {
         "required": [
           "roleId"
@@ -27980,6 +28454,28 @@
         }
       },
       "CancelOrderRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CancelPickingRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CancelPickListRequest": {
         "required": [
           "reason"
         ],
@@ -36309,6 +36805,24 @@
           }
         }
       },
+      "LocalizedText": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isEmpty": {
+            "type": "boolean"
+          }
+        },
+        "description": "A bilingual (or multilingual) text value stored as a language→text map (ADR-0027). Resolution falls back\nrequested → tenant default → any available language, and never returns null for a non-empty map."
+      },
       "LoginRequest": {
         "required": [
           "email",
@@ -40007,6 +40521,489 @@
           }
         },
         "description": "A permission the system understands: a stable key, its module and a human description."
+      },
+      "PickLineRequest": {
+        "required": [
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "serialNumbers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "shortReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "What a picker confirms for one line: the quantity taken, and where from when it differs from the plan\n            (another bin, another lot); a serial-tracked item names the serials scanned. Less than planned is a short pick and\n            says why; zero is \"nothing there\"."
+      },
+      "PickListInfo": {
+        "required": [
+          "id",
+          "companyId",
+          "warehouseId",
+          "warehouseCode",
+          "number",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "sourceNumber",
+          "status",
+          "assignedTo",
+          "assignedAt",
+          "startedAt",
+          "completedAt",
+          "closedAt",
+          "cancelledAt",
+          "cancelReason",
+          "linesTotal",
+          "linesDone",
+          "qtyToPick",
+          "qtyPicked",
+          "lines",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "assignedTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "assignedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "cancelledAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "cancelReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "linesTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "linesDone": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "qtyToPick": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyPicked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PickListLineInfo"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PickListLineInfo": {
+        "required": [
+          "id",
+          "lineNo",
+          "sourceLineId",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "variantId",
+          "binId",
+          "binCode",
+          "zone",
+          "lotId",
+          "lotNumber",
+          "expiresOn",
+          "serialNumbers",
+          "qtyToPick",
+          "qtyPicked",
+          "pickedBinId",
+          "pickedBinCode",
+          "pickedLotId",
+          "pickedLotNumber",
+          "pickedSerialNumbers",
+          "status",
+          "shortReason",
+          "pickedBy",
+          "pickedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sourceLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "zone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lotId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "qtyToPick": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyPicked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "pickedBinId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "pickedBinCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pickedLotId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "pickedLotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pickedSerialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "shortReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pickedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "pickedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "PickListRow": {
+        "required": [
+          "id",
+          "companyId",
+          "warehouseId",
+          "warehouseCode",
+          "number",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "sourceNumber",
+          "status",
+          "assignedTo",
+          "linesTotal",
+          "linesDone",
+          "qtyToPick",
+          "qtyPicked",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "sourceDocumentType": {
+            "type": "string"
+          },
+          "sourceDocumentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceNumber": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "assignedTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "linesTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "linesDone": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "qtyToPick": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyPicked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A pick list in a work queue: its progress without its lines."
       },
       "PipelineBoard": {
         "required": [
@@ -48753,6 +49750,28 @@
           }
         }
       },
+      "SaveCarrierRequest": {
+        "required": [
+          "carrier",
+          "trackingNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "carrier": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "trackingNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The carrier and its tracking reference, often only known once the goods have left."
+      },
       "SaveCategoryRequest": {
         "required": [
           "name",
@@ -51083,6 +52102,104 @@
           },
           "customFields": { }
         }
+      },
+      "SavePackageLineRequest": {
+        "required": [
+          "orderLineId",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "orderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "SavePackageRequest": {
+        "required": [
+          "contents"
+        ],
+        "type": "object",
+        "properties": {
+          "contents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavePackageLineRequest"
+            }
+          },
+          "packageType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "weightKg": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lengthCm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "widthCm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "heightCm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "trackingNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SavePackagesRequest": {
+        "required": [
+          "packages"
+        ],
+        "type": "object",
+        "properties": {
+          "packages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavePackageRequest"
+            }
+          }
+        },
+        "description": "The shipment's packages as a whole: what is sent replaces what was there."
       },
       "SavePartnerRequest": {
         "required": [
@@ -55905,6 +57022,105 @@
           }
         }
       },
+      "ShipmentAllocation": {
+        "required": [
+          "binId",
+          "binCode",
+          "lotId",
+          "lotNumber",
+          "expiresOn",
+          "serialNumbers",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lotId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lotNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "entries": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ShipmentAllocationEntry"
+            }
+          }
+        },
+        "description": "One part of a shipment line's quantity: the bin and lot it comes from, its serials, and once posted the\n            stock ledger entries it produced (what a reversal returns, entry by entry)."
+      },
+      "ShipmentAllocationEntry": {
+        "required": [
+          "sleId",
+          "serialNumber",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "sleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "serialNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "ShipmentLineSummary": {
         "required": [
           "id",
@@ -55920,7 +57136,10 @@
           "binId",
           "lotNumber",
           "serialNumbers",
-          "cogsAmount"
+          "cogsAmount",
+          "allocations",
+          "qtyPicked",
+          "qtyPacked"
         ],
         "type": "object",
         "properties": {
@@ -56001,6 +57220,161 @@
               "string"
             ],
             "format": "double"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentAllocation"
+            }
+          },
+          "qtyPicked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyPacked": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ShipmentPackageLineSummary": {
+        "required": [
+          "orderLineId",
+          "orderLineNo",
+          "itemId",
+          "itemCode",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "orderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderLineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ShipmentPackageSummary": {
+        "required": [
+          "id",
+          "packageNo",
+          "packageNumber",
+          "packageType",
+          "weightKg",
+          "lengthCm",
+          "widthCm",
+          "heightCm",
+          "trackingNumber",
+          "contentsWeightKg",
+          "contents"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "packageNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "packageNumber": {
+            "type": "string"
+          },
+          "packageType": {
+            "type": "string"
+          },
+          "weightKg": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lengthCm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "widthCm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "heightCm": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "trackingNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contentsWeightKg": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "contents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentPackageLineSummary"
+            }
           }
         }
       },
@@ -56025,7 +57399,12 @@
           "reversalReason",
           "postedAt",
           "lines",
-          "updatedAt"
+          "updatedAt",
+          "pickListId",
+          "pickListNumber",
+          "pickListStatus",
+          "packages",
+          "totalWeightKg"
         ],
         "type": "object",
         "properties": {
@@ -56122,6 +57501,40 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "pickListId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "pickListNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pickListStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentPackageSummary"
+            }
+          },
+          "totalWeightKg": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },

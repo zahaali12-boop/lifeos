@@ -1084,3 +1084,97 @@ public sealed class ReplenishmentSuggestion : ITenantEntity
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+// ------------------------------------------------------------------ picking (roadmap 5.5b, A-154)
+
+public sealed class PickList : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public string SourceDocumentType { get; set; } = string.Empty;
+
+    public Guid SourceDocumentId { get; set; }
+
+    public string SourceNumber { get; set; } = string.Empty;
+
+    public string ReservedForType { get; set; } = string.Empty;
+
+    public Guid ReservedForId { get; set; }
+
+    /// <summary>released, in_progress, picked, closed or cancelled.</summary>
+    public string Status { get; set; } = PickListStatuses.Released;
+
+    /// <summary>The membership picking the list.</summary>
+    public Guid? AssignedTo { get; set; }
+
+    public DateTimeOffset? AssignedAt { get; set; }
+
+    public DateTimeOffset? StartedAt { get; set; }
+
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    public DateTimeOffset? ClosedAt { get; set; }
+
+    public DateTimeOffset? CancelledAt { get; set; }
+
+    public string? CancelReason { get; set; }
+
+    public Guid? ReleasedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<PickLine> Lines { get; } = [];
+}
+
+public sealed class PickLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid PickListId { get; set; }
+
+    /// <summary>The walking order.</summary>
+    public int LineNo { get; set; }
+
+    public Guid SourceLineId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public Guid? LotId { get; set; }
+
+    public string SerialNumbers { get; set; } = "[]";
+
+    public decimal QtyToPick { get; set; }
+
+    public decimal QtyPicked { get; set; }
+
+    public Guid? PickedBinId { get; set; }
+
+    public Guid? PickedLotId { get; set; }
+
+    public string PickedSerialNumbers { get; set; } = "[]";
+
+    /// <summary>open, picked or short.</summary>
+    public string Status { get; set; } = PickLineStatuses.Open;
+
+    public string? ShortReason { get; set; }
+
+    public Guid? PickedBy { get; set; }
+
+    public DateTimeOffset? PickedAt { get; set; }
+}

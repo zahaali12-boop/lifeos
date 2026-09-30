@@ -193,6 +193,20 @@ public sealed record SaveShipmentRequest(
 
 public sealed record ReverseShipmentRequest(string Reason, DateOnly? ReversalDate = null);
 
+/// <summary>One part of a shipment line's quantity: the bin and lot it comes from, its serials, and once posted the
+/// stock ledger entries it produced (what a reversal returns, entry by entry).</summary>
+public sealed record ShipmentAllocation(
+    Guid? BinId,
+    string? BinCode,
+    Guid? LotId,
+    string? LotNumber,
+    DateOnly? ExpiresOn,
+    IReadOnlyList<string> SerialNumbers,
+    decimal Quantity,
+    IReadOnlyList<ShipmentAllocationEntry>? Entries = null);
+
+public sealed record ShipmentAllocationEntry(Guid SleId, string? SerialNumber, decimal Quantity);
+
 public sealed record ShipmentLineSummary(
     Guid Id,
     int LineNo,
@@ -207,7 +221,25 @@ public sealed record ShipmentLineSummary(
     Guid? BinId,
     string? LotNumber,
     IReadOnlyList<string> SerialNumbers,
-    decimal CogsAmount);
+    decimal CogsAmount,
+    IReadOnlyList<ShipmentAllocation> Allocations,
+    decimal? QtyPicked,
+    decimal QtyPacked);
+
+public sealed record ShipmentPackageLineSummary(Guid OrderLineId, int OrderLineNo, Guid ItemId, string ItemCode, decimal Quantity);
+
+public sealed record ShipmentPackageSummary(
+    Guid Id,
+    int PackageNo,
+    string PackageNumber,
+    string PackageType,
+    decimal? WeightKg,
+    decimal? LengthCm,
+    decimal? WidthCm,
+    decimal? HeightCm,
+    string? TrackingNumber,
+    decimal? ContentsWeightKg,
+    IReadOnlyList<ShipmentPackageLineSummary> Contents);
 
 public sealed record ShipmentSummary(
     Guid Id,
@@ -229,4 +261,28 @@ public sealed record ShipmentSummary(
     string? ReversalReason,
     DateTimeOffset? PostedAt,
     IReadOnlyList<ShipmentLineSummary> Lines,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    Guid? PickListId,
+    string? PickListNumber,
+    string? PickListStatus,
+    IReadOnlyList<ShipmentPackageSummary> Packages,
+    decimal? TotalWeightKg);
+
+public sealed record CancelPickingRequest(string Reason);
+
+public sealed record SavePackageLineRequest(Guid OrderLineId, decimal Quantity);
+
+public sealed record SavePackageRequest(
+    IReadOnlyList<SavePackageLineRequest> Contents,
+    string? PackageType = null,
+    decimal? WeightKg = null,
+    decimal? LengthCm = null,
+    decimal? WidthCm = null,
+    decimal? HeightCm = null,
+    string? TrackingNumber = null);
+
+/// <summary>The shipment's packages as a whole: what is sent replaces what was there.</summary>
+public sealed record SavePackagesRequest(IReadOnlyList<SavePackageRequest> Packages);
+
+/// <summary>The carrier and its tracking reference, often only known once the goods have left.</summary>
+public sealed record SaveCarrierRequest(string? Carrier, string? TrackingNumber);

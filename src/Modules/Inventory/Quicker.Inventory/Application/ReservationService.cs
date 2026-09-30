@@ -72,9 +72,13 @@ public sealed class ReservationService(InventoryDbContext db, IUnitOfWorkAccesso
             return Error.Validation("reservation.warehouse_invalid", "The warehouse must belong to the company.").WithWhy(("warehouseId", request.WarehouseId));
         }
 
-        if (warehouse.BinsEnabled && request.BinId is null)
+        if (request.BinId is { } requestedBin)
         {
-            return Error.Validation("reservation.bin_required", "The warehouse uses bins; name the bin to reserve in.").WithWhy(("warehouse", warehouse.Code));
+            var bin = await warehouses.FindBinAsync(requestedBin, cancellationToken);
+            if (!warehouse.BinsEnabled || bin is null || bin.WarehouseId != warehouse.Id)
+            {
+                return Error.Validation("reservation.bin_invalid", "The bin must belong to the warehouse, and the warehouse must use bins.").WithWhy(("warehouse", warehouse.Code), ("binId", requestedBin));
+            }
         }
 
         var converted = await items.ToBaseAsync(item.Id, request.UomId ?? item.BaseUomId, request.Quantity, cancellationToken);
@@ -87,11 +91,14 @@ public sealed class ReservationService(InventoryDbContext db, IUnitOfWorkAccesso
         var uow = unitOfWork.Current;
         var locked = await LockAsync(uow, request, cancellationToken);
         var (onHand, reserved, hold) = (locked.OnHand, locked.Reserved, locked.QualityHold);
-        if (request.LotId is null && request.SerialId is null && item.Tracking is "lot" or "serial" or "lot_and_serial")
+        var anyBin = warehouse.BinsEnabled && request.BinId is null;
+        if ((request.LotId is null && request.SerialId is null && item.Tracking is "lot" or "serial" or "lot_and_serial") || anyBin)
         {
             // A lot/serial-tracked item's stock never sits on this "any lot" row -- it lives on each lot's or
             // serial's own balance row -- so a reservation that does not name one checks the item's total instead.
-            (onHand, reserved, hold) = await LockAllForItemAsync(uow, request, cancellationToken);
+            // Likewise in a warehouse with bins, stock only ever sits in a bin: a warehouse-level hold (a sales
+            // order's, which does not choose shelves; its pick list does, A-154) checks every bin's stock.
+            (onHand, reserved, hold) = await LockAllForItemAsync(uow, request, anyBin, cancellationToken);
         }
 
         var available = onHand - reserved - hold;
@@ -246,13 +253,18 @@ public sealed class ReservationService(InventoryDbContext db, IUnitOfWorkAccesso
     }
 
     /// <summary>Locks and sums every balance row of this item (every lot and serial, plus the "any lot" row) in
-    /// this warehouse/bin/variant -- what a reservation that does not name a lot or serial must check against.</summary>
-    private static async Task<LockedBalance> LockAllForItemAsync(IUnitOfWork uow, ReservationRequest request, CancellationToken cancellationToken)
+    /// this warehouse/bin/variant -- what a reservation that does not name a lot or serial must check against. With
+    /// <paramref name="anyBin"/> every bin of the warehouse counts, still narrowed to the lot or serial the request
+    /// names. Rows are locked in key order, the order the stock engine locks them in, so the two never deadlock.</summary>
+    private static async Task<LockedBalance> LockAllForItemAsync(IUnitOfWork uow, ReservationRequest request, bool anyBin, CancellationToken cancellationToken)
     {
         var rows = await uow.Connection.QueryAsync<LockedBalance>(new CommandDefinition("""
             SELECT on_hand AS OnHand, reserved AS Reserved, quality_hold AS QualityHold
             FROM app.inv_stock_balances
-            WHERE tenant_id = @tenant AND company_id = @company AND item_id = @item AND variant_id = @variant AND warehouse_id = @warehouse AND bin_id = @bin
+            WHERE tenant_id = @tenant AND company_id = @company AND item_id = @item AND variant_id = @variant AND warehouse_id = @warehouse
+              AND (@anyBin OR bin_id = @bin)
+              AND (@lot::uuid IS NULL OR lot_id = @lot) AND (@serial::uuid IS NULL OR serial_id = @serial)
+            ORDER BY bin_id, lot_id, serial_id
             FOR UPDATE
             """, new
         {
@@ -262,6 +274,9 @@ public sealed class ReservationService(InventoryDbContext db, IUnitOfWorkAccesso
             variant = request.VariantId ?? Guid.Empty,
             warehouse = request.WarehouseId,
             bin = request.BinId ?? Guid.Empty,
+            anyBin,
+            lot = request.LotId,
+            serial = request.SerialId,
         }, uow.Transaction, cancellationToken: cancellationToken));
         return new LockedBalance(rows.Sum(static r => r.OnHand), rows.Sum(static r => r.Reserved), rows.Sum(static r => r.QualityHold));
     }

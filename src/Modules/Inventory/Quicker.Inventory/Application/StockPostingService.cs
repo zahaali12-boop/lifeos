@@ -47,7 +47,8 @@ public sealed class StockPostingService(
 
     /// <summary>ReservationKey is the balance row the reservation's own hold lives on -- the same as Key, unless the
     /// reservation did not name a lot or serial (an "any lot" hold) but the line resolved to one of the item's own
-    /// lots or serials, in which case the hold to release is still on the "any lot" row.</summary>
+    /// lots or serials, or did not name a bin (a warehouse-level hold, A-154) but the line takes from a bin; the hold
+    /// to release is then still on the row the reservation named.</summary>
     private sealed record ResolvedLine(StockLine Source, ItemInfo Item, WarehouseInfo Warehouse, decimal BaseQuantity, Guid EnteredUomId, string EnteredUomCode, Reservation? Reservation, BalanceKey Key, BalanceKey? ReservationKey);
 
     private sealed record LockedBalance(decimal OnHand, decimal Reserved, decimal QualityHold);
@@ -383,7 +384,7 @@ public sealed class StockPostingService(
             // shares the line's one reservation (and the row its hold lives on), so consuming N units credits it N
             // units at once -- exactly as consuming the whole line in a single entry would.
             var perUnit = Math.Sign(baseQuantity);
-            var reservationKeyForUnits = reservation is null ? null : new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, reservation.LotId ?? Guid.Empty, reservation.SerialId ?? Guid.Empty);
+            var reservationKeyForUnits = reservation is null ? null : new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, reservation.BinId ?? Guid.Empty, reservation.LotId ?? Guid.Empty, reservation.SerialId ?? Guid.Empty);
             var unitLines = new List<ResolvedLine>(tracked.Value.SerialIds.Count);
             foreach (var serialId in tracked.Value.SerialIds)
             {
@@ -397,7 +398,7 @@ public sealed class StockPostingService(
 
         line = line with { LotId = tracked.Value.LotId };
         var key = new BalanceKey(company.Id.Value, item.Id, line.VariantId ?? Guid.Empty, warehouse.Id, line.BinId ?? Guid.Empty, line.LotId ?? Guid.Empty, line.SerialId ?? Guid.Empty);
-        var reservationKey = reservation is null ? null : key with { LotId = reservation.LotId ?? Guid.Empty, SerialId = reservation.SerialId ?? Guid.Empty };
+        var reservationKey = reservation is null ? null : key with { BinId = reservation.BinId ?? Guid.Empty, LotId = reservation.LotId ?? Guid.Empty, SerialId = reservation.SerialId ?? Guid.Empty };
         return new List<ResolvedLine> { new(line, item, warehouse, baseQuantity, converted.Value.EnteredUomId, converted.Value.EnteredUomCode, reservation, key, reservationKey) };
     }
 

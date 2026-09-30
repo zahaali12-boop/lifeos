@@ -79,7 +79,7 @@ Conventions:
 | Consignment out (stock moved to customer) | Dr `InventoryConsignedOut` / Cr `Inventory` | SLE `consignment_out` ownership `consigned_out` | no revenue |
 | Consignment consumption report | Shipment + invoice from `InventoryConsignedOut` | | |
 | Cancellation of remaining order quantity | none | reservation released, `qty_cancelled` | |
-| Reversal of shipment | mirror: Dr `Inventory` / Cr `Cogs` | SLE reversal entry applied exactly to the original | |
+| Reversal of shipment | mirror: Dr `Inventory` / Cr `Cogs` | one SLE `sale_return` per original entry (each bin, lot and serial of each line), applied exactly to it (A-154) | |
 | Reversal of invoice | mirror: Dr `Revenue`, Dr `OutputTax` / Cr `AR` | open item reversed (settled by reversal) | posts in the first open period if original is closed |
 
 ## 3. Purchasing (procure to pay)

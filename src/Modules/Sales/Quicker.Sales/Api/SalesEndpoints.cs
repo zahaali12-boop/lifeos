@@ -90,6 +90,18 @@ public static class SalesEndpoints
         shipments.MapPost("/{shipmentId:guid}/reverse", async (Guid shipmentId, ReverseShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(shipmentId, request, ct)))
             .RequirePermission(SalesPermissions.ShipmentPost)
             .WithSummary("Reverses a posted shipment with a reason: the stock returns and re-reserves for the order");
+        shipments.MapPost("/{shipmentId:guid}/release", async (Guid shipmentId, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.ReleaseAsync(shipmentId, ct)))
+            .RequirePermission(SalesPermissions.ShipmentManage)
+            .WithSummary("Releases a draft for picking: the warehouse gets a pick list in walking order (lots first expiry first out, bins in pick sequence) and the shipment waits until every line is picked");
+        shipments.MapPost("/{shipmentId:guid}/cancel-picking", async (Guid shipmentId, CancelPickingRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelPickingAsync(shipmentId, request, ct)))
+            .RequirePermission(SalesPermissions.ShipmentManage)
+            .WithSummary("Takes a shipment back from picking: its pick list is cancelled and the shipment is a draft again");
+        shipments.MapPut("/{shipmentId:guid}/packages", async (Guid shipmentId, SavePackagesRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.SavePackagesAsync(shipmentId, request, ct)))
+            .RequirePermission(SalesPermissions.ShipmentManage)
+            .WithSummary("Replaces the shipment's packages: type, weight, dimensions, tracking number and which order lines each holds how much of; allowed until the shipment is reversed");
+        shipments.MapPut("/{shipmentId:guid}/carrier", async (Guid shipmentId, SaveCarrierRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveCarrierAsync(shipmentId, request, ct)))
+            .RequirePermission(SalesPermissions.ShipmentManage)
+            .WithSummary("Sets the carrier and its tracking reference, also after posting");
 
         return api;
     }

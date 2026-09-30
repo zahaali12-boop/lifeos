@@ -123,6 +123,22 @@ public static class InventoryRowFactories
         });
         IsolationRegistry.Register("app.inv_transfers", static async (c, tx, t) => new RowRef("app.inv_transfers", $"id = '{(await TransferAsync(c, tx, t)).Transfer}'"));
         IsolationRegistry.Register("app.inv_transfer_lines", static async (c, tx, t) => new RowRef("app.inv_transfer_lines", $"id = '{(await TransferAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.inv_pick_lists", static async (c, tx, t) => new RowRef("app.inv_pick_lists", $"id = '{(await PickListAsync(c, tx, t)).PickList}'"));
+        IsolationRegistry.Register("app.inv_pick_lines", static async (c, tx, t) => new RowRef("app.inv_pick_lines", $"id = '{(await PickListAsync(c, tx, t)).Line}'"));
+    }
+
+    private static async Task<(Guid PickList, Guid Line)> PickListAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (warehouse, company) = await WarehouseAsync(c, tx, t);
+        var (item, _) = await ItemAsync(c, tx, t);
+        var list = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("""
+            INSERT INTO app.inv_pick_lists (tenant_id, id, company_id, warehouse_id, number, source_document_type, source_document_id, source_number, reserved_for_type, reserved_for_id)
+            VALUES (@t, @list, @company, @warehouse, @number, 'probe', @doc, 'PROBE', 'probe', @doc)
+            """, new { t, list, company, warehouse, number = Suffix(list), doc = Guid.CreateVersion7() }, tx);
+        await c.ExecuteAsync("INSERT INTO app.inv_pick_lines (tenant_id, id, pick_list_id, line_no, source_line_id, item_id, qty_to_pick) VALUES (@t, @line, @list, 1, @source, @item, 1)", new { t, line, list, source = Guid.CreateVersion7(), item }, tx);
+        return (list, line);
     }
 
     private static async Task<Guid> CompanyAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

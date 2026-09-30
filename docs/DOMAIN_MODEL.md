@@ -1273,6 +1273,14 @@ Quantities on every stock document are converted to the base unit through `itm_i
 
 ## 9. Inventory: warehouses, stock ledger, valuation, tracking, counts
 
+`inv_pick_lists`/`inv_pick_lines` are built (roadmap 5.5b, A-154, migration `V0050`), generic over their source
+document and corrected from the sketch below as follows: a list also records its source's number and the document
+whose reservations hold the stock (`reserved_for_type`/`reserved_for_id`, a shipment's sales order), its assignment
+and lifecycle times, and a status `released | in_progress | picked | closed | cancelled`; a line keeps the plan
+(`bin_id`, `lot_id`, `serial_numbers`, `qty_to_pick`, with `line_no` as the walking order) apart from what was picked
+(`qty_picked`, `picked_bin_id`, `picked_lot_id`, `picked_serial_numbers`, `status open | picked | short`,
+`short_reason`, who and when) instead of one `tracking` column. Picking moves no stock; the source document posts.
+
 ```mermaid
 erDiagram
   inv_warehouses ||--o{ inv_bins : "contains"
@@ -1575,21 +1583,33 @@ erDiagram
   }
   inv_pick_lists {
     uuid id PK
+    uuid company_id
     uuid warehouse_id
     text number
     text source_document_type
     uuid source_document_id
-    text status
+    text source_number
+    text reserved_for_type
+    uuid reserved_for_id
+    text status "released | in_progress | picked | closed | cancelled"
     uuid assigned_to
   }
   inv_pick_lines {
     uuid pick_list_id FK
+    int line_no "walking order"
     uuid source_line_id
     uuid item_id
+    uuid variant_id
     uuid bin_id
+    uuid lot_id
+    jsonb serial_numbers
     numeric qty_to_pick
     numeric qty_picked
-    jsonb tracking
+    uuid picked_bin_id
+    uuid picked_lot_id
+    jsonb picked_serial_numbers
+    text status "open | picked | short"
+    text short_reason
   }
   inv_consignment_agreements {
     uuid id PK
@@ -1997,8 +2017,12 @@ generic workflow block/override mechanism `pur_invoices` already uses for match 
 `sls_shipments`/`sls_shipment_lines` are also built (roadmap 5.5a, A-153), keyed by `order_id`/`partner_id` rather
 than the sketch's `customer_account_id`/`ship_to_address_id`, without the sketch's `picked`/`packed` statuses or
 per-line `tracking` (lot/serial-tracked items are refused for this slice, `shipment.tracked_item_unsupported`) —
-picking and packages (`sls_packages`, still just the sketch below) follow in 5.5b. The other `sls_*` tables below are
-still the Phase-0 sketch, not yet built; expect the same corrections on each as it is implemented.
+lot and serial lines followed in 5.5b parts 1–2 (A-153). Picking and packing, 5.5b part 3 (A-154, migration `V0051`),
+adds the `picking` status and `pick_list_id` on `sls_shipments`, per-line `allocations` (jsonb: bin, lot, serials,
+quantity and, once posted, the ledger entries of each part — a line may take from several bins and lots), and
+packages as `sls_shipment_packages` (type, weight, dimensions, tracking number, number `<shipment>-NN`) with
+`sls_shipment_package_lines` (order line, quantity) in place of the sketch's `contents jsonb`. The other `sls_*` tables
+below are still the Phase-0 sketch, not yet built; expect the same corrections on each as it is implemented.
 
 ```mermaid
 erDiagram
@@ -2007,7 +2031,8 @@ erDiagram
   sls_orders ||--|{ sls_order_lines : "has"
   sls_order_lines ||--o{ sls_shipment_lines : "shipped by"
   sls_shipments ||--|{ sls_shipment_lines : "has"
-  sls_shipments ||--o{ sls_packages : "packed in"
+  sls_shipments ||--o{ sls_shipment_packages : "packed in"
+  sls_shipment_packages ||--|{ sls_shipment_package_lines : "holds"
   sls_shipment_lines ||--o{ sls_invoice_lines : "invoiced by"
   sls_order_lines ||--o{ sls_invoice_lines : "invoiced by"
   sls_invoices ||--|{ sls_invoice_lines : "has"
@@ -2158,12 +2183,22 @@ erDiagram
     uuid sle_id
     jsonb sle_ids
   }
-  sls_packages {
+  sls_shipment_packages {
     uuid id PK
     uuid shipment_id FK
+    int package_no
     text package_number
+    text package_type
     numeric weight_kg
-    jsonb contents
+    numeric length_cm
+    numeric width_cm
+    numeric height_cm
+    text tracking_number
+  }
+  sls_shipment_package_lines {
+    uuid package_id FK
+    uuid order_line_id
+    numeric quantity
   }
   sls_invoices {
     uuid id PK

@@ -27,7 +27,8 @@ public static class InventoryModule
             new(RevaluationService.DocumentType, InventoryPermissions.CostingRead),
             new(AssemblyService.DocumentType, InventoryPermissions.AssemblyRead),
             new(TransferService.DocumentType, InventoryPermissions.TransferRead),
-            new(CountService.DocumentType, InventoryPermissions.CountRead));
+            new(CountService.DocumentType, InventoryPermissions.CountRead),
+            new(PickListService.DocumentType, InventoryPermissions.PickRead));
         CustomFieldHosts.Register(new CustomFieldHost("stock_transfer", "app.inv_transfers", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost("stock_adjustment", "app.inv_adjustments", "custom_fields"));
         CustomFieldHosts.Register(new CustomFieldHost("lot", "app.inv_lots", "custom_fields"));
@@ -56,10 +57,10 @@ public static class InventoryModule
         services.AddScoped<AssemblyService>();
         services.AddScoped<TrackingResolver>();
         services.AddScoped<LotService>();
-        services.AddScoped<IFefoSuggestions>(static sp => sp.GetRequiredService<LotService>());
         services.AddScoped<SerialService>();
-        services.AddScoped<ISerialSuggestions>(static sp => sp.GetRequiredService<SerialService>());
         services.AddScoped<CountService>();
+        services.AddScoped<PickListService>();
+        services.AddScoped<IPickLists>(static sp => sp.GetRequiredService<PickListService>());
         services.AddScoped<ReplenishmentService>();
         services.AddScoped<IReplenishmentSuggestions>(static sp => sp.GetRequiredService<ReplenishmentService>());
         services.TryAddScoped<IIncomingSupply, NoIncomingSupply>();
@@ -73,6 +74,7 @@ public static class InventoryModule
         services.AddSingleton(new RecordReadPermission("stock_count", InventoryPermissions.CountRead));
         services.AddSingleton(new RecordReadPermission("stock_assembly", InventoryPermissions.AssemblyRead));
         services.AddSingleton(new RecordReadPermission("stock_revaluation", InventoryPermissions.CostingRead));
+        services.AddSingleton(new RecordReadPermission(PickListService.DocumentType, InventoryPermissions.PickRead));
         services.AddSingleton(new RecordReadPermission("warehouse", InventoryPermissions.WarehouseRead));
         services.AddScoped<IRecordCompanies, InventoryRecordCompanies>();
         return services;

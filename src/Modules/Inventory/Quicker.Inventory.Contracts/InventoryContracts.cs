@@ -173,23 +173,6 @@ public interface IStockReservations
 /// <summary>One lot a first-expiry-first-out plan would take from, and how much (roadmap 3.5).</summary>
 public sealed record FefoSuggestion(Guid LotId, string LotNumber, DateOnly? ExpiresOn, decimal Available, decimal Take);
 
-/// <summary>First expiry, first out (roadmap 3.5, consumed by 5.5b's automatic lot pick on shipment): the lots of an
-/// item with available stock in a warehouse, earliest expiry first, and how much a plan for the quantity would take
-/// from each -- a suggestion only; nothing is reserved or consumed by asking.</summary>
-public interface IFefoSuggestions
-{
-    Task<IReadOnlyList<FefoSuggestion>> SuggestAsync(Guid companyId, Guid itemId, Guid warehouseId, decimal quantity, DateOnly asOf, CancellationToken cancellationToken = default);
-}
-
-/// <summary>Which of an item's own on-hand serials in a warehouse a shipment's automatic pick (roadmap 5.5b) would
-/// take, oldest received first (first in, first out -- serials carry no expiry the way a lot does, so receipt order
-/// is the natural stand-in) -- a suggestion only; nothing is consumed by asking. Fewer than requested come back if
-/// fewer are on hand; the caller decides whether that is enough.</summary>
-public interface ISerialSuggestions
-{
-    Task<IReadOnlyList<string>> SuggestAsync(Guid itemId, Guid warehouseId, int quantity, CancellationToken cancellationToken = default);
-}
-
 public sealed record WarehouseInfo(Guid Id, Guid CompanyId, Guid? BranchId, string Code, LocalizedText Name, string Kind, bool BinsEnabled, bool? AllowNegativeStock, bool IsActive);
 
 public sealed record BinInfo(Guid Id, Guid WarehouseId, string Code, string? Zone, string Kind, bool IsActive);
@@ -395,4 +378,114 @@ public interface IReplenishmentSuggestions
 
     /// <summary>Records the order line a suggestion became (accepting it with that quantity and supplier when it was still open).</summary>
     Task<Result> MarkOrderedAsync(Guid suggestionId, decimal quantity, Guid supplierId, Guid purchaseOrderLineId, CancellationToken cancellationToken = default);
+}
+
+// ------------------------------------------------------------------ picking (roadmap 5.5b, A-154)
+
+public static class PickListStatuses
+{
+    public const string Released = "released";
+    public const string InProgress = "in_progress";
+    public const string Picked = "picked";
+    public const string Closed = "closed";
+    public const string Cancelled = "cancelled";
+    public static readonly IReadOnlyList<string> All = [Released, InProgress, Picked, Closed, Cancelled];
+
+    /// <summary>A pick list in one of these still claims the stock it planned or picked.</summary>
+    public static readonly IReadOnlyList<string> Live = [Released, InProgress, Picked];
+}
+
+public static class PickLineStatuses
+{
+    public const string Open = "open";
+    public const string Picked = "picked";
+    public const string Short = "short";
+}
+
+/// <summary>One line a document asks to have picked, in the item's base unit; a bin narrows the search to that bin.</summary>
+public sealed record PickRequestLine(Guid SourceLineId, Guid ItemId, Guid? VariantId, decimal Quantity, Guid? BinId = null);
+
+/// <summary>
+/// What to locate for a document: the warehouse, the lines, the day (a lot expiring before it is not picked) and the
+/// document whose own reservations hold the stock (a sales order, for its shipment) -- its holds count as available
+/// to it, everyone else's do not.
+/// </summary>
+public sealed record PickPlanRequest(Guid CompanyId, Guid WarehouseId, string ReservedForDocumentType, Guid ReservedForDocumentId, DateOnly AsOf, IReadOnlyList<PickRequestLine> Lines);
+
+/// <summary>One place a quantity comes from: a bin (in a warehouse with bins), a lot (lot-tracked items) and the serials (serial-tracked items).</summary>
+public sealed record PickAllocation(Guid? BinId, string? BinCode, Guid? LotId, string? LotNumber, DateOnly? ExpiresOn, IReadOnlyList<string> SerialNumbers, decimal Quantity);
+
+/// <summary>Where a line's quantity can be taken from: lots first expiry first out, then bins in their pick sequence, serials oldest received first. Located below Requested means the rest cannot be found.</summary>
+public sealed record PickPlanLine(Guid SourceLineId, decimal Requested, decimal Located, IReadOnlyList<PickAllocation> Allocations);
+
+public sealed record PickReleaseRequest(PickPlanRequest Plan, string SourceDocumentType, Guid SourceDocumentId, string SourceNumber);
+
+public sealed record PickListLineInfo(
+    Guid Id,
+    int LineNo,
+    Guid SourceLineId,
+    Guid ItemId,
+    string ItemCode,
+    LocalizedText ItemName,
+    Guid? VariantId,
+    Guid? BinId,
+    string? BinCode,
+    string? Zone,
+    Guid? LotId,
+    string? LotNumber,
+    DateOnly? ExpiresOn,
+    IReadOnlyList<string> SerialNumbers,
+    decimal QtyToPick,
+    decimal QtyPicked,
+    Guid? PickedBinId,
+    string? PickedBinCode,
+    Guid? PickedLotId,
+    string? PickedLotNumber,
+    IReadOnlyList<string> PickedSerialNumbers,
+    string Status,
+    string? ShortReason,
+    Guid? PickedBy,
+    DateTimeOffset? PickedAt);
+
+public sealed record PickListInfo(
+    Guid Id,
+    Guid CompanyId,
+    Guid WarehouseId,
+    string WarehouseCode,
+    string Number,
+    string SourceDocumentType,
+    Guid SourceDocumentId,
+    string SourceNumber,
+    string Status,
+    Guid? AssignedTo,
+    DateTimeOffset? AssignedAt,
+    DateTimeOffset? StartedAt,
+    DateTimeOffset? CompletedAt,
+    DateTimeOffset? ClosedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancelReason,
+    int LinesTotal,
+    int LinesDone,
+    decimal QtyToPick,
+    decimal QtyPicked,
+    IReadOnlyList<PickListLineInfo> Lines,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
+/// <summary>
+/// Pick lists for other modules' documents (roadmap 5.5b, A-154): the plan is a suggestion only; a release plans and
+/// keeps the list, whose stock no later plan counts again until the list is closed (its document posted what was
+/// picked) or cancelled. Nothing here moves stock.
+/// </summary>
+public interface IPickLists
+{
+    Task<Result<IReadOnlyList<PickPlanLine>>> PlanAsync(PickPlanRequest request, CancellationToken cancellationToken = default);
+
+    Task<Result<PickListInfo>> ReleaseAsync(PickReleaseRequest request, CancellationToken cancellationToken = default);
+
+    Task<PickListInfo?> FindAsync(Guid pickListId, CancellationToken cancellationToken = default);
+
+    Task<Result<PickListInfo>> CancelAsync(Guid pickListId, string reason, CancellationToken cancellationToken = default);
+
+    Task<Result<PickListInfo>> CloseAsync(Guid pickListId, CancellationToken cancellationToken = default);
 }

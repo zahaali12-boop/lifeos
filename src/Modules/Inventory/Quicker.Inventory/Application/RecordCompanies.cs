@@ -13,6 +13,7 @@ internal sealed class InventoryRecordCompanies(IUnitOfWorkAccessor unitOfWork) :
         ["stock_count"] = "app.inv_counts",
         ["stock_assembly"] = "app.inv_assemblies",
         ["stock_revaluation"] = "app.inv_revaluations",
+        ["stock_pick_list"] = "app.inv_pick_lists",
         ["warehouse"] = "app.inv_warehouses",
     };
 

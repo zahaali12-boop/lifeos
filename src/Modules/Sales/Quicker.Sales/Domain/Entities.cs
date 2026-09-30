@@ -268,6 +268,9 @@ public sealed class SalesShipment : ITenantEntity
 
     public string? TrackingNumber { get; set; }
 
+    /// <summary>The pick list the shipment was released to (roadmap 5.5b part 3, A-154); null when it posts without one.</summary>
+    public Guid? PickListId { get; set; }
+
     public Guid? StockPostingId { get; set; }
 
     public Guid? JournalEntryId { get; set; }
@@ -295,6 +298,8 @@ public sealed class SalesShipment : ITenantEntity
     public DateTimeOffset UpdatedAt { get; set; }
 
     public List<SalesShipmentLine> Lines { get; } = [];
+
+    public List<SalesShipmentPackage> Packages { get; } = [];
 }
 
 public sealed class SalesShipmentLine : ITenantEntity
@@ -325,6 +330,9 @@ public sealed class SalesShipmentLine : ITenantEntity
 
     public string SerialNumbers { get; set; } = "[]";
 
+    /// <summary>Where the quantity comes from, per bin and lot (<see cref="Application.ShipmentAllocation"/>), with the stock ledger entries once posted.</summary>
+    public string Allocations { get; set; } = "[]";
+
     public decimal CogsAmount { get; set; }
 
     public Guid? SleId { get; set; }
@@ -332,4 +340,49 @@ public sealed class SalesShipmentLine : ITenantEntity
     public string SleIds { get; set; } = "[]";
 
     public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A box, pallet or envelope of a shipment (roadmap 5.5b part 3, A-154): its size and weight for the carrier,
+/// the carrier's tracking number, and which order lines it holds how much of.</summary>
+public sealed class SalesShipmentPackage : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ShipmentId { get; set; }
+
+    public int PackageNo { get; set; }
+
+    public string PackageNumber { get; set; } = string.Empty;
+
+    /// <summary>box, carton, pallet, envelope, crate, drum, bag or other.</summary>
+    public string PackageType { get; set; } = "box";
+
+    public decimal? WeightKg { get; set; }
+
+    public decimal? LengthCm { get; set; }
+
+    public decimal? WidthCm { get; set; }
+
+    public decimal? HeightCm { get; set; }
+
+    public string? TrackingNumber { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public List<SalesShipmentPackageLine> Lines { get; } = [];
+}
+
+public sealed class SalesShipmentPackageLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid PackageId { get; set; }
+
+    public Guid OrderLineId { get; set; }
+
+    public decimal Quantity { get; set; }
 }

@@ -24,9 +24,21 @@ public static class SalesRowFactories
         IsolationRegistry.Register("app.sls_order_lines", static async (c, tx, t) => new RowRef("app.sls_order_lines", $"id = '{(await OrderAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.sls_shipments", static async (c, tx, t) => new RowRef("app.sls_shipments", $"id = '{(await ShipmentAsync(c, tx, t)).Shipment}'"));
         IsolationRegistry.Register("app.sls_shipment_lines", static async (c, tx, t) => new RowRef("app.sls_shipment_lines", $"id = '{(await ShipmentAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.sls_shipment_packages", static async (c, tx, t) => new RowRef("app.sls_shipment_packages", $"id = '{(await PackageAsync(c, tx, t)).Package}'"));
+        IsolationRegistry.Register("app.sls_shipment_package_lines", static async (c, tx, t) => new RowRef("app.sls_shipment_package_lines", $"id = '{(await PackageAsync(c, tx, t)).Line}'"));
     }
 
-    private static async Task<(Guid Shipment, Guid Line)> ShipmentAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    private static async Task<(Guid Package, Guid Line)> PackageAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (shipment, _, orderLine) = await ShipmentAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.sls_shipment_packages (tenant_id, id, shipment_id, package_no, package_number) VALUES (@t, @id, @shipment, 1, @number)", new { t, id, shipment, number = Suffix(id) }, tx);
+        await c.ExecuteAsync("INSERT INTO app.sls_shipment_package_lines (tenant_id, id, package_id, order_line_id, quantity) VALUES (@t, @line, @id, @orderLine, 1)", new { t, line, id, orderLine }, tx);
+        return (id, line);
+    }
+
+    private static async Task<(Guid Shipment, Guid Line, Guid OrderLine)> ShipmentAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
     {
         var (order, orderLine, company) = await OrderAsync(c, tx, t);
         var order2 = await c.QuerySingleAsync<(Guid PartnerId, Guid WarehouseId)>("SELECT partner_id AS \"PartnerId\", warehouse_id AS \"WarehouseId\" FROM app.sls_orders WHERE tenant_id = @t AND id = @order", new { t, order }, tx);
@@ -34,7 +46,7 @@ public static class SalesRowFactories
         var line = Guid.CreateVersion7();
         await c.ExecuteAsync("INSERT INTO app.sls_shipments (tenant_id, id, company_id, number, order_id, partner_id, warehouse_id, posting_date) VALUES (@t, @id, @company, @number, @order, @partner, @warehouse, '2026-09-22')", new { t, id, company, number = Suffix(id), order, partner = order2.PartnerId, warehouse = order2.WarehouseId }, tx);
         await c.ExecuteAsync("INSERT INTO app.sls_shipment_lines (tenant_id, id, shipment_id, line_no, order_line_id, item_id, quantity, uom_id, quantity_base) VALUES (@t, @line, @id, 1, @orderLine, @item, 1, @uom, 1)", new { t, line, id, orderLine, item = Guid.CreateVersion7(), uom = Guid.CreateVersion7() }, tx);
-        return (id, line);
+        return (id, line, orderLine);
     }
 
     private static async Task<(Guid Order, Guid Line, Guid Company)> OrderAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

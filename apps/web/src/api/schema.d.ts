@@ -5070,6 +5070,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/pick-lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The picking work queue: pick lists with their progress; status 'live' lists every list still being picked, mine=true the caller's own */
+        get: operations["getInventoryPickLists"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/pick-lists/{pickListId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A pick list in walking order: per line the bin, lot and serials planned, and what was picked */
+        get: operations["getInventoryPickListsByPickListId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/pick-lists/{pickListId}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes an unassigned pick list for the caller */
+        post: operations["postInventoryPickListsByPickListIdClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/pick-lists/{pickListId}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hands a pick list to a picker, or back to the queue when no member is named */
+        post: operations["postInventoryPickListsByPickListIdAssign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/pick-lists/{pickListId}/lines/{lineId}/pick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirms a line: the quantity picked and, when it differs from the plan, the bin, lot or serials it came from; less than planned is a short pick with its reason; sent again, it replaces the confirmation */
+        post: operations["postInventoryPickListsByPickListIdLinesByLineIdPick"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/pick-lists/{pickListId}/lines/{lineId}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes a line's confirmation back: the line is open again */
+        post: operations["postInventoryPickListsByPickListIdLinesByLineIdReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/pick-lists/{pickListId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels a pick list; its stock is free for other lists and its document can be released again */
+        post: operations["postInventoryPickListsByPickListIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workflow/catalogue": {
         parameters: {
             query?: never;
@@ -8399,6 +8518,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/shipments/{shipmentId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Releases a draft for picking: the warehouse gets a pick list in walking order (lots first expiry first out, bins in pick sequence) and the shipment waits until every line is picked */
+        post: operations["postSalesShipmentsByShipmentIdRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/shipments/{shipmentId}/cancel-picking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes a shipment back from picking: its pick list is cancelled and the shipment is a draft again */
+        post: operations["postSalesShipmentsByShipmentIdCancelPicking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/shipments/{shipmentId}/packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replaces the shipment's packages: type, weight, dimensions, tracking number and which order lines each holds how much of; allowed until the shipment is reversed */
+        put: operations["putSalesShipmentsByShipmentIdPackages"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/shipments/{shipmentId}/carrier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Sets the carrier and its tracking reference, also after posting */
+        put: operations["putSalesShipmentsByShipmentIdCarrier"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -8870,6 +9057,10 @@ export interface components {
             /** Format: date */
             validTo: null | string;
         };
+        AssignPickListRequest: {
+            /** Format: uuid */
+            membershipId?: null | string;
+        };
         AssignRoleRequest: {
             /** Format: uuid */
             roleId: string;
@@ -9318,6 +9509,12 @@ export interface components {
             quantity: number | string;
         };
         CancelOrderRequest: {
+            reason: string;
+        };
+        CancelPickingRequest: {
+            reason: string;
+        };
+        CancelPickListRequest: {
             reason: string;
         };
         CancelRequest: {
@@ -11503,6 +11700,16 @@ export interface components {
             to: components["schemas"]["DocumentRef"];
             relation: string;
         };
+        /**
+         * @description A bilingual (or multilingual) text value stored as a language→text map (ADR-0027). Resolution falls back
+         *     requested → tenant default → any available language, and never returns null for a non-empty map.
+         */
+        LocalizedText: {
+            values?: null | {
+                [key: string]: string;
+            };
+            isEmpty?: boolean;
+        };
         LoginRequest: {
             email: string;
             password: string;
@@ -12469,6 +12676,132 @@ export interface components {
             description: string;
             /** @default false */
             isSensitive: boolean;
+        };
+        /**
+         * @description What a picker confirms for one line: the quantity taken, and where from when it differs from the plan
+         *                 (another bin, another lot); a serial-tracked item names the serials scanned. Less than planned is a short pick and
+         *                 says why; zero is "nothing there".
+         */
+        PickLineRequest: {
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            binId?: null | string;
+            lotNumber?: null | string;
+            serialNumbers?: null | string[];
+            shortReason?: null | string;
+        };
+        PickListInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            number: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            sourceNumber: string;
+            status: string;
+            /** Format: uuid */
+            assignedTo: null | string;
+            /** Format: date-time */
+            assignedAt: null | string;
+            /** Format: date-time */
+            startedAt: null | string;
+            /** Format: date-time */
+            completedAt: null | string;
+            /** Format: date-time */
+            closedAt: null | string;
+            /** Format: date-time */
+            cancelledAt: null | string;
+            cancelReason: null | string;
+            /** Format: int32 */
+            linesTotal: number | string;
+            /** Format: int32 */
+            linesDone: number | string;
+            /** Format: double */
+            qtyToPick: number | string;
+            /** Format: double */
+            qtyPicked: number | string;
+            lines: components["schemas"]["PickListLineInfo"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PickListLineInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            sourceLineId: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: components["schemas"]["LocalizedText"];
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: uuid */
+            binId: null | string;
+            binCode: null | string;
+            zone: null | string;
+            /** Format: uuid */
+            lotId: null | string;
+            lotNumber: null | string;
+            /** Format: date */
+            expiresOn: null | string;
+            serialNumbers: string[];
+            /** Format: double */
+            qtyToPick: number | string;
+            /** Format: double */
+            qtyPicked: number | string;
+            /** Format: uuid */
+            pickedBinId: null | string;
+            pickedBinCode: null | string;
+            /** Format: uuid */
+            pickedLotId: null | string;
+            pickedLotNumber: null | string;
+            pickedSerialNumbers: string[];
+            status: string;
+            shortReason: null | string;
+            /** Format: uuid */
+            pickedBy: null | string;
+            /** Format: date-time */
+            pickedAt: null | string;
+        };
+        /** @description A pick list in a work queue: its progress without its lines. */
+        PickListRow: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: string;
+            number: string;
+            sourceDocumentType: string;
+            /** Format: uuid */
+            sourceDocumentId: string;
+            sourceNumber: string;
+            status: string;
+            /** Format: uuid */
+            assignedTo: null | string;
+            /** Format: int32 */
+            linesTotal: number | string;
+            /** Format: int32 */
+            linesDone: number | string;
+            /** Format: double */
+            qtyToPick: number | string;
+            /** Format: double */
+            qtyPicked: number | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         /** @description The board: every active stage in order with its opportunities (won and lost columns show the last 90 days) and the open pipeline's totals. */
         PipelineBoard: {
@@ -14776,6 +15109,11 @@ export interface components {
             };
             workingDays: (number | string)[];
         };
+        /** @description The carrier and its tracking reference, often only known once the goods have left. */
+        SaveCarrierRequest: {
+            carrier: null | string;
+            trackingNumber: null | string;
+        };
         SaveCategoryRequest: {
             name: {
                 [key: string]: string;
@@ -15489,6 +15827,29 @@ export interface components {
             branchId?: null | string;
             notes?: null | string;
             customFields?: unknown;
+        };
+        SavePackageLineRequest: {
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: double */
+            quantity: number | string;
+        };
+        SavePackageRequest: {
+            contents: components["schemas"]["SavePackageLineRequest"][];
+            packageType?: null | string;
+            /** Format: double */
+            weightKg?: null | number | string;
+            /** Format: double */
+            lengthCm?: null | number | string;
+            /** Format: double */
+            widthCm?: null | number | string;
+            /** Format: double */
+            heightCm?: null | number | string;
+            trackingNumber?: null | string;
+        };
+        /** @description The shipment's packages as a whole: what is sent replaces what was there. */
+        SavePackagesRequest: {
+            packages: components["schemas"]["SavePackageRequest"][];
         };
         SavePartnerRequest: {
             code: string;
@@ -16897,6 +17258,31 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        /**
+         * @description One part of a shipment line's quantity: the bin and lot it comes from, its serials, and once posted the
+         *                 stock ledger entries it produced (what a reversal returns, entry by entry).
+         */
+        ShipmentAllocation: {
+            /** Format: uuid */
+            binId: null | string;
+            binCode: null | string;
+            /** Format: uuid */
+            lotId: null | string;
+            lotNumber: null | string;
+            /** Format: date */
+            expiresOn: null | string;
+            serialNumbers: string[];
+            /** Format: double */
+            quantity: number | string;
+            entries?: null | components["schemas"]["ShipmentAllocationEntry"][];
+        };
+        ShipmentAllocationEntry: {
+            /** Format: uuid */
+            sleId: string;
+            serialNumber: null | string;
+            /** Format: double */
+            quantity: number | string;
+        };
         ShipmentLineSummary: {
             /** Format: uuid */
             id: string;
@@ -16923,6 +17309,42 @@ export interface components {
             serialNumbers: string[];
             /** Format: double */
             cogsAmount: number | string;
+            allocations: components["schemas"]["ShipmentAllocation"][];
+            /** Format: double */
+            qtyPicked: null | number | string;
+            /** Format: double */
+            qtyPacked: number | string;
+        };
+        ShipmentPackageLineSummary: {
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: int32 */
+            orderLineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            /** Format: double */
+            quantity: number | string;
+        };
+        ShipmentPackageSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            packageNo: number | string;
+            packageNumber: string;
+            packageType: string;
+            /** Format: double */
+            weightKg: null | number | string;
+            /** Format: double */
+            lengthCm: null | number | string;
+            /** Format: double */
+            widthCm: null | number | string;
+            /** Format: double */
+            heightCm: null | number | string;
+            trackingNumber: null | string;
+            /** Format: double */
+            contentsWeightKg: null | number | string;
+            contents: components["schemas"]["ShipmentPackageLineSummary"][];
         };
         ShipmentSummary: {
             /** Format: uuid */
@@ -16956,6 +17378,13 @@ export interface components {
             lines: components["schemas"]["ShipmentLineSummary"][];
             /** Format: date-time */
             updatedAt: string;
+            /** Format: uuid */
+            pickListId: null | string;
+            pickListNumber: null | string;
+            pickListStatus: null | string;
+            packages: components["schemas"]["ShipmentPackageSummary"][];
+            /** Format: double */
+            totalWeightKg: null | number | string;
         };
         ShipTransferRequest: {
             /** Format: date */
@@ -27769,6 +28198,178 @@ export interface operations {
             };
         };
     };
+    getInventoryPickLists: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                warehouseId?: string;
+                status?: string;
+                assignedTo?: string;
+                mine?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickListRow"][];
+                };
+            };
+        };
+    };
+    getInventoryPickListsByPickListId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pickListId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickListInfo"];
+                };
+            };
+        };
+    };
+    postInventoryPickListsByPickListIdClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pickListId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickListInfo"];
+                };
+            };
+        };
+    };
+    postInventoryPickListsByPickListIdAssign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pickListId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignPickListRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickListInfo"];
+                };
+            };
+        };
+    };
+    postInventoryPickListsByPickListIdLinesByLineIdPick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pickListId: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PickLineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickListInfo"];
+                };
+            };
+        };
+    };
+    postInventoryPickListsByPickListIdLinesByLineIdReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pickListId: string;
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickListInfo"];
+                };
+            };
+        };
+    };
+    postInventoryPickListsByPickListIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pickListId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelPickListRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PickListInfo"];
+                };
+            };
+        };
+    };
     getWorkflowCatalogue: {
         parameters: {
             query?: never;
@@ -34254,6 +34855,106 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReverseShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    postSalesShipmentsByShipmentIdRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    postSalesShipmentsByShipmentIdCancelPicking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelPickingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    putSalesShipmentsByShipmentIdPackages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePackagesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    putSalesShipmentsByShipmentIdCarrier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCarrierRequest"];
             };
         };
         responses: {

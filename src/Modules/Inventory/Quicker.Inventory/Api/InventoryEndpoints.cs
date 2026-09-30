@@ -279,6 +279,31 @@ public static class InventoryEndpoints
         replenishment.MapPost("/suggestions/{suggestionId:guid}/dismiss", async (Guid suggestionId, DismissSuggestionRequest request, ReplenishmentService service, CancellationToken ct) => ApiProblems.Ok(await service.DismissAsync(suggestionId, request, ct)))
             .RequirePermission(InventoryPermissions.ReplenishmentManage);
 
+        // ------------------------------------------------------------------ picking (roadmap 5.5b, A-154)
+        var picks = inventory.MapGroup("/pick-lists");
+        picks.MapGet("/", async (Guid? companyId, Guid? warehouseId, string? status, Guid? assignedTo, bool? mine, PickListService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.ListAsync(companyId, warehouseId, status, assignedTo, mine ?? false, ct)))
+            .RequireAnyPermission(InventoryPermissions.PickRead, InventoryPermissions.PickExecute)
+            .WithSummary("The picking work queue: pick lists with their progress; status 'live' lists every list still being picked, mine=true the caller's own");
+        picks.MapGet("/{pickListId:guid}", async (Guid pickListId, PickListService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(pickListId, ct)))
+            .RequireAnyPermission(InventoryPermissions.PickRead, InventoryPermissions.PickExecute)
+            .WithSummary("A pick list in walking order: per line the bin, lot and serials planned, and what was picked");
+        picks.MapPost("/{pickListId:guid}/claim", async (Guid pickListId, PickListService service, CancellationToken ct) => ApiProblems.Ok(await service.ClaimAsync(pickListId, ct)))
+            .RequirePermission(InventoryPermissions.PickExecute)
+            .WithSummary("Takes an unassigned pick list for the caller");
+        picks.MapPost("/{pickListId:guid}/assign", async (Guid pickListId, AssignPickListRequest request, PickListService service, CancellationToken ct) => ApiProblems.Ok(await service.AssignAsync(pickListId, request, ct)))
+            .RequirePermission(InventoryPermissions.PickManage)
+            .WithSummary("Hands a pick list to a picker, or back to the queue when no member is named");
+        picks.MapPost("/{pickListId:guid}/lines/{lineId:guid}/pick", async (Guid pickListId, Guid lineId, PickLineRequest request, PickListService service, CancellationToken ct) => ApiProblems.Ok(await service.PickAsync(pickListId, lineId, request, ct)))
+            .RequirePermission(InventoryPermissions.PickExecute)
+            .WithSummary("Confirms a line: the quantity picked and, when it differs from the plan, the bin, lot or serials it came from; less than planned is a short pick with its reason; sent again, it replaces the confirmation");
+        picks.MapPost("/{pickListId:guid}/lines/{lineId:guid}/reset", async (Guid pickListId, Guid lineId, PickListService service, CancellationToken ct) => ApiProblems.Ok(await service.ResetLineAsync(pickListId, lineId, ct)))
+            .RequirePermission(InventoryPermissions.PickExecute)
+            .WithSummary("Takes a line's confirmation back: the line is open again");
+        picks.MapPost("/{pickListId:guid}/cancel", async (Guid pickListId, CancelPickListRequest request, PickListService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(pickListId, request.Reason, ct)))
+            .RequirePermission(InventoryPermissions.PickManage)
+            .WithSummary("Cancels a pick list; its stock is free for other lists and its document can be released again");
+
         return inventory;
     }
 }

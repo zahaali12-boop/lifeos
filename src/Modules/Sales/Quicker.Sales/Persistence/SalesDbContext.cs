@@ -19,6 +19,10 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
 
     public DbSet<SalesShipmentLine> ShipmentLines => Set<SalesShipmentLine>();
 
+    public DbSet<SalesShipmentPackage> ShipmentPackages => Set<SalesShipmentPackage>();
+
+    public DbSet<SalesShipmentPackageLine> ShipmentPackageLines => Set<SalesShipmentPackageLine>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -62,6 +66,7 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.CustomFields).HasColumnType("jsonb");
             b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.ShipmentId });
+            b.HasMany(static x => x.Packages).WithOne().HasForeignKey(static p => new { p.TenantId, p.ShipmentId });
             b.HasAuditTrail("sls_shipment", static x => x.Number);
         });
 
@@ -71,6 +76,20 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.SleIds).HasColumnType("jsonb");
             b.Property(static x => x.SerialNumbers).HasColumnType("jsonb");
+            b.Property(static x => x.Allocations).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<SalesShipmentPackage>(b =>
+        {
+            b.ToTable("sls_shipment_packages", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.PackageId });
+        });
+
+        modelBuilder.Entity<SalesShipmentPackageLine>(b =>
+        {
+            b.ToTable("sls_shipment_package_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
         });
 
         base.OnModelCreating(modelBuilder);
