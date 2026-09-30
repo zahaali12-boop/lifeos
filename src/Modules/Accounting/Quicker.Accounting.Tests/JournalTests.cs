@@ -98,6 +98,43 @@ public sealed class JournalTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task An_unbalanced_journal_saves_as_a_draft_but_is_never_submitted_or_posted()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var companyId = await CompanyReadyAsync(owner, "UNB", "IQD");
+
+        // A draft is work in progress: it may be out of balance while it is being typed.
+        foreach (var kind in new[] { "manual", "allocation" })
+        {
+            var draft = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/journals", new { kind, postingDate = "2026-09-22", currency = "IQD", lines = new[] { Line("6110", debit: 100m), Line("2170", credit: 60m) } });
+            var journalId = draft.GetProperty("id").GetGuid();
+            draft.GetProperty("status").GetString().ShouldBe("draft");
+
+            // Neither submitted nor posted: the refusal names both sides.
+            (await owner.PostErrorAsync($"/api/v1/accounting/journals/{journalId}/submit", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("journal.unbalanced");
+            var refused = await owner.PostErrorAsync($"/api/v1/accounting/journals/{journalId}/post", new { }, HttpStatusCode.UnprocessableEntity);
+            refused.Code.ShouldBe("journal.unbalanced");
+            refused.Problem.GetProperty("why").GetProperty("debit").GetDecimal().ShouldBe(100m);
+            refused.Problem.GetProperty("why").GetProperty("credit").GetDecimal().ShouldBe(60m);
+            var after = await owner.GetOkAsync($"/api/v1/accounting/journals/{journalId}");
+            after.GetProperty("status").GetString().ShouldBe("draft");
+            (after.TryGetProperty("journalEntryId", out var entry) ? entry.ValueKind : JsonValueKind.Null).ShouldBe(JsonValueKind.Null, "nothing reached the ledger");
+
+            // Balanced, the same journal posts.
+            await owner.PutAsync($"/api/v1/accounting/journals/{journalId}", new { kind, postingDate = "2026-09-22", currency = "IQD", lines = new[] { Line("6110", debit: 100m), Line("2170", credit: 100m) } });
+            (await owner.PostAsync($"/api/v1/accounting/journals/{journalId}/post", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("posted");
+        }
+
+        // Only the two posted journals are in the ledger, and the books balance.
+        var trial = await owner.GetOkAsync($"/api/v1/accounting/companies/{companyId}/reports/trial-balance?asOf=2026-09-30");
+        var rent = trial.GetProperty("rows").EnumerateArray().Single(static r => r.GetProperty("accountCode").GetString() == "6110");
+        rent.GetProperty("closing").GetDecimal().ShouldBe(200m);
+        trial.GetProperty("totals").GetProperty("closing").GetDecimal().ShouldBe(0m);
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
     public async Task Opening_balances_balance_themselves_and_accruals_reverse_on_their_date_through_the_routine()
     {
         var ws = await Api.SignupAsync();

@@ -50,16 +50,27 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await expect(page.getByTestId("dimension-rules")).toBeVisible();
   await expectAccessible(page);
 
-  // A manual journal: rent against accrued expenses, saved then posted.
+  // A manual journal: rent against accrued expenses. Out of balance it saves as a draft but cannot be submitted or
+  // posted, and the screen says by how much; once it balances it posts.
   await nav(page, "Journals");
   await page.getByTestId("new-journal").click();
   await page.getByTestId("journal-description").fill("September rent");
   await page.getByTestId("line-account-0").fill("6110");
   await page.getByTestId("line-debit-0").fill("1500000");
   await page.getByTestId("line-account-1").fill("2170");
-  await page.getByTestId("line-credit-1").fill("1500000");
+  await page.getByTestId("line-credit-1").fill("1000000");
+  await expect(page.getByTestId("journal-balance")).toHaveAttribute("data-state", "unbalanced");
+  await expect(page.getByTestId("journal-balance")).toContainText("Out of balance by");
   await page.getByTestId("save-journal").click();
   await expect(page.getByTestId("journal-detail")).toContainText("Draft");
+  await expect(page.getByTestId("journal-detail").getByTestId("journal-balance")).toHaveAttribute("data-state", "unbalanced");
+  await expect(page.getByTestId("post-journal")).toBeDisabled();
+  await expect(page.getByTestId("submit-journal")).toBeDisabled();
+  await page.getByTestId("edit-journal").click();
+  await page.getByTestId("line-credit-1").fill("1500000");
+  await expect(page.getByTestId("journal-balance")).toHaveAttribute("data-state", "balanced");
+  await page.getByTestId("save-journal").click();
+  await expect(page.getByTestId("journal-detail").getByTestId("journal-balance")).toHaveAttribute("data-state", "balanced");
   await page.getByTestId("post-journal").click();
   await expect(page.getByTestId("journal-detail")).toContainText("Posted");
   await expectAccessible(page);

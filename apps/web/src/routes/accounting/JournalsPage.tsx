@@ -10,7 +10,8 @@ import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
 import { currentLanguage } from "../../i18n";
 import { add, compare, isDecimal } from "../../lib/decimal";
-import { formatDate, localized } from "../../lib/format";
+import { journalBalance } from "../../lib/journalBalance";
+import { formatDate, formatMoney, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { AttachmentsPanel } from "../AttachmentsPanel";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
@@ -106,6 +107,22 @@ function toRequest(form: JournalForm): components["schemas"]["SaveJournalRequest
 /** The side's total as an exact decimal; amounts still being typed (not yet a number) count as nothing. */
 function sum(lines: LineForm[], side: "debit" | "credit"): string {
   return add("0", ...lines.map((line) => line[side].trim()).filter(isDecimal));
+}
+
+function BalanceNote({ kind, debit, credit, currency }: { kind: string; debit: string | number; credit: string | number; currency: string }) {
+  const { t } = useTranslation();
+  const { state, difference } = journalBalance(kind, debit, credit);
+  const amount = formatMoney(difference.replace(/^-/u, ""), currency);
+  const tone = state === "balanced" ? "text-success" : state === "unbalanced" ? "text-danger" : "text-fg-muted";
+  const text = state === "balanced" ? t("accounting.balanced")
+    : state === "empty" ? t("accounting.noAmounts")
+    : state === "opening" ? t("accounting.openingDifference", { amount })
+    : t("accounting.outOfBalance", { amount });
+  return (
+    <p role={state === "unbalanced" ? "alert" : "status"} className={`text-sm font-medium ${tone}`} data-testid="journal-balance" data-state={state}>
+      {text}
+    </p>
+  );
 }
 
 /** Manual journals: the list by status, a line editor, and the lifecycle actions (submit, approve, reject, post, cancel, correct). */
@@ -209,6 +226,8 @@ export function JournalsPage() {
   const rows = journals.data?.pages.flatMap((page) => page.items) ?? [];
   const detail = journal.data;
   const editable = detail?.status === "draft" || detail?.status === "rejected";
+  const detailBalance = detail ? journalBalance(detail.kind, detail.totalDebit, detail.totalCredit).state : "empty";
+  const canGoFurther = detailBalance === "balanced" || detailBalance === "opening";
 
   const submitForm = (event: FormEvent): void => {
     event.preventDefault();
@@ -329,6 +348,7 @@ export function JournalsPage() {
                   </TableRow>
                 </TableBody>
               </Table>
+              {detail.status !== "posted" && detail.status !== "cancelled" ? <BalanceNote kind={detail.kind} debit={detail.totalDebit} credit={detail.totalCredit} currency={detail.currency} /> : null}
               <CustomFieldValuesList entityType="manual_journal" values={detail.customFields} />
               <AttachmentsPanel entityType="manual_journal" entityId={detail.id} />
               </>
@@ -348,7 +368,7 @@ export function JournalsPage() {
                   </Button>
                 ) : null}
                 {editable ? (
-                  <Button variant="secondary" onClick={() => { act.mutate("submit"); }} loading={act.isPending} data-testid="submit-journal">
+                  <Button variant="secondary" onClick={() => { act.mutate("submit"); }} loading={act.isPending} disabled={!canGoFurther} data-testid="submit-journal">
                     {t("accounting.submit")}
                   </Button>
                 ) : null}
@@ -363,7 +383,7 @@ export function JournalsPage() {
                   </>
                 ) : null}
                 {detail.status === "draft" || detail.status === "approved" ? (
-                  <Button onClick={() => { act.mutate("post"); }} loading={act.isPending} data-testid="post-journal">
+                  <Button onClick={() => { act.mutate("post"); }} loading={act.isPending} disabled={!canGoFurther} data-testid="post-journal">
                     {t("accounting.post")}
                   </Button>
                 ) : null}
@@ -491,6 +511,7 @@ export function JournalsPage() {
                   </TableRow>
                 </TableBody>
               </Table>
+              <BalanceNote kind={editing.form.kind} debit={sum(editing.form.lines, "debit")} credit={sum(editing.form.lines, "credit")} currency={editing.form.currency} />
               <CustomFieldsFieldset entityType="manual_journal" values={editing.form.customFields} onChange={(customFields) => { setEditing({ ...editing, form: { ...editing.form, customFields } }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setEditing(null); }}>
