@@ -20,6 +20,7 @@ export type RecordScreen =
   | "/inventory/assemblies"
   | "/inventory/transfers"
   | "/inventory/counts"
+  | "/inventory/pick-lists"
   | "/inventory/items"
   | "/inventory/warehouses"
   | "/accounting/journals"
@@ -46,6 +47,7 @@ const screens: Record<string, RecordScreen> = {
   stock_assembly: "/inventory/assemblies",
   stock_transfer: "/inventory/transfers",
   stock_count: "/inventory/counts",
+  stock_pick_list: "/inventory/pick-lists",
   manual_journal: "/accounting/journals",
   journal_entry: "/accounting/journal-entries",
   bank_payment: "/banking/payments",

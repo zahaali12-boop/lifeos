@@ -37,7 +37,7 @@ internal static class DemoSales
         // an item with neither its own tax group nor its category's is refused by tax determination (`tax.item_unclassified`).
         var standardItemTaxGroup = await unitOfWork.Connection.ExecuteScalarAsync<Guid>(new CommandDefinition(
             "SELECT id FROM app.tax_groups WHERE tenant_id = @tenant AND kind = 'item' AND code = 'STANDARD'", new { tenant }, unitOfWork.Transaction, cancellationToken: cancellationToken));
-        foreach (var code in new[] { "BEV", "ACC", "STAT" })
+        foreach (var code in new[] { "BEV", "ACC", "STAT", "GROC" })
         {
             var categoryId = await unitOfWork.Connection.ExecuteScalarAsync<Guid>(new CommandDefinition(
                 "SELECT id FROM app.itm_item_categories WHERE tenant_id = @tenant AND code = @code", new { tenant, code }, unitOfWork.Transaction, cancellationToken: cancellationToken));

@@ -22,7 +22,7 @@ using Quicker.Tenancy.Contracts;
 
 namespace Quicker.Migrator.Demo;
 
-public sealed record DemoSeedResult(Guid TenantId, bool Created, TimeSpan Elapsed, int Companies, int Branches, int Users, int Rates, int Journals = 0, int Entries = 0, int PeriodsClosed = 0, int Warehouses = 0, int Items = 0, int Variants = 0, int Lots = 0, int Serials = 0, int StockLines = 0, int PurchaseOrders = 0, int SupplierInvoices = 0, int SupplierPayments = 0, int Customers = 0, int Opportunities = 0, int PriceLists = 0, int Promotions = 0, int TaxRegimes = 0, int TaxRegistrations = 0, int Quotations = 0, int SalesOrders = 0);
+public sealed record DemoSeedResult(Guid TenantId, bool Created, TimeSpan Elapsed, int Companies, int Branches, int Users, int Rates, int Journals = 0, int Entries = 0, int PeriodsClosed = 0, int Warehouses = 0, int Items = 0, int Variants = 0, int Lots = 0, int Serials = 0, int StockLines = 0, int PurchaseOrders = 0, int SupplierInvoices = 0, int SupplierPayments = 0, int Customers = 0, int Opportunities = 0, int PriceLists = 0, int Promotions = 0, int TaxRegimes = 0, int TaxRegistrations = 0, int Quotations = 0, int SalesOrders = 0, int Shipments = 0, int PickLists = 0);
 
 /// <summary>
 /// Builds the demo tenant in one transaction through the modules' own services (ADR-0029). With
@@ -223,6 +223,9 @@ public static class DemoSeeder
         // stocked-plus-drop-ship order — priced and taxed by the engines just seeded above.
         var sales = await DemoSales.SeedAsync(services, createdCompanies, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
 
+        // Pick, pack and ship (roadmap 5.5): shipments from the Baghdad main warehouse at every stage, from a draft to posted and packed.
+        var shipping = await DemoShipping.SeedAsync(services, createdCompanies, clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
+
         // What the daily expiry job would already have done: lots past their expiry date are marked expired and held.
         await services.GetRequiredService<LotService>().ExpireAsync(clock.TodayIn(DemoData.BaghdadTimeZone), cancellationToken);
 
@@ -233,9 +236,9 @@ public static class DemoSeeder
         }
 
         await services.GetRequiredService<IAuditSink>().RecordAsync(new AuditEntry("tenant", tenant.Id.Value, DemoData.Slug, "seeded",
-            After: new { companies = DemoData.Companies.Count, branches, users = DemoData.Users.Count, rates = series.Count, journals = books.Journals, entries = books.Entries, warehouses = stock.Warehouses, items = stock.Items, variants = stock.Variants, lots = stock.Lots, serials = stock.Serials, stockLines = stock.StockLines, purchaseOrders = purchasing.Orders, supplierInvoices = purchasing.Invoices, supplierPayments = purchasing.Payments, customers = crm.Customers, prospects = crm.Prospects, opportunities = crm.Opportunities, crmActivities = crm.Activities, priceLists = pricing.PriceLists, prices = pricing.Prices, priceAgreements = pricing.Agreements, discountRules = pricing.Rules, promotions = pricing.Promotions, priceFloors = pricing.Floors, taxRegimes = tax.Regimes, taxRegistrations = tax.Registrations, salesQuotations = sales.Quotations, salesOrders = sales.Orders }), cancellationToken);
+            After: new { companies = DemoData.Companies.Count, branches, users = DemoData.Users.Count, rates = series.Count, journals = books.Journals, entries = books.Entries, warehouses = stock.Warehouses, items = stock.Items, variants = stock.Variants, lots = stock.Lots, serials = stock.Serials, stockLines = stock.StockLines, purchaseOrders = purchasing.Orders, supplierInvoices = purchasing.Invoices, supplierPayments = purchasing.Payments, customers = crm.Customers, prospects = crm.Prospects, opportunities = crm.Opportunities, crmActivities = crm.Activities, priceLists = pricing.PriceLists, prices = pricing.Prices, priceAgreements = pricing.Agreements, discountRules = pricing.Rules, promotions = pricing.Promotions, priceFloors = pricing.Floors, taxRegimes = tax.Regimes, taxRegistrations = tax.Registrations, salesQuotations = sales.Quotations, salesOrders = sales.Orders + shipping.Orders, shipments = shipping.Shipments, pickLists = shipping.PickLists }), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
-        return new DemoSeedResult(tenant.Id.Value, Created: true, stopwatch.Elapsed, DemoData.Companies.Count, branches, DemoData.Users.Count, series.Count, books.Journals, books.Entries, books.PeriodsClosed, stock.Warehouses, stock.Items, stock.Variants, stock.Lots, stock.Serials, stock.StockLines, purchasing.Orders, purchasing.Invoices, purchasing.Payments, crm.Customers, crm.Opportunities, pricing.PriceLists, pricing.Promotions, tax.Regimes, tax.Registrations, sales.Quotations, sales.Orders);
+        return new DemoSeedResult(tenant.Id.Value, Created: true, stopwatch.Elapsed, DemoData.Companies.Count, branches, DemoData.Users.Count, series.Count, books.Journals, books.Entries, books.PeriodsClosed, stock.Warehouses, stock.Items, stock.Variants, stock.Lots, stock.Serials, stock.StockLines, purchasing.Orders, purchasing.Invoices, purchasing.Payments, crm.Customers, crm.Opportunities, pricing.PriceLists, pricing.Promotions, tax.Regimes, tax.Registrations, sales.Quotations, sales.Orders + shipping.Orders, shipping.Shipments, shipping.PickLists);
     }
 
     /// <summary>Runs the invariant harness over the demo tenant as the system actor (tests and operators: the seeded books must hold).</summary>

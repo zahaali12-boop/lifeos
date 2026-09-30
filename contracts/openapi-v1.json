@@ -36805,24 +36805,6 @@
           }
         }
       },
-      "LocalizedText": {
-        "type": "object",
-        "properties": {
-          "values": {
-            "type": [
-              "null",
-              "object"
-            ],
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "isEmpty": {
-            "type": "boolean"
-          }
-        },
-        "description": "A bilingual (or multilingual) text value stored as a language→text map (ADR-0027). Resolution falls back\nrequested → tenant default → any available language, and never returns null for a non-empty map."
-      },
       "LoginRequest": {
         "required": [
           "email",
@@ -40719,6 +40701,12 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "assignedName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -40776,7 +40764,10 @@
             "type": "string"
           },
           "itemName": {
-            "$ref": "#/components/schemas/LocalizedText"
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "variantId": {
             "type": [
@@ -40900,6 +40891,10 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "uomCode": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -41001,6 +40996,12 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "assignedName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "description": "A pick list in a work queue: its progress without its lines."

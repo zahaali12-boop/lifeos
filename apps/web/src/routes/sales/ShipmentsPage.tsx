@@ -1,7 +1,8 @@
 import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { PackageOpen, Plus, ScanLine, Truck } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
@@ -11,8 +12,10 @@ import { formatDate, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { Allocations, PickProgress, PickStatus } from "../inventory/picking";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, SalesStatus, type Shipment, type SalesOrderLine } from "./shared";
+import { PackagesEditor, PackagesTable } from "./ShipmentPackages";
 
 interface ShipmentForm {
   orderId: string;
@@ -24,9 +27,9 @@ interface ShipmentForm {
 
 const shippable = (line: SalesOrderLine): boolean => !line.dropShip && line.status !== "cancelled" && Number(line.qtyReserved) > 0;
 
-/** Shipments of a confirmed order's reserved lines (roadmap 5.5a): posts through the stock engine, which consumes
- * the reservation exactly as much as it ships and books cost of goods sold; a partial shipment leaves the rest
- * reserved for a later one. */
+/** Shipments of a confirmed order's reserved lines (roadmap 5.5): located bin by bin and lot by lot, released to the
+ * warehouse as a pick list or posted directly, then packed. Posting goes through the stock engine, which consumes the
+ * reservation exactly as much as it ships and books cost of goods sold; what is not shipped stays reserved. */
 export function ShipmentsPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -39,6 +42,10 @@ export function ShipmentsPage() {
   const [openId, setOpenId] = useOpenRecord("/sales/shipments");
   const [reversing, setReversing] = useState(false);
   const [reversalReason, setReversalReason] = useState("");
+  const [cancellingPick, setCancellingPick] = useState(false);
+  const [pickCancelReason, setPickCancelReason] = useState("");
+  const [packing, setPacking] = useState(false);
+  const [carrierForm, setCarrierForm] = useState<{ carrier: string; trackingNumber: string } | null>(null);
   const [followSource, clearFollowOn] = useFollowOnSource("/sales/shipments");
   const canManage = can("sales.shipment.manage");
   const canPost = can("sales.shipment.post");
@@ -83,6 +90,7 @@ export function ShipmentsPage() {
     await queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
     await queryClient.invalidateQueries({ queryKey: ["sales-order"] });
     await queryClient.invalidateQueries({ queryKey: ["sales-order-for-shipment"] });
+    await queryClient.invalidateQueries({ queryKey: ["pick-lists"] });
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
@@ -103,6 +111,21 @@ export function ShipmentsPage() {
   const post = useMutation({
     mutationFn: async (id: string) => unwrap(await api.POST("/api/v1/sales/shipments/{shipmentId}/post", { params: { path: { shipmentId: id } } })),
     onSuccess: async () => { setProblem(null); await refresh(); },
+    onError: fail,
+  });
+  const release = useMutation({
+    mutationFn: async (id: string) => unwrap(await api.POST("/api/v1/sales/shipments/{shipmentId}/release", { params: { path: { shipmentId: id } } })),
+    onSuccess: async () => { setProblem(null); await refresh(); },
+    onError: fail,
+  });
+  const cancelPicking = useMutation({
+    mutationFn: async (input: { id: string; reason: string }) => unwrap(await api.POST("/api/v1/sales/shipments/{shipmentId}/cancel-picking", { params: { path: { shipmentId: input.id } }, body: { reason: input.reason } })),
+    onSuccess: async () => { setProblem(null); setCancellingPick(false); setPickCancelReason(""); await refresh(); },
+    onError: fail,
+  });
+  const saveCarrier = useMutation({
+    mutationFn: async (input: { id: string; carrier: string; trackingNumber: string }) => unwrap(await api.PUT("/api/v1/sales/shipments/{shipmentId}/carrier", { params: { path: { shipmentId: input.id } }, body: { carrier: input.carrier || null, trackingNumber: input.trackingNumber || null } })),
+    onSuccess: async () => { setProblem(null); setCarrierForm(null); await refresh(); },
     onError: fail,
   });
   const reverse = useMutation({
@@ -146,7 +169,7 @@ export function ShipmentsPage() {
         <Field label={t("common.status")}>
           <SelectField value={status} onChange={(e) => { setStatus(e.target.value); }} data-testid="status-filter">
             <option value="">{t("common.all")}</option>
-            {["draft", "posted", "reversed"].map((st) => (
+            {["draft", "picking", "posted", "reversed"].map((st) => (
               <option key={st} value={st}>{t(`sales.statuses.${st}`)}</option>
             ))}
           </SelectField>
@@ -222,7 +245,7 @@ export function ShipmentsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setReversing(false); } }}>
+      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setReversing(false); setCancellingPick(false); setPacking(false); setCarrierForm(null); } }}>
         <DialogContent closeLabel={t("common.close")} className="max-w-4xl">
           {s ? (
             <div className="flex flex-col gap-4" data-testid="shipment-detail">
@@ -240,16 +263,28 @@ export function ShipmentsPage() {
                 ...(s.carrier ? [[t("sales.carrier"), s.carrier] as [string, string]] : []),
                 ...(s.trackingNumber ? [[t("sales.trackingNumber"), s.trackingNumber] as [string, string]] : []),
                 ...(s.status === "posted" ? [[t("sales.totalCogs"), formatNumber(s.totalCogs, { maximumFractionDigits: 2 })] as [string, string]] : []),
+                ...(s.totalWeightKg !== null ? [[t("packing.totalWeight"), `${formatNumber(s.totalWeightKg, { maximumFractionDigits: 3 })} kg`] as [string, string]] : []),
                 ...(s.reversalReason ? [[t("sales.reversalReason"), s.reversalReason] as [string, string]] : []),
               ]} />
+              {s.pickListId ? (
+                <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm" data-testid="shipment-pick-list">
+                  <span className="text-fg-muted">{t("picking.pickList")}</span>
+                  <Link to="/inventory/pick-lists" search={{ open: s.pickListId }} className="font-medium text-accent underline-offset-2 hover:underline" dir="ltr">{s.pickListNumber}</Link>
+                  {s.pickListStatus ? <PickStatus status={s.pickListStatus} /> : null}
+                  {s.status === "picking" ? <PickProgress done={s.lines.filter((l) => l.qtyPicked !== null && Number(l.qtyPicked) >= Number(l.quantity)).length} total={s.lines.length} /> : null}
+                  {s.status === "picking" && s.pickListStatus !== "picked" ? <span className="text-xs text-fg-muted">{t("picking.waitingForWarehouse")}</span> : null}
+                  {s.status === "picking" && s.pickListStatus === "picked" ? <span className="text-xs text-success">{t("picking.readyToPost")}</span> : null}
+                </div>
+              ) : null}
               <Table data-testid="shipment-lines">
                 <TableHeader>
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>{t("sales.item")}</TableHead>
                     <TableHead>{t("sales.quantity")}</TableHead>
-                    {s.lines.some((l) => l.lotNumber) ? <TableHead>{t("sales.lot")}</TableHead> : null}
-                    {s.lines.some((l) => l.serialNumbers.length > 0) ? <TableHead>{t("sales.serials")}</TableHead> : null}
+                    <TableHead>{t("picking.from")}</TableHead>
+                    {s.status === "picking" ? <TableHead>{t("picking.picked")}</TableHead> : null}
+                    {s.packages.length > 0 ? <TableHead>{t("packing.packed")}</TableHead> : null}
                     {s.status === "posted" ? <TableHead>{t("sales.cogsAmount")}</TableHead> : null}
                   </TableRow>
                 </TableHeader>
@@ -259,20 +294,66 @@ export function ShipmentsPage() {
                       <TableCell>{String(l.lineNo)}</TableCell>
                       <TableCell dir="auto">{l.itemCode}</TableCell>
                       <TableCell className="tabular" dir="ltr">{formatNumber(l.quantity, { maximumFractionDigits: 3 })} {l.uomCode}</TableCell>
-                      {s.lines.some((x) => x.lotNumber) ? <TableCell dir="ltr">{l.lotNumber ?? "—"}</TableCell> : null}
-                      {s.lines.some((x) => x.serialNumbers.length > 0) ? <TableCell dir="ltr">{l.serialNumbers.length > 0 ? l.serialNumbers.join(", ") : "—"}</TableCell> : null}
+                      <TableCell><Allocations parts={l.allocations} uom={l.uomCode} /></TableCell>
+                      {s.status === "picking" ? <TableCell className="tabular" dir="ltr" data-testid="line-picked">{l.qtyPicked === null ? "—" : formatNumber(l.qtyPicked, { maximumFractionDigits: 3 })}</TableCell> : null}
+                      {s.packages.length > 0 ? <TableCell className="tabular" dir="ltr" data-testid="line-packed">{formatNumber(l.qtyPacked, { maximumFractionDigits: 3 })}</TableCell> : null}
                       {s.status === "posted" ? <TableCell className="tabular" dir="ltr">{formatNumber(l.cogsAmount, { maximumFractionDigits: 2 })}</TableCell> : null}
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+              <section className="flex flex-col gap-2" aria-labelledby="packages-heading">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 id="packages-heading" className="text-sm font-semibold">{t("packing.title")}</h3>
+                  {canManage && s.status !== "reversed" && !packing ? (
+                    <Button variant="secondary" size="sm" onClick={() => { setPacking(true); }} data-testid="edit-packages">
+                      <PackageOpen aria-hidden="true" />
+                      {s.packages.length > 0 ? t("packing.edit") : t("packing.pack")}
+                    </Button>
+                  ) : null}
+                </div>
+                {packing ? <PackagesEditor shipment={s} onSaved={async () => { setPacking(false); await refresh(); }} onCancel={() => { setPacking(false); }} /> : <PackagesTable shipment={s} />}
+              </section>
+              {carrierForm ? (
+                <div className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-2" data-testid="carrier-form">
+                  <Field label={t("sales.carrier")}>
+                    <TextField value={carrierForm.carrier} onChange={(e) => { setCarrierForm({ ...carrierForm, carrier: e.target.value }); }} data-testid="carrier-name" />
+                  </Field>
+                  <Field label={t("sales.trackingNumber")}>
+                    <TextField value={carrierForm.trackingNumber} onChange={(e) => { setCarrierForm({ ...carrierForm, trackingNumber: e.target.value }); }} dir="ltr" data-testid="carrier-tracking" />
+                  </Field>
+                  <div className="flex justify-end gap-2 sm:col-span-2">
+                    <Button variant="secondary" onClick={() => { setCarrierForm(null); }}>{t("common.cancel")}</Button>
+                    <Button onClick={() => { saveCarrier.mutate({ id: s.id, ...carrierForm }); }} loading={saveCarrier.isPending} data-testid="save-carrier">{t("common.save")}</Button>
+                  </div>
+                </div>
+              ) : null}
+              {cancellingPick ? (
+                <Field label={t("picking.takeBackReason")} required>
+                  <TextField value={pickCancelReason} onChange={(e) => { setPickCancelReason(e.target.value); }} required data-testid="cancel-picking-reason" />
+                </Field>
+              ) : null}
               {reversing ? (
                 <Field label={t("sales.reversalReason")} required>
                   <TextField value={reversalReason} onChange={(e) => { setReversalReason(e.target.value); }} required data-testid="reversal-reason" />
                 </Field>
               ) : null}
               <DialogFooter>
-                {s.status === "draft" && canPost ? <Button onClick={() => { post.mutate(s.id); }} loading={post.isPending} data-testid="post-shipment">{t("sales.post")}</Button> : null}
+                {canManage && s.status !== "reversed" && !carrierForm ? (
+                  <Button variant="ghost" onClick={() => { setCarrierForm({ carrier: s.carrier ?? "", trackingNumber: s.trackingNumber ?? "" }); }} data-testid="edit-carrier">
+                    <Truck aria-hidden="true" />
+                    {t("packing.carrierDetails")}
+                  </Button>
+                ) : null}
+                {s.status === "draft" && canManage ? (
+                  <Button variant="secondary" onClick={() => { release.mutate(s.id); }} loading={release.isPending} data-testid="release-shipment">
+                    <ScanLine aria-hidden="true" />
+                    {t("picking.release")}
+                  </Button>
+                ) : null}
+                {s.status === "picking" && canManage && !cancellingPick ? <Button variant="secondary" onClick={() => { setCancellingPick(true); setPickCancelReason(""); }} data-testid="start-cancel-picking">{t("picking.takeBack")}</Button> : null}
+                {cancellingPick ? <Button variant="danger" onClick={() => { cancelPicking.mutate({ id: s.id, reason: pickCancelReason }); }} loading={cancelPicking.isPending} disabled={!pickCancelReason.trim()} data-testid="confirm-cancel-picking">{t("picking.confirmTakeBack")}</Button> : null}
+                {(s.status === "draft" || (s.status === "picking" && s.pickListStatus === "picked")) && canPost ? <Button onClick={() => { post.mutate(s.id); }} loading={post.isPending} data-testid="post-shipment">{s.status === "picking" ? t("picking.postPicked") : t("sales.post")}</Button> : null}
                 {s.status === "posted" && canPost && !reversing ? <Button variant="secondary" onClick={() => { setReversing(true); setReversalReason(""); }} data-testid="start-reverse-shipment">{t("sales.reverse")}</Button> : null}
                 {reversing ? <Button onClick={() => { reverse.mutate({ id: s.id, reason: reversalReason }); }} loading={reverse.isPending} data-testid="confirm-reverse-shipment">{t("sales.confirmReverse")}</Button> : null}
               </DialogFooter>

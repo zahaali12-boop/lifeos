@@ -1,7 +1,7 @@
 import { Button, Field } from "@quicker/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowRightLeft, ClipboardCheck, PackageCheck, RefreshCw } from "lucide-react";
+import { ArrowRightLeft, ClipboardCheck, ListChecks, PackageCheck, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { SelectField } from "../common";
@@ -51,6 +51,12 @@ export function MobileHomePage() {
       </Field>
       <div className="grid gap-2">
         <Button asChild size="lg" className="h-14 justify-start gap-3 text-base" disabled={!ready}>
+          <Link to="/m/pick" aria-disabled={!ready} data-testid="start-pick">
+            <ListChecks aria-hidden="true" />
+            {t("mobile.home.startPick")}
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" size="lg" className="h-14 justify-start gap-3 text-base" disabled={!ready}>
           <Link to="/m/count" aria-disabled={!ready}>
             <ClipboardCheck aria-hidden="true" />
             {t("mobile.home.startCount")}

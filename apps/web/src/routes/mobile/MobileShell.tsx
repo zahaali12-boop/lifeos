@@ -1,6 +1,6 @@
 import { Badge, Button, cn } from "@quicker/ui";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { ArrowRightLeft, ClipboardCheck, Home, Languages, Monitor, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { ArrowRightLeft, ClipboardCheck, Home, Languages, ListChecks, Monitor, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { currentLanguage, setLanguage } from "../../i18n";
@@ -10,6 +10,7 @@ import { getQueue, syncQueue, useQueue } from "./queue";
 
 const tabs = [
   { to: "/m", label: "mobile.tabs.home", icon: Home },
+  { to: "/m/pick", label: "mobile.tabs.pick", icon: ListChecks },
   { to: "/m/count", label: "mobile.tabs.count", icon: ClipboardCheck },
   { to: "/m/transfer", label: "mobile.tabs.transfer", icon: ArrowRightLeft },
   { to: "/m/queue", label: "mobile.tabs.queue", icon: RefreshCw },
@@ -59,7 +60,7 @@ export function MobileShell() {
         <Outlet />
       </main>
       <nav aria-label={t("mobile.tabs.label")} className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)]">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-5">
           {tabs.map((tab) => {
             const active = tab.to === "/m" ? location === "/m" || location === "/m/" : location.startsWith(tab.to);
             return (

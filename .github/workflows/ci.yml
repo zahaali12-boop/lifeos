@@ -106,6 +106,8 @@ jobs:
           git show origin/main:contracts/openapi-v1.json > /tmp/base-contract.json 2>/dev/null || rm -f /tmp/base-contract.json
           pnpm --filter @quicker/tools check-api-contract /tmp/base-contract.json "$GITHUB_WORKSPACE/contracts/openapi-v1.json"
       - run: pnpm -r lint
+      - name: Every English string has its Arabic (A-063)
+        run: pnpm --filter @quicker/web check-i18n
       - run: pnpm -r typecheck
       - run: pnpm -r test
       - run: pnpm -r build

@@ -426,7 +426,7 @@ public sealed record PickListLineInfo(
     Guid SourceLineId,
     Guid ItemId,
     string ItemCode,
-    LocalizedText ItemName,
+    IReadOnlyDictionary<string, string> ItemName,
     Guid? VariantId,
     Guid? BinId,
     string? BinCode,
@@ -445,7 +445,8 @@ public sealed record PickListLineInfo(
     string Status,
     string? ShortReason,
     Guid? PickedBy,
-    DateTimeOffset? PickedAt);
+    DateTimeOffset? PickedAt,
+    string UomCode = "");
 
 public sealed record PickListInfo(
     Guid Id,
@@ -470,7 +471,8 @@ public sealed record PickListInfo(
     decimal QtyPicked,
     IReadOnlyList<PickListLineInfo> Lines,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? AssignedName = null);
 
 /// <summary>
 /// Pick lists for other modules' documents (roadmap 5.5b, A-154): the plan is a suggestion only; a release plans and

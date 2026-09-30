@@ -79,6 +79,8 @@ import { MobileQueuePage } from "./mobile/MobileQueuePage";
 import { MobileShell } from "./mobile/MobileShell";
 import { MobileTransferPage } from "./mobile/MobileTransferPage";
 import { MobileReceivePage } from "./mobile/MobileReceivePage";
+import { MobilePickPage } from "./mobile/MobilePickPage";
+import { PickListsPage } from "./inventory/PickListsPage";
 
 /** Typed routes (ADR-0013): anonymous auth screens, the shell whose children require a session, and the mobile scanner under /m. */
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
@@ -133,6 +135,7 @@ const transfersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/i
 const assembliesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/assemblies", component: AssembliesPage, validateSearch: searchRecord });
 const trackingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/tracking", component: TrackingPage, validateSearch: searchRecord });
 const countsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/counts", component: CountsPage, validateSearch: searchRecord });
+const pickListsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/pick-lists", component: PickListsPage, validateSearch: searchRecord });
 const replenishmentRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/replenishment", component: ReplenishmentPage, validateSearch: searchRecord });
 const valuationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/valuation", component: ValuationPage });
 const slowMovingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/slow-moving", component: SlowMovingPage });
@@ -187,6 +190,7 @@ const mobileCountRoute = createRoute({ getParentRoute: () => mobileRoute, path: 
 const mobileTransferRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/transfer", component: MobileTransferPage });
 const mobileQueueRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/queue", component: MobileQueuePage });
 const mobileReceiveRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/receive", component: MobileReceivePage });
+const mobilePickRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/pick", component: MobilePickPage, validateSearch: searchRecord });
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -194,10 +198,10 @@ const routeTree = rootRoute.addChildren([
   shellRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
-    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
+    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute,
   ]),
-  mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute]),
+  mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });

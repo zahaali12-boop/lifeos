@@ -167,9 +167,16 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
 
         // Quotations and orders (roadmap 5.4): a live quote, one rejected, one converted and confirmed, and a direct
         // order mixing a normally stocked line with a drop-ship one nobody has raised a purchase order for yet.
-        (first.Quotations, first.SalesOrders).ShouldBe((4, 2));
+        (first.Quotations, first.SalesOrders).ShouldBe((4, 6));
         (await db.QueryAsync<string>("SELECT status FROM app.sls_quotations WHERE tenant_id = @t ORDER BY status", new { t = DemoData.TenantId })).ShouldBe(["converted", "draft", "rejected", "sent"]);
-        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_orders WHERE tenant_id = @t AND status = 'confirmed'", new { t = DemoData.TenantId })).ShouldBe(2);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_orders WHERE tenant_id = @t AND status = 'confirmed'", new { t = DemoData.TenantId })).ShouldBe(5);
+
+        // Pick, pack and ship (roadmap 5.5): from the Baghdad main warehouse (bins), one shipment at every stage.
+        (first.Shipments, first.PickLists).ShouldBe((4, 3));
+        (await db.QueryAsync<string>("SELECT status FROM app.sls_shipments WHERE tenant_id = @t ORDER BY status", new { t = DemoData.TenantId })).ShouldBe(["draft", "picking", "picking", "posted"]);
+        (await db.QueryAsync<string>("SELECT status FROM app.inv_pick_lists WHERE tenant_id = @t ORDER BY status", new { t = DemoData.TenantId })).ShouldBe(["closed", "in_progress", "released"]);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_pick_lines WHERE tenant_id = @t AND status = 'short'", new { t = DemoData.TenantId })).ShouldBe(1);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_shipment_packages WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(2);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_order_lines WHERE tenant_id = @t AND drop_ship AND purchase_order_line_id IS NULL", new { t = DemoData.TenantId })).ShouldBe(1, "the order screen's own \"create purchase order\" button has something to click");
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
@@ -198,6 +205,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (third.PriceLists, third.Promotions).ShouldBe((first.PriceLists, first.Promotions), "the pricing is deterministic");
         (third.TaxRegimes, third.TaxRegistrations).ShouldBe((first.TaxRegimes, first.TaxRegistrations), "the tax set-up is deterministic");
         (third.Quotations, third.SalesOrders).ShouldBe((first.Quotations, first.SalesOrders), "the quotations and orders are deterministic");
+        (third.Shipments, third.PickLists).ShouldBe((first.Shipments, first.PickLists), "the shipments are deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

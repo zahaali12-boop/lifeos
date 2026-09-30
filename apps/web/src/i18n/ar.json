@@ -103,7 +103,8 @@
     "counts": "الجرد",
     "replenishment": "إعادة التزويد",
     "revaluations": "إعادة التقييم",
-    "valuation": "التقييم"
+    "valuation": "التقييم",
+    "pickLists": "قوائم الانتقاء"
   },
   "shell": {
     "filterMenu": "تصفية القائمة",
@@ -137,7 +138,10 @@
     "title": "لوحة الأوامر",
     "placeholder": "ابحث عن مستند برقمه، أو شركة أو صنف أو مورد، أو انتقل إلى شاشة، أو نفّذ إجراءً…",
     "empty": "لا نتائج.",
-    "groups": { "documents": "المستندات", "items": "الأصناف", "suppliers": "الموردون",
+    "groups": {
+      "documents": "المستندات",
+      "items": "الأصناف",
+      "suppliers": "الموردون",
       "customers": "العملاء",
       "companies": "الشركات",
       "navigation": "الانتقال إلى",
@@ -308,14 +312,40 @@
         "defaultLanguage": "اللغة التي تُطبع بها المستندات افتراضيًا."
       },
       "values": {
-        "costingMethod": { "average": "المتوسط المتحرك", "fifo": "الوارد أولًا صادر أولًا", "standard": "التكلفة المعيارية" },
-        "costingScope": { "company": "مجمّع واحد لكل شركة", "warehouse": "مجمّع واحد لكل مستودع" },
-        "negativeStockPolicy": { "block": "رفض", "approve": "يحتاج موافقة", "allow": "سماح" },
-        "revenueRecognitionPoint": { "invoice": "الفاتورة", "shipment": "الشحن" },
-        "taxRoundingMode": { "line": "لكل سطر", "document": "لكل مستند" },
-        "roundingMode": { "half_away": "النصف بعيدًا عن الصفر", "half_even": "النصف إلى الزوجي (المصرفي)" },
-        "bankRevaluationMode": { "permanent": "دائمة", "reversing": "تُعكس في الفترة التالية" },
-        "defaultLanguage": { "en": "الإنجليزية", "ar": "العربية" }
+        "costingMethod": {
+          "average": "المتوسط المتحرك",
+          "fifo": "الوارد أولًا صادر أولًا",
+          "standard": "التكلفة المعيارية"
+        },
+        "costingScope": {
+          "company": "مجمّع واحد لكل شركة",
+          "warehouse": "مجمّع واحد لكل مستودع"
+        },
+        "negativeStockPolicy": {
+          "block": "رفض",
+          "approve": "يحتاج موافقة",
+          "allow": "سماح"
+        },
+        "revenueRecognitionPoint": {
+          "invoice": "الفاتورة",
+          "shipment": "الشحن"
+        },
+        "taxRoundingMode": {
+          "line": "لكل سطر",
+          "document": "لكل مستند"
+        },
+        "roundingMode": {
+          "half_away": "النصف بعيدًا عن الصفر",
+          "half_even": "النصف إلى الزوجي (المصرفي)"
+        },
+        "bankRevaluationMode": {
+          "permanent": "دائمة",
+          "reversing": "تُعكس في الفترة التالية"
+        },
+        "defaultLanguage": {
+          "en": "الإنجليزية",
+          "ar": "العربية"
+        }
       }
     },
     "description": "الكيانات القانونية وعملاتها وتقويماتها وحقولها المخصّصة.",
@@ -350,8 +380,16 @@
     "waiting": "بانتظار",
     "showItems": "عرض ما أنجزه تشغيل {date}",
     "hideItems": "إخفاء ما أنجزه تشغيل {date}",
-    "outcomes": { "posted": "مُرحَّل", "generated": "مُنشأ", "waiting": "بانتظار" },
-    "itemKinds": { "reversal": "عكس تلقائي لـ", "recurring": "قيد متكرر", "deferral": "إطفاء مؤجل" },
+    "outcomes": {
+      "posted": "مُرحَّل",
+      "generated": "مُنشأ",
+      "waiting": "بانتظار"
+    },
+    "itemKinds": {
+      "reversal": "عكس تلقائي لـ",
+      "recurring": "قيد متكرر",
+      "deferral": "إطفاء مؤجل"
+    },
     "runNow": "تشغيل الروتين الآن",
     "ran": "تشغيل الروتين: {reversals} عكسًا تلقائيًا، {recurring} قيدًا متكررًا، {deferrals} ترحيل تأجيل.",
     "newTemplate": "قيد متكرر جديد",
@@ -365,8 +403,16 @@
     "nextRun": "التشغيل التالي",
     "lastGenerated": "آخر توليد",
     "amountMode": "المبالغ",
-    "amountModes": { "fixed": "ثابتة", "variable": "تُدخل في كل تشغيل", "percentage": "نسبة من أساس" },
-    "amountModeHints": { "fixed": "كل تشغيل يرحّل المبالغ نفسها؛ يجب أن يساوي المدين الدائن.", "variable": "تحدد الأسطر التوزيع؛ يُدخل المبلغ عند توليد القيد.", "percentage": "مبالغ الأسطر نسب من مبلغ أساس يُحدد في القالب أو عند التشغيل." },
+    "amountModes": {
+      "fixed": "ثابتة",
+      "variable": "تُدخل في كل تشغيل",
+      "percentage": "نسبة من أساس"
+    },
+    "amountModeHints": {
+      "fixed": "كل تشغيل يرحّل المبالغ نفسها؛ يجب أن يساوي المدين الدائن.",
+      "variable": "تحدد الأسطر التوزيع؛ يُدخل المبلغ عند توليد القيد.",
+      "percentage": "مبالغ الأسطر نسب من مبلغ أساس يُحدد في القالب أو عند التشغيل."
+    },
     "baseAmount": "مبلغ الأساس",
     "amount": "المبلغ",
     "requiresReview": "القيود المولّدة تنتظر المراجعة",
@@ -382,8 +428,16 @@
     "noTemplatesHint": "الإيجار والاشتراكات والقيود الأخرى التي تتكرر وفق جدول.",
     "newDeferral": "تأجيل جديد",
     "kind": "النوع",
-    "kinds": { "prepayment": "مدفوع مقدمًا", "accrual": "مستحق", "deferred_revenue": "إيراد مؤجل" },
-    "kindHints": { "prepayment": "دُفع مقدمًا: كل فترة تنقل حصتها من حساب الرصيد (مثل المصروفات المدفوعة مقدمًا) إلى حساب المصروف.", "accrual": "تحقق قبل فوترته: كل فترة تسجل حصتها في حساب المصروف مقابل المستحق.", "deferred_revenue": "فُوتر مقدمًا: كل فترة تطلق حصتها من الإيراد المؤجل إلى الإيراد." },
+    "kinds": {
+      "prepayment": "مدفوع مقدمًا",
+      "accrual": "مستحق",
+      "deferred_revenue": "إيراد مؤجل"
+    },
+    "kindHints": {
+      "prepayment": "دُفع مقدمًا: كل فترة تنقل حصتها من حساب الرصيد (مثل المصروفات المدفوعة مقدمًا) إلى حساب المصروف.",
+      "accrual": "تحقق قبل فوترته: كل فترة تسجل حصتها في حساب المصروف مقابل المستحق.",
+      "deferred_revenue": "فُوتر مقدمًا: كل فترة تطلق حصتها من الإيراد المؤجل إلى الإيراد."
+    },
     "description": "الوصف",
     "accounts": "الحسابات",
     "balanceAccount": "حساب الرصيد",
@@ -394,7 +448,10 @@
     "posted": "المُرحّل",
     "remaining": "المتبقي",
     "method": "الطريقة",
-    "methods": { "straight_line": "بالتساوي لكل فترة", "daily": "حسب أيام كل فترة" },
+    "methods": {
+      "straight_line": "بالتساوي لكل فترة",
+      "daily": "حسب أيام كل فترة"
+    },
     "preview": "معاينة",
     "postDue": "ترحيل المستحق",
     "cancelSchedule": "إلغاء الباقي",
@@ -405,8 +462,15 @@
     "title": "تكلفة الصنف",
     "openHint": "انقر نقرًا مزدوجًا على سطر لمعرفة طريقة تكلفة الصنف، ولتعيين تكلفة معيارية جديدة حين تكون الطريقة معيارية.",
     "method": "التكلفة",
-    "methods": { "fifo": "الوارد أولًا صادر أولًا", "average": "المتوسط المتحرك", "standard": "التكلفة المعيارية" },
-    "scopes": { "company": "مجمّع واحد لكل شركة", "warehouse": "مجمّع واحد لكل مستودع" },
+    "methods": {
+      "fifo": "الوارد أولًا صادر أولًا",
+      "average": "المتوسط المتحرك",
+      "standard": "التكلفة المعيارية"
+    },
+    "scopes": {
+      "company": "مجمّع واحد لكل شركة",
+      "warehouse": "مجمّع واحد لكل مستودع"
+    },
     "lastCost": "آخر تكلفة",
     "expectedUnitCost": "تكلفة الوحدة المتوقعة",
     "standardCost": "التكلفة المعيارية",
@@ -419,7 +483,12 @@
     "setStandard": "تعيين التكلفة المعيارية"
   },
   "itemEditor": {
-    "tabs": { "units": "الوحدات والباركود", "suppliers": "الموردون", "planning": "التخطيط" , "costing": "التكلفة" },
+    "tabs": {
+      "units": "الوحدات والباركود",
+      "suppliers": "الموردون",
+      "planning": "التخطيط",
+      "costing": "التكلفة"
+    },
     "companySettings": "في هذه الشركة",
     "costingOverride": "طريقة التكلفة",
     "costingOverrideHint": "اتركها على طريقة الشركة ما لم يُكلَّف هذا الصنف بطريقة مختلفة.",
@@ -533,7 +602,69 @@
     "emptyTitle": "لا توجد أبعاد",
     "emptyDescription": "تظهر الأبعاد هنا بمجرد إعداد مساحة العمل."
   },
-  "accountRoles": { "AR": "الذمم المدينة (رقابي)", "AP": "الذمم الدائنة (رقابي)", "Inventory": "المخزون", "InventoryInTransit": "مخزون في الطريق", "InventoryConsignedOut": "مخزون لدى الغير بالأمانة", "GRNI": "بضائع مستلمة غير مفوترة", "LandedCostClearing": "مقاصة التكاليف الواصلة", "Cogs": "تكلفة البضاعة المباعة", "PurchaseExpense": "مصروف المشتريات", "Revenue": "الإيرادات", "SalesReturns": "مردودات المبيعات", "DiscountGiven": "خصم ممنوح", "DiscountTaken": "خصم مكتسب", "OutputTax": "ضريبة المخرجات", "InputTax": "ضريبة المدخلات", "WhtPayable": "ضريبة مستقطعة مستحقة الدفع", "WhtReceivable": "ضريبة مستقطعة مستحقة القبض", "Bank": "البنك", "Cash": "النقد", "PettyCash": "الصندوق النثري", "ChequesUnderCollection": "شيكات برسم التحصيل", "PdcReceivable": "شيكات مؤجلة مستلمة", "PdcPayable": "شيكات مؤجلة صادرة", "BankCharges": "عمولات بنكية", "InterestIncome": "إيراد الفوائد", "InterestExpense": "مصروف الفوائد", "FxGainRealized": "أرباح فروق صرف محققة", "FxLossRealized": "خسائر فروق صرف محققة", "FxUnrealized": "فروق صرف غير محققة", "CustomerDeposits": "دفعات مقدمة من العملاء", "SupplierAdvances": "دفعات مقدمة للموردين", "UnbilledRevenue": "إيرادات غير مفوترة", "InventoryAdjustment": "تسوية المخزون", "CountVariance": "فروقات الجرد", "Scrap": "التالف", "InventoryWriteDown": "تخفيض قيمة المخزون", "PurchasePriceVariance": "فرق سعر الشراء", "AssemblyVariance": "فرق التجميع", "EmployeePayable": "مستحقات الموظفين", "CommissionExpense": "مصروف العمولات", "CommissionPayable": "عمولات مستحقة الدفع", "BadDebt": "الديون المعدومة", "WriteOff": "الشطب", "RoundingDifferences": "فروق التقريب", "FaCost": "الأصول الثابتة بالتكلفة", "FaAccDep": "مجمع الإهلاك", "FaAccImpairment": "مجمع الانخفاض في القيمة", "DepreciationExpense": "مصروف الإهلاك", "ImpairmentLoss": "خسارة الانخفاض في القيمة", "RevaluationSurplus": "فائض إعادة التقييم", "GainLossOnDisposal": "أرباح أو خسائر الاستبعاد", "FaClearing": "مقاصة الأصول الثابتة", "AccruedExpenses": "مصروفات مستحقة", "Prepayments": "مصروفات مدفوعة مقدمًا", "DeferredRevenue": "إيرادات مؤجلة", "IcReceivable": "مستحق من شركات المجموعة", "IcPayable": "مستحق لشركات المجموعة", "RetainedEarnings": "الأرباح المحتجزة", "CurrentYearEarnings": "أرباح السنة الجارية", "OpeningBalanceEquity": "حقوق ملكية الأرصدة الافتتاحية", "Suspense": "حساب معلق" },
+  "accountRoles": {
+    "AR": "الذمم المدينة (رقابي)",
+    "AP": "الذمم الدائنة (رقابي)",
+    "Inventory": "المخزون",
+    "InventoryInTransit": "مخزون في الطريق",
+    "InventoryConsignedOut": "مخزون لدى الغير بالأمانة",
+    "GRNI": "بضائع مستلمة غير مفوترة",
+    "LandedCostClearing": "مقاصة التكاليف الواصلة",
+    "Cogs": "تكلفة البضاعة المباعة",
+    "PurchaseExpense": "مصروف المشتريات",
+    "Revenue": "الإيرادات",
+    "SalesReturns": "مردودات المبيعات",
+    "DiscountGiven": "خصم ممنوح",
+    "DiscountTaken": "خصم مكتسب",
+    "OutputTax": "ضريبة المخرجات",
+    "InputTax": "ضريبة المدخلات",
+    "WhtPayable": "ضريبة مستقطعة مستحقة الدفع",
+    "WhtReceivable": "ضريبة مستقطعة مستحقة القبض",
+    "Bank": "البنك",
+    "Cash": "النقد",
+    "PettyCash": "الصندوق النثري",
+    "ChequesUnderCollection": "شيكات برسم التحصيل",
+    "PdcReceivable": "شيكات مؤجلة مستلمة",
+    "PdcPayable": "شيكات مؤجلة صادرة",
+    "BankCharges": "عمولات بنكية",
+    "InterestIncome": "إيراد الفوائد",
+    "InterestExpense": "مصروف الفوائد",
+    "FxGainRealized": "أرباح فروق صرف محققة",
+    "FxLossRealized": "خسائر فروق صرف محققة",
+    "FxUnrealized": "فروق صرف غير محققة",
+    "CustomerDeposits": "دفعات مقدمة من العملاء",
+    "SupplierAdvances": "دفعات مقدمة للموردين",
+    "UnbilledRevenue": "إيرادات غير مفوترة",
+    "InventoryAdjustment": "تسوية المخزون",
+    "CountVariance": "فروقات الجرد",
+    "Scrap": "التالف",
+    "InventoryWriteDown": "تخفيض قيمة المخزون",
+    "PurchasePriceVariance": "فرق سعر الشراء",
+    "AssemblyVariance": "فرق التجميع",
+    "EmployeePayable": "مستحقات الموظفين",
+    "CommissionExpense": "مصروف العمولات",
+    "CommissionPayable": "عمولات مستحقة الدفع",
+    "BadDebt": "الديون المعدومة",
+    "WriteOff": "الشطب",
+    "RoundingDifferences": "فروق التقريب",
+    "FaCost": "الأصول الثابتة بالتكلفة",
+    "FaAccDep": "مجمع الإهلاك",
+    "FaAccImpairment": "مجمع الانخفاض في القيمة",
+    "DepreciationExpense": "مصروف الإهلاك",
+    "ImpairmentLoss": "خسارة الانخفاض في القيمة",
+    "RevaluationSurplus": "فائض إعادة التقييم",
+    "GainLossOnDisposal": "أرباح أو خسائر الاستبعاد",
+    "FaClearing": "مقاصة الأصول الثابتة",
+    "AccruedExpenses": "مصروفات مستحقة",
+    "Prepayments": "مصروفات مدفوعة مقدمًا",
+    "DeferredRevenue": "إيرادات مؤجلة",
+    "IcReceivable": "مستحق من شركات المجموعة",
+    "IcPayable": "مستحق لشركات المجموعة",
+    "RetainedEarnings": "الأرباح المحتجزة",
+    "CurrentYearEarnings": "أرباح السنة الجارية",
+    "OpeningBalanceEquity": "حقوق ملكية الأرصدة الافتتاحية",
+    "Suspense": "حساب معلق"
+  },
   "postingRules": {
     "description": "على أي حساب يقع كل ترحيل: كل دور حسابي ترحّل إليه المستندات مربوط بحساب من دليل حسابات الشركة، ويمكن حصره بنوع مستند أو مجموعة ترحيل أو مستودع أو فرع (الأكثر تحديدًا يفوز). الملفات بإصدارات: يبدأ الإصدار الجديد من القواعد الحالية ويحل محلها عند تفعيله.",
     "rules": "القواعد",
@@ -542,7 +673,11 @@
     "current": "قيد الاستخدام",
     "validFrom": "ساري من",
     "ruleCount": "{count, plural, one {قاعدة واحدة} two {قاعدتان} few {# قواعد} many {# قاعدة} other {# قاعدة}}",
-    "statuses": { "draft": "مسودة", "active": "نشط", "retired": "متقاعد" },
+    "statuses": {
+      "draft": "مسودة",
+      "active": "نشط",
+      "retired": "متقاعد"
+    },
     "unresolved": "{count, plural, one {دور واحد بلا حساب} two {دوران بلا حساب} few {# أدوار بلا حساب} many {# دورًا بلا حساب} other {# دور بلا حساب}}: تُرفض الترحيلات التي تحتاجها حتى تُضاف قاعدة.",
     "fromChart": "إنشاء من افتراضيات الدليل",
     "newVersion": "إصدار جديد",
@@ -571,7 +706,15 @@
     "noProfile": "لا يوجد ملف ترحيل بعد. أنشئه من الدليل: يأخذ كل دور الحساب الافتراضي في الدليل.",
     "groupsHint": "تتيح مجموعات الترحيل ترحيل الأصناف أو الشركاء إلى حسابات مختلفة (مثل البضائع المستوردة أو العملاء من الأطراف ذات العلاقة). عيّن مجموعة للأصناف والشركاء ثم أضف لها قواعد.",
     "groupKind": "النوع",
-    "groupKinds": { "item": "الأصناف", "partner_customer": "العملاء", "partner_supplier": "الموردون", "bank": "الحسابات البنكية", "asset": "الأصول الثابتة", "tax": "الضرائب", "charge": "التكاليف" },
+    "groupKinds": {
+      "item": "الأصناف",
+      "partner_customer": "العملاء",
+      "partner_supplier": "الموردون",
+      "bank": "الحسابات البنكية",
+      "asset": "الأصول الثابتة",
+      "tax": "الضرائب",
+      "charge": "التكاليف"
+    },
     "code": "الرمز",
     "name": "الاسم",
     "nameEn": "الاسم (بالإنجليزية)",
@@ -904,7 +1047,11 @@
     "templateHint": "الرموز: {company} و{branch} و{yy} و{yyyy} و{mm} و{fy}، ورمز واحد فقط {seq} أو {seq:N} (مملوء بالأصفار حتى N خانة).",
     "startNumber": "الرقم الأول",
     "resetPolicy": "إعادة البدء",
-    "resetPolicies": { "never": "أبدًا", "yearly": "كل سنة", "monthly": "كل شهر" },
+    "resetPolicies": {
+      "never": "أبدًا",
+      "yearly": "كل سنة",
+      "monthly": "كل شهر"
+    },
     "gapless": "دون فجوات (كل رقم مستخدم وبالترتيب)",
     "default": "افتراضية",
     "active": "نشطة",
@@ -924,7 +1071,27 @@
     "allocatedAt": "وقت الإصدار",
     "emptyTitle": "لا توجد سلاسل",
     "emptyDescription": "تنشئ المستندات سلسلة افتراضية أول مرة تُرقَّم فيها؛ أضف سلسلة هنا لتختار صيغتك.",
-    "documentTypes": { "journal_entry": "قيد يومية", "manual_journal": "قيد يدوي", "purchase_requisition": "طلب شراء داخلي", "purchase_rfq": "طلب عروض أسعار", "purchase_agreement": "اتفاقية إطارية", "purchase_order": "أمر شراء", "purchase_receipt": "سند استلام", "purchase_invoice": "فاتورة مورد", "landed_cost_document": "مستند التكاليف الواصلة", "purchase_return": "مرتجع مورد", "payment_proposal": "مقترح دفع", "bank_payment": "دفعة لمورد", "stock_adjustment": "تسوية مخزون", "stock_transfer": "تحويل مخزون", "stock_count": "جرد مخزون", "stock_revaluation": "إعادة تقييم", "stock_assembly": "تجميع", "sales_quotation": "عرض سعر", "sales_order": "أمر بيع" }
+    "documentTypes": {
+      "journal_entry": "قيد يومية",
+      "manual_journal": "قيد يدوي",
+      "purchase_requisition": "طلب شراء داخلي",
+      "purchase_rfq": "طلب عروض أسعار",
+      "purchase_agreement": "اتفاقية إطارية",
+      "purchase_order": "أمر شراء",
+      "purchase_receipt": "سند استلام",
+      "purchase_invoice": "فاتورة مورد",
+      "landed_cost_document": "مستند التكاليف الواصلة",
+      "purchase_return": "مرتجع مورد",
+      "payment_proposal": "مقترح دفع",
+      "bank_payment": "دفعة لمورد",
+      "stock_adjustment": "تسوية مخزون",
+      "stock_transfer": "تحويل مخزون",
+      "stock_count": "جرد مخزون",
+      "stock_revaluation": "إعادة تقييم",
+      "stock_assembly": "تجميع",
+      "sales_quotation": "عرض سعر",
+      "sales_order": "أمر بيع"
+    }
   },
   "rates": {
     "description": "أسعار الصرف حسب النوع والتاريخ؛ تُستورد من المزوّدين أو تُدخل يدوياً.",
@@ -1094,7 +1261,23 @@
     "positionHint": "تُعرض الحقول من الرقم الأصغر فالأكبر.",
     "activeHint": "مستخدم: يظهر في النماذج (الحقل الموقوف يحتفظ بالقيم المحفوظة)",
     "referencePlaceholder": "معرّف السجل المرجعي",
-    "hosts": { "company": "شركة", "purchase_requisition": "طلب شراء داخلي", "purchase_order": "أمر شراء", "purchase_receipt": "سند استلام", "purchase_invoice": "فاتورة مورد", "landed_cost_document": "مستند التكاليف الواصلة", "purchase_return": "مرتجع مورد", "item": "صنف", "partner": "مورد / شريك", "manual_journal": "قيد يدوي", "bank_payment": "دفعة لمورد", "stock_adjustment": "تسوية مخزون", "stock_transfer": "تحويل مخزون", "lot": "دفعة", "serial": "رقم تسلسلي" },
+    "hosts": {
+      "company": "شركة",
+      "purchase_requisition": "طلب شراء داخلي",
+      "purchase_order": "أمر شراء",
+      "purchase_receipt": "سند استلام",
+      "purchase_invoice": "فاتورة مورد",
+      "landed_cost_document": "مستند التكاليف الواصلة",
+      "purchase_return": "مرتجع مورد",
+      "item": "صنف",
+      "partner": "مورد / شريك",
+      "manual_journal": "قيد يدوي",
+      "bank_payment": "دفعة لمورد",
+      "stock_adjustment": "تسوية مخزون",
+      "stock_transfer": "تحويل مخزون",
+      "lot": "دفعة",
+      "serial": "رقم تسلسلي"
+    },
     "emptyTitle": "لا حقول مخصّصة",
     "emptyDescription": "عرّف حقلاً ليظهر في نموذج السجل وفي مخطط الواجهة البرمجية.",
     "types": {
@@ -1405,7 +1588,12 @@
     "url": "الرابط (URL)",
     "filters": "عوامل التصفية",
     "filtersHint": "اختيارية، واحدة في كل سطر بصيغة الاسم=القيمة: aggregateType=purchase_order، أو أي حقل في المستوى الأعلى من بيانات الحدث مثل companyId=…؛ لا يُرسل الحدث إلا إذا طابقها جميعًا.",
-    "statuses": { "pending": "قيد الانتظار", "delivered": "سُلّم", "failed": "فشل", "dead": "توقفت المحاولات" },
+    "statuses": {
+      "pending": "قيد الانتظار",
+      "delivered": "سُلّم",
+      "failed": "فشل",
+      "dead": "توقفت المحاولات"
+    },
     "emptyDescription": "أضف ويب هوك لاستقبال الأحداث على عنوانك."
   },
   "accounting": {
@@ -1414,7 +1602,16 @@
     "dimensionDefault": "— (الافتراضي {value})",
     "subledgerReference": "عنصر الدفتر الفرعي",
     "subledgerReferenceHint": "معرّف العنصر",
-    "subledgerTypes": {"AP": "المورد", "AR": "العميل", "BANK": "الحركة البنكية", "FA": "الأصل الثابت", "IC": "الطرف الشقيق", "PDC": "الشيك المؤجل", "GRNI": "استلام البضاعة", "INV": "صنف المخزون"},
+    "subledgerTypes": {
+      "AP": "المورد",
+      "AR": "العميل",
+      "BANK": "الحركة البنكية",
+      "FA": "الأصل الثابت",
+      "IC": "الطرف الشقيق",
+      "PDC": "الشيك المؤجل",
+      "GRNI": "استلام البضاعة",
+      "INV": "صنف المخزون"
+    },
     "lines": "البنود",
     "company": "الشركة",
     "loadFailed": "تعذّر تحميل التقرير.",
@@ -1623,7 +1820,8 @@
       "home": "الرئيسية",
       "count": "الجرد",
       "transfer": "التحويل",
-      "queue": "المزامنة"
+      "queue": "المزامنة",
+      "pick": "انتقاء"
     },
     "home": {
       "startReceive": "استلام البضاعة",
@@ -1636,7 +1834,8 @@
       "startCount": "جرد المخزون",
       "startTransfer": "تحويل المخزون",
       "openQueue": "قائمة المزامنة",
-      "installHint": "أضف هذه الصفحة إلى الشاشة الرئيسية لماسح بملء الشاشة."
+      "installHint": "أضف هذه الصفحة إلى الشاشة الرئيسية لماسح بملء الشاشة.",
+      "startPick": "انتقاء الطلبات"
     },
     "scan": {
       "label": "امسح رمزًا أو اكتبه",
@@ -1728,8 +1927,20 @@
       "reapplied": "أعيد تطبيقه",
       "current": "ساري",
       "openHint": "انقر نقرًا مزدوجًا على حركة لمعرفة سبب تكلفتها.",
-      "valueTypes": { "direct_cost": "تكلفة مباشرة", "indirect_cost": "تكلفة غير مباشرة (واصلة)", "expected_cost": "تكلفة متوقعة", "expected_cost_reversal": "عكس التكلفة المتوقعة", "revaluation": "إعادة تقييم", "variance": "فرق", "rounding": "تقريب", "cost_adjustment": "تعديل التكلفة" },
-      "directions": { "consumed": "أخذت التكلفة من", "consumed_by": "أعطت التكلفة إلى" }
+      "valueTypes": {
+        "direct_cost": "تكلفة مباشرة",
+        "indirect_cost": "تكلفة غير مباشرة (واصلة)",
+        "expected_cost": "تكلفة متوقعة",
+        "expected_cost_reversal": "عكس التكلفة المتوقعة",
+        "revaluation": "إعادة تقييم",
+        "variance": "فرق",
+        "rounding": "تقريب",
+        "cost_adjustment": "تعديل التكلفة"
+      },
+      "directions": {
+        "consumed": "أخذت التكلفة من",
+        "consumed_by": "أعطت التكلفة إلى"
+      }
     },
     "expiresOn": "تاريخ الانتهاء",
     "serials": "الأرقام التسلسلية",
@@ -2073,7 +2284,11 @@
         "formula": "المعادلة",
         "supplierId": "المورد",
         "qualityHold": "محجوز للجودة",
-        "triggers": { "reorder_point": "دون نقطة إعادة الطلب", "min_qty": "دون الحد الأدنى", "max_qty": "دون الحد الأقصى" }
+        "triggers": {
+          "reorder_point": "دون نقطة إعادة الطلب",
+          "min_qty": "دون الحد الأدنى",
+          "max_qty": "دون الحد الأقصى"
+        }
       }
     },
     "revaluations": {
@@ -2081,8 +2296,14 @@
       "new": "إعادة تقييم جديدة",
       "edit": "تعديل إعادة التقييم",
       "kind": "النوع",
-      "kinds": { "nrv_writedown": "خفض إلى صافي القيمة القابلة للتحقق", "manual": "إعادة تقييم يدوية" },
-      "kindHints": { "nrv_writedown": "معيار المحاسبة الدولي 2: تكلفة الوحدة الجديدة هي ما يمكن بيع المخزون به ناقصًا تكاليف البيع. لا يرفع الخفض القيمة فوق التكلفة أبدًا.", "manual": "تحل تكلفة الوحدة الجديدة محل الحالية للمخزون الموجود في التاريخ." },
+      "kinds": {
+        "nrv_writedown": "خفض إلى صافي القيمة القابلة للتحقق",
+        "manual": "إعادة تقييم يدوية"
+      },
+      "kindHints": {
+        "nrv_writedown": "معيار المحاسبة الدولي 2: تكلفة الوحدة الجديدة هي ما يمكن بيع المخزون به ناقصًا تكاليف البيع. لا يرفع الخفض القيمة فوق التكلفة أبدًا.",
+        "manual": "تحل تكلفة الوحدة الجديدة محل الحالية للمخزون الموجود في التاريخ."
+      },
       "currentUnitCost": "تكلفة الوحدة الحالية",
       "newUnitCost": "تكلفة الوحدة الجديدة",
       "amount": "التغير في القيمة",
@@ -2130,8 +2351,26 @@
       "adjusted": "المعدّل",
       "emptyTitle": "لا شيء مقيّم",
       "emptyDescription": "لا مخزون مقيّم لهذه المرشحات في هذا التاريخ.",
-      "triggerKinds": { "stock_posting": "حركة بتاريخ سابق", "invoice": "سعر الفاتورة", "landed_cost": "التكاليف الواصلة", "revaluation": "إعادة تقييم", "standard_cost": "تغيير التكلفة المعيارية", "inquiry": "استعلام" },
-      "sourceDocuments": { "purchase_receipt": "سند استلام", "purchase_invoice": "فاتورة مورد", "purchase_return": "مرتجع مورد", "landed_cost": "مستند التكاليف الواصلة", "stock_adjustment": "تسوية", "stock_transfer": "تحويل", "stock_count": "جرد", "stock_revaluation": "إعادة تقييم", "standard_cost": "التكلفة المعيارية", "demo_opening": "رصيد افتتاحي" }
+      "triggerKinds": {
+        "stock_posting": "حركة بتاريخ سابق",
+        "invoice": "سعر الفاتورة",
+        "landed_cost": "التكاليف الواصلة",
+        "revaluation": "إعادة تقييم",
+        "standard_cost": "تغيير التكلفة المعيارية",
+        "inquiry": "استعلام"
+      },
+      "sourceDocuments": {
+        "purchase_receipt": "سند استلام",
+        "purchase_invoice": "فاتورة مورد",
+        "purchase_return": "مرتجع مورد",
+        "landed_cost": "مستند التكاليف الواصلة",
+        "stock_adjustment": "تسوية",
+        "stock_transfer": "تحويل",
+        "stock_count": "جرد",
+        "stock_revaluation": "إعادة تقييم",
+        "standard_cost": "التكلفة المعيارية",
+        "demo_opening": "رصيد افتتاحي"
+      }
     }
   },
   "workflow": {
@@ -2159,7 +2398,11 @@
     "approvers": "المعتمدون",
     "approvedBy": "اعتمده",
     "mode": "النمط",
-    "modes": { "any": "أي واحد", "all": "الجميع", "quorum": "نصاب" },
+    "modes": {
+      "any": "أي واحد",
+      "all": "الجميع",
+      "quorum": "نصاب"
+    },
     "quorum": "النصاب",
     "history": "السجل",
     "onBehalfOf": "نيابة عن {name}",
@@ -2176,10 +2419,42 @@
     "delegate": "تفويض",
     "delegateTo": "تفويض إلى",
     "cancelRequest": "سحب",
-    "actions": { "submit": "قُدّم", "approve": "اعتُمد", "reject": "رُفض", "request_changes": "طُلب تعديل", "delegate": "فُوّض", "escalate": "صُعّد", "comment": "عُلّق", "cancel": "سُحب", "expire": "انتهى", "auto_approve": "اعتُمد تلقائيًا" },
-    "statuses": { "pending": "قيد الانتظار", "approved": "معتمد", "rejected": "مرفوض", "cancelled": "مسحوب", "expired": "منتهٍ", "auto_approved": "معتمد تلقائيًا", "waiting": "بانتظار الدور", "skipped": "متخطّى", "draft": "مسودة", "active": "نشط", "retired": "متقاعد", "open": "مفتوح", "overridden": "متجاوَز", "cleared": "مُصفّى" },
-    "triggers": { "on_submit": "عند التقديم", "on_post_attempt": "عند محاولة الترحيل", "on_block": "عند الحاجز" },
-    "entityTypes": { "stock_adjustment": "تسوية مخزون" },
+    "actions": {
+      "submit": "قُدّم",
+      "approve": "اعتُمد",
+      "reject": "رُفض",
+      "request_changes": "طُلب تعديل",
+      "delegate": "فُوّض",
+      "escalate": "صُعّد",
+      "comment": "عُلّق",
+      "cancel": "سُحب",
+      "expire": "انتهى",
+      "auto_approve": "اعتُمد تلقائيًا"
+    },
+    "statuses": {
+      "pending": "قيد الانتظار",
+      "approved": "معتمد",
+      "rejected": "مرفوض",
+      "cancelled": "مسحوب",
+      "expired": "منتهٍ",
+      "auto_approved": "معتمد تلقائيًا",
+      "waiting": "بانتظار الدور",
+      "skipped": "متخطّى",
+      "draft": "مسودة",
+      "active": "نشط",
+      "retired": "متقاعد",
+      "open": "مفتوح",
+      "overridden": "متجاوَز",
+      "cleared": "مُصفّى"
+    },
+    "triggers": {
+      "on_submit": "عند التقديم",
+      "on_post_attempt": "عند محاولة الترحيل",
+      "on_block": "عند الحاجز"
+    },
+    "entityTypes": {
+      "stock_adjustment": "تسوية مخزون"
+    },
     "emptyInbox": "لا شيء لتقرّره",
     "emptyInboxDescription": "تظهر هنا الطلبات المسندة إليك أو المفوَّضة لك.",
     "emptyAll": "لا طلبات",
@@ -2202,7 +2477,10 @@
     "nameAr": "الاسم (بالعربية)",
     "description": "الوصف",
     "reapprovalPolicy": "بعد أي تعديل",
-    "reapprovalPolicies": { "reset": "يُعاد الاعتماد", "none": "يبقى الاعتماد" },
+    "reapprovalPolicies": {
+      "reset": "يُعاد الاعتماد",
+      "none": "يبقى الاعتماد"
+    },
     "overrideValidHours": "صلاحية التجاوز (ساعات)",
     "rules": "القواعد",
     "addRule": "إضافة قاعدة",
@@ -2214,7 +2492,10 @@
     "addStep": "إضافة خطوة",
     "removeStep": "إزالة الخطوة",
     "approverKind": "المعتمدون",
-    "approverKinds": { "users": "أعضاء محدّدون", "role": "كل من يحمل دورًا" },
+    "approverKinds": {
+      "users": "أعضاء محدّدون",
+      "role": "كل من يحمل دورًا"
+    },
     "roleCode": "رمز الدور",
     "members": "الأعضاء",
     "timeoutHours": "التصعيد بعد (ساعات)",
@@ -2238,14 +2519,21 @@
     "tradeName": "الاسم التجاري",
     "tradeNameAr": "الاسم التجاري (بالعربية)",
     "kind": "النوع",
-    "kinds": { "organization": "مؤسسة", "person": "شخص" },
+    "kinds": {
+      "organization": "مؤسسة",
+      "person": "شخص"
+    },
     "email": "البريد الإلكتروني",
     "phone": "الهاتف",
     "website": "الموقع",
     "notes": "ملاحظات",
     "search": "ابحث بالرمز أو الاسم أو البريد",
     "held": "محجوز",
-    "holdFilter": { "": "كل الموردين", "held": "المحجوزون فقط", "none": "غير المحجوزين" },
+    "holdFilter": {
+      "": "كل الموردين",
+      "held": "المحجوزون فقط",
+      "none": "غير المحجوزين"
+    },
     "account": "الحساب",
     "contacts": "جهات الاتصال",
     "addresses": "العناوين",
@@ -2267,7 +2555,12 @@
     "hold": "حجز",
     "release": "رفع الحجز",
     "holdStatus": "الحجز",
-    "holdStatuses": { "none": "لا شيء", "purchase": "المشتريات", "payment": "المدفوعات", "all": "المشتريات والمدفوعات" },
+    "holdStatuses": {
+      "none": "لا شيء",
+      "purchase": "المشتريات",
+      "payment": "المدفوعات",
+      "all": "المشتريات والمدفوعات"
+    },
     "holdReason": "السبب",
     "heldSince": "محجوز منذ {when}: {reason}",
     "saveAccount": "حفظ الحساب",
@@ -2279,7 +2572,12 @@
     "receivesStatements": "يستلم كشوف الحساب",
     "addContact": "إضافة جهة اتصال",
     "addressRole": "الاستخدام",
-    "addressRoles": { "billing": "الفوترة", "shipping": "الشحن", "legal": "القانوني", "other": "أخرى" },
+    "addressRoles": {
+      "billing": "الفوترة",
+      "shipping": "الشحن",
+      "legal": "القانوني",
+      "other": "أخرى"
+    },
     "country": "الدولة (رمز ISO)",
     "region": "المنطقة",
     "line1": "سطر العنوان",
@@ -2297,17 +2595,31 @@
     "revealed": "مكشوف (مسجّل في التدقيق)",
     "addBankAccount": "إضافة حساب بنكي",
     "registrationType": "النوع",
-    "registrationTypes": { "vat": "ضريبة القيمة المضافة", "tin": "الرقم الضريبي", "crn": "السجل التجاري", "other": "أخرى" },
+    "registrationTypes": {
+      "vat": "ضريبة القيمة المضافة",
+      "tin": "الرقم الضريبي",
+      "crn": "السجل التجاري",
+      "other": "أخرى"
+    },
     "number": "الرقم",
     "validFrom": "صالح من",
     "validTo": "صالح حتى",
     "addRegistration": "إضافة تسجيل",
     "emptySuppliers": "لا موردين بعد",
     "emptySuppliersDescription": "سجّل أول مورد لهذه الشركة: سجل الشريك وشروطه.",
-    "tabs": { "payment": "شروط الدفع", "delivery": "شروط التسليم", "groups": "مجموعات الموردين", "wht": "رموز الاستقطاع" },
+    "tabs": {
+      "payment": "شروط الدفع",
+      "delivery": "شروط التسليم",
+      "groups": "مجموعات الموردين",
+      "wht": "رموز الاستقطاع"
+    },
     "newPaymentTerms": "شروط دفع جديدة",
     "dueBasis": "الاستحقاق من",
-    "dueBases": { "invoice_date": "تاريخ الفاتورة", "end_of_month": "نهاية شهر الفاتورة", "delivery": "تاريخ التسليم" },
+    "dueBases": {
+      "invoice_date": "تاريخ الفاتورة",
+      "end_of_month": "نهاية شهر الفاتورة",
+      "delivery": "تاريخ التسليم"
+    },
     "dueDays": "أيام الاستحقاق",
     "earlyDiscountPct": "خصم الدفع المبكر %",
     "earlyDiscountDays": "خلال (أيام)",
@@ -2330,7 +2642,10 @@
     "newWhtCode": "رمز استقطاع جديد",
     "ratePct": "النسبة %",
     "withholdAt": "يُستقطع عند",
-    "withholdAts": { "invoice": "الفاتورة", "payment": "الدفع" },
+    "withholdAts": {
+      "invoice": "الفاتورة",
+      "payment": "الدفع"
+    },
     "threshold": "الحد",
     "thresholdCurrency": "عملة الحد",
     "emptyTerms": "لا شيء هنا بعد",
@@ -2498,7 +2813,11 @@
       "description": "ما اشتُري خلال فترة: الأوامر المعتمدة بصافي سعر الأمر بعملة الشركة، مع ما استُلم منها وما فُوتر.",
       "from": "من",
       "to": "إلى",
-      "by": { "month": "الشهر", "supplier": "المورد", "item": "الصنف" },
+      "by": {
+        "month": "الشهر",
+        "supplier": "المورد",
+        "item": "الصنف"
+      },
       "ordered": "المطلوب",
       "received": "المستلم",
       "invoiced": "المفوتر",
@@ -2593,8 +2912,7 @@
     "kind": "النوع",
     "kinds": {
       "invoice": "فاتورة",
-      "expense": "مصروف"
-,
+      "expense": "مصروف",
       "debit_note": "إشعار مدين"
     },
     "applyWht": "اقتطاع الضريبة عند الفاتورة (رمز المورد)",
@@ -2607,8 +2925,7 @@
       "charge": "رسم تكلفة وصول",
       "receipt": "استلام",
       "order": "خدمة",
-      "expense": "مصروف"
-,
+      "expense": "مصروف",
       "return": "مرتجع"
     },
     "matchStatuses": {
@@ -3032,7 +3349,7 @@
     "pipelineStages": "مراحل الفرص",
     "newStage": "مرحلة جديدة",
     "editStage": "تعديل المرحلة",
-    "order": "الترتيب",
+    "order": "الأمر",
     "moveUp": "تحريك {stage} للأعلى",
     "moveDown": "تحريك {stage} للأسفل",
     "systemStage": "مرحلة افتراضية: يبقى رمزها ونتيجتها كما هما.",
@@ -3087,7 +3404,6 @@
     "purchaseOrderLineId": "معرّف بند أمر الشراء",
     "purchaseOrderLineIdPlaceholder": "الصق معرّف بند أمر الشراء",
     "openApprovals": "فتح الموافقات",
-    "order": "الأمر",
     "createShipment": "إنشاء شحنة",
     "shipmentsDescription": "بنود الأمر المحجوزة تُشحن كاملة أو جزئيًا: يُحرِّك محرك المخزون الكمية ويُثبت تكلفة البضاعة المباعة.",
     "newShipment": "شحنة جديدة",
@@ -3125,7 +3441,8 @@
       "shipped": "تم الشحن",
       "fulfilled": "مُنفَّذ",
       "posted": "مُرحَّل",
-      "reversed": "معكوس"
+      "reversed": "معكوس",
+      "picking": "قيد الانتقاء"
     }
   },
   "pricing": {
@@ -3460,7 +3777,9 @@
         "uom_not_item_unit": "الوحدة ليست من وحدات الصنف.",
         "quantity_not_positive": "يجب أن تكون الكمية أكبر من صفر."
       },
-      "quantity": { "not_exact_in_base": "الكمية ليست عددًا صحيحًا من الوحدة الأساسية للصنف." }
+      "quantity": {
+        "not_exact_in_base": "الكمية ليست عددًا صحيحًا من الوحدة الأساسية للصنف."
+      }
     }
   },
   "tax": {
@@ -3481,8 +3800,8 @@
     "rules": "قواعد المصفوفة",
     "installed": "مثبت",
     "install": "تثبيت",
-    "editNamed": "تعديل {{name}}",
-    "deleteNamed": "حذف {{name}}",
+    "editNamed": "تعديل {name}",
+    "deleteNamed": "حذف {name}",
     "newCode": "مدونة جديدة",
     "editCode": "تعديل المدونة",
     "newRule": "قاعدة جديدة",
@@ -3554,7 +3873,7 @@
     "periodStart": "بداية الفترة",
     "periodEnd": "نهاية الفترة",
     "selectCompanyAndRegime": "اختر شركة ونظامًا ضريبيًا لمعاينة إقرارها.",
-    "drillDownTitle": "الخانة {{box}}: القيود",
+    "drillDownTitle": "الخانة {box}: القيود",
     "document": "المستند",
     "reversal": "عكس قيد",
     "value": {
@@ -3578,5 +3897,145 @@
       "open": "مفتوحة",
       "filed": "مقدَّمة"
     }
+  },
+  "picking": {
+    "description": "أعمال الانتقاء في المستودع: قوائم صادرة من الشحنات، بترتيب المسار، مع من يعمل على كل قائمة وإلى أين وصل.",
+    "number": "قائمة الانتقاء",
+    "pickList": "قائمة الانتقاء",
+    "source": "الشحنة",
+    "picker": "المنتقي",
+    "unassigned": "غير مُسندة",
+    "lines": "البنود المنتقاة",
+    "pickedOfPlanned": "المنتقى / المخطط",
+    "released": "صدرت",
+    "started": "بدأت",
+    "completed": "انتهت",
+    "live": "قيد الانتقاء",
+    "empty": "لا توجد قوائم انتقاء",
+    "emptyDescription": "أصدر شحنة مسودة للانتقاء لتظهر قائمة انتقائها هنا.",
+    "openScanner": "الانتقاء بالماسح",
+    "pickOnScanner": "افتح على الماسح",
+    "takeIt": "استلمها",
+    "assignTo": "المنتقي",
+    "assign": "إسناد",
+    "cancel": "إلغاء قائمة الانتقاء",
+    "confirmCancel": "ألغِ قائمة الانتقاء",
+    "cancelReason": "سبب الإلغاء",
+    "walk": "المسار",
+    "bin": "الموقع",
+    "zone": "المنطقة {zone}",
+    "toPick": "للانتقاء",
+    "picked": "المنتقى",
+    "pickedFrom": "من {place}",
+    "from": "مأخوذ من",
+    "lotShort": "الدفعة {lot}",
+    "expires": "تنتهي {date}",
+    "progress": "انتُقي {done} من {total} بنود",
+    "waitingForWarehouse": "المستودع ينتقيها.",
+    "readyToPost": "انتُقيت كل البنود: رحّلها لشحن ما انتُقي.",
+    "release": "إصدار للانتقاء",
+    "takeBack": "استرجاع من الانتقاء",
+    "takeBackReason": "لماذا تسترجعها من المستودع؟",
+    "confirmTakeBack": "استرجعها",
+    "postPicked": "رحّل ما انتُقي",
+    "statuses": {
+      "released": "صدرت",
+      "in_progress": "قيد الانتقاء",
+      "picked": "انتُقيت",
+      "closed": "مغلقة",
+      "cancelled": "ملغاة",
+      "open": "للانتقاء",
+      "short": "ناقص"
+    },
+    "reasons": {
+      "empty": "لا شيء على الرف",
+      "damaged": "تالف",
+      "wrongItem": "صنف خاطئ على الرف"
+    },
+    "scanner": {
+      "title": "الانتقاء",
+      "description": "استلم قائمة انتقاء وامشِ في مسارها: امسح الموقع ثم الصنف وكل رقم تسلسلي، ثم أكّد ما أخذت.",
+      "offline": "الانتقاء يتحقق من المخزون على الرف، لذا يحتاج إلى اتصال.",
+      "none": "لا شيء للانتقاء هنا",
+      "noneDescription": "تظهر هنا قوائم الانتقاء الصادرة لهذا المستودع.",
+      "yours": "قائمتك",
+      "takenBy": "استلمها {name}",
+      "start": "ابدأ الانتقاء",
+      "continue": "متابعة",
+      "backToLists": "العودة إلى قوائم الانتقاء",
+      "forSource": "للشحنة {source}",
+      "loadFailed": "تعذر تحميل قائمة الانتقاء.",
+      "allPicked": "انتُقيت كل البنود",
+      "allPickedHint": "انتُقي {picked} من {planned}. يمكن للمكتب الآن ترحيل الشحنة.",
+      "route": "المسار",
+      "go": "اذهب",
+      "undo": "تراجع عن هذا البند",
+      "anyShelf": "أي مكان",
+      "plannedSerials": "المخطط: {serials}",
+      "steps": "الخطوات",
+      "step": {
+        "bin": "الموقع",
+        "item": "الصنف",
+        "serials": "التسلسلي",
+        "confirm": "تأكيد"
+      },
+      "scanBin": "امسح الموقع {bin}",
+      "scanItem": "امسح الصنف",
+      "scanSerial": "امسح الرقم التسلسلي {count} من {total}",
+      "serialsDone": "انتهيت من مسح الأرقام التسلسلية",
+      "confirmPrompt": "راجع الكمية وأكّد.",
+      "otherBin": "الأخذ من {bin} بدلاً من {planned}.",
+      "wrongItem": "هذا {scanned}؛ وهذا البند {expected}.",
+      "serialTwice": "الرقم التسلسلي {serial} ممسوح مسبقاً.",
+      "quantityPicked": "الكمية المنتقاة",
+      "quantityInvalid": "أدخل كمية من 0 إلى {max}.",
+      "otherLot": "دفعة مختلفة",
+      "otherLotHint": "اتركه فارغاً إذا أخذت الدفعة {lot}.",
+      "shortReason": "لماذا النقص؟",
+      "reasonRequired": "اذكر سبب انتقاء كمية أقل.",
+      "confirm": "أكّد انتقاء {quantity}",
+      "confirmShort": "أكّد النقص: {picked} من {planned}",
+      "nothingHere": "لا شيء هنا",
+      "confirmNothing": "أكّد أنه لم يُنتقَ شيء"
+    }
+  },
+  "packing": {
+    "title": "الطرود",
+    "none": "لم تُغلّف بعد.",
+    "pack": "تغليف",
+    "edit": "تعديل الطرود",
+    "save": "احفظ الطرود",
+    "package": "الطرد",
+    "packageNo": "الطرد {no}",
+    "type": "النوع",
+    "types": {
+      "box": "صندوق",
+      "carton": "كرتونة",
+      "pallet": "منصّة نقالة",
+      "envelope": "ظرف",
+      "crate": "قفص",
+      "drum": "برميل",
+      "bag": "كيس",
+      "other": "أخرى"
+    },
+    "weight": "الوزن",
+    "weightKg": "الوزن (كغ)",
+    "lengthCm": "الطول (سم)",
+    "widthCm": "العرض (سم)",
+    "heightCm": "الارتفاع (سم)",
+    "dimensions": "الأبعاد",
+    "contents": "المحتويات",
+    "contentsWeight": "المحتويات نحو {weight} كغ",
+    "totalWeight": "الوزن الإجمالي",
+    "addPackage": "أضف طرداً",
+    "removePackage": "احذف الطرد",
+    "allInOne": "كل شيء في طرد واحد",
+    "shipped": "المشحون",
+    "inThisPackage": "في هذا الطرد",
+    "packed": "المغلّف",
+    "left": "{item}: {quantity} لم يُغلّف بعد",
+    "over": "{item}: غُلّف {quantity} أكثر من المشحون",
+    "allPacked": "{item}: غُلّف بالكامل",
+    "carrierDetails": "بيانات الناقل"
   }
 }

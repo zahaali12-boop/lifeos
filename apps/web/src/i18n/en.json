@@ -103,7 +103,8 @@
     "purchaseOrders": "Purchase orders",
     "agreements": "Blanket agreements",
     "taxSetup": "Tax setup",
-    "taxReturns": "Tax returns"
+    "taxReturns": "Tax returns",
+    "pickLists": "Pick lists"
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -137,7 +138,10 @@
     "title": "Command palette",
     "placeholder": "Search document numbers, companies, items or suppliers, go somewhere, or run an action…",
     "empty": "Nothing matches.",
-    "groups": { "documents": "Documents", "items": "Items", "suppliers": "Suppliers",
+    "groups": {
+      "documents": "Documents",
+      "items": "Items",
+      "suppliers": "Suppliers",
       "customers": "Customers",
       "companies": "Companies",
       "navigation": "Go to",
@@ -308,14 +312,40 @@
         "defaultLanguage": "The language documents are printed in by default."
       },
       "values": {
-        "costingMethod": { "average": "Moving average", "fifo": "FIFO", "standard": "Standard cost" },
-        "costingScope": { "company": "One pool per company", "warehouse": "One pool per warehouse" },
-        "negativeStockPolicy": { "block": "Refuse", "approve": "Needs approval", "allow": "Allow" },
-        "revenueRecognitionPoint": { "invoice": "Invoice", "shipment": "Shipment" },
-        "taxRoundingMode": { "line": "Per line", "document": "Per document" },
-        "roundingMode": { "half_away": "Half away from zero", "half_even": "Half to even (banker's)" },
-        "bankRevaluationMode": { "permanent": "Permanent", "reversing": "Reversed next period" },
-        "defaultLanguage": { "en": "English", "ar": "Arabic" }
+        "costingMethod": {
+          "average": "Moving average",
+          "fifo": "FIFO",
+          "standard": "Standard cost"
+        },
+        "costingScope": {
+          "company": "One pool per company",
+          "warehouse": "One pool per warehouse"
+        },
+        "negativeStockPolicy": {
+          "block": "Refuse",
+          "approve": "Needs approval",
+          "allow": "Allow"
+        },
+        "revenueRecognitionPoint": {
+          "invoice": "Invoice",
+          "shipment": "Shipment"
+        },
+        "taxRoundingMode": {
+          "line": "Per line",
+          "document": "Per document"
+        },
+        "roundingMode": {
+          "half_away": "Half away from zero",
+          "half_even": "Half to even (banker's)"
+        },
+        "bankRevaluationMode": {
+          "permanent": "Permanent",
+          "reversing": "Reversed next period"
+        },
+        "defaultLanguage": {
+          "en": "English",
+          "ar": "Arabic"
+        }
       }
     },
     "description": "Legal entities, their currencies, calendars and custom fields.",
@@ -350,8 +380,16 @@
     "waiting": "Waiting",
     "showItems": "Show what the run of {date} did",
     "hideItems": "Hide what the run of {date} did",
-    "outcomes": { "posted": "Posted", "generated": "Generated", "waiting": "Waiting" },
-    "itemKinds": { "reversal": "Automatic reversal of", "recurring": "Recurring journal", "deferral": "Deferral release" },
+    "outcomes": {
+      "posted": "Posted",
+      "generated": "Generated",
+      "waiting": "Waiting"
+    },
+    "itemKinds": {
+      "reversal": "Automatic reversal of",
+      "recurring": "Recurring journal",
+      "deferral": "Deferral release"
+    },
     "runNow": "Run routines now",
     "ran": "Routine run: {reversals} auto-reversals, {recurring} recurring journals, {deferrals} deferral postings.",
     "newTemplate": "New recurring journal",
@@ -365,8 +403,16 @@
     "nextRun": "Next run",
     "lastGenerated": "Last generated",
     "amountMode": "Amounts",
-    "amountModes": { "fixed": "Fixed", "variable": "Entered each run", "percentage": "Percentage of a base" },
-    "amountModeHints": { "fixed": "Every run posts the same amounts; debits must equal credits.", "variable": "The lines give the split; the amount is entered when the journal is generated.", "percentage": "Line amounts are percentages of a base amount given on the template or at the run." },
+    "amountModes": {
+      "fixed": "Fixed",
+      "variable": "Entered each run",
+      "percentage": "Percentage of a base"
+    },
+    "amountModeHints": {
+      "fixed": "Every run posts the same amounts; debits must equal credits.",
+      "variable": "The lines give the split; the amount is entered when the journal is generated.",
+      "percentage": "Line amounts are percentages of a base amount given on the template or at the run."
+    },
     "baseAmount": "Base amount",
     "amount": "Amount",
     "requiresReview": "Generated journals wait for review",
@@ -382,8 +428,16 @@
     "noTemplatesHint": "Rent, subscriptions and other journals that repeat on a schedule.",
     "newDeferral": "New deferral",
     "kind": "Kind",
-    "kinds": { "prepayment": "Prepayment", "accrual": "Accrual", "deferred_revenue": "Deferred revenue" },
-    "kindHints": { "prepayment": "Paid in advance: each period moves its share from the balance account (e.g. prepaid expenses) to the expense account.", "accrual": "Incurred before it is billed: each period books its share to the expense account against the accrual.", "deferred_revenue": "Billed in advance: each period releases its share from deferred revenue to revenue." },
+    "kinds": {
+      "prepayment": "Prepayment",
+      "accrual": "Accrual",
+      "deferred_revenue": "Deferred revenue"
+    },
+    "kindHints": {
+      "prepayment": "Paid in advance: each period moves its share from the balance account (e.g. prepaid expenses) to the expense account.",
+      "accrual": "Incurred before it is billed: each period books its share to the expense account against the accrual.",
+      "deferred_revenue": "Billed in advance: each period releases its share from deferred revenue to revenue."
+    },
     "description": "Description",
     "accounts": "Accounts",
     "balanceAccount": "Balance account",
@@ -394,7 +448,10 @@
     "posted": "Posted",
     "remaining": "Remaining",
     "method": "Method",
-    "methods": { "straight_line": "Equal per period", "daily": "By days in each period" },
+    "methods": {
+      "straight_line": "Equal per period",
+      "daily": "By days in each period"
+    },
     "preview": "Preview",
     "postDue": "Post what is due",
     "cancelSchedule": "Cancel the rest",
@@ -405,8 +462,15 @@
     "title": "Item cost",
     "openHint": "Double-click a row to see how the item is costed and, under standard cost, set a new standard.",
     "method": "Costing",
-    "methods": { "fifo": "FIFO", "average": "Moving average", "standard": "Standard cost" },
-    "scopes": { "company": "one pool per company", "warehouse": "one pool per warehouse" },
+    "methods": {
+      "fifo": "FIFO",
+      "average": "Moving average",
+      "standard": "Standard cost"
+    },
+    "scopes": {
+      "company": "one pool per company",
+      "warehouse": "one pool per warehouse"
+    },
     "lastCost": "Last cost",
     "expectedUnitCost": "Expected unit cost",
     "standardCost": "Standard cost",
@@ -419,7 +483,12 @@
     "setStandard": "Set standard cost"
   },
   "itemEditor": {
-    "tabs": { "units": "Units & barcodes", "suppliers": "Suppliers", "planning": "Planning" , "costing": "Costing" },
+    "tabs": {
+      "units": "Units & barcodes",
+      "suppliers": "Suppliers",
+      "planning": "Planning",
+      "costing": "Costing"
+    },
     "companySettings": "In this company",
     "costingOverride": "Costing method",
     "costingOverrideHint": "Leave on the company's method unless this item is costed differently.",
@@ -533,7 +602,69 @@
     "emptyTitle": "No dimensions",
     "emptyDescription": "Dimensions appear here as soon as the workspace is set up."
   },
-  "accountRoles": { "AR": "Receivables (control)", "AP": "Payables (control)", "Inventory": "Inventory", "InventoryInTransit": "Inventory in transit", "InventoryConsignedOut": "Inventory on consignment", "GRNI": "Goods received not invoiced", "LandedCostClearing": "Landed cost clearing", "Cogs": "Cost of goods sold", "PurchaseExpense": "Purchase expense", "Revenue": "Revenue", "SalesReturns": "Sales returns", "DiscountGiven": "Discount given", "DiscountTaken": "Discount taken", "OutputTax": "Output tax", "InputTax": "Input tax", "WhtPayable": "Withholding tax payable", "WhtReceivable": "Withholding tax receivable", "Bank": "Bank", "Cash": "Cash", "PettyCash": "Petty cash", "ChequesUnderCollection": "Cheques under collection", "PdcReceivable": "Post-dated cheques received", "PdcPayable": "Post-dated cheques issued", "BankCharges": "Bank charges", "InterestIncome": "Interest income", "InterestExpense": "Interest expense", "FxGainRealized": "Realised exchange gain", "FxLossRealized": "Realised exchange loss", "FxUnrealized": "Unrealised exchange difference", "CustomerDeposits": "Customer deposits", "SupplierAdvances": "Advances to suppliers", "UnbilledRevenue": "Unbilled revenue", "InventoryAdjustment": "Inventory adjustment", "CountVariance": "Count variance", "Scrap": "Scrap", "InventoryWriteDown": "Inventory write-down", "PurchasePriceVariance": "Purchase price variance", "AssemblyVariance": "Assembly variance", "EmployeePayable": "Due to employees", "CommissionExpense": "Commission expense", "CommissionPayable": "Commission payable", "BadDebt": "Bad debts", "WriteOff": "Write-offs", "RoundingDifferences": "Rounding differences", "FaCost": "Fixed assets at cost", "FaAccDep": "Accumulated depreciation", "FaAccImpairment": "Accumulated impairment", "DepreciationExpense": "Depreciation expense", "ImpairmentLoss": "Impairment loss", "RevaluationSurplus": "Revaluation surplus", "GainLossOnDisposal": "Gain or loss on disposal", "FaClearing": "Fixed asset clearing", "AccruedExpenses": "Accrued expenses", "Prepayments": "Prepayments", "DeferredRevenue": "Deferred revenue", "IcReceivable": "Intercompany receivable", "IcPayable": "Intercompany payable", "RetainedEarnings": "Retained earnings", "CurrentYearEarnings": "Current year earnings", "OpeningBalanceEquity": "Opening balance equity", "Suspense": "Suspense" },
+  "accountRoles": {
+    "AR": "Receivables (control)",
+    "AP": "Payables (control)",
+    "Inventory": "Inventory",
+    "InventoryInTransit": "Inventory in transit",
+    "InventoryConsignedOut": "Inventory on consignment",
+    "GRNI": "Goods received not invoiced",
+    "LandedCostClearing": "Landed cost clearing",
+    "Cogs": "Cost of goods sold",
+    "PurchaseExpense": "Purchase expense",
+    "Revenue": "Revenue",
+    "SalesReturns": "Sales returns",
+    "DiscountGiven": "Discount given",
+    "DiscountTaken": "Discount taken",
+    "OutputTax": "Output tax",
+    "InputTax": "Input tax",
+    "WhtPayable": "Withholding tax payable",
+    "WhtReceivable": "Withholding tax receivable",
+    "Bank": "Bank",
+    "Cash": "Cash",
+    "PettyCash": "Petty cash",
+    "ChequesUnderCollection": "Cheques under collection",
+    "PdcReceivable": "Post-dated cheques received",
+    "PdcPayable": "Post-dated cheques issued",
+    "BankCharges": "Bank charges",
+    "InterestIncome": "Interest income",
+    "InterestExpense": "Interest expense",
+    "FxGainRealized": "Realised exchange gain",
+    "FxLossRealized": "Realised exchange loss",
+    "FxUnrealized": "Unrealised exchange difference",
+    "CustomerDeposits": "Customer deposits",
+    "SupplierAdvances": "Advances to suppliers",
+    "UnbilledRevenue": "Unbilled revenue",
+    "InventoryAdjustment": "Inventory adjustment",
+    "CountVariance": "Count variance",
+    "Scrap": "Scrap",
+    "InventoryWriteDown": "Inventory write-down",
+    "PurchasePriceVariance": "Purchase price variance",
+    "AssemblyVariance": "Assembly variance",
+    "EmployeePayable": "Due to employees",
+    "CommissionExpense": "Commission expense",
+    "CommissionPayable": "Commission payable",
+    "BadDebt": "Bad debts",
+    "WriteOff": "Write-offs",
+    "RoundingDifferences": "Rounding differences",
+    "FaCost": "Fixed assets at cost",
+    "FaAccDep": "Accumulated depreciation",
+    "FaAccImpairment": "Accumulated impairment",
+    "DepreciationExpense": "Depreciation expense",
+    "ImpairmentLoss": "Impairment loss",
+    "RevaluationSurplus": "Revaluation surplus",
+    "GainLossOnDisposal": "Gain or loss on disposal",
+    "FaClearing": "Fixed asset clearing",
+    "AccruedExpenses": "Accrued expenses",
+    "Prepayments": "Prepayments",
+    "DeferredRevenue": "Deferred revenue",
+    "IcReceivable": "Intercompany receivable",
+    "IcPayable": "Intercompany payable",
+    "RetainedEarnings": "Retained earnings",
+    "CurrentYearEarnings": "Current year earnings",
+    "OpeningBalanceEquity": "Opening balance equity",
+    "Suspense": "Suspense"
+  },
   "postingRules": {
     "description": "Which account each posting lands on: every account role the documents post to is mapped onto an account of the company's chart, optionally only for a document type, posting group, warehouse or branch (the most specific rule wins). Profiles are versioned: a new version starts from the current rules and takes over when activated.",
     "rules": "Rules",
@@ -542,7 +673,11 @@
     "current": "in use",
     "validFrom": "Valid from",
     "ruleCount": "{count, plural, one {# rule} other {# rules}}",
-    "statuses": { "draft": "draft", "active": "active", "retired": "retired" },
+    "statuses": {
+      "draft": "draft",
+      "active": "active",
+      "retired": "retired"
+    },
     "unresolved": "{count, plural, one {# role has no account} other {# roles have no account}}: postings that need them are refused until a rule is added.",
     "fromChart": "Create from the chart's defaults",
     "newVersion": "New version",
@@ -571,7 +706,15 @@
     "noProfile": "No posting profile yet. Create it from the chart: every role gets the chart's default account.",
     "groupsHint": "Posting groups let items or partners post to different accounts (for example imported goods, or related-party customers). Assign a group to items and partners, then add rules for it.",
     "groupKind": "Kind",
-    "groupKinds": { "item": "Items", "partner_customer": "Customers", "partner_supplier": "Suppliers", "bank": "Bank accounts", "asset": "Fixed assets", "tax": "Taxes", "charge": "Charges" },
+    "groupKinds": {
+      "item": "Items",
+      "partner_customer": "Customers",
+      "partner_supplier": "Suppliers",
+      "bank": "Bank accounts",
+      "asset": "Fixed assets",
+      "tax": "Taxes",
+      "charge": "Charges"
+    },
     "code": "Code",
     "name": "Name",
     "nameEn": "Name (English)",
@@ -904,7 +1047,11 @@
     "templateHint": "Tokens: {company}, {branch}, {yy}, {yyyy}, {mm}, {fy}, and exactly one {seq} or {seq:N} (zero-padded to N digits).",
     "startNumber": "First number",
     "resetPolicy": "Restarts",
-    "resetPolicies": { "never": "Never", "yearly": "Every year", "monthly": "Every month" },
+    "resetPolicies": {
+      "never": "Never",
+      "yearly": "Every year",
+      "monthly": "Every month"
+    },
     "gapless": "Gapless (every number used, in order)",
     "default": "Default",
     "active": "Active",
@@ -924,7 +1071,27 @@
     "allocatedAt": "Issued at",
     "emptyTitle": "No series",
     "emptyDescription": "Documents create a default series the first time they are numbered; add one here to choose your own format.",
-    "documentTypes": { "journal_entry": "Journal entry", "manual_journal": "Manual journal", "purchase_requisition": "Purchase requisition", "purchase_rfq": "Request for quotation", "purchase_agreement": "Blanket agreement", "purchase_order": "Purchase order", "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "landed_cost_document": "Landed-cost document", "purchase_return": "Supplier return", "payment_proposal": "Payment proposal", "bank_payment": "Supplier payment", "stock_adjustment": "Stock adjustment", "stock_transfer": "Stock transfer", "stock_count": "Stock count", "stock_revaluation": "Revaluation", "stock_assembly": "Assembly", "sales_quotation": "Sales quotation", "sales_order": "Sales order" }
+    "documentTypes": {
+      "journal_entry": "Journal entry",
+      "manual_journal": "Manual journal",
+      "purchase_requisition": "Purchase requisition",
+      "purchase_rfq": "Request for quotation",
+      "purchase_agreement": "Blanket agreement",
+      "purchase_order": "Purchase order",
+      "purchase_receipt": "Goods receipt",
+      "purchase_invoice": "Supplier invoice",
+      "landed_cost_document": "Landed-cost document",
+      "purchase_return": "Supplier return",
+      "payment_proposal": "Payment proposal",
+      "bank_payment": "Supplier payment",
+      "stock_adjustment": "Stock adjustment",
+      "stock_transfer": "Stock transfer",
+      "stock_count": "Stock count",
+      "stock_revaluation": "Revaluation",
+      "stock_assembly": "Assembly",
+      "sales_quotation": "Sales quotation",
+      "sales_order": "Sales order"
+    }
   },
   "rates": {
     "description": "Exchange rates by type and date; imported from providers or entered by hand.",
@@ -1094,7 +1261,23 @@
     "positionHint": "Fields are shown from the lowest number up.",
     "activeHint": "In use: shown on forms (a field taken out of use keeps the values already saved)",
     "referencePlaceholder": "Id of the referenced record",
-    "hosts": { "company": "Company", "purchase_requisition": "Purchase requisition", "purchase_order": "Purchase order", "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "landed_cost_document": "Landed-cost document", "purchase_return": "Supplier return", "item": "Item", "partner": "Supplier / partner", "manual_journal": "Manual journal", "bank_payment": "Supplier payment", "stock_adjustment": "Stock adjustment", "stock_transfer": "Stock transfer", "lot": "Lot", "serial": "Serial number" },
+    "hosts": {
+      "company": "Company",
+      "purchase_requisition": "Purchase requisition",
+      "purchase_order": "Purchase order",
+      "purchase_receipt": "Goods receipt",
+      "purchase_invoice": "Supplier invoice",
+      "landed_cost_document": "Landed-cost document",
+      "purchase_return": "Supplier return",
+      "item": "Item",
+      "partner": "Supplier / partner",
+      "manual_journal": "Manual journal",
+      "bank_payment": "Supplier payment",
+      "stock_adjustment": "Stock adjustment",
+      "stock_transfer": "Stock transfer",
+      "lot": "Lot",
+      "serial": "Serial number"
+    },
     "emptyTitle": "No custom fields",
     "emptyDescription": "Define a field and it appears on the record's form and in the API schema.",
     "types": {
@@ -1405,7 +1588,12 @@
     "url": "URL",
     "filters": "Filters",
     "filtersHint": "Optional, one per line as name=value: aggregateType=purchase_order, or any top-level field of the event's data such as companyId=…; an event is sent only when all of them match.",
-    "statuses": { "pending": "Pending", "delivered": "Delivered", "failed": "Failed", "dead": "Gave up" },
+    "statuses": {
+      "pending": "Pending",
+      "delivered": "Delivered",
+      "failed": "Failed",
+      "dead": "Gave up"
+    },
     "emptyDescription": "Add a webhook to receive events at your URL."
   },
   "accounting": {
@@ -1414,7 +1602,16 @@
     "dimensionDefault": "— (default {value})",
     "subledgerReference": "Subledger item",
     "subledgerReferenceHint": "Item id",
-    "subledgerTypes": {"AP": "Supplier", "AR": "Customer", "BANK": "Bank transaction", "FA": "Fixed asset", "IC": "Intercompany partner", "PDC": "Post-dated cheque", "GRNI": "Goods receipt", "INV": "Stock item"},
+    "subledgerTypes": {
+      "AP": "Supplier",
+      "AR": "Customer",
+      "BANK": "Bank transaction",
+      "FA": "Fixed asset",
+      "IC": "Intercompany partner",
+      "PDC": "Post-dated cheque",
+      "GRNI": "Goods receipt",
+      "INV": "Stock item"
+    },
     "lines": "Lines",
     "company": "Company",
     "loadFailed": "The report could not be loaded.",
@@ -1623,7 +1820,8 @@
       "home": "Home",
       "count": "Count",
       "transfer": "Transfer",
-      "queue": "Queue"
+      "queue": "Queue",
+      "pick": "Pick"
     },
     "home": {
       "startReceive": "Receive goods",
@@ -1636,7 +1834,8 @@
       "startCount": "Count stock",
       "startTransfer": "Transfer stock",
       "openQueue": "Sync queue",
-      "installHint": "Add this page to the home screen for a full-screen scanner."
+      "installHint": "Add this page to the home screen for a full-screen scanner.",
+      "startPick": "Pick orders"
     },
     "scan": {
       "label": "Scan or type a code",
@@ -1728,8 +1927,20 @@
       "reapplied": "Re-applied",
       "current": "Current",
       "openHint": "Double-click a movement to see why it cost what it did.",
-      "valueTypes": { "direct_cost": "Direct cost", "indirect_cost": "Indirect cost (landed)", "expected_cost": "Expected cost", "expected_cost_reversal": "Expected cost reversed", "revaluation": "Revaluation", "variance": "Variance", "rounding": "Rounding", "cost_adjustment": "Cost adjustment" },
-      "directions": { "consumed": "Took cost from", "consumed_by": "Gave cost to" }
+      "valueTypes": {
+        "direct_cost": "Direct cost",
+        "indirect_cost": "Indirect cost (landed)",
+        "expected_cost": "Expected cost",
+        "expected_cost_reversal": "Expected cost reversed",
+        "revaluation": "Revaluation",
+        "variance": "Variance",
+        "rounding": "Rounding",
+        "cost_adjustment": "Cost adjustment"
+      },
+      "directions": {
+        "consumed": "Took cost from",
+        "consumed_by": "Gave cost to"
+      }
     },
     "expiresOn": "Expires on",
     "serials": "Serial numbers",
@@ -2073,7 +2284,11 @@
         "formula": "Formula",
         "supplierId": "Supplier",
         "qualityHold": "Quality hold",
-        "triggers": { "reorder_point": "Below the reorder point", "min_qty": "Below the minimum", "max_qty": "Below the maximum" }
+        "triggers": {
+          "reorder_point": "Below the reorder point",
+          "min_qty": "Below the minimum",
+          "max_qty": "Below the maximum"
+        }
       }
     },
     "revaluations": {
@@ -2081,8 +2296,14 @@
       "new": "New revaluation",
       "edit": "Edit revaluation",
       "kind": "Kind",
-      "kinds": { "nrv_writedown": "Write-down to net realisable value", "manual": "Manual revaluation" },
-      "kindHints": { "nrv_writedown": "IAS 2: the new unit cost is what the stock can still be sold for, less the costs to sell. A write-down never raises the value above cost.", "manual": "The new unit cost replaces the current one for the stock on hand at the date." },
+      "kinds": {
+        "nrv_writedown": "Write-down to net realisable value",
+        "manual": "Manual revaluation"
+      },
+      "kindHints": {
+        "nrv_writedown": "IAS 2: the new unit cost is what the stock can still be sold for, less the costs to sell. A write-down never raises the value above cost.",
+        "manual": "The new unit cost replaces the current one for the stock on hand at the date."
+      },
       "currentUnitCost": "Current unit cost",
       "newUnitCost": "New unit cost",
       "amount": "Change in value",
@@ -2130,8 +2351,26 @@
       "adjusted": "Adjusted",
       "emptyTitle": "Nothing valued",
       "emptyDescription": "No stock is valued for these filters at this date.",
-      "triggerKinds": { "stock_posting": "Back-dated movement", "invoice": "Invoice price", "landed_cost": "Landed cost", "revaluation": "Revaluation", "standard_cost": "Standard cost change", "inquiry": "Inquiry" },
-      "sourceDocuments": { "purchase_receipt": "Goods receipt", "purchase_invoice": "Supplier invoice", "purchase_return": "Supplier return", "landed_cost": "Landed-cost document", "stock_adjustment": "Adjustment", "stock_transfer": "Transfer", "stock_count": "Count", "stock_revaluation": "Revaluation", "standard_cost": "Standard cost", "demo_opening": "Opening stock" }
+      "triggerKinds": {
+        "stock_posting": "Back-dated movement",
+        "invoice": "Invoice price",
+        "landed_cost": "Landed cost",
+        "revaluation": "Revaluation",
+        "standard_cost": "Standard cost change",
+        "inquiry": "Inquiry"
+      },
+      "sourceDocuments": {
+        "purchase_receipt": "Goods receipt",
+        "purchase_invoice": "Supplier invoice",
+        "purchase_return": "Supplier return",
+        "landed_cost": "Landed-cost document",
+        "stock_adjustment": "Adjustment",
+        "stock_transfer": "Transfer",
+        "stock_count": "Count",
+        "stock_revaluation": "Revaluation",
+        "standard_cost": "Standard cost",
+        "demo_opening": "Opening stock"
+      }
     }
   },
   "workflow": {
@@ -2159,7 +2398,11 @@
     "approvers": "Approvers",
     "approvedBy": "Approved by",
     "mode": "Mode",
-    "modes": { "any": "Any one", "all": "Everyone", "quorum": "Quorum" },
+    "modes": {
+      "any": "Any one",
+      "all": "Everyone",
+      "quorum": "Quorum"
+    },
     "quorum": "Quorum",
     "history": "History",
     "onBehalfOf": "on behalf of {name}",
@@ -2176,10 +2419,42 @@
     "delegate": "Delegate",
     "delegateTo": "Delegate to",
     "cancelRequest": "Withdraw",
-    "actions": { "submit": "Submitted", "approve": "Approved", "reject": "Rejected", "request_changes": "Changes requested", "delegate": "Delegated", "escalate": "Escalated", "comment": "Commented", "cancel": "Withdrawn", "expire": "Expired", "auto_approve": "Auto-approved" },
-    "statuses": { "pending": "Pending", "approved": "Approved", "rejected": "Rejected", "cancelled": "Withdrawn", "expired": "Expired", "auto_approved": "Auto-approved", "waiting": "Waiting", "skipped": "Skipped", "draft": "Draft", "active": "Active", "retired": "Retired", "open": "Open", "overridden": "Overridden", "cleared": "Cleared" },
-    "triggers": { "on_submit": "On submit", "on_post_attempt": "On post attempt", "on_block": "On block" },
-    "entityTypes": { "stock_adjustment": "Stock adjustment" },
+    "actions": {
+      "submit": "Submitted",
+      "approve": "Approved",
+      "reject": "Rejected",
+      "request_changes": "Changes requested",
+      "delegate": "Delegated",
+      "escalate": "Escalated",
+      "comment": "Commented",
+      "cancel": "Withdrawn",
+      "expire": "Expired",
+      "auto_approve": "Auto-approved"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Withdrawn",
+      "expired": "Expired",
+      "auto_approved": "Auto-approved",
+      "waiting": "Waiting",
+      "skipped": "Skipped",
+      "draft": "Draft",
+      "active": "Active",
+      "retired": "Retired",
+      "open": "Open",
+      "overridden": "Overridden",
+      "cleared": "Cleared"
+    },
+    "triggers": {
+      "on_submit": "On submit",
+      "on_post_attempt": "On post attempt",
+      "on_block": "On block"
+    },
+    "entityTypes": {
+      "stock_adjustment": "Stock adjustment"
+    },
     "emptyInbox": "Nothing to decide",
     "emptyInboxDescription": "Requests assigned to you, or delegated to you, appear here.",
     "emptyAll": "No requests",
@@ -2202,7 +2477,10 @@
     "nameAr": "Name (Arabic)",
     "description": "Description",
     "reapprovalPolicy": "After a change",
-    "reapprovalPolicies": { "reset": "Approve again", "none": "Keep the approval" },
+    "reapprovalPolicies": {
+      "reset": "Approve again",
+      "none": "Keep the approval"
+    },
     "overrideValidHours": "Override valid for (hours)",
     "rules": "Rules",
     "addRule": "Add rule",
@@ -2214,7 +2492,10 @@
     "addStep": "Add step",
     "removeStep": "Remove step",
     "approverKind": "Approvers",
-    "approverKinds": { "users": "Named members", "role": "Everyone with a role" },
+    "approverKinds": {
+      "users": "Named members",
+      "role": "Everyone with a role"
+    },
     "roleCode": "Role code",
     "members": "Members",
     "timeoutHours": "Escalate after (hours)",
@@ -2238,14 +2519,21 @@
     "tradeName": "Trade name",
     "tradeNameAr": "Trade name (Arabic)",
     "kind": "Kind",
-    "kinds": { "organization": "Organisation", "person": "Person" },
+    "kinds": {
+      "organization": "Organisation",
+      "person": "Person"
+    },
     "email": "Email",
     "phone": "Phone",
     "website": "Website",
     "notes": "Notes",
     "search": "Search by code, name or email",
     "held": "On hold",
-    "holdFilter": { "": "All suppliers", "held": "On hold only", "none": "Not on hold" },
+    "holdFilter": {
+      "": "All suppliers",
+      "held": "On hold only",
+      "none": "Not on hold"
+    },
     "account": "Account",
     "contacts": "Contacts",
     "addresses": "Addresses",
@@ -2267,7 +2555,12 @@
     "hold": "Hold",
     "release": "Release",
     "holdStatus": "Hold",
-    "holdStatuses": { "none": "None", "purchase": "Purchasing", "payment": "Payments", "all": "Purchasing and payments" },
+    "holdStatuses": {
+      "none": "None",
+      "purchase": "Purchasing",
+      "payment": "Payments",
+      "all": "Purchasing and payments"
+    },
     "holdReason": "Reason",
     "heldSince": "Held since {when}: {reason}",
     "saveAccount": "Save account",
@@ -2279,7 +2572,12 @@
     "receivesStatements": "Receives statements",
     "addContact": "Add contact",
     "addressRole": "Use",
-    "addressRoles": { "billing": "Billing", "shipping": "Shipping", "legal": "Legal", "other": "Other" },
+    "addressRoles": {
+      "billing": "Billing",
+      "shipping": "Shipping",
+      "legal": "Legal",
+      "other": "Other"
+    },
     "country": "Country (ISO)",
     "region": "Region",
     "line1": "Address line",
@@ -2297,17 +2595,31 @@
     "revealed": "Revealed (audited)",
     "addBankAccount": "Add bank account",
     "registrationType": "Type",
-    "registrationTypes": { "vat": "VAT", "tin": "Tax number", "crn": "Commercial registration", "other": "Other" },
+    "registrationTypes": {
+      "vat": "VAT",
+      "tin": "Tax number",
+      "crn": "Commercial registration",
+      "other": "Other"
+    },
     "number": "Number",
     "validFrom": "Valid from",
     "validTo": "Valid to",
     "addRegistration": "Add registration",
     "emptySuppliers": "No suppliers yet",
     "emptySuppliersDescription": "Register the first supplier of this company: a partner record and its terms.",
-    "tabs": { "payment": "Payment terms", "delivery": "Delivery terms", "groups": "Supplier groups", "wht": "Withholding codes" },
+    "tabs": {
+      "payment": "Payment terms",
+      "delivery": "Delivery terms",
+      "groups": "Supplier groups",
+      "wht": "Withholding codes"
+    },
     "newPaymentTerms": "New payment terms",
     "dueBasis": "Due from",
-    "dueBases": { "invoice_date": "Invoice date", "end_of_month": "End of the invoice month", "delivery": "Delivery date" },
+    "dueBases": {
+      "invoice_date": "Invoice date",
+      "end_of_month": "End of the invoice month",
+      "delivery": "Delivery date"
+    },
     "dueDays": "Due days",
     "earlyDiscountPct": "Early-payment discount %",
     "earlyDiscountDays": "within (days)",
@@ -2330,7 +2642,10 @@
     "newWhtCode": "New withholding code",
     "ratePct": "Rate %",
     "withholdAt": "Withheld at",
-    "withholdAts": { "invoice": "Invoice", "payment": "Payment" },
+    "withholdAts": {
+      "invoice": "Invoice",
+      "payment": "Payment"
+    },
     "threshold": "Threshold",
     "thresholdCurrency": "Threshold currency",
     "emptyTerms": "Nothing here yet",
@@ -2498,7 +2813,11 @@
       "description": "What was bought over a period: approved orders at the net order price in the company's currency, with how much has been received and invoiced.",
       "from": "From",
       "to": "To",
-      "by": { "month": "Month", "supplier": "Supplier", "item": "Item" },
+      "by": {
+        "month": "Month",
+        "supplier": "Supplier",
+        "item": "Item"
+      },
       "ordered": "Ordered",
       "received": "Received",
       "invoiced": "Invoiced",
@@ -2593,8 +2912,7 @@
     "kind": "Kind",
     "kinds": {
       "invoice": "Invoice",
-      "expense": "Expense"
-,
+      "expense": "Expense",
       "debit_note": "Debit note"
     },
     "applyWht": "Withhold tax at invoice (supplier's code)",
@@ -2607,8 +2925,7 @@
       "charge": "Landed-cost charge",
       "receipt": "Receipt",
       "order": "Service",
-      "expense": "Expense"
-,
+      "expense": "Expense",
       "return": "Return"
     },
     "matchStatuses": {
@@ -3087,7 +3404,6 @@
     "purchaseOrderLineId": "Purchase order line ID",
     "purchaseOrderLineIdPlaceholder": "Paste the purchase order line's ID",
     "openApprovals": "Open approvals",
-    "order": "Order",
     "createShipment": "Create shipment",
     "shipmentsDescription": "A confirmed order's reserved lines, shipped in full or in part: the stock engine moves the stock and books cost of goods sold.",
     "newShipment": "New shipment",
@@ -3125,7 +3441,8 @@
       "shipped": "Shipped",
       "fulfilled": "Fulfilled",
       "posted": "Posted",
-      "reversed": "Reversed"
+      "reversed": "Reversed",
+      "picking": "Picking"
     }
   },
   "pricing": {
@@ -3460,7 +3777,9 @@
         "uom_not_item_unit": "The unit is not one of the item's units.",
         "quantity_not_positive": "The quantity must be greater than zero."
       },
-      "quantity": { "not_exact_in_base": "The quantity is not a whole number of the item's base unit." }
+      "quantity": {
+        "not_exact_in_base": "The quantity is not a whole number of the item's base unit."
+      }
     }
   },
   "tax": {
@@ -3481,8 +3800,8 @@
     "rules": "Matrix rules",
     "installed": "Installed",
     "install": "Install",
-    "editNamed": "Edit {{name}}",
-    "deleteNamed": "Delete {{name}}",
+    "editNamed": "Edit {name}",
+    "deleteNamed": "Delete {name}",
     "newCode": "New code",
     "editCode": "Edit code",
     "newRule": "New rule",
@@ -3554,7 +3873,7 @@
     "periodStart": "Period start",
     "periodEnd": "Period end",
     "selectCompanyAndRegime": "Select a company and a regime to preview its return.",
-    "drillDownTitle": "Box {{box}}: entries",
+    "drillDownTitle": "Box {box}: entries",
     "document": "Document",
     "reversal": "Reversal",
     "value": {
@@ -3578,5 +3897,145 @@
       "open": "Open",
       "filed": "Filed"
     }
+  },
+  "picking": {
+    "description": "The warehouse's picking work: lists released from shipments, in walking order, with who has each and how far they got.",
+    "number": "Pick list",
+    "pickList": "Pick list",
+    "source": "Shipment",
+    "picker": "Picker",
+    "unassigned": "Unassigned",
+    "lines": "Lines picked",
+    "pickedOfPlanned": "Picked / planned",
+    "released": "Released",
+    "started": "Started",
+    "completed": "Finished",
+    "live": "Being picked",
+    "empty": "No pick lists",
+    "emptyDescription": "Release a draft shipment for picking and its pick list appears here.",
+    "openScanner": "Pick on the scanner",
+    "pickOnScanner": "Open on the scanner",
+    "takeIt": "Take it",
+    "assignTo": "Picker",
+    "assign": "Assign",
+    "cancel": "Cancel pick list",
+    "confirmCancel": "Cancel the pick list",
+    "cancelReason": "Reason for cancelling",
+    "walk": "Walk",
+    "bin": "Bin",
+    "zone": "zone {zone}",
+    "toPick": "To pick",
+    "picked": "Picked",
+    "pickedFrom": "from {place}",
+    "from": "Taken from",
+    "lotShort": "Lot {lot}",
+    "expires": "expires {date}",
+    "progress": "{done} of {total} lines picked",
+    "waitingForWarehouse": "The warehouse is picking it.",
+    "readyToPost": "Every line is picked: post it to ship what was picked.",
+    "release": "Release for picking",
+    "takeBack": "Take back from picking",
+    "takeBackReason": "Why take it back from the warehouse?",
+    "confirmTakeBack": "Take it back",
+    "postPicked": "Post what was picked",
+    "statuses": {
+      "released": "Released",
+      "in_progress": "Being picked",
+      "picked": "Picked",
+      "closed": "Closed",
+      "cancelled": "Cancelled",
+      "open": "To pick",
+      "short": "Short"
+    },
+    "reasons": {
+      "empty": "Nothing on the shelf",
+      "damaged": "Damaged",
+      "wrongItem": "Wrong item on the shelf"
+    },
+    "scanner": {
+      "title": "Pick",
+      "description": "Take a pick list and walk it: scan the bin, the item and each serial, then confirm what you took.",
+      "offline": "Picking checks the stock on the shelf, so it needs a connection.",
+      "none": "Nothing to pick here",
+      "noneDescription": "Pick lists released for this warehouse appear here.",
+      "yours": "Yours",
+      "takenBy": "Taken by {name}",
+      "start": "Start picking",
+      "continue": "Continue",
+      "backToLists": "Back to pick lists",
+      "forSource": "For {source}",
+      "loadFailed": "The pick list could not be loaded.",
+      "allPicked": "Every line is picked",
+      "allPickedHint": "{picked} of {planned} picked. The office can now post the shipment.",
+      "route": "Route",
+      "go": "Go",
+      "undo": "Undo this line",
+      "anyShelf": "Anywhere",
+      "plannedSerials": "Planned: {serials}",
+      "steps": "Steps",
+      "step": {
+        "bin": "Bin",
+        "item": "Item",
+        "serials": "Serials",
+        "confirm": "Confirm"
+      },
+      "scanBin": "Scan bin {bin}",
+      "scanItem": "Scan the item",
+      "scanSerial": "Scan serial {count} of {total}",
+      "serialsDone": "Done scanning serials",
+      "confirmPrompt": "Check the quantity and confirm.",
+      "otherBin": "Taking from {bin} instead of {planned}.",
+      "wrongItem": "That is {scanned}; this line is {expected}.",
+      "serialTwice": "Serial {serial} is already scanned.",
+      "quantityPicked": "Quantity picked",
+      "quantityInvalid": "Enter a quantity from 0 to {max}.",
+      "otherLot": "Different lot",
+      "otherLotHint": "Leave empty if you took lot {lot}.",
+      "shortReason": "Why is it short?",
+      "reasonRequired": "Say why less was picked.",
+      "confirm": "Confirm {quantity} picked",
+      "confirmShort": "Confirm short: {picked} of {planned}",
+      "nothingHere": "Nothing here",
+      "confirmNothing": "Confirm nothing was picked"
+    }
+  },
+  "packing": {
+    "title": "Packages",
+    "none": "Not packed yet.",
+    "pack": "Pack",
+    "edit": "Edit packages",
+    "save": "Save packages",
+    "package": "Package",
+    "packageNo": "Package {no}",
+    "type": "Type",
+    "types": {
+      "box": "Box",
+      "carton": "Carton",
+      "pallet": "Pallet",
+      "envelope": "Envelope",
+      "crate": "Crate",
+      "drum": "Drum",
+      "bag": "Bag",
+      "other": "Other"
+    },
+    "weight": "Weight",
+    "weightKg": "Weight (kg)",
+    "lengthCm": "Length (cm)",
+    "widthCm": "Width (cm)",
+    "heightCm": "Height (cm)",
+    "dimensions": "Size",
+    "contents": "Contents",
+    "contentsWeight": "contents about {weight} kg",
+    "totalWeight": "Total weight",
+    "addPackage": "Add package",
+    "removePackage": "Remove package",
+    "allInOne": "Everything in one package",
+    "shipped": "Shipped",
+    "inThisPackage": "In this package",
+    "packed": "Packed",
+    "left": "{item}: {quantity} not packed yet",
+    "over": "{item}: {quantity} more packed than shipped",
+    "allPacked": "{item}: all packed",
+    "carrierDetails": "Carrier details"
   }
 }

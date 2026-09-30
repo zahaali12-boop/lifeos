@@ -11700,16 +11700,6 @@ export interface components {
             to: components["schemas"]["DocumentRef"];
             relation: string;
         };
-        /**
-         * @description A bilingual (or multilingual) text value stored as a language→text map (ADR-0027). Resolution falls back
-         *     requested → tenant default → any available language, and never returns null for a non-empty map.
-         */
-        LocalizedText: {
-            values?: null | {
-                [key: string]: string;
-            };
-            isEmpty?: boolean;
-        };
         LoginRequest: {
             email: string;
             password: string;
@@ -12731,6 +12721,7 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            assignedName?: null | string;
         };
         PickListLineInfo: {
             /** Format: uuid */
@@ -12742,7 +12733,9 @@ export interface components {
             /** Format: uuid */
             itemId: string;
             itemCode: string;
-            itemName: components["schemas"]["LocalizedText"];
+            itemName: {
+                [key: string]: string;
+            };
             /** Format: uuid */
             variantId: null | string;
             /** Format: uuid */
@@ -12772,6 +12765,8 @@ export interface components {
             pickedBy: null | string;
             /** Format: date-time */
             pickedAt: null | string;
+            /** @default  */
+            uomCode: string;
         };
         /** @description A pick list in a work queue: its progress without its lines. */
         PickListRow: {
@@ -12802,6 +12797,7 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            assignedName?: null | string;
         };
         /** @description The board: every active stage in order with its opportunities (won and lost columns show the last 90 days) and the open pipeline's totals. */
         PipelineBoard: {

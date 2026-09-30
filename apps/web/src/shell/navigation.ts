@@ -44,6 +44,7 @@ export const navigation: NavigationItem[] = [
   { to: "/inventory/assemblies", label: "nav.assemblies", icon: Hammer, shortcut: "g y", permission: "inventory.assembly.read", group: "inventory" },
   { to: "/inventory/tracking", label: "nav.tracking", icon: Barcode, shortcut: "g z", permission: "inventory.stock.read", group: "inventory" },
   { to: "/inventory/counts", label: "nav.counts", icon: ClipboardCheck, shortcut: "g q", permission: "inventory.count.read", group: "inventory" },
+  { to: "/inventory/pick-lists", label: "nav.pickLists", icon: ListChecks, shortcut: "g +", permission: "inventory.pick.read", group: "inventory" },
   { to: "/inventory/replenishment", label: "nav.replenishment", icon: ShoppingCart, shortcut: "g g", permission: "inventory.replenishment.read", group: "inventory" },
   { to: "/inventory/slow-moving", label: "nav.slowMoving", icon: Hourglass, shortcut: "g )", permission: "inventory.stock.read", group: "inventory" },
   { to: "/inventory/valuation", label: "nav.valuation", icon: Calculator, shortcut: "g 9", permission: "inventory.costing.read", group: "inventory" },

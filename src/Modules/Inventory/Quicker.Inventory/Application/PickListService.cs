@@ -9,7 +9,6 @@ using Quicker.Inventory.Persistence;
 using Quicker.Items.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
-using Quicker.Kernel.Text;
 using Quicker.Kernel.Time;
 using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
@@ -43,7 +42,8 @@ public sealed record PickListRow(
     decimal QtyToPick,
     decimal QtyPicked,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? AssignedName = null);
 
 /// <summary>
 /// Pick lists (roadmap 5.5b, DOMAIN_MODEL §9, A-154). The planner locates a document's lines in the warehouse: lots
@@ -278,6 +278,7 @@ public sealed class PickListService(
             .Select(static g => new { Id = g.Key, Total = g.Count(), Done = g.Count(static l => l.Status != PickLineStatuses.Open), ToPick = g.Sum(static l => l.QtyToPick), Picked = g.Sum(static l => l.QtyPicked) })
             .ToDictionaryAsync(static g => g.Id, cancellationToken);
         var codes = new Dictionary<Guid, string>();
+        var names = new Dictionary<Guid, string?>();
         var rows = new List<PickListRow>(lists.Count);
         foreach (var p in lists)
         {
@@ -289,7 +290,7 @@ public sealed class PickListService(
 
             var g = progress.GetValueOrDefault(p.Id);
             rows.Add(new PickListRow(p.Id, p.CompanyId, p.WarehouseId, code, p.Number, p.SourceDocumentType, p.SourceDocumentId, p.SourceNumber, p.Status, p.AssignedTo,
-                g?.Total ?? 0, g?.Done ?? 0, ItemUomMath.Normalize(g?.ToPick ?? 0m), ItemUomMath.Normalize(g?.Picked ?? 0m), p.CreatedAt, p.UpdatedAt));
+                g?.Total ?? 0, g?.Done ?? 0, ItemUomMath.Normalize(g?.ToPick ?? 0m), ItemUomMath.Normalize(g?.Picked ?? 0m), p.CreatedAt, p.UpdatedAt, await NameAsync(p.AssignedTo, names, cancellationToken)));
         }
 
         return rows;
@@ -977,14 +978,32 @@ public sealed class PickListService(
             var lot = l.LotId is { } lo ? lots.GetValueOrDefault(lo) : null;
             var pickedBin = l.PickedBinId is { } pb ? bins.GetValueOrDefault(pb) : null;
             var pickedLot = l.PickedLotId is { } pl ? lots.GetValueOrDefault(pl) : null;
-            lines.Add(new PickListLineInfo(l.Id, l.LineNo, l.SourceLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name ?? new LocalizedText(), l.VariantId,
+            lines.Add(new PickListLineInfo(l.Id, l.LineNo, l.SourceLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId,
                 l.BinId, bin?.Code, bin?.Zone, l.LotId, lot?.LotNumber, lot?.ExpiresOn, Serials(l.SerialNumbers), N(l.QtyToPick), N(l.QtyPicked),
-                l.PickedBinId, pickedBin?.Code, l.PickedLotId, pickedLot?.LotNumber, Serials(l.PickedSerialNumbers), l.Status, l.ShortReason, l.PickedBy, l.PickedAt));
+                l.PickedBinId, pickedBin?.Code, l.PickedLotId, pickedLot?.LotNumber, Serials(l.PickedSerialNumbers), l.Status, l.ShortReason, l.PickedBy, l.PickedAt, item?.BaseUomCode ?? string.Empty));
         }
 
         return new PickListInfo(list.Id, list.CompanyId, list.WarehouseId, warehouse?.Code ?? string.Empty, list.Number, list.SourceDocumentType, list.SourceDocumentId, list.SourceNumber,
             list.Status, list.AssignedTo, list.AssignedAt, list.StartedAt, list.CompletedAt, list.ClosedAt, list.CancelledAt, list.CancelReason,
-            lines.Count, lines.Count(static l => l.Status != PickLineStatuses.Open), N(lines.Sum(static l => l.QtyToPick)), N(lines.Sum(static l => l.QtyPicked)), lines, list.CreatedAt, list.UpdatedAt);
+            lines.Count, lines.Count(static l => l.Status != PickLineStatuses.Open), N(lines.Sum(static l => l.QtyToPick)), N(lines.Sum(static l => l.QtyPicked)), lines, list.CreatedAt, list.UpdatedAt,
+            await NameAsync(list.AssignedTo, [], cancellationToken));
+    }
+
+    /// <summary>The picker's display name, so a work queue reads by person.</summary>
+    private async Task<string?> NameAsync(Guid? membershipId, Dictionary<Guid, string?> cache, CancellationToken cancellationToken)
+    {
+        if (membershipId is not { } id)
+        {
+            return null;
+        }
+
+        if (!cache.TryGetValue(id, out var name))
+        {
+            name = (await members.FindAsync(new MembershipId(id), cancellationToken))?.DisplayName;
+            cache[id] = name;
+        }
+
+        return name;
     }
 
     private static IReadOnlyList<string> Serials(string json) => JsonSerializer.Deserialize<List<string>>(json) ?? [];
