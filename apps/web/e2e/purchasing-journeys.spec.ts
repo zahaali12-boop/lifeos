@@ -9,6 +9,7 @@ import { expect, test, type Page } from "@playwright/test";
  * critical violation.
  */
 const password = "correct-horse-battery-staple";
+const apiUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8080";
 
 async function expectAccessible(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
@@ -96,6 +97,13 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await expectAccessible(page);
   await closeDialog(page);
 
+  // A cost centre for the canteen, through the API; the requisition line is charged to it and the order inherits it.
+  const token = await page.evaluate(() => (JSON.parse(window.localStorage.getItem("quicker.session") ?? "{}") as { accessToken?: string }).accessToken);
+  const headers = { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" };
+  const dimensions = (await (await page.request.get(`${apiUrl}/api/v1/organization/dimensions`, { headers })).json()) as { id: string; code: string }[];
+  const costCentre = dimensions.find((d) => d.code === "COST_CENTER");
+  expect((await page.request.post(`${apiUrl}/api/v1/organization/dimensions/${costCentre?.id ?? ""}/values`, { headers, data: { code: "CC-CAN", name: { en: "Canteen", ar: "المقصف" } } })).ok()).toBeTruthy();
+
   // A requisition: submitted, approved at once, turned into an order for the suggested supplier.
   await nav(page, "Requisitions");
   await expect(page.getByText("No requisitions yet")).toBeVisible();
@@ -106,8 +114,10 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await page.getByTestId("line-qty-0").fill("10");
   await page.getByTestId("line-price-0").fill("1500");
   await page.getByTestId("line-supplier-0").selectOption({ label: "ALPHA" });
+  await page.getByTestId("line-cost-centre-0").selectOption({ label: "CC-CAN · Canteen" });
   await expectAccessible(page);
   await page.getByTestId("save-requisition").click();
+  await expect(page.getByTestId("requisition-detail").getByTestId("doc-line-cost-centre")).toHaveText("CC-CAN · Canteen");
   await expect(page.getByTestId("requisition-detail")).toBeVisible();
   await expect(page.getByTestId("requisition-detail")).toContainText("REQ-");
   await page.getByTestId("submit-requisition").click();
@@ -124,6 +134,7 @@ test("English: requisition to purchase order, a change order, a send, a receipt,
   await page.getByRole("grid").getByRole("row").filter({ hasText: "PO-" }).first().dblclick();
   await expect(page.getByTestId("order-detail")).toBeVisible();
   await expect(page.getByTestId("order-total")).toContainText("15,000");
+  await expect(page.getByTestId("order-detail").getByTestId("doc-line-cost-centre")).toHaveText("CC-CAN · Canteen");
   await page.getByTestId("submit-order").click();
   await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Approved");
   await page.getByTestId("tab-commitments").click();

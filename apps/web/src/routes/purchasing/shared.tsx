@@ -5,6 +5,7 @@ import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { formatMoney, formatNumber } from "../../lib/format";
 import { SelectField, TextField } from "../common";
+import { CostCentreSelect, costCentreText, type LineDimensionReference } from "../accounting/JournalLineDetails";
 import { ItemCodeField } from "../inventory/ItemCodeField";
 
 export function usePaymentTerms() {
@@ -96,11 +97,19 @@ export interface LineForm {
   price: string;
   supplierId: string;
   blanketLineId: string;
+  /** Dimension code to value id; the cost centre is chosen on the line, the order and invoice inherit it. */
+  dimensions: Record<string, string>;
 }
 
-export const emptyLine = (): LineForm => ({ itemCode: "", description: "", quantity: "1", uom: "", price: "", supplierId: "", blanketLineId: "" });
+export const emptyLine = (): LineForm => ({ itemCode: "", description: "", quantity: "1", uom: "", price: "", supplierId: "", blanketLineId: "", dimensions: {} });
 
-export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, suppliers, showDescription = false }: { lines: LineForm[]; onChange: (lines: LineForm[]) => void; showPrice?: boolean; priceLabel?: string; suppliers?: { partnerId: string; partnerCode: string }[]; showDescription?: boolean }) {
+/** The dimensions a line sends: only when it has any (a line without names none, and an order line lends its own). */
+export function lineDimensions(line: LineForm): Record<string, string> | null {
+  return Object.keys(line.dimensions).length > 0 ? line.dimensions : null;
+}
+
+export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, suppliers, showDescription = false, costCentres }: { lines: LineForm[]; onChange: (lines: LineForm[]) => void; showPrice?: boolean; priceLabel?: string; suppliers?: { partnerId: string; partnerCode: string }[]; showDescription?: boolean; costCentres?: LineDimensionReference }) {
+  const showCostCentre = Boolean(costCentres?.dimensions.some((d) => d.code === "COST_CENTER"));
   const { t } = useTranslation();
   const patch = (index: number, change: Partial<LineForm>): void => { onChange(lines.map((l, i) => (i === index ? { ...l, ...change } : l))); };
   return (
@@ -120,6 +129,7 @@ export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, sup
               <TableHead>{t("purchasing.quantity")}</TableHead>
               <TableHead>{t("purchasing.uom")}</TableHead>
               {showPrice ? <TableHead>{priceLabel ?? t("purchasing.unitPrice")}</TableHead> : null}
+              {showCostCentre ? <TableHead>{t("accounting.costCentre")}</TableHead> : null}
               {suppliers ? <TableHead>{t("purchasing.suggestedSupplier")}</TableHead> : null}
               <TableHead />
             </TableRow>
@@ -132,6 +142,11 @@ export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, sup
                 <TableCell><TextField aria-label={t("purchasing.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patch(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`line-qty-${String(index)}`} /></TableCell>
                 <TableCell><TextField aria-label={t("purchasing.uom")} value={line.uom} onChange={(e) => { patch(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" placeholder={t("purchasing.baseUom")} data-testid={`line-uom-${String(index)}`} /></TableCell>
                 {showPrice ? <TableCell><TextField aria-label={priceLabel ?? t("purchasing.unitPrice")} inputMode="decimal" value={line.price} onChange={(e) => { patch(index, { price: e.target.value }); }} dir="ltr" className="w-24" data-testid={`line-price-${String(index)}`} /></TableCell> : null}
+                {showCostCentre && costCentres ? (
+                  <TableCell>
+                    <CostCentreSelect label={t("accounting.costCentreOfLine", { line: index + 1 })} values={line.dimensions} reference={costCentres} emptyLabel="—" onChange={(dimensions) => { patch(index, { dimensions }); }} testId={`line-cost-centre-${String(index)}`} />
+                  </TableCell>
+                ) : null}
                 {suppliers ? (
                   <TableCell>
                     <SelectField aria-label={t("purchasing.suggestedSupplier")} value={line.supplierId} onChange={(e) => { patch(index, { supplierId: e.target.value }); }} data-testid={`line-supplier-${String(index)}`}>
@@ -164,12 +179,13 @@ export function optionalNum(value: string): number | null {
 }
 
 export function orderLineBodies(lines: LineForm[]) {
-  return lines.map((l) => ({ itemCode: l.itemCode, description: l.description || null, quantity: num(l.quantity), uom: l.uom || null, unitPrice: optionalNum(l.price), discountPct: 0, blanketLineId: l.blanketLineId || null }));
+  return lines.map((l) => ({ itemCode: l.itemCode, description: l.description || null, quantity: num(l.quantity), uom: l.uom || null, unitPrice: optionalNum(l.price), discountPct: 0, blanketLineId: l.blanketLineId || null, dimensions: lineDimensions(l) }));
 }
 
 /** Read-only lines of a document, with the money in the document's currency. */
-export function LinesTable({ lines, currency, testId = "doc-lines" }: { lines: { id: string; lineNo: string | number; itemCode?: string | null; description?: string | null; quantity: number | string; uomCode: string; unitPrice?: number | string | null; netAmount?: number | string; status?: string }[]; currency?: string; testId?: string }) {
+export function LinesTable({ lines, currency, testId = "doc-lines", costCentres }: { lines: { id: string; lineNo: string | number; itemCode?: string | null; description?: string | null; quantity: number | string; uomCode: string; unitPrice?: number | string | null; netAmount?: number | string; status?: string; dimensions?: Record<string, string> | null }[]; currency?: string; testId?: string; costCentres?: LineDimensionReference }) {
   const { t } = useTranslation();
+  const showCostCentre = Boolean(costCentres && lines.some((l) => l.dimensions?.COST_CENTER));
   return (
     <Table data-testid={testId}>
       <TableHeader>
@@ -179,6 +195,7 @@ export function LinesTable({ lines, currency, testId = "doc-lines" }: { lines: {
           <TableHead>{t("purchasing.quantity")}</TableHead>
           {currency ? <TableHead>{t("purchasing.unitPrice")}</TableHead> : null}
           {currency ? <TableHead>{t("purchasing.net")}</TableHead> : null}
+          {showCostCentre ? <TableHead>{t("accounting.costCentre")}</TableHead> : null}
           <TableHead>{t("common.status")}</TableHead>
         </TableRow>
       </TableHeader>
@@ -190,6 +207,7 @@ export function LinesTable({ lines, currency, testId = "doc-lines" }: { lines: {
             <TableCell className="tabular" dir="ltr">{formatNumber(l.quantity, { maximumFractionDigits: 3 })} {l.uomCode}</TableCell>
             {currency ? <TableCell className="tabular" dir="ltr">{l.unitPrice === null || l.unitPrice === undefined ? "" : formatNumber(l.unitPrice, { maximumFractionDigits: 4 })}</TableCell> : null}
             {currency ? <TableCell className="tabular" dir="ltr">{l.netAmount === undefined ? "" : formatMoney(l.netAmount, currency)}</TableCell> : null}
+            {showCostCentre && costCentres ? <TableCell data-testid="doc-line-cost-centre">{costCentreText(l.dimensions, costCentres)}</TableCell> : null}
             <TableCell>{l.status ? <PurchaseStatus status={l.status} /> : null}</TableCell>
           </TableRow>
         ))}

@@ -110,9 +110,13 @@ public sealed class InvoiceTests(ApiHostFixture host)
 
         // The service ordered for the workshop: the order line names its cost centre.
         var workshopSet = (await owner.PostAsync("/api/v1/organization/dimension-sets", new { values = new Dictionary<string, Guid> { ["COST_CENTER"] = workshop } }, HttpStatusCode.OK)).GetProperty("id").GetGuid();
-        var order = await owner.PostAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId = s.Supplier, warehouseId = s.WarehouseId, lines = new object[] { new { itemId = s.Cleaning, quantity = 2m, uom = "HR", unitPrice = 30m, dimensionSetId = workshopSet } } });
+        // An order line names its cost centre by value (as the order screen sends it), or by a set; both are refused together.
+        (await owner.PostErrorAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId = s.Supplier, warehouseId = s.WarehouseId, lines = new object[] { new { itemId = s.Cleaning, quantity = 2m, uom = "HR", unitPrice = 30m, dimensionSetId = workshopSet, dimensions = new Dictionary<string, Guid> { ["COST_CENTER"] = workshop } } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("order.dimensions_ambiguous");
+        var order = await owner.PostAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId = s.Supplier, warehouseId = s.WarehouseId, lines = new object[] { new { itemId = s.Cleaning, quantity = 2m, uom = "HR", unitPrice = 30m, dimensions = new Dictionary<string, Guid> { ["COST_CENTER"] = workshop } } } });
         var orderId = order.GetProperty("id").GetGuid();
         var cleaningLine = order.GetProperty("lines").Only().GetProperty("id").GetGuid();
+        order.GetProperty("lines").Only().GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(workshop);
+        order.GetProperty("lines").Only().GetProperty("dimensionSetId").GetGuid().ShouldBe(workshopSet, "the same values are the same set");
         (await owner.PostAsync($"/api/v1/purchasing/orders/{orderId}/submit", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("approved");
 
         // Dimensions only go where the amount lands in profit and loss, and they must exist and be unambiguous.

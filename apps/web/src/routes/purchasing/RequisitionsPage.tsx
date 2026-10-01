@@ -11,7 +11,8 @@ import { formatDate, formatMoney } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
-import { emptyLine, LinesEditor, LinesTable, num, optionalNum, PurchaseStatus, useSuppliers, type LineForm, type Requisition } from "./shared";
+import { useLineDimensions } from "../accounting/JournalLineDetails";
+import { emptyLine, lineDimensions, LinesEditor, LinesTable, num, optionalNum, PurchaseStatus, useSuppliers, type LineForm, type Requisition } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
 import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordActivity } from "../RecordDiscussion";
@@ -33,6 +34,7 @@ export function RequisitionsPage() {
   const [form, setForm] = useState<RequisitionForm | null>(null);
   const [openId, setOpenId] = useOpenRecord("/purchasing/requisitions");
   const suppliers = useSuppliers(companyId);
+  const costCentres = useLineDimensions(companyId);
 
   const list = useQuery({
     queryKey: ["requisitions", companyId, status],
@@ -58,7 +60,7 @@ export function RequisitionsPage() {
           neededBy: f.neededBy || null,
           justification: f.justification || null,
           customFields: f.customFields,
-          lines: f.lines.map((l) => ({ itemCode: l.itemCode, description: l.description || null, quantity: num(l.quantity), uom: l.uom || null, estimatedPrice: optionalNum(l.price), suggestedSupplierId: l.supplierId || null })),
+          lines: f.lines.map((l) => ({ itemCode: l.itemCode, description: l.description || null, quantity: num(l.quantity), uom: l.uom || null, estimatedPrice: optionalNum(l.price), suggestedSupplierId: l.supplierId || null, dimensions: lineDimensions(l) })),
         },
       })),
     onSuccess: async (created) => { setProblem(null); setForm(null); setOpenId(created.id); await refresh(); },
@@ -144,7 +146,7 @@ export function RequisitionsPage() {
                 </Field>
               </div>
               <CustomFieldsFieldset entityType="purchase_requisition" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
-              <LinesEditor lines={form.lines} onChange={(lines) => { setForm({ ...form, lines }); }} priceLabel={t("purchasing.estimatedPrice")} suppliers={suppliers.data ?? []} showDescription />
+              <LinesEditor lines={form.lines} onChange={(lines) => { setForm({ ...form, lines }); }} priceLabel={t("purchasing.estimatedPrice")} suppliers={suppliers.data ?? []} showDescription costCentres={costCentres} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setForm(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={create.isPending} data-testid="save-requisition">{t("common.save")}</Button>
@@ -174,7 +176,7 @@ export function RequisitionsPage() {
                 [t("purchasing.estimatedTotal"), formatMoney(r.totalEstimated, r.currency)],
                 ...(r.rejectionReason ? [[t("purchasing.rejectionReason"), r.rejectionReason] as [string, string]] : []),
               ]} />
-              <LinesTable lines={r.lines.map((l) => ({ id: l.id, lineNo: l.lineNo, itemCode: l.itemCode, description: l.description, quantity: l.quantity, uomCode: l.uomCode, unitPrice: l.estimatedPrice, status: l.status }))} currency={r.currency} testId="requisition-lines" />
+              <LinesTable lines={r.lines.map((l) => ({ id: l.id, lineNo: l.lineNo, itemCode: l.itemCode, description: l.description, quantity: l.quantity, uomCode: l.uomCode, unitPrice: l.estimatedPrice, status: l.status, dimensions: l.dimensions ?? null }))} currency={r.currency} testId="requisition-lines" costCentres={costCentres} />
               {createdOrders.length > 0 ? <p className="text-sm" data-testid="created-orders">{t("purchasing.ordersCreated", { numbers: createdOrders.join(", ") })}</p> : null}
               <RecordActivity entityType="purchase_requisition" entityId={r.id} />
               <DialogFooter>

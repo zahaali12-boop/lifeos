@@ -13648,6 +13648,9 @@ export interface components {
             /** @default true */
             taxRecoverable: boolean;
             taxReason?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         PurchaseOrderRevisionSummary: {
             /** Format: int32 */
@@ -14354,6 +14357,9 @@ export interface components {
             /** Format: double */
             qtyOrdered: number | string;
             status: string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         RequisitionSummary: {
             /** Format: uuid */
@@ -16211,6 +16217,9 @@ export interface components {
             blanketLineId?: null | string;
             /** Format: uuid */
             taxCodeId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         SavePurchaseOrderRequest: {
             /** Format: uuid */
@@ -16425,6 +16434,9 @@ export interface components {
             dimensionSetId?: null | string;
             /** Format: uuid */
             suggestedSupplierId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         SaveRequisitionRequest: {
             /** Format: uuid */

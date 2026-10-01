@@ -5,11 +5,11 @@ namespace Quicker.Purchasing.Application;
 
 // ------------------------------------------------------------------ requisitions
 
-public sealed record SaveRequisitionLineRequest(Guid? ItemId = null, string? ItemCode = null, string? Description = null, decimal Quantity = 0m, string? Uom = null, Guid? UomId = null, decimal? EstimatedPrice = null, Guid? WarehouseId = null, Guid? DimensionSetId = null, Guid? SuggestedSupplierId = null);
+public sealed record SaveRequisitionLineRequest(Guid? ItemId = null, string? ItemCode = null, string? Description = null, decimal Quantity = 0m, string? Uom = null, Guid? UomId = null, decimal? EstimatedPrice = null, Guid? WarehouseId = null, Guid? DimensionSetId = null, Guid? SuggestedSupplierId = null, IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record SaveRequisitionRequest(Guid CompanyId, IReadOnlyList<SaveRequisitionLineRequest> Lines, DateOnly? NeededBy = null, string? Justification = null, Guid? DepartmentValueId = null, Guid? BranchId = null, JsonElement? CustomFields = null);
 
-public sealed record RequisitionLineSummary(Guid Id, int LineNo, Guid? ItemId, string? ItemCode, IReadOnlyDictionary<string, string>? ItemName, string? Description, decimal Quantity, Guid UomId, string UomCode, decimal QuantityBase, decimal? EstimatedPrice, Guid? WarehouseId, Guid? DimensionSetId, Guid? SuggestedSupplierId, string? SuggestedSupplierCode, decimal QtyOrdered, string Status);
+public sealed record RequisitionLineSummary(Guid Id, int LineNo, Guid? ItemId, string? ItemCode, IReadOnlyDictionary<string, string>? ItemName, string? Description, decimal Quantity, Guid UomId, string UomCode, decimal QuantityBase, decimal? EstimatedPrice, Guid? WarehouseId, Guid? DimensionSetId, Guid? SuggestedSupplierId, string? SuggestedSupplierCode, decimal QtyOrdered, string Status, IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record RequisitionSummary(Guid Id, Guid CompanyId, string Number, string Status, Guid? RequesterMembershipId, string? RequesterName, DateOnly? NeededBy, string? Justification, string Currency, decimal TotalEstimated, Guid? ApprovalRequestId, string? RejectionReason, Guid? DepartmentValueId, JsonElement CustomFields, IReadOnlyList<RequisitionLineSummary> Lines, DateTimeOffset? SubmittedAt, DateTimeOffset? ApprovedAt, DateTimeOffset UpdatedAt);
 
@@ -60,7 +60,7 @@ public sealed record BlanketAgreementSummary(Guid Id, Guid CompanyId, string Num
 
 // ------------------------------------------------------------------ purchase orders
 
-public sealed record SavePurchaseOrderLineRequest(Guid? ItemId = null, string? ItemCode = null, Guid? VariantId = null, string? Description = null, decimal Quantity = 0m, string? Uom = null, Guid? UomId = null, decimal? UnitPrice = null, decimal DiscountPct = 0m, DateOnly? ExpectedDate = null, Guid? WarehouseId = null, Guid? DimensionSetId = null, Guid? RequisitionLineId = null, Guid? BlanketLineId = null, Guid? TaxCodeId = null);
+public sealed record SavePurchaseOrderLineRequest(Guid? ItemId = null, string? ItemCode = null, Guid? VariantId = null, string? Description = null, decimal Quantity = 0m, string? Uom = null, Guid? UomId = null, decimal? UnitPrice = null, decimal DiscountPct = 0m, DateOnly? ExpectedDate = null, Guid? WarehouseId = null, Guid? DimensionSetId = null, Guid? RequisitionLineId = null, Guid? BlanketLineId = null, Guid? TaxCodeId = null, IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record SavePurchaseOrderRequest(Guid CompanyId, Guid PartnerId, IReadOnlyList<SavePurchaseOrderLineRequest> Lines, string? Currency = null, DateOnly? OrderDate = null, DateOnly? ExpectedDate = null, Guid? PaymentTermsId = null, Guid? DeliveryTermsId = null, Guid? WarehouseId = null, Guid? AgreementId = null, Guid? BranchId = null, string? Notes = null, JsonElement? CustomFields = null);
 
@@ -69,7 +69,7 @@ public sealed record ChangeOrderRequest(SavePurchaseOrderRequest Order, string R
 
 public sealed record SendOrderRequest(string? To = null, string? Message = null);
 
-public sealed record PurchaseOrderLineSummary(Guid Id, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? VariantId, string? Description, decimal Quantity, Guid UomId, string UomCode, decimal QuantityBase, decimal UnitPrice, decimal DiscountPct, decimal NetAmount, decimal TaxAmount, DateOnly? ExpectedDate, Guid? WarehouseId, Guid? DimensionSetId, decimal QtyReceived, decimal QtyInvoiced, decimal QtyCancelled, Guid? RequisitionLineId, Guid? BlanketLineId, string Status, Guid? TaxCodeId = null, string? TaxCode = null, decimal TaxRatePct = 0m, bool TaxReverseCharge = false, bool TaxRecoverable = true, string? TaxReason = null);
+public sealed record PurchaseOrderLineSummary(Guid Id, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, Guid? VariantId, string? Description, decimal Quantity, Guid UomId, string UomCode, decimal QuantityBase, decimal UnitPrice, decimal DiscountPct, decimal NetAmount, decimal TaxAmount, DateOnly? ExpectedDate, Guid? WarehouseId, Guid? DimensionSetId, decimal QtyReceived, decimal QtyInvoiced, decimal QtyCancelled, Guid? RequisitionLineId, Guid? BlanketLineId, string Status, Guid? TaxCodeId = null, string? TaxCode = null, decimal TaxRatePct = 0m, bool TaxReverseCharge = false, bool TaxRecoverable = true, string? TaxReason = null, IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record PurchaseOrderRevisionSummary(int Revision, string? Reason, Guid? ChangedBy, DateTimeOffset ChangedAt, JsonElement Snapshot);
 

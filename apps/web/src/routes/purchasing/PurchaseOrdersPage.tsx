@@ -14,6 +14,7 @@ import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
+import { useLineDimensions } from "../accounting/JournalLineDetails";
 import { emptyLine, LinesEditor, LinesTable, orderLineBodies, PurchaseStatus, useAgreements, useSuppliers, type LineForm, type PurchaseOrder } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
@@ -53,6 +54,7 @@ export function PurchaseOrdersPage() {
   const [tab, setTab] = useState("lines");
   const [sendTo, setSendTo] = useState<{ to: string; message: string } | null>(null);
   const suppliers = useSuppliers(companyId);
+  const costCentres = useLineDimensions(companyId);
   const warehouses = useWarehouses(companyId);
   const agreements = useAgreements(companyId);
 
@@ -99,7 +101,7 @@ export function PurchaseOrdersPage() {
       customFields: {},
       change: false,
       reason: "",
-      lines: [{ itemCode: line.itemCode, description: line.description ?? "", quantity: String(line.quantity), uom: line.uomCode, price: String(line.unitPrice), supplierId: "", blanketLineId: "" }],
+      lines: [{ itemCode: line.itemCode, description: line.description ?? "", quantity: String(line.quantity), uom: line.uomCode, price: String(line.unitPrice), supplierId: "", blanketLineId: "", dimensions: {} }],
     });
   }, [dropShipOrderId, dropShipLineId, salesOrderForDropShip.data, clearDropShipFrom, companyId, setCompanyId, t]);
 
@@ -183,7 +185,7 @@ export function PurchaseOrdersPage() {
   const openForm = (o: PurchaseOrder | null, change = false): void => {
     setProblem(null);
     setForm(o
-      ? { id: o.id, partnerId: o.partnerId, currency: o.currency, expectedDate: o.expectedDate ?? "", warehouseId: o.warehouseId ?? "", agreementId: o.agreementId ?? "", notes: o.notes ?? "", customFields: asCustomFieldValues(o.customFields), change, reason: "", lines: o.lines.map((l) => ({ itemCode: l.itemCode, description: l.description ?? "", quantity: String(l.quantity), uom: l.uomCode, price: String(l.unitPrice), supplierId: "", blanketLineId: l.blanketLineId ?? "" })) }
+      ? { id: o.id, partnerId: o.partnerId, currency: o.currency, expectedDate: o.expectedDate ?? "", warehouseId: o.warehouseId ?? "", agreementId: o.agreementId ?? "", notes: o.notes ?? "", customFields: asCustomFieldValues(o.customFields), change, reason: "", lines: o.lines.map((l) => ({ itemCode: l.itemCode, description: l.description ?? "", quantity: String(l.quantity), uom: l.uomCode, price: String(l.unitPrice), supplierId: "", blanketLineId: l.blanketLineId ?? "", dimensions: { ...(l.dimensions ?? {}) } })) }
       : { id: null, partnerId: "", currency: "", expectedDate: "", warehouseId: "", agreementId: "", notes: "", customFields: {}, change: false, reason: "", lines: [emptyLine()] });
   };
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
@@ -256,7 +258,7 @@ export function PurchaseOrdersPage() {
                 ) : null}
               </div>
               <CustomFieldsFieldset entityType="purchase_order" values={form.customFields} onChange={(customFields) => { setForm({ ...form, customFields }); }} errors={problem?.fields} />
-              <LinesEditor lines={form.lines} onChange={(lines) => { setForm({ ...form, lines }); }} showDescription />
+              <LinesEditor lines={form.lines} onChange={(lines) => { setForm({ ...form, lines }); }} showDescription costCentres={costCentres} />
               {form.agreementId ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {form.lines.map((line, index) => (
@@ -306,7 +308,7 @@ export function PurchaseOrdersPage() {
               <Tabs tabs={[{ id: "lines", label: t("purchasing.lines"), testId: "tab-lines" }, { id: "revisions", label: t("purchasing.revisions"), testId: "tab-revisions" }, { id: "commitments", label: t("purchasing.commitments"), testId: "tab-commitments" }, { id: "discussion", label: t("comments.tab"), testId: "tab-discussion" }, { id: "history", label: t("history.tab"), testId: "tab-history" }]} value={tab} onChange={setTab} />
               {tab === "discussion" ? <RecordDiscussion entityType="purchase_order" entityId={o.id} /> : null}
               {tab === "history" ? <RecordHistory entityType="purchase_order" entityId={o.id} /> : null}
-              {tab === "lines" ? <LinesTable lines={o.lines} currency={o.currency} testId="order-lines" /> : null}
+              {tab === "lines" ? <LinesTable lines={o.lines} currency={o.currency} testId="order-lines" costCentres={costCentres} /> : null}
               {tab === "revisions" ? (
                 o.revisions.length === 0 ? <p className="text-sm text-fg-muted">{t("purchasing.noRevisions")}</p> : (
                   <Table data-testid="order-revisions">

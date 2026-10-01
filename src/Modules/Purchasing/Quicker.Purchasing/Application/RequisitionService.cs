@@ -34,6 +34,7 @@ public sealed class RequisitionService(
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock,
+    IDimensionSets dimensionSets,
     PurchaseOrderService orders)
 {
     public const string DocumentType = PurchaseDocumentTypes.Requisition;
@@ -162,6 +163,23 @@ public sealed class RequisitionService(
         foreach (var line in request.Lines)
         {
             var entity = new RequisitionLine { Id = Guid.CreateVersion7(), RequisitionId = requisition.Id, LineNo = ++lineNo, Description = Shared.Trim(line.Description), EstimatedPrice = line.EstimatedPrice, WarehouseId = line.WarehouseId, DimensionSetId = line.DimensionSetId, SuggestedSupplierId = line.SuggestedSupplierId };
+            // The cost centre and other dimensions by value; the order raised from the line inherits them.
+            if (line.Dimensions is { Count: > 0 } values)
+            {
+                if (line.DimensionSetId is not null)
+                {
+                    return Error.Validation("requisition.dimensions_ambiguous", "A line gives its dimension values or a dimension set, not both.").WithWhy(("lineNo", lineNo));
+                }
+
+                var set = await dimensionSets.GetOrCreateAsync(values, cancellationToken);
+                if (set.IsFailure)
+                {
+                    return set.Error!.WithWhy(("lineNo", lineNo));
+                }
+
+                entity.DimensionSetId = set.Value;
+            }
+
             if (line.ItemId is not null || !string.IsNullOrWhiteSpace(line.ItemCode))
             {
                 var resolved = await Shared.ResolveLineAsync(items, "requisition", line.ItemId, line.ItemCode, line.Quantity, line.Uom, line.UomId, cancellationToken);
@@ -455,7 +473,8 @@ public sealed class RequisitionService(
             var item = l.ItemId is { } itemId ? await items.FindAsync(itemId, cancellationToken) : null;
             var unit = item is null ? null : (await items.UomsAsync(item.Id, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
             var supplier = l.SuggestedSupplierId is { } s ? await partners.FindAsync(s, cancellationToken) : null;
-            lines.Add(new RequisitionLineSummary(l.Id, l.LineNo, l.ItemId, item?.Code, item?.Name.Values, l.Description, l.Quantity, l.UomId, unit?.UomCode ?? string.Empty, l.QuantityBase, l.EstimatedPrice, l.WarehouseId, l.DimensionSetId, l.SuggestedSupplierId, supplier?.Code, l.QtyOrdered, l.Status));
+            lines.Add(new RequisitionLineSummary(l.Id, l.LineNo, l.ItemId, item?.Code, item?.Name.Values, l.Description, l.Quantity, l.UomId, unit?.UomCode ?? string.Empty, l.QuantityBase, l.EstimatedPrice, l.WarehouseId, l.DimensionSetId, l.SuggestedSupplierId, supplier?.Code, l.QtyOrdered, l.Status,
+                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
         }
 
         return new RequisitionSummary(r.Id, r.CompanyId, r.Number, r.Status, r.RequesterMembershipId, requester?.DisplayName, r.NeededBy, r.Justification, r.Currency, r.TotalEstimated, r.ApprovalRequestId, r.RejectionReason, r.DepartmentValueId, Shared.Parse(r.CustomFields), lines, r.SubmittedAt, r.ApprovedAt, r.UpdatedAt);

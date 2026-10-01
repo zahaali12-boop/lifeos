@@ -226,13 +226,21 @@ public sealed class PurchasingTests(ApiHostFixture host)
         var owner = s.Owner;
 
         (await owner.PostErrorAsync("/api/v1/purchasing/requisitions", new { companyId = s.CompanyId, lines = Array.Empty<object>() }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("requisition.lines_required");
+        // The tea is for the canteen's cost centre: the requisition line names it and the order raised from it inherits it.
+        var costCentres = (await owner.GetOkAsync("/api/v1/organization/dimensions")).EnumerateArray().Single(d => d.GetProperty("code").GetString() == "COST_CENTER").GetProperty("id").GetGuid();
+        var canteen = (await owner.PostAsync($"/api/v1/organization/dimensions/{costCentres}/values", new { code = "CC-CANTEEN", name = new { en = "Canteen", ar = "المقصف" } })).GetProperty("id").GetGuid();
         var requisition = await owner.PostAsync("/api/v1/purchasing/requisitions", new
         {
             companyId = s.CompanyId,
             neededBy = "2026-10-15",
             justification = "Restock the canteen",
-            lines = new object[] { Line(s.Tea, 10m, 1500m, suggestedSupplierId: s.SupplierA, warehouseId: s.WarehouseId), Line(s.Coffee, 5m, 4000m, suggestedSupplierId: s.SupplierB, warehouseId: s.WarehouseId) },
+            lines = new object[]
+            {
+                new { itemId = s.Tea, quantity = 10m, uom = "PCS", estimatedPrice = 1500m, suggestedSupplierId = s.SupplierA, warehouseId = s.WarehouseId, dimensions = new Dictionary<string, Guid> { ["COST_CENTER"] = canteen } },
+                Line(s.Coffee, 5m, 4000m, suggestedSupplierId: s.SupplierB, warehouseId: s.WarehouseId),
+            },
         });
+        requisition.GetProperty("lines")[0].GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(canteen);
         var requisitionId = requisition.GetProperty("id").GetGuid();
         requisition.GetProperty("number").GetString().ShouldStartWith("REQ-2026-");
         requisition.GetProperty("status").GetString().ShouldBe("draft");
@@ -254,6 +262,7 @@ public sealed class PurchasingTests(ApiHostFixture host)
         orderA.GetProperty("requisitionId").GetGuid().ShouldBe(requisitionId);
         orderA.GetProperty("currency").GetString().ShouldBe("IQD");
         orderA.GetProperty("lines").Only().GetProperty("unitPrice").GetDecimal().ShouldBe(1500m);
+        orderA.GetProperty("lines").Only().GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(canteen);
         orderA.GetProperty("totalNet").GetDecimal().ShouldBe(15000m);
         var ordered = await owner.GetOkAsync($"/api/v1/purchasing/requisitions/{requisitionId}");
         ordered.GetProperty("status").GetString().ShouldBe("ordered");

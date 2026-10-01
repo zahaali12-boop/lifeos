@@ -259,7 +259,24 @@ public sealed class PurchaseOrderService(
                 }
             }
 
-            if (line.DimensionSetId is { } ds && await dimensionSets.GetAsync(ds, cancellationToken) is null)
+            // A line names its cost centre and other dimensions by value (or by an existing set, as a requisition hands them on).
+            var dimensionSetId = line.DimensionSetId;
+            if (line.Dimensions is { Count: > 0 } values)
+            {
+                if (line.DimensionSetId is not null)
+                {
+                    return Error.Validation("order.dimensions_ambiguous", "A line gives its dimension values or a dimension set, not both.").WithWhy(("lineNo", lineNo));
+                }
+
+                var set = await dimensionSets.GetOrCreateAsync(values, cancellationToken);
+                if (set.IsFailure)
+                {
+                    return set.Error!.WithWhy(("lineNo", lineNo));
+                }
+
+                dimensionSetId = set.Value;
+            }
+            else if (line.DimensionSetId is { } ds && await dimensionSets.GetAsync(ds, cancellationToken) is null)
             {
                 return Error.Validation("order.dimension_set_unknown", "The dimension set does not exist.").WithWhy(("lineNo", lineNo));
             }
@@ -301,7 +318,7 @@ public sealed class PurchaseOrderService(
                 TaxAmount = 0m,
                 ExpectedDate = line.ExpectedDate ?? request.ExpectedDate,
                 WarehouseId = line.WarehouseId ?? request.WarehouseId,
-                DimensionSetId = line.DimensionSetId,
+                DimensionSetId = dimensionSetId,
                 RequisitionLineId = line.RequisitionLineId,
                 BlanketLineId = line.BlanketLineId,
             });
@@ -768,7 +785,8 @@ public sealed class PurchaseOrderService(
             var item = await items.FindAsync(l.ItemId, cancellationToken);
             var unit = item is null ? null : (await items.UomsAsync(item.Id, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
             lines.Add(new PurchaseOrderLineSummary(l.Id, l.LineNo, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Description, l.Quantity, l.UomId, unit?.UomCode ?? string.Empty, l.QuantityBase, l.UnitPrice, l.DiscountPct, l.NetAmount, l.TaxAmount, l.ExpectedDate, l.WarehouseId, l.DimensionSetId, l.QtyReceived, l.QtyInvoiced, l.QtyCancelled, l.RequisitionLineId, l.BlanketLineId, l.Status,
-                l.TaxCodeId, l.TaxCodeId is { } code ? taxCodes.GetValueOrDefault(code)?.Code : null, l.TaxRatePct, l.TaxReverseCharge, l.TaxRecoverable, l.TaxReason));
+                l.TaxCodeId, l.TaxCodeId is { } code ? taxCodes.GetValueOrDefault(code)?.Code : null, l.TaxRatePct, l.TaxReverseCharge, l.TaxRecoverable, l.TaxReason,
+                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
         }
 
         var revisions = withHistory
