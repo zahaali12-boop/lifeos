@@ -8,6 +8,7 @@ import { expect, test, type Page } from "@playwright/test";
  * hold; then the screens in Arabic, right-to-left. Every screen passes axe with no serious or critical violation.
  */
 const password = "correct-horse-battery-staple";
+const apiUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8080";
 
 async function expectAccessible(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
@@ -289,6 +290,13 @@ test("English: a quotation converts to an order, reserves and backorders stock, 
   await expect(page.getByTestId("customer-360")).toBeVisible();
   await closeDialog(page);
 
+  // A retail cost centre, through the API: the quotation line is charged to it and the order inherits it (A-157).
+  const token = await page.evaluate(() => (JSON.parse(window.localStorage.getItem("quicker.session") ?? "{}") as { accessToken?: string }).accessToken);
+  const headers = { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" };
+  const dimensions = (await (await page.request.get(`${apiUrl}/api/v1/organization/dimensions`, { headers })).json()) as { id: string; code: string }[];
+  const costCentre = dimensions.find((d) => d.code === "COST_CENTER");
+  expect((await page.request.post(`${apiUrl}/api/v1/organization/dimensions/${costCentre?.id ?? ""}/values`, { headers, data: { code: "CC-RTL", name: { en: "Retail", ar: "التجزئة" } } })).ok()).toBeTruthy();
+
   // A quotation for 5 TEA is sent, accepted and converted to an order with the same frozen line.
   await nav(page, "Quotations");
   await page.getByTestId("new-quotation").click();
@@ -296,8 +304,10 @@ test("English: a quotation converts to an order, reserves and backorders stock, 
   await page.getByTestId("line-item-0").fill("TEA");
   await page.getByTestId("line-qty-0").fill("5");
   await page.getByTestId("line-price-0").fill("10000");
+  await page.getByTestId("line-cost-centre-0").selectOption({ label: "CC-RTL · Retail" });
   await page.getByTestId("save-quotation").click();
   await expect(page.getByTestId("quotation-detail")).toBeVisible();
+  await expect(page.getByTestId("quotation-detail").getByTestId("doc-line-cost-centre")).toHaveText("CC-RTL · Retail");
   await expect(page.getByTestId("quotation-detail").getByTestId("doc-status").first()).toContainText("Draft");
   await expectAccessible(page);
   await page.getByTestId("send-quotation").click();
@@ -312,6 +322,7 @@ test("English: a quotation converts to an order, reserves and backorders stock, 
   await expect(page.getByTestId("order-detail")).toBeVisible();
   await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Draft");
   await expect(page.getByTestId("order-total")).toContainText("50,000");
+  await expect(page.getByTestId("order-detail").getByTestId("doc-line-cost-centre")).toHaveText("CC-RTL · Retail");
   await page.getByTestId("confirm-order").click();
   await expect(page.getByTestId("order-detail").getByTestId("doc-status").first()).toContainText("Confirmed");
   await expect(page.getByTestId("doc-line").filter({ hasText: "TEA" })).toContainText("Open");

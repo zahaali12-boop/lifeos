@@ -1349,6 +1349,7 @@ erDiagram
     bool cost_is_expected
     bool costed_at_expected "negative stock"
     uuid transfer_pair_id
+    uuid dimension_set_id "the document line's, A-157"
     uuid posted_by
     timestamptz posted_at
   }
@@ -1369,6 +1370,7 @@ erDiagram
     uuid gl_journal_entry_id
     uuid adjusts_sve_id
     uuid adjustment_run_id FK
+    uuid dimension_set_id "on the offset side only, A-157"
     text source_document_type
     uuid source_document_id
     jsonb reason
@@ -2021,7 +2023,10 @@ lot and serial lines followed in 5.5b parts 1–2 (A-153). Picking and packing, 
 adds the `picking` status and `pick_list_id` on `sls_shipments`, per-line `allocations` (jsonb: bin, lot, serials,
 quantity and, once posted, the ledger entries of each part — a line may take from several bins and lots), and
 packages as `sls_shipment_packages` (type, weight, dimensions, tracking number, number `<shipment>-NN`) with
-`sls_shipment_package_lines` (order line, quantity) in place of the sketch's `contents jsonb`. The other `sls_*` tables
+`sls_shipment_package_lines` (order line, quantity) in place of the sketch's `contents jsonb`. Quotation, order and
+shipment lines carry `dimension_set_id` (migration `V0052`, A-157): a converted order and a shipment inherit their
+source line's set, and the stock ledger entry and value entries of the shipment keep it, so cost of goods sold (and
+its later cost adjustments and reversal) lands on the line's cost centre. The other `sls_*` tables
 below are still the Phase-0 sketch, not yet built; expect the same corrections on each as it is implemented.
 
 ```mermaid

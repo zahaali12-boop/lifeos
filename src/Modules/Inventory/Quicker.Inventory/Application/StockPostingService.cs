@@ -182,6 +182,7 @@ public sealed class StockPostingService(
                 Ownership = line.Source.Ownership,
                 OwnerPartnerId = line.Source.OwnerPartnerId,
                 PartnerId = line.Source.PartnerId,
+                DimensionSetId = line.Source.DimensionSetId,
                 EnteredUnitCost = line.Source.UnitCost,
                 CostIsExpected = line.Source.CostIsExpected,
                 AppliesToSleId = line.Source.AppliesToSleId,

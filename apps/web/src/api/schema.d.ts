@@ -12234,6 +12234,9 @@ export interface components {
             /** @default true */
             taxRecoverable: boolean;
             taxReason?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         OrdersCreated: {
             orders: components["schemas"]["PurchaseOrderSummary"][];
@@ -13785,6 +13788,9 @@ export interface components {
             /** @default true */
             taxRecoverable: boolean;
             taxReason?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         QuotationSummary: {
             /** Format: uuid */
@@ -15818,6 +15824,9 @@ export interface components {
             warehouseId?: null | string;
             /** @default false */
             dropShip: boolean;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         SaveOrderRequest: {
             /** Format: uuid */
@@ -16269,6 +16278,9 @@ export interface components {
             discountPct: number | string;
             /** Format: uuid */
             taxCodeId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         SaveQuotationRequest: {
             /** Format: uuid */
@@ -17331,6 +17343,9 @@ export interface components {
             qtyPicked: null | number | string;
             /** Format: double */
             qtyPacked: number | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
         };
         ShipmentPackageLineSummary: {
             /** Format: uuid */

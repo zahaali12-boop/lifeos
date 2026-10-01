@@ -107,6 +107,9 @@ public sealed class SalesQuotationLine : ITenantEntity
 
     public Guid? PromotionId { get; set; }
 
+    /// <summary>The cost centre and other dimensions the line is charged to (A-157).</summary>
+    public Guid? DimensionSetId { get; set; }
+
     public string PriceBreakdown { get; set; } = "[]";
 }
 
@@ -218,6 +221,9 @@ public sealed class SalesOrderLine : ITenantEntity
     public decimal TaxAmount { get; set; }
 
     public Guid? PromotionId { get; set; }
+
+    /// <summary>The cost centre and other dimensions the line is charged to (A-157).</summary>
+    public Guid? DimensionSetId { get; set; }
 
     public string PriceBreakdown { get; set; } = "[]";
 
@@ -332,6 +338,9 @@ public sealed class SalesShipmentLine : ITenantEntity
 
     /// <summary>Where the quantity comes from, per bin and lot (<see cref="Application.ShipmentAllocation"/>), with the stock ledger entries once posted.</summary>
     public string Allocations { get; set; } = "[]";
+
+    /// <summary>The order line's dimensions, carried to the cost of goods sold of the movement (A-157).</summary>
+    public Guid? DimensionSetId { get; set; }
 
     public decimal CogsAmount { get; set; }
 

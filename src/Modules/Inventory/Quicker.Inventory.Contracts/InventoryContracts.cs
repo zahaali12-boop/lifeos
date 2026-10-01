@@ -61,7 +61,8 @@ public sealed record StockLine(
     DateOnly? ManufacturedOn = null,
     string? SupplierLot = null,
     IReadOnlyList<string>? SerialNumbers = null,
-    Guid? PartnerId = null);
+    Guid? PartnerId = null,
+    Guid? DimensionSetId = null);
 
 public sealed record StockPostingRequest(
     Guid CompanyId,

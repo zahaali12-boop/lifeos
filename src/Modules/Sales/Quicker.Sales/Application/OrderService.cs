@@ -47,7 +47,8 @@ public sealed class OrderService(
     IUnitOfWorkAccessor unitOfWork,
     ICurrentPrincipal principal,
     IAuditSink audit,
-    IClock clock)
+    IClock clock,
+    IDimensionSets dimensionSets)
 {
     public const string DocumentType = "sales_order";
     public const string CreditLimitBlockKind = "credit_limit";
@@ -182,6 +183,7 @@ public sealed class OrderService(
                 TaxAmount = line.TaxAmount,
                 PromotionId = line.PromotionId,
                 PriceBreakdown = line.PriceBreakdown,
+                DimensionSetId = line.DimensionSetId,
             });
         }
 
@@ -711,6 +713,19 @@ public sealed class OrderService(
         order.Notes = Shared.Trim(request.Notes);
         order.CustomFields = validated.Value;
 
+        // The cost centre and other dimensions of each line, resolved before anything changes.
+        var dimensionSetIds = new List<Guid?>(request.Lines.Count);
+        for (var i = 0; i < request.Lines.Count; i++)
+        {
+            var dimensionSet = await Shared.DimensionSetAsync(dimensionSets, request.Lines[i].Dimensions, i + 1, cancellationToken);
+            if (dimensionSet.IsFailure)
+            {
+                return dimensionSet.Error!;
+            }
+
+            dimensionSetIds.Add(dimensionSet.Value);
+        }
+
         order.Lines.Clear();
         var totalNet = 0m;
         var totalTax = 0m;
@@ -749,6 +764,7 @@ public sealed class OrderService(
                 PriceBreakdown = JsonSerializer.Serialize(p.Steps),
                 WarehouseId = lineWarehouseId,
                 DropShip = dropShip,
+                DimensionSetId = dimensionSetIds[i],
             });
         }
 
@@ -840,7 +856,8 @@ public sealed class OrderService(
                     line.TaxRatePct,
                     line.TaxReverseCharge,
                     line.TaxRecoverable,
-                    line.TaxReason));
+                    line.TaxReason,
+                    line.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
             }
 
             result.Add(new OrderSummary(

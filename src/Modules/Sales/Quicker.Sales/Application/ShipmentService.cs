@@ -41,7 +41,8 @@ public sealed class ShipmentService(
     ICustomFieldValidator customFields,
     ICurrentPrincipal principal,
     IAuditSink audit,
-    IClock clock)
+    IClock clock,
+    IDimensionSets dimensionSets)
 {
     public const string DocumentType = "sales_shipment";
 
@@ -349,7 +350,7 @@ public sealed class ShipmentService(
                     }
 
                     stockLines.Add(new StockLine(line.ItemId, StockEntryTypes.SaleShipment, take, shipment.WarehouseId, VariantId: line.VariantId, BinId: allocation.BinId, LotId: allocation.LotId,
-                        SourceLineId: line.Id, ReservationId: holds[hold].Id, PartnerId: order.PartnerId, SerialNumbers: serials));
+                        SourceLineId: line.Id, ReservationId: holds[hold].Id, PartnerId: order.PartnerId, SerialNumbers: serials, DimensionSetId: line.DimensionSetId));
                     holds[hold] = (holds[hold].Id, holds[hold].Left - take);
                     remaining -= take;
                 }
@@ -454,7 +455,7 @@ public sealed class ShipmentService(
                 foreach (var entry in allocation.Entries ?? [])
                 {
                     stockLines.Add(new StockLine(line.ItemId, StockEntryTypes.SaleReturn, entry.Quantity, warehouseId, VariantId: line.VariantId, BinId: allocation.BinId, LotId: allocation.LotId,
-                        SourceLineId: line.Id, AppliesToSleId: entry.SleId, PartnerId: shipment.PartnerId, SerialNumbers: entry.SerialNumber is { } serial ? [serial] : null));
+                        SourceLineId: line.Id, AppliesToSleId: entry.SleId, PartnerId: shipment.PartnerId, SerialNumbers: entry.SerialNumber is { } serial ? [serial] : null, DimensionSetId: line.DimensionSetId));
                 }
             }
         }
@@ -726,6 +727,7 @@ public sealed class ShipmentService(
             UomId = c.Item.BaseUomId,
             QuantityBase = c.Quantity,
             BinId = c.BinId,
+            DimensionSetId = c.OrderLine.DimensionSetId,
             CreatedAt = clock.UtcNow,
         }).ToList();
 
@@ -968,7 +970,8 @@ public sealed class ShipmentService(
             var item = await ItemAsync(l.ItemId);
             var uom = (await items.UomsAsync(l.ItemId, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
             lines.Add(new ShipmentLineSummary(l.Id, l.LineNo, l.OrderLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Quantity, l.UomId, uom?.UomCode ?? string.Empty,
-                l.BinId, l.LotNumber, Serials(l.SerialNumbers), l.CogsAmount, Allocations(l.Allocations), picked is null ? null : picked.GetValueOrDefault(l.Id), packedByOrderLine.GetValueOrDefault(l.OrderLineId)));
+                l.BinId, l.LotNumber, Serials(l.SerialNumbers), l.CogsAmount, Allocations(l.Allocations), picked is null ? null : picked.GetValueOrDefault(l.Id), packedByOrderLine.GetValueOrDefault(l.OrderLineId),
+                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
         }
 
         var packages = new List<ShipmentPackageSummary>(s.Packages.Count);

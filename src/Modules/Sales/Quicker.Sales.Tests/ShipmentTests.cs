@@ -99,6 +99,52 @@ public sealed class ShipmentTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task A_line_s_cost_centre_travels_from_quotation_to_order_to_shipment_and_lands_on_cost_of_goods_sold_only()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await StockAsync(owner, s.CompanyId, s.Warehouse, s.Tea, 10m, unitCost: 40m);
+        var costCentres = (await owner.GetOkAsync("/api/v1/organization/dimensions")).EnumerateArray().Single(d => d.GetProperty("code").GetString() == "COST_CENTER").GetProperty("id").GetGuid();
+        var retail = (await owner.PostAsync($"/api/v1/organization/dimensions/{costCentres}/values", new { code = "CC-RETAIL", name = Name("Retail", "التجزئة") })).GetProperty("id").GetGuid();
+        var dimensions = new Dictionary<string, Guid> { ["COST_CENTER"] = retail };
+
+        // The quotation line names the cost centre; the order converted from it keeps it.
+        var quotation = await owner.PostAsync("/api/v1/sales/quotations", new { companyId = s.CompanyId, partnerId = s.Customer, lines = new object[] { new { itemId = s.Tea, quantity = 10m, dimensions } } });
+        quotation.GetProperty("lines")[0].GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(retail);
+        var quotationId = quotation.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/quotations/{quotationId}/send", new { }, HttpStatusCode.OK);
+        await owner.PostAsync($"/api/v1/sales/quotations/{quotationId}/accept", new { }, HttpStatusCode.OK);
+        var order = await owner.PostAsync($"/api/v1/sales/quotations/{quotationId}/convert", new { warehouseId = s.Warehouse });
+        order.GetProperty("lines")[0].GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(retail);
+        var orderId = order.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/orders/{orderId}/confirm", new { }, HttpStatusCode.OK);
+
+        // A value of another dimension is refused with the line named.
+        (await owner.PostErrorAsync("/api/v1/sales/orders", new { companyId = s.CompanyId, partnerId = s.Customer, warehouseId = s.Warehouse, lines = new object[] { new { itemId = s.Tea, quantity = 1m, dimensions = new Dictionary<string, Guid> { ["PROJECT"] = retail } } } }, HttpStatusCode.UnprocessableEntity))
+            .Code.ShouldBe("dimension_set.value_mismatch");
+
+        // The shipment inherits it, and its cost of goods sold (and nothing else) is booked on it.
+        var shipment = await owner.PostAsync("/api/v1/sales/shipments", new { orderId, lines = new object[] { new { orderLineId = order.GetProperty("lines")[0].GetProperty("id").GetGuid(), quantity = 10m } } });
+        shipment.GetProperty("lines")[0].GetProperty("dimensions").GetProperty("COST_CENTER").GetGuid().ShouldBe(retail);
+        var shipmentId = shipment.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/sales/shipments/{shipmentId}/post", new { }, HttpStatusCode.OK);
+        var reports = $"/api/v1/accounting/companies/{s.CompanyId}/reports";
+        var byCentre = (await owner.GetOkAsync($"{reports}/trial-balance?groupBy=COST_CENTER")).GetProperty("rows").EnumerateArray().ToList();
+        var onRetail = byCentre.Where(r => r.GetProperty("dimensionValueCode").GetString() == "CC-RETAIL").ToList();
+        var cogs = onRetail.ShouldHaveSingleItem("only the cost of goods sold carries the cost centre");
+        cogs.GetProperty("accountType").GetString().ShouldBe("expense");
+        cogs.GetProperty("debit").GetDecimal().ShouldBe(400m);
+
+        // A reversal takes it back off the same cost centre.
+        await owner.PostAsync($"/api/v1/sales/shipments/{shipmentId}/reverse", new { reason = "Returned" }, HttpStatusCode.OK);
+        var afterReversal = (await owner.GetOkAsync($"{reports}/trial-balance?groupBy=COST_CENTER")).GetProperty("rows").EnumerateArray()
+            .Single(r => r.GetProperty("dimensionValueCode").GetString() == "CC-RETAIL");
+        afterReversal.GetProperty("closing").GetDecimal().ShouldBe(0m);
+        afterReversal.GetProperty("credit").GetDecimal().ShouldBe(400m);
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
     public async Task A_partial_shipment_leaves_the_remainder_reserved_and_a_second_shipment_completes_the_order()
     {
         var s = await SetUpAsync();

@@ -14,6 +14,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { useCompanyCustomers } from "./pricing/shared";
+import { useLineDimensions } from "../accounting/JournalLineDetails";
 import { emptySalesLine, Money, money, orderLineBodies, SalesLinesEditor, SalesLinesTable, SalesStatus, type SalesLineForm, type SalesOrder, type SalesOrderLine } from "./shared";
 import { CurrencyField } from "../CurrencyField";
 
@@ -36,6 +37,7 @@ export function OrdersPage() {
   const navigate = useNavigate();
   const can = useCan();
   const { companies, companyId, setCompanyId } = useCompanyContext();
+  const costCentres = useLineDimensions(companyId);
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [creating, setCreating] = useState<OrderForm | null>(null);
@@ -166,7 +168,7 @@ export function OrdersPage() {
                   <TextareaField value={creating.notes} onChange={(e) => { setCreating({ ...creating, notes: e.target.value }); }} rows={2} />
                 </Field>
               </div>
-              <SalesLinesEditor lines={creating.lines} onChange={(lines) => { setCreating({ ...creating, lines }); }} showDropShip />
+              <SalesLinesEditor lines={creating.lines} onChange={(lines) => { setCreating({ ...creating, lines }); }} showDropShip costCentres={costCentres} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setCreating(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={create.isPending} data-testid="save-order">{t("common.save")}</Button>
@@ -205,6 +207,7 @@ export function OrdersPage() {
                 lines={o.lines}
                 currency={o.currency}
                 testId="order-lines"
+                costCentres={costCentres}
                 dropShipActions={(line) => (
                   line.purchaseOrderLineId ? (
                     <Badge tone="success" data-testid="drop-ship-linked">{t("sales.linkedToPurchaseOrder")}</Badge>

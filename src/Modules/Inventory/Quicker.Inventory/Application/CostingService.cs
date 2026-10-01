@@ -49,6 +49,7 @@ public sealed class CostingService(
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock,
+    IDimensionSets dimensionSets,
     InventoryOptions options) : IInventoryCosting
 {
     public const string RunDocumentType = "cost_adjustment_run";
@@ -127,6 +128,9 @@ public sealed class CostingService(
     private sealed class RunContext
     {
         public required Trigger Trigger { get; init; }
+
+        /// <summary>Dimension sets read for the journals of this run, by id.</summary>
+        public Dictionary<Guid, IReadOnlyDictionary<string, Guid>?> DimensionSets { get; } = [];
 
         public required bool InBackground { get; init; }
 
@@ -1115,8 +1119,10 @@ public sealed class CostingService(
             {
                 var keys = new PostingKeys(DocumentType: documentType, ItemPostingGroupId: value.ItemPostingGroupId, WarehouseId: value.WarehouseId);
                 var offsetKeys = value.OffsetPostingGroupId is null ? keys : keys with { ItemPostingGroupId = value.OffsetPostingGroupId };
-                Accumulate(lines, value.AccountRole, value.Amount, keys, value.ItemId, null);
-                Accumulate(lines, value.OffsetRole, -value.Amount, offsetKeys, value.ItemId, value.OffsetRef);
+                // The movement's cost centre goes on the offset (the cost of goods sold), never on the inventory account.
+                var offsetDimensions = value.DimensionSetId is { } setId ? await DimensionsAsync(context, setId, cancellationToken) : null;
+                Accumulate(lines, value.AccountRole, value.Amount, keys, value.ItemId, null, null, null);
+                Accumulate(lines, value.OffsetRole, -value.Amount, offsetKeys, value.ItemId, value.OffsetRef, value.DimensionSetId, offsetDimensions);
             }
 
             var postingLines = lines.Values.Where(static l => l.Amount != 0m).Select(static l => l.Line with { Amount = l.Amount }).ToList();
@@ -1147,7 +1153,7 @@ public sealed class CostingService(
     }
 
     /// <summary>One journal line per role, keys and subledger item; the account side references the entry's item, the offset side its counterpart (the receipt, the assembly, the transit item) when it has one.</summary>
-    private static void Accumulate(Dictionary<string, (PostingLine Line, decimal Amount)> lines, string role, decimal amount, PostingKeys keys, Guid itemId, Guid? offsetRef)
+    private static void Accumulate(Dictionary<string, (PostingLine Line, decimal Amount)> lines, string role, decimal amount, PostingKeys keys, Guid itemId, Guid? offsetRef, Guid? dimensionSetId, IReadOnlyDictionary<string, Guid>? dimensions)
     {
         string? subledgerType = null;
         Guid? subledgerRef = null;
@@ -1157,15 +1163,27 @@ public sealed class CostingService(
             subledgerRef = offsetRef ?? itemId;
         }
 
-        var key = string.Join('|', role, keys.ItemPostingGroupId, keys.WarehouseId, subledgerType, subledgerRef);
+        var key = string.Join('|', role, keys.ItemPostingGroupId, keys.WarehouseId, subledgerType, subledgerRef, dimensionSetId);
         if (lines.TryGetValue(key, out var existing))
         {
             lines[key] = (existing.Line, existing.Amount + amount);
         }
         else
         {
-            lines[key] = (new PostingLine(role, amount, keys, SubledgerType: subledgerType, SubledgerRef: subledgerRef), amount);
+            lines[key] = (new PostingLine(role, amount, keys, Dimensions: dimensions, SubledgerType: subledgerType, SubledgerRef: subledgerRef), amount);
         }
+    }
+
+    /// <summary>A dimension set's values, read once per run.</summary>
+    private async Task<IReadOnlyDictionary<string, Guid>?> DimensionsAsync(RunContext context, Guid setId, CancellationToken cancellationToken)
+    {
+        if (!context.DimensionSets.TryGetValue(setId, out var values))
+        {
+            values = await dimensionSets.GetAsync(setId, cancellationToken);
+            context.DimensionSets[setId] = values;
+        }
+
+        return values;
     }
 
     /// <summary>Flushes anything left (loose value entries with no walk), closes the run and records it.</summary>
@@ -1231,6 +1249,7 @@ public sealed class CostingService(
     private StockValueEntry NewValueEntry(StockLedgerEntry entry, Method method, string valueType, decimal valuedQuantity, decimal actual, decimal expected, string accountRole, string offsetRole, Guid? offsetRef, DateOnly glDate, Dictionary<string, object?> reason, Guid? adjusts, Guid? runId) => new()
     {
         OffsetPostingGroupId = entry.EntryType == StockEntryTypes.AssemblyConsumption ? method.OutputPostingGroupId : null,
+        DimensionSetId = entry.DimensionSetId,
         Id = Guid.CreateVersion7(),
         SleId = entry.Id,
         CompanyId = entry.CompanyId,

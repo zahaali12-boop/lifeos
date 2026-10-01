@@ -38825,6 +38825,16 @@
               "null",
               "string"
             ]
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -44890,6 +44900,16 @@
               "null",
               "string"
             ]
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -52067,6 +52087,16 @@
           "dropShip": {
             "type": "boolean",
             "default": false
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -53588,6 +53618,16 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -57300,6 +57340,16 @@
               "string"
             ],
             "format": "double"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },

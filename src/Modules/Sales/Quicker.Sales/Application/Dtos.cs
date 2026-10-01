@@ -12,7 +12,8 @@ public sealed record SaveQuotationLineRequest(
     Guid? UomId = null,
     decimal? UnitPrice = null,
     decimal DiscountPct = 0m,
-    Guid? TaxCodeId = null);
+    Guid? TaxCodeId = null,
+    IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record SaveQuotationRequest(
     Guid CompanyId,
@@ -53,7 +54,8 @@ public sealed record QuotationLineSummary(
     decimal TaxRatePct = 0m,
     bool TaxReverseCharge = false,
     bool TaxRecoverable = true,
-    string? TaxReason = null);
+    string? TaxReason = null,
+    IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record QuotationSummary(
     Guid Id,
@@ -94,7 +96,8 @@ public sealed record SaveOrderLineRequest(
     decimal DiscountPct = 0m,
     Guid? TaxCodeId = null,
     Guid? WarehouseId = null,
-    bool DropShip = false);
+    bool DropShip = false,
+    IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record SaveOrderRequest(
     Guid CompanyId,
@@ -148,7 +151,8 @@ public sealed record OrderLineSummary(
     decimal TaxRatePct = 0m,
     bool TaxReverseCharge = false,
     bool TaxRecoverable = true,
-    string? TaxReason = null);
+    string? TaxReason = null,
+    IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record OrderSummary(
     Guid Id,
@@ -224,7 +228,8 @@ public sealed record ShipmentLineSummary(
     decimal CogsAmount,
     IReadOnlyList<ShipmentAllocation> Allocations,
     decimal? QtyPicked,
-    decimal QtyPacked);
+    decimal QtyPacked,
+    IReadOnlyDictionary<string, Guid>? Dimensions = null);
 
 public sealed record ShipmentPackageLineSummary(Guid OrderLineId, int OrderLineNo, Guid ItemId, string ItemCode, decimal Quantity);
 

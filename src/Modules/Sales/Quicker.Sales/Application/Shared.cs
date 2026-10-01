@@ -9,6 +9,18 @@ namespace Quicker.Sales.Application;
 /// <summary>Line and currency resolution shared by the sales documents (mirrors Quicker.Purchasing's own).</summary>
 internal static class Shared
 {
+    /// <summary>A line's dimensions given by value, as the set the line keeps (none when it names none).</summary>
+    public static async Task<Result<Guid?>> DimensionSetAsync(IDimensionSets dimensionSets, IReadOnlyDictionary<string, Guid>? dimensions, int lineNo, CancellationToken cancellationToken)
+    {
+        if (dimensions is not { Count: > 0 })
+        {
+            return (Guid?)null;
+        }
+
+        var set = await dimensionSets.GetOrCreateAsync(dimensions, cancellationToken);
+        return set.IsFailure ? set.Error!.WithWhy(("lineNo", lineNo)) : set.Value;
+    }
+
     public static async Task<Result<(ItemInfo Item, ItemUomInfo Unit, decimal QuantityBase)>> ResolveLineAsync(IItemDirectory items, string prefix, Guid? itemId, string? itemCode, decimal quantity, string? uom, Guid? uomId, CancellationToken cancellationToken)
     {
         var code = itemCode?.Trim();

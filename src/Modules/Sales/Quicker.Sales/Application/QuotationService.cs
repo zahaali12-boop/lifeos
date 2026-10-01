@@ -35,7 +35,8 @@ public sealed class QuotationService(
     ICustomFieldValidator customFields,
     ICurrentPrincipal principal,
     IAuditSink audit,
-    IClock clock)
+    IClock clock,
+    IDimensionSets dimensionSets)
 {
     public const string DocumentType = "sales_quotation";
 
@@ -244,10 +245,18 @@ public sealed class QuotationService(
         var pricingDate = request.PricingDate ?? quoteDate;
         var pricingLines = new List<PricingLineRequest>();
         var resolvedItems = new List<(Guid ItemId, Guid? VariantId, string? Description, Guid? TaxCodeId)>();
+        var dimensionSetIds = new List<Guid?>();
         var lineNo = 0;
         foreach (var line in request.Lines)
         {
             lineNo++;
+            var dimensionSet = await Shared.DimensionSetAsync(dimensionSets, line.Dimensions, lineNo, cancellationToken);
+            if (dimensionSet.IsFailure)
+            {
+                return dimensionSet.Error!;
+            }
+
+            dimensionSetIds.Add(dimensionSet.Value);
             var resolved = await Shared.ResolveLineAsync(items, "quotation", line.ItemId, line.ItemCode, line.Quantity, line.Uom, line.UomId, cancellationToken);
             if (resolved.IsFailure)
             {
@@ -330,6 +339,7 @@ public sealed class QuotationService(
                 Id = Guid.CreateVersion7(),
                 QuotationId = quotation.Id,
                 LineNo = i + 1,
+                DimensionSetId = dimensionSetIds[i],
                 ItemId = p.ItemId,
                 VariantId = p.VariantId,
                 Description = resolvedItems[i].Description,
@@ -404,7 +414,8 @@ public sealed class QuotationService(
                     line.Id, line.LineNo, line.ItemId, item?.Code ?? "?", item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal),
                     line.VariantId, line.Description, line.Quantity, line.UomId, uomInfos.GetValueOrDefault(line.UomId, "?"), line.QuantityBase,
                     line.UnitPrice, line.DiscountPct, line.NetAmount, line.TaxAmount, line.PromotionId, null,
-                    line.TaxCodeId, taxCode?.Code, line.TaxRatePct, line.TaxReverseCharge, line.TaxRecoverable, line.TaxReason));
+                    line.TaxCodeId, taxCode?.Code, line.TaxRatePct, line.TaxReverseCharge, line.TaxRecoverable, line.TaxReason,
+                    line.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
             }
 
             result.Add(new QuotationSummary(

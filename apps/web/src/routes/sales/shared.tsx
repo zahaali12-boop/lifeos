@@ -7,6 +7,7 @@ import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { formatNumber } from "../../lib/format";
 import { TextField } from "../common";
+import { CostCentreSelect, costCentreText, type LineDimensionReference } from "../accounting/JournalLineDetails";
 import { ItemCodeField } from "../inventory/ItemCodeField";
 
 export type CustomerAccount = components["schemas"]["CustomerAccountSummary"];
@@ -160,21 +161,26 @@ export interface SalesLineForm {
   price: string;
   discountPct: string;
   dropShip: boolean;
+  /** Dimension code to value id; the cost centre is chosen on the line, the order and shipment inherit it (A-157). */
+  dimensions: Record<string, string>;
 }
 
-export const emptySalesLine = (): SalesLineForm => ({ itemCode: "", quantity: "1", uom: "", price: "", discountPct: "0", dropShip: false });
+export const emptySalesLine = (): SalesLineForm => ({ itemCode: "", quantity: "1", uom: "", price: "", discountPct: "0", dropShip: false, dimensions: {} });
+
+const lineDimensions = (l: SalesLineForm): Record<string, string> | null => (Object.keys(l.dimensions).length > 0 ? l.dimensions : null);
 
 export function salesLineBodies(lines: SalesLineForm[]) {
-  return lines.map((l) => ({ itemCode: l.itemCode, quantity: num(l.quantity), uom: l.uom || null, unitPrice: optionalNum(l.price), discountPct: num(l.discountPct) }));
+  return lines.map((l) => ({ itemCode: l.itemCode, quantity: num(l.quantity), uom: l.uom || null, unitPrice: optionalNum(l.price), discountPct: num(l.discountPct), dimensions: lineDimensions(l) }));
 }
 
 export function orderLineBodies(lines: SalesLineForm[]) {
-  return lines.map((l) => ({ itemCode: l.itemCode, quantity: num(l.quantity), uom: l.uom || null, unitPrice: optionalNum(l.price), discountPct: num(l.discountPct), dropShip: l.dropShip }));
+  return lines.map((l) => ({ itemCode: l.itemCode, quantity: num(l.quantity), uom: l.uom || null, unitPrice: optionalNum(l.price), discountPct: num(l.discountPct), dropShip: l.dropShip, dimensions: lineDimensions(l) }));
 }
 
 /** The lines editor shared by quotations and orders: item, quantity, unit, price and discount; drop-ship only for orders. */
-export function SalesLinesEditor({ lines, onChange, showDropShip = false }: { lines: SalesLineForm[]; onChange: (lines: SalesLineForm[]) => void; showDropShip?: boolean }) {
+export function SalesLinesEditor({ lines, onChange, showDropShip = false, costCentres }: { lines: SalesLineForm[]; onChange: (lines: SalesLineForm[]) => void; showDropShip?: boolean; costCentres?: LineDimensionReference }) {
   const { t } = useTranslation();
+  const showCostCentre = Boolean(costCentres?.dimensions.some((d) => d.code === "COST_CENTER"));
   const patch = (index: number, change: Partial<SalesLineForm>): void => { onChange(lines.map((l, i) => (i === index ? { ...l, ...change } : l))); };
   return (
     <div className="flex flex-col gap-2">
@@ -193,6 +199,7 @@ export function SalesLinesEditor({ lines, onChange, showDropShip = false }: { li
               <TableHead>{t("sales.uom")}</TableHead>
               <TableHead>{t("sales.unitPrice")}</TableHead>
               <TableHead>{t("sales.discountPct")}</TableHead>
+              {showCostCentre ? <TableHead>{t("accounting.costCentre")}</TableHead> : null}
               {showDropShip ? <TableHead>{t("sales.dropShip")}</TableHead> : null}
               <TableHead />
             </TableRow>
@@ -205,6 +212,11 @@ export function SalesLinesEditor({ lines, onChange, showDropShip = false }: { li
                 <TableCell><TextField aria-label={t("sales.uom")} value={line.uom} onChange={(e) => { patch(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" placeholder={t("sales.baseUom")} data-testid={`line-uom-${String(index)}`} /></TableCell>
                 <TableCell><TextField aria-label={t("sales.unitPrice")} inputMode="decimal" value={line.price} onChange={(e) => { patch(index, { price: e.target.value }); }} dir="ltr" className="w-24" placeholder={t("sales.autoPrice")} data-testid={`line-price-${String(index)}`} /></TableCell>
                 <TableCell><TextField aria-label={t("sales.discountPct")} inputMode="decimal" value={line.discountPct} onChange={(e) => { patch(index, { discountPct: e.target.value }); }} dir="ltr" className="w-20" data-testid={`line-discount-${String(index)}`} /></TableCell>
+                {showCostCentre && costCentres ? (
+                  <TableCell>
+                    <CostCentreSelect label={t("accounting.costCentreOfLine", { line: index + 1 })} values={line.dimensions} reference={costCentres} emptyLabel="—" onChange={(dimensions) => { patch(index, { dimensions }); }} testId={`line-cost-centre-${String(index)}`} />
+                  </TableCell>
+                ) : null}
                 {showDropShip ? (
                   <TableCell>
                     <input type="checkbox" aria-label={t("sales.dropShip")} checked={line.dropShip} onChange={(e) => { patch(index, { dropShip: e.target.checked }); }} data-testid={`line-drop-ship-${String(index)}`} />
@@ -227,8 +239,9 @@ export function SalesLinesEditor({ lines, onChange, showDropShip = false }: { li
 }
 
 /** Read-only lines of a priced, taxed document: quotation or confirmed order lines, in the document's currency. */
-export function SalesLinesTable({ lines, currency, testId = "doc-lines", dropShipActions }: { lines: (QuotationLine | SalesOrderLine)[]; currency: string; testId?: string; dropShipActions?: (line: SalesOrderLine) => ReactNode }) {
+export function SalesLinesTable({ lines, currency, testId = "doc-lines", dropShipActions, costCentres }: { lines: (QuotationLine | SalesOrderLine)[]; currency: string; testId?: string; dropShipActions?: (line: SalesOrderLine) => ReactNode; costCentres?: LineDimensionReference }) {
   const { t } = useTranslation();
+  const showCostCentre = Boolean(costCentres && lines.some((l) => l.dimensions?.COST_CENTER));
   const hasStatus = Boolean(lines[0] && "status" in lines[0]);
   return (
     <Table data-testid={testId}>
@@ -242,6 +255,7 @@ export function SalesLinesTable({ lines, currency, testId = "doc-lines", dropShi
           <TableHead>{t("sales.net")}</TableHead>
           <TableHead>{t("tax.code")}</TableHead>
           <TableHead>{t("sales.taxAmount")}</TableHead>
+          {showCostCentre ? <TableHead>{t("accounting.costCentre")}</TableHead> : null}
           {hasStatus ? <TableHead>{t("common.status")}</TableHead> : null}
           {dropShipActions ? <TableHead /> : null}
         </TableRow>
@@ -257,6 +271,7 @@ export function SalesLinesTable({ lines, currency, testId = "doc-lines", dropShi
             <TableCell className="tabular" dir="ltr">{money(l.netAmount, currency)}</TableCell>
             <TableCell dir="ltr">{l.taxCode ?? "—"}</TableCell>
             <TableCell className="tabular" dir="ltr">{money(l.taxAmount, currency)}</TableCell>
+            {showCostCentre && costCentres ? <TableCell data-testid="doc-line-cost-centre">{costCentreText(l.dimensions, costCentres)}</TableCell> : null}
             {hasStatus ? (
               <TableCell>
                 <span className="flex flex-wrap items-center gap-1">

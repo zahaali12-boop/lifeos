@@ -151,6 +151,9 @@ public sealed class StockLedgerEntry : ITenantEntity
     /// <summary>The document's counterparty (customer, supplier), for traceability.</summary>
     public Guid? PartnerId { get; set; }
 
+    /// <summary>The cost centre and other dimensions the document line charged (a sales shipment line); its value entries carry it to the offset (A-157).</summary>
+    public Guid? DimensionSetId { get; set; }
+
     public Guid? TransferPairId { get; set; }
 
     public Guid? ReservationId { get; set; }
@@ -381,6 +384,9 @@ public sealed class StockValueEntry : ITenantEntity
 
     /// <summary>The item posting group of the offset when it belongs to another item (an assembly's components offset the assembly's stock).</summary>
     public Guid? OffsetPostingGroupId { get; set; }
+
+    /// <summary>The movement's dimension set, on the offset side of the journal (cost of goods sold on a cost centre); the inventory side has none.</summary>
+    public Guid? DimensionSetId { get; set; }
 
     public Guid? ItemPostingGroupId { get; set; }
 

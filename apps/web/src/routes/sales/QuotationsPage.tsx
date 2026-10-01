@@ -14,6 +14,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { useCompanyCustomers } from "./pricing/shared";
+import { useLineDimensions } from "../accounting/JournalLineDetails";
 import { emptySalesLine, Money, money, salesLineBodies, SalesLinesEditor, SalesLinesTable, SalesStatus, type Quotation, type SalesLineForm } from "./shared";
 import { CurrencyField } from "../CurrencyField";
 
@@ -35,6 +36,7 @@ export function QuotationsPage() {
   const navigate = useNavigate();
   const can = useCan();
   const { companies, companyId, setCompanyId } = useCompanyContext();
+  const costCentres = useLineDimensions(companyId);
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [creating, setCreating] = useState<QuotationForm | null>(null);
@@ -161,7 +163,7 @@ export function QuotationsPage() {
                   <TextareaField value={creating.notes} onChange={(e) => { setCreating({ ...creating, notes: e.target.value }); }} rows={2} />
                 </Field>
               </div>
-              <SalesLinesEditor lines={creating.lines} onChange={(lines) => { setCreating({ ...creating, lines }); }} />
+              <SalesLinesEditor lines={creating.lines} onChange={(lines) => { setCreating({ ...creating, lines }); }} costCentres={costCentres} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setCreating(null); }}>{t("common.cancel")}</Button>
                 <Button type="submit" loading={create.isPending} data-testid="save-quotation">{t("common.save")}</Button>
@@ -189,7 +191,7 @@ export function QuotationsPage() {
                 [t("sales.total"), <span key="total" data-testid="quotation-total">{money(q.totalGross, q.currency)}</span>],
                 ...(q.rejectionReason ? [[t("sales.rejectionReason"), q.rejectionReason] as [string, string]] : []),
               ]} />
-              <SalesLinesTable lines={q.lines} currency={q.currency} testId="quotation-lines" />
+              <SalesLinesTable lines={q.lines} currency={q.currency} testId="quotation-lines" costCentres={costCentres} />
               {rejecting === q.id ? (
                 <Field label={t("sales.rejectionReason")} required>
                   <TextField value={rejectReason} onChange={(e) => { setRejectReason(e.target.value); }} required data-testid="reject-reason" />
