@@ -15,6 +15,7 @@ import { Tabs } from "../inventory/shared";
 import { RecordDiscussion } from "../RecordDiscussion";
 import { ActivityForm, ActivityList } from "./Activities";
 import { Money, OutcomeBadge, daysSince, money, usePipelineStages, useSalesReps, type Opportunity } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 /** Invalidates what shows opportunities: the board, lists, the 360 views and the open deal itself. */
 export function useRefreshSales() {
@@ -125,7 +126,7 @@ export function NewOpportunityDialog({ open, onClose, companyId: initialCompany,
               <TextField inputMode="decimal" value={form.amount} onChange={(e) => { setForm({ ...form, amount: e.target.value }); }} dir="ltr" data-testid="opportunity-amount" />
             </Field>
             <Field label={t("partners.currency")} description={t("sales.currencyDefault", { currency: company?.functionalCurrency ?? "" })}>
-              <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} data-testid="opportunity-currency" />
+              <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="opportunity-currency" />
             </Field>
             <Field label={t("sales.stage")}>
               <SelectField value={form.stageId} onChange={(e) => { setForm({ ...form, stageId: e.target.value }); }} data-testid="opportunity-stage">
@@ -329,7 +330,7 @@ export function OpportunityDialog({ opportunityId, onClose }: { opportunityId: s
                     <TextField inputMode="decimal" value={form.amount} onChange={(e) => { patch({ amount: e.target.value }); }} dir="ltr" data-testid="edit-amount" />
                   </Field>
                   <Field label={t("partners.currency")}>
-                    <TextField value={form.currency} onChange={(e) => { patch({ currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} />
+                    <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
                   </Field>
                   <Field label={t("sales.probability")}>
                     <TextField type="number" min={0} max={100} value={form.probability} onChange={(e) => { patch({ probability: e.target.value }); }} dir="ltr" data-testid="edit-probability" />

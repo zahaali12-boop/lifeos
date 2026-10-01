@@ -14,6 +14,7 @@ import { CompanyFilter, Tabs, findItemByCode, useCompanyContext } from "../../in
 import { usePaymentTerms } from "../../purchasing/shared";
 import { useCustomerGroups } from "../shared";
 import { Validity, price, refLabel, useBrands, useCategories, useCompanyCustomers, type DiscountRule, type PriceAgreement, type PriceFloor, type Promotion } from "./shared";
+import { CurrencyField } from "../../CurrencyField";
 
 const n = (value: string): number | null => (value.trim() === "" ? null : Number(value));
 const s = (value: number | string | null | undefined): string => (value === null ? "" : String(value));
@@ -364,7 +365,7 @@ function AgreementsTab({ companyId, currency }: { companyId: string; currency: s
                   <TextField type="number" min={0} step="any" value={form.price} onChange={(e) => { patch({ price: e.target.value }); }} required dir="ltr" data-testid="agreement-price" />
                 </Field>
                 <Field label={t("pricing.currency")}>
-                  <TextField value={form.currency} onChange={(e) => { patch({ currency: e.target.value.toUpperCase() }); }} maxLength={3} dir="ltr" />
+                  <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
                 </Field>
               </>
             ) : (
@@ -545,7 +546,7 @@ function RulesTab({ companyId, currency }: { companyId: string; currency: string
               <TextField type="number" min={0} value={form.priority} onChange={(e) => { patch({ priority: e.target.value }); }} dir="ltr" />
             </Field>
             <Field label={t("pricing.currency")}>
-              <TextField value={form.currency} onChange={(e) => { patch({ currency: e.target.value.toUpperCase() }); }} maxLength={3} dir="ltr" />
+              <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
             </Field>
             <ScopeFields form={form} patch={patch} items={form.level === "line"} />
             <Field label={t("pricing.customer")}>
@@ -769,7 +770,7 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
               </SelectField>
             </Field>
             <Field label={t("pricing.coupon")} description={form.kind === "coupon" ? undefined : t("pricing.couponHint")} required={form.kind === "coupon"}>
-              <TextField value={form.couponCode} onChange={(e) => { patch({ couponCode: e.target.value.toUpperCase() }); }} required={form.kind === "coupon"} dir="ltr" data-testid="promotion-coupon" />
+              <CurrencyField value={form.couponCode} onChange={(code) => { patch({ couponCode: code }); }} required data-testid="promotion-coupon" />
             </Field>
             <Field label={t("pricing.combination")}>
               <SelectField value={form.combination} onChange={(e) => { patch({ combination: e.target.value }); }}>
@@ -808,7 +809,7 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
                   <TextField type="number" min={0} step="any" value={form.bundlePrice} onChange={(e) => { patch({ bundlePrice: e.target.value }); }} required dir="ltr" data-testid="promotion-bundle-price" />
                 </Field>
                 <Field label={t("pricing.currency")}>
-                  <TextField value={form.currency} onChange={(e) => { patch({ currency: e.target.value.toUpperCase() }); }} maxLength={3} dir="ltr" />
+                  <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
                 </Field>
                 <fieldset className="flex flex-col gap-2 sm:col-span-3">
                   <legend className="mb-1 text-sm font-medium">{t("pricing.components")}</legend>
@@ -970,7 +971,7 @@ function FloorsTab({ companyId, currency }: { companyId: string; currency: strin
               <TextField type="number" min={0} step="any" value={form.minPrice} onChange={(e) => { patch({ minPrice: e.target.value }); }} dir="ltr" data-testid="floor-min-price" />
             </Field>
             <Field label={t("pricing.currency")}>
-              <TextField value={form.currency} onChange={(e) => { patch({ currency: e.target.value.toUpperCase() }); }} maxLength={3} dir="ltr" />
+              <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
             </Field>
             <Field label={t("pricing.minMarginPct")} description={t("pricing.marginHint")}>
               <TextField type="number" step="any" value={form.minMarginPct} onChange={(e) => { patch({ minMarginPct: e.target.value }); }} dir="ltr" data-testid="floor-min-margin" />

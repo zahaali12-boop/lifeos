@@ -15,6 +15,7 @@ import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/
 import { emptyLine, LinesEditor, LinesTable, num, PurchaseStatus, useSuppliers, type LineForm, type Rfq } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
+import { CurrencyField } from "../CurrencyField";
 
 type Comparison = components["schemas"]["QuoteComparison"];
 
@@ -272,7 +273,7 @@ export function RfqsPage() {
                   <h3 className="text-sm font-semibold">{t("purchasing.recordQuoteFor", { supplier: r.suppliers.find((s) => s.partnerId === quote.partnerId)?.partnerCode ?? "" })}</h3>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <Field label={t("partners.currency")} required>
-                      <TextField value={quote.currency} onChange={(e) => { setQuote({ ...quote, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} required data-testid="quote-currency" />
+                      <CurrencyField value={quote.currency} onChange={(code) => { setQuote({ ...quote, currency: code }); }} required data-testid="quote-currency" />
                     </Field>
                     <Field label={t("purchasing.leadTimeDays")}>
                       <TextField type="number" min={0} value={quote.leadTimeDays} onChange={(e) => { setQuote({ ...quote, leadTimeDays: e.target.value }); }} dir="ltr" data-testid="quote-lead-time" />

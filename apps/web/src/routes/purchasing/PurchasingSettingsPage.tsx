@@ -13,6 +13,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs, useCompanyContext } from "../inventory/shared";
 import { num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, useSupplierPostingGroups, useWhtCodes } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 type PaymentTerms = components["schemas"]["PaymentTermsSummary"];
 type DeliveryTerms = components["schemas"]["DeliveryTermsSummary"];
@@ -309,7 +310,7 @@ export function PurchasingSettingsPage() {
                       <TextField inputMode="decimal" value={preview.amount} onChange={(e) => { setPreview({ ...preview, amount: e.target.value }); }} dir="ltr" data-testid="preview-amount" />
                     </Field>
                     <Field label={t("partners.currency")}>
-                      <TextField value={preview.currency} onChange={(e) => { setPreview({ ...preview, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} />
+                      <CurrencyField value={preview.currency} onChange={(code) => { setPreview({ ...preview, currency: code }); }} allowEmpty />
                     </Field>
                     <div className="flex items-end">
                       <Button type="button" variant="secondary" onClick={() => { if (terms.id) { previewSchedule.mutate(terms.id); } }} loading={previewSchedule.isPending} disabled={!companyId} data-testid="preview-schedule">
@@ -413,7 +414,7 @@ export function PurchasingSettingsPage() {
                       <TextField inputMode="decimal" value={simple.form.thresholdAmount} onChange={(e) => { setSimpleForm({ thresholdAmount: e.target.value }); }} dir="ltr" />
                     </Field>
                     <Field label={t("partners.thresholdCurrency")}>
-                      <TextField value={simple.form.thresholdCurrency} onChange={(e) => { setSimpleForm({ thresholdCurrency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} />
+                      <CurrencyField value={simple.form.thresholdCurrency} onChange={(code) => { setSimpleForm({ thresholdCurrency: code }); }} allowEmpty />
                     </Field>
                   </>
                 ) : null}

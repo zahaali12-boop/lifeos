@@ -832,7 +832,12 @@
       "json": "JSON"
     },
     "updated": "آخر تحديث",
-    "invalidJson": "القيمة ليست JSON صالحًا."
+    "invalidJson": "القيمة ليست JSON صالحًا.",
+    "favouriteCurrencies": "العملات المفضلة",
+    "favouriteCurrenciesHint": "تظهر أولاً وبهذا الترتيب في كل قائمة عملات؛ وتُوجد أي عملة أخرى بالبحث.",
+    "removeFavourite": "إزالة {code} من المفضلة",
+    "addFavourite": "إضافة عملة",
+    "resetFavourites": "استعادة الافتراضي ({codes})"
   },
   "security": {
     "grantException": "منح استثناء",
@@ -1632,7 +1637,7 @@
     "anyValue": "أي قيمة",
     "addFilter": "إضافة تصفية",
     "removeFilter": "إزالة التصفية",
-    "balanced": "متوازن",
+    "balanced": "متوازن: المدين يساوي الدائن.",
     "unbalanced": "غير متوازن",
     "tbSummary": "{currency} · {rows, plural, zero {لا حسابات} one {حساب واحد} two {حسابان} few {# حسابات} many {# حساباً} other {# حساب}}",
     "accountCode": "الحساب",
@@ -1644,7 +1649,6 @@
     "compareClosing": "ختامي المقارنة",
     "unassigned": "بدون قيمة",
     "totals": "الإجمالي",
-    "balanced": "متوازن: المدين يساوي الدائن.",
     "noAmounts": "أدخل مبالغ المدين والدائن.",
     "outOfBalance": "غير متوازن بفرق {amount}. يجب أن يساوي المدين الدائن قبل إرسال القيد أو ترحيله؛ ويمكنك حفظه كمسودة.",
     "openingDifference": "سيُرحَّل الفرق البالغ {amount} إلى حقوق ملكية الأرصدة الافتتاحية.",
@@ -4041,5 +4045,13 @@
     "over": "{item}: غُلّف {quantity} أكثر من المشحون",
     "allPacked": "{item}: غُلّف بالكامل",
     "carrierDetails": "بيانات الناقل"
+  },
+  "currencyField": {
+    "favourites": "المفضلة",
+    "all": "كل العملات",
+    "none": "بدون عملة",
+    "noMatch": "لا توجد عملة تطابق «{query}»",
+    "placeholder": "ابحث بالرمز أو الاسم",
+    "list": "العملات"
   }
 }

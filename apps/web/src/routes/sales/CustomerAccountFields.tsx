@@ -4,6 +4,7 @@ import { Field, SelectField, TextField } from "../common";
 import { useWarehouses } from "../inventory/shared";
 import { useDeliveryTerms, usePaymentTerms } from "../purchasing/shared";
 import { useCustomerGroups, useCustomerPostingGroups, useSalesReps, type CustomerAccount } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 /** A customer account as the form edits it: strings until the request is built, so nothing becomes a float on the way. */
 export interface CustomerAccountForm {
@@ -140,7 +141,7 @@ export function CustomerAccountFields({ form, onChange, companyId, functionalCur
           </SelectField>
         </Field>
         <Field label={t("partners.currency")} required>
-          <TextField value={form.currency} onChange={(e) => { onChange({ currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} required data-testid="customer-currency" />
+          <CurrencyField value={form.currency} onChange={(code) => { onChange({ currency: code }); }} required data-testid="customer-currency" />
         </Field>
         <Field label={t("sales.statementFrequency")}>
           <SelectField value={form.statementFrequency} onChange={(e) => { onChange({ statementFrequency: e.target.value }); }}>

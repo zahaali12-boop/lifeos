@@ -1,14 +1,16 @@
 import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Field, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
 import type { components } from "../api/schema";
-import { formatDateTime } from "../lib/format";
+import { defaultFavouriteCurrencies, favouriteCurrenciesSetting, parseFavourites, useCurrencies } from "../lib/currencies";
+import { formatDateTime, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { CompanySelect, useCompanies, useCompanySelection } from "./accounting/shared";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { CurrencyField } from "./CurrencyField";
 import { Tabs } from "./inventory/shared";
 
 type Setting = components["schemas"]["SettingSummary"];
@@ -40,6 +42,53 @@ function parse(value: string, valueType: string): unknown {
     default:
       return value;
   }
+}
+
+/** The currencies every currency picker shows first, in this order (A-155). */
+function FavouriteCurrencies({ value, onSave }: { value: string[]; onSave: (codes: string[]) => void }) {
+  const { t } = useTranslation();
+  const currencies = useCurrencies();
+  const name = (code: string): string => localized(currencies.data?.find((c) => c.code === code)?.name);
+  const isDefault = value.join() === defaultFavouriteCurrencies.join();
+  return (
+    <section className="mb-6 flex flex-col gap-3 rounded-md border border-border p-4" data-testid="favourite-currencies">
+      <div>
+        <h2 className="text-base font-semibold">{t("settings.favouriteCurrencies")}</h2>
+        <p className="text-sm text-fg-muted">{t("settings.favouriteCurrenciesHint")}</p>
+      </div>
+      <ul className="flex flex-wrap gap-2">
+        {value.map((code) => (
+          <li key={code} className="flex items-center gap-1 rounded-full border border-border bg-surface-sunken py-0.5 pe-1 ps-3 text-sm" data-testid={`favourite-${code}`}>
+            <span dir="ltr" className="font-mono">{code}</span>
+            <span className="text-fg-muted">{name(code)}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("settings.removeFavourite", { code })}
+              disabled={value.length === 1}
+              onClick={() => { onSave(value.filter((c) => c !== code)); }}
+              data-testid={`remove-favourite-${code}`}
+            >
+              <X aria-hidden="true" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label={t("settings.addFavourite")}>
+          <CurrencyField value="" allowEmpty onChange={(code) => { if (code && !value.includes(code)) { onSave([...value, code]); } }} data-testid="add-favourite" />
+        </Field>
+      </div>
+      {isDefault ? null : (
+        <div>
+          <Button type="button" variant="secondary" size="sm" onClick={() => { onSave(defaultFavouriteCurrencies); }} data-testid="reset-favourites">
+            {t("settings.resetFavourites", { codes: defaultFavouriteCurrencies.join(", ") })}
+          </Button>
+        </div>
+      )}
+    </section>
+  );
 }
 
 /**
@@ -133,6 +182,13 @@ export function SettingsPage() {
             })}
           </div>
         </section>
+      ) : null}
+
+      {tab === "workspace" ? (
+        <FavouriteCurrencies
+          value={parseFavourites(current(favouriteCurrenciesSetting)?.value)}
+          onSave={(codes) => { save.mutate({ key: favouriteCurrenciesSetting, valueType: "json", value: codes }); }}
+        />
       ) : null}
 
       <section className="flex flex-col gap-3" data-testid="all-settings">

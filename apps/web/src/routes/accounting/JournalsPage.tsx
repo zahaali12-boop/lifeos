@@ -21,6 +21,7 @@ import { Tabs } from "../inventory/shared";
 import { JournalImportDialog } from "./JournalImport";
 import { emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 type Journal = components["schemas"]["ManualJournalSummary"];
 
@@ -425,7 +426,7 @@ export function JournalsPage() {
                   <TextField type="date" value={editing.form.postingDate} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, postingDate: e.target.value } }); }} required dir="ltr" data-testid="journal-date" />
                 </Field>
                 <Field label={t("accounting.currency")} required error={problem?.fields.currency}>
-                  <TextField value={editing.form.currency} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, currency: e.target.value.toUpperCase() } }); }} required dir="ltr" maxLength={3} />
+                  <CurrencyField value={editing.form.currency} onChange={(code) => { setEditing({ ...editing, form: { ...editing.form, currency: code } }); }} required data-testid="journal-currency" />
                 </Field>
                 <Field label={t("accounting.descriptionEn")} required>
                   <TextField value={editing.form.descriptionEn} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, descriptionEn: e.target.value } }); }} required data-testid="journal-description" />

@@ -17,6 +17,7 @@ import { num, PurchaseStatus, useChargeTypes, useSuppliers } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
+import { CurrencyField } from "../CurrencyField";
 
 type LandedCost = components["schemas"]["LandedCostSummary"];
 
@@ -207,7 +208,7 @@ export function LandedCostsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("partners.code")} required>
-                  <TextField value={chargeType.code} onChange={(e) => { setChargeType({ ...chargeType, code: e.target.value.toUpperCase() }); }} dir="ltr" required data-testid="charge-type-code" />
+                  <CurrencyField value={chargeType.code} onChange={(code) => { setChargeType({ ...chargeType, code: code }); }} required data-testid="charge-type-code" />
                 </Field>
                 <Field label={t("purchasing.defaultBasis")}>
                   <SelectField value={chargeType.basis} onChange={(e) => { setChargeType({ ...chargeType, basis: e.target.value }); }} data-testid="charge-type-basis">
@@ -249,7 +250,7 @@ export function LandedCostsPage() {
                   <TextField type="date" value={form.postingDate} onChange={(e) => { setForm({ ...form, postingDate: e.target.value }); }} dir="ltr" data-testid="landed-cost-date" />
                 </Field>
                 <Field label={t("partners.currency")} description={t("purchasing.companyCurrencyHelp")}>
-                  <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} />
+                  <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty />
                 </Field>
                 <Field label={t("purchasing.reference")}>
                   <TextField value={form.reference} onChange={(e) => { setForm({ ...form, reference: e.target.value }); }} dir="ltr" data-testid="landed-cost-reference" />

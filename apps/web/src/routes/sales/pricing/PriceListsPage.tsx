@@ -14,6 +14,7 @@ import { Field, FormError, PageHeader, SelectField, TextField, TextareaField } f
 import { CompanyFilter, useCompanyContext } from "../../inventory/shared";
 import { useCustomerGroups } from "../shared";
 import { Validity, refLabel, useCompanyCustomers, usePriceLists, type PriceList } from "./shared";
+import { CurrencyField } from "../../CurrencyField";
 
 export interface PriceListForm {
   code: string;
@@ -126,7 +127,7 @@ export function PriceListDialog({ list, companyId, currency, onClose, onSaved }:
               <TextField value={form.nameAr} onChange={(e) => { patch({ nameAr: e.target.value }); }} dir="rtl" lang="ar" />
             </Field>
             <Field label={t("pricing.currency")} required>
-              <TextField value={form.currency} onChange={(e) => { patch({ currency: e.target.value.toUpperCase() }); }} maxLength={3} required dir="ltr" data-testid="list-currency" />
+              <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} required data-testid="list-currency" />
             </Field>
             <Field label={t("pricing.priority")} description={t("pricing.priorityHint")}>
               <TextField type="number" min={0} value={form.priority} onChange={(e) => { patch({ priority: e.target.value }); }} dir="ltr" />

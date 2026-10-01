@@ -12,6 +12,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { Tabs } from "../inventory/shared";
 import { useDeliveryTerms, usePaymentTerms } from "../purchasing/shared";
 import { Money, useCommissionPlans, useCustomerGroups, useCustomerPostingGroups, usePipelineStages, useSalesReps, type CommissionPlan, type CustomerGroup, type PipelineStage, type SalesRep } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 /** Sales set-up (roadmap 5.1): customer groups, the sales team and how it is paid, and the pipeline's stages. */
 export function SalesSetupPage() {
@@ -432,7 +433,7 @@ function PlansTab() {
                 <TextField value={editing.nameAr} onChange={(e) => { setEditing({ ...editing, nameAr: e.target.value }); }} dir="rtl" lang="ar" />
               </Field>
               <Field label={t("partners.currency")} required>
-                <TextField value={editing.currency} onChange={(e) => { setEditing({ ...editing, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} required data-testid="plan-currency" />
+                <CurrencyField value={editing.currency} onChange={(code) => { setEditing({ ...editing, currency: code }); }} required data-testid="plan-currency" />
               </Field>
               <Field label={t("sales.basis")}>
                 <SelectField value={editing.basis} onChange={(e) => { const basis = e.target.value; setEditing({ ...editing, basis, accrualPoint: basis === "collected" ? "payment" : editing.accrualPoint }); }}>

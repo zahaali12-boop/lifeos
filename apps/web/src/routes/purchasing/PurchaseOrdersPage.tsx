@@ -18,6 +18,7 @@ import { emptyLine, LinesEditor, LinesTable, orderLineBodies, PurchaseStatus, us
 import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
+import { CurrencyField } from "../CurrencyField";
 
 interface OrderForm {
   id: string | null;
@@ -231,7 +232,7 @@ export function PurchaseOrdersPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
-                  <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} data-testid="order-currency" />
+                  <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="order-currency" />
                 </Field>
                 <Field label={t("purchasing.expectedDate")}>
                   <TextField type="date" value={form.expectedDate} onChange={(e) => { setForm({ ...form, expectedDate: e.target.value }); }} dir="ltr" data-testid="order-expected" />

@@ -11,6 +11,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { ExportChartButton, ImportChartDialog, StatutoryMappingDialog } from "./ChartTools";
 import { CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 type Account = components["schemas"]["AccountSummary"];
 type DimensionRule = components["schemas"]["DimensionRuleSummary"];
@@ -364,7 +365,7 @@ export function ChartPage() {
                   <TextField value={editing.form.defaultRole} onChange={(e) => { setForm({ defaultRole: e.target.value }); }} dir="ltr" />
                 </Field>
                 <Field label={t("accounting.currencyRestriction")} error={problem?.fields.currencyRestriction}>
-                  <TextField value={editing.form.currencyRestriction} onChange={(e) => { setForm({ currencyRestriction: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} />
+                  <CurrencyField value={editing.form.currencyRestriction} onChange={(code) => { setForm({ currencyRestriction: code }); }} allowEmpty />
                 </Field>
               </div>
               <div className="flex flex-wrap gap-6 text-sm">

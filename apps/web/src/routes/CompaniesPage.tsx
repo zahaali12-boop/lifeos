@@ -14,6 +14,7 @@ import { rememberRecent } from "../shell/CommandPalette";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { CompanyBranches } from "./CompanyBranches";
 import { CustomFieldsFieldset } from "./CustomFieldsFieldset";
+import { CurrencyField } from "./CurrencyField";
 
 type Company = components["schemas"]["CompanySummary"];
 
@@ -119,7 +120,6 @@ export function CompaniesPage() {
     queryKey: ["companies", filter ?? ""],
     queryFn: async () => unwrap(await api.GET("/api/v1/organization/companies", { params: { query: filter ? { filter } : {} } })),
   });
-  const currencies = useQuery({ queryKey: ["currencies"], queryFn: async () => unwrap(await api.GET("/api/v1/organization/currencies")) });
 
   useEffect(() => {
     if (search.new) {
@@ -236,23 +236,10 @@ export function CompaniesPage() {
                   <TextField value={form.legalNameAr} onChange={(e) => { setForm({ legalNameAr: e.target.value }); }} name="legalNameAr" dir="rtl" />
                 </Field>
                 <Field label={t("companies.functionalCurrency")} required error={problem?.fields.functionalCurrency ?? problem?.fields.currency} description={isEdit ? t("companies.currencyLocked") : undefined}>
-                  <SelectField value={form.functionalCurrency} onChange={(e) => { setForm({ functionalCurrency: e.target.value }); }} disabled={isEdit} name="functionalCurrency">
-                    {(currencies.data ?? []).filter((c) => c.isActive).map((currency) => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code} — {localized(currency.name)}
-                      </option>
-                    ))}
-                  </SelectField>
+                  <CurrencyField value={form.functionalCurrency} onChange={(code) => { setForm({ functionalCurrency: code }); }} required disabled={isEdit} name="functionalCurrency" data-testid="company-functional-currency" />
                 </Field>
                 <Field label={t("companies.reportingCurrency")} error={problem?.fields.reportingCurrency}>
-                  <SelectField value={form.reportingCurrency} onChange={(e) => { setForm({ reportingCurrency: e.target.value }); }} name="reportingCurrency">
-                    <option value="">—</option>
-                    {(currencies.data ?? []).filter((c) => c.isActive).map((currency) => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code}
-                      </option>
-                    ))}
-                  </SelectField>
+                  <CurrencyField value={form.reportingCurrency} onChange={(code) => { setForm({ reportingCurrency: code }); }} allowEmpty name="reportingCurrency" data-testid="company-reporting-currency" />
                 </Field>
                 <Field label={t("companies.timeZone")} required error={problem?.fields.timeZone}>
                   <TextField value={form.timeZone} onChange={(e) => { setForm({ timeZone: e.target.value }); }} required dir="ltr" name="timeZone" />

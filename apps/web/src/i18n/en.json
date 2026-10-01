@@ -832,7 +832,12 @@
       "json": "JSON"
     },
     "updated": "Updated",
-    "invalidJson": "The value is not valid JSON."
+    "invalidJson": "The value is not valid JSON.",
+    "favouriteCurrencies": "Favourite currencies",
+    "favouriteCurrenciesHint": "Shown first, in this order, in every currency list; any other currency is found by searching.",
+    "removeFavourite": "Remove {code} from favourites",
+    "addFavourite": "Add a currency",
+    "resetFavourites": "Restore the defaults ({codes})"
   },
   "security": {
     "grantException": "Grant exception",
@@ -1632,7 +1637,7 @@
     "anyValue": "Any value",
     "addFilter": "Add filter",
     "removeFilter": "Remove filter",
-    "balanced": "Balanced",
+    "balanced": "Balanced: debits equal credits.",
     "unbalanced": "Not balanced",
     "tbSummary": "{currency} · {rows, plural, one {# account} other {# accounts}}",
     "accountCode": "Account",
@@ -1644,7 +1649,6 @@
     "compareClosing": "Comparative closing",
     "unassigned": "No value",
     "totals": "Totals",
-    "balanced": "Balanced: debits equal credits.",
     "noAmounts": "Enter the debit and credit amounts.",
     "outOfBalance": "Out of balance by {amount}. Debits must equal credits before the journal can be submitted or posted; you can still save it as a draft.",
     "openingDifference": "The difference of {amount} will be posted to opening balance equity.",
@@ -4041,5 +4045,13 @@
     "over": "{item}: {quantity} more packed than shipped",
     "allPacked": "{item}: all packed",
     "carrierDetails": "Carrier details"
+  },
+  "currencyField": {
+    "favourites": "Favourites",
+    "all": "All currencies",
+    "none": "No currency",
+    "noMatch": "No currency matches “{query}”",
+    "placeholder": "Search by code or name",
+    "list": "Currencies"
   }
 }

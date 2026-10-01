@@ -17,6 +17,7 @@ import { ItemAttributesEditor, ItemBomEditor, ItemImage, ItemSubstitutesEditor, 
 import { DocStatus, Tabs, type Item } from "./shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
+import { CurrencyField } from "../CurrencyField";
 
 interface ItemForm {
   code: string;
@@ -254,7 +255,7 @@ export function ItemsPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("inventory.items.code")} required error={problem?.fields.code}>
-                  <TextField value={form.code} onChange={(e) => { setForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" disabled={isEdit} data-testid="item-code" />
+                  <CurrencyField value={form.code} onChange={(code) => { setForm({ code: code }); }} required disabled={isEdit} data-testid="item-code" />
                 </Field>
                 <Field label={t("inventory.items.nameEn")} required error={problem?.fields.name}>
                   <TextField value={form.nameEn} onChange={(e) => { setForm({ nameEn: e.target.value }); }} required data-testid="item-name-en" />
@@ -316,7 +317,7 @@ export function ItemsPage() {
                   <TextField inputMode="decimal" value={form.listPrice} onChange={(e) => { setForm({ listPrice: e.target.value }); }} dir="ltr" />
                 </Field>
                 <Field label={t("inventory.items.listPriceCurrency")}>
-                  <TextField value={form.listPriceCurrency} onChange={(e) => { setForm({ listPriceCurrency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} />
+                  <CurrencyField value={form.listPriceCurrency} onChange={(code) => { setForm({ listPriceCurrency: code }); }} allowEmpty />
                 </Field>
                 <div className="flex flex-col gap-2 self-end pb-2 text-sm">
                   <label className="flex items-center gap-2">
@@ -389,7 +390,7 @@ function MasterDataDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               ))}
             </ul>
             <Field label={t("inventory.items.code")} required>
-              <TextField value={category.code} onChange={(e) => { setCategory({ ...category, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="category-code" />
+              <CurrencyField value={category.code} onChange={(code) => { setCategory({ ...category, code: code }); }} required data-testid="category-code" />
             </Field>
             <Field label={t("inventory.items.nameEn")} required>
               <TextField value={category.en} onChange={(e) => { setCategory({ ...category, en: e.target.value }); }} required data-testid="category-name-en" />
@@ -421,7 +422,7 @@ function MasterDataDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               ))}
             </ul>
             <Field label={t("inventory.items.code")} required>
-              <TextField value={brand.code} onChange={(e) => { setBrand({ ...brand, code: e.target.value.toUpperCase() }); }} required dir="ltr" />
+              <CurrencyField value={brand.code} onChange={(code) => { setBrand({ ...brand, code: code }); }} required />
             </Field>
             <Field label={t("inventory.items.nameEn")} required>
               <TextField value={brand.en} onChange={(e) => { setBrand({ ...brand, en: e.target.value }); }} required />

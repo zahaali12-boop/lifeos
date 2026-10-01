@@ -11,6 +11,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts, type BankAccount } from "../payables/shared";
+import { CurrencyField } from "../CurrencyField";
 
 interface AccountForm {
   id: string | null;
@@ -99,7 +100,7 @@ export function BankAccountsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("banking.code")} required>
-                  <TextField value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value.toUpperCase() }); }} dir="ltr" required data-testid="bank-code" />
+                  <CurrencyField value={form.code} onChange={(code) => { setForm({ ...form, code: code }); }} required data-testid="bank-code" />
                 </Field>
                 <Field label={t("purchasing.kind")} required>
                   <SelectField value={form.kind} onChange={(e) => { setForm({ ...form, kind: e.target.value }); }} data-testid="bank-kind">
@@ -115,7 +116,7 @@ export function BankAccountsPage() {
                   <TextField value={form.nameAr} onChange={(e) => { setForm({ ...form, nameAr: e.target.value }); }} dir="rtl" required data-testid="bank-name-ar" />
                 </Field>
                 <Field label={t("partners.currency")} required>
-                  <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} required data-testid="bank-currency" />
+                  <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} required data-testid="bank-currency" />
                 </Field>
                 <Field label={t("banking.bankName")}>
                   <TextField value={form.bankName} onChange={(e) => { setForm({ ...form, bankName: e.target.value }); }} data-testid="bank-bank-name" />

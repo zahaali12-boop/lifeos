@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } f
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { useCompanyCustomers } from "./pricing/shared";
 import { emptySalesLine, Money, money, orderLineBodies, SalesLinesEditor, SalesLinesTable, SalesStatus, type SalesLineForm, type SalesOrder, type SalesOrderLine } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 interface OrderForm {
   partnerId: string;
@@ -156,7 +157,7 @@ export function OrdersPage() {
                 </Field>
                 <WarehouseSelect warehouses={warehouses.data ?? []} value={creating.warehouseId} onChange={(id) => { setCreating({ ...creating, warehouseId: id }); }} label={t("sales.shipFrom")} testId="order-warehouse" required />
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
-                  <TextField value={creating.currency} onChange={(e) => { setCreating({ ...creating, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} data-testid="order-currency" />
+                  <CurrencyField value={creating.currency} onChange={(code) => { setCreating({ ...creating, currency: code }); }} allowEmpty data-testid="order-currency" />
                 </Field>
                 <Field label={t("sales.orderDate")}>
                   <TextField type="date" value={creating.orderDate} onChange={(e) => { setCreating({ ...creating, orderDate: e.target.value }); }} dir="ltr" data-testid="order-date" />

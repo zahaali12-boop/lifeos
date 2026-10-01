@@ -13,6 +13,7 @@ import { ItemCodeField } from "../../inventory/ItemCodeField";
 import { CompanyFilter, findItemByCode, useCompanyContext, type Item } from "../../inventory/shared";
 import { Money, money } from "../shared";
 import { PriceExplanation, PriceStepView, price, useCompanyCustomers, usePriceLists, type PricingResult } from "./shared";
+import { CurrencyField } from "../../CurrencyField";
 
 interface BasketLine {
   key: string;
@@ -112,7 +113,7 @@ export function PriceCheckPage() {
             <TextField type="date" value={pricingDate} onChange={(e) => { setPricingDate(e.target.value); }} dir="ltr" data-testid="check-date" />
           </Field>
           <Field label={t("pricing.currency")} description={t("pricing.currencyHint")}>
-            <TextField value={currency} onChange={(e) => { setCurrency(e.target.value.toUpperCase()); }} maxLength={3} dir="ltr" data-testid="check-currency" />
+            <CurrencyField value={currency} onChange={(code) => { setCurrency(code); }} allowEmpty data-testid="check-currency" />
           </Field>
           <Field label={t("pricing.priceList")}>
             <SelectField value={priceListId} onChange={(e) => { setPriceListId(e.target.value); }} data-testid="check-price-list">
@@ -128,7 +129,7 @@ export function PriceCheckPage() {
             <TextField value={channel} onChange={(e) => { setChannel(e.target.value); }} dir="ltr" />
           </Field>
           <Field label={t("pricing.coupons")}>
-            <TextField value={coupons} onChange={(e) => { setCoupons(e.target.value.toUpperCase()); }} dir="ltr" data-testid="check-coupons" />
+            <CurrencyField value={coupons} onChange={(code) => { setCoupons(code); }} allowEmpty data-testid="check-coupons" />
           </Field>
           {mayOverride ? (
             <Field label={t("pricing.documentDiscountPct")}>

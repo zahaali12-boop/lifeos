@@ -16,6 +16,7 @@ import { HoldBadge, num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, u
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { covers } from "../../lib/permissions";
+import { CurrencyField } from "../CurrencyField";
 
 type SupplierAccount = components["schemas"]["SupplierAccountSummary"];
 
@@ -300,7 +301,7 @@ function AccountFields({ form, onChange }: { form: AccountForm; onChange: (patch
         </SelectField>
       </Field>
       <Field label={t("partners.currency")} required>
-        <TextField value={form.currency} onChange={(e) => { onChange({ currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} required data-testid="account-currency" />
+        <CurrencyField value={form.currency} onChange={(code) => { onChange({ currency: code }); }} required data-testid="account-currency" />
       </Field>
       <Field label={t("partners.leadTimeDays")}>
         <TextField type="number" min={0} value={form.leadTimeDays} onChange={(e) => { onChange({ leadTimeDays: e.target.value }); }} dir="ltr" data-testid="account-lead-time" />
@@ -561,7 +562,7 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
                     <TextField value={address.city} onChange={(e) => { setAddress({ ...address, city: e.target.value }); }} />
                   </Field>
                   <Field label={t("partners.country")} required>
-                    <TextField value={address.country} onChange={(e) => { setAddress({ ...address, country: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={2} required data-testid="address-country" />
+                    <CurrencyField value={address.country} onChange={(code) => { setAddress({ ...address, country: code }); }} required data-testid="address-country" />
                   </Field>
                   <Field label={t("partners.region")}>
                     <TextField value={address.region} onChange={(e) => { setAddress({ ...address, region: e.target.value }); }} />
@@ -624,7 +625,7 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
                     <TextField value={bank.swiftBic} onChange={(e) => { setBank({ ...bank, swiftBic: e.target.value }); }} dir="ltr" />
                   </Field>
                   <Field label={t("partners.currency")} required>
-                    <TextField value={bank.currency} onChange={(e) => { setBank({ ...bank, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} required data-testid="bank-currency" />
+                    <CurrencyField value={bank.currency} onChange={(code) => { setBank({ ...bank, currency: code }); }} required data-testid="bank-currency" />
                   </Field>
                   <Field label={t("partners.accountHolder")}>
                     <TextField value={bank.accountHolder} onChange={(e) => { setBank({ ...bank, accountHolder: e.target.value }); }} />
@@ -669,7 +670,7 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
                 </Table>
                 <form onSubmit={submit(() => { addRegistration.mutate(); })} className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-4">
                   <Field label={t("partners.country")} required>
-                    <TextField value={registration.country} onChange={(e) => { setRegistration({ ...registration, country: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={2} required data-testid="registration-country" />
+                    <CurrencyField value={registration.country} onChange={(code) => { setRegistration({ ...registration, country: code }); }} required data-testid="registration-country" />
                   </Field>
                   <Field label={t("partners.registrationType")}>
                     <SelectField value={registration.registrationType} onChange={(e) => { setRegistration({ ...registration, registrationType: e.target.value }); }}>

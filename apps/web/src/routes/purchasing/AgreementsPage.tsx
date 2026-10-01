@@ -15,6 +15,7 @@ import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared
 import { emptyLine, LinesEditor, num, PurchaseStatus, useAgreements, useSuppliers, type Agreement, type LineForm } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
 import { RecordActivity } from "../RecordDiscussion";
+import { CurrencyField } from "../CurrencyField";
 
 interface AgreementForm {
   partnerId: string;
@@ -132,7 +133,7 @@ export function AgreementsPage() {
                   <TextField type="date" value={form.validTo} onChange={(e) => { setForm({ ...form, validTo: e.target.value }); }} dir="ltr" required data-testid="agreement-to" />
                 </Field>
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
-                  <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} />
+                  <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty />
                 </Field>
                 <Field label={t("purchasing.committedAmount")} description={t("purchasing.committedAmountHelp")}>
                   <TextField inputMode="decimal" value={form.committedAmount} onChange={(e) => { setForm({ ...form, committedAmount: e.target.value }); }} dir="ltr" />

@@ -55,6 +55,24 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await nav(page, "Journals");
   await page.getByTestId("new-journal").click();
   await page.getByTestId("journal-description").fill("September rent");
+  // The currency is chosen, not typed: the favourites (IQD, USD, AED) first, every other currency by search.
+  const currency = page.getByTestId("journal-currency");
+  await currency.click();
+  const options = page.getByTestId("currency-options");
+  await expect(options.getByRole("group", { name: "Favourites" }).getByRole("option")).toHaveText([/^IQD/u, /^USD/u, /^AED/u]);
+  await expectAccessible(page);
+  await currency.fill("dinar");
+  await expect(options.getByTestId("currency-option-JOD")).toBeVisible();
+  await expect(options.getByTestId("currency-option-USD")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(options).toHaveCount(0);
+  await expect(page.getByTestId("journal-description")).toBeVisible();
+  await currency.click();
+  await options.getByTestId("currency-option-USD").click();
+  await expect(currency).toHaveAttribute("data-value", "USD");
+  await currency.click();
+  await options.getByTestId("currency-option-IQD").click();
+  await expect(currency).toHaveAttribute("data-value", "IQD");
   await page.getByTestId("line-account-0").fill("6110");
   await page.getByTestId("line-debit-0").fill("1500000");
   await page.getByTestId("line-account-1").fill("2170");

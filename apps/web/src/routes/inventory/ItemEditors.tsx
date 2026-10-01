@@ -11,6 +11,7 @@ import { Amount, today, useCompanies } from "../accounting/shared";
 import { Field, FormError, SelectField, TextField } from "../common";
 import { ItemCostPanel } from "./ItemCostDialog";
 import { Qty, type Item } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 type ItemUom = components["schemas"]["ItemUomSummary"];
 type ItemSupplier = components["schemas"]["ItemSupplierSummary"];
@@ -352,7 +353,7 @@ export function ItemSuppliersEditor({ item }: { item: Item }) {
               <TextField inputMode="decimal" value={form.lastPrice} onChange={(e) => { setForm({ ...form, lastPrice: e.target.value }); }} dir="ltr" data-testid="supplier-price" />
             </Field>
             <Field label={t("itemEditor.currency")} error={problem?.fields.lastPriceCurrency}>
-              <TextField value={form.lastPriceCurrency} onChange={(e) => { setForm({ ...form, lastPriceCurrency: e.target.value.toUpperCase() }); }} maxLength={3} dir="ltr" />
+              <CurrencyField value={form.lastPriceCurrency} onChange={(code) => { setForm({ ...form, lastPriceCurrency: code }); }} allowEmpty />
             </Field>
           </div>
           <label className="flex items-center gap-2 text-sm">

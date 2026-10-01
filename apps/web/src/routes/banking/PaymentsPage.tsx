@@ -17,6 +17,7 @@ import { ItemStatus, useBankAccounts, useOpenItems } from "../payables/shared";
 import { num, useSuppliers } from "../purchasing/shared";
 import { RecordActivity } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
+import { CurrencyField } from "../CurrencyField";
 
 type Payment = components["schemas"]["PaymentSummary"];
 
@@ -208,7 +209,7 @@ export function PaymentsPage() {
                 </Field>
                 {form.kind === "supplier_advance" || form.lines.length === 0 ? (
                   <Field label={t("partners.currency")} description={t("banking.currencyHelp")}>
-                    <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} data-testid="payment-currency" />
+                    <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="payment-currency" />
                   </Field>
                 ) : null}
                 <Field label={t("banking.exchangeRate")} description={t("banking.exchangeRateHelp")}>

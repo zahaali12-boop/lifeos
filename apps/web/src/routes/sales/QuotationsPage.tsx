@@ -15,6 +15,7 @@ import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } f
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { useCompanyCustomers } from "./pricing/shared";
 import { emptySalesLine, Money, money, salesLineBodies, SalesLinesEditor, SalesLinesTable, SalesStatus, type Quotation, type SalesLineForm } from "./shared";
+import { CurrencyField } from "../CurrencyField";
 
 interface QuotationForm {
   partnerId: string;
@@ -148,7 +149,7 @@ export function QuotationsPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
-                  <TextField value={creating.currency} onChange={(e) => { setCreating({ ...creating, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} data-testid="quotation-currency" />
+                  <CurrencyField value={creating.currency} onChange={(code) => { setCreating({ ...creating, currency: code }); }} allowEmpty data-testid="quotation-currency" />
                 </Field>
                 <Field label={t("sales.quoteDate")}>
                   <TextField type="date" value={creating.quoteDate} onChange={(e) => { setCreating({ ...creating, quoteDate: e.target.value }); }} dir="ltr" data-testid="quotation-date" />

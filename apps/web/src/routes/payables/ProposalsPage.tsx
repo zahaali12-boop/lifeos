@@ -16,6 +16,7 @@ import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared
 import { num, useSuppliers } from "../purchasing/shared";
 import { ItemStatus, useBankAccounts } from "./shared";
 import { RecordActivity } from "../RecordDiscussion";
+import { CurrencyField } from "../CurrencyField";
 
 type Proposal = components["schemas"]["ProposalSummary"];
 
@@ -129,7 +130,7 @@ export function ProposalsPage() {
                   <TextField type="date" value={form.payThrough} onChange={(e) => { setForm({ ...form, payThrough: e.target.value }); }} dir="ltr" required data-testid="proposal-pay-through" />
                 </Field>
                 <Field label={t("partners.currency")} required>
-                  <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} required data-testid="proposal-currency" />
+                  <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} required data-testid="proposal-currency" />
                 </Field>
                 <Field label={t("partners.supplier")}>
                   <SelectField value={form.partnerId} onChange={(e) => { setForm({ ...form, partnerId: e.target.value }); }} data-testid="proposal-supplier">

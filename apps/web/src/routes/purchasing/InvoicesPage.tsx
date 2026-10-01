@@ -18,6 +18,7 @@ import { num, PurchaseStatus, useSuppliers } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
+import { CurrencyField } from "../CurrencyField";
 
 type Invoice = components["schemas"]["InvoiceSummary"];
 type Invoicable = components["schemas"]["InvoicableLine"];
@@ -276,7 +277,7 @@ export function InvoicesPage() {
                   <TextField type="date" value={form.documentDate} onChange={(e) => { setForm({ ...form, documentDate: e.target.value }); }} dir="ltr" data-testid="invoice-date" />
                 </Field>
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
-                  <TextField value={form.currency} onChange={(e) => { setForm({ ...form, currency: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={3} data-testid="invoice-currency" />
+                  <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="invoice-currency" />
                 </Field>
                 <label className="flex items-center gap-2 self-end text-sm">
                   <input type="checkbox" checked={form.applyWht} onChange={(e) => { setForm({ ...form, applyWht: e.target.checked }); }} data-testid="invoice-wht" />

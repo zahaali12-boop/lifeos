@@ -15,7 +15,15 @@ export interface DialogContentProps extends ComponentProps<typeof DialogPrimitiv
 }
 
 /** Modal dialog on Radix: focus trap, escape, labelled by DialogTitle; centred, full-width on small screens. */
-export function DialogContent({ className, children, closeLabel, ...props }: DialogContentProps) {
+export function DialogContent({ className, children, closeLabel, onEscapeKeyDown, ...props }: DialogContentProps) {
+  // Escape in an open list (a combobox inside the dialog) closes that list, not the dialog and the work in it.
+  const escape: DialogContentProps["onEscapeKeyDown"] = (event) => {
+    const focused = document.activeElement;
+    if (focused?.getAttribute("role") === "combobox" && focused.getAttribute("aria-expanded") === "true") {
+      event.preventDefault();
+    }
+    onEscapeKeyDown?.(event);
+  };
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px]" />
@@ -24,6 +32,7 @@ export function DialogContent({ className, children, closeLabel, ...props }: Dia
           "fixed inset-x-4 top-1/2 z-50 mx-auto max-h-[85dvh] w-auto max-w-lg -translate-y-1/2 overflow-y-auto rounded-lg border border-border bg-surface p-6 shadow-lg focus:outline-none sm:inset-x-auto sm:start-1/2 sm:w-full sm:-translate-x-1/2 rtl:sm:translate-x-1/2",
           className,
         )}
+        onEscapeKeyDown={escape}
         {...props}
       >
         {children}
