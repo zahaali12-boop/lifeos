@@ -40,8 +40,7 @@ interface JournalForm {
   kind: string;
   postingDate: string;
   currency: string;
-  descriptionEn: string;
-  descriptionAr: string;
+  description: string;
   reference: string;
   autoReverseOn: string;
   customFields: CustomFieldValues;
@@ -52,7 +51,7 @@ const kinds = ["manual", "opening", "accrual", "allocation"];
 const statuses = ["", "draft", "pending_approval", "approved", "rejected", "posted", "cancelled"];
 
 function emptyForm(currency: string): JournalForm {
-  return { kind: "manual", postingDate: today(), currency, descriptionEn: "", descriptionAr: "", reference: "", autoReverseOn: "", customFields: {}, lines: [emptyLine(), emptyLine()] };
+  return { kind: "manual", postingDate: today(), currency, description: "", reference: "", autoReverseOn: "", customFields: {}, lines: [emptyLine(), emptyLine()] };
 }
 
 function toForm(journal: Journal): JournalForm {
@@ -60,8 +59,7 @@ function toForm(journal: Journal): JournalForm {
     kind: journal.kind,
     postingDate: journal.postingDate,
     currency: journal.currency,
-    descriptionEn: journal.description.en ?? "",
-    descriptionAr: journal.description.ar ?? "",
+    description: localized(journal.description),
     reference: journal.reference ?? "",
     autoReverseOn: journal.autoReverseOn ?? "",
     customFields: asCustomFieldValues(journal.customFields),
@@ -84,7 +82,8 @@ function toRequest(form: JournalForm): components["schemas"]["SaveJournalRequest
     kind: form.kind,
     postingDate: form.postingDate,
     currency: form.currency,
-    description: { en: form.descriptionEn, ...(form.descriptionAr ? { ar: form.descriptionAr } : {}) },
+    // One description, typed in whichever language (or both): every language reads the same text.
+    description: { en: form.description.trim(), ar: form.description.trim() },
     reference: form.reference || null,
     autoReverse: form.kind === "accrual" && Boolean(form.autoReverseOn),
     autoReverseOn: form.kind === "accrual" && form.autoReverseOn ? form.autoReverseOn : null,
@@ -428,11 +427,8 @@ export function JournalsPage() {
                 <Field label={t("accounting.currency")} required error={problem?.fields.currency}>
                   <CurrencyField value={editing.form.currency} onChange={(code) => { setEditing({ ...editing, form: { ...editing.form, currency: code } }); }} required data-testid="journal-currency" />
                 </Field>
-                <Field label={t("accounting.descriptionEn")} required>
-                  <TextField value={editing.form.descriptionEn} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, descriptionEn: e.target.value } }); }} required data-testid="journal-description" />
-                </Field>
-                <Field label={t("accounting.descriptionAr")}>
-                  <TextField value={editing.form.descriptionAr} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, descriptionAr: e.target.value } }); }} dir="rtl" />
+                <Field label={t("accounting.description")} required className="sm:col-span-2">
+                  <TextField value={editing.form.description} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, description: e.target.value } }); }} required dir="auto" data-testid="journal-description" />
                 </Field>
                 <Field label={t("accounting.reference")}>
                   <TextField value={editing.form.reference} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, reference: e.target.value } }); }} />
