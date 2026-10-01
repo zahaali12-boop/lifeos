@@ -1,0 +1,231 @@
+using System.Data;
+using System.Diagnostics;
+using System.Text.Json;
+using Dapper;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Npgsql;
+using Quicker.Kernel.Ids;
+using Quicker.Kernel.Tenancy;
+using Quicker.Messaging.Jobs;
+using Quicker.Observability;
+using Quicker.Persistence;
+
+namespace Quicker.Messaging.Outbox;
+
+/// <summary>
+/// Claims pending outbox messages with <c>FOR UPDATE SKIP LOCKED</c> in insertion order, one in flight per aggregate
+/// (a message waits until every earlier message of its aggregate is published or discarded, dead letters included,
+/// so order holds per aggregate and a poison message stops its aggregate until an operator retries or discards it),
+/// runs every registered
+/// handler in its own unit of work bound to the message's tenant, and marks the message published. A handler
+/// failure backs off exponentially (1 s → 1 h) and dead-letters after the configured attempts; the inbox makes
+/// redelivery to an already-successful handler a no-op.
+/// </summary>
+public sealed class OutboxDispatcher(
+    NpgsqlDataSource dataSource,
+    IUnitOfWorkFactory unitOfWorkFactory,
+    IServiceScopeFactory scopeFactory,
+    ITenantContextAccessor tenantContext,
+    EventHandlerRegistry registry,
+    IOptions<WorkerOptions> options,
+    ILogger<OutboxDispatcher> logger)
+{
+    /// <summary>Processes one batch; returns how many messages were claimed (0 means the queue is drained).</summary>
+    public async Task<int> RunOnceAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await using var claim = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+        var messages = (await connection.QueryAsync<OutboxMessage>(new CommandDefinition("""
+            SELECT id, seq, tenant_id, occurred_at, event_type, event_version, aggregate_type, aggregate_id, payload::text AS payload,
+                   correlation_id, causation_id, actor, published_at, attempts, next_attempt_at, last_error, dead_at,
+                   discarded_at, discarded_by, discard_reason
+            FROM ops.outbox_messages o
+            WHERE o.published_at IS NULL AND o.dead_at IS NULL AND o.next_attempt_at <= now()
+              AND NOT EXISTS (
+                SELECT 1 FROM ops.outbox_messages earlier
+                WHERE earlier.aggregate_id = o.aggregate_id AND earlier.published_at IS NULL AND earlier.discarded_at IS NULL AND earlier.seq < o.seq)
+            ORDER BY o.seq
+            LIMIT @batch
+            FOR UPDATE SKIP LOCKED
+            """, new { batch = options.Value.OutboxBatchSize }, claim, cancellationToken: cancellationToken))).ToList();
+
+        foreach (var message in messages)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var outcome = await DeliverAsync(message, cancellationToken);
+            if (outcome is null)
+            {
+                await connection.ExecuteAsync(new CommandDefinition("UPDATE ops.outbox_messages SET published_at = now(), last_error = NULL WHERE id = @id", new { id = message.Id }, claim, cancellationToken: cancellationToken));
+            }
+            else
+            {
+                var attempts = message.Attempts + 1;
+                var dead = attempts >= options.Value.OutboxMaxAttempts;
+                await connection.ExecuteAsync(new CommandDefinition("""
+                    UPDATE ops.outbox_messages
+                    SET attempts = @attempts, next_attempt_at = now() + make_interval(secs => @delay), last_error = @error, dead_at = CASE WHEN @dead THEN now() ELSE NULL END
+                    WHERE id = @id
+                    """, new { id = message.Id, attempts, delay = Backoff.Seconds(attempts), error = Truncate(outcome), dead }, claim, cancellationToken: cancellationToken));
+                if (dead)
+                {
+                    logger.LogError("Outbox message {EventId} ({EventType}) dead-lettered after {Attempts} attempts: {Error}", message.Id, message.EventType, attempts, outcome);
+                }
+            }
+        }
+
+        await claim.CommitAsync(cancellationToken);
+        return messages.Count;
+    }
+
+    /// <summary>Runs every typed handler and every observer; returns null when all succeeded, otherwise the first failure's description.</summary>
+    private async Task<string?> DeliverAsync(OutboxMessage message, CancellationToken cancellationToken)
+    {
+        foreach (var registration in registry.For(message.EventType))
+        {
+            var failure = await RunAsync(message, registration.HandlerName, (sp, ctx, ct) => InvokeHandlerAsync(sp, registration, message, ctx, ct), cancellationToken);
+            if (failure is not null)
+            {
+                return failure;
+            }
+        }
+
+        foreach (var observer in registry.Observers)
+        {
+            var failure = await RunAsync(message, observer.HandlerName, (sp, ctx, ct) => ((IIntegrationEventObserver)sp.GetRequiredService(observer.ObserverType)).ObserveAsync(message, ctx, ct), cancellationToken);
+            if (failure is not null)
+            {
+                return failure;
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<string?> RunAsync(OutboxMessage message, string handlerName, Func<IServiceProvider, EventContext, CancellationToken, Task> invoke, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleAsync(message, handlerName, invoke, cancellationToken);
+            return null;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Handler {Handler} failed for event {EventId} ({EventType}), attempt {Attempt}", handlerName, message.Id, message.EventType, message.Attempts + 1);
+            return $"{handlerName}: {ex.GetType().Name}: {ex.Message}";
+        }
+    }
+
+    private static async Task InvokeHandlerAsync(IServiceProvider services, EventHandlerRegistration registration, OutboxMessage message, EventContext context, CancellationToken cancellationToken)
+    {
+        var payload = JsonSerializer.Deserialize(message.Payload, registration.EventClrType, OutboxJson.Options)
+            ?? throw new InvalidOperationException($"Event {message.Id} payload could not be read as {registration.EventClrType.Name}.");
+        var handler = services.GetRequiredService(registration.HandlerType);
+        var method = registration.HandlerType.GetMethod("HandleAsync", [registration.EventClrType, typeof(EventContext), typeof(CancellationToken)])
+            ?? throw new InvalidOperationException($"{registration.HandlerType.Name} does not implement HandleAsync({registration.EventClrType.Name}).");
+        await (Task)method.Invoke(handler, [payload, context, cancellationToken])!;
+    }
+
+    private async Task HandleAsync(OutboxMessage message, string handlerName, Func<IServiceProvider, EventContext, CancellationToken, Task> invoke, CancellationToken cancellationToken)
+    {
+        using var activity = Telemetry.Outbox.StartActivity("event " + message.EventType, ActivityKind.Consumer);
+        activity?.SetTag("quicker.event_id", message.Id.ToString());
+        activity?.SetTag("quicker.event_type", message.EventType);
+        activity?.SetTag("quicker.handler", handlerName);
+        if (message.TenantId is { } tenantTag)
+        {
+            activity?.SetTag(Telemetry.TenantTag, tenantTag.ToString());
+        }
+
+        var requestId = "evt-" + message.Id.ToString("N")[^12..];
+        var context = message.ContextFor(requestId);
+        await using var scope = scopeFactory.CreateAsyncScope();
+        await using var unitOfWork = await unitOfWorkFactory.BeginAsync(context, cancellationToken: cancellationToken);
+        scope.ServiceProvider.GetRequiredService<IUnitOfWorkAccessor>().Set(unitOfWork);
+        using var ambient = tenantContext.Use(context);
+
+        // The inbox row is the idempotency record: inserted with the effect, so both commit or neither does.
+        var inserted = await unitOfWork.Connection.ExecuteAsync(new CommandDefinition(
+            "INSERT INTO ops.inbox (handler, event_id) VALUES (@handler, @id) ON CONFLICT DO NOTHING",
+            new { handler = handlerName, id = message.Id }, unitOfWork.Transaction, cancellationToken: cancellationToken));
+        if (inserted == 0)
+        {
+            await unitOfWork.RollbackAsync(cancellationToken);
+            return;
+        }
+
+        var eventContext = new EventContext(message.Id, message.TenantId is { } t ? new TenantId(t) : null, message.OccurredAt, message.CorrelationId, message.CausationId, message.Actor, message.Attempts + 1);
+        await invoke(scope.ServiceProvider, eventContext, cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+    }
+
+    private static string Truncate(string text) => text.Length <= 2000 ? text : text[..2000];
+}
+
+/// <summary>Operator actions on the outbox: dead letters, retries and discards (ADR-0010 "a UI page lists and retries dead letters").</summary>
+public sealed class OutboxAdmin(NpgsqlDataSource dataSource)
+{
+    public async Task<IReadOnlyList<OutboxMessage>> ListAsync(string state, Guid? tenantId, int limit, CancellationToken cancellationToken)
+    {
+        var filter = state switch
+        {
+            "dead" => "dead_at IS NOT NULL AND discarded_at IS NULL",
+            "discarded" => "discarded_at IS NOT NULL",
+            "published" => "published_at IS NOT NULL",
+            "pending" => "published_at IS NULL AND dead_at IS NULL",
+            _ => "TRUE",
+        };
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        return (await connection.QueryAsync<OutboxMessage>(new CommandDefinition($"""
+            SELECT id, seq, tenant_id, occurred_at, event_type, event_version, aggregate_type, aggregate_id, payload::text AS payload,
+                   correlation_id, causation_id, actor, published_at, attempts, next_attempt_at, last_error, dead_at,
+                   discarded_at, discarded_by, discard_reason
+            FROM ops.outbox_messages
+            WHERE {filter} AND (@tenant IS NULL OR tenant_id = @tenant)
+            ORDER BY seq DESC
+            LIMIT @limit
+            """, new { tenant = tenantId, limit = Math.Clamp(limit, 1, 500) }, cancellationToken: cancellationToken))).ToList();
+    }
+
+    /// <summary>
+    /// Puts a dead letter back in the queue with a fresh attempt budget; returns false when the id is unknown, not dead,
+    /// or discarded (its aggregate's later events may already be out, so delivering it now would break their order).
+    /// </summary>
+    public async Task<bool> RetryAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE ops.outbox_messages SET dead_at = NULL, attempts = 0, next_attempt_at = now(), last_error = NULL WHERE id = @id AND dead_at IS NOT NULL AND discarded_at IS NULL",
+            new { id }, cancellationToken: cancellationToken)) == 1;
+    }
+
+    /// <summary>
+    /// Gives up on a dead letter for good: its handlers will not run, the row keeps who decided, when and why, and the
+    /// later events of its aggregate are delivered. Returns false when the id is unknown, not dead or already discarded.
+    /// </summary>
+    public async Task<bool> DiscardAsync(Guid id, string reason, string discardedBy, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        ArgumentException.ThrowIfNullOrWhiteSpace(discardedBy);
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE ops.outbox_messages SET discarded_at = now(), discarded_by = @by, discard_reason = @reason WHERE id = @id AND dead_at IS NOT NULL AND discarded_at IS NULL",
+            new { id, by = discardedBy, reason = reason.Trim() }, cancellationToken: cancellationToken)) == 1;
+    }
+
+    /// <summary>
+    /// Removes published and discarded messages older than the retention (the archive partition of ADR-0010 is this
+    /// delete until reporting needs history).
+    /// </summary>
+    public async Task<int> ArchiveAsync(int olderThanDays, CancellationToken cancellationToken)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition("DELETE FROM ops.inbox i USING ops.outbox_messages o WHERE o.id = i.event_id AND (o.published_at < now() - make_interval(days => @days) OR o.discarded_at < now() - make_interval(days => @days))", new { days = olderThanDays }, cancellationToken: cancellationToken));
+        return await connection.ExecuteAsync(new CommandDefinition("DELETE FROM ops.outbox_messages WHERE published_at < now() - make_interval(days => @days) OR discarded_at < now() - make_interval(days => @days)", new { days = olderThanDays }, cancellationToken: cancellationToken));
+    }
+}

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Organization module contracts: company directory, exchange-rate resolution, fiscal-period resolution, working-day calendars, dimension sets and unit conversions (ADR-0011, ADR-0017, ADR-0026).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+
+</Project>

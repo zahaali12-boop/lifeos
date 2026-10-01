@@ -1,0 +1,161 @@
+/*
+ * Quicker design tokens (ADR-0013). Colours are AA-contrast pairs (every `*-fg` reads on its `*`), spacing and
+ * radii on a 4px grid, an Arabic-capable type stack, and motion that respects reduced-motion. Tailwind v4 reads the
+ * `@theme` block and exposes each token as a utility (bg-surface, text-fg-muted, rounded-md…). Dark mode is the
+ * `[data-theme="dark"]` attribute on <html>; RTL is `dir="rtl"` and only logical properties are used.
+ */
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Inter Variable", "IBM Plex Sans Arabic", system-ui, "Segoe UI", sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "Inter Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", menlo, monospace;
+  --color-canvas: var(--q-canvas);
+  --color-surface: var(--q-surface);
+  --color-surface-raised: var(--q-surface-raised);
+  --color-surface-sunken: var(--q-surface-sunken);
+  --color-fg: var(--q-fg);
+  --color-fg-muted: var(--q-fg-muted);
+  --color-fg-subtle: var(--q-fg-subtle);
+  --color-border: var(--q-border);
+  --color-border-strong: var(--q-border-strong);
+  --color-accent: var(--q-accent);
+  --color-accent-hover: var(--q-accent-hover);
+  --color-accent-fg: var(--q-accent-fg);
+  --color-accent-soft: var(--q-accent-soft);
+  --color-danger: var(--q-danger);
+  --color-danger-hover: var(--q-danger-hover);
+  --color-danger-fg: var(--q-danger-fg);
+  --color-danger-soft: var(--q-danger-soft);
+  --color-success: var(--q-success);
+  --color-success-fg: var(--q-success-fg);
+  --color-success-soft: var(--q-success-soft);
+  --color-warning: var(--q-warning);
+  --color-warning-fg: var(--q-warning-fg);
+  --color-warning-soft: var(--q-warning-soft);
+  --color-info-soft: var(--q-info-soft);
+  --color-focus: var(--q-focus);
+  --color-selection: var(--q-selection);
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 6%);
+  --shadow-md: 0 4px 12px -2px rgb(15 23 42 / 12%);
+  --shadow-lg: 0 16px 40px -8px rgb(15 23 42 / 18%);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --spacing-touch: 2.75rem; /* 44px minimum touch target on mobile */
+}
+
+:root {
+  color-scheme: light;
+
+  --q-canvas: #f6f7f9;
+  --q-surface: #fff;
+  --q-surface-raised: #fff;
+  --q-surface-sunken: #eef0f3;
+  --q-fg: #0f172a;
+  --q-fg-muted: #475569;
+  --q-fg-subtle: #586679; /* 4.6:1 on the sunken surface, the darkest background small text sits on */
+  --q-border: #e2e6ec;
+  --q-border-strong: #cbd2dc;
+  --q-accent: #1d4ed8;
+  --q-accent-hover: #1e40af;
+  --q-accent-fg: #fff;
+  --q-accent-soft: #e0e9ff;
+  --q-danger: #b91c1c;
+  --q-danger-hover: #991b1b;
+  --q-danger-fg: #fff;
+  --q-danger-soft: #fee2e2;
+  --q-success: #15803d;
+  --q-success-fg: #fff;
+  --q-success-soft: #dcfce7;
+  --q-warning: #854d0e;
+  --q-warning-fg: #fff;
+  --q-warning-soft: #fef3c7;
+  --q-info-soft: #e0f2fe;
+  --q-focus: #2563eb;
+  --q-selection: #dbeafe;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --q-canvas: #0b1220;
+  --q-surface: #111a2b;
+  --q-surface-raised: #172236;
+  --q-surface-sunken: #0d1526;
+  --q-fg: #e6ebf3;
+  --q-fg-muted: #a7b3c5;
+  --q-fg-subtle: #8593a8;
+  --q-border: #24304a;
+  --q-border-strong: #33415c;
+  --q-accent: #6d9cff;
+  --q-accent-hover: #8db1ff;
+  --q-accent-fg: #0b1220;
+  --q-accent-soft: #1b2c52;
+  --q-danger: #f87171;
+  --q-danger-hover: #fca5a5;
+  --q-danger-fg: #0b1220;
+  --q-danger-soft: #3f1d1d;
+  --q-success: #4ade80;
+  --q-success-fg: #0b1220;
+  --q-success-soft: #14321f;
+  --q-warning: #fbbf24;
+  --q-warning-fg: #0b1220;
+  --q-warning-soft: #3b2f0b;
+  --q-info-soft: #0f2a3d;
+  --q-focus: #93c5fd;
+  --q-selection: #1e3a8a;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background: var(--color-canvas);
+    color: var(--color-fg);
+    text-rendering: optimizelegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  html[lang="ar"] {
+    font-family: var(--font-arabic);
+  }
+
+  body {
+    margin: 0;
+    min-block-size: 100dvh;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-selection);
+  }
+
+  /* Eastern Arabic digits when the user prefers them (ADR-0027): the app sets the attribute per user. */
+  [data-digits="arab"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "locl";
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}

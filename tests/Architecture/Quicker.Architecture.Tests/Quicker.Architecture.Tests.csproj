@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The module walls (ARCHITECTURE §6): checked on the project files and on the compiled assemblies the API host loads. -->
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Host/Quicker.Api/Quicker.Api.csproj" />
+  </ItemGroup>
+
+</Project>

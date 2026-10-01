@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The demo seeder (roadmap 1.12): builds the demo tenant on a migrated database, reseeds it, and stays under a minute. -->
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <ProjectReference Include="../../../src/BuildingBlocks/Quicker.Testing/Quicker.Testing.csproj" />
+    <ProjectReference Include="../../../src/Host/Quicker.Migrator/Quicker.Migrator.csproj" />
+    <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity/Quicker.Identity.csproj" />
+    <ProjectReference Include="../../../src/Modules/Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
+  </ItemGroup>
+
+</Project>

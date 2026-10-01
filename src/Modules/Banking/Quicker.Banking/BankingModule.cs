@@ -1,0 +1,32 @@
+using Microsoft.Extensions.DependencyInjection;
+using Quicker.Accounting.Contracts;
+using Quicker.Banking.Application;
+using Quicker.Banking.Contracts;
+using Quicker.Banking.Persistence;
+using Quicker.Collaboration.Contracts;
+using Quicker.Identity.Contracts;
+using Quicker.Numbering.Contracts;
+using Quicker.Persistence.EntityFramework;
+namespace Quicker.Banking;
+
+public static class BankingModule
+{
+    public static IServiceCollection AddBankingModule(this IServiceCollection services)
+    {
+        // Entries of this module belong to its documents, which keep their own subledger (A-140).
+        services.AddSingleton(new PostingDocumentModule("banking"));
+        ArgumentNullException.ThrowIfNull(services);
+        PermissionCatalog.Register(BankingPermissions.All);
+        NumberedDocumentTypes.Register(new NumberedDocumentType(BankDocumentTypes.Payment, BankingPermissions.PaymentRead));
+        CustomFieldHosts.Register(new CustomFieldHost(BankDocumentTypes.Payment, "app.bnk_payments", "custom_fields"));
+        services.AddModuleDbContext<BankingDbContext>();
+        services.AddScoped<BankAccountService>();
+        services.AddScoped<PaymentService>();
+        services.AddScoped<IBankAccountDirectory>(static sp => sp.GetRequiredService<BankAccountService>());
+        // Comments, files, history and links on these records are shown to those who may read the records.
+        services.AddSingleton(new RecordReadPermission("bank_payment", BankingPermissions.PaymentRead));
+        services.AddSingleton(new RecordReadPermission("bank_account", BankingPermissions.BankAccountRead));
+        services.AddScoped<IRecordCompanies, BankingRecordCompanies>();
+        return services;
+    }
+}

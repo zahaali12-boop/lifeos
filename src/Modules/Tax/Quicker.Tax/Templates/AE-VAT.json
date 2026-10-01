@@ -1,0 +1,327 @@
+{
+  "code": "AE-VAT",
+  "country": "AE",
+  "version": "2026.1",
+  "name": {
+    "en": "United Arab Emirates VAT",
+    "ar": "ضريبة القيمة المضافة - الإمارات"
+  },
+  "family": "vat",
+  "roundingLevel": "line",
+  "taxPoint": "invoice",
+  "returnFrequency": "quarterly",
+  "einvoicingScheme": null,
+  "itemGroups": [
+    {
+      "code": "STANDARD",
+      "name": {
+        "en": "Standard-rated goods and services",
+        "ar": "سلع وخدمات بالنسبة الأساسية"
+      }
+    },
+    {
+      "code": "ZERO",
+      "name": {
+        "en": "Zero-rated supplies",
+        "ar": "توريدات بنسبة صفر"
+      }
+    },
+    {
+      "code": "EXEMPT",
+      "name": {
+        "en": "Exempt supplies",
+        "ar": "توريدات معفاة"
+      }
+    },
+    {
+      "code": "SERVICES",
+      "name": {
+        "en": "Services",
+        "ar": "خدمات"
+      }
+    },
+    {
+      "code": "OUT",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      }
+    }
+  ],
+  "partnerGroups": [
+    {
+      "code": "DOMESTIC",
+      "name": {
+        "en": "Domestic, registered",
+        "ar": "محلي مسجل"
+      }
+    },
+    {
+      "code": "DOMESTIC_UNREG",
+      "name": {
+        "en": "Domestic, not registered",
+        "ar": "محلي غير مسجل"
+      }
+    },
+    {
+      "code": "GCC",
+      "name": {
+        "en": "GCC registered",
+        "ar": "مسجل في دول الخليج"
+      }
+    },
+    {
+      "code": "FOREIGN",
+      "name": {
+        "en": "Outside the country",
+        "ar": "خارج الدولة"
+      }
+    }
+  ],
+  "codes": [
+    {
+      "code": "AE-S",
+      "name": {
+        "en": "Standard rate",
+        "ar": "النسبة الأساسية"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 5
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "1",
+        "salesTax": "1",
+        "purchaseBase": "9",
+        "purchaseTax": "9"
+      }
+    },
+    {
+      "code": "AE-Z",
+      "name": {
+        "en": "Zero rate",
+        "ar": "نسبة الصفر"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "4"
+      }
+    },
+    {
+      "code": "AE-E",
+      "name": {
+        "en": "Exempt",
+        "ar": "معفى"
+      },
+      "kind": "vat",
+      "treatment": "exempt",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "5"
+      },
+      "exemptionReasonCode": "VATEX-AE-EXEMPT",
+      "exemptionReason": {
+        "en": "Exempt supply under Article 46 of the Federal Decree-Law on VAT",
+        "ar": "توريد معفى بموجب المادة 46 من المرسوم بقانون اتحادي بشأن ضريبة القيمة المضافة"
+      }
+    },
+    {
+      "code": "AE-X",
+      "name": {
+        "en": "Export (zero rate)",
+        "ar": "تصدير (نسبة الصفر)"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "4"
+      }
+    },
+    {
+      "code": "AE-RC",
+      "name": {
+        "en": "Reverse charge on imported services",
+        "ar": "احتساب عكسي على الخدمات المستوردة"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 5
+        }
+      ],
+      "reverseCharge": true,
+      "recoverable": true,
+      "appliesTo": "services",
+      "boxes": {
+        "salesBase": "3",
+        "salesTax": "3",
+        "purchaseBase": "10",
+        "purchaseTax": "10"
+      }
+    },
+    {
+      "code": "AE-IMP",
+      "name": {
+        "en": "Reverse charge on imported goods",
+        "ar": "احتساب عكسي على السلع المستوردة"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 5
+        }
+      ],
+      "reverseCharge": true,
+      "recoverable": true,
+      "appliesTo": "goods",
+      "boxes": {
+        "salesBase": "6",
+        "salesTax": "6",
+        "purchaseBase": "10",
+        "purchaseTax": "10"
+      }
+    },
+    {
+      "code": "AE-O",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      },
+      "kind": "vat",
+      "treatment": "out_of_scope",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {}
+    }
+  ],
+  "rules": [
+    {
+      "direction": "sales",
+      "code": "AE-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "sales",
+      "code": "AE-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "sales",
+      "code": "AE-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "sales",
+      "code": "AE-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "sales",
+      "code": "AE-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "sales",
+      "code": "AE-X",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "sales",
+      "code": "AE-X",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-RC",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-IMP",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "AE-RC",
+      "partnerGroup": "FOREIGN"
+    }
+  ]
+}

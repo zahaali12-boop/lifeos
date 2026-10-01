@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Quicker">
+  <rect width="512" height="512" rx="96" fill="#0f766e"/>
+  <g fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round">
+    <path d="M112 176v-40a24 24 0 0 1 24-24h40"/>
+    <path d="M336 112h40a24 24 0 0 1 24 24v40"/>
+    <path d="M400 336v40a24 24 0 0 1-24 24h-40"/>
+    <path d="M176 400h-40a24 24 0 0 1-24-24v-40"/>
+    <path d="M176 208v96M232 208v96M288 208v96M336 208v96"/>
+  </g>
+</svg>

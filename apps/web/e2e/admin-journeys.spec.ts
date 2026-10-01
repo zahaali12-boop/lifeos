@@ -1,0 +1,188 @@
+import { readFileSync } from "node:fs";
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * The admin journeys of slice 1.10 in English and Arabic (ADR-0029): create a workspace, create a company with a
+ * custom field, invite a member, announce; every screen passes axe with no serious or critical violation; RTL is
+ * verified from the document direction and the mirrored layout.
+ */
+const password = "correct-horse-battery-staple";
+
+async function expectAccessible(page: Page): Promise<void> {
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
+  const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  expect(serious, serious.map((v) => `${v.id}: ${v.help}\n  ${v.nodes.map((n) => n.target.join(" ")).join("\n  ")}`).join("\n")).toEqual([]);
+}
+
+/** Clicks an entry of the primary navigation (the dashboard also links to the same screens). */
+async function nav(page: Page, name: string): Promise<void> {
+  await page.getByRole("navigation").getByRole("link", { name }).click();
+}
+
+async function signup(page: Page, language: "en" | "ar"): Promise<{ slug: string; email: string }> {
+  const slug = `e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const email = `owner-${slug}@example.test`;
+  await page.addInitScript((lang) => { window.localStorage.setItem("quicker.language", lang); }, language);
+  await page.goto("/signup");
+  await page.getByLabel(language === "en" ? /Workspace name/ : /اسم مساحة العمل/).fill("E2E " + slug);
+  await page.getByLabel(language === "en" ? /^Slug/ : /المعرّف/).fill(slug);
+  await page.getByLabel(language === "en" ? /Your name/ : /اسمك/).fill("Owner");
+  await page.getByLabel(language === "en" ? /^Email/ : /البريد/).fill(email);
+  await page.getByLabel(language === "en" ? /^Password/ : /كلمة المرور/).fill(password);
+  await page.getByRole("button", { name: language === "en" ? "Create workspace" : "إنشاء مساحة عمل" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(language === "en" ? "Welcome" : "أهلاً");
+  return { slug, email };
+}
+
+test("English: workspace, custom field, company, member invitation, announcement — all accessible", async ({ page }) => {
+  await signup(page, "en");
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  await expectAccessible(page);
+
+  // A custom field on companies.
+  await nav(page, "Custom fields");
+  await page.getByTestId("new-custom-field").click();
+  await page.getByLabel(/^Key/).fill("region");
+  await page.getByLabel(/Label \(English\)/).fill("Region");
+  await page.getByLabel(/^Type/).selectOption("select");
+  await page.getByLabel(/^Options/).fill("north, south");
+  await page.getByLabel(/required/i).first().check();
+  await page.getByTestId("save-custom-field").click();
+  await expect(page.getByRole("grid")).toContainText("region");
+  await expectAccessible(page);
+
+  // A company: the required custom field is enforced by the API and mapped to the field.
+  await nav(page, "Companies");
+  await page.getByTestId("new-company").click();
+  await page.getByLabel(/^Code/).fill("MAIN");
+  await page.getByLabel(/Legal name \(English\)/).fill("Main Trading Co.");
+  await page.getByTestId("save-company").click();
+  await expect(page.getByRole("alert")).toContainText("required");
+  await page.getByLabel("Region").selectOption("north");
+  await page.getByTestId("save-company").click();
+  await expect(page.getByRole("grid")).toContainText("MAIN");
+  await expectAccessible(page);
+
+  // The list exports what it shows: its visible columns, in its order, as CSV (UTF-8 with a byte order mark).
+  await page.getByTestId("grid-export").click();
+  const [csv] = await Promise.all([page.waitForEvent("download"), page.getByTestId("grid-export-csv").click()]);
+  expect(csv.suggestedFilename()).toMatch(/^Companies-\d{8}-\d{4}\.csv$/);
+  const csvText = readFileSync(await csv.path(), "utf8");
+  expect(csvText.startsWith("\uFEFFCode,Legal name,Country,Functional currency,Time zone,Status,Updated\r\n")).toBeTruthy();
+  expect(csvText).toContain("\r\nMAIN,Main Trading Co.,");
+
+  // A branch for the company; it becomes a value of the branch dimension.
+  await page.getByRole("grid").getByText("MAIN", { exact: true }).dblclick();
+  await page.getByTestId("new-branch").click();
+  await page.getByTestId("branch-code").fill("BGD");
+  await page.getByTestId("branch-name-en").fill("Baghdad");
+  await page.getByTestId("save-branch").click();
+  await expect(page.getByTestId("branch-row")).toHaveCount(1);
+  await expectAccessible(page);
+  await page.keyboard.press("Escape");
+
+  // The command palette finds the company.
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByPlaceholder(/Search/).fill("MA");
+  await expect(page.getByRole("dialog")).toContainText("Main Trading Co.");
+  await page.keyboard.press("Escape");
+
+  // A numbering series of its own for purchase orders: a template without {seq} is refused; the saved series opens with no counters yet.
+  await nav(page, "Numbering series");
+  await page.getByTestId("new-series").click();
+  await page.getByTestId("series-code").fill("PO-MAIN");
+  await page.getByTestId("series-type").selectOption("purchase_order");
+  await page.getByTestId("series-template").fill("PO-{company}-{yyyy}");
+  await page.getByTestId("save-series").click();
+  await expect(page.getByRole("dialog")).toContainText("{seq}");
+  await page.getByTestId("series-template").fill("PO-{company}-{yyyy}-{seq:4}");
+  await page.getByTestId("series-default").check();
+  await expectAccessible(page);
+  await page.getByTestId("save-series").click();
+  await expect(page.getByTestId("series-detail")).toContainText("Nothing has been numbered");
+  await expectAccessible(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("grid")).toContainText("PO-MAIN");
+
+  // A hierarchical "sales region" dimension: a region and a city under it.
+  await nav(page, "Dimensions");
+  await expect(page.getByRole("grid").first()).toContainText("BRANCH");
+  await page.getByRole("grid").first().getByText("BRANCH", { exact: true }).dblclick();
+  await expect(page.getByTestId("dimension-values")).toContainText("BGD");
+  await page.getByTestId("new-dimension").click();
+  await page.getByTestId("dimension-code").fill("REGION");
+  await page.getByTestId("dimension-name-en").fill("Sales region");
+  await page.getByTestId("dimension-name-ar").fill("منطقة المبيعات");
+  await page.getByLabel("Values form a tree").check();
+  await page.getByTestId("save-dimension").click();
+  await expect(page.getByTestId("dimension-values")).toContainText("REGION");
+  await page.getByTestId("new-value").click();
+  await page.getByTestId("value-code").fill("NORTH");
+  await page.getByTestId("value-name-en").fill("North");
+  await page.getByTestId("save-value").click();
+  await page.getByTestId("new-value").click();
+  await page.getByTestId("value-code").fill("MOSUL");
+  await page.getByTestId("value-name-en").fill("Mosul");
+  await page.getByLabel("Parent").selectOption({ label: "NORTH · North" });
+  await expectAccessible(page);
+  await page.getByTestId("save-value").click();
+  await expect(page.getByTestId("dimension-values").getByRole("grid")).toContainText("MOSUL");
+  await expectAccessible(page);
+
+  // A member is invited; an announcement reaches the inbox.
+  await nav(page, "Members");
+  await page.getByTestId("invite-member").click();
+  await page.getByLabel(/^Email/).fill("clerk@example.test");
+  await page.getByRole("button", { name: "Send invitation" }).click();
+  await expect(page.getByRole("grid")).toContainText("clerk@example.test");
+  await nav(page, "Notifications");
+  await page.getByTestId("announce").click();
+  await page.getByLabel(/Title \(English\)/).fill("Welcome aboard");
+  await page.getByTestId("send-announcement").click();
+  await expect(page.getByTestId("inbox")).toContainText("Welcome aboard");
+  await expectAccessible(page);
+
+  // Keyboard shortcuts overlay.
+  await page.keyboard.press("?");
+  await expect(page.getByRole("dialog")).toContainText("Keyboard shortcuts");
+});
+
+test("Arabic: the same journey renders right-to-left and stays accessible", async ({ page }) => {
+  await signup(page, "ar");
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+  await expectAccessible(page);
+
+  // The sidebar sits on the right in RTL: its box starts past the middle of the viewport.
+  const sidebar = page.getByRole("complementary");
+  const box = await sidebar.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box && viewport && box.x > viewport.width / 2).toBeTruthy();
+
+  await nav(page, "الشركات");
+  await page.getByTestId("new-company").click();
+  await page.getByLabel(/^الرمز/).fill("RTL1");
+  await page.getByLabel(/الاسم القانوني \(الإنجليزية\)/).fill("RTL Company");
+  await page.getByLabel(/الاسم القانوني \(العربية\)/).fill("شركة الاختبار");
+  await page.getByTestId("save-company").click();
+  await expect(page.getByRole("grid")).toContainText("شركة الاختبار");
+  await expectAccessible(page);
+  // An Excel export of the Arabic list: a workbook whose sheet reads right to left.
+  await page.getByTestId("grid-export").click();
+  const [xlsx] = await Promise.all([page.waitForEvent("download"), page.getByTestId("grid-export-xlsx").click()]);
+  expect(xlsx.suggestedFilename()).toMatch(/\.xlsx$/);
+  expect(readFileSync(await xlsx.path()).subarray(0, 2).toString("latin1")).toBe("PK");
+  await nav(page, "سلاسل الترقيم");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("سلاسل الترقيم");
+  await expectAccessible(page);
+  await nav(page, "الأبعاد");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("الأبعاد");
+  await expectAccessible(page);
+
+  // Eastern Arabic digits when chosen.
+  await page.getByTestId("language-menu").click();
+  await page.getByRole("menuitemradio", { name: /٠١٢٣/ }).click();
+  await nav(page, "لوحة المتابعة");
+  await expect(page.getByRole("main")).toContainText("١");
+});

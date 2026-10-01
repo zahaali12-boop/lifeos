@@ -1,14 +1,12 @@
 {
-  "name": "lifeos",
-  "version": "1.0.0",
-  "description": "Life OS - personal execution system",
+  "name": "quicker-monorepo",
   "private": true,
-  "dependencies": {
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/local-notifications": "^6.1.0"
+  "description": "Quicker ERP: web app, design system, API client and tooling",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22"
   },
-  "devDependencies": {
-    "@capacitor/cli": "^6.1.2"
+  "scripts": {
+    "check-diagrams": "pnpm --filter @quicker/tools check-diagrams docs"
   }
 }
