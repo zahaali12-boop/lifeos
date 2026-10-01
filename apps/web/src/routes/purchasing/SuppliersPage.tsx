@@ -562,7 +562,7 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
                     <TextField value={address.city} onChange={(e) => { setAddress({ ...address, city: e.target.value }); }} />
                   </Field>
                   <Field label={t("partners.country")} required>
-                    <CurrencyField value={address.country} onChange={(code) => { setAddress({ ...address, country: code }); }} required data-testid="address-country" />
+                    <TextField value={address.country} onChange={(e) => { setAddress({ ...address, country: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={2} required data-testid="address-country" />
                   </Field>
                   <Field label={t("partners.region")}>
                     <TextField value={address.region} onChange={(e) => { setAddress({ ...address, region: e.target.value }); }} />
@@ -670,7 +670,7 @@ function SupplierDialog({ partnerId, companyId, onClose, onChanged }: { partnerI
                 </Table>
                 <form onSubmit={submit(() => { addRegistration.mutate(); })} className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-4">
                   <Field label={t("partners.country")} required>
-                    <CurrencyField value={registration.country} onChange={(code) => { setRegistration({ ...registration, country: code }); }} required data-testid="registration-country" />
+                    <TextField value={registration.country} onChange={(e) => { setRegistration({ ...registration, country: e.target.value.toUpperCase() }); }} dir="ltr" maxLength={2} required data-testid="registration-country" />
                   </Field>
                   <Field label={t("partners.registrationType")}>
                     <SelectField value={registration.registrationType} onChange={(e) => { setRegistration({ ...registration, registrationType: e.target.value }); }}>

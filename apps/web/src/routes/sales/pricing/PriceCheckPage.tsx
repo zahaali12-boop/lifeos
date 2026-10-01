@@ -129,7 +129,7 @@ export function PriceCheckPage() {
             <TextField value={channel} onChange={(e) => { setChannel(e.target.value); }} dir="ltr" />
           </Field>
           <Field label={t("pricing.coupons")}>
-            <CurrencyField value={coupons} onChange={(code) => { setCoupons(code); }} allowEmpty data-testid="check-coupons" />
+            <TextField value={coupons} onChange={(e) => { setCoupons(e.target.value.toUpperCase()); }} dir="ltr" data-testid="check-coupons" />
           </Field>
           {mayOverride ? (
             <Field label={t("pricing.documentDiscountPct")}>

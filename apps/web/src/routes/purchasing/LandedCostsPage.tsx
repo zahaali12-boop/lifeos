@@ -208,7 +208,7 @@ export function LandedCostsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("partners.code")} required>
-                  <CurrencyField value={chargeType.code} onChange={(code) => { setChargeType({ ...chargeType, code: code }); }} required data-testid="charge-type-code" />
+                  <TextField value={chargeType.code} onChange={(e) => { setChargeType({ ...chargeType, code: e.target.value.toUpperCase() }); }} dir="ltr" required data-testid="charge-type-code" />
                 </Field>
                 <Field label={t("purchasing.defaultBasis")}>
                   <SelectField value={chargeType.basis} onChange={(e) => { setChargeType({ ...chargeType, basis: e.target.value }); }} data-testid="charge-type-basis">

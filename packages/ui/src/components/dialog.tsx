@@ -16,10 +16,10 @@ export interface DialogContentProps extends ComponentProps<typeof DialogPrimitiv
 
 /** Modal dialog on Radix: focus trap, escape, labelled by DialogTitle; centred, full-width on small screens. */
 export function DialogContent({ className, children, closeLabel, onEscapeKeyDown, ...props }: DialogContentProps) {
-  // Escape in an open list (a combobox inside the dialog) closes that list, not the dialog and the work in it.
+  // Escape in a field's open list (a picker marking itself with data-list-open) closes that list, not the dialog and
+  // the work in it. A dialog that is itself a search box (the command palette) still closes as before.
   const escape: DialogContentProps["onEscapeKeyDown"] = (event) => {
-    const focused = document.activeElement;
-    if (focused?.getAttribute("role") === "combobox" && focused.getAttribute("aria-expanded") === "true") {
+    if (document.activeElement?.getAttribute("data-list-open") === "true") {
       event.preventDefault();
     }
     onEscapeKeyDown?.(event);

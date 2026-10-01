@@ -132,6 +132,7 @@ export function CurrencyField({ value, onChange, allowEmpty = false, required, d
         value={shown}
         data-testid={testId}
         data-value={value}
+        data-list-open={open}
         onFocus={(e) => { setOpen(true); setActive(0); e.target.select(); }}
         onClick={() => { setOpen(true); }}
         onChange={(e) => {

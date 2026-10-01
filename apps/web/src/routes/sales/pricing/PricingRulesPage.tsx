@@ -770,7 +770,7 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
               </SelectField>
             </Field>
             <Field label={t("pricing.coupon")} description={form.kind === "coupon" ? undefined : t("pricing.couponHint")} required={form.kind === "coupon"}>
-              <CurrencyField value={form.couponCode} onChange={(code) => { patch({ couponCode: code }); }} required data-testid="promotion-coupon" />
+              <TextField value={form.couponCode} onChange={(e) => { patch({ couponCode: e.target.value.toUpperCase() }); }} required={form.kind === "coupon"} dir="ltr" data-testid="promotion-coupon" />
             </Field>
             <Field label={t("pricing.combination")}>
               <SelectField value={form.combination} onChange={(e) => { patch({ combination: e.target.value }); }}>
