@@ -3364,7 +3364,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=DIMENSION, dimension filters d.CODE=valueId, format=csv|xlsx; every row carries its ledger drill parameters */
+        /** Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=a dimension code or a grouping (partner, user, date, week, month, quarter, year, period, source, module, entry, document, kind, currency, branch, subledger, tax, role, due), dimension filters d.CODE=valueId, grouping filters g.KEY=value (~ for none), format=csv|xlsx; every row carries its ledger drill parameters */
         get: operations["getAccountingCompaniesByCompanyIdReportsTrialBalance"];
         put?: never;
         post?: never;
@@ -8630,6 +8630,9 @@ export interface components {
             closing: number | string;
             items: components["schemas"]["LedgerItem"][];
             nextCursor: null | string;
+            attributes?: null | {
+                [key: string]: string;
+            };
         };
         AccountSummary: {
             /** Format: uuid */
@@ -11636,7 +11639,10 @@ export interface components {
             /** Format: double */
             onTimePct: null | number | string;
         };
-        /** @description What a figure drills to: the ledger of the account over the same window with the same dimension filters. */
+        /**
+         * @description What a figure drills to: the ledger of the account over the same window with the same dimension filters and, for
+         *     a row of a built-in grouping, that grouping's value (query keys `g.KEY=value`; `~` for lines without one).
+         */
         LedgerDrill: {
             /** Format: uuid */
             accountId: string;
@@ -11645,6 +11651,9 @@ export interface components {
             /** Format: date */
             to: string;
             dimensions: {
+                [key: string]: string;
+            };
+            attributes: {
                 [key: string]: string;
             };
         };
@@ -18548,6 +18557,9 @@ export interface components {
             totals: components["schemas"]["TrialBalanceAmounts"];
             compareTotals: null | components["schemas"]["TrialBalanceAmounts"];
             balanced: boolean;
+            attributes?: null | {
+                [key: string]: string;
+            };
         };
         TrialBalanceAmounts: {
             /** Format: double */
@@ -18584,6 +18596,7 @@ export interface components {
             closing: number | string;
             compare: null | components["schemas"]["TrialBalanceAmounts"];
             drill: components["schemas"]["LedgerDrill"];
+            groupValue?: null | string;
         };
         UnreadCount: {
             /** Format: int32 */

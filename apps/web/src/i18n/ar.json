@@ -1799,7 +1799,37 @@
     "noWindows": "لا نوافذ: تسري حالات الفترات فقط.",
     "everyone": "الجميع",
     "allowFrom": "السماح من",
-    "allowTo": "السماح إلى"
+    "allowTo": "السماح إلى",
+    "groupingsJournal": "القيود",
+    "groupingsDimensions": "الأبعاد",
+    "groupings": {
+      "partner": "الشريك",
+      "user": "رُحِّل بواسطة",
+      "date": "اليوم",
+      "week": "الأسبوع",
+      "month": "الشهر",
+      "quarter": "الربع",
+      "year": "السنة",
+      "period": "الفترة المالية",
+      "source": "نوع المستند",
+      "module": "الوحدة",
+      "entry": "قيد اليومية",
+      "document": "المستند المصدر",
+      "kind": "نوع القيد",
+      "currency": "عملة المعاملة",
+      "branch": "الفرع",
+      "subledger": "الدفتر الفرعي",
+      "tax": "رمز الضريبة",
+      "role": "دور الترحيل",
+      "due": "شهر الاستحقاق"
+    },
+    "entryKinds": {
+      "opening": "افتتاحي",
+      "closing": "إقفال",
+      "reversal": "عكسي",
+      "manual": "يدوي",
+      "automatic": "تلقائي"
+    }
   },
   "mobile": {
     "receive": {

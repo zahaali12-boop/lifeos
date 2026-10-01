@@ -8947,7 +8947,7 @@
         "tags": [
           "Accounting"
         ],
-        "summary": "Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=DIMENSION, dimension filters d.CODE=valueId, format=csv|xlsx; every row carries its ledger drill parameters",
+        "summary": "Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=a dimension code or a grouping (partner, user, date, week, month, quarter, year, period, source, module, entry, document, kind, currency, branch, subledger, tax, role, due), dimension filters d.CODE=valueId, grouping filters g.KEY=value (~ for none), format=csv|xlsx; every row carries its ledger drill parameters",
         "operationId": "getAccountingCompaniesByCompanyIdReportsTrialBalance",
         "parameters": [
           {
@@ -25194,6 +25194,15 @@
               "null",
               "string"
             ]
+          },
+          "attributes": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
@@ -36584,7 +36593,8 @@
           "accountId",
           "from",
           "to",
-          "dimensions"
+          "dimensions",
+          "attributes"
         ],
         "type": "object",
         "properties": {
@@ -36609,9 +36619,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         },
-        "description": "What a figure drills to: the ledger of the account over the same window with the same dimension filters."
+        "description": "What a figure drills to: the ledger of the account over the same window with the same dimension filters and, for\na row of a built-in grouping, that grouping's value (query keys `g.KEY=value`; `~` for lines without one)."
       },
       "LedgerItem": {
         "required": [
@@ -61741,6 +61757,15 @@
           },
           "balanced": {
             "type": "boolean"
+          },
+          "attributes": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
@@ -61891,6 +61916,12 @@
           },
           "drill": {
             "$ref": "#/components/schemas/LedgerDrill"
+          },
+          "groupValue": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

@@ -30,6 +30,77 @@ public sealed class InquiryTests(ApiHostFixture host)
     private static JsonElement Row(JsonElement report, string code) => Rows(report).Single(r => r.GetProperty("accountCode").GetString() == code && r.GetProperty("dimensionValueCode").ValueKind == JsonValueKind.Null);
 
     [Fact]
+    public async Task The_trial_balance_groups_by_any_grouping_and_every_group_drills_to_exactly_its_lines()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var companyId = await owner.CompanyAsync("GRP", "IQD");
+        await owner.ChartFromTemplateAsync("IFRS_SME", "CH-GRP", companyId);
+        await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/posting-profiles/from-chart", new { });
+        var (_, cc1) = await owner.DimensionValueAsync("COST_CENTER", "CC-G1");
+        var landlord = (await owner.PostAsync("/api/v1/partners", new { code = "LANDLORD", legalName = new { en = "Tigris Properties", ar = "عقارات دجلة" }, isSupplier = true })).GetProperty("id").GetGuid();
+        var reports = $"/api/v1/accounting/companies/{companyId}/reports";
+
+        await PostJournalAsync(owner, companyId, "2026-01-15", "Go-live", [Line("1111", debit: 5000000m, subledgerType: "BANK", subledgerRef: Guid.NewGuid()), Line("2510", credit: 3000000m)], kind: "opening");
+        var rent = new { accountCode = "6110", debit = 1500000m, credit = 0m, partnerId = landlord, dimensions = new { COST_CENTER = cc1 } };
+        await PostJournalAsync(owner, companyId, "2026-09-05", "Rent September", [rent, Line("2170", credit: 1500000m)]);
+        await PostJournalAsync(owner, companyId, "2026-10-12", "Salaries October", [Line("6100", debit: 2000000m), Line("2190", credit: 2000000m)]);
+        await PostJournalAsync(owner, companyId, "2026-12-05", "Rent December", [rent, Line("2170", credit: 1500000m)]);
+
+        var plain = await owner.GetOkAsync($"{reports}/trial-balance?asOf=2026-12-31");
+        var plainDebit = plain.GetProperty("totals").GetProperty("debit").GetDecimal();
+        string[] groupings = ["partner", "user", "date", "week", "month", "quarter", "year", "period", "source", "module", "entry", "document", "kind", "currency", "branch", "subledger", "tax", "role", "due", "COST_CENTER"];
+        groupings.Length.ShouldBeGreaterThanOrEqualTo(15);
+        foreach (var grouping in groupings)
+        {
+            // Grouped, the books still balance and the groups add up to the ungrouped report.
+            var tb = await owner.GetOkAsync($"{reports}/trial-balance?asOf=2026-12-31&groupBy={grouping}");
+            tb.GetProperty("groupBy").GetString().ShouldBe(grouping);
+            tb.GetProperty("totals").GetProperty("closing").GetDecimal().ShouldBe(0m, grouping);
+            tb.GetProperty("totals").GetProperty("debit").GetDecimal().ShouldBe(plainDebit, grouping);
+
+            // Every grouped figure drills to a ledger that closes on it: the ledger is narrowed to the group's value.
+            foreach (var row in Rows(tb))
+            {
+                var drill = row.GetProperty("drill");
+                var query = new StringBuilder($"{reports}/ledger?accountId={drill.GetProperty("accountId").GetGuid()}&to={drill.GetProperty("to").GetString()}");
+                foreach (var dimension in drill.GetProperty("dimensions").EnumerateObject())
+                {
+                    query.Append($"&d.{dimension.Name}={dimension.Value.GetGuid()}");
+                }
+
+                foreach (var attribute in drill.GetProperty("attributes").EnumerateObject())
+                {
+                    query.Append($"&g.{attribute.Name}={Uri.EscapeDataString(attribute.Value.GetString()!)}");
+                }
+
+                var ledger = await owner.GetOkAsync(query.ToString());
+                ledger.GetProperty("closing").GetDecimal().ShouldBe(row.GetProperty("closing").GetDecimal(), $"{grouping} {row.GetProperty("accountCode").GetString()} {row.GetProperty("groupValue")}");
+            }
+        }
+
+        // The groups read as people and records, not ids.
+        var byPartner = Rows(await owner.GetOkAsync($"{reports}/trial-balance?asOf=2026-12-31&groupBy=partner"));
+        var landlordRow = byPartner.Single(r => r.GetProperty("dimensionValueId").ValueKind != JsonValueKind.Null);
+        landlordRow.GetProperty("dimensionValueCode").GetString().ShouldBe("LANDLORD");
+        landlordRow.GetProperty("dimensionValueName").GetProperty("ar").GetString().ShouldBe("عقارات دجلة");
+        landlordRow.GetProperty("closing").GetDecimal().ShouldBe(3000000m);
+        var byUser = Rows(await owner.GetOkAsync($"{reports}/trial-balance?asOf=2026-12-31&groupBy=user"));
+        byUser.ShouldAllBe(r => r.GetProperty("dimensionValueCode").GetString() == ws.OwnerEmail, "one person posted everything");
+        var byMonth = Rows(await owner.GetOkAsync($"{reports}/trial-balance?asOf=2026-12-31&groupBy=month")).Where(r => r.GetProperty("accountCode").GetString() == "6110").ToList();
+        byMonth.Select(r => (r.GetProperty("groupValue").GetString(), r.GetProperty("closing").GetDecimal())).ShouldBe([("2026-09", 1500000m), ("2026-12", 1500000m)]);
+        var byKind = Rows(await owner.GetOkAsync($"{reports}/trial-balance?asOf=2026-12-31&groupBy=kind")).Select(r => r.GetProperty("groupValue").GetString()).ToHashSet();
+        byKind.ShouldBe(["opening", "manual"], ignoreOrder: true);
+
+        // A filter on a grouping narrows the report itself; an unknown grouping is refused with the list.
+        var septemberOnly = await owner.GetOkAsync($"{reports}/trial-balance?asOf=2026-12-31&g.month=2026-09");
+        Row(septemberOnly, "6110").GetProperty("closing").GetDecimal().ShouldBe(1500000m);
+        var unknown = await owner.GetErrorAsync($"{reports}/trial-balance?groupBy=colour", HttpStatusCode.UnprocessableEntity);
+        unknown.Code.ShouldBe("inquiry.dimension_unknown", "the stable code of an unknown group-by, now listing the groupings too");
+        unknown.Problem.GetProperty("why").GetProperty("groupings").GetArrayLength().ShouldBeGreaterThanOrEqualTo(15);
+    }
+
+    [Fact]
     public async Task The_trial_balance_balances_at_any_date_and_every_figure_drills_to_its_lines()
     {
         var ws = await Api.SignupAsync();

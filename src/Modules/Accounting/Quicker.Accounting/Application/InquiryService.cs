@@ -5,12 +5,15 @@ using Microsoft.EntityFrameworkCore;
 using Quicker.Accounting.Contracts;
 using Quicker.Accounting.Persistence;
 using Quicker.Audit.Contracts;
+using Quicker.Identity.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
+using Quicker.Partners.Contracts;
 using Quicker.Persistence;
+using Quicker.Tax.Contracts;
 using Quicker.Web;
 using Quicker.Web.Exports;
 
@@ -23,13 +26,20 @@ namespace Quicker.Accounting.Application;
 /// read from the journal lines (functional or reporting currency), so the figures agree with the derived balances
 /// only when those are intact; the invariant harness checks that.
 /// </summary>
-public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IDimensionDirectory dimensions, IAuditSink audit, IClock clock, IIssuedNumbers issuedNumbers)
+public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor unitOfWork, ICompanyDirectory companies, IDimensionDirectory dimensions, IAuditSink audit, IClock clock, IIssuedNumbers issuedNumbers,
+    IPartnerDirectory partners, IMemberDirectory members, ITaxDirectory taxes)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly IReadOnlyDictionary<string, Guid> NoFilters = new Dictionary<string, Guid>(StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, string> NoAttributes = new Dictionary<string, string>(StringComparer.Ordinal);
     private static readonly IReadOnlyDictionary<string, string> NoText = new Dictionary<string, string>(StringComparer.Ordinal);
 
-    private sealed record Scope(CompanyInfo Company, string Basis, string Currency, DateOnly AsOf, DateOnly? From, IReadOnlyDictionary<string, Guid> Filters, string? GroupBy, bool IncludeClosing);
+    /// <summary>The report's frame. <c>GroupBy</c> is a dimension code or a built-in grouping key (<see cref="Grouping"/> set).</summary>
+    private sealed record Scope(CompanyInfo Company, string Basis, string Currency, DateOnly AsOf, DateOnly? From, IReadOnlyDictionary<string, Guid> Filters, string? GroupBy, bool IncludeClosing,
+        JournalGrouping? Grouping, IReadOnlyDictionary<string, string> Attributes);
+
+    /// <summary>How a built-in group's value reads: its id when it names a record, a code and a name.</summary>
+    private sealed record GroupLabel(Guid? Id, string? Code, IReadOnlyDictionary<string, string>? Name);
 
     private sealed record AggregateRow(Guid Account, string? Value, decimal Opening, decimal Debit, decimal Credit);
 
@@ -66,25 +76,42 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
         var keys = compare is null ? current.Keys.ToList() : current.Keys.Union(compare.Keys).ToList();
         var accountIds = keys.Select(static k => k.Account).Distinct().ToList();
         var accounts = await db.Accounts.AsNoTracking().Where(a => accountIds.Contains(a.Id)).ToDictionaryAsync(static a => a.Id, cancellationToken);
-        var values = await DimensionValuesAsync(keys.Select(static k => k.Value), cancellationToken);
+        var values = scope.Grouping is null ? await DimensionValuesAsync(keys.Select(static k => k.Value), cancellationToken) : new Dictionary<Guid, DimensionValueRow>();
+        var labels = scope.Grouping is { } grouping ? await GroupLabelsAsync(grouping, keys.Select(static k => k.Value), cancellationToken) : new Dictionary<string, GroupLabel>(StringComparer.Ordinal);
 
         var rows = new List<TrialBalanceRow>(keys.Count);
         foreach (var key in keys)
         {
             var account = accounts[key.Account];
             var amounts = current.GetValueOrDefault(key) ?? TrialBalanceAmounts.Zero;
-            var value = key.Value is { } v && Guid.TryParse(v, out var valueId) ? values.GetValueOrDefault(valueId) : null;
             var drillFilters = new Dictionary<string, Guid>(scope.Filters, StringComparer.Ordinal);
-            if (scope.GroupBy is { } groupBy && value is not null)
+            var drillAttributes = new Dictionary<string, string>(scope.Attributes, StringComparer.Ordinal);
+            Guid? groupId;
+            string? groupCode;
+            IReadOnlyDictionary<string, string>? groupName;
+            if (scope.Grouping is { } builtIn)
             {
-                drillFilters[groupBy] = value.Id;
+                // A built-in group drills to the ledger narrowed to that value (or to lines without one), so the ledger closes on the figure.
+                var label = key.Value is { } raw ? labels.GetValueOrDefault(raw) : null;
+                (groupId, groupCode, groupName) = (label?.Id, label?.Code ?? key.Value, label?.Name);
+                drillAttributes[builtIn.Key] = key.Value ?? JournalGroupings.None;
+            }
+            else
+            {
+                var value = key.Value is { } v && Guid.TryParse(v, out var valueId) ? values.GetValueOrDefault(valueId) : null;
+                if (scope.GroupBy is { } groupBy && value is not null)
+                {
+                    drillFilters[groupBy] = value.Id;
+                }
+
+                (groupId, groupCode, groupName) = (value?.Id, value?.Code, value is null ? null : Text(value.Name));
             }
 
             rows.Add(new TrialBalanceRow(account.Id, account.Code, account.Name.Values, account.Type, account.IsControl,
-                value?.Id, value?.Code, value is null ? null : Text(value.Name),
+                groupId, groupCode, groupName,
                 amounts.Opening, amounts.Debit, amounts.Credit, amounts.Closing,
                 compare?.GetValueOrDefault(key) ?? (compare is null ? null : TrialBalanceAmounts.Zero),
-                new LedgerDrill(account.Id, scope.From, scope.AsOf, drillFilters)));
+                new LedgerDrill(account.Id, scope.From, scope.AsOf, drillFilters, drillAttributes), key.Value));
         }
 
         rows.Sort(static (a, b) =>
@@ -97,7 +124,7 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
         var compareTotals = compare is null ? null : rows.Aggregate(TrialBalanceAmounts.Zero, static (sum, r) => sum.Add(r.Compare ?? TrialBalanceAmounts.Zero));
         // Books that balance show a zero opening total and equal movements, whatever the window; a dimension filter is a slice and need not.
         var balanced = totals.Opening == 0m && totals.Debit == totals.Credit;
-        return new TrialBalance(scope.Company.Id.Value, scope.Currency, scope.Basis, scope.AsOf, scope.From, query.CompareAsOf, compareFrom, scope.GroupBy, scope.Filters, scope.IncludeClosing, rows, totals, compareTotals, balanced);
+        return new TrialBalance(scope.Company.Id.Value, scope.Currency, scope.Basis, scope.AsOf, scope.From, query.CompareAsOf, compareFrom, scope.GroupBy, scope.Filters, scope.IncludeClosing, rows, totals, compareTotals, balanced, scope.Attributes);
     }
 
     // ------------------------------------------------------------------ account ledger
@@ -202,7 +229,7 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
         var last = rows.Count > 0 ? rows[^1] : null;
         var next = hasMore && last is not null ? Cursor.Encode(new LedgerCursor(last.PostingDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), last.Number, last.LineNo)) : null;
         return new AccountLedger(scope.Company.Id.Value, account.Id, account.Code, account.Name.Values, scope.Currency, scope.Basis, scope.From, scope.AsOf, scope.Filters,
-            summary.Opening, summary.Debit, summary.Credit, summary.Opening + summary.Debit - summary.Credit, items, next);
+            summary.Opening, summary.Debit, summary.Credit, summary.Opening + summary.Debit - summary.Credit, items, next, scope.Attributes);
     }
 
     // ------------------------------------------------------------------ balances by dimension
@@ -217,6 +244,11 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
         }
 
         var scope = scoped.Value;
+        if (scope.Grouping is not null)
+        {
+            return Error.Validation("inquiry.dimension_unknown", $"Dimension '{dimension}' does not exist.").WithWhy(("dimension", dimension));
+        }
+
         var type = string.IsNullOrWhiteSpace(accountType) ? null : accountType.Trim().ToLowerInvariant();
         if (type is not null && !AccountTypes.All.Contains(type, StringComparer.Ordinal))
         {
@@ -372,18 +404,34 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
             filters[normalized] = valueId;
         }
 
+        // Group by a dimension (its code) or by a built-in grouping (partner, user, month…); filter by built-in groupings too.
         string? groupBy = null;
+        JournalGrouping? grouping = null;
         if (!string.IsNullOrWhiteSpace(query.GroupBy))
         {
-            groupBy = query.GroupBy.Trim().ToUpperInvariant();
-            if (!known.Contains(groupBy))
+            grouping = JournalGroupings.Find(query.GroupBy);
+            groupBy = grouping?.Key ?? query.GroupBy.Trim().ToUpperInvariant();
+            if (grouping is null && !known.Contains(groupBy))
             {
-                return Error.Validation("inquiry.dimension_unknown", $"Dimension '{query.GroupBy}' does not exist.").WithWhy(("dimension", query.GroupBy), ("known", known.Order(StringComparer.Ordinal).ToList()));
+                return Error.Validation("inquiry.dimension_unknown", $"'{query.GroupBy}' is neither a dimension nor a grouping.")
+                    .WithWhy(("groupBy", query.GroupBy), ("dimensions", known.Order(StringComparer.Ordinal).ToList()), ("groupings", JournalGroupings.All.Select(static g => g.Key).ToList()));
             }
         }
 
+        var attributes = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (key, value) in query.Attributes ?? NoAttributes)
+        {
+            var attribute = JournalGroupings.Find(key);
+            if (attribute is null)
+            {
+                return Error.Validation("inquiry.grouping_unknown", $"'{key}' is not a grouping.").WithWhy(("filter", key), ("groupings", JournalGroupings.All.Select(static g => g.Key).ToList()));
+            }
+
+            attributes[attribute.Key] = value;
+        }
+
         var currency = basis == "rc" ? company.ReportingCurrency!.Value.Code : company.FunctionalCurrency.Code;
-        return new Scope(company, basis, currency, asOf, query.From, filters, groupBy, query.IncludeClosing);
+        return new Scope(company, basis, currency, asOf, query.From, filters, groupBy, query.IncludeClosing, grouping, attributes);
     }
 
     /// <summary>The shared predicate: company, date ceiling, closing entries, dimension filters on the set's values; parameters named for Dapper.</summary>
@@ -407,6 +455,23 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
             i++;
         }
 
+        var a = 0;
+        foreach (var (key, value) in scope.Attributes)
+        {
+            var sql = JournalGroupings.Find(key)!.Sql;
+            if (value == JournalGroupings.None)
+            {
+                where += $" AND ({sql}) IS NULL";
+            }
+            else
+            {
+                parameters.Add("av" + a, value);
+                where += $" AND ({sql}) = @av{a}";
+            }
+
+            a++;
+        }
+
         return (where, parameters);
     }
 
@@ -416,7 +481,7 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
         var (where, parameters) = Where(scope, asOf);
         parameters.Add("from", (from ?? DateOnly.MinValue).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         parameters.Add("groupBy", scope.GroupBy);
-        var groupExpr = scope.GroupBy is null ? "NULL::text" : "ds.values->>@groupBy";
+        var groupExpr = scope.Grouping is { } grouping ? grouping.Sql : scope.GroupBy is null ? "NULL::text" : "ds.values->>@groupBy";
         var sfx = scope.Basis;
         var rows = await uow.Connection.QueryAsync<AggregateRow>(new CommandDefinition($"""
             SELECT l.account_id AS account, {groupExpr} AS value,
@@ -430,6 +495,71 @@ public sealed class InquiryService(AccountingDbContext db, IUnitOfWorkAccessor u
             GROUP BY l.account_id, {groupExpr}
             """, parameters, uow.Transaction, cancellationToken: cancellationToken));
         return rows.ToDictionary(static r => (r.Account, r.Value), static r => new TrialBalanceAmounts(r.Opening, r.Debit, r.Credit, r.Opening + r.Debit - r.Credit));
+    }
+
+    /// <summary>The code and name of each value of a built-in grouping that names a record (partner, user, branch, period, tax code).</summary>
+    private async Task<Dictionary<string, GroupLabel>> GroupLabelsAsync(JournalGrouping grouping, IEnumerable<string?> values, CancellationToken cancellationToken)
+    {
+        var ids = values.Where(static v => v is not null).Select(static v => Guid.TryParse(v, out var id) ? id : Guid.Empty).Where(static id => id != Guid.Empty).Distinct().ToList();
+        var labels = new Dictionary<string, GroupLabel>(StringComparer.Ordinal);
+        if (ids.Count == 0)
+        {
+            return labels;
+        }
+
+        static string Key(Guid id) => id.ToString("D");
+        var uow = unitOfWork.Current;
+        switch (grouping.Kind)
+        {
+            case GroupingKind.Partner:
+                foreach (var (id, partner) in await partners.DescribeAsync(ids, cancellationToken))
+                {
+                    labels[Key(id)] = new GroupLabel(id, partner.Code, partner.Name.Values);
+                }
+
+                break;
+            case GroupingKind.User:
+                foreach (var member in await members.ListActiveAsync(cancellationToken))
+                {
+                    if (ids.Contains(member.UserId.Value))
+                    {
+                        labels[Key(member.UserId.Value)] = new GroupLabel(member.UserId.Value, member.Email, new Dictionary<string, string>(StringComparer.Ordinal) { ["en"] = member.DisplayName });
+                    }
+                }
+
+                break;
+            case GroupingKind.TaxCode:
+                foreach (var (id, code) in await taxes.DescribeCodesAsync(ids, cancellationToken))
+                {
+                    labels[Key(id)] = new GroupLabel(id, code.Code, code.Name.Values);
+                }
+
+                break;
+            case GroupingKind.Branch:
+                foreach (var row in await uow.Connection.QueryAsync<DimensionValueRow>(new CommandDefinition(
+                    "SELECT id, code, name_i18n::text AS name FROM app.org_branches WHERE id = ANY(@ids)", new { ids }, uow.Transaction, cancellationToken: cancellationToken)))
+                {
+                    labels[Key(row.Id)] = new GroupLabel(row.Id, row.Code, Text(row.Name));
+                }
+
+                break;
+            case GroupingKind.FiscalPeriod:
+                foreach (var row in await uow.Connection.QueryAsync<DimensionValueRow>(new CommandDefinition("""
+                    SELECT p.id, y.code || '-P' || lpad(p.number::text, 2, '0') AS code,
+                           json_build_object('en', to_char(p.starts_on, 'YYYY-MM-DD') || ' – ' || to_char(p.ends_on, 'YYYY-MM-DD'))::text AS name
+                    FROM app.org_fiscal_periods p JOIN app.org_fiscal_years y ON y.tenant_id = p.tenant_id AND y.id = p.fiscal_year_id
+                    WHERE p.id = ANY(@ids)
+                    """, new { ids }, uow.Transaction, cancellationToken: cancellationToken)))
+                {
+                    labels[Key(row.Id)] = new GroupLabel(row.Id, row.Code, Text(row.Name));
+                }
+
+                break;
+            case GroupingKind.Text:
+                break;
+        }
+
+        return labels;
     }
 
     private async Task<Dictionary<Guid, DimensionValueRow>> DimensionValuesAsync(IEnumerable<string?> values, CancellationToken cancellationToken)

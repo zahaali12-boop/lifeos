@@ -15,6 +15,10 @@ type TrialBalance = components["schemas"]["TrialBalance"];
 type TrialBalanceRow = components["schemas"]["TrialBalanceRow"];
 type Dimension = components["schemas"]["DimensionSummary"];
 
+/** The built-in groupings the API offers besides the dimensions (A-156), in the order the list shows them. */
+const groupings = ["partner", "user", "date", "week", "month", "quarter", "year", "period", "source", "module", "entry", "document", "kind", "currency", "branch", "subledger", "tax", "role", "due"] as const;
+const isGrouping = (key: string): boolean => (groupings as readonly string[]).includes(key);
+
 /** One dimension filter row: its own dimension and value pickers, the value list fetched for whichever dimension is chosen. */
 function DimensionFilterRow({ dimensions, taken, dimensionCode, valueId, onChange, onRemove }: { dimensions: Dimension[]; taken: Set<string>; dimensionCode: string; valueId: string; onChange: (next: { dimensionCode: string; valueId: string }) => void; onRemove: () => void }) {
   const { t } = useTranslation();
@@ -53,7 +57,7 @@ function DimensionFilterRow({ dimensions, taken, dimensionCode, valueId, onChang
   );
 }
 
-/** The trial balance at any date: movement window, comparative, basis, one dimension filter or grouping; every row drills to its ledger. */
+/** The trial balance at any date: movement window, comparative, basis, dimension filters, and grouping by a dimension or any of the journal groupings; every row drills to its ledger. */
 export function TrialBalancePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -90,10 +94,32 @@ export function TrialBalancePage() {
     for (const [code, valueId] of Object.entries(row.drill.dimensions)) {
       drill[`d.${code}`] = valueId;
     }
+    for (const [key, value] of Object.entries(row.drill.attributes)) {
+      drill[`g.${key}`] = value;
+    }
     void navigate({ to: "/accounting/ledger", search: drill });
   };
 
   const data: TrialBalance | undefined = report.data;
+  const groupLabel = !data?.groupBy ? "" : isGrouping(data.groupBy) ? t(`accounting.groupings.${data.groupBy}`) : localized(dimensions.data?.find((d) => d.code === data.groupBy)?.name) || data.groupBy;
+  /** A group as it reads: a record's code and name, a document type or entry kind in words, a date or code as it is. */
+  const groupText = (row: TrialBalanceRow): string => {
+    const code = row.dimensionValueCode;
+    if (!code) {
+      return t("accounting.unassigned");
+    }
+    if (row.dimensionValueName) {
+      return `${code} · ${localized(row.dimensionValueName)}`;
+    }
+    switch (data?.groupBy) {
+      case "source":
+        return t(`numbering.documentTypes.${code}`, { defaultValue: code });
+      case "kind":
+        return t(`accounting.entryKinds.${code}`, { defaultValue: code });
+      default:
+        return code;
+    }
+  };
   const problem = report.error ? toFormProblem(report.error, t("accounting.loadFailed")) : null;
   const minorUnits = 2;
   const compare = Boolean(data?.compareAsOf);
@@ -134,13 +160,24 @@ export function TrialBalancePage() {
           </SelectField>
         </Field>
         <Field label={t("accounting.groupBy")}>
-          <SelectField value={groupBy} onChange={(e) => { setGroupBy(e.target.value); }}>
+          <SelectField value={groupBy} onChange={(e) => { setGroupBy(e.target.value); }} data-testid="tb-group-by">
             <option value="">{t("accounting.noGrouping")}</option>
-            {(dimensions.data ?? []).map((d) => (
-              <option key={d.id} value={d.code}>
-                {localized(d.name)}
-              </option>
-            ))}
+            <optgroup label={t("accounting.groupingsJournal")}>
+              {groupings.map((key) => (
+                <option key={key} value={key}>
+                  {t(`accounting.groupings.${key}`)}
+                </option>
+              ))}
+            </optgroup>
+            {(dimensions.data ?? []).length > 0 ? (
+              <optgroup label={t("accounting.groupingsDimensions")}>
+                {(dimensions.data ?? []).map((d) => (
+                  <option key={d.id} value={d.code}>
+                    {localized(d.name)}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
           </SelectField>
         </Field>
       </div>
@@ -182,7 +219,7 @@ export function TrialBalancePage() {
               <TableRow>
                 <TableHead>{t("accounting.accountCode")}</TableHead>
                 <TableHead>{t("accounting.accountName")}</TableHead>
-                {data.groupBy ? <TableHead>{data.groupBy}</TableHead> : null}
+                {data.groupBy ? <TableHead>{groupLabel}</TableHead> : null}
                 <TableHead className="text-end">{t("accounting.opening")}</TableHead>
                 <TableHead className="text-end">{t("accounting.debit")}</TableHead>
                 <TableHead className="text-end">{t("accounting.credit")}</TableHead>
@@ -192,14 +229,14 @@ export function TrialBalancePage() {
             </TableHeader>
             <TableBody>
               {data.rows.map((row) => (
-                <TableRow key={`${row.accountId}-${row.dimensionValueId ?? ""}`} className="cursor-pointer" onClick={() => { openLedger(row); }} data-testid="tb-row">
+                <TableRow key={`${row.accountId}-${row.groupValue ?? row.dimensionValueId ?? ""}`} className="cursor-pointer" onClick={() => { openLedger(row); }} data-testid="tb-row">
                   <TableCell dir="ltr">
                     <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => { openLedger(row); }}>
                       {row.accountCode}
                     </button>
                   </TableCell>
                   <TableCell>{localized(row.accountName)}</TableCell>
-                  {data.groupBy ? <TableCell>{row.dimensionValueCode ? `${row.dimensionValueCode} · ${localized(row.dimensionValueName)}` : t("accounting.unassigned")}</TableCell> : null}
+                  {data.groupBy ? <TableCell dir="auto" data-testid="tb-group">{groupText(row)}</TableCell> : null}
                   <TableNumberCell><Amount value={row.opening} minorUnits={minorUnits} /></TableNumberCell>
                   <TableNumberCell><Amount value={row.debit} minorUnits={minorUnits} /></TableNumberCell>
                   <TableNumberCell><Amount value={row.credit} minorUnits={minorUnits} /></TableNumberCell>

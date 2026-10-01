@@ -91,7 +91,8 @@ export function withFilters<T extends object>(base: T, filters: Record<string, s
 }
 
 export function dimensionFilters(search: Record<string, string | undefined>): Record<string, string> {
-  return Object.fromEntries(Object.entries(search).filter((pair): pair is [string, string] => pair[0].startsWith("d.") && typeof pair[1] === "string"));
+  // Dimension filters (d.CODE) and grouping filters (g.KEY) a drilled figure carries to its ledger.
+  return Object.fromEntries(Object.entries(search).filter((pair): pair is [string, string] => (pair[0].startsWith("d.") || pair[0].startsWith("g.")) && typeof pair[1] === "string"));
 }
 
 /** A journal line's source document by its number, linked to the document's screen when it has one (purchase invoices, receipts, stock documents, payments, manual journals…). */

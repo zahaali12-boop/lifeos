@@ -12,7 +12,8 @@ public sealed record InquiryQuery(
     string? Basis = null,
     string? GroupBy = null,
     bool IncludeClosing = false,
-    IReadOnlyDictionary<string, Guid>? Filters = null);
+    IReadOnlyDictionary<string, Guid>? Filters = null,
+    IReadOnlyDictionary<string, string>? Attributes = null);
 
 public sealed record TrialBalanceAmounts(decimal Opening, decimal Debit, decimal Credit, decimal Closing)
 {
@@ -25,8 +26,11 @@ public sealed record TrialBalanceAmounts(decimal Opening, decimal Debit, decimal
     }
 }
 
-/// <summary>What a figure drills to: the ledger of the account over the same window with the same dimension filters.</summary>
-public sealed record LedgerDrill(Guid AccountId, DateOnly? From, DateOnly To, IReadOnlyDictionary<string, Guid> Dimensions);
+/// <summary>
+/// What a figure drills to: the ledger of the account over the same window with the same dimension filters and, for
+/// a row of a built-in grouping, that grouping's value (query keys <c>g.KEY=value</c>; <c>~</c> for lines without one).
+/// </summary>
+public sealed record LedgerDrill(Guid AccountId, DateOnly? From, DateOnly To, IReadOnlyDictionary<string, Guid> Dimensions, IReadOnlyDictionary<string, string> Attributes);
 
 public sealed record TrialBalanceRow(
     Guid AccountId,
@@ -42,7 +46,8 @@ public sealed record TrialBalanceRow(
     decimal Credit,
     decimal Closing,
     TrialBalanceAmounts? Compare,
-    LedgerDrill Drill);
+    LedgerDrill Drill,
+    string? GroupValue = null);
 
 public sealed record TrialBalance(
     Guid CompanyId,
@@ -58,7 +63,8 @@ public sealed record TrialBalance(
     IReadOnlyList<TrialBalanceRow> Rows,
     TrialBalanceAmounts Totals,
     TrialBalanceAmounts? CompareTotals,
-    bool Balanced);
+    bool Balanced,
+    IReadOnlyDictionary<string, string>? Attributes = null);
 
 public sealed record LedgerItem(
     Guid LineId,
@@ -101,7 +107,8 @@ public sealed record AccountLedger(
     decimal Credit,
     decimal Closing,
     IReadOnlyList<LedgerItem> Items,
-    string? NextCursor);
+    string? NextCursor,
+    IReadOnlyDictionary<string, string>? Attributes = null);
 
 public sealed record DimensionBalanceRow(
     Guid? ValueId,

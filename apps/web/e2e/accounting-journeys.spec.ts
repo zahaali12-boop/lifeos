@@ -105,6 +105,20 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await expect(page.getByTestId("ledger-line")).toContainText("September rent");
   await expectAccessible(page);
 
+  // Grouped by who posted (one of the journal groupings, next to the dimensions): each row names the person and
+  // still drills to exactly its lines.
+  await nav(page, "Trial balance");
+  expect(await page.getByTestId("tb-group-by").locator("optgroup").first().locator("option").count()).toBeGreaterThanOrEqual(15);
+  await page.getByTestId("tb-group-by").selectOption("user");
+  await expect(page.getByRole("columnheader", { name: "Posted by" })).toBeVisible();
+  await expect(page.getByTestId("tb-group").first()).toContainText(`owner-${slug}@example.test`);
+  await expect(page.getByTestId("tb-status")).toContainText("Balanced");
+  await page.getByTestId("tb-group-by").selectOption("month");
+  await expect(page.getByTestId("tb-row").filter({ hasText: "6110" }).getByTestId("tb-group")).toHaveText(/^\d{4}-\d{2}$/u);
+  await expectAccessible(page);
+  await page.getByTestId("tb-row").filter({ hasText: "6110" }).getByRole("button", { name: "6110" }).click();
+  await expect(page.getByTestId("ledger-line")).toHaveCount(1);
+
   // Posting rules: the chart's profile is in use; a new version adds a narrower rule (purchase-invoice expenses to rent) and takes over.
   await nav(page, "Posting rules");
   await expect(page.getByTestId("posting-profile")).toBeVisible();

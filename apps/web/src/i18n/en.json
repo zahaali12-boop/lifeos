@@ -1799,7 +1799,37 @@
     "noWindows": "No windows: only the period states apply.",
     "everyone": "Everyone",
     "allowFrom": "Allow from",
-    "allowTo": "Allow to"
+    "allowTo": "Allow to",
+    "groupingsJournal": "Journal",
+    "groupingsDimensions": "Dimensions",
+    "groupings": {
+      "partner": "Partner",
+      "user": "Posted by",
+      "date": "Day",
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year",
+      "period": "Fiscal period",
+      "source": "Document type",
+      "module": "Module",
+      "entry": "Journal entry",
+      "document": "Source document",
+      "kind": "Entry kind",
+      "currency": "Transaction currency",
+      "branch": "Branch",
+      "subledger": "Subledger",
+      "tax": "Tax code",
+      "role": "Posting role",
+      "due": "Due month"
+    },
+    "entryKinds": {
+      "opening": "Opening",
+      "closing": "Closing",
+      "reversal": "Reversal",
+      "manual": "Manual",
+      "automatic": "Automatic"
+    }
   },
   "mobile": {
     "receive": {

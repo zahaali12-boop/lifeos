@@ -162,6 +162,8 @@ public sealed class ModuleBoundaryTests
     /// <summary>Modules that use each other's contracts on purpose (no assembly cycle: contracts reference only the kernel).</summary>
     private static readonly Dictionary<string, string> MutualDependencies = new(StringComparer.Ordinal)
     {
+        ["Accounting ↔ Partners"] = "partners post through the ledger, and the trial balance grouped by partner names each partner (A-156)",
+        ["Accounting ↔ Tax"] = "tax posts through the ledger, and the trial balance grouped by tax code names each code (A-156)",
         ["Audit ↔ Identity"] = "identity's changes are audited, and the audit trail names and filters by the caller",
         ["Inventory ↔ Items"] = "stock reads the item master, and the item master's per-warehouse settings check the warehouse",
         ["Items ↔ Tax"] = "an item or category names its tax group, which tax owns; tax reads the item's group to determine a line's code",

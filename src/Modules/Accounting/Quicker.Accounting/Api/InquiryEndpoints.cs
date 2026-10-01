@@ -24,7 +24,7 @@ public static class InquiryEndpoints
                 return ApiProblems.From(FormatInvalid(format));
             }
 
-            var report = await service.TrialBalanceAsync(companyId, new InquiryQuery(asOf, from, compareAsOf, basis, groupBy, includeClosing ?? false, DimensionFilters(http)), ct);
+            var report = await service.TrialBalanceAsync(companyId, new InquiryQuery(asOf, from, compareAsOf, basis, groupBy, includeClosing ?? false, DimensionFilters(http), GroupFilters(http)), ct);
             if (report.IsFailure)
             {
                 return ApiProblems.From(report.Error!);
@@ -39,7 +39,7 @@ public static class InquiryEndpoints
             return TypedResults.File(file.Bytes, file.ContentType, file.FileName);
         })
             .RequirePermission(AccountingPermissions.JournalRead)
-            .WithSummary("Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=DIMENSION, dimension filters d.CODE=valueId, format=csv|xlsx; every row carries its ledger drill parameters");
+            .WithSummary("Trial balance at asOf (today by default) with opening/movement/closing when from is given, a comparative (compareAsOf), basis fc|rc, groupBy=a dimension code or a grouping (partner, user, date, week, month, quarter, year, period, source, module, entry, document, kind, currency, branch, subledger, tax, role, due), dimension filters d.CODE=valueId, grouping filters g.KEY=value (~ for none), format=csv|xlsx; every row carries its ledger drill parameters");
 
         reports.MapGet("/ledger", async Task<Results<Ok<AccountLedger>, FileContentHttpResult, ProblemHttpResult>> (Guid companyId, HttpRequest http, Guid? accountId, string? accountCode, DateOnly? from, DateOnly? to, string? basis, bool? includeClosing, int? limit, string? cursor, string? format, InquiryService service, CancellationToken ct) =>
         {
@@ -54,7 +54,7 @@ public static class InquiryEndpoints
             }
 
             var page = format is null ? new PageRequest(limit, cursor) : new PageRequest(PageRequest.MaxLimit * 50, null);
-            var ledger = await service.LedgerAsync(companyId, accountId, accountCode, new InquiryQuery(to, from, null, basis, null, includeClosing ?? false, DimensionFilters(http)), page, ct);
+            var ledger = await service.LedgerAsync(companyId, accountId, accountCode, new InquiryQuery(to, from, null, basis, null, includeClosing ?? false, DimensionFilters(http), GroupFilters(http)), page, ct);
             if (ledger.IsFailure)
             {
                 return ApiProblems.From(ledger.Error!);
@@ -72,7 +72,7 @@ public static class InquiryEndpoints
             .WithSummary("Account ledger (accountId or accountCode) from a date to a date with opening, running balance and the source document of every line (sourceLink where the platform knows the document); paged by limit/cursor; format=csv|xlsx exports up to 10,000 lines");
 
         reports.MapGet("/dimension-balances", async (Guid companyId, HttpRequest http, string dimension, DateOnly? asOf, DateOnly? from, string? accountType, Guid? accountId, string? basis, bool? includeClosing, InquiryService service, CancellationToken ct) =>
-            ApiProblems.Ok(await service.DimensionBalancesAsync(companyId, dimension, accountType, accountId, new InquiryQuery(asOf, from, null, basis, null, includeClosing ?? false, DimensionFilters(http)), ct)))
+            ApiProblems.Ok(await service.DimensionBalancesAsync(companyId, dimension, accountType, accountId, new InquiryQuery(asOf, from, null, basis, null, includeClosing ?? false, DimensionFilters(http), GroupFilters(http)), ct)))
             .RequirePermission(AccountingPermissions.JournalRead)
             .WithSummary("Balances per value of one dimension (lines without the dimension are the row without a value), optionally for one account type or account; the same window and filter parameters as the trial balance");
 
@@ -90,6 +90,21 @@ public static class InquiryEndpoints
             if (key.StartsWith("d.", StringComparison.OrdinalIgnoreCase) && key.Length > 2 && Guid.TryParse(values.LastOrDefault(), out var valueId))
             {
                 filters[key[2..]] = valueId;
+            }
+        }
+
+        return filters;
+    }
+
+    /// <summary>Filters on the built-in groupings: query keys <c>g.KEY=value</c> (<c>~</c> selects lines without a value).</summary>
+    private static Dictionary<string, string> GroupFilters(HttpRequest http)
+    {
+        var filters = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (key, values) in http.Query)
+        {
+            if (key.StartsWith("g.", StringComparison.OrdinalIgnoreCase) && key.Length > 2 && values.LastOrDefault() is { Length: > 0 } value)
+            {
+                filters[key[2..]] = value;
             }
         }
 
