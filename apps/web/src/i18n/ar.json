@@ -1829,7 +1829,9 @@
       "reversal": "عكسي",
       "manual": "يدوي",
       "automatic": "تلقائي"
-    }
+    },
+    "costCentre": "مركز التكلفة",
+    "costCentreOfLine": "مركز التكلفة للسطر {line}"
   },
   "mobile": {
     "receive": {

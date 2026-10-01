@@ -65,12 +65,12 @@ test("English: journal lines with a cost centre and a supplier, refused without 
   await page.getByTestId("post-journal").click();
   await expect(detail.getByRole("alert")).toContainText("COST_CENTER");
 
-  // The line details: the cost centre (required by the account) and the supplier (the account is a control account).
+  // The cost centre (required by the account) in its own column on the line; the supplier (the account is a control
+  // account) and a description in the line's details.
   await page.getByTestId("edit-journal").click();
-  await page.getByTestId("line-details-toggle-0").click();
-  const rentDetails = page.getByTestId("line-details-0");
-  await expect(rentDetails.getByText("Cost centre")).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Cost centre" })).toBeVisible();
   await page.getByTestId("line-dimension-0-COST_CENTER").selectOption({ label: "CC-OPS · Operations" });
+  await page.getByTestId("line-details-toggle-0").click();
   await page.getByTestId("line-description-0").fill("Head office, October");
   await page.getByTestId("line-details-toggle-1").click();
   await expect(page.getByTestId("line-details-1").getByText("Supplier")).toBeVisible();
@@ -80,15 +80,15 @@ test("English: journal lines with a cost centre and a supplier, refused without 
   await expect(detail).toContainText("Draft");
   const details = detail.getByTestId("line-details");
   await expect(details.first()).toContainText("Head office, October");
-  await expect(details.first()).toContainText("CC-OPS Operations");
+  await expect(detail.getByTestId("journal-line-cost-centre").first()).toHaveText("CC-OPS · Operations");
   await expect(details.last()).toContainText("Supplier: LANDLORD Tigris Properties");
 
   // Another edit keeps the details (saving an edit used to drop them), then the journal posts.
   await page.getByTestId("edit-journal").click();
-  await expect(page.getByTestId("line-details-toggle-0").locator("xpath=..")).toContainText("2");
+  await expect(page.getByTestId("line-details-toggle-0").locator("xpath=..")).toContainText("1");
   await page.getByTestId("journal-description").fill("October rent, head office");
   await page.getByTestId("save-journal").click();
-  await expect(detail.getByTestId("line-details").first()).toContainText("CC-OPS Operations");
+  await expect(detail.getByTestId("journal-line-cost-centre").first()).toHaveText("CC-OPS · Operations");
   await expect(detail.getByTestId("line-details").last()).toContainText("LANDLORD");
   await page.getByTestId("post-journal").click();
   await expect(detail).toContainText("Posted");

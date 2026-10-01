@@ -19,7 +19,7 @@ import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type 
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs } from "../inventory/shared";
 import { JournalImportDialog } from "./JournalImport";
-import { emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
+import { costCentre, CostCentreSelect, costCentreText, emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
 import { CurrencyField } from "../CurrencyField";
 
@@ -152,6 +152,8 @@ export function JournalsPage() {
     (journal.data?.lines ?? []).map((l) => l.accountId),
     (editing?.form.lines ?? []).map((l) => l.accountCode),
   );
+  // The cost centre has its own column (the other dimensions stay in each line's details).
+  const hasCostCentre = reference.dimensions.some((d) => d.code === costCentre);
 
   const journals = useInfiniteQuery({
     queryKey: ["journals", companyId, status],
@@ -325,6 +327,7 @@ export function JournalsPage() {
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>{t("accounting.account")}</TableHead>
+                    {hasCostCentre ? <TableHead>{t("accounting.costCentre")}</TableHead> : null}
                     <TableHead className="text-end">{t("accounting.debit")}</TableHead>
                     <TableHead className="text-end">{t("accounting.credit")}</TableHead>
                   </TableRow>
@@ -335,14 +338,15 @@ export function JournalsPage() {
                       <TableCell>{String(line.lineNo)}</TableCell>
                       <TableCell>
                         <span dir="ltr">{line.accountCode}</span> {localized(line.accountName)}
-                        <LineDetailsSummary dimensions={line.dimensions} subledgerType={line.subledgerType} subledgerRef={line.subledgerRef} description={line.description} reference={reference} />
+                        <LineDetailsSummary dimensions={Object.fromEntries(Object.entries(line.dimensions).filter(([code]) => code !== costCentre))} subledgerType={line.subledgerType} subledgerRef={line.subledgerRef} description={line.description} reference={reference} />
                       </TableCell>
+                      {hasCostCentre ? <TableCell data-testid="journal-line-cost-centre">{costCentreText(line.dimensions, reference)}</TableCell> : null}
                       <TableNumberCell><Amount value={line.debit} /></TableNumberCell>
                       <TableNumberCell><Amount value={line.credit} /></TableNumberCell>
                     </TableRow>
                   ))}
                   <TableRow className="font-semibold">
-                    <TableCell colSpan={2}>{t("accounting.totals")}</TableCell>
+                    <TableCell colSpan={hasCostCentre ? 3 : 2}>{t("accounting.totals")}</TableCell>
                     <TableNumberCell><Amount value={detail.totalDebit} /></TableNumberCell>
                     <TableNumberCell><Amount value={detail.totalCredit} /></TableNumberCell>
                   </TableRow>
@@ -443,6 +447,7 @@ export function JournalsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("accounting.accountCode")}</TableHead>
+                    {hasCostCentre ? <TableHead>{t("accounting.costCentre")}</TableHead> : null}
                     <TableHead className="text-end">{t("accounting.debit")}</TableHead>
                     <TableHead className="text-end">{t("accounting.credit")}</TableHead>
                     <TableHead />
@@ -451,7 +456,7 @@ export function JournalsPage() {
                 <TableBody>
                   {editing.form.lines.map((line, index) => {
                     const account = reference.accounts.get(line.accountCode.trim());
-                    const extras = Object.keys(line.dimensions).length + (line.subledgerRef ? 1 : 0) + (line.description.trim() ? 1 : 0);
+                    const extras = Object.keys(line.dimensions).filter((code) => code !== costCentre).length + (line.subledgerRef ? 1 : 0) + (line.description.trim() ? 1 : 0);
                     return (
                     <Fragment key={index}>
                     <TableRow>
@@ -459,6 +464,20 @@ export function JournalsPage() {
                         <TextField aria-label={t("accounting.accountCode")} value={line.accountCode} onChange={(e) => { updateLine(index, { accountCode: e.target.value, ...(reference.accounts.get(e.target.value.trim())?.subledgerType === line.subledgerType ? {} : { subledgerType: "", subledgerRef: "" }) }); }} dir="ltr" data-testid={`line-account-${index}`} />
                         {account ? <p className="mt-0.5 truncate text-xs text-fg-muted">{localized(account.name)}</p> : null}
                       </TableCell>
+                      {hasCostCentre ? (
+                        <TableCell>
+                          <CostCentreSelect
+                            label={t("accounting.costCentreOfLine", { line: index + 1 })}
+                            values={line.dimensions}
+                            reference={reference}
+                            emptyLabel="—"
+                            // An account whose rules block the cost centre takes none (the server refuses it too).
+                            disabled={(account ? reference.rulesByAccount.get(account.id) ?? [] : []).some((r) => r.dimensionCode === costCentre && r.rule === "blocked")}
+                            onChange={(dimensions) => { updateLine(index, { dimensions }); }}
+                            testId={`line-dimension-${String(index)}-${costCentre}`}
+                          />
+                        </TableCell>
+                      ) : null}
                       <TableNumberCell>
                         <TextField aria-label={t("accounting.debit")} inputMode="decimal" value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value, credit: e.target.value ? "" : line.credit }); }} dir="ltr" className="text-end" data-testid={`line-debit-${index}`} />
                       </TableNumberCell>
@@ -487,7 +506,7 @@ export function JournalsPage() {
                     </TableRow>
                     {line.showDetails ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="bg-surface-sunken/40">
+                        <TableCell colSpan={hasCostCentre ? 5 : 4} className="bg-surface-sunken/40">
                           <LineDetailsEditor index={index} account={account} details={line} reference={reference} onChange={(patch) => { updateLine(index, patch); }} />
                         </TableCell>
                       </TableRow>
@@ -502,6 +521,7 @@ export function JournalsPage() {
                         {t("accounting.addLine")}
                       </Button>
                     </TableCell>
+                    {hasCostCentre ? <TableCell /> : null}
                     <TableNumberCell><Amount value={sum(editing.form.lines, "debit")} /></TableNumberCell>
                     <TableNumberCell><Amount value={sum(editing.form.lines, "credit")} /></TableNumberCell>
                     <TableCell />

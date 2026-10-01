@@ -79,6 +79,48 @@ export function DimensionSelects({ testIdPrefix, values, reference, emptyLabel, 
   );
 }
 
+/** The cost centre, the dimension a line is most often analysed by: shown as its own column wherever lines are entered. */
+export const costCentre = "COST_CENTER";
+
+/**
+ * A line's cost centre in a table cell (the other dimensions stay in the line's details). Renders nothing when the
+ * cost centre dimension is inactive; the value lives in the line's dimensions like any other.
+ */
+export function CostCentreSelect({ values, reference, onChange, emptyLabel, label, testId, disabled }: { values: Record<string, string>; reference: LineDimensionReference; onChange: (values: Record<string, string>) => void; emptyLabel: string; label: string; testId?: string; disabled?: boolean }) {
+  const dimension = reference.dimensions.find((d) => d.code === costCentre);
+  if (!dimension) {
+    return null;
+  }
+  const options = reference.valuesByDimension.get(costCentre) ?? [];
+  return (
+    <SelectField
+      aria-label={label}
+      value={values[costCentre] ?? ""}
+      onChange={(e) => {
+        const rest = Object.fromEntries(Object.entries(values).filter(([code]) => code !== costCentre));
+        onChange(e.target.value ? { ...rest, [costCentre]: e.target.value } : rest);
+      }}
+      disabled={disabled}
+      data-testid={testId}
+    >
+      <option value="">{emptyLabel}</option>
+      {options.filter((v) => v.isActive || v.id === values[costCentre]).map((v) => (
+        <option key={v.id} value={v.id}>{`${v.code} · ${localized(v.name)}`}</option>
+      ))}
+    </SelectField>
+  );
+}
+
+/** The cost centre a line carries, as "CC-1 · Head office", or an empty string. */
+export function costCentreText(values: Record<string, string> | null | undefined, reference: LineDimensionReference): string {
+  const valueId = values?.[costCentre];
+  if (!valueId) {
+    return "";
+  }
+  const value = reference.valuesByDimension.get(costCentre)?.find((v) => v.id === valueId);
+  return value ? `${value.code} · ${localized(value.name)}` : valueId.slice(0, 8);
+}
+
 /**
  * Everything the line details need for one company: its chart's accounts by code, the dimensions a line can carry
  * (the branch is the journal's, not a line's), their values, each used account's dimension rules, and the suppliers
@@ -143,7 +185,7 @@ export function LineDetailsEditor({ index, account, details, reference, onChange
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid={`line-details-${index}`}>
-      {reference.dimensions.filter((d) => ruleFor(d)?.rule !== "blocked").map((dimension) => {
+      {reference.dimensions.filter((d) => d.code !== costCentre && ruleFor(d)?.rule !== "blocked").map((dimension) => {
         const rule = ruleFor(dimension);
         const options = reference.valuesByDimension.get(dimension.code) ?? [];
         const fallback = rule?.defaultValueId ? options.find((v) => v.id === rule.defaultValueId) : undefined;

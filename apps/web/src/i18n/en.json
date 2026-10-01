@@ -1829,7 +1829,9 @@
       "reversal": "Reversal",
       "manual": "Manual",
       "automatic": "Automatic"
-    }
+    },
+    "costCentre": "Cost centre",
+    "costCentreOfLine": "Cost centre of line {line}"
   },
   "mobile": {
     "receive": {
