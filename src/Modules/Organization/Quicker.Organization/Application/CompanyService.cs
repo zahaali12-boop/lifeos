@@ -590,7 +590,7 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         return new CompanyInfo(new CompanyId(company.Id), company.Code, company.LegalName, company.Country, functional, reporting, company.TimeZone, company.DefaultLanguage,
             company.RoundingMode == "half_even" ? RoundingMode.HalfEven : RoundingMode.HalfAwayFromZero,
             company.CostingMethod, company.CostingScope, company.TaxRoundingMode, company.NegativeStockPolicy, company.BankRevaluationMode,
-            company.FiscalCalendarId, company.BusinessCalendarId, company.IsActive, company.ChartId, company.PostingProfileId);
+            company.FiscalCalendarId, company.BusinessCalendarId, company.IsActive, company.ChartId, company.PostingProfileId, company.Address, company.RegistrationNumbers);
     }
 
     // ------------------------------------------------------------------ mapping

@@ -3,7 +3,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Quicker.Messaging;
 
-public sealed record EmailMessage(string To, string Subject, string TextBody, string? HtmlBody = null, string? ToName = null, IReadOnlyDictionary<string, string>? Headers = null);
+/// <summary>A file sent with an email: a rendered PDF, say (roadmap 5.9).</summary>
+public sealed record EmailAttachment(string FileName, string ContentType, ReadOnlyMemory<byte> Content);
+
+public sealed record EmailMessage(string To, string Subject, string TextBody, string? HtmlBody = null, string? ToName = null, IReadOnlyDictionary<string, string>? Headers = null, IReadOnlyList<EmailAttachment>? Attachments = null);
 
 /// <summary>Sends transactional email. The SMTP/API provider implementation ships with the Collaboration module (M1.8).</summary>
 public interface IEmailSender

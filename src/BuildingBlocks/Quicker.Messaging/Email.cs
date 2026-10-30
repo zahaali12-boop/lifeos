@@ -59,6 +59,12 @@ public sealed class SmtpEmailSender(EmailOptions options) : IEmailSender
             }
         }
 
+        foreach (var attachment in message.Attachments ?? [])
+        {
+            // The stream is owned by the MailMessage and disposed with it.
+            mail.Attachments.Add(new Attachment(new MemoryStream(attachment.Content.ToArray()), attachment.FileName, attachment.ContentType));
+        }
+
         using var client = new SmtpClient(options.SmtpHost, options.SmtpPort)
         {
             EnableSsl = options.UseStartTls,

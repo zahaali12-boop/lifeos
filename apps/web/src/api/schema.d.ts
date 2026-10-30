@@ -9416,6 +9416,213 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/print/document-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The document types that print, each with its variants (the tax invoice and the pro forma of an invoice, say) */
+        get: operations["getPrintDocumentTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The document rendered as HTML for the browser's print preview: the same template the PDF uses; a draft invoice is refused as a tax invoice (print it pro forma) */
+        get: operations["getPrintPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tenant's print templates (the shipped ones copied in on first use), by document type */
+        get: operations["getPrintTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/templates/{templateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The template with its current version's HTML, CSS and sample data */
+        get: operations["getPrintTemplatesByTemplateId"];
+        /** Edits the template: new HTML or CSS becomes a new version; name, language mode, paper, scope, default and active change in place */
+        put: operations["putPrintTemplatesByTemplateId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/templates/{templateId}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A copy of the template for a company or a branch, from its current version */
+        post: operations["postPrintTemplatesByTemplateIdCopy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/templates/{templateId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The template's versions, newest first */
+        get: operations["getPrintTemplatesByTemplateIdVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/templates/{templateId}/rollback/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Makes an earlier version current again, as a new version with its content */
+        post: operations["postPrintTemplatesByTemplateIdRollbackByVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/templates/{templateId}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The template rendered with its sample data, as HTML */
+        get: operations["getPrintTemplatesByTemplateIdPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/renders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The renders of a document, newest first, with their status and whether an evidence copy is kept */
+        get: operations["getPrintRenders"];
+        put?: never;
+        /** Asks for the PDF: an identical render already made is reused, otherwise the worker renders it (poll the render until ready, then fetch its file) */
+        post: operations["postPrintRenders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/renders/{renderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The render's status, size, hash and error */
+        get: operations["getPrintRendersByRenderId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/renders/{renderId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The PDF of a ready render */
+        get: operations["getPrintRendersByRenderIdFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/emails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The emails sent for a document, newest first */
+        get: operations["getPrintEmails"];
+        put?: never;
+        /** Emails the document's PDF to the partner's address or the one given; the worker renders first when it must, and the send is logged on the document */
+        post: operations["postPrintEmails"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -10897,6 +11104,18 @@ export interface components {
             warehouseId: string;
             /** Format: date */
             orderDate?: null | string;
+        };
+        /** @description A copy of a template for a company or a branch, starting from the source's current version. */
+        CopyPrintTemplateRequest: {
+            code: string;
+            name?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            languageMode?: null | string;
         };
         /** @description The replacement of an entry (its lines as a posting request; the company is the original's) and why. */
         CorrectEntryRequest: {
@@ -14623,6 +14842,134 @@ export interface components {
             hasFloorBlocks: boolean;
             hasFloorWarnings: boolean;
         };
+        PrintDocumentTypeSummary: {
+            documentType: string;
+            variants: components["schemas"]["PrintVariantSummary"][];
+        };
+        PrintEmailRequest: {
+            documentType: string;
+            /** Format: uuid */
+            documentId?: null | string;
+            parameters?: null | {
+                [key: string]: string;
+            };
+            /** @default standard */
+            variant: string;
+            /** Format: uuid */
+            templateId?: null | string;
+            to?: null | string;
+            subject?: null | string;
+            message?: null | string;
+        };
+        PrintEmailSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            renderId: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: null | string;
+            to: string;
+            toName: null | string;
+            subject: string;
+            message: null | string;
+            status: string;
+            error: null | string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** Format: date-time */
+            sentAt: null | string;
+        };
+        PrintRenderSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: null | string;
+            parameters: components["schemas"]["JsonElement"];
+            variant: string;
+            /** Format: uuid */
+            templateId: string;
+            /** Format: int32 */
+            templateVersion: number | string;
+            languageMode: string;
+            title: string;
+            number: string;
+            fileName: string;
+            isFinal: boolean;
+            isEvidence: boolean;
+            status: string;
+            /** Format: int64 */
+            sizeBytes: null | number | string;
+            sha256: null | string;
+            error: null | string;
+            /** Format: uuid */
+            jobId: null | string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** Format: date-time */
+            renderedAt: null | string;
+            reused: boolean;
+        };
+        /** @description What to print: the document, the variant (tax invoice or pro forma), and which template when not the default. */
+        PrintRequest: {
+            documentType: string;
+            /** Format: uuid */
+            documentId?: null | string;
+            parameters?: null | {
+                [key: string]: string;
+            };
+            /** @default standard */
+            variant: string;
+            /** Format: uuid */
+            templateId?: null | string;
+        };
+        PrintTemplateSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            documentType: string;
+            variant: string;
+            name: {
+                [key: string]: string;
+            };
+            languageMode: string;
+            paper: string;
+            /** Format: uuid */
+            companyId: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            isDefault: boolean;
+            isSystem: boolean;
+            isActive: boolean;
+            /** Format: int32 */
+            currentVersion: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+            html?: null | string;
+            css?: null | string;
+            sampleData?: unknown;
+        };
+        PrintTemplateVersionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            version: number | string;
+            note: null | string;
+            /** Format: uuid */
+            publishedBy: null | string;
+            /** Format: date-time */
+            publishedAt: string;
+            isCurrent: boolean;
+        };
+        PrintVariantSummary: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+        };
         /** @description A promise to pay on an item: the date the customer promised, and what they said; a null date clears the promise. */
         PromiseToPayRequest: {
             /** Format: date */
@@ -17885,6 +18232,23 @@ export interface components {
             notes?: null | string;
             partnerIds?: null | string[];
             customerGroupIds?: null | string[];
+        };
+        /** @description An edit of a template: a new version of its HTML and CSS, and the settings that are not versioned. */
+        SavePrintTemplateRequest: {
+            name?: null | {
+                [key: string]: string;
+            };
+            languageMode?: null | string;
+            paper?: null | string;
+            html?: null | string;
+            css?: null | string;
+            isDefault?: null | boolean;
+            isActive?: null | boolean;
+            /** Format: uuid */
+            companyId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            note?: null | string;
         };
         SavePromotionRequest: {
             /** Format: uuid */
@@ -38443,6 +38807,352 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    getPrintDocumentTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintDocumentTypeSummary"][];
+                };
+            };
+        };
+    };
+    getPrintPreview: {
+        parameters: {
+            query: {
+                documentType: string;
+                documentId?: string;
+                variant?: string;
+                templateId?: string;
+                companyId?: string;
+                partnerId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPrintTemplates: {
+        parameters: {
+            query?: {
+                documentType?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintTemplateSummary"][];
+                };
+            };
+        };
+    };
+    getPrintTemplatesByTemplateId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintTemplateSummary"];
+                };
+            };
+        };
+    };
+    putPrintTemplatesByTemplateId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePrintTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintTemplateSummary"];
+                };
+            };
+        };
+    };
+    postPrintTemplatesByTemplateIdCopy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopyPrintTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintTemplateSummary"];
+                };
+            };
+        };
+    };
+    getPrintTemplatesByTemplateIdVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintTemplateVersionSummary"][];
+                };
+            };
+        };
+    };
+    postPrintTemplatesByTemplateIdRollbackByVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintTemplateSummary"];
+                };
+            };
+        };
+    };
+    getPrintTemplatesByTemplateIdPreview: {
+        parameters: {
+            query?: {
+                version?: number | string;
+            };
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPrintRenders: {
+        parameters: {
+            query: {
+                documentType: string;
+                documentId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintRenderSummary"][];
+                };
+            };
+        };
+    };
+    postPrintRenders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrintRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintRenderSummary"];
+                };
+            };
+        };
+    };
+    getPrintRendersByRenderId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                renderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintRenderSummary"];
+                };
+            };
+        };
+    };
+    getPrintRendersByRenderIdFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                renderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPrintEmails: {
+        parameters: {
+            query: {
+                documentType: string;
+                documentId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintEmailSummary"][];
+                };
+            };
+        };
+    };
+    postPrintEmails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrintEmailRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintEmailSummary"];
                 };
             };
         };

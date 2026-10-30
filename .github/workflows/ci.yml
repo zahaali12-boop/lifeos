@@ -71,6 +71,15 @@ jobs:
           sudo apt-get install -y -qq postgresql-client-17
           /usr/lib/postgresql/17/bin/pg_dump --version
 
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Chromium for the print pipeline tests (the Playwright build the web journeys use)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @quicker/web exec playwright install --with-deps chromium
       - name: Restore
         run: dotnet restore Quicker.sln
 

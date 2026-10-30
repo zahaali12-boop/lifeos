@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans.ttf"); font-weight: 400; }
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans-Bold.ttf"); font-weight: 700; }
+@page { size: {{ paper }}; margin: 14mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Sans", sans-serif; font-size: 8pt; color: #666; } }
+{{ css }}
+</style>
+</head>
+<body class="{{ mode }} {{ variant }}">
+{{ if document.is_proforma }}<div class="watermark">{{ L.proforma_watermark }}</div>{{ else if document.status == "draft" }}<div class="watermark">{{ L.draft_watermark }}</div>{{ else if document.status == "cancelled" }}<div class="watermark">{{ L.cancelled_watermark }}</div>{{ end }}
+<div class="sheet">
+  <header class="doc-header">
+    <div class="company">
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+      {{ if company.tax_number }}<p>{{ L.tax_number }}: <span class="ltr">{{ company.tax_number | html.escape }}</span></p>{{ end }}
+      {{ if branch }}<p>{{ branch.name | html.escape }}</p>{{ end }}
+    </div>
+    <div class="doc">
+      <p class="title">{{ title | html.escape }}</p>
+      <p class="number">{{ number | html.escape }}</p>
+      <table>
+        <tr><td class="k">{{ L.document_date }}</td><td class="v">{{ document.document_date }}</td></tr>
+        {{ if document.due_date }}<tr><td class="k">{{ L.due_date }}</td><td class="v">{{ document.due_date }}</td></tr>{{ end }}
+        <tr><td class="k">{{ L.currency }}</td><td class="v">{{ document.currency }}</td></tr>
+        {{ if document.exchange_rate_shown }}<tr><td class="k">{{ L.exchange_rate }}</td><td class="v">{{ document.exchange_rate }}</td></tr>{{ end }}
+        {{ if document.payment_terms }}<tr><td class="k">{{ L.payment_terms }}</td><td class="v">{{ document.payment_terms | html.escape }}</td></tr>{{ end }}
+        {{ if document.customer_reference }}<tr><td class="k">{{ L.your_reference }}</td><td class="v">{{ document.customer_reference | html.escape }}</td></tr>{{ end }}
+        {{ if document.credits_invoice_number }}<tr><td class="k">{{ L.credits_invoice }}</td><td class="v">{{ document.credits_invoice_number | html.escape }}</td></tr>{{ end }}
+      </table>
+    </div>
+  </header>
+
+  <section class="parties">
+    <div class="party">
+      <h3>{{ L.bill_to }}</h3>
+      {{ if partner }}
+      <p class="name">{{ partner.name | html.escape }}</p>
+      {{ if partner.address_text }}<p>{{ partner.address_text | html.escape }}</p>{{ end }}
+      {{ if partner.email }}<p class="ltr">{{ partner.email | html.escape }}</p>{{ end }}
+      <p class="muted"><span class="ltr">{{ partner.code | html.escape }}</span></p>
+      {{ end }}
+    </div>
+    <div class="party">
+      <h3>{{ L.seller }}</h3>
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+      {{ if company.registration_numbers.cr }}<p>{{ L.registration }}: <span class="ltr">{{ company.registration_numbers.cr | html.escape }}</span></p>{{ end }}
+    </div>
+  </section>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th>{{ L.line }}</th>
+        <th>{{ L.item }}</th>
+        <th class="num">{{ L.quantity }}</th>
+        <th class="num">{{ L.unit_price }}</th>
+        {{ if document.has_discount }}<th class="num">{{ L.discount }}</th>{{ end }}
+        <th class="num">{{ L.net }}</th>
+        <th class="num">{{ L.tax_rate }}</th>
+        <th class="num">{{ L.tax }}</th>
+        <th class="num">{{ L.gross }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ for line in document.lines }}
+      <tr>
+        <td class="num">{{ line.line_no }}</td>
+        <td class="desc">
+          {{ if line.item_code }}<span class="code ltr">{{ line.item_code | html.escape }}</span> {{ end }}<span class="text">{{ line.description | html.escape }}</span>
+          {{ if line.source }}<div class="meta ltr">{{ line.source | html.escape }}</div>{{ end }}
+        </td>
+        <td class="num">{{ line.quantity }} {{ line.uom | html.escape }}</td>
+        <td class="num">{{ line.unit_price }}</td>
+        {{ if document.has_discount }}<td class="num">{{ if line.discount_pct != "0" }}{{ line.discount_pct }}%{{ end }}</td>{{ end }}
+        <td class="num">{{ line.net }}</td>
+        <td class="num">{{ if line.tax_code }}{{ line.tax_rate }}%{{ end }}</td>
+        <td class="num">{{ line.tax_amount }}</td>
+        <td class="num">{{ line.gross }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+
+  <div class="after-lines">
+    <div class="left">
+      {{ if document.tax_summary && document.tax_summary.size > 0 }}
+      <div class="box">
+        <h3>{{ L.tax_summary }}</h3>
+        <table>
+          <thead><tr><th>{{ L.tax }}</th><th class="num">{{ L.tax_rate }}</th><th class="num">{{ L.taxable_amount }}</th><th class="num">{{ L.tax }}</th></tr></thead>
+          <tbody>
+          {{ for t in document.tax_summary }}
+          <tr><td class="ltr">{{ t.code | html.escape }}</td><td class="num">{{ t.rate }}%</td><td class="num">{{ t.base }}</td><td class="num">{{ t.amount }}</td></tr>
+          {{ end }}
+          </tbody>
+        </table>
+        {{ if document.reverse_charge }}<p class="muted">{{ L.reverse_charge }}</p>{{ end }}
+        {{ if document.prices_include_tax }}<p class="muted">{{ L.prices_include_tax }}</p>{{ end }}
+      </div>
+      {{ end }}
+      {{ if document.instalments && document.instalments.size > 1 }}
+      <div class="box">
+        <h3>{{ L.instalments }}</h3>
+        <table>
+          <thead><tr><th>{{ L.instalment }}</th><th>{{ L.due_date }}</th><th class="num">{{ L.amount }}</th><th class="num">{{ L.remaining }}</th></tr></thead>
+          <tbody>
+          {{ for i in document.instalments }}
+          <tr><td class="num">{{ i.instalment }}</td><td class="ltr">{{ i.due_date }}</td><td class="num">{{ i.amount }}</td><td class="num">{{ i.remaining }}</td></tr>
+          {{ end }}
+          </tbody>
+        </table>
+      </div>
+      {{ end }}
+      {{ if document.amount_in_words_en || document.amount_in_words_ar }}
+      <div class="box words">
+        <h3>{{ L.amount_in_words }}</h3>
+        {{ if mode != "ar" && document.amount_in_words_en }}<p class="en">{{ document.amount_in_words_en | html.escape }}</p>{{ end }}
+        {{ if mode != "en" && document.amount_in_words_ar }}<p class="ar">{{ document.amount_in_words_ar | html.escape }}</p>{{ end }}
+      </div>
+      {{ end }}
+      {{ if qr_svg }}
+      <div class="box qr">{{ qr_svg }}<p>{{ L.qr_hint }}</p></div>
+      {{ end }}
+    </div>
+    <table class="totals">
+      <tr><td class="k">{{ L.total_net }}</td><td class="num">{{ document.total_net }} {{ document.currency }}</td></tr>
+      {{ if document.has_discount }}<tr><td class="k">{{ L.total_discount }}</td><td class="num">{{ document.total_discount }} {{ document.currency }}</td></tr>{{ end }}
+      <tr><td class="k">{{ L.total_tax }}</td><td class="num">{{ document.total_tax }} {{ document.currency }}</td></tr>
+      <tr class="grand"><td class="k">{{ L.total_gross }}</td><td class="num">{{ document.total_gross }} {{ document.currency }}</td></tr>
+    </table>
+  </div>
+
+  {{ if document.notes }}
+  <div class="box"><h3>{{ L.notes }}</h3><p class="note">{{ document.notes | html.escape }}</p></div>
+  {{ end }}
+
+  <footer class="foot">
+    <span>{{ L.thank_you }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -4,6 +4,7 @@ using Quicker.Identity.Contracts;
 using Quicker.Numbering.Contracts;
 using Quicker.Partners.Contracts;
 using Quicker.Persistence.EntityFramework;
+using Quicker.Printing.Contracts;
 using Quicker.Receivables.Application;
 using Quicker.Receivables.Contracts;
 using Quicker.Receivables.Persistence;
@@ -24,6 +25,7 @@ public static class ReceivablesModule
         services.AddScoped<WriteOffService>();
         services.AddScoped<DunningService>();
         services.AddScoped<NettingService>();
+        services.AddScoped<IPrintModelProvider, StatementPrintModel>();
         NumberedDocumentTypes.Register(new NumberedDocumentType(ReceivablesDocumentTypes.WriteOff, ReceivablesPermissions.OpenItemRead));
         NumberedDocumentTypes.Register(new NumberedDocumentType(ReceivablesDocumentTypes.DunningRun, ReceivablesPermissions.DunningRead));
         NumberedDocumentTypes.Register(new NumberedDocumentType(ReceivablesDocumentTypes.Netting, ReceivablesPermissions.OpenItemRead));

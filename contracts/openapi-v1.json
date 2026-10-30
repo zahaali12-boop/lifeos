@@ -27429,6 +27429,569 @@
           }
         }
       }
+    },
+    "/api/v1/print/document-types": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The document types that print, each with its variants (the tax invoice and the pro forma of an invoice, say)",
+        "operationId": "getPrintDocumentTypes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrintDocumentTypeSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/preview": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The document rendered as HTML for the browser's print preview: the same template the PDF uses; a draft invoice is refused as a tax invoice (print it pro forma)",
+        "operationId": "getPrintPreview",
+        "parameters": [
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "variant",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "templateId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/print/templates": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The tenant's print templates (the shipped ones copied in on first use), by document type",
+        "operationId": "getPrintTemplates",
+        "parameters": [
+          {
+            "name": "documentType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrintTemplateSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/templates/{templateId}": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The template with its current version's HTML, CSS and sample data",
+        "operationId": "getPrintTemplatesByTemplateId",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintTemplateSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "Edits the template: new HTML or CSS becomes a new version; name, language mode, paper, scope, default and active change in place",
+        "operationId": "putPrintTemplatesByTemplateId",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePrintTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintTemplateSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/templates/{templateId}/copy": {
+      "post": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "A copy of the template for a company or a branch, from its current version",
+        "operationId": "postPrintTemplatesByTemplateIdCopy",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyPrintTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintTemplateSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/templates/{templateId}/versions": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The template's versions, newest first",
+        "operationId": "getPrintTemplatesByTemplateIdVersions",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrintTemplateVersionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/templates/{templateId}/rollback/{version}": {
+      "post": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "Makes an earlier version current again, as a new version with its content",
+        "operationId": "postPrintTemplatesByTemplateIdRollbackByVersion",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintTemplateSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/templates/{templateId}/preview": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The template rendered with its sample data, as HTML",
+        "operationId": "getPrintTemplatesByTemplateIdPreview",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/print/renders": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The renders of a document, newest first, with their status and whether an evidence copy is kept",
+        "operationId": "getPrintRenders",
+        "parameters": [
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrintRenderSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "Asks for the PDF: an identical render already made is reused, otherwise the worker renders it (poll the render until ready, then fetch its file)",
+        "operationId": "postPrintRenders",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrintRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintRenderSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/renders/{renderId}": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The render's status, size, hash and error",
+        "operationId": "getPrintRendersByRenderId",
+        "parameters": [
+          {
+            "name": "renderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintRenderSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/renders/{renderId}/file": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The PDF of a ready render",
+        "operationId": "getPrintRendersByRenderIdFile",
+        "parameters": [
+          {
+            "name": "renderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/print/emails": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The emails sent for a document, newest first",
+        "operationId": "getPrintEmails",
+        "parameters": [
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrintEmailSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "Emails the document's PDF to the partner's address or the one given; the worker renders first when it must, and the send is logged on the document",
+        "operationId": "postPrintEmails",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrintEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintEmailSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -32913,6 +33476,47 @@
             "format": "date"
           }
         }
+      },
+      "CopyPrintTemplateRequest": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "languageMode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A copy of a template for a company or a branch, starting from the source's current version."
       },
       "CorrectEntryRequest": {
         "required": [
@@ -47145,6 +47749,479 @@
         },
         "description": "A priced basket: every line with its explanation, the promotions and document discounts applied, and the totals."
       },
+      "PrintDocumentTypeSummary": {
+        "required": [
+          "documentType",
+          "variants"
+        ],
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrintVariantSummary"
+            }
+          }
+        }
+      },
+      "PrintEmailRequest": {
+        "required": [
+          "documentType"
+        ],
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "parameters": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variant": {
+            "type": "string",
+            "default": "standard"
+          },
+          "templateId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PrintEmailSummary": {
+        "required": [
+          "id",
+          "renderId",
+          "documentType",
+          "documentId",
+          "to",
+          "toName",
+          "subject",
+          "message",
+          "status",
+          "error",
+          "requestedAt",
+          "sentAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "renderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "to": {
+            "type": "string"
+          },
+          "toName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subject": {
+            "type": "string"
+          },
+          "message": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "PrintRenderSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "documentType",
+          "documentId",
+          "parameters",
+          "variant",
+          "templateId",
+          "templateVersion",
+          "languageMode",
+          "title",
+          "number",
+          "fileName",
+          "isFinal",
+          "isEvidence",
+          "status",
+          "sizeBytes",
+          "sha256",
+          "error",
+          "jobId",
+          "requestedAt",
+          "renderedAt",
+          "reused"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "languageMode": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "isFinal": {
+            "type": "boolean"
+          },
+          "isEvidence": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "sha256": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "jobId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "renderedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "reused": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PrintRequest": {
+        "required": [
+          "documentType"
+        ],
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "parameters": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variant": {
+            "type": "string",
+            "default": "standard"
+          },
+          "templateId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "What to print: the document, the variant (tax invoice or pro forma), and which template when not the default."
+      },
+      "PrintTemplateSummary": {
+        "required": [
+          "id",
+          "code",
+          "documentType",
+          "variant",
+          "name",
+          "languageMode",
+          "paper",
+          "companyId",
+          "branchId",
+          "isDefault",
+          "isSystem",
+          "isActive",
+          "currentVersion",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "languageMode": {
+            "type": "string"
+          },
+          "paper": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "currentVersion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "html": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "css": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sampleData": { }
+        }
+      },
+      "PrintTemplateVersionSummary": {
+        "required": [
+          "id",
+          "version",
+          "note",
+          "publishedBy",
+          "publishedAt",
+          "isCurrent"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "publishedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isCurrent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PrintVariantSummary": {
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "PromiseToPayRequest": {
         "required": [
           "promisedOn"
@@ -58907,6 +59984,77 @@
           }
         }
       },
+      "SavePrintTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "languageMode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paper": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "html": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "css": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isDefault": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "isActive": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "An edit of a template: a new version of its HTML and CSS, and the settings that are not versioned."
+      },
       "SavePromotionRequest": {
         "required": [
           "companyId",
@@ -69479,6 +70627,9 @@
     },
     {
       "name": "Sales"
+    },
+    {
+      "name": "Printing"
     }
   ]
 }

@@ -18,6 +18,7 @@ using Quicker.Partners;
 using Quicker.Payables;
 using Quicker.Persistence;
 using Quicker.Pricing;
+using Quicker.Printing;
 using Quicker.Purchasing;
 using Quicker.Receivables;
 using Quicker.Sales;
@@ -64,6 +65,7 @@ builder.Services.AddReceivablesModule();
 builder.Services.AddBankingModule();
 builder.Services.AddPurchasingModule();
 builder.Services.AddSalesModule();
+builder.Services.AddPrintingModule(builder.Configuration);
 
 var app = builder.Build();
 

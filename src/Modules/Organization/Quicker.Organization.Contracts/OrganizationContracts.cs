@@ -26,7 +26,9 @@ public sealed record CompanyInfo(
     Guid BusinessCalendarId,
     bool IsActive,
     Guid? ChartId = null,
-    Guid? PostingProfileId = null);
+    Guid? PostingProfileId = null,
+    IReadOnlyDictionary<string, string>? Address = null,
+    IReadOnlyDictionary<string, string>? RegistrationNumbers = null);
 
 public sealed record BranchInfo(BranchId Id, CompanyId CompanyId, string Code, LocalizedText Name, Guid DimensionValueId, bool IsActive);
 

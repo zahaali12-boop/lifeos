@@ -138,6 +138,7 @@ public sealed class ModuleBoundaryTests
         ["Collaboration"] = 0,
         ["Integration"] = 0,
         ["Integrity"] = 0,
+        ["Printing"] = 0,
         ["Organization"] = 1,
         ["Accounting"] = 1,
         ["Partners"] = 1,
@@ -157,6 +158,8 @@ public sealed class ModuleBoundaryTests
     private static readonly Dictionary<string, string> UpwardDependencies = new(StringComparer.Ordinal)
     {
         ["Inventory → Workflow"] = "stock adjustments are approved through the workflow engine (ADR-0020), drawn with the process modules but serving core documents too",
+        ["Printing → Organization"] = "a printed document carries the company's and the branch's names, address and registration numbers, so printing reads the company directory",
+        ["Printing → Partners"] = "a printed document carries the partner's name, address and email, so printing reads the partner directory",
         ["Numbering → Organization"] = "number series are per company and fiscal period, so numbering reads the company directory and the fiscal calendar",
     };
 

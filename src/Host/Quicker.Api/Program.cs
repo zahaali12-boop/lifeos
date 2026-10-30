@@ -34,6 +34,8 @@ using Quicker.Payables.Api;
 using Quicker.Persistence;
 using Quicker.Pricing;
 using Quicker.Pricing.Api;
+using Quicker.Printing;
+using Quicker.Printing.Api;
 using Quicker.Purchasing;
 using Quicker.Purchasing.Api;
 using Quicker.Receivables;
@@ -130,6 +132,7 @@ builder.Services.AddReceivablesModule();
 builder.Services.AddBankingModule();
 builder.Services.AddPurchasingModule();
 builder.Services.AddSalesModule();
+builder.Services.AddPrintingModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -175,6 +178,7 @@ api.MapReceivablesEndpoints();
 api.MapBankingEndpoints();
 api.MapPurchasingEndpoints();
 api.MapSalesEndpoints();
+api.MapPrintingEndpoints();
 
 app.Run();
 

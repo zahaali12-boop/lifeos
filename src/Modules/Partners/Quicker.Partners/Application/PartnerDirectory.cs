@@ -51,6 +51,33 @@ public sealed class PartnerDirectory(PartnersDbContext db, SupplierService suppl
         return p is null ? null : new PartnerInfo(p.Id, p.Code, p.LegalName, p.TradeName, p.Kind, p.IsSupplier, p.IsCustomer, p.IsActive, p.Email, p.DefaultLanguage, p.IntercompanyCompanyId);
     }
 
+    public async Task<IReadOnlyList<PartnerAddressInfo>> AddressesAsync(Guid partnerId, CancellationToken cancellationToken = default)
+    {
+        var rows = await db.Addresses.AsNoTracking().Where(a => a.PartnerId == partnerId).OrderByDescending(static a => a.IsDefault).ThenBy(static a => a.Role).ToListAsync(cancellationToken);
+        return rows.Select(static a => new PartnerAddressInfo(a.Id, a.Role, a.Country, a.Region, Lines(a.Address), a.IsDefault)).ToList();
+    }
+
+    /// <summary>The address JSON as the flat text lines it holds (nested values are left out).</summary>
+    private static Dictionary<string, string> Lines(string json)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        using var doc = System.Text.Json.JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "{}" : json);
+        if (doc.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+        {
+            return result;
+        }
+
+        foreach (var property in doc.RootElement.EnumerateObject())
+        {
+            if (property.Value.ValueKind is System.Text.Json.JsonValueKind.String or System.Text.Json.JsonValueKind.Number)
+            {
+                result[property.Name] = property.Value.ToString();
+            }
+        }
+
+        return result;
+    }
+
     public async Task<SupplierTermsInfo?> FindSupplierAsync(Guid companyId, Guid partnerId, CancellationToken cancellationToken = default)
     {
         var account = await db.SupplierAccounts.AsNoTracking().SingleOrDefaultAsync(a => a.PartnerId == partnerId && a.CompanyId == companyId, cancellationToken);
