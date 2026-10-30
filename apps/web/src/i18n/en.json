@@ -24,7 +24,8 @@
     "status": "Status",
     "name": "Name",
     "nameEn": "Name (English)",
-    "nameAr": "Name (Arabic)"
+    "nameAr": "Name (Arabic)",
+    "back": "Back"
   },
   "entities": {
     "company": "Companies"
@@ -110,7 +111,8 @@
     "pickLists": "Pick lists",
     "salesInvoices": "Sales invoices",
     "recurringInvoices": "Recurring invoices",
-    "receivables": "Receivables"
+    "receivables": "Receivables",
+    "customerReceipts": "Customer receipts"
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -2831,7 +2833,28 @@
     "nothingOpen": "Nothing open for this supplier.",
     "payNow": "Pay now",
     "cash": "Cash paid",
-    "postPayment": "Post payment"
+    "postPayment": "Post payment",
+    "receiptsDescription": "Customer receipts and deposits: invoices settled at their booked value, the early-payment discount given and the tax the customer withheld, the bank's charges and the exchange difference; the rest stays on account.",
+    "newReceipt": "New receipt",
+    "editReceipt": "Edit receipt",
+    "emptyReceipts": "No receipts yet",
+    "emptyReceiptsDescription": "Collect a customer's open invoices or record a deposit.",
+    "receiptDate": "Receipt date",
+    "receiptCurrencyHelp": "The customer's currency unless given.",
+    "depositAmount": "Deposit amount",
+    "bankCredited": "Credited by the bank",
+    "bankCreditedHelp": "In {currency}, after the bank's charges.",
+    "withheldByCustomer": "Withheld by the customer",
+    "withheldByCustomerHelp": "The code whose rate the customer deducted from what they paid.",
+    "nothingOpenCustomer": "Nothing open for this customer.",
+    "collectNow": "Collect now",
+    "discountGiven": "Discount given",
+    "cashReceived": "Cash received",
+    "postReceipt": "Post receipt",
+    "receiptKinds": {
+      "customer_receipt": "Customer receipt",
+      "customer_deposit": "Customer deposit"
+    }
   },
   "intelligence": {
     "description": "How suppliers perform, from the documents as they stand: a scorecard with configurable weights, the days from order to receipt, and the prices paid and quoted.",
@@ -3284,7 +3307,11 @@
       "sales_order": "Sales order",
       "sales_invoice": "Sales invoice",
       "sales_credit_note": "Credit note",
-      "ar_settlement": "Receivable settlement"
+      "ar_settlement": "Receivable settlement",
+      "bank_receipt": "Customer receipt",
+      "ar_write_off": "Write-off",
+      "ar_netting": "Netting",
+      "ar_dunning_letter": "Dunning fee"
     },
     "date": "Date",
     "amount": "Amount",
@@ -4227,6 +4254,58 @@
       "increases": "Invoiced",
       "decreases": "Credited and received",
       "closing": "Owed at the end"
+    },
+    "writeOff": {
+      "action": "Write off",
+      "confirm": "Write off now",
+      "reason": "Reason",
+      "kinds": {
+        "bad_debt": "Bad debt",
+        "small_balance": "Small balance"
+      }
+    },
+    "promise": {
+      "title": "Promised by",
+      "action": "Promise to pay",
+      "record": "Record the promise",
+      "clear": "Clear the promise",
+      "date": "Promised by",
+      "hint": "Leave empty to clear; dunning leaves the item alone until the date passes.",
+      "note": "What they said"
+    },
+    "netting": {
+      "action": "Net against a payable",
+      "payable": "Supplier invoice",
+      "hint": "An open invoice of the same partner as a supplier, in this currency; the smaller remainder by default."
+    },
+    "dunning": {
+      "title": "Dunning",
+      "levels": "Reminder ladder",
+      "newLevel": "New level",
+      "editLevel": "Edit level",
+      "noLevels": "No dunning levels yet: add the first rung of the ladder.",
+      "level": "Level",
+      "daysOverdue": "Days past due",
+      "daysOverdueHint": "An item this many days late reaches the level.",
+      "fee": "Fee",
+      "fees": "Fees",
+      "blocks": "Credit hold",
+      "blockCustomer": "Put the customer on credit hold",
+      "textEn": "Letter text (English)",
+      "textAr": "Letter text (Arabic)",
+      "due": "Letters due",
+      "runDate": "Run date",
+      "issue": "Issue letters",
+      "nothingDue": "No customer has an overdue item that climbs a level on that date.",
+      "items": "Items",
+      "overdue": "Overdue",
+      "runs": "Runs",
+      "noRuns": "No dunning run yet.",
+      "letters": "Letters",
+      "sent": "Sent",
+      "notSent": "Not yet",
+      "markSent": "Mark as sent",
+      "daysLate": "Days late"
     }
   }
 }

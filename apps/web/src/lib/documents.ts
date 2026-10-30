@@ -29,6 +29,7 @@ export type RecordScreen =
   | "/accounting/journals"
   | "/accounting/journal-entries"
   | "/banking/payments"
+  | "/banking/receipts"
   | "/payables/proposals"
   | "/companies";
 
@@ -56,6 +57,7 @@ const screens: Record<string, RecordScreen> = {
   manual_journal: "/accounting/journals",
   journal_entry: "/accounting/journal-entries",
   bank_payment: "/banking/payments",
+  bank_receipt: "/banking/receipts",
   payment_proposal: "/payables/proposals",
   item: "/inventory/items",
   partner: "/purchasing/suppliers",

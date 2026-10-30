@@ -188,6 +188,16 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_settlements WHERE tenant_id = @t AND kind = 'credit_application' AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(1, "the credit note settled its invoice as it posted");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_open_items WHERE tenant_id = @t AND status IN ('open', 'partially_settled')", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(2);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_commission_entries WHERE tenant_id = @t AND status = 'accrued'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(0, "the rep's plan accrues at invoice");
+
+        // Receivables (roadmap 5.7): Baghdad Mall's invoice collected in two receipts with the odd dinars written off, Kurdistan's deposit,
+        // the three-rung reminder ladder and one run reminding Baghdad Mall of the year-old sale, with the second rung's fee charged.
+        (first.CustomerReceipts, first.WriteOffs, first.DunningLetters).ShouldBe((3, 1, 1));
+        (await db.QueryAsync<string>("SELECT kind || ':' || status FROM app.bnk_payments WHERE tenant_id = @t AND kind IN ('customer_receipt', 'customer_deposit') ORDER BY 1", new { t = DemoData.TenantId })).ShouldBe(["customer_deposit:posted", "customer_receipt:posted", "customer_receipt:posted"]);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_settlements WHERE tenant_id = @t AND kind = 'receipt' AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(2);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_write_offs WHERE tenant_id = @t AND status = 'posted' AND kind = 'small_balance'", new { t = DemoData.TenantId })).ShouldBe(1);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_dunning_levels WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_dunning_letters WHERE tenant_id = @t AND level = 3 AND fee_item_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(1, "the year-old sale reached the final notice and its fee");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_open_items WHERE tenant_id = @t AND kind = 'deposit' AND status = 'open'", new { t = DemoData.TenantId })).ShouldBe(1);
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
@@ -217,6 +227,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (third.Quotations, third.SalesOrders).ShouldBe((first.Quotations, first.SalesOrders), "the quotations and orders are deterministic");
         (third.Shipments, third.PickLists).ShouldBe((first.Shipments, first.PickLists), "the shipments are deterministic");
         (third.SalesInvoices, third.CreditNotes, third.RecurringInvoices).ShouldBe((first.SalesInvoices, first.CreditNotes, first.RecurringInvoices), "the invoices are deterministic");
+        (third.CustomerReceipts, third.WriteOffs, third.DunningLetters).ShouldBe((first.CustomerReceipts, first.WriteOffs, first.DunningLetters), "the collecting is deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

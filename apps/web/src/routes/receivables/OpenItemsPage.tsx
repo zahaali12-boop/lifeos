@@ -2,7 +2,7 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, Dialo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
@@ -16,6 +16,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { useCompanyCustomers } from "../sales/pricing/shared";
 import { money, num, SalesStatus } from "../sales/shared";
+import { DunningPanel } from "./DunningPanel";
 
 type ReceivableRow = components["schemas"]["ReceivableSummary"];
 
@@ -46,10 +47,15 @@ export function ReceivablesPage() {
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [hold, setHold] = useState<string | null>(null);
   const [apply, setApply] = useState<{ settledItemId: string; amount: string } | null>(null);
+  const [writeOff, setWriteOff] = useState<{ amount: string; kind: string; reason: string } | null>(null);
+  const [promise, setPromise] = useState<{ promisedOn: string; note: string } | null>(null);
+  const [netting, setNetting] = useState<{ payableItemId: string; amount: string } | null>(null);
   const customers = useCompanyCustomers(companyId);
   const list = useReceivables(companyId, partnerId, status);
   const canManage = can("receivables.open_item.manage");
   const canSettle = can("receivables.settlement.post");
+  const canWriteOff = can("receivables.writeoff.post");
+  const canDun = can("receivables.dunning.read");
   const aging = useQuery({
     queryKey: ["ar-aging", companyId, asOf, partnerId],
     enabled: Boolean(companyId) && tab === "aging",
@@ -71,20 +77,28 @@ export function ReceivablesPage() {
     queryFn: async () => unwrap(await api.GET("/api/v1/receivables/settlements", { params: { query: { companyId, openItemId: openId ?? "" } } })),
   });
   const targets = useReceivables(companyId, detail.data?.item.partnerId ?? "", "live");
+  const payables = useQuery({
+    queryKey: ["open-items", companyId, detail.data?.item.partnerId ?? "", "live"],
+    enabled: Boolean(companyId) && Boolean(detail.data?.item.partnerId) && netting !== null,
+    queryFn: async () => unwrap(await api.GET("/api/v1/payables/open-items", { params: { query: { companyId, partnerId: detail.data?.item.partnerId ?? "", status: "live" } } })),
+  });
   const refresh = async (): Promise<void> => {
-    await Promise.all([["ar-open-items"], ["ar-open-item"], ["ar-aging"], ["ar-statement"], ["ar-settlements"], ["sales-invoice"], ["sales-invoices"], ["customer-360"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    await Promise.all([["ar-open-items"], ["ar-open-item"], ["ar-aging"], ["ar-statement"], ["ar-settlements"], ["open-items"], ["open-item"], ["sales-invoice"], ["sales-invoices"], ["customer-360"], ["dunning-preview"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
   const act = useMutation({
-    mutationFn: async (input: { action: "hold" | "release" | "apply" | "reverse"; id: string; reason?: string; settledItemId?: string; amount?: number }) => {
+    mutationFn: async (input: { action: "hold" | "release" | "apply" | "reverse" | "write_off" | "promise" | "net"; id: string; reason?: string; settledItemId?: string; amount?: number; kind?: string; promisedOn?: string | null; note?: string; payableItemId?: string }) => {
       switch (input.action) {
         case "hold": return unwrap(await api.POST("/api/v1/receivables/open-items/{itemId}/hold", { params: { path: { itemId: input.id } }, body: { reason: input.reason ?? "" } }));
         case "release": return unwrap(await api.POST("/api/v1/receivables/open-items/{itemId}/release", { params: { path: { itemId: input.id } } }));
         case "apply": return unwrap(await api.POST("/api/v1/receivables/settlements/apply", { body: { settlingItemId: input.id, settledItemId: input.settledItemId ?? "", amount: input.amount ?? 0 } }));
         case "reverse": return unwrap(await api.POST("/api/v1/receivables/settlements/{settlementId}/reverse", { params: { path: { settlementId: input.id } }, body: { reason: input.reason ?? "" } }));
+        case "write_off": return unwrap(await api.POST("/api/v1/receivables/open-items/{itemId}/write-off", { params: { path: { itemId: input.id } }, body: { reason: input.reason ?? "", amount: input.amount ?? null, kind: input.kind ?? "bad_debt" } }));
+        case "promise": return unwrap(await api.POST("/api/v1/receivables/open-items/{itemId}/promise", { params: { path: { itemId: input.id } }, body: { promisedOn: input.promisedOn ?? null, note: input.note ?? null } }));
+        case "net": return unwrap(await api.POST("/api/v1/receivables/nettings", { body: { receivableItemId: input.id, payableItemId: input.payableItemId ?? "", amount: input.amount ?? null } }));
       }
     },
-    onSuccess: async () => { setProblem(null); setHold(null); setApply(null); await refresh(); },
+    onSuccess: async () => { setProblem(null); setHold(null); setApply(null); setWriteOff(null); setPromise(null); setNetting(null); await refresh(); },
     onError: fail,
   });
 
@@ -134,7 +148,7 @@ export function ReceivablesPage() {
               ))}
             </SelectField>
           </Field>
-        ) : tab === "statement" ? (
+        ) : tab === "dunning" ? null : tab === "statement" ? (
           <>
             <Field label={t("purchasing.analysis.from")}>
               <TextField type="date" value={statementFrom} onChange={(e) => { setStatementFrom(e.target.value); }} dir="ltr" data-testid="statement-from" />
@@ -149,7 +163,7 @@ export function ReceivablesPage() {
           </Field>
         )}
       </div>
-      <Tabs tabs={[{ id: "items", label: t("payables.openItems"), testId: "tab-items" }, { id: "aging", label: t("payables.aging"), testId: "tab-aging" }, { id: "statement", label: t("payables.statement.title"), testId: "tab-statement" }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ id: "items", label: t("payables.openItems"), testId: "tab-items" }, { id: "aging", label: t("payables.aging"), testId: "tab-aging" }, { id: "statement", label: t("payables.statement.title"), testId: "tab-statement" }, ...(canDun ? [{ id: "dunning", label: t("receivables.dunning.title"), testId: "tab-dunning" }] : [])]} value={tab} onChange={setTab} />
       {tab === "items" ? (
         <DataGrid<ReceivableRow> label="nav.receivables" columns={columns} data={list.data ?? []} rowKey={(row) => row.item.id} loading={list.isPending && Boolean(companyId)} emptyTitle={t("receivables.emptyItems")} emptyDescription={t("receivables.emptyItemsDescription")} onOpen={(row) => { setProblem(null); setHold(null); setApply(null); setOpenId(row.item.id); }} />
       ) : tab === "aging" ? (
@@ -195,6 +209,8 @@ export function ReceivablesPage() {
             </Table>
           ) : <p className="text-sm text-fg-muted">{companyId ? t("common.loading") : t("payables.chooseCompany")}</p>}
         </div>
+      ) : tab === "dunning" ? (
+        <DunningPanel companyId={companyId} partnerId={partnerId} customers={customers.data ?? []} />
       ) : (
         <div className="mt-3 flex flex-col gap-4" data-testid="customer-statement">
           {!partnerId ? <p className="text-sm text-fg-muted" data-testid="statement-choose">{t("receivables.statement.chooseCustomer")}</p>
@@ -261,6 +277,8 @@ export function ReceivablesPage() {
                 [t("purchasing.remaining"), <span key="rem" data-testid="item-remaining">{money(item.remainingTc, item.currency)}</span>],
                 [t("payables.remainingFc"), money(item.remainingFc, d.functionalCurrency)],
                 ...(item.holdReason ? [[t("payables.holdReason"), item.holdReason] as [string, string]] : []),
+                ...(Number(item.dunningLevel) > 0 ? [[t("receivables.dunning.level"), <span key="dl" data-testid="item-dunning-level">{String(item.dunningLevel)}</span>] as [string, ReactNode]] : []),
+                ...(item.promisedPaymentDate ? [[t("receivables.promise.title"), <span key="pr" dir="ltr" data-testid="item-promise">{formatDate(item.promisedPaymentDate)}</span>] as [string, ReactNode]] : []),
               ]} />
               <h3 className="text-sm font-semibold">{t("purchasing.settlements")}</h3>
               {(settlements.data ?? []).length === 0 ? <p className="text-xs text-fg-muted">{t("purchasing.noSettlements")}</p> : (
@@ -309,12 +327,59 @@ export function ReceivablesPage() {
                   </Field>
                 </div>
               ) : null}
+              {writeOff ? (
+                <div className="grid gap-3 sm:grid-cols-3" data-testid="write-off-form">
+                  <Field label={t("sales.amount")} required>
+                    <TextField inputMode="decimal" value={writeOff.amount} onChange={(e) => { setWriteOff({ ...writeOff, amount: e.target.value }); }} dir="ltr" data-testid="write-off-amount" />
+                  </Field>
+                  <Field label={t("sales.invoicing.kind")}>
+                    <SelectField value={writeOff.kind} onChange={(e) => { setWriteOff({ ...writeOff, kind: e.target.value }); }} data-testid="write-off-kind">
+                      <option value="bad_debt">{t("receivables.writeOff.kinds.bad_debt")}</option>
+                      <option value="small_balance">{t("receivables.writeOff.kinds.small_balance")}</option>
+                    </SelectField>
+                  </Field>
+                  <Field label={t("receivables.writeOff.reason")} required>
+                    <TextField value={writeOff.reason} onChange={(e) => { setWriteOff({ ...writeOff, reason: e.target.value }); }} data-testid="write-off-reason" />
+                  </Field>
+                </div>
+              ) : null}
+              {promise ? (
+                <div className="grid gap-3 sm:grid-cols-2" data-testid="promise-form">
+                  <Field label={t("receivables.promise.date")} description={t("receivables.promise.hint")}>
+                    <TextField type="date" value={promise.promisedOn} onChange={(e) => { setPromise({ ...promise, promisedOn: e.target.value }); }} dir="ltr" data-testid="promise-date" />
+                  </Field>
+                  <Field label={t("receivables.promise.note")}>
+                    <TextField value={promise.note} onChange={(e) => { setPromise({ ...promise, note: e.target.value }); }} data-testid="promise-note" />
+                  </Field>
+                </div>
+              ) : null}
+              {netting ? (
+                <div className="grid gap-3 sm:grid-cols-2" data-testid="netting-form">
+                  <Field label={t("receivables.netting.payable")} required description={t("receivables.netting.hint")}>
+                    <SelectField value={netting.payableItemId} onChange={(e) => { const chosen = (payables.data ?? []).find((o) => o.item.id === e.target.value); setNetting({ payableItemId: e.target.value, amount: chosen ? String(Math.min(Number(chosen.item.remainingTc), Number(item.remainingTc))) : netting.amount }); }} data-testid="netting-payable">
+                      <option value="">—</option>
+                      {(payables.data ?? []).map((o) => o.item).filter((o) => Number(o.originalTc) > 0 && o.currency === item.currency && !o.paymentBlocked).map((o) => (
+                        <option key={o.id} value={o.id}>{o.documentNumber} · {money(o.remainingTc, o.currency)}</option>
+                      ))}
+                    </SelectField>
+                  </Field>
+                  <Field label={t("sales.amount")} required>
+                    <TextField inputMode="decimal" value={netting.amount} onChange={(e) => { setNetting({ ...netting, amount: e.target.value }); }} dir="ltr" data-testid="netting-amount" />
+                  </Field>
+                </div>
+              ) : null}
               <DialogFooter>
                 {canManage && canHold && !item.onHold && hold === null ? <Button variant="secondary" onClick={() => { setHold(""); }} data-testid="hold-item">{t("payables.hold")}</Button> : null}
                 {hold !== null ? <Button onClick={() => { act.mutate({ action: "hold", id: item.id, reason: hold }); }} loading={act.isPending} disabled={!hold.trim()} data-testid="confirm-hold">{t("payables.hold")}</Button> : null}
                 {canManage && item.onHold ? <Button variant="secondary" onClick={() => { act.mutate({ action: "release", id: item.id }); }} loading={act.isPending} data-testid="release-item">{t("payables.release")}</Button> : null}
                 {canSettle && canApply && !apply ? <Button onClick={() => { setApply({ settledItemId: "", amount: String(Math.abs(Number(item.remainingTc))) }); }} data-testid="apply-item">{t("purchasing.applyCredit")}</Button> : null}
                 {apply ? <Button onClick={() => { act.mutate({ action: "apply", id: item.id, settledItemId: apply.settledItemId, amount: num(apply.amount) }); }} loading={act.isPending} disabled={!apply.settledItemId || num(apply.amount) <= 0} data-testid="confirm-apply">{t("purchasing.applyCredit")}</Button> : null}
+                {canManage && canHold && Number(item.originalTc) > 0 && !promise ? <Button variant="secondary" onClick={() => { setPromise({ promisedOn: item.promisedPaymentDate ?? "", note: "" }); }} data-testid="promise-item">{t("receivables.promise.action")}</Button> : null}
+                {promise ? <Button onClick={() => { act.mutate({ action: "promise", id: item.id, promisedOn: promise.promisedOn || null, note: promise.note }); }} loading={act.isPending} data-testid="confirm-promise">{promise.promisedOn ? t("receivables.promise.record") : t("receivables.promise.clear")}</Button> : null}
+                {canSettle && canHold && Number(item.originalTc) > 0 && !item.onHold && !netting ? <Button variant="secondary" onClick={() => { setNetting({ payableItemId: "", amount: "" }); }} data-testid="net-item">{t("receivables.netting.action")}</Button> : null}
+                {netting ? <Button onClick={() => { act.mutate({ action: "net", id: item.id, payableItemId: netting.payableItemId, amount: num(netting.amount) }); }} loading={act.isPending} disabled={!netting.payableItemId || num(netting.amount) <= 0} data-testid="confirm-netting">{t("receivables.netting.action")}</Button> : null}
+                {canWriteOff && canHold && Number(item.originalTc) > 0 && !writeOff ? <Button variant="secondary" onClick={() => { setWriteOff({ amount: String(item.remainingTc), kind: "bad_debt", reason: "" }); }} data-testid="write-off-item">{t("receivables.writeOff.action")}</Button> : null}
+                {writeOff ? <Button variant="danger" onClick={() => { act.mutate({ action: "write_off", id: item.id, amount: num(writeOff.amount), kind: writeOff.kind, reason: writeOff.reason }); }} loading={act.isPending} disabled={!writeOff.reason.trim() || num(writeOff.amount) <= 0} data-testid="confirm-write-off">{t("receivables.writeOff.confirm")}</Button> : null}
               </DialogFooter>
             </div>
           ) : null}
