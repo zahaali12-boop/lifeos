@@ -17,7 +17,8 @@ async function expectAccessible(page: Page): Promise<void> {
 
 /** Clicks an entry of the primary navigation (the dashboard also links to the same screens). */
 async function nav(page: Page, name: string): Promise<void> {
-  await page.getByRole("navigation").getByRole("link", { name }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name, exact: true }).click();
 }
 
 async function signup(page: Page, language: "en" | "ar"): Promise<{ slug: string; email: string }> {
@@ -154,9 +155,8 @@ test("Arabic: the same journey renders right-to-left and stays accessible", asyn
   await expect(page.locator("html")).toHaveAttribute("lang", "ar");
   await expectAccessible(page);
 
-  // The sidebar sits on the right in RTL: its box starts past the middle of the viewport.
-  const sidebar = page.getByRole("complementary");
-  const box = await sidebar.boundingBox();
+  // The menu bar starts on the right in RTL: the all-menus button sits past the middle of the viewport.
+  const box = await page.getByTestId("apps-menu").boundingBox();
   const viewport = page.viewportSize();
   expect(box && viewport && box.x > viewport.width / 2).toBeTruthy();
 

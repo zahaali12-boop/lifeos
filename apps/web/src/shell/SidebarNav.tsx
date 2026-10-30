@@ -21,7 +21,7 @@ function isActive(item: NavigationItem, location: string): boolean {
 }
 
 /**
- * The sidebar: the everyday entries on top, then one section per module. A section can be collapsed (remembered in
+ * The small-screen drawer (the top bar's menus on a narrow screen): the everyday entries on top, then one section per module. A section can be collapsed (remembered in
  * this browser) and opens again by itself when the current page is in it (reached from the palette or a shortcut);
  * the filter narrows every section at once to the entries whose label matches, and Enter opens the first.
  */
@@ -69,7 +69,7 @@ export function SidebarNav({ items, location, onNavigate }: { items: NavigationI
   };
 
   return (
-    <nav className="flex flex-1 flex-col overflow-y-auto p-2">
+    <nav className="flex flex-1 flex-col overflow-y-auto p-2" aria-label={t("shell.drawerNavigation")}>
       <div className="relative mb-2">
         <label htmlFor={filterId} className="sr-only">
           {t("shell.filterMenu")}
@@ -89,7 +89,7 @@ export function SidebarNav({ items, location, onNavigate }: { items: NavigationI
           }}
           placeholder={t("shell.filterMenu")}
           className="h-8 w-full rounded-md border border-border bg-canvas ps-8 pe-2 text-sm placeholder:text-fg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          data-testid="nav-filter"
+          data-testid="drawer-filter"
         />
       </div>
       <ul className="flex flex-col gap-0.5">{visible.filter((item) => !item.group).map(link)}</ul>
@@ -101,17 +101,17 @@ export function SidebarNav({ items, location, onNavigate }: { items: NavigationI
         const open = Boolean(needle) || !collapsed.includes(group);
         const listId = `${filterId}-${group}`;
         return (
-          <section key={group} className="mt-3" data-testid={`nav-group-${group}`}>
+          <section key={group} className="mt-3" data-testid={`drawer-group-${group}`}>
             <h2>
               <button
                 type="button"
                 onClick={() => { toggle(group); }}
                 aria-expanded={open}
                 aria-controls={listId}
-                data-testid={`nav-toggle-${group}`}
+                data-testid={`drawer-toggle-${group}`}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-semibold uppercase tracking-wide text-fg-muted hover:text-fg"
               >
-                <span className="flex-1 text-start">{t(`nav.groups.${group}`)}</span>
+                <span className="flex-1 text-start">{t(`nav.modules.${group}`)}</span>
                 <ChevronDown className={cn("size-3.5 transition-transform", open ? "" : "-rotate-90 rtl:rotate-90")} aria-hidden="true" />
               </button>
             </h2>

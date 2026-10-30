@@ -25,7 +25,9 @@
     "name": "Name",
     "nameEn": "Name (English)",
     "nameAr": "Name (Arabic)",
-    "back": "Back"
+    "back": "Back",
+    "typeToNarrow": "{count} more — type to narrow the list",
+    "allEntries": "All"
   },
   "entities": {
     "company": "Companies"
@@ -113,7 +115,34 @@
     "recurringInvoices": "Recurring invoices",
     "receivables": "Receivables",
     "customerReceipts": "Customer receipts",
-    "salesReturns": "Sales returns"
+    "salesReturns": "Sales returns",
+    "modules": {
+      "accounting": "Accounting",
+      "sales": "Sales",
+      "purchasing": "Purchasing",
+      "inventory": "Inventory",
+      "finance": "Finance",
+      "organization": "Organization",
+      "administration": "Administration"
+    },
+    "sections": {
+      "operations": "Operations",
+      "customers": "Customers",
+      "orders": "Orders",
+      "products": "Products",
+      "invoicing": "Invoicing",
+      "receivables": "Receivables",
+      "payables": "Payables",
+      "bank": "Bank and cash",
+      "tax": "Tax",
+      "planning": "Planning",
+      "pricing": "Pricing",
+      "reporting": "Reporting",
+      "setup": "Set-up",
+      "users": "Users and access",
+      "automation": "Automation and audit",
+      "configuration": "Configuration"
+    }
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -130,7 +159,13 @@
     "lightMode": "Switch to light mode",
     "darkMode": "Switch to dark mode",
     "account": "Account",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "apps": "All menus",
+    "appsHint": "Every screen, by module",
+    "home": "Home",
+    "menuOf": "{module} menu",
+    "drawerNavigation": "Menu",
+    "approvals": "Approvals"
   },
   "shortcuts": {
     "title": "Keyboard shortcuts",
@@ -1858,7 +1893,9 @@
     "rejectReason": "Reason (needed to reject)",
     "correctionReason": "Why does it need correcting?",
     "correctionHint": "A copy of this journal is drafted in the first open period for you to fix. Posting it reverses this journal and books the corrected one.",
-    "createCorrection": "Draft the correction"
+    "createCorrection": "Draft the correction",
+    "cashAndBank": "Cash and bank",
+    "allAccounts": "All accounts"
   },
   "mobile": {
     "receive": {

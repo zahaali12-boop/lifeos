@@ -47,7 +47,8 @@ test("English: fields added to purchase orders are filled on the order form, enf
   await page.reload();
 
   // The administrator adds two fields to purchase orders.
-  await page.getByRole("navigation").getByRole("link", { name: "Custom fields", exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name: "Custom fields", exact: true }).click();
   await page.getByTestId("custom-field-host").selectOption({ label: "Purchase order" });
   const define = async (key: string, en: string, ar: string, type: string, options: string, required: boolean): Promise<void> => {
     await page.getByTestId("new-custom-field").click();
@@ -101,7 +102,8 @@ test("English: fields added to purchase orders are filled on the order form, enf
 
   // The same on the item master: a shelf field defined for items is filled on the item and shown with it.
   await page.keyboard.press("Escape");
-  await page.getByRole("navigation").getByRole("link", { name: "Custom fields", exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name: "Custom fields", exact: true }).click();
   await page.getByTestId("custom-field-host").selectOption({ label: "Item" });
   await page.getByTestId("new-custom-field").click();
   await page.getByLabel(/^Key/).fill("shelf");

@@ -225,7 +225,7 @@ export function AssembliesPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <WarehouseSelect warehouses={warehouses.data ?? []} value={editing.warehouseId} onChange={(id) => { setForm({ warehouseId: id }); }} required />
                 <Field label={t("inventory.assemblies.output")} required>
-                  <TextField value={editing.outputItemCode} onChange={(e) => { setForm({ outputItemCode: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="assembly-output" />
+                  <ItemCodeField value={editing.outputItemCode} onChange={(code) => { setForm({ outputItemCode: code }); }} required data-testid="assembly-output" />
                 </Field>
                 <Field label={t("inventory.quantity")} required>
                   <TextField inputMode="decimal" value={editing.outputQuantity} onChange={(e) => { setForm({ outputQuantity: e.target.value }); }} required dir="ltr" data-testid="assembly-qty" />

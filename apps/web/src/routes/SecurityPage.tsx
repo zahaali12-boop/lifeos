@@ -1,12 +1,13 @@
 import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Field, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Plus, Trash2 } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, isApiProblem, unwrap } from "../api";
 import type { components } from "../api/schema";
 import { formatDate, formatDateTime, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
+import { ComboField } from "./ComboField";
 import { FormError, PageHeader, SelectField, TextareaField, TextField } from "./common";
 import { DocStatus, Tabs } from "./inventory/shared";
 
@@ -41,7 +42,6 @@ function list(value: string): string[] {
 export function SecurityPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const permissionListId = useId();
   const [tab, setTab] = useState("sod");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [rule, setRule] = useState<{ id: string | null; permissionA: string; permissionB: string; severity: string; rationaleEn: string; rationaleAr: string; isActive: boolean } | null>(null);
@@ -58,6 +58,7 @@ export function SecurityPage() {
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
   const permissions = useQuery({ queryKey: ["permission-catalog"], queryFn: async () => unwrap(await api.GET("/api/v1/meta/permissions")) });
+  const permissionOptions = (permissions.data ?? []).map((p) => ({ value: p.key, label: p.description }));
   const rules = useQuery({ queryKey: ["sod-rules"], enabled: tab === "sod", queryFn: async () => unwrap(await api.GET("/api/v1/sod/rules")) });
   const report = useQuery({ queryKey: ["sod-report"], enabled: tab === "sod", queryFn: async () => unwrap(await api.GET("/api/v1/sod/report")) });
   const exceptions = useQuery({ queryKey: ["sod-exceptions"], enabled: tab === "sod", queryFn: async () => unwrap(await api.GET("/api/v1/sod/exceptions")) });
@@ -210,13 +211,6 @@ export function SecurityPage() {
         ]}
       />
       <FormError message={problem && !rule && !key && !sso && !exception && !revoking && tab !== "policy" ? problem.message : null} />
-      <datalist id={permissionListId}>
-        {(permissions.data ?? []).map((p) => (
-          <option key={p.key} value={p.key}>
-            {p.description}
-          </option>
-        ))}
-      </datalist>
 
       {tab === "sod" ? (
         <div className="flex flex-col gap-6" data-testid="sod">
@@ -502,10 +496,10 @@ export function SecurityPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("security.permissionA")} required error={problem?.fields.permissionA}>
-                  <TextField value={rule.permissionA} onChange={(e) => { setRule({ ...rule, permissionA: e.target.value }); }} list={permissionListId} required dir="ltr" data-testid="sod-permission-a" />
+                  <ComboField value={rule.permissionA} onChange={(v) => { setRule({ ...rule, permissionA: v }); }} options={permissionOptions} required dir="ltr" data-testid="sod-permission-a" />
                 </Field>
                 <Field label={t("security.permissionB")} required error={problem?.fields.permissionB}>
-                  <TextField value={rule.permissionB} onChange={(e) => { setRule({ ...rule, permissionB: e.target.value }); }} list={permissionListId} required dir="ltr" data-testid="sod-permission-b" />
+                  <ComboField value={rule.permissionB} onChange={(v) => { setRule({ ...rule, permissionB: v }); }} options={permissionOptions} required dir="ltr" data-testid="sod-permission-b" />
                 </Field>
                 <Field label={t("security.severity")}>
                   <SelectField value={rule.severity} onChange={(e) => { setRule({ ...rule, severity: e.target.value }); }} data-testid="sod-severity">
@@ -607,7 +601,7 @@ export function SecurityPage() {
                 </Field>
               </div>
               <Field label={t("security.scopes")} description={t("security.scopesHint")} error={problem?.fields.scopes}>
-                <TextField value={key.scopes} onChange={(e) => { setKey({ ...key, scopes: e.target.value }); }} list={permissionListId} dir="ltr" data-testid="key-scopes" />
+                <ComboField value={key.scopes} onChange={(v) => { setKey({ ...key, scopes: v }); }} options={permissionOptions} separator="," dir="ltr" data-testid="key-scopes" />
               </Field>
               <Field label={t("security.ipAllowlist")} description={t("security.ipAllowlistHint")} error={problem?.fields.ipAllowlist}>
                 <TextField value={key.ipAllowlist} onChange={(e) => { setKey({ ...key, ipAllowlist: e.target.value }); }} dir="ltr" />

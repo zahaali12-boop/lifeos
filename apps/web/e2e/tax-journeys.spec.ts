@@ -15,7 +15,8 @@ async function expectAccessible(page: Page): Promise<void> {
 }
 
 async function nav(page: Page, name: string): Promise<void> {
-  await page.getByRole("navigation").getByRole("link", { name, exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name, exact: true }).click();
 }
 
 test("English: install a tax template, extend its codes and matrix, register a company and file an empty return; then Arabic", async ({ page }) => {

@@ -16,7 +16,8 @@ async function expectAccessible(page: Page): Promise<void> {
 }
 
 async function nav(page: Page, name: string): Promise<void> {
-  await page.getByRole("navigation").getByRole("link", { name, exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name, exact: true }).click();
 }
 
 test("English: journal lines with a cost centre and a supplier, refused without the supplier, kept through an edit and posted; then Arabic", async ({ page }) => {
@@ -42,7 +43,7 @@ test("English: journal lines with a cost centre and a supplier, refused without 
   };
   const company = await call<{ id: string }>("POST", "/api/v1/organization/companies", { code: "JLN", legalName: { en: "Lines Co.", ar: "شركة البنود" }, country: "IQ", functionalCurrency: "IQD", timeZone: "Asia/Baghdad" });
   const chart = await call<{ id: string }>("POST", "/api/v1/accounting/charts/from-template", { templateCode: "IFRS_SME", code: "MAIN", companyId: company.id });
-  const accounts = (await call<{ accounts: { id: string; code: string }[] }>("GET", `/api/v1/accounting/charts/${chart.id}?expand=accounts`)).accounts;
+  const accounts = (await call<{ accounts: { id: string; code: string; subtype: string; isHeader: boolean }[] }>("GET", `/api/v1/accounting/charts/${chart.id}?expand=accounts`)).accounts;
   const rent = accounts.find((a) => a.code === "6110");
   const dimensions = await call<{ id: string; code: string }[]>("GET", "/api/v1/organization/dimensions");
   const costCentre = dimensions.find((d) => d.code === "COST_CENTER");
@@ -55,6 +56,20 @@ test("English: journal lines with a cost centre and a supplier, refused without 
   await nav(page, "Journals");
   await page.getByTestId("new-journal").click();
   await page.getByTestId("journal-description").fill("October rent");
+  // The account list opens on click with the cash and bank accounts on top; typing narrows it, Enter picks.
+  const cashAndBank = accounts.filter((a) => !a.isHeader && (a.subtype === "cash" || a.subtype === "bank")).map((a) => a.code);
+  expect(cashAndBank.length).toBeGreaterThan(0);
+  await page.getByTestId("line-account-0").click();
+  const options = page.getByTestId("line-account-0-options");
+  await expect(options.getByRole("group", { name: "Cash and bank" })).toBeVisible();
+  await expect(options.getByRole("group", { name: "All accounts" })).toBeVisible();
+  expect(cashAndBank).toContain((await options.getByRole("option").first().locator("span").first().textContent()) ?? "");
+  await expectAccessible(page);
+  await page.getByTestId("line-account-0").pressSequentially("611");
+  await expect(options.getByRole("option").first()).toContainText("6110");
+  await page.getByTestId("line-account-0").press("Enter");
+  await expect(page.getByTestId("line-account-0")).toHaveValue("6110");
+  await expect(options).toBeHidden();
   await page.getByTestId("line-account-0").fill("6110");
   await page.getByTestId("line-debit-0").fill("750000.50");
   await page.getByTestId("line-account-1").fill("2110");

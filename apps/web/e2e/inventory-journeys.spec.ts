@@ -16,7 +16,8 @@ async function expectAccessible(page: Page): Promise<void> {
 }
 
 async function nav(page: Page, name: string): Promise<void> {
-  await page.getByRole("navigation").getByRole("link", { name, exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name, exact: true }).click();
 }
 
 async function closeDialog(page: Page): Promise<void> {
@@ -124,9 +125,13 @@ test("English: warehouses with bins, an item, a posted adjustment, stock, a tran
   await closeDialog(page);
   await page.getByTestId("new-adjustment").click();
   await page.getByTestId("adjustment-warehouse").selectOption({ label: "MAIN · Main warehouse" });
-  await page.getByTestId("line-item-0").fill("WAT");
-  await expect(page.locator("datalist option[value='WATER']")).toHaveCount(1);
-  await page.getByTestId("line-item-0").fill("WATER");
+  // The item list opens on click and narrows as the code is typed; picking fills the code.
+  await page.getByTestId("line-item-0").click();
+  await page.getByTestId("line-item-0").pressSequentially("WAT");
+  const itemOptions = page.getByTestId("line-item-0-options");
+  await itemOptions.getByRole("option", { name: /WATER/ }).click();
+  await expect(page.getByTestId("line-item-0")).toHaveValue("WATER");
+  await expect(itemOptions).toBeHidden();
   await page.getByTestId("line-qty-0").fill("100");
   await page.getByTestId("line-cost-0").fill("250");
   await page.getByTestId("line-reason-0").selectOption({ label: "INIT · Opening stock" });

@@ -16,7 +16,8 @@ async function expectAccessible(page: Page): Promise<void> {
 }
 
 async function nav(page: Page, name: string): Promise<void> {
-  await page.getByRole("navigation").getByRole("link", { name, exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name, exact: true }).click();
 }
 
 function today(): string {

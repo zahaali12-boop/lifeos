@@ -2,11 +2,12 @@ import { Badge, Button, Input } from "@quicker/ui";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { X } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
 import type { components } from "../api/schema";
 import { DataGrid } from "../grid/DataGrid";
+import { ComboField } from "./ComboField";
 import { formatDateTime } from "../lib/format";
 import { AuditEventDialog } from "./AuditEventDialog";
 import { auditActionLabel, auditActionTone, auditEntityLabel, auditVocabulary } from "./auditLabels";
@@ -26,7 +27,6 @@ interface RecordFilter {
  */
 export function AuditPage() {
   const { t } = useTranslation();
-  const listId = useId();
   const [q, setQ] = useState("");
   const [entityType, setEntityType] = useState("");
   const [action, setAction] = useState("");
@@ -79,12 +79,6 @@ export function AuditPage() {
   return (
     <>
       <PageHeader title={t("nav.audit")} description={t("audit.description")} />
-      <datalist id={`${listId}-types`}>
-        {vocabulary.entityTypes.map((v) => <option key={v.code} value={v.label} />)}
-      </datalist>
-      <datalist id={`${listId}-actions`}>
-        {vocabulary.actions.map((v) => <option key={v.code} value={v.label} />)}
-      </datalist>
       <DataGrid<AuditEvent>
         label="nav.audit"
         columns={columns}
@@ -104,21 +98,21 @@ export function AuditPage() {
                 </button>
               </span>
             ) : (
-              <Input
+              <ComboField
                 placeholder={t("audit.allRecords")}
                 value={entityType}
-                onChange={(e) => { setEntityType(e.target.value); }}
-                list={`${listId}-types`}
+                onChange={setEntityType}
+                options={vocabulary.entityTypes.map((v) => ({ value: v.label }))}
                 className="w-48"
                 aria-label={t("audit.entityType")}
                 data-testid="audit-entity-type"
               />
             )}
-            <Input
+            <ComboField
               placeholder={t("audit.allActions")}
               value={action}
-              onChange={(e) => { setAction(e.target.value); }}
-              list={`${listId}-actions`}
+              onChange={setAction}
+              options={vocabulary.actions.map((v) => ({ value: v.label }))}
               className="w-44"
               aria-label={t("audit.action")}
               data-testid="audit-action"

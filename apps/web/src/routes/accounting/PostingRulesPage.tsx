@@ -1,14 +1,16 @@
 import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Field, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
+import { ComboField } from "../ComboField";
 import { FormError, PageHeader, SelectField, TextField } from "../common";
 import { DocStatus, Tabs } from "../inventory/shared";
+import { cashAndBankCodes } from "./JournalLineDetails";
 import { CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
 
 type Rule = components["schemas"]["PostingRuleSummary"];
@@ -43,7 +45,6 @@ export function PostingRulesPage() {
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [versionFrom, setVersionFrom] = useState<string | null>(null);
   const [group, setGroup] = useState<{ id: string | null; kind: string; code: string; nameEn: string; nameAr: string; isActive: boolean } | null>(null);
-  const accountListId = useId();
   const roleLabel = (role: string) => t(`accountRoles.${role}`, { defaultValue: role });
 
   const profiles = useQuery({
@@ -126,6 +127,8 @@ export function PostingRulesPage() {
   const detail = profile.data;
   const editable = detail?.status === "draft" || detail?.status === "active";
   const postable = (accounts.data ?? []).filter((a) => !a.isHeader && a.isActive);
+  const accountOptions = postable.map((a) => ({ value: a.code, label: localized(a.name) })).sort((a, b) => a.value.localeCompare(b.value));
+  const cashAndBank = { label: t("accounting.cashAndBank"), values: cashAndBankCodes(postable) };
   const accountName = (code: string) => {
     const account = postable.find((a) => a.code === code);
     return account ? localized(account.name) : "";
@@ -233,13 +236,6 @@ export function PostingRulesPage() {
             {rows ? (
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-fg-muted">{t("postingRules.editHint")}</p>
-                <datalist id={accountListId}>
-                  {postable.map((a) => (
-                    <option key={a.id} value={a.code}>
-                      {localized(a.name)}
-                    </option>
-                  ))}
-                </datalist>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -267,7 +263,7 @@ export function PostingRulesPage() {
                           </SelectField>
                         </TableCell>
                         <TableCell>
-                          <TextField value={r.accountCode} onChange={(e) => { patch(r.key, { accountCode: e.target.value }); }} list={accountListId} dir="ltr" className="w-28" aria-label={t("postingRules.account")} />
+                          <ComboField value={r.accountCode} onChange={(code) => { patch(r.key, { accountCode: code }); }} options={accountOptions} pinned={cashAndBank} allLabel={t("accounting.allAccounts")} dir="ltr" className="w-28" aria-label={t("postingRules.account")} />
                         </TableCell>
                         <TableCell>
                           <TextField value={r.documentType ?? ""} onChange={(e) => { patch(r.key, { documentType: e.target.value }); }} dir="ltr" className="w-36" aria-label={t("postingRules.documentType")} />

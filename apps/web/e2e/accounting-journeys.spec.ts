@@ -15,7 +15,8 @@ async function expectAccessible(page: Page): Promise<void> {
 }
 
 async function nav(page: Page, name: string): Promise<void> {
-  await page.getByRole("navigation").getByRole("link", { name }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name, exact: true }).click();
 }
 
 test("English: chart from a template, a journal posted, the trial balance drills to the ledger, the period closes and reopens", async ({ page }) => {

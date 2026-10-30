@@ -58,7 +58,8 @@ test("English: replenishment suggestions become draft purchase orders per suppli
 
   // The planner suggests both; the buyer selects them and creates the orders.
   await page.reload(); // the company was created behind the app's back
-  await page.getByRole("navigation").getByRole("link", { name: "Replenishment", exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name: "Replenishment", exact: true }).click();
   await page.getByTestId("run-planner").click();
   const grid = page.getByRole("grid");
   await expect(grid.getByRole("row").filter({ hasText: "WATER" })).toContainText("ALPHA");
@@ -80,7 +81,8 @@ test("English: replenishment suggestions become draft purchase orders per suppli
   await page.keyboard.press("Escape");
 
   // Back on the planner, the decided suggestions are on order and can no longer be ordered.
-  await page.getByRole("navigation").getByRole("link", { name: "Replenishment", exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name: "Replenishment", exact: true }).click();
   await page.getByLabel("Status").selectOption("accepted");
   await expect(page.getByTestId("on-order")).toHaveCount(2);
 });

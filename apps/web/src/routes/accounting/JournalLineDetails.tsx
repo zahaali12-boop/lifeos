@@ -1,9 +1,10 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useId, useMemo } from "react";
+import { useMemo, type ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { localized } from "../../lib/format";
+import { ComboField } from "../ComboField";
 import { Field, SelectField, TextField } from "../common";
 
 type Account = components["schemas"]["AccountSummary"];
@@ -86,10 +87,15 @@ export function DimensionSelects({ testIdPrefix, values, reference, emptyLabel, 
  */
 export function AccountCodeField({ value, onChange, accounts, label, testId }: { value: string; onChange: (code: string) => void; accounts: Map<string, Account>; label: string; testId?: string }) {
   const { t } = useTranslation();
-  const listId = useId();
   const postable = useMemo(
     () => [...accounts.values()].filter((a) => a.isActive && !a.isHeader && (a.allowManualPosting || a.isControl)).sort((a, b) => a.code.localeCompare(b.code)),
     [accounts],
+  );
+  const options = useMemo(() => postable.map((a) => ({ value: a.code, label: localized(a.name) })), [postable]);
+  // The cash and bank accounts come first: they are on most entries.
+  const pinned = useMemo(
+    () => ({ label: t("accounting.cashAndBank"), values: cashAndBankCodes(postable) }),
+    [postable, t],
   );
   const code = value.trim();
   const account = accounts.get(code);
@@ -101,12 +107,7 @@ export function AccountCodeField({ value, onChange, accounts, label, testId }: {
     : null;
   return (
     <>
-      <TextField aria-label={label} value={value} onChange={(e) => { onChange(e.target.value); }} list={listId} autoComplete="off" dir="ltr" aria-invalid={problem ? true : undefined} data-testid={testId} />
-      <datalist id={listId}>
-        {postable.map((a) => (
-          <option key={a.id} value={a.code}>{`${a.code} · ${localized(a.name)}`}</option>
-        ))}
-      </datalist>
+      <ComboField aria-label={label} value={value} onChange={onChange} options={options} pinned={pinned} allLabel={t("accounting.allAccounts")} dir="ltr" aria-invalid={problem ? true : undefined} data-testid={testId} />
       {problem ? (
         <p className="mt-0.5 text-xs text-danger" data-testid={testId ? `${testId}-problem` : undefined}>{problem}</p>
       ) : account ? (
@@ -117,6 +118,29 @@ export function AccountCodeField({ value, onChange, accounts, label, testId }: {
       ) : null}
     </>
   );
+}
+
+/**
+ * An account-code input for a company's chart: the list opens on click with the cash and bank accounts on top, then
+ * every postable account; typing narrows it by code or name.
+ */
+export function AccountPicker({ chartId, value, onChange, ...props }: Omit<ComponentProps<typeof ComboField>, "options" | "pinned" | "allLabel" | "onChange"> & { chartId: string | null | undefined; onChange: (code: string) => void }) {
+  const { t } = useTranslation();
+  const accounts = useQuery({
+    queryKey: ["chart-accounts", chartId],
+    enabled: Boolean(chartId),
+    queryFn: async () => unwrap(await api.GET("/api/v1/accounting/charts/{chartId}/accounts", { params: { path: { chartId: chartId ?? "" } } })),
+  });
+  const postable = useMemo(() => (accounts.data ?? []).filter((a) => a.isActive && !a.isHeader).sort((a, b) => a.code.localeCompare(b.code)), [accounts.data]);
+  const options = useMemo(() => postable.map((a) => ({ value: a.code, label: localized(a.name) })), [postable]);
+  const pinned = useMemo(() => ({ label: t("accounting.cashAndBank"), values: cashAndBankCodes(postable) }), [postable, t]);
+  return <ComboField {...props} value={value} onChange={onChange} options={options} pinned={pinned} allLabel={t("accounting.allAccounts")} dir="ltr" />;
+}
+
+/** Up to four postable cash and bank accounts, cash first, the order a picker shows them on top. */
+export function cashAndBankCodes(accounts: Account[]): string[] {
+  const of = (subtype: string): string[] => accounts.filter((a) => a.subtype === subtype).map((a) => a.code).sort((a, b) => a.localeCompare(b));
+  return [...of("cash"), ...of("bank")].slice(0, 4);
 }
 
 /** The cost centre, the dimension a line is most often analysed by: shown as its own column wherever lines are entered. */

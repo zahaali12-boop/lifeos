@@ -25,7 +25,9 @@
     "name": "الاسم",
     "nameEn": "الاسم (بالإنجليزية)",
     "nameAr": "الاسم (بالعربية)",
-    "back": "رجوع"
+    "back": "رجوع",
+    "typeToNarrow": "{count} أخرى — اكتب لتضييق القائمة",
+    "allEntries": "الكل"
   },
   "entities": {
     "company": "الشركات"
@@ -113,7 +115,34 @@
     "recurringInvoices": "الفواتير الدورية",
     "receivables": "الذمم المدينة",
     "customerReceipts": "مقبوضات العملاء",
-    "salesReturns": "مرتجعات المبيعات"
+    "salesReturns": "مرتجعات المبيعات",
+    "modules": {
+      "accounting": "المحاسبة",
+      "sales": "المبيعات",
+      "purchasing": "المشتريات",
+      "inventory": "المخزون",
+      "finance": "المالية",
+      "organization": "المنظمة",
+      "administration": "الإدارة"
+    },
+    "sections": {
+      "operations": "العمليات",
+      "customers": "العملاء",
+      "orders": "الطلبات",
+      "products": "المنتجات",
+      "invoicing": "الفوترة",
+      "receivables": "الذمم المدينة",
+      "payables": "الذمم الدائنة",
+      "bank": "البنوك والنقد",
+      "tax": "الضريبة",
+      "planning": "التخطيط",
+      "pricing": "التسعير",
+      "reporting": "التقارير",
+      "setup": "الإعداد",
+      "users": "المستخدمون والصلاحيات",
+      "automation": "الأتمتة والتدقيق",
+      "configuration": "التهيئة"
+    }
   },
   "shell": {
     "filterMenu": "تصفية القائمة",
@@ -130,7 +159,13 @@
     "lightMode": "التبديل إلى الوضع الفاتح",
     "darkMode": "التبديل إلى الوضع الداكن",
     "account": "الحساب",
-    "signOut": "تسجيل الخروج"
+    "signOut": "تسجيل الخروج",
+    "apps": "كل القوائم",
+    "appsHint": "كل الشاشات حسب الوحدة",
+    "home": "الرئيسية",
+    "menuOf": "قائمة {module}",
+    "drawerNavigation": "القائمة",
+    "approvals": "الموافقات"
   },
   "shortcuts": {
     "title": "اختصارات لوحة المفاتيح",
@@ -1858,7 +1893,9 @@
     "rejectReason": "السبب (مطلوب للرفض)",
     "correctionReason": "لماذا يحتاج إلى تصحيح؟",
     "correctionHint": "تُنشأ نسخة من هذا القيد كمسودة في أول فترة مفتوحة لتعدّلها. ترحيلها يعكس هذا القيد ويقيّد القيد المصحَّح.",
-    "createCorrection": "إنشاء مسودة التصحيح"
+    "createCorrection": "إنشاء مسودة التصحيح",
+    "cashAndBank": "النقد والبنوك",
+    "allAccounts": "كل الحسابات"
   },
   "mobile": {
     "receive": {

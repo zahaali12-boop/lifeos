@@ -188,7 +188,8 @@ test("English: profile, authenticator app, security key and recovery codes, each
 test("English: a workspace that requires two-step verification has a member without it set up an authenticator app while signing in", async ({ page }) => {
   test.setTimeout(90_000);
   const email = await signup(page);
-  await page.getByRole("navigation").getByRole("link", { name: "Security", exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name: "Security", exact: true }).click();
   await page.getByTestId("tab-policy").click();
   await page.getByTestId("policy-mfaRequired").check();
   await page.getByTestId("save-policy").click();
@@ -220,7 +221,8 @@ test("English: someone whose only second factor is a security key confirms a sen
   await cdp.send("WebAuthn.enable");
   await cdp.send("WebAuthn.addVirtualAuthenticator", { options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, automaticPresenceSimulation: true } });
   await signup(page);
-  await page.getByRole("navigation").getByRole("link", { name: "Security", exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name: "Security", exact: true }).click();
   await page.getByTestId("tab-policy").click();
   await page.getByTestId("policy-stepUpWindowMinutes").fill("1");
   await page.getByTestId("save-policy").click();

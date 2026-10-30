@@ -16,7 +16,8 @@ async function expectAccessible(page: Page): Promise<void> {
 }
 
 async function nav(page: Page, name: string): Promise<void> {
-  await page.getByRole("navigation").getByRole("link", { name, exact: true }).click();
+  await page.getByTestId("apps-menu").click();
+  await page.getByTestId("apps-panel").getByRole("link", { name, exact: true }).click();
 }
 
 async function closeDialog(page: Page): Promise<void> {
@@ -285,26 +286,46 @@ test("Arabic: the set-up screens read right to left and stay accessible", async 
   await expectAccessible(page);
 });
 
-test("English: the sidebar groups screens by module, remembers collapsed sections and filters", async ({ page }) => {
+test("English: the top menu opens a module on hover, moves with the arrow keys and filters every screen", async ({ page }) => {
   await signup(page, "en");
-  const purchasing = page.getByTestId("nav-group-purchasing");
-  await expect(purchasing.getByRole("link", { name: "Purchase orders" })).toBeVisible();
-  await page.getByTestId("nav-toggle-purchasing").click();
-  await expect(page.getByTestId("nav-toggle-purchasing")).toHaveAttribute("aria-expanded", "false");
-  await expect(purchasing.getByRole("link", { name: "Purchase orders" })).toBeHidden();
+  // Outside a module the bar lists the modules; hovering one shows its screens by section.
+  await page.getByTestId("menu-module-purchasing").hover();
+  const purchasing = page.getByTestId("menu-panel-module-purchasing");
+  await expect(purchasing.getByRole("link", { name: "Purchase orders", exact: true })).toBeVisible();
+  await expect(purchasing).toContainText("Reporting");
   await expectAccessible(page);
+  await page.mouse.move(5, 700);
+  await expect(purchasing).toBeHidden();
 
-  // Collapsed sections stay collapsed after a reload, and open again when the current page is in them.
-  await page.reload();
-  await expect(page.getByTestId("nav-toggle-purchasing")).toHaveAttribute("aria-expanded", "false");
+  // Inside a module the bar shows that module's sections; the current screen is marked.
   await page.goto("/purchasing/orders");
-  await expect(page.getByTestId("nav-toggle-purchasing")).toHaveAttribute("aria-expanded", "true");
-  await expect(purchasing.getByRole("link", { name: "Purchase orders" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("current-module")).toHaveText("Purchasing");
+  await page.getByTestId("menu-section-orders").click();
+  const orders = page.getByTestId("menu-panel-section-orders");
+  await expect(orders.getByRole("link", { name: "Purchase orders", exact: true })).toHaveAttribute("aria-current", "page");
 
-  // The filter narrows every section at once; Enter opens the first match.
+  // Arrow keys: down walks the screens, right moves to the next section's menu, Escape closes and returns to the button.
+  await page.getByTestId("menu-section-orders").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(orders.getByRole("link").first()).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(orders.getByRole("link").nth(1)).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  const operations = page.getByTestId("menu-panel-section-operations");
+  await expect(operations).toBeVisible();
+  await expect(operations.getByRole("link").first()).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(operations).toBeHidden();
+  await expect(page.getByTestId("menu-section-operations")).toBeFocused();
+
+  // The all-menus panel has every module; its filter narrows them all, and Enter opens the first match.
+  await page.getByTestId("apps-menu").click();
+  await expect(page.getByTestId("apps-module-accounting")).toBeVisible();
+  await expect(page.getByTestId("apps-module-sales")).toBeVisible();
   await page.getByTestId("nav-filter").fill("trial");
-  await expect(page.getByRole("navigation").getByRole("link")).toHaveCount(1);
+  await expect(page.getByTestId("apps-panel").getByRole("link")).toHaveCount(1);
   await page.getByTestId("nav-filter").press("Enter");
   await expect(page).toHaveURL(/\/accounting\/trial-balance$/);
-  await expect(page.getByTestId("nav-filter")).toHaveValue("");
+  await expect(page.getByTestId("apps-panel")).toBeHidden();
+  await expect(page.getByTestId("current-module")).toHaveText("Accounting");
 });

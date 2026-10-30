@@ -11,6 +11,7 @@ import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { FormError, PageHeader, SelectField, TextField } from "../common";
 import { DocStatus, KeyValues, Tabs } from "../inventory/shared";
+import { AccountPicker } from "./JournalLineDetails";
 import { RoutineRuns } from "./RoutineRuns";
 import { Amount, CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
 
@@ -367,7 +368,7 @@ export function RoutinesPage() {
                   {editing.form.lines.map((line, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        <TextField value={line.accountCode} onChange={(e) => { updateLine(index, { accountCode: e.target.value }); }} dir="ltr" aria-label={t("routines.account")} data-testid={`template-account-${String(index)}`} />
+                        <AccountPicker chartId={company?.chartId} value={line.accountCode} onChange={(code) => { updateLine(index, { accountCode: code }); }} aria-label={t("routines.account")} data-testid={`template-account-${String(index)}`} />
                       </TableCell>
                       <TableCell>
                         <TextField inputMode="decimal" value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value }); }} dir="ltr" aria-label={t("routines.debit")} data-testid={`template-debit-${String(index)}`} />
@@ -473,10 +474,10 @@ export function RoutinesPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("routines.balanceAccount")} required error={problem?.fields.balanceAccountCode}>
-                  <TextField value={deferral.balanceAccountCode} onChange={(e) => { setDeferral({ ...deferral, balanceAccountCode: e.target.value }); }} required dir="ltr" data-testid="deferral-balance" />
+                  <AccountPicker chartId={company?.chartId} value={deferral.balanceAccountCode} onChange={(code) => { setDeferral({ ...deferral, balanceAccountCode: code }); }} required data-testid="deferral-balance" />
                 </Field>
                 <Field label={t("routines.targetAccount")} required error={problem?.fields.targetAccountCode}>
-                  <TextField value={deferral.targetAccountCode} onChange={(e) => { setDeferral({ ...deferral, targetAccountCode: e.target.value }); }} required dir="ltr" data-testid="deferral-target" />
+                  <AccountPicker chartId={company?.chartId} value={deferral.targetAccountCode} onChange={(code) => { setDeferral({ ...deferral, targetAccountCode: code }); }} required data-testid="deferral-target" />
                 </Field>
                 <Field label={t("routines.startsOn")} required>
                   <TextField type="date" value={deferral.startsOn} onChange={(e) => { setDeferral({ ...deferral, startsOn: e.target.value }); }} required dir="ltr" />
