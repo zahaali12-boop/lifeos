@@ -103,6 +103,32 @@ public static class SalesEndpoints
             .RequirePermission(SalesPermissions.ShipmentManage)
             .WithSummary("Sets the carrier and its tracking reference, also after posting");
 
+        var invoices = sales.MapGroup("/invoices");
+        invoices.MapGet("/", async (Guid? companyId, string? status, string? kind, Guid? partnerId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, kind, partnerId, ct)))
+            .RequirePermission(SalesPermissions.InvoiceRead)
+            .WithSummary("Sales invoices and credit notes, newest first, filtered by company, status, kind or customer");
+        invoices.MapGet("/invoicable", async (Guid companyId, Guid partnerId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.InvoicableAsync(companyId, partnerId, ct)))
+            .RequirePermission(SalesPermissions.InvoiceRead)
+            .WithSummary("What a customer can still be invoiced: posted shipment lines with an uninvoiced quantity and open service lines of its orders");
+        invoices.MapPost("/", async (SaveSalesInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static i => $"/api/v1/sales/invoices/{i.Id}"))
+            .RequirePermission(SalesPermissions.InvoiceManage)
+            .WithSummary("A draft invoice or credit note: lines from shipments and orders at the order's price, items priced by the pricing engine, service lines, or credited invoice lines; taxed on the document date");
+        invoices.MapGet("/{invoiceId:guid}", async (Guid invoiceId, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(invoiceId, ct)))
+            .RequirePermission(SalesPermissions.InvoiceRead)
+            .WithSummary("The invoice with its lines and, once posted, its receivable open items");
+        invoices.MapPut("/{invoiceId:guid}", async (Guid invoiceId, SaveSalesInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(invoiceId, request, ct)))
+            .RequirePermission(SalesPermissions.InvoiceManage)
+            .WithSummary("Replaces a draft's lines and re-taxes them; only a draft is edited");
+        invoices.MapPost("/{invoiceId:guid}/cancel", async (Guid invoiceId, CancelSalesInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(invoiceId, request, ct)))
+            .RequirePermission(SalesPermissions.InvoiceManage)
+            .WithSummary("Cancels a draft with a reason, keeping its number");
+        invoices.MapPost("/{invoiceId:guid}/post", async (Guid invoiceId, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(invoiceId, ct)))
+            .RequirePermission(SalesPermissions.InvoicePost)
+            .WithSummary("Posts the invoice: Dr receivables / Cr revenue per line / Cr output tax per code, the tax ledger, one receivable open item per instalment; a credit note naming its invoice is applied to it at once");
+        invoices.MapPost("/{invoiceId:guid}/reverse", async (Guid invoiceId, ReverseSalesInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(invoiceId, request, ct)))
+            .RequirePermission(SalesPermissions.InvoicePost)
+            .WithSummary("Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled");
+
         return api;
     }
 }

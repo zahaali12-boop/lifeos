@@ -15,6 +15,7 @@ using Quicker.Organization.Contracts;
 using Quicker.Partners.Contracts;
 using Quicker.Persistence;
 using Quicker.Pricing.Contracts;
+using Quicker.Receivables.Contracts;
 using Quicker.Sales.Domain;
 using Quicker.Sales.Persistence;
 using Quicker.Tax.Contracts;
@@ -48,10 +49,13 @@ public sealed class OrderService(
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock,
-    IDimensionSets dimensionSets)
+    IDimensionSets dimensionSets,
+    IReceivables receivables)
 {
     public const string DocumentType = "sales_order";
     public const string CreditLimitBlockKind = "credit_limit";
+
+    private static readonly string[] OpenOrderStatuses = ["confirmed", "partially_shipped", "shipped"];
 
     public async Task<IReadOnlyList<OrderSummary>> ListAsync(Guid? companyId, string? status, Guid? partnerId, CancellationToken cancellationToken)
     {
@@ -236,12 +240,19 @@ public sealed class OrderService(
                 uow.Transaction,
                 cancellationToken: cancellationToken));
 
-            // open_ar contributes nothing until Receivables (5.7) exists; open_ar_plus_orders is what is actually
-            // computable today (A-152), so a customer on the open_ar basis alone never blocks yet -- an honest gap.
-            var confirmedElsewhere = await db.Orders.AsNoTracking()
-                .Where(o => o.CompanyId == order.CompanyId && o.PartnerId == order.PartnerId && o.Status == "confirmed" && o.Currency == order.Currency && o.Id != order.Id)
-                .SumAsync(static o => (decimal?)o.TotalGross, cancellationToken) ?? 0m;
-            var exposure = confirmedElsewhere + order.TotalGross;
+            // Exposure (A-152, A-159): what the customer owes in receivables net of its unapplied credits, plus, on the
+            // open_ar_plus_orders basis, the part of its other confirmed orders not yet invoiced, plus this order.
+            var openAr = await receivables.OpenBalanceAsync(order.CompanyId, order.PartnerId, order.Currency, cancellationToken);
+            var uninvoicedOrders = 0m;
+            if (customer.Value.CreditExposureBasis == CreditExposureBases.OpenArPlusOrders)
+            {
+                var others = await db.Orders.AsNoTracking().Include(static o => o.Lines)
+                    .Where(o => o.CompanyId == order.CompanyId && o.PartnerId == order.PartnerId && OpenOrderStatuses.Contains(o.Status) && o.Currency == order.Currency && o.Id != order.Id)
+                    .ToListAsync(cancellationToken);
+                uninvoicedOrders = others.Sum(static o => o.Lines.Where(static l => l.Status != "cancelled" && l.QuantityBase > 0m).Sum(static l => (l.NetAmount + l.TaxAmount) * Math.Max(0m, l.QuantityBase - l.QtyCancelled - l.QtyInvoiced) / l.QuantityBase));
+            }
+
+            var exposure = openAr + uninvoicedOrders + order.TotalGross;
             if (exposure > limit)
             {
                 var overrideId = await workflow.ConsumeOverrideAsync(CreditLimitBlockKind, DocumentType, order.Id, cancellationToken);
@@ -250,6 +261,8 @@ public sealed class OrderService(
                     var why = new Dictionary<string, object?>(StringComparer.Ordinal)
                     {
                         ["exposure"] = exposure,
+                        ["openAr"] = openAr,
+                        ["uninvoicedOrders"] = uninvoicedOrders,
                         ["limit"] = limit,
                         ["basis"] = customer.Value.CreditExposureBasis,
                         ["currency"] = order.Currency,

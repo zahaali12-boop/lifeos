@@ -15,10 +15,8 @@ public static class SalesPermissions
     public const string ShipmentManage = "sales.shipment.manage";
     public const string ShipmentPost = "sales.shipment.post";
 
-    // Forward-declared for the default SoD rule (RoleTemplates.cs) pairing it with receivables.writeoff.post: no
-    // invoice endpoint checks it yet (5.6), but once any sales.* permission ships, a rule naming a sales.* key it
-    // does not register would silently never trip (Identity's
-    // Default_sod_rules_name_permissions_that_exist_once_their_module_has_shipped test).
+    public const string InvoiceRead = "sales.invoice.read";
+    public const string InvoiceManage = "sales.invoice.manage";
     public const string InvoicePost = "sales.invoice.post";
 
     public static readonly PermissionDefinition[] All =
@@ -30,6 +28,8 @@ public static class SalesPermissions
         new(ShipmentRead, "sales", "Read sales shipments"),
         new(ShipmentManage, "sales", "Create and edit draft sales shipments"),
         new(ShipmentPost, "sales", "Post sales shipments into stock and reverse them"),
-        new(InvoicePost, "sales", "Post sales invoices into the books and reverse them"),
+        new(InvoiceRead, "sales", "Read sales invoices and credit notes"),
+        new(InvoiceManage, "sales", "Create, edit and delete draft sales invoices and credit notes"),
+        new(InvoicePost, "sales", "Post sales invoices and credit notes into the books and reverse them"),
     ];
 }

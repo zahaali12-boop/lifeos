@@ -57,7 +57,7 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         var ws = await Api.SignupAsync();
         using var owner = Api.ClientFor(ws.AccessToken);
         var setup = await SetupAsync(owner, "AEG", "AED", "USD", 3.6725m);
-        var customer = Guid.NewGuid();
+        var customer = (await owner.PostAsync("/api/v1/partners", new { code = "CUS-P", legalName = new { en = "Posting Customer", ar = "عميل الترحيل" }, isCustomer = true })).GetProperty("id").GetGuid();
 
         // 100.01 USD at 3.6725: the four lines round to 367.29 against 367.28, so the engine adds a 0.01 AED rounding line.
         var posted = await owner.PostAsync("/api/v1/accounting/postings", Posting(setup.CompanyId, "USD",
@@ -119,6 +119,7 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         using var owner = Api.ClientFor(ws.AccessToken);
         var setup = await SetupAsync(owner, "IQT", "IQD", null, 1310m);
         var post = "/api/v1/accounting/postings";
+        var customer = (await owner.PostAsync("/api/v1/partners", new { code = "CUS-R", legalName = new { en = "Rules Customer", ar = "عميل القواعد" }, isCustomer = true })).GetProperty("id").GetGuid();
 
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("Cogs", 100m), Line("Inventory", -90m, "INV", Guid.NewGuid())]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.unbalanced");
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("Cogs", 100m)]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.lines_required");
@@ -131,12 +132,12 @@ public sealed class PostingEngineTests(ApiHostFixture host)
         why.GetProperty("why").GetProperty("line").GetInt32().ShouldBe(1);
         why.GetProperty("why").GetProperty("subledgerType").GetString().ShouldBe("AR");
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AP", Guid.NewGuid()), Line("Revenue", -100m)]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.subledger_type_mismatch");
-        (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AR", Guid.NewGuid()), Line("Revenue", -100m, "AR", Guid.NewGuid())]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.subledger_unexpected");
+        (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AR", customer), Line("Revenue", -100m, "AR", customer)]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.subledger_unexpected");
 
         // Documents post by role; naming an account is for manual journals, and a control account takes a manual line only with its subledger item.
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("Cogs", 100m, accountId: setup.Accounts["6100"]), Line("Revenue", -100m)]), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("posting.explicit_account_not_allowed");
         (await owner.PostErrorAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, accountId: setup.Accounts["1210"]), Line("Revenue", -100m)], isManual: true), HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("account.manual_posting_blocked");
-        (await owner.PostAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AR", Guid.NewGuid(), accountId: setup.Accounts["1210"]), Line("Revenue", -100m)], isManual: true))).GetProperty("lines").EnumerateArray().First().GetProperty("subledgerType").GetString().ShouldBe("AR", "a manual line on a control account passes when it names the subledger item it adjusts");
+        (await owner.PostAsync(post, Posting(setup.CompanyId, "IQD", [Line("AR", 100m, "AR", customer, accountId: setup.Accounts["1210"]), Line("Revenue", -100m)], isManual: true))).GetProperty("lines").EnumerateArray().First().GetProperty("subledgerType").GetString().ShouldBe("AR", "a manual line on a control account passes when it names the subledger item it adjusts");
 
         // A required dimension: the account's rule decides, whichever way the line came in (roadmap 2.1 acceptance).
         var (_, costCentre) = await owner.DimensionValueAsync("COST_CENTER", "CC-1");

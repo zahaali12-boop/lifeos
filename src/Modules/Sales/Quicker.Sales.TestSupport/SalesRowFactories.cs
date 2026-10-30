@@ -26,6 +26,19 @@ public static class SalesRowFactories
         IsolationRegistry.Register("app.sls_shipment_lines", static async (c, tx, t) => new RowRef("app.sls_shipment_lines", $"id = '{(await ShipmentAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.sls_shipment_packages", static async (c, tx, t) => new RowRef("app.sls_shipment_packages", $"id = '{(await PackageAsync(c, tx, t)).Package}'"));
         IsolationRegistry.Register("app.sls_shipment_package_lines", static async (c, tx, t) => new RowRef("app.sls_shipment_package_lines", $"id = '{(await PackageAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.sls_invoices", static async (c, tx, t) => new RowRef("app.sls_invoices", $"id = '{(await InvoiceAsync(c, tx, t)).Invoice}'"));
+        IsolationRegistry.Register("app.sls_invoice_lines", static async (c, tx, t) => new RowRef("app.sls_invoice_lines", $"id = '{(await InvoiceAsync(c, tx, t)).Line}'"));
+    }
+
+    private static async Task<(Guid Invoice, Guid Line)> InvoiceAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var company = await CompanyAsync(c, tx, t);
+        var partner = await PartnerAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.sls_invoices (tenant_id, id, company_id, number, partner_id, document_date, posting_date, currency) VALUES (@t, @id, @company, @number, @partner, '2026-09-22', '2026-09-22', 'IQD')", new { t, id, company, number = Suffix(id), partner }, tx);
+        await c.ExecuteAsync("INSERT INTO app.sls_invoice_lines (tenant_id, id, invoice_id, line_no, kind, description, quantity, unit_price) VALUES (@t, @line, @id, 1, 'service', 'Probe', 1, 10)", new { t, line, id }, tx);
+        return (id, line);
     }
 
     private static async Task<(Guid Package, Guid Line)> PackageAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

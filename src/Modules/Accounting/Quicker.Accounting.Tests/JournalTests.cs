@@ -88,7 +88,7 @@ public sealed class JournalTests(ApiHostFixture host)
         (await owner.PostErrorAsync($"/api/v1/accounting/journals/{journalId}/cancel", new { }, HttpStatusCode.Conflict)).Code.ShouldBe("journal.not_cancellable");
 
         // A control account takes a manual line only with its subledger item; the list shows the journal by status.
-        var customer = Guid.NewGuid();
+        var customer = (await owner.PostAsync("/api/v1/partners", new { code = "CUS-J", legalName = new { en = "Journal Customer", ar = "عميل القيد" }, isCustomer = true })).GetProperty("id").GetGuid();
         var blocked = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/journals", new { postingDate = "2026-09-22", currency = "IQD", lines = new[] { Line("1210", debit: 10m), Line("4100", credit: 10m) } });
         (await owner.PostErrorAsync($"/api/v1/accounting/journals/{blocked.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("account.manual_posting_blocked");
         var adjustment = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/journals", new { postingDate = "2026-09-22", currency = "IQD", lines = new[] { Line("1210", debit: 10m, subledgerType: "AR", subledgerRef: customer), Line("4100", credit: 10m) } });

@@ -23,6 +23,10 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
 
     public DbSet<SalesShipmentPackageLine> ShipmentPackageLines => Set<SalesShipmentPackageLine>();
 
+    public DbSet<SalesInvoice> Invoices => Set<SalesInvoice>();
+
+    public DbSet<SalesInvoiceLine> InvoiceLines => Set<SalesInvoiceLine>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -90,6 +94,23 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
         {
             b.ToTable("sls_shipment_package_lines", "app");
             b.HasKey(static x => new { x.TenantId, x.Id });
+        });
+
+        modelBuilder.Entity<SalesInvoice>(b =>
+        {
+            b.ToTable("sls_invoices", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.CustomerSnapshot).HasColumnType("jsonb");
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.InvoiceId });
+            b.HasAuditTrail("sales_invoice", static x => x.Number);
+        });
+
+        modelBuilder.Entity<SalesInvoiceLine>(b =>
+        {
+            b.ToTable("sls_invoice_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.PriceBreakdown).HasColumnType("jsonb");
         });
 
         base.OnModelCreating(modelBuilder);

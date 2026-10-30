@@ -71,7 +71,7 @@ Conventions:
 | Overpayment | remaining amount stays as `receipt_on_account` credit | | refund posts Dr `AR` (credit item) / Cr `Bank` |
 | **Sales return (RMA receipt)** | Dr `Inventory` at return cost / Cr `Cogs` | SLE `sale_return` (+qty) applied to the original shipment's cost; serial → `returned`; disposition to quarantine bin if inspection; lot status respected (recalled lots go to quarantine and are flagged) | Return cost policy: original (default), current, specified. |
 | **Credit note** (from return or price adjustment) | Dr `Revenue` (or `SalesReturns`) / Dr `OutputTax` / Cr `AR` | AR open item (credit); tax lines; commission reversal | Automatically allocated against the original invoice when linked (settlement with no FX if same rate; FX otherwise). |
-| Credit note without return (price/goodwill) | Dr `Revenue` / Dr `OutputTax` / Cr `AR` | AR open item (credit) | |
+| Credit note without return (price/goodwill) | Dr `Revenue` / Dr `OutputTax` / Cr `AR` | AR open item (credit) | Built in 5.6a: a credit note's lines default to `Revenue` (or the line's own role); `SalesReturns` arrives with returns (5.8). A credit note naming its invoice is applied to it as it posts (A-159). |
 | Write-off (bad debt) | Dr `BadDebt` / Cr `AR` | settlement kind `write_off` | small-balance write-offs may use `WriteOff` or `RoundingDifferences` per threshold |
 | Dunning fee | Dr `AR` / Cr `InterestIncome` | AR open item (debit adjustment) | |
 | Commission payment | Dr `CommissionPayable` / Cr `Bank` | | commissions accrued at payment instead if plan says so |

@@ -235,6 +235,9 @@ public sealed class SalesOrderLine : ITenantEntity
 
     public decimal QtyInvoiced { get; set; }
 
+    /// <summary>What the line's net has been invoiced so far, so the last invoice of a line takes the exact remainder (5.6a).</summary>
+    public decimal NetInvoiced { get; set; }
+
     public decimal QtyCancelled { get; set; }
 
     public string Status { get; set; } = "open";
@@ -344,6 +347,9 @@ public sealed class SalesShipmentLine : ITenantEntity
 
     public decimal CogsAmount { get; set; }
 
+    /// <summary>What the line has been invoiced so far, in base units like its quantity (5.6a).</summary>
+    public decimal QtyInvoiced { get; set; }
+
     public Guid? SleId { get; set; }
 
     public string SleIds { get; set; } = "[]";
@@ -394,4 +400,159 @@ public sealed class SalesShipmentPackageLine : ITenantEntity
     public Guid OrderLineId { get; set; }
 
     public decimal Quantity { get; set; }
+}
+
+/// <summary>A sales invoice or credit note (DOMAIN_MODEL §11, roadmap 5.6a): lines against posted shipment lines, service
+/// lines of orders, directly priced non-stock items or free lines on an account role; a credit note credits an
+/// invoice's lines or stands on its own. Posting books Dr receivables gross / Cr revenue net per line / Cr output tax
+/// per code (POSTING_RULES §2) and opens one receivable open item per payment-terms instalment; a posted document
+/// is reversed, never edited.</summary>
+public sealed class SalesInvoice : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? BranchId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    /// <summary>invoice or credit_note.</summary>
+    public string Kind { get; set; } = "invoice";
+
+    public Guid PartnerId { get; set; }
+
+    /// <summary>The customer's own reference (its purchase order number), printed and carried to the open item.</summary>
+    public string? CustomerReference { get; set; }
+
+    /// <summary>For a credit note: the invoice it credits, applied to automatically once posted.</summary>
+    public Guid? CreditsInvoiceId { get; set; }
+
+    public DateOnly DocumentDate { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public DateOnly? DueDate { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal ExchangeRate { get; set; } = 1m;
+
+    public Guid? PaymentTermsId { get; set; }
+
+    public Guid? SalesRepId { get; set; }
+
+    public Guid? PriceListId { get; set; }
+
+    public decimal TotalNet { get; set; }
+
+    public decimal TotalTax { get; set; }
+
+    public decimal TotalGross { get; set; }
+
+    public string TaxRoundingLevel { get; set; } = "line";
+
+    public bool PricesIncludeTax { get; set; }
+
+    public string Status { get; set; } = "draft";
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalEntryId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    /// <summary>not_required until a regime's clearance scheme is wired to the document (5.6b).</summary>
+    public string EinvoiceStatus { get; set; } = "not_required";
+
+    public string CustomerSnapshot { get; set; } = "{}";
+
+    public string? Notes { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<SalesInvoiceLine> Lines { get; } = [];
+}
+
+public sealed class SalesInvoiceLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid InvoiceId { get; set; }
+
+    public int LineNo { get; set; }
+
+    /// <summary>shipment (a posted shipment line), order (a service line of an order), item (a non-stock item priced here), service (a free line on an account role) or invoice (a credit note's line against an invoice line).</summary>
+    public string Kind { get; set; } = "shipment";
+
+    public Guid? ShipmentLineId { get; set; }
+
+    public Guid? OrderLineId { get; set; }
+
+    public Guid? InvoiceLineId { get; set; }
+
+    public Guid? ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    public string? AccountRole { get; set; }
+
+    public string? Description { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid? UomId { get; set; }
+
+    public decimal QuantityBase { get; set; }
+
+    public decimal UnitPrice { get; set; }
+
+    public decimal DiscountPct { get; set; }
+
+    public decimal DiscountAmount { get; set; }
+
+    public Guid? TaxCodeId { get; set; }
+
+    public decimal TaxRatePct { get; set; }
+
+    public bool TaxReverseCharge { get; set; }
+
+    public bool TaxRecoverable { get; set; } = true;
+
+    public string? TaxReason { get; set; }
+
+    public decimal NetAmount { get; set; }
+
+    public decimal TaxAmount { get; set; }
+
+    public decimal NetAmountFc { get; set; }
+
+    public decimal QtyCredited { get; set; }
+
+    public decimal NetCredited { get; set; }
+
+    /// <summary>The cost centre and other dimensions the revenue is credited to (A-157).</summary>
+    public Guid? DimensionSetId { get; set; }
+
+    public string PriceBreakdown { get; set; } = "[]";
+
+    public DateTimeOffset CreatedAt { get; set; }
 }

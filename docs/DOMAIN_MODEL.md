@@ -2026,8 +2026,16 @@ packages as `sls_shipment_packages` (type, weight, dimensions, tracking number, 
 `sls_shipment_package_lines` (order line, quantity) in place of the sketch's `contents jsonb`. Quotation, order and
 shipment lines carry `dimension_set_id` (migration `V0052`, A-157): a converted order and a shipment inherit their
 source line's set, and the stock ledger entry and value entries of the shipment keep it, so cost of goods sold (and
-its later cost adjustments and reversal) lands on the line's cost centre. The other `sls_*` tables
-below are still the Phase-0 sketch, not yet built; expect the same corrections on each as it is implemented.
+its later cost adjustments and reversal) lands on the line's cost centre. `sls_invoices`/`sls_invoice_lines` are
+built (roadmap 5.6a, A-159, migration `V0053`), keyed by `partner_id` rather than `customer_account_id`, with kinds
+`invoice | credit_note` only (a prepayment invoice is a receipt matter, 5.7), `credits_invoice_id` in place of the
+sketch's `reverses_id`, `customer_reference`, a `cancelled` status for a draft that keeps its number, and lines of
+kind `shipment | order | item | service | invoice` carrying `shipment_line_id`, `order_line_id` or the credited
+`invoice_line_id`, an `account_role` instead of an `account_id` for service lines, `quantity_base`, `qty_credited`
+and `net_credited`; `sls_order_lines.net_invoiced` and `sls_shipment_lines.qty_invoiced` record what the invoices
+took. `return_id`, `recurring_template_id`, `deferral_schedule_id` and `sle_id` wait for 5.6b and 5.8. The other
+`sls_*` tables below are still the Phase-0 sketch, not yet built; expect the same corrections on each as it is
+implemented.
 
 ```mermaid
 erDiagram
@@ -2616,6 +2624,15 @@ Items (`itm_items.item_tax_group_id`, else the category's) and customer and supp
 Purchase order and supplier invoice lines keep the engine's decision (`tax_code_id`, `tax_rate_pct`, `tax_amount`, `tax_reverse_charge`, `tax_recoverable`, `tax_reason`) and their documents the `tax_rounding_level` used; invoices also total the self-assessed tax (`total_reverse_charge_tax`). `gl_journal_lines.tax_code_id` references `tax_codes` (A-147).
 
 ## 13. Receivables and payables (subledgers and settlement)
+
+`ar_open_items`/`ar_settlements` are built (roadmap 5.6a, A-159, migration `V0053`) as the mirror of the payables
+tables: keyed by `partner_id` (not `customer_account_id`), kinds `invoice | credit_note | deposit | receipt_on_account
+| adjustment | pdc | opening` (one signed `adjustment` kind replaces the sketch's debit/credit pair), `instalment`,
+`customer_reference`, `discount_date`/`discount_pct`, `on_hold`/`hold_reason`/`held_by`/`held_at`, `reversed_on` and
+a status of `open | partially_settled | settled | reversed` (a write-off is a settlement kind, not a status).
+Settlements carry `amount_fc_settled_item`/`amount_fc_settling_item`, `fx_gain_loss_fc`, `discount_taken_tc`,
+`wht_deducted_tc`, `write_off_tc`, `bank_charge_tc`, `reverses_settlement_id` and a status, exactly as
+`ap_settlements` do since ADR-0031. Dunning and statements tables remain the sketch (5.7).
 
 ```mermaid
 erDiagram

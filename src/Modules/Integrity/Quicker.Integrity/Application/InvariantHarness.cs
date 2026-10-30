@@ -42,6 +42,7 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             await InventoryMatchesGlAsync(uow, companyId, cancellationToken),
             await GrniMatchesReceiptsAsync(uow, companyId, cancellationToken),
             await PayablesMatchOpenItemsAsync(uow, companyId, cancellationToken),
+            await ReceivablesMatchOpenItemsAsync(uow, companyId, cancellationToken),
             await BankMatchesTransactionsAsync(uow, companyId, cancellationToken),
         };
         return new InvariantReport(uow.Context.TenantId.Value, companyId, clock.UtcNow, checks, checks.TrueForAll(static c => c.Passed));
@@ -331,6 +332,36 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
         var problems = mismatches.Select(m => $"company {m.CompanyId} {m.Control}: control lines {N(m.Booked)}, open items {N(m.Expected)}").ToList();
         return Result(InvariantCodes.PayablesMatchOpenItems, checkedCount, problems, $"{checkedCount} open item(s), payables and advances controls equal to their open items in every company");
+    }
+
+    private static async Task<InvariantResult> ReceivablesMatchOpenItemsAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(*) FROM app.ar_open_items WHERE (@company::uuid IS NULL OR company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<ControlMismatch>(new CommandDefinition("""
+            WITH booked AS (
+              SELECT l.company_id, CASE WHEN l.account_role = 'CustomerDeposits' THEN 'deposits' ELSE 'receivables' END AS control, sum(l.debit_fc - l.credit_fc) AS booked
+              FROM app.gl_journal_lines l
+              WHERE l.subledger_type = 'AR' AND (@company::uuid IS NULL OR l.company_id = @company)
+              GROUP BY 1, 2
+            ), expected AS (
+              SELECT i.company_id, CASE WHEN i.kind = 'deposit' THEN 'deposits' ELSE 'receivables' END AS control, sum(i.remaining_fc) AS expected
+              FROM app.ar_open_items i
+              WHERE i.status <> 'reversed' AND (@company::uuid IS NULL OR i.company_id = @company)
+              GROUP BY 1, 2
+            ), keys AS (
+              SELECT company_id, control FROM booked UNION SELECT company_id, control FROM expected
+            )
+            SELECT k.company_id, k.control, coalesce(b.booked, 0) AS booked, coalesce(e.expected, 0) AS expected
+            FROM keys k
+            LEFT JOIN booked b ON b.company_id = k.company_id AND b.control = k.control
+            LEFT JOIN expected e ON e.company_id = k.company_id AND e.control = k.control
+            WHERE coalesce(b.booked, 0) <> coalesce(e.expected, 0)
+            ORDER BY k.company_id, k.control
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"company {m.CompanyId} {m.Control}: control lines {N(m.Booked)}, open items {N(m.Expected)}").ToList();
+        return Result(InvariantCodes.ReceivablesMatchOpenItems, checkedCount, problems, $"{checkedCount} open item(s), receivables and deposits controls equal to their open items in every company");
     }
 
     private static async Task<InvariantResult> BankMatchesTransactionsAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)

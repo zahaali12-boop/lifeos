@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Receivables module: the AR subledger (open items per customer invoice instalment, credit note, deposit and receipt on account), applications with realised FX, aging at any date, customer statements and holds (roadmap 5.6a, DOMAIN_MODEL §13, POSTING_RULES §2 and §5, ADR-0031 applied to the customer side).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Receivables.Contracts/Quicker.Receivables.Contracts.csproj" />
+    <ProjectReference Include="../../Accounting/Quicker.Accounting.Contracts/Quicker.Accounting.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Partners/Quicker.Partners.Contracts/Quicker.Partners.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+</Project>

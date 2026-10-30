@@ -158,7 +158,7 @@ internal static class DemoCrm
         {
             var party = DemoBooks.Customers.Single(c => c.Key == customer.Key);
             await unitOfWork.Connection.ExecuteAsync(new CommandDefinition(
-                "INSERT INTO app.ptr_partners (tenant_id, id, code, legal_name_i18n, is_customer, email) VALUES (@tenant, @id, @code, @name::jsonb, true, @email) ON CONFLICT (tenant_id, id) DO NOTHING",
+                "INSERT INTO app.ptr_partners (tenant_id, id, code, legal_name_i18n, is_customer, email) VALUES (@tenant, @id, @code, @name::jsonb, true, @email) ON CONFLICT (tenant_id, id) DO UPDATE SET email = coalesce(app.ptr_partners.email, EXCLUDED.email)",
                 new { tenant, id = party.Ref, code = "CUS-" + customer.Key[5..].ToUpperInvariant(), name = JsonSerializer.Serialize(Text(party.En, party.Ar)), email = customer.Finance.Email },
                 unitOfWork.Transaction, cancellationToken: cancellationToken));
             partners[customer.Key] = party.Ref;

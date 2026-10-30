@@ -147,6 +147,7 @@ public sealed class ModuleBoundaryTests
         ["Tax"] = 1,
         ["Purchasing"] = 2,
         ["Payables"] = 2,
+        ["Receivables"] = 2,
         ["Banking"] = 2,
         ["Workflow"] = 2,
         ["Sales"] = 2,

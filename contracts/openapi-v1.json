@@ -20545,6 +20545,396 @@
         }
       }
     },
+    "/api/v1/receivables/open-items": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Receivable open items of a company: by customer, status (open, partially_settled, settled, reversed, or live for the first two) and kind.",
+        "operationId": "getReceivablesOpenItems",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceivableSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/open-items/aging": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Aging at any date, per customer, in the company's currency: computed from the items and the settlements dated up to it.",
+        "operationId": "getReceivablesOpenItemsAging",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArAgingReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/open-items/{itemId}": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesOpenItemsByItemId",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/open-items/{itemId}/hold": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Holds an item: nothing is applied to it until released.",
+        "operationId": "postReceivablesOpenItemsByItemIdHold",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldReceivableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/open-items/{itemId}/release": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "postReceivablesOpenItemsByItemIdRelease",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/statement": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "A customer's statement over a period, per document currency: opening balance, documents and reversals with a running balance, closing balance.",
+        "operationId": "getReceivablesStatement",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerStatement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/settlements": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Settlements of a company, optionally those touching one item or one customer; reversals are mirror rows naming what they reverse.",
+        "operationId": "getReceivablesSettlements",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "openItemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceivableSettlementInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/settlements/apply": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Applies a credit note, a receipt on account or a deposit to an invoice open item; a rate difference is realised FX.",
+        "operationId": "postReceivablesSettlementsApply",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyReceivableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableSettlementInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/settlements/{settlementId}/reverse": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Reverses an application: both items reopen at their booked values, the FX journal is mirrored.",
+        "operationId": "postReceivablesSettlementsBySettlementIdReverse",
+        "parameters": [
+          {
+            "name": "settlementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseReceivableSettlementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableSettlementInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/banking/bank-accounts": {
       "get": {
         "tags": [
@@ -25038,6 +25428,323 @@
           }
         }
       }
+    },
+    "/api/v1/sales/invoices": {
+      "get": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Sales invoices and credit notes, newest first, filtered by company, status, kind or customer",
+        "operationId": "getSalesInvoices",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SalesInvoiceSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "A draft invoice or credit note: lines from shipments and orders at the order's price, items priced by the pricing engine, service lines, or credited invoice lines; taxed on the document date",
+        "operationId": "postSalesInvoices",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSalesInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/invoices/invoicable": {
+      "get": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "What a customer can still be invoiced: posted shipment lines with an uninvoiced quantity and open service lines of its orders",
+        "operationId": "getSalesInvoicesInvoicable",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoicableSalesLine"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/invoices/{invoiceId}": {
+      "get": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "The invoice with its lines and, once posted, its receivable open items",
+        "operationId": "getSalesInvoicesByInvoiceId",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Replaces a draft's lines and re-taxes them; only a draft is edited",
+        "operationId": "putSalesInvoicesByInvoiceId",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSalesInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/invoices/{invoiceId}/cancel": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Cancels a draft with a reason, keeping its number",
+        "operationId": "postSalesInvoicesByInvoiceIdCancel",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelSalesInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/invoices/{invoiceId}/post": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Posts the invoice: Dr receivables / Cr revenue per line / Cr output tax per code, the tax ledger, one receivable open item per instalment; a credit note naming its invoice is applied to it at once",
+        "operationId": "postSalesInvoicesByInvoiceIdPost",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/invoices/{invoiceId}/reverse": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled",
+        "operationId": "postSalesInvoicesByInvoiceIdReverse",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseSalesInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -26402,6 +27109,46 @@
           }
         }
       },
+      "ApplyReceivableRequest": {
+        "required": [
+          "settlingItemId",
+          "settledItemId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "settlingItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "settledItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "settlementDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Applies a credit note, a receipt on account or a deposit to an invoice open item of the same customer and currency; a rate difference is realised FX, booked by the subledger itself."
+      },
       "ApplyRequest": {
         "required": [
           "settlingItemId",
@@ -26467,6 +27214,326 @@
           }
         },
         "description": "Who approves: named members, or every active holder of a role (scoped to the document's company unless told otherwise)."
+      },
+      "ArAgingReport": {
+        "required": [
+          "companyId",
+          "asOf",
+          "functionalCurrency",
+          "rows",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArAgingRow"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ArAgingTotals"
+          }
+        }
+      },
+      "ArAgingRow": {
+        "required": [
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "itemCount",
+          "notDue",
+          "days1To30",
+          "days31To60",
+          "days61To90",
+          "over90",
+          "totalFc",
+          "depositsFc"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notDue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days1To30": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days31To60": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days61To90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "over90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depositsFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One customer's receivables at a date, in the company's currency, by days past due; deposits are shown apart because they sit on their own control account."
+      },
+      "ArAgingTotals": {
+        "required": [
+          "notDue",
+          "days1To30",
+          "days31To60",
+          "days61To90",
+          "over90",
+          "totalFc",
+          "depositsFc"
+        ],
+        "type": "object",
+        "properties": {
+          "notDue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days1To30": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days31To60": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days61To90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "over90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depositsFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "ArStatementCurrency": {
+        "required": [
+          "currency",
+          "opening",
+          "increases",
+          "decreases",
+          "closing",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "opening": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "increases": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "decreases": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closing": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArStatementLine"
+            }
+          }
+        },
+        "description": "The account in one of the documents' currencies: what was owed before the period, the period's movements and what is owed at its end."
+      },
+      "ArStatementLine": {
+        "required": [
+          "date",
+          "kind",
+          "documentType",
+          "documentId",
+          "documentNumber",
+          "customerReference",
+          "dueDate",
+          "reversal",
+          "amount",
+          "balance"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "customerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reversal": {
+            "type": "boolean"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "balance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One movement on a customer's account: a document booked (what they owe goes up for an invoice, down for a credit note or a receipt) or its reversal."
       },
       "AssemblyLineSummary": {
         "required": [
@@ -28496,6 +29563,17 @@
         }
       },
       "CancelRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "CancelSalesInvoiceRequest": {
         "required": [
           "reason"
         ],
@@ -31606,6 +32684,51 @@
           }
         }
       },
+      "CustomerStatement": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "from",
+          "to",
+          "currencies"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "currencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArStatementCurrency"
+            }
+          }
+        }
+      },
       "CustomFieldHostList": {
         "required": [
           "entityTypes"
@@ -33605,6 +34728,17 @@
           }
         }
       },
+      "HoldReceivableRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "HoldRequest": {
         "required": [
           "status",
@@ -34208,6 +35342,146 @@
           }
         },
         "description": "What can still be invoiced for a supplier: posted receipt lines with an uninvoiced quantity and open service lines of orders."
+      },
+      "InvoicableSalesLine": {
+        "required": [
+          "kind",
+          "shipmentLineId",
+          "shipmentNumber",
+          "shipmentId",
+          "orderLineId",
+          "orderNumber",
+          "orderId",
+          "lineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "uomId",
+          "uomCode",
+          "quantity",
+          "qtyInvoiced",
+          "remaining",
+          "unitPrice",
+          "discountPct",
+          "currency",
+          "postingDate"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "shipmentLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shipmentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "shipmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "orderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "uomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyInvoiced": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remaining": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "What can still be invoiced to a customer: posted shipment lines with an uninvoiced quantity and open service lines of its orders; quantities in the item's base unit."
       },
       "InvoiceLineSummary": {
         "required": [
@@ -45864,6 +47138,216 @@
           }
         }
       },
+      "ReceivableInfo": {
+        "required": [
+          "id",
+          "companyId",
+          "partnerId",
+          "kind",
+          "documentType",
+          "documentId",
+          "documentNumber",
+          "instalment",
+          "customerReference",
+          "postingDate",
+          "documentDate",
+          "dueDate",
+          "discountDate",
+          "discountPct",
+          "currency",
+          "originalTc",
+          "originalFc",
+          "bookedRate",
+          "settledTc",
+          "settledFc",
+          "remainingTc",
+          "remainingFc",
+          "onHold",
+          "holdReason",
+          "dunningLevel",
+          "promisedPaymentDate",
+          "journalEntryId",
+          "salesRepId",
+          "branchId",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "instalment": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "customerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "discountDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "originalTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "originalFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bookedRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "settledTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "settledFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remainingTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remainingFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "onHold": {
+            "type": "boolean"
+          },
+          "holdReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dunningLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "promisedPaymentDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
       "ReceivableLine": {
         "required": [
           "orderId",
@@ -45984,6 +47468,202 @@
           }
         },
         "description": "An open order line as the receiving screen sees it: what was ordered, what arrived so far and what the tolerance still allows."
+      },
+      "ReceivableSettlementInfo": {
+        "required": [
+          "id",
+          "companyId",
+          "settlingItemId",
+          "settlingDocumentNumber",
+          "settlingKind",
+          "settledItemId",
+          "settledDocumentNumber",
+          "settlementDate",
+          "kind",
+          "currency",
+          "amountTc",
+          "amountFcSettledItem",
+          "amountFcSettlingItem",
+          "settlementRate",
+          "fxGainLossFc",
+          "discountTakenTc",
+          "whtDeductedTc",
+          "writeOffTc",
+          "bankChargeTc",
+          "journalEntryId",
+          "reversesSettlementId",
+          "reason",
+          "status",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "settlingItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "settlingDocumentNumber": {
+            "type": "string"
+          },
+          "settlingKind": {
+            "type": "string"
+          },
+          "settledItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "settledDocumentNumber": {
+            "type": "string"
+          },
+          "settlementDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFcSettledItem": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFcSettlingItem": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "settlementRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "fxGainLossFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountTakenTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "whtDeductedTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "writeOffTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bankChargeTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversesSettlementId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReceivableSummary": {
+        "required": [
+          "item",
+          "partnerCode",
+          "partnerName",
+          "functionalCurrency",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/ReceivableInfo"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "ReceiveTransferRequest": {
         "type": "object",
@@ -48100,6 +49780,24 @@
           }
         }
       },
+      "ReverseReceivableSettlementRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "ReverseRequest": {
         "required": [
           "reason"
@@ -48119,6 +49817,24 @@
         }
       },
       "ReverseReturnRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ReverseSalesInvoiceRequest": {
         "required": [
           "reason"
         ],
@@ -48746,6 +50462,485 @@
             "items": {
               "$ref": "#/components/schemas/StepSummary"
             }
+          }
+        }
+      },
+      "SalesInvoiceLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "kind",
+          "shipmentLineId",
+          "shipmentNumber",
+          "orderLineId",
+          "orderNumber",
+          "invoiceLineId",
+          "creditedInvoiceNumber",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "variantId",
+          "accountRole",
+          "description",
+          "quantity",
+          "uomId",
+          "uomCode",
+          "quantityBase",
+          "unitPrice",
+          "discountPct",
+          "discountAmount",
+          "netAmount",
+          "taxAmount",
+          "qtyCredited",
+          "taxCodeId",
+          "taxCode",
+          "taxRatePct",
+          "taxReverseCharge",
+          "taxRecoverable",
+          "taxReason",
+          "dimensions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "shipmentLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shipmentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "orderLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "invoiceLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "creditedInvoiceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "accountRole": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantityBase": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "qtyCredited": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxReverseCharge": {
+            "type": "boolean"
+          },
+          "taxRecoverable": {
+            "type": "boolean"
+          },
+          "taxReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "SalesInvoiceSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "kind",
+          "status",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "customerReference",
+          "creditsInvoiceId",
+          "creditsInvoiceNumber",
+          "documentDate",
+          "postingDate",
+          "dueDate",
+          "currency",
+          "exchangeRate",
+          "functionalCurrency",
+          "paymentTermsId",
+          "paymentTermsCode",
+          "salesRepId",
+          "totalNet",
+          "totalTax",
+          "totalGross",
+          "taxRoundingLevel",
+          "pricesIncludeTax",
+          "journalEntryId",
+          "reversalEntryId",
+          "reversalReason",
+          "einvoiceStatus",
+          "notes",
+          "customFields",
+          "lines",
+          "openItems",
+          "postedAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "customerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creditsInvoiceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "creditsInvoiceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentTermsCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "totalNet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalTax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalGross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxRoundingLevel": {
+            "type": "string"
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceStatus": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesInvoiceLineSummary"
+            }
+          },
+          "openItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivableInfo"
+            }
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -54612,6 +56807,224 @@
               "$ref": "#/components/schemas/SaveStepRequest"
             }
           }
+        }
+      },
+      "SaveSalesInvoiceLineRequest": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "shipmentLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "orderLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "invoiceLineId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "uom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "accountRole": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "One line of an invoice or credit note. `shipment` and `order` lines take their price from the order line\nand their quantity in the item's base unit (like the shipment and the order's fulfilment quantities, A-152);\n`item` lines are priced here by the pricing engine (non-stock items only until direct stock invoices ship);\n`service` lines are free lines on an account role; `invoice` lines credit a posted invoice's line."
+      },
+      "SaveSalesInvoiceRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveSalesInvoiceLineRequest"
+            }
+          },
+          "kind": {
+            "type": "string",
+            "default": "invoice"
+          },
+          "customerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creditsInvoiceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "documentDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "salesRepId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "priceListId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": { }
         }
       },
       "SaveSalesRepRequest": {
@@ -62999,6 +65412,9 @@
     },
     {
       "name": "Payables"
+    },
+    {
+      "name": "Receivables"
     },
     {
       "name": "Banking"

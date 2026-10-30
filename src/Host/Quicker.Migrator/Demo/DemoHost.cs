@@ -20,6 +20,7 @@ using Quicker.Numbering;
 using Quicker.Organization;
 using Quicker.Partners;
 using Quicker.Payables;
+using Quicker.Receivables;
 using Quicker.Persistence;
 using Quicker.Pricing;
 using Quicker.Purchasing;
@@ -97,6 +98,7 @@ internal static class DemoHost
         services.AddPricingModule();
         services.AddTaxModule();
         services.AddPayablesModule();
+        services.AddReceivablesModule();
         services.AddBankingModule();
         services.AddPurchasingModule();
         services.AddSalesModule();

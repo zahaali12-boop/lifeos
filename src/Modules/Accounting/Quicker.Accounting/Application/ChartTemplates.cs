@@ -135,7 +135,7 @@ public static class ChartTemplates
             A("2130", "2100", "Landed cost clearing", "حساب وسيط لتكاليف الاستيراد", liability, "accrual", "current_liabilities", AccountRoles.LandedCostClearing, SubledgerTypes.GoodsReceivedNotInvoiced, CashFlowCategories.Operating),
             A("2140", "2100", "Intercompany payables", "ذمم الشركات الشقيقة الدائنة", liability, "payable", "current_liabilities", AccountRoles.IcPayable, SubledgerTypes.Intercompany, CashFlowCategories.Operating, revalue: true),
             A("2150", "2100", "Post-dated cheques payable", "شيكات مؤجلة مدفوعة", liability, "cheques", "current_liabilities", AccountRoles.PdcPayable, SubledgerTypes.PostDatedCheques, CashFlowCategories.Operating),
-            A("2160", "2100", "Customer deposits and advances", "دفعات مقدمة من العملاء", liability, "deposit", "current_liabilities", AccountRoles.CustomerDeposits, cashFlow: CashFlowCategories.Operating, revalue: true),
+            A("2160", "2100", "Customer deposits and advances", "دفعات مقدمة من العملاء", liability, "deposit", "current_liabilities", AccountRoles.CustomerDeposits, SubledgerTypes.Receivables, CashFlowCategories.Operating, revalue: true),
             A("2170", "2100", "Accrued expenses", "مصروفات مستحقة", liability, "accrual", "current_liabilities", AccountRoles.AccruedExpenses, cashFlow: CashFlowCategories.Operating),
             A("2180", "2100", "Deferred revenue", "إيرادات مؤجلة", liability, "deferral", "current_liabilities", AccountRoles.DeferredRevenue, cashFlow: CashFlowCategories.Operating),
             A("2190", "2100", "Employee payables", "ذمم الموظفين الدائنة", liability, "payable", "current_liabilities", AccountRoles.EmployeePayable, cashFlow: CashFlowCategories.Operating),

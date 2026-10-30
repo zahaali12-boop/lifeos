@@ -7116,6 +7116,157 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/receivables/open-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Receivable open items of a company: by customer, status (open, partially_settled, settled, reversed, or live for the first two) and kind. */
+        get: operations["getReceivablesOpenItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/open-items/aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Aging at any date, per customer, in the company's currency: computed from the items and the settlements dated up to it. */
+        get: operations["getReceivablesOpenItemsAging"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/open-items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesOpenItemsByItemId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/open-items/{itemId}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Holds an item: nothing is applied to it until released. */
+        post: operations["postReceivablesOpenItemsByItemIdHold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/open-items/{itemId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postReceivablesOpenItemsByItemIdRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A customer's statement over a period, per document currency: opening balance, documents and reversals with a running balance, closing balance. */
+        get: operations["getReceivablesStatement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/settlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Settlements of a company, optionally those touching one item or one customer; reversals are mirror rows naming what they reverse. */
+        get: operations["getReceivablesSettlements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/settlements/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Applies a credit note, a receipt on account or a deposit to an invoice open item; a rate difference is realised FX. */
+        post: operations["postReceivablesSettlementsApply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/settlements/{settlementId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses an application: both items reopen at their booked values, the FX journal is mirrored. */
+        post: operations["postReceivablesSettlementsBySettlementIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/banking/bank-accounts": {
         parameters: {
             query?: never;
@@ -8586,6 +8737,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales invoices and credit notes, newest first, filtered by company, status, kind or customer */
+        get: operations["getSalesInvoices"];
+        put?: never;
+        /** A draft invoice or credit note: lines from shipments and orders at the order's price, items priced by the pricing engine, service lines, or credited invoice lines; taxed on the document date */
+        post: operations["postSalesInvoices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/invoices/invoicable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a customer can still be invoiced: posted shipment lines with an uninvoiced quantity and open service lines of its orders */
+        get: operations["getSalesInvoicesInvoicable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/invoices/{invoiceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The invoice with its lines and, once posted, its receivable open items */
+        get: operations["getSalesInvoicesByInvoiceId"];
+        /** Replaces a draft's lines and re-taxes them; only a draft is edited */
+        put: operations["putSalesInvoicesByInvoiceId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/invoices/{invoiceId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels a draft with a reason, keeping its number */
+        post: operations["postSalesInvoicesByInvoiceIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/invoices/{invoiceId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the invoice: Dr receivables / Cr revenue per line / Cr output tax per code, the tax ledger, one receivable open item per instalment; a credit note naming its invoice is applied to it at once */
+        post: operations["postSalesInvoicesByInvoiceIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/invoices/{invoiceId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled */
+        post: operations["postSalesInvoicesByInvoiceIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -8955,6 +9210,18 @@ export interface components {
             benefit: number | string;
             lineKeys: string[];
         };
+        /** @description Applies a credit note, a receipt on account or a deposit to an invoice open item of the same customer and currency; a rate difference is realised FX, booked by the subledger itself. */
+        ApplyReceivableRequest: {
+            /** Format: uuid */
+            settlingItemId: string;
+            /** Format: uuid */
+            settledItemId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: date */
+            settlementDate?: null | string;
+            reason?: null | string;
+        };
         /** @description Applies a debit note, a payment on account or an advance to an invoice open item of the same supplier and currency. */
         ApplyRequest: {
             /** Format: uuid */
@@ -8973,6 +9240,87 @@ export interface components {
             roleCode?: null | string;
             /** @default true */
             scopeToCompany: boolean;
+        };
+        ArAgingReport: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            asOf: string;
+            functionalCurrency: string;
+            rows: components["schemas"]["ArAgingRow"][];
+            totals: components["schemas"]["ArAgingTotals"];
+        };
+        /** @description One customer's receivables at a date, in the company's currency, by days past due; deposits are shown apart because they sit on their own control account. */
+        ArAgingRow: {
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            itemCount: number | string;
+            /** Format: double */
+            notDue: number | string;
+            /** Format: double */
+            days1To30: number | string;
+            /** Format: double */
+            days31To60: number | string;
+            /** Format: double */
+            days61To90: number | string;
+            /** Format: double */
+            over90: number | string;
+            /** Format: double */
+            totalFc: number | string;
+            /** Format: double */
+            depositsFc: number | string;
+        };
+        ArAgingTotals: {
+            /** Format: double */
+            notDue: number | string;
+            /** Format: double */
+            days1To30: number | string;
+            /** Format: double */
+            days31To60: number | string;
+            /** Format: double */
+            days61To90: number | string;
+            /** Format: double */
+            over90: number | string;
+            /** Format: double */
+            totalFc: number | string;
+            /** Format: double */
+            depositsFc: number | string;
+        };
+        /** @description The account in one of the documents' currencies: what was owed before the period, the period's movements and what is owed at its end. */
+        ArStatementCurrency: {
+            currency: string;
+            /** Format: double */
+            opening: number | string;
+            /** Format: double */
+            increases: number | string;
+            /** Format: double */
+            decreases: number | string;
+            /** Format: double */
+            closing: number | string;
+            lines: components["schemas"]["ArStatementLine"][];
+        };
+        /** @description One movement on a customer's account: a document booked (what they owe goes up for an invoice, down for a credit note or a receipt) or its reversal. */
+        ArStatementLine: {
+            /** Format: date */
+            date: string;
+            kind: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            documentNumber: string;
+            customerReference: null | string;
+            /** Format: date */
+            dueDate: null | string;
+            reversal: boolean;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            balance: number | string;
         };
         AssemblyLineSummary: {
             /** Format: uuid */
@@ -9521,6 +9869,9 @@ export interface components {
             reason: string;
         };
         CancelRequest: {
+            reason: string;
+        };
+        CancelSalesInvoiceRequest: {
             reason: string;
         };
         CatalogueEntry: {
@@ -10345,6 +10696,21 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        CustomerStatement: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            currencies: components["schemas"]["ArStatementCurrency"][];
+        };
         /** @description The record types that carry custom fields, in code order. */
         CustomFieldHostList: {
             entityTypes: string[];
@@ -10885,6 +11251,9 @@ export interface components {
         HoldOpenItemRequest: {
             reason: string;
         };
+        HoldReceivableRequest: {
+            reason: string;
+        };
         HoldRequest: {
             status: string;
             reason: string;
@@ -11034,6 +11403,44 @@ export interface components {
             returnId?: null | string;
             /** Format: uuid */
             landedCostId?: null | string;
+        };
+        /** @description What can still be invoiced to a customer: posted shipment lines with an uninvoiced quantity and open service lines of its orders; quantities in the item's base unit. */
+        InvoicableSalesLine: {
+            kind: string;
+            /** Format: uuid */
+            shipmentLineId: null | string;
+            shipmentNumber: null | string;
+            /** Format: uuid */
+            shipmentId: null | string;
+            /** Format: uuid */
+            orderLineId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            orderId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            qtyInvoiced: number | string;
+            /** Format: double */
+            remaining: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            discountPct: number | string;
+            currency: string;
+            /** Format: date */
+            postingDate: null | string;
         };
         InvoiceLineSummary: {
             /** Format: uuid */
@@ -14047,6 +14454,60 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        ReceivableInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            kind: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            documentNumber: string;
+            /** Format: int32 */
+            instalment: number | string;
+            customerReference: null | string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            documentDate: string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: date */
+            discountDate: null | string;
+            /** Format: double */
+            discountPct: number | string;
+            currency: string;
+            /** Format: double */
+            originalTc: number | string;
+            /** Format: double */
+            originalFc: number | string;
+            /** Format: double */
+            bookedRate: number | string;
+            /** Format: double */
+            settledTc: number | string;
+            /** Format: double */
+            settledFc: number | string;
+            /** Format: double */
+            remainingTc: number | string;
+            /** Format: double */
+            remainingFc: number | string;
+            onHold: boolean;
+            holdReason: null | string;
+            /** Format: int32 */
+            dunningLevel: number | string;
+            /** Format: date */
+            promisedPaymentDate: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            salesRepId: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            status: string;
+        };
         /** @description An open order line as the receiving screen sees it: what was ordered, what arrived so far and what the tolerance still allows. */
         ReceivableLine: {
             /** Format: uuid */
@@ -14080,6 +14541,59 @@ export interface components {
             expectedDate: null | string;
             /** Format: uuid */
             warehouseId: null | string;
+        };
+        ReceivableSettlementInfo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            settlingItemId: string;
+            settlingDocumentNumber: string;
+            settlingKind: string;
+            /** Format: uuid */
+            settledItemId: string;
+            settledDocumentNumber: string;
+            /** Format: date */
+            settlementDate: string;
+            kind: string;
+            currency: string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            amountFcSettledItem: number | string;
+            /** Format: double */
+            amountFcSettlingItem: number | string;
+            /** Format: double */
+            settlementRate: number | string;
+            /** Format: double */
+            fxGainLossFc: number | string;
+            /** Format: double */
+            discountTakenTc: number | string;
+            /** Format: double */
+            whtDeductedTc: number | string;
+            /** Format: double */
+            writeOffTc: number | string;
+            /** Format: double */
+            bankChargeTc: number | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversesSettlementId: null | string;
+            reason: null | string;
+            status: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ReceivableSummary: {
+            item: components["schemas"]["ReceivableInfo"];
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            functionalCurrency: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         ReceiveTransferRequest: {
             /** Format: date */
@@ -14642,12 +15156,22 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        ReverseReceivableSettlementRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         ReverseRequest: {
             reason: string;
             /** Format: date */
             reversalDate?: null | string;
         };
         ReverseReturnRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
+        ReverseSalesInvoiceRequest: {
             reason: string;
             /** Format: date */
             reversalDate?: null | string;
@@ -14816,6 +15340,118 @@ export interface components {
             };
             condition: string;
             steps: components["schemas"]["StepSummary"][];
+        };
+        SalesInvoiceLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            kind: string;
+            /** Format: uuid */
+            shipmentLineId: null | string;
+            shipmentNumber: null | string;
+            /** Format: uuid */
+            orderLineId: null | string;
+            orderNumber: null | string;
+            /** Format: uuid */
+            invoiceLineId: null | string;
+            creditedInvoiceNumber: null | string;
+            /** Format: uuid */
+            itemId: null | string;
+            itemCode: null | string;
+            itemName: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            variantId: null | string;
+            accountRole: null | string;
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: null | string;
+            uomCode: null | string;
+            /** Format: double */
+            quantityBase: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            discountAmount: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            /** Format: double */
+            qtyCredited: number | string;
+            /** Format: uuid */
+            taxCodeId: null | string;
+            taxCode: null | string;
+            /** Format: double */
+            taxRatePct: number | string;
+            taxReverseCharge: boolean;
+            taxRecoverable: boolean;
+            taxReason: null | string;
+            dimensions: null | {
+                [key: string]: string;
+            };
+        };
+        SalesInvoiceSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            kind: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            customerReference: null | string;
+            /** Format: uuid */
+            creditsInvoiceId: null | string;
+            creditsInvoiceNumber: null | string;
+            /** Format: date */
+            documentDate: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            dueDate: null | string;
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            functionalCurrency: string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            paymentTermsCode: null | string;
+            /** Format: uuid */
+            salesRepId: null | string;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalTax: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            taxRoundingLevel: string;
+            pricesIncludeTax: boolean;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            reversalReason: null | string;
+            einvoiceStatus: string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            lines: components["schemas"]["SalesInvoiceLineSummary"][];
+            openItems: components["schemas"]["ReceivableInfo"][];
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         SalesRepSummary: {
             /** Format: uuid */
@@ -16555,6 +17191,75 @@ export interface components {
             };
             condition: string;
             steps: components["schemas"]["SaveStepRequest"][];
+        };
+        /**
+         * @description One line of an invoice or credit note. `shipment` and `order` lines take their price from the order line
+         *     and their quantity in the item's base unit (like the shipment and the order's fulfilment quantities, A-152);
+         *     `item` lines are priced here by the pricing engine (non-stock items only until direct stock invoices ship);
+         *     `service` lines are free lines on an account role; `invoice` lines credit a posted invoice's line.
+         */
+        SaveSalesInvoiceLineRequest: {
+            kind: string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            quantity: number | string;
+            /** Format: uuid */
+            shipmentLineId?: null | string;
+            /** Format: uuid */
+            orderLineId?: null | string;
+            /** Format: uuid */
+            invoiceLineId?: null | string;
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            uom?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /** Format: double */
+            unitPrice?: null | number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            discountPct: number | string;
+            accountRole?: null | string;
+            description?: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+        };
+        SaveSalesInvoiceRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            lines: components["schemas"]["SaveSalesInvoiceLineRequest"][];
+            /** @default invoice */
+            kind: string;
+            customerReference?: null | string;
+            /** Format: uuid */
+            creditsInvoiceId?: null | string;
+            /** Format: date */
+            documentDate?: null | string;
+            /** Format: date */
+            postingDate?: null | string;
+            currency?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** Format: uuid */
+            salesRepId?: null | string;
+            /** Format: uuid */
+            priceListId?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
         };
         SaveSalesRepRequest: {
             code: string;
@@ -32152,6 +32857,224 @@ export interface operations {
             };
         };
     };
+    getReceivablesOpenItems: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                status?: string;
+                kind?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSummary"][];
+                };
+            };
+        };
+    };
+    getReceivablesOpenItemsAging: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArAgingReport"];
+                };
+            };
+        };
+    };
+    getReceivablesOpenItemsByItemId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSummary"];
+                };
+            };
+        };
+    };
+    postReceivablesOpenItemsByItemIdHold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldReceivableRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSummary"];
+                };
+            };
+        };
+    };
+    postReceivablesOpenItemsByItemIdRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSummary"];
+                };
+            };
+        };
+    };
+    getReceivablesStatement: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerStatement"];
+                };
+            };
+        };
+    };
+    getReceivablesSettlements: {
+        parameters: {
+            query: {
+                companyId: string;
+                openItemId?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSettlementInfo"][];
+                };
+            };
+        };
+    };
+    postReceivablesSettlementsApply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyReceivableRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSettlementInfo"];
+                };
+            };
+        };
+    };
+    postReceivablesSettlementsBySettlementIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                settlementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseReceivableSettlementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSettlementInfo"];
+                };
+            };
+        };
+    };
     getBankingBankAccounts: {
         parameters: {
             query?: {
@@ -35001,6 +35924,200 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShipmentSummary"];
+                };
+            };
+        };
+    };
+    getSalesInvoices: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                kind?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"][];
+                };
+            };
+        };
+    };
+    postSalesInvoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    getSalesInvoicesInvoicable: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoicableSalesLine"][];
+                };
+            };
+        };
+    };
+    getSalesInvoicesByInvoiceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    putSalesInvoicesByInvoiceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    postSalesInvoicesByInvoiceIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    postSalesInvoicesByInvoiceIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    postSalesInvoicesByInvoiceIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseSalesInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
                 };
             };
         };

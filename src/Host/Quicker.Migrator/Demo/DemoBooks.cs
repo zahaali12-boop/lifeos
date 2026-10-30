@@ -77,14 +77,23 @@ internal static class DemoBooks
         var harness = services.GetRequiredService<IInvariantHarness>();
         var accounting = services.GetRequiredService<AccountingDbContext>();
         var payables = services.GetRequiredService<IPayables>();
-        // The v2 books name their suppliers by fixed ids; the payables subledger (4.7) keeps open items per partner, so
-        // those suppliers become real partner records with the same ids (idempotent, like the rest of the seed).
+        // The v2 books name their suppliers and customers by fixed ids; the payables (4.7) and receivables (5.6)
+        // subledgers keep open items per partner, so those parties become real partner records with the same ids before
+        // the first journal names them (idempotent, like the rest of the seed; the CRM seed fills in the rest later).
         var unitOfWork = services.GetRequiredService<IUnitOfWorkAccessor>().Current;
         foreach (var supplier in Suppliers)
         {
             await unitOfWork.Connection.ExecuteAsync(new CommandDefinition(
                 "INSERT INTO app.ptr_partners (tenant_id, id, code, legal_name_i18n, is_supplier) VALUES (@tenant, @id, @code, @name::jsonb, true) ON CONFLICT (tenant_id, id) DO NOTHING",
                 new { tenant = unitOfWork.Context.TenantId.Value, id = supplier.Ref, code = "SUP-" + supplier.Key[5..].ToUpperInvariant(), name = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>(StringComparer.Ordinal) { ["en"] = supplier.En, ["ar"] = supplier.Ar }) },
+                unitOfWork.Transaction, cancellationToken: cancellationToken));
+        }
+
+        foreach (var customer in Customers)
+        {
+            await unitOfWork.Connection.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO app.ptr_partners (tenant_id, id, code, legal_name_i18n, is_customer) VALUES (@tenant, @id, @code, @name::jsonb, true) ON CONFLICT (tenant_id, id) DO NOTHING",
+                new { tenant = unitOfWork.Context.TenantId.Value, id = customer.Ref, code = "CUS-" + customer.Key[5..].ToUpperInvariant(), name = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>(StringComparer.Ordinal) { ["en"] = customer.En, ["ar"] = customer.Ar }) },
                 unitOfWork.Transaction, cancellationToken: cancellationToken));
         }
 

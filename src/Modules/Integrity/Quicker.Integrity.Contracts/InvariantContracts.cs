@@ -33,10 +33,13 @@ public static class InvariantCodes
     /// <summary>Per company, the payables control accounts' lines net to the open items' remaining functional amounts, and the supplier-advances control to the advances (roadmap 4.7, DOMAIN_MODEL §13.1).</summary>
     public const string PayablesMatchOpenItems = "payables_match_open_items";
 
+    /// <summary>Per company, the receivables control account's lines net to the open items' remaining functional amounts, and the customer-deposits control to the deposits (roadmap 5.6, DOMAIN_MODEL §13.1).</summary>
+    public const string ReceivablesMatchOpenItems = "receivables_match_open_items";
+
     /// <summary>Per bank account, the control account's lines referencing the bank subledger net to the bank transactions' functional amounts (roadmap 4.7 / 6.1).</summary>
     public const string BankMatchesTransactions = "bank_matches_transactions";
 
-    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts, PayablesMatchOpenItems, BankMatchesTransactions];
+    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts, PayablesMatchOpenItems, ReceivablesMatchOpenItems, BankMatchesTransactions];
 }
 
 /// <summary>One check: what it looked at, whether it holds, and the first problems it found (never more than a page).</summary>

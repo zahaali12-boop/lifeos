@@ -21,6 +21,7 @@ internal static class RowFactoryRegistration
         Quicker.Workflow.TestSupport.WorkflowRowFactories.RegisterAll();
         Quicker.Partners.TestSupport.PartnersRowFactories.RegisterAll();
         Quicker.Payables.TestSupport.PayablesRowFactories.RegisterAll();
+        Quicker.Receivables.TestSupport.ReceivablesRowFactories.RegisterAll();
         Quicker.Pricing.TestSupport.PricingRowFactories.RegisterAll();
         Quicker.Tax.TestSupport.TaxRowFactories.RegisterAll();
         Quicker.Banking.TestSupport.BankingRowFactories.RegisterAll();

@@ -147,6 +147,7 @@ public static class AccountRoles
         [GRNI] = SubledgerTypes.GoodsReceivedNotInvoiced,
         [LandedCostClearing] = SubledgerTypes.GoodsReceivedNotInvoiced,
         [SupplierAdvances] = SubledgerTypes.Payables,
+        [CustomerDeposits] = SubledgerTypes.Receivables,
         [Bank] = SubledgerTypes.Bank,
         [Cash] = SubledgerTypes.Bank,
         [PettyCash] = SubledgerTypes.Bank,
