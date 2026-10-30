@@ -15,6 +15,9 @@ export type RecordScreen =
   | "/sales/quotations"
   | "/sales/orders"
   | "/sales/shipments"
+  | "/sales/invoices"
+  | "/sales/recurring-invoices"
+  | "/receivables/open-items"
   | "/inventory/adjustments"
   | "/inventory/revaluations"
   | "/inventory/assemblies"
@@ -42,6 +45,8 @@ const screens: Record<string, RecordScreen> = {
   sales_quotation: "/sales/quotations",
   sales_order: "/sales/orders",
   sales_shipment: "/sales/shipments",
+  sales_invoice: "/sales/invoices",
+  sales_credit_note: "/sales/invoices",
   stock_adjustment: "/inventory/adjustments",
   stock_revaluation: "/inventory/revaluations",
   stock_assembly: "/inventory/assemblies",

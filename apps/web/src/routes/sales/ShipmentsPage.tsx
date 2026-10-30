@@ -1,13 +1,13 @@
 import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Link } from "@tanstack/react-router";
-import { PackageOpen, Plus, ScanLine, Truck } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { PackageOpen, Plus, ReceiptText, ScanLine, Truck } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
-import { useFollowOnSource, useOpenRecord } from "../../lib/documents";
+import { followOn, useFollowOnSource, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -47,6 +47,7 @@ export function ShipmentsPage() {
   const [packing, setPacking] = useState(false);
   const [carrierForm, setCarrierForm] = useState<{ carrier: string; trackingNumber: string } | null>(null);
   const [followSource, clearFollowOn] = useFollowOnSource("/sales/shipments");
+  const navigate = useNavigate();
   const canManage = can("sales.shipment.manage");
   const canPost = can("sales.shipment.post");
 
@@ -354,6 +355,12 @@ export function ShipmentsPage() {
                 {s.status === "picking" && canManage && !cancellingPick ? <Button variant="secondary" onClick={() => { setCancellingPick(true); setPickCancelReason(""); }} data-testid="start-cancel-picking">{t("picking.takeBack")}</Button> : null}
                 {cancellingPick ? <Button variant="danger" onClick={() => { cancelPicking.mutate({ id: s.id, reason: pickCancelReason }); }} loading={cancelPicking.isPending} disabled={!pickCancelReason.trim()} data-testid="confirm-cancel-picking">{t("picking.confirmTakeBack")}</Button> : null}
                 {(s.status === "draft" || (s.status === "picking" && s.pickListStatus === "picked")) && canPost ? <Button onClick={() => { post.mutate(s.id); }} loading={post.isPending} data-testid="post-shipment">{s.status === "picking" ? t("picking.postPicked") : t("sales.post")}</Button> : null}
+                {s.status === "posted" && can("sales.invoice.manage") ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/invoices", search: followOn("sales_shipment", s.id) }); }} data-testid="create-invoice">
+                    <ReceiptText aria-hidden="true" />
+                    {t("sales.createInvoice")}
+                  </Button>
+                ) : null}
                 {s.status === "posted" && canPost && !reversing ? <Button variant="secondary" onClick={() => { setReversing(true); setReversalReason(""); }} data-testid="start-reverse-shipment">{t("sales.reverse")}</Button> : null}
                 {reversing ? <Button onClick={() => { reverse.mutate({ id: s.id, reason: reversalReason }); }} loading={reverse.isPending} data-testid="confirm-reverse-shipment">{t("sales.confirmReverse")}</Button> : null}
               </DialogFooter>

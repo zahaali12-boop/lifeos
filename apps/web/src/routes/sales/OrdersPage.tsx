@@ -2,7 +2,7 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, Dialo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { PackageCheck, Plus, RefreshCw, Truck } from "lucide-react";
+import { PackageCheck, Plus, ReceiptText, RefreshCw, Truck } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
@@ -256,6 +256,12 @@ export function OrdersPage() {
                   <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/shipments", search: followOn("sales_order", o.id) }); }} data-testid="create-shipment">
                     <PackageCheck aria-hidden="true" />
                     {t("sales.createShipment")}
+                  </Button>
+                ) : null}
+                {(o.status === "confirmed" || o.status === "partially_shipped" || o.status === "shipped") && can("sales.invoice.manage") ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/invoices", search: followOn("sales_order", o.id) }); }} data-testid="create-invoice">
+                    <ReceiptText aria-hidden="true" />
+                    {t("sales.createInvoice")}
                   </Button>
                 ) : null}
                 {o.status !== "cancelled" && canManage && !cancelling ? <Button variant="secondary" onClick={() => { setCancelling(true); setCancelReason(""); }} data-testid="start-cancel-order">{t("sales.cancelOrder")}</Button> : null}

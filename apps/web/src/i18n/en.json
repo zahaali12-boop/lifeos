@@ -21,7 +21,10 @@
     "save": "Save",
     "saveFailed": "The change could not be saved.",
     "search": "Search",
-    "status": "Status"
+    "status": "Status",
+    "name": "Name",
+    "nameEn": "Name (English)",
+    "nameAr": "Name (Arabic)"
   },
   "entities": {
     "company": "Companies"
@@ -104,7 +107,10 @@
     "agreements": "Blanket agreements",
     "taxSetup": "Tax setup",
     "taxReturns": "Tax returns",
-    "pickLists": "Pick lists"
+    "pickLists": "Pick lists",
+    "salesInvoices": "Sales invoices",
+    "recurringInvoices": "Recurring invoices",
+    "receivables": "Receivables"
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -3260,7 +3266,8 @@
     "noTransactions": "Nothing open with this partner",
     "noTransactionsDescription": "Balances and documents appear here as the modules that hold them record them.",
     "sources": {
-      "payables": "Payables"
+      "payables": "Payables",
+      "receivables": "Receivables"
     },
     "side": "Side",
     "open": "Open",
@@ -3274,7 +3281,10 @@
       "journal_entry": "Journal entry",
       "bank_payment": "Payment",
       "sales_quotation": "Sales quotation",
-      "sales_order": "Sales order"
+      "sales_order": "Sales order",
+      "sales_invoice": "Sales invoice",
+      "sales_credit_note": "Credit note",
+      "ar_settlement": "Receivable settlement"
     },
     "date": "Date",
     "amount": "Amount",
@@ -3498,7 +3508,93 @@
       "fulfilled": "Fulfilled",
       "posted": "Posted",
       "reversed": "Reversed",
-      "picking": "Picking"
+      "picking": "Picking",
+      "accrued": "Accrued",
+      "partially_settled": "Partly settled",
+      "settled": "Settled"
+    },
+    "createInvoice": "Create invoice",
+    "invoicing": {
+      "description": "Invoices and credit notes: lines picked from what was shipped or ordered, or typed as items and services; posted to revenue, tax and the customer's receivable; deferred, commissioned and cleared where the setup says so.",
+      "newInvoice": "New invoice",
+      "newCreditNote": "New credit note",
+      "editInvoice": "Edit invoice",
+      "empty": "No invoices yet",
+      "emptyDescription": "Invoice a posted shipment, an order with service lines, or start one from scratch.",
+      "kind": "Kind",
+      "kinds": {
+        "invoice": "Invoice",
+        "credit_note": "Credit note"
+      },
+      "lineKinds": {
+        "shipment": "Shipment",
+        "order": "Order",
+        "item": "Item",
+        "service": "Service",
+        "invoice": "Invoice"
+      },
+      "customerReference": "Customer reference",
+      "customerReferenceHint": "Their purchase order or reference, printed on the invoice.",
+      "documentDate": "Invoice date",
+      "dueDate": "Due",
+      "terms": "Terms",
+      "openAmount": "Open",
+      "credits": "Credits",
+      "currencyHelp": "The customer's currency; the receivable is kept in it.",
+      "invoicable": "Not yet invoiced",
+      "nothingInvoicable": "This customer has nothing posted or ordered that is still to be invoiced.",
+      "creditable": "Invoiced lines to credit",
+      "nothingCreditable": "This customer has no posted invoice lines left to credit.",
+      "addItemLine": "Add item",
+      "addServiceLine": "Add service",
+      "lineDescription": "Description",
+      "taxByItem": "By item and customer",
+      "deferMonths": "Defer (months)",
+      "deferredOver": "Deferred over {count} months from {from}",
+      "dimensionAsOrdered": "As on the order",
+      "noReceivables": "No open items: the invoice is not posted yet.",
+      "noCommission": "No commission was accrued on this invoice.",
+      "einvoice": "E-invoice",
+      "einvoiceScheme": "Scheme",
+      "noScheme": "The regime names no e-invoicing scheme.",
+      "submissionId": "Submission",
+      "submittedAt": "Submitted",
+      "einvoiceHelp": "Submit the posted invoice to the scheme; the status and QR come back from it.",
+      "submitEinvoice": "Submit",
+      "einvoiceStatuses": {
+        "not_required": "Not required",
+        "pending": "Pending",
+        "cleared": "Cleared",
+        "reported": "Reported",
+        "rejected": "Rejected"
+      },
+      "cancelDraft": "Cancel draft",
+      "recurringDescription": "Invoices issued on a schedule: the customer's items and services, on the cron you set in the company's time zone, posted at once or left as drafts to review.",
+      "newRecurring": "New recurring invoice",
+      "editRecurring": "Edit recurring invoice",
+      "emptyRecurring": "No recurring invoices yet",
+      "emptyRecurringDescription": "Set up a subscription, retainer or rent to be invoiced on a schedule.",
+      "recurringCode": "Code",
+      "schedule": "Schedule",
+      "scheduleHint": "A cron expression: minute, hour, day, month, weekday.",
+      "preset": "Preset",
+      "cron": "Cron",
+      "presets": {
+        "monthly": "Monthly, on the 1st",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly",
+        "weekly": "Weekly, on Monday",
+        "custom": "Custom"
+      },
+      "startsOn": "Starts on",
+      "endsOn": "Ends on",
+      "autoPost": "Post each invoice as it is issued",
+      "nextRun": "Next run",
+      "lastGenerated": "Last issued",
+      "generated": "Issued",
+      "issued": "Invoices issued",
+      "nothingIssued": "No invoice has been issued from this schedule yet.",
+      "issueNow": "Issue now"
     }
   },
   "pricing": {
@@ -4101,5 +4197,36 @@
     "noMatch": "No currency matches “{query}”",
     "placeholder": "Search by code or name",
     "list": "Currencies"
+  },
+  "receivables": {
+    "description": "What each customer owes: invoice instalments, credit notes, deposits and receipts on account; aged at any date from the items and their settlements; held, applied and unapplied.",
+    "emptyItems": "No receivables yet",
+    "emptyItemsDescription": "Post a sales invoice to open the first item.",
+    "deposits": "Deposits",
+    "kinds": {
+      "invoice": "Invoice",
+      "credit_note": "Credit note",
+      "deposit": "Deposit",
+      "receipt_on_account": "Receipt on account",
+      "adjustment": "Adjustment",
+      "opening": "Opening balance",
+      "pdc": "Post-dated cheque"
+    },
+    "settlementKinds": {
+      "receipt": "Receipt",
+      "credit_application": "Credit applied",
+      "deposit_application": "Deposit applied",
+      "netting": "Netting",
+      "write_off": "Write-off",
+      "revaluation": "Revaluation"
+    },
+    "statement": {
+      "chooseCustomer": "Choose a customer to see their statement.",
+      "empty": "Nothing was booked for this customer up to the end of the period.",
+      "opening": "Owed at the start",
+      "increases": "Invoiced",
+      "decreases": "Credited and received",
+      "closing": "Owed at the end"
+    }
   }
 }

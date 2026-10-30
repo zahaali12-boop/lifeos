@@ -178,6 +178,16 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_pick_lines WHERE tenant_id = @t AND status = 'short'", new { t = DemoData.TenantId })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_shipment_packages WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(2);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_order_lines WHERE tenant_id = @t AND drop_ship AND purchase_order_line_id IS NULL", new { t = DemoData.TenantId })).ShouldBe(1, "the order screen's own \"create purchase order\" button has something to click");
+
+        // Invoicing (roadmap 5.6): the posted shipment billed and posted, two units credited and the credit note applied, a
+        // deferred service invoice, a draft delivery charge, and a recurring retainer whose first run is a draft to review.
+        (first.SalesInvoices, first.CreditNotes, first.RecurringInvoices).ShouldBe((4, 1, 1));
+        (await db.QueryAsync<string>("SELECT kind || ':' || status FROM app.sls_invoices WHERE tenant_id = @t ORDER BY 1", new { t = DemoData.TenantId })).ShouldBe(["credit_note:posted", "invoice:draft", "invoice:draft", "invoice:posted", "invoice:posted"]);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_invoices WHERE tenant_id = @t AND recurring_invoice_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(1);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_invoice_lines WHERE tenant_id = @t AND deferral_schedule_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(1);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_settlements WHERE tenant_id = @t AND kind = 'credit_application' AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(1, "the credit note settled its invoice as it posted");
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_open_items WHERE tenant_id = @t AND status IN ('open', 'partially_settled')", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(2);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_commission_entries WHERE tenant_id = @t AND status = 'accrued'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(0, "the rep's plan accrues at invoice");
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
@@ -206,6 +216,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (third.TaxRegimes, third.TaxRegistrations).ShouldBe((first.TaxRegimes, first.TaxRegistrations), "the tax set-up is deterministic");
         (third.Quotations, third.SalesOrders).ShouldBe((first.Quotations, first.SalesOrders), "the quotations and orders are deterministic");
         (third.Shipments, third.PickLists).ShouldBe((first.Shipments, first.PickLists), "the shipments are deterministic");
+        (third.SalesInvoices, third.CreditNotes, third.RecurringInvoices).ShouldBe((first.SalesInvoices, first.CreditNotes, first.RecurringInvoices), "the invoices are deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

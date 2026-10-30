@@ -21,7 +21,10 @@
     "save": "حفظ",
     "saveFailed": "تعذّر حفظ التغيير.",
     "search": "بحث",
-    "status": "الحالة"
+    "status": "الحالة",
+    "name": "الاسم",
+    "nameEn": "الاسم (بالإنجليزية)",
+    "nameAr": "الاسم (بالعربية)"
   },
   "entities": {
     "company": "الشركات"
@@ -104,7 +107,10 @@
     "replenishment": "إعادة التزويد",
     "revaluations": "إعادة التقييم",
     "valuation": "التقييم",
-    "pickLists": "قوائم الانتقاء"
+    "pickLists": "قوائم الانتقاء",
+    "salesInvoices": "فواتير المبيعات",
+    "recurringInvoices": "الفواتير الدورية",
+    "receivables": "الذمم المدينة"
   },
   "shell": {
     "filterMenu": "تصفية القائمة",
@@ -3260,7 +3266,8 @@
     "noTransactions": "لا شيء مفتوح مع هذا الشريك",
     "noTransactionsDescription": "تظهر هنا الأرصدة والمستندات كلما سجّلتها الوحدات التي تحتفظ بها.",
     "sources": {
-      "payables": "الذمم الدائنة"
+      "payables": "الذمم الدائنة",
+      "receivables": "الذمم المدينة"
     },
     "side": "الاتجاه",
     "open": "المفتوح",
@@ -3274,7 +3281,10 @@
       "journal_entry": "قيد يومية",
       "bank_payment": "دفعة",
       "sales_quotation": "عرض سعر",
-      "sales_order": "أمر بيع"
+      "sales_order": "أمر بيع",
+      "sales_invoice": "فاتورة مبيعات",
+      "sales_credit_note": "إشعار دائن",
+      "ar_settlement": "تسوية ذمة مدينة"
     },
     "date": "التاريخ",
     "amount": "المبلغ",
@@ -3498,7 +3508,93 @@
       "fulfilled": "مُنفَّذ",
       "posted": "مُرحَّل",
       "reversed": "معكوس",
-      "picking": "قيد الانتقاء"
+      "picking": "قيد الانتقاء",
+      "accrued": "مستحقة",
+      "partially_settled": "مسوّاة جزئيًا",
+      "settled": "مسوّاة"
+    },
+    "createInvoice": "إنشاء فاتورة",
+    "invoicing": {
+      "description": "الفواتير والإشعارات الدائنة: بنود تُختار مما شُحن أو طُلب، أو تُكتب كأصناف وخدمات؛ تُرحَّل إلى الإيرادات والضريبة وذمة العميل؛ وتُؤجَّل وتُحتسب عليها العمولة وتُعتمد إلكترونيًا حيث يقضي الإعداد.",
+      "newInvoice": "فاتورة جديدة",
+      "newCreditNote": "إشعار دائن جديد",
+      "editInvoice": "تعديل الفاتورة",
+      "empty": "لا توجد فواتير بعد",
+      "emptyDescription": "أصدر فاتورة لشحنة مرحّلة أو لطلب ببنود خدمات، أو ابدأ فاتورة من الصفر.",
+      "kind": "النوع",
+      "kinds": {
+        "invoice": "فاتورة",
+        "credit_note": "إشعار دائن"
+      },
+      "lineKinds": {
+        "shipment": "شحنة",
+        "order": "طلب",
+        "item": "صنف",
+        "service": "خدمة",
+        "invoice": "فاتورة"
+      },
+      "customerReference": "مرجع العميل",
+      "customerReferenceHint": "أمر الشراء أو المرجع لدى العميل، يُطبع على الفاتورة.",
+      "documentDate": "تاريخ الفاتورة",
+      "dueDate": "الاستحقاق",
+      "terms": "الشروط",
+      "openAmount": "المفتوح",
+      "credits": "الإشعارات الدائنة",
+      "currencyHelp": "عملة العميل؛ تُحفظ الذمة بها.",
+      "invoicable": "لم تُفوتر بعد",
+      "nothingInvoicable": "ليس لدى هذا العميل شيء مرحّل أو مطلوب لم يُفوتر بعد.",
+      "creditable": "بنود الفواتير التي يمكن ردّها",
+      "nothingCreditable": "لا توجد لدى هذا العميل بنود فواتير مرحّلة يمكن ردّها.",
+      "addItemLine": "إضافة صنف",
+      "addServiceLine": "إضافة خدمة",
+      "lineDescription": "الوصف",
+      "taxByItem": "حسب الصنف والعميل",
+      "deferMonths": "التأجيل (أشهر)",
+      "deferredOver": "مؤجَّل على {count} شهرًا من {from}",
+      "dimensionAsOrdered": "كما في الطلب",
+      "noReceivables": "لا توجد بنود مفتوحة: الفاتورة لم تُرحَّل بعد.",
+      "noCommission": "لم تُحتسب عمولة على هذه الفاتورة.",
+      "einvoice": "الفاتورة الإلكترونية",
+      "einvoiceScheme": "النظام",
+      "noScheme": "لا يحدد النظام الضريبي نظامًا للفوترة الإلكترونية.",
+      "submissionId": "رقم الإرسال",
+      "submittedAt": "أُرسلت في",
+      "einvoiceHelp": "أرسل الفاتورة المرحّلة إلى النظام؛ تعود الحالة ورمز الاستجابة السريعة منه.",
+      "submitEinvoice": "إرسال",
+      "einvoiceStatuses": {
+        "not_required": "غير مطلوبة",
+        "pending": "قيد الانتظار",
+        "cleared": "معتمدة",
+        "reported": "مُبلَّغ عنها",
+        "rejected": "مرفوضة"
+      },
+      "cancelDraft": "إلغاء المسودة",
+      "recurringDescription": "فواتير تصدر وفق جدول: أصناف العميل وخدماته، بالجدول الزمني الذي تحدده بتوقيت الشركة، تُرحَّل فورًا أو تُترك مسودات للمراجعة.",
+      "newRecurring": "فاتورة دورية جديدة",
+      "editRecurring": "تعديل الفاتورة الدورية",
+      "emptyRecurring": "لا توجد فواتير دورية بعد",
+      "emptyRecurringDescription": "أعدّ اشتراكًا أو أتعابًا أو إيجارًا يُفوتر وفق جدول.",
+      "recurringCode": "الرمز",
+      "schedule": "الجدول",
+      "scheduleHint": "تعبير cron: الدقيقة، الساعة، اليوم، الشهر، يوم الأسبوع.",
+      "preset": "نمط جاهز",
+      "cron": "Cron",
+      "presets": {
+        "monthly": "شهريًا، في الأول",
+        "quarterly": "ربع سنوي",
+        "yearly": "سنويًا",
+        "weekly": "أسبوعيًا، يوم الاثنين",
+        "custom": "مخصص"
+      },
+      "startsOn": "يبدأ في",
+      "endsOn": "ينتهي في",
+      "autoPost": "ترحيل كل فاتورة عند إصدارها",
+      "nextRun": "التشغيل التالي",
+      "lastGenerated": "آخر إصدار",
+      "generated": "الصادرة",
+      "issued": "الفواتير الصادرة",
+      "nothingIssued": "لم تصدر أي فاتورة من هذا الجدول بعد.",
+      "issueNow": "إصدار الآن"
     }
   },
   "pricing": {
@@ -4101,5 +4197,36 @@
     "noMatch": "لا توجد عملة تطابق «{query}»",
     "placeholder": "ابحث بالرمز أو الاسم",
     "list": "العملات"
+  },
+  "receivables": {
+    "description": "ما يدين به كل عميل: أقساط الفواتير والإشعارات الدائنة والعربونات والمقبوضات على الحساب؛ مُعمَّرة في أي تاريخ من البنود وتسوياتها؛ تُحجز وتُطبَّق ويُلغى تطبيقها.",
+    "emptyItems": "لا توجد ذمم مدينة بعد",
+    "emptyItemsDescription": "رحّل فاتورة مبيعات لفتح أول بند.",
+    "deposits": "العربونات",
+    "kinds": {
+      "invoice": "فاتورة",
+      "credit_note": "إشعار دائن",
+      "deposit": "عربون",
+      "receipt_on_account": "مقبوض على الحساب",
+      "adjustment": "تسوية",
+      "opening": "رصيد افتتاحي",
+      "pdc": "شيك مؤجل"
+    },
+    "settlementKinds": {
+      "receipt": "قبض",
+      "credit_application": "تطبيق إشعار دائن",
+      "deposit_application": "تطبيق عربون",
+      "netting": "مقاصة",
+      "write_off": "شطب",
+      "revaluation": "إعادة تقييم"
+    },
+    "statement": {
+      "chooseCustomer": "اختر عميلًا لعرض كشف حسابه.",
+      "empty": "لم يُقيَّد شيء لهذا العميل حتى نهاية الفترة.",
+      "opening": "المستحق في البداية",
+      "increases": "المفوتر",
+      "decreases": "المردود والمقبوض",
+      "closing": "المستحق في النهاية"
+    }
   }
 }
