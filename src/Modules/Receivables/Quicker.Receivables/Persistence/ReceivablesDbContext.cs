@@ -13,6 +13,14 @@ public sealed class ReceivablesDbContext(DbContextOptions<ReceivablesDbContext> 
 
     public DbSet<ArWriteOff> WriteOffs => Set<ArWriteOff>();
 
+    public DbSet<ArDunningLevel> DunningLevels => Set<ArDunningLevel>();
+
+    public DbSet<ArDunningRun> DunningRuns => Set<ArDunningRun>();
+
+    public DbSet<ArDunningLetter> DunningLetters => Set<ArDunningLetter>();
+
+    public DbSet<ArNetting> Nettings => Set<ArNetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -54,6 +62,40 @@ public sealed class ReceivablesDbContext(DbContextOptions<ReceivablesDbContext> 
             b.Property(static x => x.AmountTc).HasPrecision(24, 6);
             b.Property(static x => x.AmountFc).HasPrecision(24, 6);
             b.HasOne<ArOpenItem>().WithMany().HasForeignKey(static x => new { x.TenantId, x.OpenItemId });
+        });
+
+        modelBuilder.Entity<ArDunningLevel>(b =>
+        {
+            b.ToTable("ar_dunning_levels", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Name).HasColumnName("name_i18n");
+            b.Property(static x => x.Text).HasColumnName("text_i18n");
+            b.Property(static x => x.FeeAmount).HasPrecision(24, 6);
+        });
+        modelBuilder.Entity<ArDunningRun>(b =>
+        {
+            b.ToTable("ar_dunning_runs", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.FeesFc).HasPrecision(24, 6);
+        });
+        modelBuilder.Entity<ArDunningLetter>(b =>
+        {
+            b.ToTable("ar_dunning_letters", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Items).HasColumnType("jsonb");
+            b.Property(static x => x.OverdueFc).HasPrecision(24, 6);
+            b.Property(static x => x.FeeAmount).HasPrecision(24, 6);
+            b.HasOne<ArDunningRun>().WithMany().HasForeignKey(static x => new { x.TenantId, x.RunId });
+        });
+        modelBuilder.Entity<ArNetting>(b =>
+        {
+            b.ToTable("ar_nettings", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.AmountTc).HasPrecision(24, 6);
+            b.Property(static x => x.AmountFcReceivable).HasPrecision(24, 6);
+            b.Property(static x => x.AmountFcPayable).HasPrecision(24, 6);
+            b.Property(static x => x.FxGainLossFc).HasPrecision(24, 6);
+            b.HasOne<ArOpenItem>().WithMany().HasForeignKey(static x => new { x.TenantId, x.ReceivableItemId });
         });
 
         base.OnModelCreating(modelBuilder);

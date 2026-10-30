@@ -7350,6 +7350,172 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/receivables/dunning/levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The company's reminder ladder: each level's days past due, wording, fee and whether it holds the customer's credit. */
+        get: operations["getReceivablesDunningLevels"];
+        put?: never;
+        post: operations["postReceivablesDunningLevels"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/dunning/levels/{levelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putReceivablesDunningLevelsByLevelId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/dunning/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a run on the date would issue: one letter per customer whose overdue items climb a level, nothing written. */
+        get: operations["getReceivablesDunningPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/dunning/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesDunningRuns"];
+        put?: never;
+        /** Issues the letters due on the date: items climb to their level, fees are charged to the customers, customers are held where the level says so. */
+        post: operations["postReceivablesDunningRuns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/dunning/runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesDunningRunsByRunId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/dunning/letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesDunningLetters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/dunning/letters/{letterId}/sent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Records that the letter went out. */
+        post: operations["postReceivablesDunningLettersByLetterIdSent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/nettings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesNettings"];
+        put?: never;
+        /** Sets a customer's open invoice against the same partner's open supplier invoice in their currency: Dr payables / Cr receivables at booked values, the difference realised FX. */
+        post: operations["postReceivablesNettings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/nettings/{nettingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesNettingsByNettingId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/nettings/{nettingId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a netting: both items reopen at their booked values. */
+        post: operations["postReceivablesNettingsByNettingIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/banking/bank-accounts": {
         parameters: {
             query?: never;
@@ -11344,6 +11510,134 @@ export interface components {
             documentId: string;
             identifier: string;
         };
+        /** @description One overdue item as a letter names it: what was open on the date, how late, and the level it reached. */
+        DunningLetterItem: {
+            /** Format: uuid */
+            itemId: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            documentNumber: string;
+            /** Format: int32 */
+            instalment: number | string;
+            /** Format: date */
+            dueDate: string;
+            /** Format: int32 */
+            daysOverdue: number | string;
+            currency: string;
+            /** Format: double */
+            remainingTc: number | string;
+            /** Format: double */
+            remainingFc: number | string;
+            /** Format: int32 */
+            previousLevel: number | string;
+            /** Format: int32 */
+            level: number | string;
+        };
+        DunningLetterSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            runId: string;
+            runNumber: string;
+            /** Format: date */
+            runDate: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            number: string;
+            /** Format: int32 */
+            level: number | string;
+            levelName: {
+                [key: string]: string;
+            };
+            text: {
+                [key: string]: string;
+            };
+            items: components["schemas"]["DunningLetterItem"][];
+            /** Format: int32 */
+            itemCount: number | string;
+            /** Format: double */
+            overdueFc: number | string;
+            functionalCurrency: string;
+            /** Format: double */
+            feeAmount: number | string;
+            /** Format: uuid */
+            feeItemId: null | string;
+            blockedCustomer: boolean;
+            /** Format: date-time */
+            sentAt: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        DunningLevelSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: int32 */
+            level: number | string;
+            /** Format: int32 */
+            daysOverdue: number | string;
+            name: {
+                [key: string]: string;
+            };
+            text: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            feeAmount: number | string;
+            feeCurrency: string;
+            blockCustomer: boolean;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description What a run on the date would issue, before anything is written. */
+        DunningPreview: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            runDate: string;
+            functionalCurrency: string;
+            letters: components["schemas"]["DunningLetterSummary"][];
+        };
+        /** @description Issues the letters due on a date for the company's overdue customers, or one customer; fees are charged unless told otherwise. */
+        DunningRunRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            runDate?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** @default true */
+            chargeFees: boolean;
+        };
+        DunningRunSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: date */
+            runDate: string;
+            /** Format: uuid */
+            partnerId: null | string;
+            status: string;
+            /** Format: int32 */
+            letters: number | string;
+            /** Format: double */
+            feesFc: number | string;
+            functionalCurrency: string;
+            /** Format: date-time */
+            createdAt: string;
+            letterList: components["schemas"]["DunningLetterSummary"][];
+        };
         EditCommentRequest: {
             body: string;
             mentions?: null | string[];
@@ -12635,6 +12929,58 @@ export interface components {
             /** Format: int32 */
             probabilityPct?: null | number | string;
             lostReason?: null | string;
+        };
+        /** @description Sets a customer's open receivable item against the same partner's open payable item, in their common currency; the amount defaults to the smaller remainder. */
+        NettingRequest: {
+            /** Format: uuid */
+            receivableItemId: string;
+            /** Format: uuid */
+            payableItemId: string;
+            /** Format: double */
+            amount?: null | number | string;
+            /** Format: date */
+            nettingDate?: null | string;
+            reason?: null | string;
+        };
+        NettingSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            receivableItemId: string;
+            receivableNumber: string;
+            /** Format: uuid */
+            payableItemId: string;
+            payableNumber: string;
+            /** Format: date */
+            nettingDate: string;
+            currency: string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            amountFcReceivable: number | string;
+            /** Format: double */
+            amountFcPayable: number | string;
+            /** Format: double */
+            fxGainLossFc: number | string;
+            functionalCurrency: string;
+            reason: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            reversalReason: null | string;
+            /** Format: date-time */
+            createdAt: string;
         };
         /** @description How many in-app rows were written and how many emails were queued after preferences. */
         NotificationOutcome: {
@@ -15463,6 +15809,11 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        ReverseNettingRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         ReversePaymentRequest: {
             reason: string;
             /** Format: date */
@@ -16550,6 +16901,29 @@ export interface components {
             validFrom?: null | string;
             /** Format: date */
             validTo?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveDunningLevelRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: int32 */
+            level: number | string;
+            /** Format: int32 */
+            daysOverdue: number | string;
+            name: {
+                [key: string]: string;
+            };
+            text?: null | {
+                [key: string]: string;
+            };
+            /**
+             * Format: double
+             * @default 0
+             */
+            feeAmount: number | string;
+            /** @default false */
+            blockCustomer: boolean;
             /** @default true */
             isActive: boolean;
         };
@@ -33651,6 +34025,311 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReceivableSettlementInfo"];
+                };
+            };
+        };
+    };
+    getReceivablesDunningLevels: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningLevelSummary"][];
+                };
+            };
+        };
+    };
+    postReceivablesDunningLevels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDunningLevelRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningLevelSummary"];
+                };
+            };
+        };
+    };
+    putReceivablesDunningLevelsByLevelId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                levelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDunningLevelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningLevelSummary"];
+                };
+            };
+        };
+    };
+    getReceivablesDunningPreview: {
+        parameters: {
+            query: {
+                companyId: string;
+                runDate?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningPreview"];
+                };
+            };
+        };
+    };
+    getReceivablesDunningRuns: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningRunSummary"][];
+                };
+            };
+        };
+    };
+    postReceivablesDunningRuns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DunningRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningRunSummary"];
+                };
+            };
+        };
+    };
+    getReceivablesDunningRunsByRunId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningRunSummary"];
+                };
+            };
+        };
+    };
+    getReceivablesDunningLetters: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningLetterSummary"][];
+                };
+            };
+        };
+    };
+    postReceivablesDunningLettersByLetterIdSent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                letterId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DunningLetterSummary"];
+                };
+            };
+        };
+    };
+    getReceivablesNettings: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NettingSummary"][];
+                };
+            };
+        };
+    };
+    postReceivablesNettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NettingRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NettingSummary"];
+                };
+            };
+        };
+    };
+    getReceivablesNettingsByNettingId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nettingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NettingSummary"];
+                };
+            };
+        };
+    };
+    postReceivablesNettingsByNettingIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nettingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseNettingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NettingSummary"];
                 };
             };
         };

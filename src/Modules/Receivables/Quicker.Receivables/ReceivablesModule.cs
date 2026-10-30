@@ -22,7 +22,11 @@ public static class ReceivablesModule
         services.AddScoped<ReceivablesService>();
         services.AddScoped<SettlementService>();
         services.AddScoped<WriteOffService>();
+        services.AddScoped<DunningService>();
+        services.AddScoped<NettingService>();
         NumberedDocumentTypes.Register(new NumberedDocumentType(ReceivablesDocumentTypes.WriteOff, ReceivablesPermissions.OpenItemRead));
+        NumberedDocumentTypes.Register(new NumberedDocumentType(ReceivablesDocumentTypes.DunningRun, ReceivablesPermissions.DunningRead));
+        NumberedDocumentTypes.Register(new NumberedDocumentType(ReceivablesDocumentTypes.Netting, ReceivablesPermissions.OpenItemRead));
         services.AddScoped<IReceivables, ReceivablesFacade>();
         services.AddScoped<IJournalSubledger, ReceivablesJournalSubledger>();
         services.AddScoped<IPartnerActivitySource, ReceivablesPartnerActivity>();

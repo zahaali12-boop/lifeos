@@ -270,6 +270,114 @@ public sealed class ReceivablesTests(ApiHostFixture host)
         await owner.AssertInvariantsAsync();
     }
 
+    [Fact]
+    public async Task Dunning_levels_climb_with_days_overdue_and_a_run_issues_letters_charges_fees_and_holds_credit_while_a_promise_keeps_an_item_out()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+
+        // The ladder: a reminder after a week, a second notice with a fee and a credit hold after a month; a rung out of order is refused.
+        var first = await owner.PostAsync("/api/v1/receivables/dunning/levels", new { companyId = s.CompanyId, level = 1, daysOverdue = 7, name = Name("Reminder", "تذكير"), text = Name("Our records show the following items are past due.", "تشير سجلاتنا إلى تأخر سداد البنود التالية.") });
+        first.GetProperty("feeCurrency").GetString().ShouldBe("IQD");
+        await owner.PostAsync("/api/v1/receivables/dunning/levels", new { companyId = s.CompanyId, level = 2, daysOverdue = 30, name = Name("Second notice", "إشعار ثانٍ"), feeAmount = 5_000m, blockCustomer = true });
+        (await owner.PostErrorAsync("/api/v1/receivables/dunning/levels", new { companyId = s.CompanyId, level = 3, daysOverdue = 10, name = Name("Final", "نهائي") }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("dunning.ladder_order");
+        (await owner.PostErrorAsync("/api/v1/receivables/dunning/levels", new { companyId = s.CompanyId, level = 2, daysOverdue = 60, name = Name("Again", "مجددًا") }, HttpStatusCode.Conflict)).Code.ShouldBe("dunning.level_taken");
+        (await owner.GetOkAsync($"/api/v1/receivables/dunning/levels?companyId={s.CompanyId}")).GetArrayLength().ShouldBe(2);
+
+        // What is owed: an old invoice, a recent one, one not yet due, and another customer's overdue item with a promise to pay.
+        await SaleAsync(s, "2026-07-01", 100_000m, dueDate: "2026-08-01");
+        await SaleAsync(s, "2026-09-01", 50_000m, dueDate: "2026-09-10");
+        await SaleAsync(s, "2026-09-15", 20_000m, dueDate: "2026-10-15");
+        await SaleAsync(s, "2026-08-01", 30_000m, customer: s.Other, dueDate: "2026-09-01");
+        var promisedItem = (await ItemsAsync(s, s.Other)).ShouldHaveSingleItem();
+        await owner.PostAsync($"/api/v1/receivables/open-items/{promisedItem.GetProperty("id").GetGuid()}/promise", new { promisedOn = "2026-10-05", note = "Paying with the October run" }, HttpStatusCode.OK);
+
+        // On 15 September only the old invoice has climbed: one letter at level 2, with its fee and the hold.
+        var preview = await owner.GetOkAsync($"/api/v1/receivables/dunning/preview?companyId={s.CompanyId}&runDate=2026-09-15");
+        var previewed = preview.GetProperty("letters").EnumerateArray().ShouldHaveSingleItem();
+        previewed.GetProperty("level").GetInt32().ShouldBe(2);
+        previewed.GetProperty("items").GetArrayLength().ShouldBe(1);
+        previewed.GetProperty("overdueFc").GetDecimal().ShouldBe(100_000m);
+        (await owner.PostErrorAsync("/api/v1/receivables/dunning/runs", new { companyId = s.CompanyId, runDate = "2026-12-01" }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("dunning.run_date_future");
+        var run1 = await owner.PostAsync("/api/v1/receivables/dunning/runs", new { companyId = s.CompanyId, runDate = "2026-09-15" });
+        run1.GetProperty("number").GetString().ShouldStartWith("DUN-2026-");
+        run1.GetProperty("letters").GetInt32().ShouldBe(1);
+        run1.GetProperty("feesFc").GetDecimal().ShouldBe(5_000m);
+        var letter1 = run1.GetProperty("letterList").EnumerateArray().Single();
+        letter1.GetProperty("number").GetString().ShouldBe(run1.GetProperty("number").GetString() + "-01");
+        letter1.GetProperty("blockedCustomer").GetBoolean().ShouldBeTrue();
+        letter1.GetProperty("feeItemId").ValueKind.ShouldBe(JsonValueKind.String);
+        var items = await ItemsAsync(s);
+        items.Single(i => i.GetProperty("originalTc").GetDecimal() == 100_000m).GetProperty("dunningLevel").GetInt32().ShouldBe(2);
+        items.Single(i => i.GetProperty("originalTc").GetDecimal() == 50_000m).GetProperty("dunningLevel").GetInt32().ShouldBe(0);
+        var fee = items.Single(i => i.GetProperty("documentType").GetString() == "ar_dunning_letter");
+        (fee.GetProperty("kind").GetString(), fee.GetProperty("originalTc").GetDecimal(), fee.GetProperty("dueDate").GetString()).ShouldBe(("adjustment", 5_000m, "2026-09-15"));
+        (await RoleAsync(s, "InterestIncome")).ShouldBe(-5_000m);
+        (await ControlAsync(s, "2026-09-22")).ShouldBe(205_000m);
+        var account = (await owner.GetOkAsync($"/api/v1/partners/{s.Customer}/customer-accounts")).EnumerateArray().Single(a => a.GetProperty("companyId").GetGuid() == s.CompanyId);
+        account.GetProperty("creditStatus").GetString().ShouldBe("on_hold");
+        account.GetProperty("dunningLevel").GetInt32().ShouldBe(2);
+        await owner.AssertInvariantsAsync();
+
+        // A week later the recent invoice and the fee itself reach the first rung: a new letter at the customer's level naming all three; the promised item stays out; then nothing more is due.
+        var run2 = await owner.PostAsync("/api/v1/receivables/dunning/runs", new { companyId = s.CompanyId, runDate = "2026-09-22" });
+        var letter2 = run2.GetProperty("letterList").EnumerateArray().Single();
+        letter2.GetProperty("level").GetInt32().ShouldBe(2);
+        letter2.GetProperty("items").EnumerateArray().Select(static i => i.GetProperty("level").GetInt32()).Order().ShouldBe([1, 1, 2]);
+        letter2.GetProperty("overdueFc").GetDecimal().ShouldBe(155_000m);
+        letter2.GetProperty("partnerId").GetGuid().ShouldBe(s.Customer);
+        (await ItemsAsync(s)).Single(i => i.GetProperty("originalTc").GetDecimal() == 50_000m).GetProperty("dunningLevel").GetInt32().ShouldBe(1);
+        (await owner.PostErrorAsync("/api/v1/receivables/dunning/runs", new { companyId = s.CompanyId, runDate = "2026-09-22" }, HttpStatusCode.Conflict)).Code.ShouldBe("dunning.nothing_due");
+        (await owner.GetOkAsync($"/api/v1/receivables/dunning/runs?companyId={s.CompanyId}")).GetArrayLength().ShouldBe(2);
+        (await owner.GetOkAsync($"/api/v1/receivables/dunning/letters?companyId={s.CompanyId}&partnerId={s.Customer}")).GetArrayLength().ShouldBe(2);
+        var sent = await owner.PostAsync($"/api/v1/receivables/dunning/letters/{letter2.GetProperty("id").GetGuid()}/sent", new { }, HttpStatusCode.OK);
+        sent.GetProperty("sentAt").ValueKind.ShouldBe(JsonValueKind.String);
+        var reader = await InviteAsync(s, "dun_reader", "receivables.dunning.read");
+        (await reader.PostErrorAsync("/api/v1/receivables/dunning/runs", new { companyId = s.CompanyId, runDate = "2026-09-22" }, HttpStatusCode.Forbidden)).Code.ShouldNotBeNull();
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
+    public async Task A_partner_who_is_customer_and_supplier_has_a_receivable_netted_against_a_payable_and_the_netting_reversed()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await owner.PutAsync($"/api/v1/partners/{s.Customer}", new { code = "CUS-A", legalName = Name("Alpha Retail", "ألفا"), isCustomer = true, isSupplier = true });
+        await owner.PutAsync($"/api/v1/partners/{s.Customer}/supplier-accounts/{s.CompanyId}", new { currency = "IQD", leadTimeDays = 7 });
+
+        // They owe 1 000 on a sale; the company owes them 600 on a service invoice.
+        await SaleAsync(s, "2026-09-05", 1000m, dueDate: "2026-10-05");
+        var receivable = (await ItemsAsync(s)).ShouldHaveSingleItem().GetProperty("id").GetGuid();
+        var purchase = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Customer, kind = "expense", supplierInvoiceNumber = "S-1", documentDate = "2026-09-10", lines = new[] { new { kind = "expense", quantity = 1m, unitPrice = 600m, description = "Shelf fitting" } } });
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{purchase.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+        var payable = (await owner.PostAsync($"/api/v1/purchasing/invoices/{purchase.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK)).GetProperty("openItems").EnumerateArray().Single().GetProperty("id").GetGuid();
+        (await RoleAsync(s, "AP")).ShouldBe(-600m);
+
+        // Netted for the smaller remainder: the payable is settled, 400 stays owed, both controls agree with their items.
+        (await owner.PostErrorAsync("/api/v1/receivables/nettings", new { receivableItemId = receivable, payableItemId = payable, amount = 700m }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("netting.amount_invalid");
+        var netting = await owner.PostAsync("/api/v1/receivables/nettings", new { receivableItemId = receivable, payableItemId = payable, nettingDate = "2026-09-20", reason = "Agreed with the partner" });
+        netting.GetProperty("number").GetString().ShouldStartWith("NET-2026-");
+        netting.GetProperty("amountTc").GetDecimal().ShouldBe(600m);
+        netting.GetProperty("fxGainLossFc").GetDecimal().ShouldBe(0m);
+        (await ItemsAsync(s)).Single(i => i.GetProperty("id").GetGuid() == receivable).GetProperty("remainingTc").GetDecimal().ShouldBe(400m);
+        (await owner.GetOkAsync($"/api/v1/payables/open-items/{payable}")).GetProperty("item").GetProperty("status").GetString().ShouldBe("settled");
+        (await RoleAsync(s, "AP")).ShouldBe(0m);
+        (await ControlAsync(s, "2026-09-20")).ShouldBe(400m);
+        (await owner.GetOkAsync($"/api/v1/receivables/settlements?companyId={s.CompanyId}&openItemId={receivable}")).EnumerateArray().Single().GetProperty("kind").GetString().ShouldBe("netting");
+        (await owner.GetOkAsync($"/api/v1/payables/settlements?companyId={s.CompanyId}&openItemId={payable}")).EnumerateArray().Single().GetProperty("kind").GetString().ShouldBe("netting");
+        (await owner.GetOkAsync($"/api/v1/receivables/nettings?companyId={s.CompanyId}")).GetArrayLength().ShouldBe(1);
+        await owner.AssertInvariantsAsync();
+
+        // Reversed: both invoices are open in full again.
+        var reversed = await owner.PostAsync($"/api/v1/receivables/nettings/{netting.GetProperty("id").GetGuid()}/reverse", new { reason = "The partner paid instead", reversalDate = "2026-09-21" }, HttpStatusCode.OK);
+        reversed.GetProperty("status").GetString().ShouldBe("reversed");
+        (await ItemsAsync(s)).Single(i => i.GetProperty("id").GetGuid() == receivable).GetProperty("remainingTc").GetDecimal().ShouldBe(1000m);
+        (await owner.GetOkAsync($"/api/v1/payables/open-items/{payable}")).GetProperty("item").GetProperty("remainingTc").GetDecimal().ShouldBe(600m);
+        (await RoleAsync(s, "AP")).ShouldBe(-600m);
+        (await ControlAsync(s, "2026-09-21")).ShouldBe(1000m);
+        await owner.AssertInvariantsAsync();
+    }
+
     private async Task<decimal> RoleAsync(Setup s, string role)
     {
         await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);

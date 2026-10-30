@@ -1,3 +1,4 @@
+using Quicker.Kernel.Text;
 using Quicker.Persistence.EntityFramework;
 
 namespace Quicker.Receivables.Domain;
@@ -72,6 +73,8 @@ public sealed class ArOpenItem : ITenantEntity
     public DateTimeOffset? PromisedAt { get; set; }
 
     public Guid? PromisedBy { get; set; }
+
+    public DateOnly? LastDunnedOn { get; set; }
 
     public Guid? BranchId { get; set; }
 
@@ -166,6 +169,156 @@ public sealed class ArWriteOff : ITenantEntity
     public decimal AmountFc { get; set; }
 
     public string Reason { get; set; } = string.Empty;
+
+    public string Status { get; set; } = "posted";
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalEntryId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>One rung of a company's reminder ladder: the days past due that reach it, its wording, the fee it charges and whether it puts the customer on credit hold.</summary>
+public sealed class ArDunningLevel : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public int Level { get; set; }
+
+    public int DaysOverdue { get; set; }
+
+    public LocalizedText Name { get; set; } = new();
+
+    public LocalizedText Text { get; set; } = new();
+
+    public decimal FeeAmount { get; set; }
+
+    public bool BlockCustomer { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>A dunning run: the letters issued on a date for the company's overdue customers (or one of them).</summary>
+public sealed class ArDunningRun : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public DateOnly RunDate { get; set; }
+
+    public Guid? PartnerId { get; set; }
+
+    public string Status { get; set; } = "issued";
+
+    public int Letters { get; set; }
+
+    public decimal FeesFc { get; set; }
+
+    public Guid? RunBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>One customer's letter in a run: the overdue items it names as they stood, the level reached, the fee charged.</summary>
+public sealed class ArDunningLetter : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid RunId { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public int Level { get; set; }
+
+    public Guid LevelId { get; set; }
+
+    public string Items { get; set; } = "[]";
+
+    public int ItemCount { get; set; }
+
+    public decimal OverdueFc { get; set; }
+
+    public decimal FeeAmount { get; set; }
+
+    public Guid? FeeItemId { get; set; }
+
+    public Guid? FeeJournalEntryId { get; set; }
+
+    public bool BlockedCustomer { get; set; }
+
+    public DateTimeOffset? SentAt { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A netting of a customer's receivable against the same partner's payable, in one currency: the journal, the counter items and the settlements it made.</summary>
+public sealed class ArNetting : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public Guid ReceivableItemId { get; set; }
+
+    public Guid PayableItemId { get; set; }
+
+    public Guid? ArCounterItemId { get; set; }
+
+    public Guid? ApCounterItemId { get; set; }
+
+    public Guid? ArSettlementId { get; set; }
+
+    public DateOnly NettingDate { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal AmountTc { get; set; }
+
+    public decimal AmountFcReceivable { get; set; }
+
+    public decimal AmountFcPayable { get; set; }
+
+    public decimal FxGainLossFc { get; set; }
+
+    public string? Reason { get; set; }
 
     public string Status { get; set; } = "posted";
 

@@ -34,6 +34,41 @@ public static class ReceivablesRowFactories
             await c.ExecuteAsync("INSERT INTO app.ar_write_offs (tenant_id, id, company_id, partner_id, number, open_item_id, write_off_date, kind, currency, amount_tc, amount_fc, reason) VALUES (@t, @id, @company, @partner, @number, @item, '2026-09-22', 'bad_debt', 'IQD', 10, 10, 'Probe')", new { t, id, company, partner, number = Suffix(id), item }, tx);
             return new RowRef("app.ar_write_offs", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.ar_dunning_levels", static async (c, tx, t) => new RowRef("app.ar_dunning_levels", $"id = '{(await LevelAsync(c, tx, t, await CompanyAsync(c, tx, t)))}'"));
+        IsolationRegistry.Register("app.ar_dunning_runs", static async (c, tx, t) => new RowRef("app.ar_dunning_runs", $"id = '{(await RunAsync(c, tx, t, await CompanyAsync(c, tx, t)))}'"));
+        IsolationRegistry.Register("app.ar_dunning_letters", static async (c, tx, t) =>
+        {
+            var company = await CompanyAsync(c, tx, t);
+            var partner = await PartnerAsync(c, tx, t);
+            var level = await LevelAsync(c, tx, t, company);
+            var run = await RunAsync(c, tx, t, company);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ar_dunning_letters (tenant_id, id, run_id, company_id, partner_id, number, level, level_id) VALUES (@t, @id, @run, @company, @partner, @number, 1, @level)", new { t, id, run, company, partner, number = Suffix(id), level }, tx);
+            return new RowRef("app.ar_dunning_letters", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.ar_nettings", static async (c, tx, t) =>
+        {
+            var (item, company, partner) = await OpenItemAsync(c, tx, t, "invoice", 10m);
+            var payable = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ap_open_items (tenant_id, id, company_id, partner_id, kind, document_type, document_id, document_number, posting_date, document_date, due_date, currency, original_tc, original_fc, remaining_tc, remaining_fc) VALUES (@t, @id, @company, @partner, 'invoice', 'purchase_invoice', @doc, @number, '2026-09-22', '2026-09-22', '2026-10-22', 'IQD', 10, 10, 10, 10)", new { t, id = payable, company, partner, doc = Guid.CreateVersion7(), number = Suffix(payable) }, tx);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ar_nettings (tenant_id, id, company_id, partner_id, number, receivable_item_id, payable_item_id, netting_date, currency, amount_tc, amount_fc_receivable, amount_fc_payable) VALUES (@t, @id, @company, @partner, @number, @item, @payable, '2026-09-22', 'IQD', 10, 10, 10)", new { t, id, company, partner, number = Suffix(id), item, payable }, tx);
+            return new RowRef("app.ar_nettings", $"id = '{id}'");
+        });
+    }
+
+    private static async Task<Guid> LevelAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t, Guid company)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.ar_dunning_levels (tenant_id, id, company_id, level, days_overdue, name_i18n) VALUES (@t, @id, @company, 1, 7, '{\"en\":\"Probe\"}')", new { t, id, company }, tx);
+        return id;
+    }
+
+    private static async Task<Guid> RunAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t, Guid company)
+    {
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.ar_dunning_runs (tenant_id, id, company_id, number, run_date) VALUES (@t, @id, @company, @number, '2026-09-22')", new { t, id, company, number = Suffix(id) }, tx);
+        return id;
     }
 
     private static string Suffix(Guid id) => "R" + id.ToString("N")[^8..].ToUpperInvariant();

@@ -30,6 +30,9 @@ public static class ReceivablesDocumentTypes
 {
     public const string Settlement = "ar_settlement";
     public const string WriteOff = "ar_write_off";
+    public const string DunningRun = "ar_dunning_run";
+    public const string DunningLetter = "ar_dunning_letter";
+    public const string Netting = "ar_netting";
 }
 
 /// <summary>A new open item: <paramref name="AmountTc"/> and <paramref name="AmountFc"/> are signed (positive owed by the customer, negative owed to them).</summary>

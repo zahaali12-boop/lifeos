@@ -10,6 +10,8 @@ public static class ReceivablesPermissions
     public const string SettlementPost = "receivables.settlement.post";
 
     public const string WriteOffPost = "receivables.writeoff.post";
+    public const string DunningRead = "receivables.dunning.read";
+    public const string DunningManage = "receivables.dunning.manage";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -17,5 +19,7 @@ public static class ReceivablesPermissions
         new(OpenItemManage, "receivables", "Hold and release receivable open items and record promises to pay"),
         new(SettlementPost, "receivables", "Apply credit notes, deposits and receipts on account to invoices and reverse such applications"),
         new(WriteOffPost, "receivables", "Write off customer balances and reverse write-offs"),
+        new(DunningRead, "receivables", "Read dunning levels, runs and letters"),
+        new(DunningManage, "receivables", "Set up dunning levels and issue dunning runs"),
     ];
 }

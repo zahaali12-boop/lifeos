@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Quicker.Kernel.Results;
+using Quicker.Kernel.Time;
 using Quicker.Partners.Contracts;
 using Quicker.Partners.Persistence;
 
 namespace Quicker.Partners.Application;
 
 /// <summary>What sales, receivables and commissions read from the customer master (roadmap 5.1).</summary>
-public sealed class CustomerDirectory(PartnersDbContext db, CustomerService customers, SalesSetupService salesSetup) : ICustomerDirectory
+public sealed class CustomerDirectory(PartnersDbContext db, CustomerService customers, SalesSetupService salesSetup, IClock clock) : ICustomerDirectory
 {
     public async Task<CustomerTermsInfo?> FindCustomerAsync(Guid companyId, Guid partnerId, CancellationToken cancellationToken = default)
     {
@@ -23,6 +24,28 @@ public sealed class CustomerDirectory(PartnersDbContext db, CustomerService cust
             effective.PaymentTermsId, effective.PaymentTermsCode, effective.DeliveryTermsId, effective.DeliveryTermsCode, effective.PostingGroupId, account.TaxGroupId,
             account.SalesRepId, account.DefaultWarehouseId, account.CreditLimit, account.CreditExposureBasis, account.OverdueBlockDays,
             account.CreditStatus, account.CreditStatusReason, account.StatementFrequency, account.DunningLevel, account.IsActive && partner.IsActive);
+    }
+
+    public async Task<Result> RecordDunningAsync(Guid companyId, Guid partnerId, int level, string? holdReason, CancellationToken cancellationToken = default)
+    {
+        var account = await db.CustomerAccounts.SingleOrDefaultAsync(a => a.PartnerId == partnerId && a.CompanyId == companyId, cancellationToken);
+        if (account is null)
+        {
+            return Error.NotFound("customer_account", partnerId);
+        }
+
+        account.DunningLevel = level;
+        if (holdReason is not null && account.CreditStatus == CreditStatuses.Ok)
+        {
+            account.CreditStatus = CreditStatuses.OnHold;
+            account.CreditStatusReason = holdReason;
+            account.CreditStatusAt = clock.UtcNow;
+            account.CreditStatusBy = null;
+        }
+
+        account.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return Result.Success();
     }
 
     public async Task<Result<CustomerTermsInfo>> EnsureCustomerAsync(Guid companyId, Guid partnerId, string purpose, CancellationToken cancellationToken = default)

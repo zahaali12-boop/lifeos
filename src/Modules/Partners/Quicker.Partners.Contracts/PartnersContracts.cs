@@ -258,6 +258,9 @@ public interface ICustomerDirectory
     /// </summary>
     Task<Result<CustomerTermsInfo>> EnsureCustomerAsync(Guid companyId, Guid partnerId, string purpose, CancellationToken cancellationToken = default);
 
+    /// <summary>A dunning run reached a level for the customer: the account records it and, when the level says so, goes on credit hold with the reason given (an account already held or blocked keeps its status).</summary>
+    Task<Result> RecordDunningAsync(Guid companyId, Guid partnerId, int level, string? holdReason, CancellationToken cancellationToken = default);
+
     Task<SalesRepInfo?> FindSalesRepAsync(Guid salesRepId, CancellationToken cancellationToken = default);
 
     Task<CommissionPlanInfo?> FindCommissionPlanAsync(Guid planId, CancellationToken cancellationToken = default);

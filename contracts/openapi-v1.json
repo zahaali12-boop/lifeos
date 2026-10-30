@@ -21141,6 +21141,477 @@
         }
       }
     },
+    "/api/v1/receivables/dunning/levels": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "The company's reminder ladder: each level's days past due, wording, fee and whether it holds the customer's credit.",
+        "operationId": "getReceivablesDunningLevels",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DunningLevelSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "postReceivablesDunningLevels",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDunningLevelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DunningLevelSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/dunning/levels/{levelId}": {
+      "put": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "putReceivablesDunningLevelsByLevelId",
+        "parameters": [
+          {
+            "name": "levelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDunningLevelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DunningLevelSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/dunning/preview": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "What a run on the date would issue: one letter per customer whose overdue items climb a level, nothing written.",
+        "operationId": "getReceivablesDunningPreview",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "runDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DunningPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/dunning/runs": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesDunningRuns",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DunningRunSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Issues the letters due on the date: items climb to their level, fees are charged to the customers, customers are held where the level says so.",
+        "operationId": "postReceivablesDunningRuns",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DunningRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DunningRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/dunning/runs/{runId}": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesDunningRunsByRunId",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DunningRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/dunning/letters": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesDunningLetters",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DunningLetterSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/dunning/letters/{letterId}/sent": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Records that the letter went out.",
+        "operationId": "postReceivablesDunningLettersByLetterIdSent",
+        "parameters": [
+          {
+            "name": "letterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DunningLetterSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/nettings": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesNettings",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NettingSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Sets a customer's open invoice against the same partner's open supplier invoice in their currency: Dr payables / Cr receivables at booked values, the difference realised FX.",
+        "operationId": "postReceivablesNettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NettingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NettingSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/nettings/{nettingId}": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesNettingsByNettingId",
+        "parameters": [
+          {
+            "name": "nettingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NettingSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/nettings/{nettingId}/reverse": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Reverses a netting: both items reopen at their booked values.",
+        "operationId": "postReceivablesNettingsByNettingIdReverse",
+        "parameters": [
+          {
+            "name": "nettingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseNettingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NettingSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/banking/bank-accounts": {
       "get": {
         "tags": [
@@ -34893,6 +35364,439 @@
         },
         "description": "The identifier a draft shows until numbering issues its number."
       },
+      "DunningLetterItem": {
+        "required": [
+          "itemId",
+          "documentType",
+          "documentId",
+          "documentNumber",
+          "instalment",
+          "dueDate",
+          "daysOverdue",
+          "currency",
+          "remainingTc",
+          "remainingFc",
+          "previousLevel",
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "instalment": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysOverdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "remainingTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "remainingFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "previousLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "One overdue item as a letter names it: what was open on the date, how late, and the level it reached."
+      },
+      "DunningLetterSummary": {
+        "required": [
+          "id",
+          "runId",
+          "runNumber",
+          "runDate",
+          "companyId",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "number",
+          "level",
+          "levelName",
+          "text",
+          "items",
+          "itemCount",
+          "overdueFc",
+          "functionalCurrency",
+          "feeAmount",
+          "feeItemId",
+          "blockedCustomer",
+          "sentAt",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runNumber": {
+            "type": "string"
+          },
+          "runDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "number": {
+            "type": "string"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "levelName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "text": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DunningLetterItem"
+            }
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "overdueFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "feeAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "feeItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "blockedCustomer": {
+            "type": "boolean"
+          },
+          "sentAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DunningLevelSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "level",
+          "daysOverdue",
+          "name",
+          "text",
+          "feeAmount",
+          "feeCurrency",
+          "blockCustomer",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "daysOverdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "text": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "feeAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "feeCurrency": {
+            "type": "string"
+          },
+          "blockCustomer": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DunningPreview": {
+        "required": [
+          "companyId",
+          "runDate",
+          "functionalCurrency",
+          "letters"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "letters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DunningLetterSummary"
+            }
+          }
+        },
+        "description": "What a run on the date would issue, before anything is written."
+      },
+      "DunningRunRequest": {
+        "required": [
+          "companyId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "chargeFees": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "description": "Issues the letters due on a date for the company's overdue customers, or one customer; fees are charged unless told otherwise."
+      },
+      "DunningRunSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "runDate",
+          "partnerId",
+          "status",
+          "letters",
+          "feesFc",
+          "functionalCurrency",
+          "createdAt",
+          "letterList"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "runDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "letters": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "feesFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "letterList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DunningLetterSummary"
+            }
+          }
+        }
+      },
       "EditCommentRequest": {
         "required": [
           "body"
@@ -39912,6 +40816,189 @@
           }
         },
         "description": "Moves the opportunity to a stage; a lost stage needs the reason; the probability defaults to the stage's."
+      },
+      "NettingRequest": {
+        "required": [
+          "receivableItemId",
+          "payableItemId"
+        ],
+        "type": "object",
+        "properties": {
+          "receivableItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payableItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "nettingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Sets a customer's open receivable item against the same partner's open payable item, in their common currency; the amount defaults to the smaller remainder."
+      },
+      "NettingSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "status",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "receivableItemId",
+          "receivableNumber",
+          "payableItemId",
+          "payableNumber",
+          "nettingDate",
+          "currency",
+          "amountTc",
+          "amountFcReceivable",
+          "amountFcPayable",
+          "fxGainLossFc",
+          "functionalCurrency",
+          "reason",
+          "journalEntryId",
+          "reversalEntryId",
+          "reversalReason",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "receivableItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receivableNumber": {
+            "type": "string"
+          },
+          "payableItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payableNumber": {
+            "type": "string"
+          },
+          "nettingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFcReceivable": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFcPayable": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "fxGainLossFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "NotificationOutcome": {
         "required": [
@@ -50746,6 +51833,24 @@
           }
         }
       },
+      "ReverseNettingRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "ReversePaymentRequest": {
         "required": [
           "reason"
@@ -54516,6 +55621,69 @@
               "string"
             ],
             "format": "date"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveDunningLevelRequest": {
+        "required": [
+          "companyId",
+          "level",
+          "daysOverdue",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "daysOverdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "text": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "feeAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "blockCustomer": {
+            "type": "boolean",
+            "default": false
           },
           "isActive": {
             "type": "boolean",

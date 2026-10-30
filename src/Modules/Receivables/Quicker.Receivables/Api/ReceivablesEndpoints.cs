@@ -59,6 +59,42 @@ public static class ReceivablesEndpoints
             .RequirePermission(ReceivablesPermissions.SettlementPost)
             .WithSummary("Reverses an application: both items reopen at their booked values, the FX journal is mirrored.");
 
+        var dunning = receivables.MapGroup("/dunning");
+        dunning.MapGet("/levels", async (Guid companyId, DunningService service, CancellationToken ct) => TypedResults.Ok(await service.ListLevelsAsync(companyId, ct)))
+            .RequirePermission(ReceivablesPermissions.DunningRead)
+            .WithSummary("The company's reminder ladder: each level's days past due, wording, fee and whether it holds the customer's credit.");
+        dunning.MapPost("/levels", async (SaveDunningLevelRequest request, DunningService service, CancellationToken ct) => ApiProblems.Created(await service.SaveLevelAsync(null, request, ct), static l => $"/api/v1/receivables/dunning/levels/{l.Id}"))
+            .RequirePermission(ReceivablesPermissions.DunningManage);
+        dunning.MapPut("/levels/{levelId:guid}", async (Guid levelId, SaveDunningLevelRequest request, DunningService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveLevelAsync(levelId, request, ct)))
+            .RequirePermission(ReceivablesPermissions.DunningManage);
+        dunning.MapGet("/preview", async (Guid companyId, DateOnly? runDate, Guid? partnerId, DunningService service, CancellationToken ct) => ApiProblems.Ok(await service.PreviewAsync(companyId, runDate, partnerId, ct)))
+            .RequirePermission(ReceivablesPermissions.DunningRead)
+            .WithSummary("What a run on the date would issue: one letter per customer whose overdue items climb a level, nothing written.");
+        dunning.MapGet("/runs", async (Guid companyId, DunningService service, CancellationToken ct) => TypedResults.Ok(await service.ListRunsAsync(companyId, ct)))
+            .RequirePermission(ReceivablesPermissions.DunningRead);
+        dunning.MapPost("/runs", async (DunningRunRequest request, DunningService service, CancellationToken ct) => ApiProblems.Created(await service.RunAsync(request, ct), static r => $"/api/v1/receivables/dunning/runs/{r.Id}"))
+            .RequirePermission(ReceivablesPermissions.DunningManage)
+            .WithSummary("Issues the letters due on the date: items climb to their level, fees are charged to the customers, customers are held where the level says so.");
+        dunning.MapGet("/runs/{runId:guid}", async (Guid runId, DunningService service, CancellationToken ct) => ApiProblems.Ok(await service.GetRunAsync(runId, ct)))
+            .RequirePermission(ReceivablesPermissions.DunningRead);
+        dunning.MapGet("/letters", async (Guid companyId, Guid? partnerId, DunningService service, CancellationToken ct) => TypedResults.Ok(await service.LettersAsync(companyId, partnerId, ct)))
+            .RequirePermission(ReceivablesPermissions.DunningRead);
+        dunning.MapPost("/letters/{letterId:guid}/sent", async (Guid letterId, DunningService service, CancellationToken ct) => ApiProblems.Ok(await service.MarkSentAsync(letterId, ct)))
+            .RequirePermission(ReceivablesPermissions.DunningManage)
+            .WithSummary("Records that the letter went out.");
+
+        var nettings = receivables.MapGroup("/nettings");
+        nettings.MapGet("/", async (Guid companyId, Guid? partnerId, string? status, NettingService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, partnerId, status, ct)))
+            .RequirePermission(ReceivablesPermissions.OpenItemRead);
+        nettings.MapPost("/", async (NettingRequest request, NettingService service, CancellationToken ct) => ApiProblems.Created(await service.NetAsync(request, ct), static n => $"/api/v1/receivables/nettings/{n.Id}"))
+            .RequirePermission(ReceivablesPermissions.SettlementPost)
+            .WithSummary("Sets a customer's open invoice against the same partner's open supplier invoice in their currency: Dr payables / Cr receivables at booked values, the difference realised FX.");
+        nettings.MapGet("/{nettingId:guid}", async (Guid nettingId, NettingService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(nettingId, ct)))
+            .RequirePermission(ReceivablesPermissions.OpenItemRead);
+        nettings.MapPost("/{nettingId:guid}/reverse", async (Guid nettingId, ReverseNettingRequest request, NettingService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(nettingId, request, ct)))
+            .RequirePermission(ReceivablesPermissions.SettlementPost)
+            .WithSummary("Reverses a netting: both items reopen at their booked values.");
+
         return api;
     }
 }
