@@ -125,6 +125,7 @@ internal static class DemoStock
     [
         ("DAMAGE", new("Damaged in storage", "تلف في التخزين"), "adjustment", true), ("SAMPLE", new("Samples issued", "عينات مصروفة"), "adjustment", false), ("EXPIRED", new("Expired stock", "بضاعة منتهية الصلاحية"), "write_off", false),
         ("QC-FAIL", new("Failed quality check", "فشل فحص الجودة"), "scrap", true), ("MISCOUNT", new("Counting difference", "فرق عدّ"), "count", false), ("TRANSIT-LOSS", new("Lost in transit", "فقدان في الطريق"), "shortage", true), ("DEFECT", new("Customer return: defective", "مرتجع زبون: معيب"), "return", true),
+        ("NEAR-DATE", new("Customer return: near expiry", "مرتجع زبون: قرب انتهاء الصلاحية"), "return", false), ("CRUSHED", new("Customer return: crushed in transit", "مرتجع زبون: تهشّم أثناء النقل"), "return", true), ("CHANGED-MIND", new("Customer return: changed their mind", "مرتجع زبون: عدل عن رأيه"), "return", false),
     ];
 
     private static readonly string[] Zones = ["A", "B", "C", "D"];

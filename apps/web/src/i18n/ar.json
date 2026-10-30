@@ -112,7 +112,8 @@
     "salesInvoices": "فواتير المبيعات",
     "recurringInvoices": "الفواتير الدورية",
     "receivables": "الذمم المدينة",
-    "customerReceipts": "مقبوضات العملاء"
+    "customerReceipts": "مقبوضات العملاء",
+    "salesReturns": "مرتجعات المبيعات"
   },
   "shell": {
     "filterMenu": "تصفية القائمة",
@@ -3311,7 +3312,8 @@
       "bank_receipt": "قبض من عميل",
       "ar_write_off": "شطب",
       "ar_netting": "مقاصة",
-      "ar_dunning_letter": "رسم تذكير"
+      "ar_dunning_letter": "رسم تذكير",
+      "sales_return": "مرتجع مبيعات"
     },
     "date": "التاريخ",
     "amount": "المبلغ",
@@ -3538,7 +3540,13 @@
       "picking": "قيد الانتقاء",
       "accrued": "مستحقة",
       "partially_settled": "مسوّاة جزئيًا",
-      "settled": "مسوّاة"
+      "settled": "مسوّاة",
+      "requested": "مطلوب",
+      "authorised": "مُصرَّح",
+      "received": "مُستلَم",
+      "inspected": "مُفحوص",
+      "credited": "مُعتمَد دائنًا",
+      "closed": "مُغلَق"
     },
     "createInvoice": "إنشاء فاتورة",
     "invoicing": {
@@ -3622,6 +3630,55 @@
       "issued": "الفواتير الصادرة",
       "nothingIssued": "لم تصدر أي فاتورة من هذا الجدول بعد.",
       "issueNow": "إصدار الآن"
+    },
+    "returns": {
+      "description": "بضاعة يعيدها العميل: تُطلب على بنود شحنات مرحّلة، وتُصرَّح، وتُستلم إلى المخزون بالتكلفة التي خرجت بها، وتُفحص ويُقرَّر مصيرها، وتُعتمد دائنًا على الفواتير التي فوترتها.",
+      "new": "مرتجع جديد",
+      "edit": "تعديل المرتجع",
+      "empty": "لا توجد مرتجعات بعد",
+      "emptyDescription": "اطلب مرتجعًا لبنود شحنات العميل المرحّلة، أو استخدم «إرجاع البضاعة» على شحنة مرحّلة.",
+      "requestDate": "تاريخ الطلب",
+      "receivedOn": "تاريخ الاستلام",
+      "costPolicy": "سياسة التكلفة",
+      "costPolicies": {
+        "original": "الأصلية (تكلفة الشحنة)",
+        "current": "التكلفة الحالية",
+        "specified": "محدَّدة لكل بند"
+      },
+      "reason": "السبب",
+      "customerReference": "مرجع العميل",
+      "costValue": "قيمة التكلفة",
+      "credited": "المعتمَد دائنًا",
+      "creditNotes": "الإشعارات الدائنة",
+      "rejectionReason": "سبب الرفض",
+      "shipped": "المشحون",
+      "returnNow": "المراد إرجاعه",
+      "returnedSoFar": "أُرجع {quantity} حتى الآن",
+      "reasonCode": "رمز السبب",
+      "disposition": "المصير",
+      "dispositionNote": "ملاحظة",
+      "dispositions": {
+        "restock": "إعادة للمخزون",
+        "quarantine": "حجر",
+        "scrap": "إتلاف",
+        "repair": "إصلاح"
+      },
+      "unitCost": "تكلفة الوحدة",
+      "tracking": "الدفعة / الأرقام التسلسلية",
+      "nothingReturnable": "لا يتبقى شيء من شحنات هذا العميل المرحّلة لإرجاعه.",
+      "chooseCustomer": "اختر العميل لعرض ما يمكن إرجاعه.",
+      "returnGoods": "إرجاع البضاعة",
+      "authorise": "تصريح",
+      "reject": "رفض",
+      "confirmReject": "تأكيد الرفض",
+      "receive": "استلام البضاعة",
+      "confirmReceive": "تأكيد الاستلام",
+      "inspect": "فحص",
+      "confirmInspect": "تأكيد المصير",
+      "credit": "إصدار إشعار دائن",
+      "close": "إغلاق",
+      "scrapped": "أُتلف {amount}",
+      "serialHistoryOf": "سجل الرقم التسلسلي {serial}"
     }
   },
   "pricing": {

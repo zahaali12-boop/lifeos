@@ -132,6 +132,7 @@ const docTones: Record<string, "neutral" | "info" | "success" | "warning" | "dan
   open: "info", backordered: "warning",
   partially_shipped: "warning", shipped: "success", fulfilled: "success",
   posted: "success", reversed: "neutral", picking: "info",
+  requested: "info", authorised: "success", received: "info", inspected: "info", credited: "success", closed: "neutral",
 };
 
 export function SalesStatus({ status }: { status: string }) {

@@ -2,7 +2,7 @@ import { Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { PackageOpen, Plus, ReceiptText, ScanLine, Truck } from "lucide-react";
+import { PackageOpen, Plus, ReceiptText, ScanLine, Truck, Undo2 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
@@ -359,6 +359,12 @@ export function ShipmentsPage() {
                   <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/invoices", search: followOn("sales_shipment", s.id) }); }} data-testid="create-invoice">
                     <ReceiptText aria-hidden="true" />
                     {t("sales.createInvoice")}
+                  </Button>
+                ) : null}
+                {s.status === "posted" && can("sales.return.manage") && s.lines.some((l) => Number(l.qtyReturned) < Number(l.quantity)) ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/returns", search: followOn("sales_shipment", s.id) }); }} data-testid="create-return">
+                    <Undo2 aria-hidden="true" />
+                    {t("sales.returns.returnGoods")}
                   </Button>
                 ) : null}
                 {s.status === "posted" && canPost && !reversing ? <Button variant="secondary" onClick={() => { setReversing(true); setReversalReason(""); }} data-testid="start-reverse-shipment">{t("sales.reverse")}</Button> : null}

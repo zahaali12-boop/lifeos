@@ -117,7 +117,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_ledger_entries WHERE tenant_id = @t AND entry_type = 'opening'", new { t = DemoData.TenantId })).ShouldBe(first.StockLines);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_value_entries WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(first.StockLines, "every opening unit is valued");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_journal_lines WHERE tenant_id = @t AND subledger_type = 'INV'", new { t = DemoData.TenantId })).ShouldBeGreaterThan(0, "the opening stock is booked");
-        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_reason_codes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(7);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_reason_codes WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.itm_item_warehouse_settings WHERE tenant_id = @t AND reorder_point IS NOT NULL", new { t = DemoData.TenantId })).ShouldBeGreaterThan(500, "a quarter of the stocked items carry planning parameters");
 
         // A year of buying (roadmap 4.9): eleven months of closed orders carry the price history; the live month runs procure-to-pay through the posting engine.
@@ -182,7 +182,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         // Invoicing (roadmap 5.6): the posted shipment billed and posted, two units credited and the credit note applied, a
         // deferred service invoice, a draft delivery charge, and a recurring retainer whose first run is a draft to review.
         (first.SalesInvoices, first.CreditNotes, first.RecurringInvoices).ShouldBe((4, 1, 1));
-        (await db.QueryAsync<string>("SELECT kind || ':' || status FROM app.sls_invoices WHERE tenant_id = @t ORDER BY 1", new { t = DemoData.TenantId })).ShouldBe(["credit_note:posted", "invoice:draft", "invoice:draft", "invoice:posted", "invoice:posted"]);
+        (await db.QueryAsync<string>("SELECT kind || ':' || status FROM app.sls_invoices WHERE tenant_id = @t ORDER BY 1", new { t = DemoData.TenantId })).ShouldBe(["credit_note:posted", "credit_note:posted", "credit_note:posted", "invoice:draft", "invoice:draft", "invoice:posted", "invoice:posted"]);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_invoices WHERE tenant_id = @t AND recurring_invoice_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_invoice_lines WHERE tenant_id = @t AND deferral_schedule_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_settlements WHERE tenant_id = @t AND kind = 'credit_application' AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(1, "the credit note settled its invoice as it posted");
@@ -198,6 +198,15 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_dunning_levels WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_dunning_letters WHERE tenant_id = @t AND level = 3 AND fee_item_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(1, "the year-old sale reached the final notice and its fee");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.ar_open_items WHERE tenant_id = @t AND kind = 'deposit' AND status = 'open'", new { t = DemoData.TenantId })).ShouldBe(1);
+
+        // Returns (roadmap 5.8): Baghdad Mall's groceries back near their date and quarantined, three crushed cartons scrapped at the
+        // return's cost, both credited on the invoice that billed them (the invoice being collected already, the credit stays on account),
+        // and one request waiting to be authorised.
+        (first.SalesReturns, first.ReturnCreditNotes).ShouldBe((3, 2));
+        (await db.QueryAsync<string>("SELECT status FROM app.sls_returns WHERE tenant_id = @t ORDER BY status", new { t = DemoData.TenantId })).ShouldBe(["credited", "credited", "requested"]);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_return_lines WHERE tenant_id = @t AND disposition = 'scrap' AND scrap_sle_id IS NOT NULL", new { t = DemoData.TenantId })).ShouldBe(1);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.sls_invoices WHERE tenant_id = @t AND return_id IS NOT NULL AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(2);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.inv_stock_ledger_entries WHERE tenant_id = @t AND source_document_type = 'sales_return' AND entry_type = 'sale_return'", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(2);
         var verified = await DemoSeeder.VerifyAsync(fixture.Db.OwnerConnectionString, fixture.Db.AppConnectionString, cancellationToken: TestContext.Current.CancellationToken);
         verified.Passed.ShouldBeTrue(string.Join(" | ", verified.Checks.Where(static c => !c.Passed).Select(static c => c.Code + ": " + string.Join("; ", c.Problems))));
         verified.Checks.Select(static c => c.Code).ShouldBe(InvariantCodes.All, ignoreOrder: true);
@@ -228,6 +237,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         (third.Shipments, third.PickLists).ShouldBe((first.Shipments, first.PickLists), "the shipments are deterministic");
         (third.SalesInvoices, third.CreditNotes, third.RecurringInvoices).ShouldBe((first.SalesInvoices, first.CreditNotes, first.RecurringInvoices), "the invoices are deterministic");
         (third.CustomerReceipts, third.WriteOffs, third.DunningLetters).ShouldBe((first.CustomerReceipts, first.WriteOffs, first.DunningLetters), "the collecting is deterministic");
+        (third.SalesReturns, third.ReturnCreditNotes).ShouldBe((first.SalesReturns, first.ReturnCreditNotes), "the returns are deterministic");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.tenants WHERE slug = @slug", new { slug = DemoData.Slug })).ShouldBe(1);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM control.users WHERE email LIKE @p", new { p = "%@" + DemoData.EmailDomain })).ShouldBe(10);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM ops.jobs WHERE tenant_id = @t AND type = 'demo.probe'", new { t = DemoData.TenantId })).ShouldBe(0);

@@ -112,7 +112,8 @@
     "salesInvoices": "Sales invoices",
     "recurringInvoices": "Recurring invoices",
     "receivables": "Receivables",
-    "customerReceipts": "Customer receipts"
+    "customerReceipts": "Customer receipts",
+    "salesReturns": "Sales returns"
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -3311,7 +3312,8 @@
       "bank_receipt": "Customer receipt",
       "ar_write_off": "Write-off",
       "ar_netting": "Netting",
-      "ar_dunning_letter": "Dunning fee"
+      "ar_dunning_letter": "Dunning fee",
+      "sales_return": "Sales return"
     },
     "date": "Date",
     "amount": "Amount",
@@ -3538,7 +3540,13 @@
       "picking": "Picking",
       "accrued": "Accrued",
       "partially_settled": "Partly settled",
-      "settled": "Settled"
+      "settled": "Settled",
+      "requested": "Requested",
+      "authorised": "Authorised",
+      "received": "Received",
+      "inspected": "Inspected",
+      "credited": "Credited",
+      "closed": "Closed"
     },
     "createInvoice": "Create invoice",
     "invoicing": {
@@ -3622,6 +3630,55 @@
       "issued": "Invoices issued",
       "nothingIssued": "No invoice has been issued from this schedule yet.",
       "issueNow": "Issue now"
+    },
+    "returns": {
+      "description": "Goods a customer sends back: requested against posted shipment lines, authorised, received into stock at the cost they left with, inspected and dispositioned, credited against the invoices that billed them.",
+      "new": "New return",
+      "edit": "Edit return",
+      "empty": "No returns yet",
+      "emptyDescription": "Request a return of a customer's posted shipment lines, or use \"Return goods\" on a posted shipment.",
+      "requestDate": "Requested on",
+      "receivedOn": "Received on",
+      "costPolicy": "Cost policy",
+      "costPolicies": {
+        "original": "Original (the shipment's cost)",
+        "current": "Current cost",
+        "specified": "Specified per line"
+      },
+      "reason": "Reason",
+      "customerReference": "Customer reference",
+      "costValue": "Cost value",
+      "credited": "Credited",
+      "creditNotes": "Credit notes",
+      "rejectionReason": "Rejection reason",
+      "shipped": "Shipped",
+      "returnNow": "Return now",
+      "returnedSoFar": "{quantity} returned so far",
+      "reasonCode": "Reason code",
+      "disposition": "Disposition",
+      "dispositionNote": "Note",
+      "dispositions": {
+        "restock": "Restock",
+        "quarantine": "Quarantine",
+        "scrap": "Scrap",
+        "repair": "Repair"
+      },
+      "unitCost": "Unit cost",
+      "tracking": "Lot / serials",
+      "nothingReturnable": "Nothing of this customer's posted shipments is left to return.",
+      "chooseCustomer": "Choose the customer to see what can come back.",
+      "returnGoods": "Return goods",
+      "authorise": "Authorise",
+      "reject": "Reject",
+      "confirmReject": "Confirm rejection",
+      "receive": "Receive goods",
+      "confirmReceive": "Confirm receipt",
+      "inspect": "Inspect",
+      "confirmInspect": "Confirm dispositions",
+      "credit": "Issue credit note",
+      "close": "Close",
+      "scrapped": "Scrapped {amount}",
+      "serialHistoryOf": "History of serial {serial}"
     }
   },
   "pricing": {
