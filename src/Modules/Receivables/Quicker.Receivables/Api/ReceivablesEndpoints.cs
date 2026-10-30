@@ -32,6 +32,21 @@ public static class ReceivablesEndpoints
             .WithSummary("Holds an item: nothing is applied to it until released.");
         items.MapPost("/{itemId:guid}/release", async (Guid itemId, ReceivablesService service, CancellationToken ct) => ApiProblems.Ok(await service.ReleaseAsync(itemId, ct)))
             .RequirePermission(ReceivablesPermissions.OpenItemManage);
+        items.MapPost("/{itemId:guid}/promise", async (Guid itemId, PromiseToPayRequest request, ReceivablesService service, CancellationToken ct) => ApiProblems.Ok(await service.PromiseAsync(itemId, request, ct)))
+            .RequirePermission(ReceivablesPermissions.OpenItemManage)
+            .WithSummary("Records the customer's promise to pay an item by a date (a null date clears it); dunning leaves the item alone until then.");
+        items.MapPost("/{itemId:guid}/write-off", async (Guid itemId, WriteOffRequest request, WriteOffService service, CancellationToken ct) => ApiProblems.Created(await service.WriteOffAsync(itemId, request, ct), static w => $"/api/v1/receivables/write-offs/{w.Id}"))
+            .RequirePermission(ReceivablesPermissions.WriteOffPost)
+            .WithSummary("Writes off what is open on the item, or part of it: Dr bad debt (or the small-balance account) / Cr receivables, the item settled by the write-off.");
+
+        var writeOffs = receivables.MapGroup("/write-offs");
+        writeOffs.MapGet("/", async (Guid companyId, Guid? partnerId, string? status, WriteOffService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, partnerId, status, ct)))
+            .RequirePermission(ReceivablesPermissions.OpenItemRead);
+        writeOffs.MapGet("/{writeOffId:guid}", async (Guid writeOffId, WriteOffService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(writeOffId, ct)))
+            .RequirePermission(ReceivablesPermissions.OpenItemRead);
+        writeOffs.MapPost("/{writeOffId:guid}/reverse", async (Guid writeOffId, ReverseWriteOffRequest request, WriteOffService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(writeOffId, request, ct)))
+            .RequirePermission(ReceivablesPermissions.WriteOffPost)
+            .WithSummary("Reverses a write-off: the journal is mirrored and the item reopens for the amount written off.");
 
         var settlements = receivables.MapGroup("/settlements");
         settlements.MapGet("/", async (Guid companyId, Guid? openItemId, Guid? partnerId, SettlementService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, openItemId, partnerId, ct)))

@@ -7199,6 +7199,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/receivables/open-items/{itemId}/promise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Records the customer's promise to pay an item by a date (a null date clears it); dunning leaves the item alone until then. */
+        post: operations["postReceivablesOpenItemsByItemIdPromise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/open-items/{itemId}/write-off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Writes off what is open on the item, or part of it: Dr bad debt (or the small-balance account) / Cr receivables, the item settled by the write-off. */
+        post: operations["postReceivablesOpenItemsByItemIdWriteOff"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/receivables/statement": {
         parameters: {
             query?: never;
@@ -7210,6 +7244,55 @@ export interface paths {
         get: operations["getReceivablesStatement"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/write-offs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesWriteOffs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/write-offs/{writeOffId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReceivablesWriteOffsByWriteOffId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/receivables/write-offs/{writeOffId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a write-off: the journal is mirrored and the item reopens for the amount written off. */
+        post: operations["postReceivablesWriteOffsByWriteOffIdReverse"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7396,6 +7479,73 @@ export interface paths {
         put?: never;
         /** Reverses a posted payment whose remainder was not applied further: items reopen at their booked values. */
         post: operations["postBankingPaymentsByPaymentIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBankingReceipts"];
+        put?: never;
+        /** Drafts a customer receipt (lines against open invoice items, discount given, tax withheld by the customer, bank charges, on account) or a deposit. */
+        post: operations["postBankingReceipts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/receipts/{receiptId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBankingReceiptsByReceiptId"];
+        put: operations["putBankingReceiptsByReceiptId"];
+        post?: never;
+        delete: operations["deleteBankingReceiptsByReceiptId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/receipts/{receiptId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts the receipt: receivables relieved at booked value, discount given, withholding, charges, the bank movement and the realised exchange difference. */
+        post: operations["postBankingReceiptsByReceiptIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/receipts/{receiptId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted receipt whose remainder was not applied further: items reopen at their booked values. */
+        post: operations["postBankingReceiptsByReceiptIdReverse"];
         delete?: never;
         options?: never;
         head?: never;
@@ -13938,6 +14088,12 @@ export interface components {
             hasFloorBlocks: boolean;
             hasFloorWarnings: boolean;
         };
+        /** @description A promise to pay on an item: the date the customer promised, and what they said; a null date clears the promise. */
+        PromiseToPayRequest: {
+            /** Format: date */
+            promisedOn: null | string;
+            note?: null | string;
+        };
         PromotionComponentDto: {
             /** Format: uuid */
             itemId: string;
@@ -15347,6 +15503,11 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        ReverseWriteOffRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         RevokeSodExceptionRequest: {
             reason: string;
         };
@@ -16186,6 +16347,47 @@ export interface components {
             deliveryTermsId?: null | string;
             /** @default true */
             isActive: boolean;
+        };
+        /**
+         * @description A customer receipt: lines settle invoice open items (amount, early-payment discount given, tax the customer withheld),
+         *     the remainder goes on account; a deposit (kind `customer_deposit`) has no lines. Charges are what the bank kept,
+         *     in the bank account's currency; the bank amount is what it credited and is required when that currency differs
+         *     from the receipt's.
+         */
+        SaveCustomerReceiptRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            /** @default customer_receipt */
+            kind: string;
+            /** Format: date */
+            receiptDate?: null | string;
+            /** @default transfer */
+            method: string;
+            reference?: null | string;
+            currency?: null | string;
+            /** Format: double */
+            exchangeRate?: null | number | string;
+            lines?: null | components["schemas"]["SavePaymentLineRequest"][];
+            /**
+             * Format: double
+             * @default 0
+             */
+            onAccount: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            charges: number | string;
+            /** Format: double */
+            bankAmount?: null | number | string;
+            /** Format: uuid */
+            whtCodeId?: null | string;
+            notes?: null | string;
+            customFields?: unknown;
         };
         SaveCustomFieldRequest: {
             entityType: string;
@@ -19785,6 +19987,54 @@ export interface components {
             mode: string;
             /** Format: date */
             result: string;
+        };
+        /** @description Writes off what is still open on an item, or part of it: as bad debt, or as a small balance not worth chasing. */
+        WriteOffRequest: {
+            reason: string;
+            /** Format: double */
+            amount?: null | number | string;
+            /** @default bad_debt */
+            kind: string;
+            /** Format: date */
+            writeOffDate?: null | string;
+        };
+        WriteOffSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            openItemId: string;
+            documentNumber: string;
+            /** Format: uuid */
+            adjustmentItemId: null | string;
+            /** Format: uuid */
+            settlementId: null | string;
+            /** Format: date */
+            writeOffDate: string;
+            kind: string;
+            currency: string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            amountFc: number | string;
+            functionalCurrency: string;
+            reason: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            reversalReason: null | string;
+            /** Format: date-time */
+            createdAt: string;
         };
     };
     responses: never;
@@ -33182,6 +33432,58 @@ export interface operations {
             };
         };
     };
+    postReceivablesOpenItemsByItemIdPromise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromiseToPayRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivableSummary"];
+                };
+            };
+        };
+    };
+    postReceivablesOpenItemsByItemIdWriteOff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WriteOffRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteOffSummary"];
+                };
+            };
+        };
+    };
     getReceivablesStatement: {
         parameters: {
             query: {
@@ -33203,6 +33505,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CustomerStatement"];
+                };
+            };
+        };
+    };
+    getReceivablesWriteOffs: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteOffSummary"][];
+                };
+            };
+        };
+    };
+    getReceivablesWriteOffsByWriteOffId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                writeOffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteOffSummary"];
+                };
+            };
+        };
+    };
+    postReceivablesWriteOffsByWriteOffIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                writeOffId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseWriteOffRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteOffSummary"];
                 };
             };
         };
@@ -33568,6 +33942,170 @@ export interface operations {
             header?: never;
             path: {
                 paymentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReversePaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    getBankingReceipts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"][];
+                };
+            };
+        };
+    };
+    postBankingReceipts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCustomerReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    getBankingReceiptsByReceiptId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    putBankingReceiptsByReceiptId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCustomerReceiptRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    deleteBankingReceiptsByReceiptId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postBankingReceiptsByReceiptIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    postBankingReceiptsByReceiptIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receiptId: string;
             };
             cookie?: never;
         };

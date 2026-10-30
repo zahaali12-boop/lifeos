@@ -22,6 +22,14 @@ public sealed record PaymentLineSummary(Guid Id, int LineNo, Guid OpenItemId, st
 public sealed record PaymentSummary(Guid Id, Guid CompanyId, string Number, string Kind, string Status, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, Guid BankAccountId, string BankAccountCode, DateOnly PaymentDate, string Method, string? Reference, string Currency, decimal ExchangeRate, string FunctionalCurrency,
     decimal AmountTc, decimal OnAccountTc, decimal DiscountTc, decimal WhtTc, decimal ChargesBank, decimal BankAmount, string BankCurrency, bool ApplyWht, Guid? WhtCodeId, string? WhtCode, Guid? OpenItemId, Guid? JournalEntryId, Guid? BankTransactionId, Guid? ReversalEntryId, string? ReversalReason, Guid? ProposalId, string? Notes, JsonElement CustomFields, IReadOnlyList<PaymentLineSummary> Lines, DateTimeOffset? PostedAt, DateTimeOffset UpdatedAt);
 
+/// <summary>
+/// A customer receipt: lines settle invoice open items (amount, early-payment discount given, tax the customer withheld),
+/// the remainder goes on account; a deposit (kind <c>customer_deposit</c>) has no lines. Charges are what the bank kept,
+/// in the bank account's currency; the bank amount is what it credited and is required when that currency differs
+/// from the receipt's.
+/// </summary>
+public sealed record SaveCustomerReceiptRequest(Guid CompanyId, Guid PartnerId, Guid BankAccountId, string Kind = "customer_receipt", DateOnly? ReceiptDate = null, string Method = "transfer", string? Reference = null, string? Currency = null, decimal? ExchangeRate = null, IReadOnlyList<SavePaymentLineRequest>? Lines = null, decimal OnAccount = 0m, decimal Charges = 0m, decimal? BankAmount = null, Guid? WhtCodeId = null, string? Notes = null, JsonElement? CustomFields = null);
+
 public sealed record ReversePaymentRequest(string Reason, DateOnly? ReversalDate = null);
 
 public sealed record PayProposalRequest(Guid ProposalId, Guid BankAccountId, DateOnly? PaymentDate = null, string Method = "transfer");

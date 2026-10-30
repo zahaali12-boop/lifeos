@@ -20754,6 +20754,90 @@
         }
       }
     },
+    "/api/v1/receivables/open-items/{itemId}/promise": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Records the customer's promise to pay an item by a date (a null date clears it); dunning leaves the item alone until then.",
+        "operationId": "postReceivablesOpenItemsByItemIdPromise",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromiseToPayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivableSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/open-items/{itemId}/write-off": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Writes off what is open on the item, or part of it: Dr bad debt (or the small-balance account) / Cr receivables, the item settled by the write-off.",
+        "operationId": "postReceivablesOpenItemsByItemIdWriteOff",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteOffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteOffSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/receivables/statement": {
       "get": {
         "tags": [
@@ -20804,6 +20888,128 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CustomerStatement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/write-offs": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesWriteOffs",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WriteOffSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/write-offs/{writeOffId}": {
+      "get": {
+        "tags": [
+          "Receivables"
+        ],
+        "operationId": "getReceivablesWriteOffsByWriteOffId",
+        "parameters": [
+          {
+            "name": "writeOffId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteOffSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receivables/write-offs/{writeOffId}/reverse": {
+      "post": {
+        "tags": [
+          "Receivables"
+        ],
+        "summary": "Reverses a write-off: the journal is mirrored and the item reopens for the amount written off.",
+        "operationId": "postReceivablesWriteOffsByWriteOffIdReverse",
+        "parameters": [
+          {
+            "name": "writeOffId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseWriteOffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteOffSummary"
                 }
               }
             }
@@ -21364,6 +21570,249 @@
         "parameters": [
           {
             "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReversePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/receipts": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "getBankingReceipts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Drafts a customer receipt (lines against open invoice items, discount given, tax withheld by the customer, bank charges, on account) or a deposit.",
+        "operationId": "postBankingReceipts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCustomerReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/receipts/{receiptId}": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "getBankingReceiptsByReceiptId",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "putBankingReceiptsByReceiptId",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCustomerReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "deleteBankingReceiptsByReceiptId",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/banking/receipts/{receiptId}/post": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Posts the receipt: receivables relieved at booked value, discount given, withholding, charges, the bank movement and the realised exchange difference.",
+        "operationId": "postBankingReceiptsByReceiptIdPost",
+        "parameters": [
+          {
+            "name": "receiptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/receipts/{receiptId}/reverse": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Reverses a posted receipt whose remainder was not applied further: items reopen at their booked values.",
+        "operationId": "postBankingReceiptsByReceiptIdReverse",
+        "parameters": [
+          {
+            "name": "receiptId",
             "in": "path",
             "required": true,
             "schema": {
@@ -45054,6 +45503,28 @@
         },
         "description": "A priced basket: every line with its explanation, the promotions and document discounts applied, and the totals."
       },
+      "PromiseToPayRequest": {
+        "required": [
+          "promisedOn"
+        ],
+        "type": "object",
+        "properties": {
+          "promisedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A promise to pay on an item: the date the customer promised, and what they said; a null date clears the promise."
+      },
       "PromotionComponentDto": {
         "required": [
           "itemId",
@@ -50419,6 +50890,24 @@
           }
         }
       },
+      "ReverseWriteOffRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "RevokeSodExceptionRequest": {
         "required": [
           "reason"
@@ -53394,6 +53883,115 @@
             "default": true
           }
         }
+      },
+      "SaveCustomerReceiptRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "bankAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "default": "customer_receipt"
+          },
+          "receiptDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "method": {
+            "type": "string",
+            "default": "transfer"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SavePaymentLineRequest"
+            }
+          },
+          "onAccount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "charges": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "bankAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "whtCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": { }
+        },
+        "description": "A customer receipt: lines settle invoice open items (amount, early-payment discount given, tax the customer withheld),\nthe remainder goes on account; a deposit (kind `customer_deposit`) has no lines. Charges are what the bank kept,\nin the bank account's currency; the bank amount is what it credited and is required when that currency differs\nfrom the receipt's."
       },
       "SaveCustomFieldRequest": {
         "required": [
@@ -66044,6 +66642,171 @@
           "result": {
             "type": "string",
             "format": "date"
+          }
+        }
+      },
+      "WriteOffRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "kind": {
+            "type": "string",
+            "default": "bad_debt"
+          },
+          "writeOffDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Writes off what is still open on an item, or part of it: as bad debt, or as a small balance not worth chasing."
+      },
+      "WriteOffSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "status",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "openItemId",
+          "documentNumber",
+          "adjustmentItemId",
+          "settlementId",
+          "writeOffDate",
+          "kind",
+          "currency",
+          "amountTc",
+          "amountFc",
+          "functionalCurrency",
+          "reason",
+          "journalEntryId",
+          "reversalEntryId",
+          "reversalReason",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "openItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "adjustmentItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "settlementId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "writeOffDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }

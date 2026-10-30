@@ -11,6 +11,8 @@ public sealed class ReceivablesDbContext(DbContextOptions<ReceivablesDbContext> 
 
     public DbSet<ArSettlement> Settlements => Set<ArSettlement>();
 
+    public DbSet<ArWriteOff> WriteOffs => Set<ArWriteOff>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -43,6 +45,15 @@ public sealed class ReceivablesDbContext(DbContextOptions<ReceivablesDbContext> 
             b.Property(static x => x.BankChargeTc).HasPrecision(24, 6);
             b.HasOne<ArOpenItem>().WithMany().HasForeignKey(static x => new { x.TenantId, x.SettlingItemId });
             b.HasOne<ArOpenItem>().WithMany().HasForeignKey(static x => new { x.TenantId, x.SettledItemId });
+        });
+
+        modelBuilder.Entity<ArWriteOff>(b =>
+        {
+            b.ToTable("ar_write_offs", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.AmountTc).HasPrecision(24, 6);
+            b.Property(static x => x.AmountFc).HasPrecision(24, 6);
+            b.HasOne<ArOpenItem>().WithMany().HasForeignKey(static x => new { x.TenantId, x.OpenItemId });
         });
 
         base.OnModelCreating(modelBuilder);

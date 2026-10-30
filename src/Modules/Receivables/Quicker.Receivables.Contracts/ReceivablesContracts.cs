@@ -29,6 +29,7 @@ public static class ReceivableSettlementKinds
 public static class ReceivablesDocumentTypes
 {
     public const string Settlement = "ar_settlement";
+    public const string WriteOff = "ar_write_off";
 }
 
 /// <summary>A new open item: <paramref name="AmountTc"/> and <paramref name="AmountFc"/> are signed (positive owed by the customer, negative owed to them).</summary>

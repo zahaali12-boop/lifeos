@@ -2632,7 +2632,7 @@ tables: keyed by `partner_id` (not `customer_account_id`), kinds `invoice | cred
 a status of `open | partially_settled | settled | reversed` (a write-off is a settlement kind, not a status).
 Settlements carry `amount_fc_settled_item`/`amount_fc_settling_item`, `fx_gain_loss_fc`, `discount_taken_tc`,
 `wht_deducted_tc`, `write_off_tc`, `bank_charge_tc`, `reverses_settlement_id` and a status, exactly as
-`ap_settlements` do since ADR-0031. Dunning and statements tables remain the sketch (5.7).
+`ap_settlements` do since ADR-0031. 5.7a (A-161, `V0055`) adds the promise to pay on an item (`promised_payment_date`, `promise_note`, `promised_at`, `promised_by`) and `ar_write_offs` (a numbered document per write-off: the item, its amount in the item's currency at the booked rate, `bad_debt | small_balance`, the credit item and the `write_off` settlement it opened, the journal and its reversal), and customer receipts share `bnk_payments`/`bnk_payment_lines` with the supplier payments (kinds `customer_receipt | customer_deposit`; a line's `open_item_id` names a receivable item on a receipt and a payable item on a payment, so the column no longer carries a foreign key). Dunning and statements tables remain the sketch (5.7b).
 
 ```mermaid
 erDiagram

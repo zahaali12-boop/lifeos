@@ -22,3 +22,13 @@ public sealed record ArStatementCurrency(string Currency, decimal Opening, decim
 public sealed record CustomerStatement(Guid CompanyId, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, DateOnly From, DateOnly To, IReadOnlyList<ArStatementCurrency> Currencies);
 
 public sealed record ReverseReceivableSettlementRequest(string Reason, DateOnly? ReversalDate = null);
+
+/// <summary>A promise to pay on an item: the date the customer promised, and what they said; a null date clears the promise.</summary>
+public sealed record PromiseToPayRequest(DateOnly? PromisedOn, string? Note = null);
+
+/// <summary>Writes off what is still open on an item, or part of it: as bad debt, or as a small balance not worth chasing.</summary>
+public sealed record WriteOffRequest(string Reason, decimal? Amount = null, string Kind = "bad_debt", DateOnly? WriteOffDate = null);
+
+public sealed record ReverseWriteOffRequest(string Reason, DateOnly? ReversalDate = null);
+
+public sealed record WriteOffSummary(Guid Id, Guid CompanyId, string Number, string Status, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, Guid OpenItemId, string DocumentNumber, Guid? AdjustmentItemId, Guid? SettlementId, DateOnly WriteOffDate, string Kind, string Currency, decimal AmountTc, decimal AmountFc, string FunctionalCurrency, string Reason, Guid? JournalEntryId, Guid? ReversalEntryId, string? ReversalReason, DateTimeOffset CreatedAt);

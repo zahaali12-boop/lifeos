@@ -152,7 +152,7 @@ public sealed class SettlementService(ReceivablesDbContext db, ReceivablesServic
 
         if (row.Kind is not (ReceivableSettlementKinds.CreditApplication or ReceivableSettlementKinds.DepositApplication))
         {
-            return Error.Conflict("settlement.reverse_document", "A receipt's settlements are reversed by reversing the receipt.").WithWhy(("kind", row.Kind));
+            return Error.Conflict("settlement.reverse_document", "A receipt's or a write-off's settlement is reversed by reversing that document.").WithWhy(("kind", row.Kind));
         }
 
         var settling = await db.OpenItems.SingleAsync(i => i.Id == row.SettlingItemId, cancellationToken);

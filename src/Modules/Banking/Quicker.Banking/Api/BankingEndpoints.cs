@@ -51,6 +51,25 @@ public static class BankingEndpoints
             .RequirePermission(BankingPermissions.PaymentPost)
             .WithSummary("Reverses a posted payment whose remainder was not applied further: items reopen at their booked values.");
 
+        var receipts = banking.MapGroup("/receipts");
+        receipts.MapGet("/", async (Guid? companyId, string? status, Guid? partnerId, CustomerReceiptService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, partnerId, ct)))
+            .RequirePermission(BankingPermissions.ReceiptRead);
+        receipts.MapPost("/", async (SaveCustomerReceiptRequest request, CustomerReceiptService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static p => $"/api/v1/banking/receipts/{p.Id}"))
+            .RequirePermission(BankingPermissions.ReceiptManage)
+            .WithSummary("Drafts a customer receipt (lines against open invoice items, discount given, tax withheld by the customer, bank charges, on account) or a deposit.");
+        receipts.MapGet("/{receiptId:guid}", async (Guid receiptId, CustomerReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(receiptId, ct)))
+            .RequirePermission(BankingPermissions.ReceiptRead);
+        receipts.MapPut("/{receiptId:guid}", async (Guid receiptId, SaveCustomerReceiptRequest request, CustomerReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(receiptId, request, ct)))
+            .RequirePermission(BankingPermissions.ReceiptManage);
+        receipts.MapDelete("/{receiptId:guid}", async (Guid receiptId, CustomerReceiptService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(receiptId, ct)))
+            .RequirePermission(BankingPermissions.ReceiptManage);
+        receipts.MapPost("/{receiptId:guid}/post", async (Guid receiptId, CustomerReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(receiptId, ct)))
+            .RequirePermission(BankingPermissions.ReceiptPost)
+            .WithSummary("Posts the receipt: receivables relieved at booked value, discount given, withholding, charges, the bank movement and the realised exchange difference.");
+        receipts.MapPost("/{receiptId:guid}/reverse", async (Guid receiptId, ReversePaymentRequest request, CustomerReceiptService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(receiptId, request, ct)))
+            .RequirePermission(BankingPermissions.ReceiptPost)
+            .WithSummary("Reverses a posted receipt whose remainder was not applied further: items reopen at their booked values.");
+
         return api;
     }
 }

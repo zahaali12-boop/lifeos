@@ -17,14 +17,17 @@ public static class BankingModule
         services.AddSingleton(new PostingDocumentModule("banking"));
         ArgumentNullException.ThrowIfNull(services);
         PermissionCatalog.Register(BankingPermissions.All);
-        NumberedDocumentTypes.Register(new NumberedDocumentType(BankDocumentTypes.Payment, BankingPermissions.PaymentRead));
+        NumberedDocumentTypes.Register(new NumberedDocumentType(BankDocumentTypes.Payment, BankingPermissions.PaymentRead), new NumberedDocumentType(BankDocumentTypes.Receipt, BankingPermissions.ReceiptRead));
         CustomFieldHosts.Register(new CustomFieldHost(BankDocumentTypes.Payment, "app.bnk_payments", "custom_fields"));
+        CustomFieldHosts.Register(new CustomFieldHost(BankDocumentTypes.Receipt, "app.bnk_payments", "custom_fields"));
         services.AddModuleDbContext<BankingDbContext>();
         services.AddScoped<BankAccountService>();
         services.AddScoped<PaymentService>();
+        services.AddScoped<CustomerReceiptService>();
         services.AddScoped<IBankAccountDirectory>(static sp => sp.GetRequiredService<BankAccountService>());
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("bank_payment", BankingPermissions.PaymentRead));
+        services.AddSingleton(new RecordReadPermission("bank_receipt", BankingPermissions.ReceiptRead));
         services.AddSingleton(new RecordReadPermission("bank_account", BankingPermissions.BankAccountRead));
         services.AddScoped<IRecordCompanies, BankingRecordCompanies>();
         return services;

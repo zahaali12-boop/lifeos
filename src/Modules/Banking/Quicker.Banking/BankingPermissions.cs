@@ -10,6 +10,9 @@ public static class BankingPermissions
     public const string PaymentRead = "banking.payment.read";
     public const string PaymentManage = "banking.payment.manage";
     public const string PaymentPost = "banking.payment.post";
+    public const string ReceiptRead = "banking.receipt.read";
+    public const string ReceiptManage = "banking.receipt.manage";
+    public const string ReceiptPost = "banking.receipt.post";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -18,5 +21,8 @@ public static class BankingPermissions
         new(PaymentRead, "banking", "Read supplier payments and advances"),
         new(PaymentManage, "banking", "Create, edit and delete draft supplier payments and advances, and draft them from a proposal"),
         new(PaymentPost, "banking", "Post supplier payments and advances and reverse them"),
+        new(ReceiptRead, "banking", "Read customer receipts and deposits"),
+        new(ReceiptManage, "banking", "Create, edit and delete draft customer receipts and deposits"),
+        new(ReceiptPost, "banking", "Post customer receipts and deposits and reverse them"),
     ];
 }

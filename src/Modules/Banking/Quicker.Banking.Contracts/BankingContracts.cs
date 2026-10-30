@@ -5,6 +5,7 @@ namespace Quicker.Banking.Contracts;
 public static class BankDocumentTypes
 {
     public const string Payment = "bank_payment";
+    public const string Receipt = "bank_receipt";
     public const string Transaction = "bank_transaction";
 }
 

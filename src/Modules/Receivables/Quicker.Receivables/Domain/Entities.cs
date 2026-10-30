@@ -67,6 +67,12 @@ public sealed class ArOpenItem : ITenantEntity
 
     public DateOnly? PromisedPaymentDate { get; set; }
 
+    public string? PromiseNote { get; set; }
+
+    public DateTimeOffset? PromisedAt { get; set; }
+
+    public Guid? PromisedBy { get; set; }
+
     public Guid? BranchId { get; set; }
 
     public Guid? DimensionSetId { get; set; }
@@ -128,4 +134,54 @@ public sealed class ArSettlement : ITenantEntity
     public Guid? CreatedBy { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A write-off of what a customer still owes on one item (bad debt, or a small balance not worth chasing): a document with its journal, the credit item it opened and the settlement that closed the written-off item with it.</summary>
+public sealed class ArWriteOff : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public Guid OpenItemId { get; set; }
+
+    public Guid? AdjustmentItemId { get; set; }
+
+    public Guid? SettlementId { get; set; }
+
+    public DateOnly WriteOffDate { get; set; }
+
+    public string Kind { get; set; } = "bad_debt";
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal AmountTc { get; set; }
+
+    public decimal AmountFc { get; set; }
+
+    public string Reason { get; set; } = string.Empty;
+
+    public string Status { get; set; } = "posted";
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalEntryId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
 }

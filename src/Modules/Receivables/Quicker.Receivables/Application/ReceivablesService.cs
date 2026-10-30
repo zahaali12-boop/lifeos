@@ -407,6 +407,37 @@ public sealed class ReceivablesService(ReceivablesDbContext db, ICompanyDirector
         return await GetAsync(id, cancellationToken);
     }
 
+    /// <summary>Records what the customer promised on an item (or clears it); dunning leaves a promised item alone until the date has passed.</summary>
+    public async Task<Result<ReceivableSummary>> PromiseAsync(Guid id, PromiseToPayRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var item = await db.OpenItems.SingleOrDefaultAsync(i => i.Id == id, cancellationToken);
+        if (item is null)
+        {
+            return Error.NotFound("open_item", id);
+        }
+
+        if (!Live.Contains(item.Status, StringComparer.Ordinal) || item.OriginalTc <= 0m)
+        {
+            return Error.Conflict("receivables.item_not_open", "Only an open invoice item carries a promise to pay.").WithWhy(("status", item.Status), ("kind", item.Kind));
+        }
+
+        var company = await companies.FindAsync(new CompanyId(item.CompanyId), cancellationToken);
+        if (request.PromisedOn is { } promised && promised < clock.TodayIn(company?.TimeZone ?? "UTC"))
+        {
+            return Error.Validation("receivables.promise_date_past", "A promise to pay names a date from today on.").WithWhy(("promisedOn", promised));
+        }
+
+        item.PromisedPaymentDate = request.PromisedOn;
+        item.PromiseNote = request.PromisedOn is null ? null : string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+        item.PromisedAt = request.PromisedOn is null ? null : clock.UtcNow;
+        item.PromisedBy = request.PromisedOn is null ? null : principal.Principal?.MembershipId.Value;
+        item.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry("open_item", item.Id, item.DocumentNumber, AuditActions.StateChanged, After: new { promisedOn = item.PromisedPaymentDate, note = item.PromiseNote }, CompanyId: item.CompanyId), cancellationToken);
+        return await GetAsync(id, cancellationToken);
+    }
+
     // ------------------------------------------------------------------ internals
 
     internal static Result Check(ArOpenItem settling, ArOpenItem settled, decimal amountTc, decimal? settlingUse = null)

@@ -27,6 +27,13 @@ public static class ReceivablesRowFactories
             await c.ExecuteAsync("INSERT INTO app.ar_settlements (tenant_id, id, company_id, settling_item_id, settled_item_id, settlement_date, kind, currency, amount_tc, amount_fc_settled_item, amount_fc_settling_item) VALUES (@t, @id, @company, @settling, @settled, '2026-09-22', 'credit_application', 'IQD', 1, 1, 1)", new { t, id, company, settling, settled }, tx);
             return new RowRef("app.ar_settlements", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.ar_write_offs", static async (c, tx, t) =>
+        {
+            var (item, company, partner) = await OpenItemAsync(c, tx, t, "invoice", 10m);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.ar_write_offs (tenant_id, id, company_id, partner_id, number, open_item_id, write_off_date, kind, currency, amount_tc, amount_fc, reason) VALUES (@t, @id, @company, @partner, @number, @item, '2026-09-22', 'bad_debt', 'IQD', 10, 10, 'Probe')", new { t, id, company, partner, number = Suffix(id), item }, tx);
+            return new RowRef("app.ar_write_offs", $"id = '{id}'");
+        });
     }
 
     private static string Suffix(Guid id) => "R" + id.ToString("N")[^8..].ToUpperInvariant();

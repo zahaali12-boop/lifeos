@@ -48,7 +48,7 @@ public sealed class PaymentService(
 
     public async Task<IReadOnlyList<PaymentSummary>> ListAsync(Guid? companyId, string? status, Guid? partnerId, CancellationToken cancellationToken)
     {
-        var query = db.Payments.AsNoTracking().Include(static p => p.Lines).AsQueryable();
+        var query = db.Payments.AsNoTracking().Include(static p => p.Lines).Where(static p => Kinds.Contains(p.Kind));
         if (companyId is { } c)
         {
             query = query.Where(p => p.CompanyId == c);

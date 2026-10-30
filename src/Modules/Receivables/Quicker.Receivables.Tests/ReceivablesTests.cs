@@ -206,4 +206,74 @@ public sealed class ReceivablesTests(ApiHostFixture host)
         panel.GetProperty("balances").EnumerateArray().Single().GetProperty("open").GetDecimal().ShouldBe(400_000m);
         await owner.AssertInvariantsAsync();
     }
+
+    [Fact]
+    public async Task A_promise_to_pay_is_recorded_and_a_balance_is_written_off_in_part_then_in_full_and_a_write_off_reversed()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await SaleAsync(s, "2026-09-05", 1000m, dueDate: "2026-09-15");
+        var owed = (await ItemsAsync(s)).ShouldHaveSingleItem();
+        var owedId = owed.GetProperty("id").GetGuid();
+
+        // The customer promises to pay by the 1st; a date in the past is refused; the promise can be cleared.
+        (await owner.PostErrorAsync($"/api/v1/receivables/open-items/{owedId}/promise", new { promisedOn = "2026-09-01", note = "Late" }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("receivables.promise_date_past");
+        var promised = await owner.PostAsync($"/api/v1/receivables/open-items/{owedId}/promise", new { promisedOn = "2026-10-01", note = "Cheque in the post, said the buyer" }, HttpStatusCode.OK);
+        promised.GetProperty("item").GetProperty("promisedPaymentDate").GetString().ShouldBe("2026-10-01");
+        var cleared = await owner.PostAsync($"/api/v1/receivables/open-items/{owedId}/promise", new { promisedOn = (string?)null }, HttpStatusCode.OK);
+        cleared.GetProperty("item").GetProperty("promisedPaymentDate").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        // 300 of it written off as a small balance: Dr write-off / Cr receivables, the item stays open for 700, the control agrees.
+        var clerk = await InviteAsync(s, "ar_clerk_no_wo", "receivables.open_item.read", "receivables.open_item.manage");
+        (await clerk.PostErrorAsync($"/api/v1/receivables/open-items/{owedId}/write-off", new { reason = "Not worth chasing", amount = 300m, kind = "small_balance" }, HttpStatusCode.Forbidden)).Code.ShouldNotBeNull();
+        (await owner.PostErrorAsync($"/api/v1/receivables/open-items/{owedId}/write-off", new { reason = "", amount = 300m }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("write_off.reason_required");
+        (await owner.PostErrorAsync($"/api/v1/receivables/open-items/{owedId}/write-off", new { reason = "Too much", amount = 1500m }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("write_off.amount_invalid");
+        var small = await owner.PostAsync($"/api/v1/receivables/open-items/{owedId}/write-off", new { reason = "Not worth chasing", amount = 300m, kind = "small_balance", writeOffDate = "2026-09-20" });
+        small.GetProperty("number").GetString().ShouldStartWith("WO-2026-");
+        small.GetProperty("status").GetString().ShouldBe("posted");
+        small.GetProperty("amountTc").GetDecimal().ShouldBe(300m);
+        var afterSmall = (await ItemsAsync(s)).Single(i => i.GetProperty("id").GetGuid() == owedId);
+        afterSmall.GetProperty("remainingTc").GetDecimal().ShouldBe(700m);
+        afterSmall.GetProperty("status").GetString().ShouldBe("partially_settled");
+        (await ControlAsync(s, "2026-09-20")).ShouldBe(700m);
+        (await RoleAsync(s, "WriteOff")).ShouldBe(300m);
+        var writeOffSettlement = (await owner.GetOkAsync($"/api/v1/receivables/settlements?companyId={s.CompanyId}&openItemId={owedId}")).EnumerateArray().Single();
+        writeOffSettlement.GetProperty("kind").GetString().ShouldBe("write_off");
+        writeOffSettlement.GetProperty("writeOffTc").GetDecimal().ShouldBe(300m);
+        (await owner.PostErrorAsync($"/api/v1/receivables/settlements/{writeOffSettlement.GetProperty("id").GetGuid()}/reverse", new { reason = "Oops" }, HttpStatusCode.Conflict)).Code.ShouldBe("settlement.reverse_document");
+        (await owner.GetOkAsync($"/api/v1/receivables/write-offs?companyId={s.CompanyId}")).GetArrayLength().ShouldBe(1);
+        await owner.AssertInvariantsAsync();
+
+        // Reversed: the item is owed in full again and the write-off's credit item is gone.
+        var smallId = small.GetProperty("id").GetGuid();
+        (await owner.PostErrorAsync($"/api/v1/receivables/write-offs/{smallId}/reverse", new { reason = "Customer paid after all", reversalDate = "2026-09-19" }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("write_off.reversal_date_invalid");
+        var reversed = await owner.PostAsync($"/api/v1/receivables/write-offs/{smallId}/reverse", new { reason = "Customer paid after all", reversalDate = "2026-09-21" }, HttpStatusCode.OK);
+        reversed.GetProperty("status").GetString().ShouldBe("reversed");
+        (await ItemsAsync(s)).Single(i => i.GetProperty("id").GetGuid() == owedId).GetProperty("remainingTc").GetDecimal().ShouldBe(1000m);
+        (await ItemsAsync(s, status: "reversed")).ShouldHaveSingleItem().GetProperty("documentType").GetString().ShouldBe("ar_write_off");
+        (await RoleAsync(s, "WriteOff")).ShouldBe(0m);
+        (await ControlAsync(s, "2026-09-21")).ShouldBe(1000m);
+        await owner.AssertInvariantsAsync();
+
+        // Then the whole balance as bad debt: the item is settled, the control is empty, the statement shows the write-off.
+        var bad = await owner.PostAsync($"/api/v1/receivables/open-items/{owedId}/write-off", new { reason = "Customer in liquidation" });
+        bad.GetProperty("kind").GetString().ShouldBe("bad_debt");
+        bad.GetProperty("amountTc").GetDecimal().ShouldBe(1000m);
+        (await ItemsAsync(s)).Single(i => i.GetProperty("id").GetGuid() == owedId).GetProperty("status").GetString().ShouldBe("settled");
+        (await RoleAsync(s, "BadDebt")).ShouldBe(1000m);
+        (await ControlAsync(s, "2026-09-22")).ShouldBe(0m);
+        (await owner.PostErrorAsync($"/api/v1/receivables/open-items/{owedId}/write-off", new { reason = "Again" }, HttpStatusCode.Conflict)).Code.ShouldBe("write_off.item_not_open");
+        var statement = await owner.GetOkAsync($"/api/v1/receivables/statement?companyId={s.CompanyId}&partnerId={s.Customer}&from=2026-09-01&to=2026-09-30");
+        var iqd = statement.GetProperty("currencies").EnumerateArray().Single();
+        iqd.GetProperty("closing").GetDecimal().ShouldBe(0m);
+        iqd.GetProperty("lines").EnumerateArray().Count(static l => l.GetProperty("documentType").GetString() == "ar_write_off").ShouldBe(3, "two write-offs and the reversal of one");
+        await owner.AssertInvariantsAsync();
+    }
+
+    private async Task<decimal> RoleAsync(Setup s, string role)
+    {
+        await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
+        await db.OpenAsync(TestContext.Current.CancellationToken);
+        return await db.ExecuteScalarAsync<decimal>("SELECT coalesce(sum(l.debit_fc - l.credit_fc), 0) FROM app.gl_journal_lines l WHERE l.tenant_id = @t AND l.company_id = @c AND l.account_role = @role", new { t = s.Ws.TenantId, c = s.CompanyId, role });
+    }
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Accounting.Contracts;
 using Quicker.Identity.Contracts;
+using Quicker.Numbering.Contracts;
 using Quicker.Partners.Contracts;
 using Quicker.Persistence.EntityFramework;
 using Quicker.Receivables.Application;
@@ -20,6 +21,8 @@ public static class ReceivablesModule
         services.AddModuleDbContext<ReceivablesDbContext>();
         services.AddScoped<ReceivablesService>();
         services.AddScoped<SettlementService>();
+        services.AddScoped<WriteOffService>();
+        NumberedDocumentTypes.Register(new NumberedDocumentType(ReceivablesDocumentTypes.WriteOff, ReceivablesPermissions.OpenItemRead));
         services.AddScoped<IReceivables, ReceivablesFacade>();
         services.AddScoped<IJournalSubledger, ReceivablesJournalSubledger>();
         services.AddScoped<IPartnerActivitySource, ReceivablesPartnerActivity>();

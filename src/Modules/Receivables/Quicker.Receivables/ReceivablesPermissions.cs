@@ -9,16 +9,13 @@ public static class ReceivablesPermissions
     public const string OpenItemManage = "receivables.open_item.manage";
     public const string SettlementPost = "receivables.settlement.post";
 
-    // Forward-declared for the default SoD rule (RoleTemplates.cs) pairing it with sales.invoice.post: write-offs are
-    // posted by 5.7's receipts and write-off documents, but once any receivables.* permission ships, a rule naming a
-    // receivables.* key the module does not register would silently never trip.
     public const string WriteOffPost = "receivables.writeoff.post";
 
     public static readonly PermissionDefinition[] All =
     [
         new(OpenItemRead, "receivables", "Read receivable open items, aging, statements and settlements"),
-        new(OpenItemManage, "receivables", "Hold and release receivable open items"),
+        new(OpenItemManage, "receivables", "Hold and release receivable open items and record promises to pay"),
         new(SettlementPost, "receivables", "Apply credit notes, deposits and receipts on account to invoices and reverse such applications"),
-        new(WriteOffPost, "receivables", "Write off customer balances"),
+        new(WriteOffPost, "receivables", "Write off customer balances and reverse write-offs"),
     ];
 }

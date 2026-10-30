@@ -9,6 +9,7 @@ internal sealed class BankingRecordCompanies(IUnitOfWorkAccessor unitOfWork) : I
     private static readonly Dictionary<string, string> Tables = new(StringComparer.Ordinal)
     {
         ["bank_payment"] = "app.bnk_payments",
+        ["bank_receipt"] = "app.bnk_payments",
         ["bank_account"] = "app.bnk_bank_accounts",
     };
 
