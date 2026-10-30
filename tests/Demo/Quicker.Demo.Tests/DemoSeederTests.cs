@@ -95,7 +95,7 @@ public sealed class DemoSeederTests(DatabaseFixture fixture) : IClassFixture<Dat
         offBalance.Count.ShouldBe(3);
         offBalance.ShouldAllBe(static c => c.Off == 0m);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_recurring_templates WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(3);
-        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_deferral_schedules WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(4);
+        (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_deferral_schedules WHERE tenant_id = @t", new { t = DemoData.TenantId })).ShouldBe(5, "the books' four schedules and the shelf-placement invoice's deferred revenue (5.6)");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_journal_entries WHERE tenant_id = @t AND is_auto_reversal", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(30, "the utility accruals of the closed months reversed on their date");
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.org_period_module_states WHERE tenant_id = @t AND state = 'hard_closed'", new { t = DemoData.TenantId })).ShouldBeGreaterThanOrEqualTo(27);
         (await db.ExecuteScalarAsync<int>("SELECT count(*) FROM app.gl_manual_journals WHERE tenant_id = @t AND corrects_journal_id IS NOT NULL AND status = 'posted'", new { t = DemoData.TenantId })).ShouldBe(1, "scenario 7 lives in the demo");
