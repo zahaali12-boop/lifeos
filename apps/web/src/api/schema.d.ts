@@ -38854,7 +38854,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "text/html": string;
+                };
             };
         };
     };
@@ -39017,7 +39019,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "text/html": string;
+                };
             };
         };
     };
@@ -39106,7 +39110,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/pdf": components["schemas"]["Stream"];
+                };
             };
         };
     };

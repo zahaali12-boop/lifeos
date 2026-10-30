@@ -39,11 +39,13 @@ public static class PrintingEndpoints
             .WithSummary("Makes an earlier version current again, as a new version with its content");
         templates.MapGet("/{templateId:guid}/preview", async (Guid templateId, int? version, PrintService service, CancellationToken ct) =>
             ApiProblems.From(await service.PreviewTemplateAsync(templateId, version, false, ct), static p => Results.Content(p.Html, "text/html; charset=utf-8")))
+            .Produces<string>(StatusCodes.Status200OK, "text/html")
             .RequirePermission(PrintingPermissions.TemplateRead)
             .WithSummary("The template rendered with its sample data, as HTML");
 
         print.MapGet("/preview", async (string documentType, Guid? documentId, string? variant, Guid? templateId, Guid? companyId, Guid? partnerId, DateOnly? from, DateOnly? to, PrintService service, CancellationToken ct) =>
             ApiProblems.From(await service.PreviewAsync(new PrintRequest(documentType, documentId, Parameters(companyId, partnerId, from, to), variant ?? "standard", templateId), ct), static p => Results.Content(p.Html, "text/html; charset=utf-8")))
+            .Produces<string>(StatusCodes.Status200OK, "text/html")
             .RequirePermission(PrintingPermissions.Render)
             .WithSummary("The document rendered as HTML for the browser's print preview: the same template the PDF uses; a draft invoice is refused as a tax invoice (print it pro forma)");
 
@@ -59,6 +61,7 @@ public static class PrintingEndpoints
             .WithSummary("The render's status, size, hash and error");
         renders.MapGet("/{renderId:guid}/file", async (Guid renderId, PrintService service, CancellationToken ct) =>
             ApiProblems.From(await service.OpenAsync(renderId, ct), static f => Results.Stream(f.Content, f.ContentType, f.FileName)))
+            .Produces<Stream>(StatusCodes.Status200OK, "application/pdf")
             .RequirePermission(PrintingPermissions.Render)
             .WithSummary("The PDF of a ready render");
 
