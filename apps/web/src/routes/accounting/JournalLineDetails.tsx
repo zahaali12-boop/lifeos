@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
@@ -75,6 +75,46 @@ export function DimensionSelects({ testIdPrefix, values, reference, emptyLabel, 
           </Field>
         );
       })}
+    </>
+  );
+}
+
+/**
+ * A journal line's account: typed by code, with the chart's accounts a journal can post to suggested by code or name
+ * (a native datalist: keyboard- and screen-reader-friendly, right to left). Under it, the account's name, or what is
+ * wrong with the code before the server says so (no such account, a header, an account only documents post to).
+ */
+export function AccountCodeField({ value, onChange, accounts, label, testId }: { value: string; onChange: (code: string) => void; accounts: Map<string, Account>; label: string; testId?: string }) {
+  const { t } = useTranslation();
+  const listId = useId();
+  const postable = useMemo(
+    () => [...accounts.values()].filter((a) => a.isActive && !a.isHeader && (a.allowManualPosting || a.isControl)).sort((a, b) => a.code.localeCompare(b.code)),
+    [accounts],
+  );
+  const code = value.trim();
+  const account = accounts.get(code);
+  const problem = !code || accounts.size === 0 ? null
+    : !account ? t("accounting.unknownAccount")
+    : account.isHeader ? t("accounting.headerAccount")
+    : !account.isActive ? t("accounting.inactiveAccount")
+    : !account.allowManualPosting && !account.isControl ? t("accounting.documentsOnlyAccount")
+    : null;
+  return (
+    <>
+      <TextField aria-label={label} value={value} onChange={(e) => { onChange(e.target.value); }} list={listId} autoComplete="off" dir="ltr" aria-invalid={problem ? true : undefined} data-testid={testId} />
+      <datalist id={listId}>
+        {postable.map((a) => (
+          <option key={a.id} value={a.code}>{`${a.code} · ${localized(a.name)}`}</option>
+        ))}
+      </datalist>
+      {problem ? (
+        <p className="mt-0.5 text-xs text-danger" data-testid={testId ? `${testId}-problem` : undefined}>{problem}</p>
+      ) : account ? (
+        <p className="mt-0.5 truncate text-xs text-fg-muted">
+          {localized(account.name)}
+          {account.isControl ? ` · ${t("accounting.controlAccountHint")}` : ""}
+        </p>
+      ) : null}
     </>
   );
 }

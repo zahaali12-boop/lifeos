@@ -1831,7 +1831,25 @@
       "automatic": "Automatic"
     },
     "costCentre": "Cost centre",
-    "costCentreOfLine": "Cost centre of line {line}"
+    "costCentreOfLine": "Cost centre of line {line}",
+    "unknownAccount": "No account with this code",
+    "headerAccount": "A header account: choose one of the accounts under it",
+    "inactiveAccount": "This account is inactive",
+    "documentsOnlyAccount": "Only documents post to this account, not journals",
+    "controlAccountHint": "control account: name the customer or supplier in the line details",
+    "lineWithoutAccount": "Line {line} has an amount or details but no account. Choose an account or remove the line.",
+    "accountOfLine": "Account of line {line}",
+    "submitForApproval": "Submit for approval",
+    "cancelJournal": "Cancel journal",
+    "cancelJournalWarning": "The journal will be cancelled and can no longer be posted. This cannot be undone.",
+    "keepJournal": "Keep journal",
+    "confirmCancelJournal": "Yes, cancel the journal",
+    "viewReversal": "View the reversing entry",
+    "roundingLine": "Rounding",
+    "rejectReason": "Reason (needed to reject)",
+    "correctionReason": "Why does it need correcting?",
+    "correctionHint": "A copy of this journal is drafted in the first open period for you to fix. Posting it reverses this journal and books the corrected one.",
+    "createCorrection": "Draft the correction"
   },
   "mobile": {
     "receive": {

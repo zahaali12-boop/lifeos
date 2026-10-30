@@ -30,6 +30,7 @@ public sealed class ManualJournalService(
     IPostingService posting,
     INumberAllocator numbering,
     ICompanySettings settings,
+    IChartOfAccounts chart,
     ICustomFieldValidator customFields,
     ICurrentPrincipal principal,
     IAuditSink audit,
@@ -157,11 +158,6 @@ public sealed class ManualJournalService(
             return Error.Validation("journal.rate_override_invalid", "A rate override is a positive rate with a reason.");
         }
 
-        if (request.AutoReverse && (request.AutoReverseOn is null || request.AutoReverseOn <= request.PostingDate))
-        {
-            return Error.Validation("journal.auto_reverse_date", "An auto-reversing journal names a reversal date after its posting date.");
-        }
-
         if (request.BranchId is { } branchId)
         {
             var branch = await companies.FindBranchAsync(new BranchId(branchId), cancellationToken);
@@ -262,6 +258,12 @@ public sealed class ManualJournalService(
             return Error.Validation("journal.auto_reverse_date", "An accrual names the date its reversal posts on (usually the first day of the next period).");
         }
 
+        // An accrual is reversed after it is booked, never on or before (whether the request said auto-reverse or the kind implied it).
+        if (journal.AutoReverse && journal.AutoReverseOn <= journal.PostingDate)
+        {
+            return Error.Validation("journal.auto_reverse_date", "An auto-reversing journal names a reversal date after its posting date.").WithWhy(("postingDate", journal.PostingDate), ("autoReverseOn", journal.AutoReverseOn));
+        }
+
         journal.CustomFields = custom.Value;
         journal.UpdatedAt = clock.UtcNow;
         return Result.Success();
@@ -282,10 +284,10 @@ public sealed class ManualJournalService(
             return Error.Conflict("journal.not_submittable", $"A {journal.Status} journal cannot be submitted.").WithWhy(("status", journal.Status));
         }
 
-        var balanced = Balanced(journal);
-        if (balanced.IsFailure)
+        var ready = await ReadyAsync(journal, cancellationToken);
+        if (ready.IsFailure)
         {
-            return balanced.Error!;
+            return ready.Error!;
         }
 
         var now = clock.UtcNow;
@@ -311,10 +313,11 @@ public sealed class ManualJournalService(
             return Error.Conflict("journal.not_pending", $"A {journal.Status} journal is not waiting for approval.").WithWhy(("status", journal.Status));
         }
 
+        // Maker-checker: neither the person who prepared the journal nor the one who submitted it approves it.
         var actor = principal.Principal?.UserId.Value;
-        if (actor is not null && actor == journal.SubmittedBy)
+        if (actor is not null && (actor == journal.SubmittedBy || actor == journal.CreatedBy))
         {
-            return Error.Conflict("journal.approve_own", "The person who submitted a journal cannot approve it.").WithWhy(("submittedBy", journal.SubmittedBy));
+            return Error.Conflict("journal.approve_own", "The person who prepared or submitted a journal cannot approve it.").WithWhy(("submittedBy", journal.SubmittedBy), ("createdBy", journal.CreatedBy));
         }
 
         var now = clock.UtcNow;
@@ -392,10 +395,10 @@ public sealed class ManualJournalService(
                 : $"A {journal.Status} journal cannot be posted.").WithWhy(("status", journal.Status), ("approvalRequired", approvalRequired));
         }
 
-        var balanced = Balanced(journal);
-        if (balanced.IsFailure)
+        var ready = await ReadyAsync(journal, cancellationToken);
+        if (ready.IsFailure)
         {
-            return balanced.Error!;
+            return ready.Error!;
         }
 
         var company = (await companies.FindAsync(new CompanyId(journal.CompanyId), cancellationToken))!;
@@ -600,6 +603,66 @@ public sealed class ManualJournalService(
     {
         var value = await settings.GetAsync(companyId, ApprovalSetting, cancellationToken);
         return value is { ValueKind: JsonValueKind.String } v && string.Equals(v.GetString(), "required", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// What a journal must satisfy before it is submitted or posted, so nothing is approved that the engine would then
+    /// refuse: it balances, every line has an amount, and every line passes the chart's checks (active, postable,
+    /// manual posting allowed, currency restriction, dimension rules with the journal's branch) and names a subledger
+    /// item exactly when its account is a control account. The codes are the engine's, with the line number.
+    /// </summary>
+    private async Task<Result> ReadyAsync(ManualJournal journal, CancellationToken cancellationToken)
+    {
+        var balanced = Balanced(journal);
+        if (balanced.IsFailure)
+        {
+            return balanced;
+        }
+
+        Guid? branchValue = null;
+        if (journal.BranchId is { } branchId)
+        {
+            branchValue = (await companies.FindBranchAsync(new BranchId(branchId), cancellationToken))?.DimensionValueId;
+        }
+
+        foreach (var line in journal.Lines.OrderBy(static l => l.LineNo))
+        {
+            var lineNo = line.LineNo;
+            if (line.Debit == 0m && line.Credit == 0m)
+            {
+                return Error.Validation("journal.line_zero", $"Line {lineNo} has no amount; enter a debit or a credit, or remove the line.").WithWhy(("line", lineNo));
+            }
+
+            var dimensions = new Dictionary<string, Guid>(line.Dimensions, StringComparer.Ordinal);
+            if (branchValue is { } branch && !dimensions.ContainsKey("BRANCH"))
+            {
+                dimensions["BRANCH"] = branch;
+            }
+
+            var check = await chart.CheckLineAsync(line.AccountId, new CompanyId(journal.CompanyId), dimensions, journal.Currency, line.SubledgerRef is null, cancellationToken);
+            if (check.IsFailure)
+            {
+                return check.Error!.WithWhy(("line", lineNo));
+            }
+
+            var account = check.Value.Account;
+            if (account.IsControl && line.SubledgerRef is null)
+            {
+                return Error.Validation("posting.subledger_ref_required", $"Line {lineNo}: '{account.Code}' is a {account.SubledgerType} control account; the line must reference its subledger item.").WithWhy(("line", lineNo), ("account", account.Code), ("subledgerType", account.SubledgerType));
+            }
+
+            if (account.IsControl && !string.Equals(line.SubledgerType, account.SubledgerType, StringComparison.Ordinal))
+            {
+                return Error.Validation("posting.subledger_type_mismatch", $"Line {lineNo}: '{account.Code}' reconciles to {account.SubledgerType}, the line says {line.SubledgerType ?? "nothing"}.").WithWhy(("line", lineNo), ("account", account.Code), ("expected", account.SubledgerType), ("actual", line.SubledgerType));
+            }
+
+            if (!account.IsControl && line.SubledgerRef is not null)
+            {
+                return Error.Validation("posting.subledger_unexpected", $"Line {lineNo}: '{account.Code}' is not a control account; it takes no subledger reference.").WithWhy(("line", lineNo), ("account", account.Code));
+            }
+        }
+
+        return Result.Success();
     }
 
     private static Result Balanced(ManualJournal journal)

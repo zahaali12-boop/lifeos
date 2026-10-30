@@ -9,6 +9,8 @@ export interface FormProblem {
   message: string;
   code?: string;
   fields: Record<string, string>;
+  /** The facts the server gave with the refusal (a line number, the amounts…), for screens that point at them. */
+  why?: Record<string, unknown>;
 }
 
 export function toFormProblem(error: unknown, fallback: string): FormProblem {
@@ -31,6 +33,9 @@ export function toFormProblem(error: unknown, fallback: string): FormProblem {
   const result: FormProblem = { message, fields };
   if (problem.code) {
     result.code = problem.code;
+  }
+  if (problem.why) {
+    result.why = problem.why;
   }
   return result;
 }

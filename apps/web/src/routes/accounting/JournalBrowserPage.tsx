@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
+import { useCurrencies } from "../../lib/currencies";
+import { add, compare } from "../../lib/decimal";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
@@ -30,6 +32,8 @@ export function JournalBrowserPage() {
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const openId = search.open;
+  const currencies = useCurrencies();
+  const minorUnitsOf = (code: string | undefined): number => Number(currencies.data?.find((c) => c.code === code)?.minorUnits ?? 2);
 
   const entries = useInfiniteQuery({
     queryKey: ["journal-entries", companyId, from, to, number, text, sourceType],
@@ -61,16 +65,22 @@ export function JournalBrowserPage() {
       { id: "postingDate", accessorKey: "postingDate", header: t("accounting.date"), size: 120, cell: ({ row }) => formatDate(row.original.postingDate) },
       { id: "source", accessorFn: (row) => row.sourceDocumentNumber ?? row.sourceDocumentType, header: t("accounting.source"), size: 160, cell: ({ row }) => <span dir="ltr">{row.original.sourceDocumentNumber ?? row.original.sourceDocumentType}</span> },
       { id: "description", accessorFn: (row) => localized(row.description), header: t("accounting.description"), size: 260 },
-      { id: "total", accessorKey: "totalDebitTc", header: t("accounting.total"), size: 140, cell: ({ row }) => <Amount value={row.original.totalDebitTc} /> },
+      { id: "total", accessorKey: "totalDebitTc", header: t("accounting.total"), size: 140, cell: ({ row }) => <Amount value={row.original.totalDebitTc} minorUnits={minorUnitsOf(row.original.currencyTc)} /> },
       { id: "currency", accessorKey: "currencyTc", header: t("accounting.currency"), size: 90 },
       { id: "flags", accessorFn: (row) => (row.isReversal ? "reversal" : row.reversedByEntryId ? "reversed" : ""), header: t("common.status"), size: 120, cell: ({ row }) => (row.original.isReversal ? <Badge tone="accent">{t("accounting.reversal")}</Badge> : row.original.reversedByEntryId ? <Badge tone="neutral">{t("accounting.reversed")}</Badge> : null) },
     ],
-    [t],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the decimals follow the currency list, which only loads once
+    [t, currencies.data],
   );
 
   const rows = entries.data?.pages.flatMap((page) => page.items) ?? [];
   const open = (id: string | null): void => { void navigate({ to: "/accounting/journal-entries", search: id ? { open: id } : {} }); };
   const detail = entry.data;
+  // The functional columns repeat the transaction ones when the entry is in the company's own currency.
+  const foreign = Boolean(detail && detail.currencyTc !== detail.currencyFc);
+  const tcMinor = minorUnitsOf(detail?.currencyTc);
+  const fcMinor = minorUnitsOf(detail?.currencyFc);
+  const total = (pick: (line: NonNullable<Entry["lines"]>[number]) => number | string): string => add("0", ...(detail?.lines ?? []).map(pick));
 
   return (
     <>
@@ -138,10 +148,10 @@ export function JournalBrowserPage() {
                     <TableHead>#</TableHead>
                     <TableHead>{t("accounting.account")}</TableHead>
                     <TableHead>{t("accounting.role")}</TableHead>
-                    <TableHead className="text-end">{t("accounting.debit")}</TableHead>
-                    <TableHead className="text-end">{t("accounting.credit")}</TableHead>
-                    <TableHead className="text-end">{t("accounting.debitFunctional")}</TableHead>
-                    <TableHead className="text-end">{t("accounting.creditFunctional")}</TableHead>
+                    <TableHead className="text-end">{`${t("accounting.debit")} (${detail.currencyTc})`}</TableHead>
+                    <TableHead className="text-end">{`${t("accounting.credit")} (${detail.currencyTc})`}</TableHead>
+                    {foreign ? <TableHead className="text-end">{`${t("accounting.debitFunctional")} (${detail.currencyFc})`}</TableHead> : null}
+                    {foreign ? <TableHead className="text-end">{`${t("accounting.creditFunctional")} (${detail.currencyFc})`}</TableHead> : null}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -153,14 +163,22 @@ export function JournalBrowserPage() {
                           {line.accountCode}
                         </Link>{" "}
                         {localized(line.accountName)}
+                        {localized(line.description) ? <p className="text-xs text-fg-muted" dir="auto">{localized(line.description)}</p> : null}
                       </TableCell>
-                      <TableCell dir="ltr">{line.accountRole}</TableCell>
-                      <TableNumberCell><Amount value={line.debitTc} /></TableNumberCell>
-                      <TableNumberCell><Amount value={line.creditTc} /></TableNumberCell>
-                      <TableNumberCell><Amount value={line.debitFc} /></TableNumberCell>
-                      <TableNumberCell><Amount value={line.creditFc} /></TableNumberCell>
+                      <TableCell dir="ltr">{line.isRounding ? t("accounting.roundingLine") : line.accountRole}</TableCell>
+                      <TableNumberCell>{compare(line.debitTc, 0) === 0 ? null : <Amount value={line.debitTc} minorUnits={tcMinor} />}</TableNumberCell>
+                      <TableNumberCell>{compare(line.creditTc, 0) === 0 ? null : <Amount value={line.creditTc} minorUnits={tcMinor} />}</TableNumberCell>
+                      {foreign ? <TableNumberCell>{compare(line.debitFc, 0) === 0 ? null : <Amount value={line.debitFc} minorUnits={fcMinor} />}</TableNumberCell> : null}
+                      {foreign ? <TableNumberCell>{compare(line.creditFc, 0) === 0 ? null : <Amount value={line.creditFc} minorUnits={fcMinor} />}</TableNumberCell> : null}
                     </TableRow>
                   ))}
+                  <TableRow className="font-semibold" data-testid="entry-totals">
+                    <TableCell colSpan={3}>{t("accounting.totals")}</TableCell>
+                    <TableNumberCell><Amount value={total((l) => l.debitTc)} minorUnits={tcMinor} /></TableNumberCell>
+                    <TableNumberCell><Amount value={total((l) => l.creditTc)} minorUnits={tcMinor} /></TableNumberCell>
+                    {foreign ? <TableNumberCell><Amount value={total((l) => l.debitFc)} minorUnits={fcMinor} /></TableNumberCell> : null}
+                    {foreign ? <TableNumberCell><Amount value={total((l) => l.creditFc)} minorUnits={fcMinor} /></TableNumberCell> : null}
+                  </TableRow>
                 </TableBody>
               </Table>
               {!detail.isReversal && !detail.reversedByEntryId ? (

@@ -73,17 +73,35 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await currency.click();
   await options.getByTestId("currency-option-IQD").click();
   await expect(currency).toHaveAttribute("data-value", "IQD");
+  // The account is picked from the chart; a code that is not an account says so before anything is saved.
+  await page.getByTestId("line-account-0").fill("9999");
+  await expect(page.getByTestId("line-account-0-problem")).toHaveText("No account with this code");
   await page.getByTestId("line-account-0").fill("6110");
+  await expect(page.getByTestId("line-account-0-problem")).toHaveCount(0);
   await page.getByTestId("line-debit-0").fill("1500000");
   await page.getByTestId("line-account-1").fill("2170");
   await page.getByTestId("line-credit-1").fill("1000000");
   await expect(page.getByTestId("journal-balance")).toHaveAttribute("data-state", "unbalanced");
   await expect(page.getByTestId("journal-balance")).toContainText("Out of balance by");
+  // A new line starts with the amount that balances the journal; left without an account it is not silently dropped.
+  await page.getByTestId("add-line").click();
+  await expect(page.getByTestId("line-credit-2")).toHaveValue("500000");
+  await expect(page.getByTestId("journal-balance")).toHaveAttribute("data-state", "balanced");
+  await page.getByTestId("save-journal").click();
+  await expect(page.getByRole("alert").filter({ hasText: "Line 3 has an amount or details but no account" })).toBeVisible();
+  await expect(page.getByTestId("journal-line-problem")).toBeVisible();
+  await page.getByRole("button", { name: "Remove line" }).last().click();
   await page.getByTestId("save-journal").click();
   await expect(page.getByTestId("journal-detail")).toContainText("Draft");
   await expect(page.getByTestId("journal-detail").getByTestId("journal-balance")).toHaveAttribute("data-state", "unbalanced");
   await expect(page.getByTestId("post-journal")).toBeDisabled();
-  await expect(page.getByTestId("submit-journal")).toBeDisabled();
+  // Without an approval step the draft posts directly: there is nothing to submit.
+  await expect(page.getByTestId("submit-journal")).toHaveCount(0);
+  // Cancelling asks first and can be taken back.
+  await page.getByTestId("cancel-journal").click();
+  await expect(page.getByTestId("confirm-cancel-journal")).toBeVisible();
+  await page.getByTestId("keep-journal").click();
+  await expect(page.getByTestId("journal-detail")).toContainText("Draft");
   await page.getByTestId("edit-journal").click();
   await page.getByTestId("line-credit-1").fill("1500000");
   await expect(page.getByTestId("journal-balance")).toHaveAttribute("data-state", "balanced");

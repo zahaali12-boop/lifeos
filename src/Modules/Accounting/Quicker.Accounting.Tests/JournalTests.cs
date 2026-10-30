@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Quicker.Accounting.Application;
@@ -131,6 +132,56 @@ public sealed class JournalTests(ApiHostFixture host)
         var rent = trial.GetProperty("rows").EnumerateArray().Single(static r => r.GetProperty("accountCode").GetString() == "6110");
         rent.GetProperty("closing").GetDecimal().ShouldBe(200m);
         trial.GetProperty("totals").GetProperty("closing").GetDecimal().ShouldBe(0m);
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
+    public async Task What_posting_would_refuse_is_refused_at_submit_and_the_preparer_cannot_approve()
+    {
+        var ws = await Api.SignupAsync();
+        using var owner = Api.ClientFor(ws.AccessToken);
+        var companyId = await CompanyReadyAsync(owner, "RDY", "IQD");
+        await owner.PutAsync($"/api/v1/organization/companies/{companyId}/settings/{ManualJournalService.ApprovalSetting}", new { value = "required", valueType = "string" });
+        var journals = $"/api/v1/accounting/companies/{companyId}/journals";
+
+        // Rent requires a cost centre: without one the journal is refused at submit, naming the line, instead of
+        // waiting for an approval and failing only when someone posts it.
+        var draft = await owner.PostAsync(journals, new { postingDate = "2026-09-22", currency = "IQD", lines = new[] { Line("6110", debit: 100m), Line("2170", credit: 100m) } });
+        var journalId = draft.GetProperty("id").GetGuid();
+        var rent = draft.GetProperty("lines")[0].GetProperty("accountId").GetGuid();
+        await owner.PutAsync($"/api/v1/accounting/accounts/{rent}/dimension-rules", new[] { new { dimensionCode = "COST_CENTER", rule = "required" } });
+        var submit = $"/api/v1/accounting/journals/{journalId}/submit";
+        var refused = await owner.PostErrorAsync(submit, new { }, HttpStatusCode.UnprocessableEntity);
+        refused.Code.ShouldBe("account.dimension_required");
+        refused.Problem.GetProperty("why").GetProperty("line").GetInt32().ShouldBe(1);
+        (await owner.GetOkAsync($"/api/v1/accounting/journals/{journalId}")).GetProperty("status").GetString().ShouldBe("draft");
+
+        // A line without an amount, and a control account without its customer, are refused the same way.
+        var (_, centre) = await owner.DimensionValueAsync("COST_CENTER", "CC-RDY");
+        object Rent(decimal debit) => new { accountCode = "6110", debit, credit = 0m, dimensions = new { COST_CENTER = centre } };
+        await owner.PutAsync($"/api/v1/accounting/journals/{journalId}", new { postingDate = "2026-09-22", currency = "IQD", lines = new[] { Rent(100m), Line("2170", credit: 100m), Line("6120") } });
+        var zero = await owner.PostErrorAsync(submit, new { }, HttpStatusCode.UnprocessableEntity);
+        zero.Code.ShouldBe("journal.line_zero");
+        zero.Problem.GetProperty("why").GetProperty("line").GetInt32().ShouldBe(3);
+        await owner.PutAsync($"/api/v1/accounting/journals/{journalId}", new { postingDate = "2026-09-22", currency = "IQD", lines = new[] { Rent(100m), Line("1210", credit: 100m) } });
+        var control = await owner.PostErrorAsync(submit, new { }, HttpStatusCode.UnprocessableEntity);
+        control.Code.ShouldBe("account.manual_posting_blocked");
+        control.Problem.GetProperty("why").GetProperty("line").GetInt32().ShouldBe(2);
+
+        // Fixed, it is submitted by a colleague; the owner prepared it, so the owner may not approve it either.
+        await owner.PutAsync($"/api/v1/accounting/journals/{journalId}", new { postingDate = "2026-09-22", currency = "IQD", lines = new[] { Rent(100m), Line("2170", credit: 100m) } });
+        var role = await owner.PostAsync("/api/v1/roles", new { code = "journal_clerk", name = new { en = "Journal clerk", ar = "كاتب القيود" }, description = "", grants = new[] { "accounting.journal.read", "accounting.journal.manage" } });
+        var email = $"clerk-{ws.Slug}@example.test";
+        await owner.PostAsync("/api/v1/users/invite", new { email, displayName = "Clerk", roleIds = new[] { role.GetProperty("id").GetGuid() } }, HttpStatusCode.Created);
+        var token = Api.Emails.LastTo(email).ShouldNotBeNull().TextBody.Split("token=")[1].Trim();
+        var accepted = await (await Api.Client.PostAsJsonAsync("/api/v1/auth/invitations/accept", new { token, password = "member-passphrase-long-enough" }, ApiFixture.Json)).ReadJsonAsync();
+        using var clerk = Api.ClientFor(accepted.GetProperty("accessToken").GetString()!);
+        (await clerk.PostAsync(submit, new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("pending_approval");
+        (await owner.PostErrorAsync($"/api/v1/accounting/journals/{journalId}/approve", new { }, HttpStatusCode.Conflict)).Code.ShouldBe("journal.approve_own");
+
+        // An accrual reverses after it is booked, even when the request leaves the auto-reverse flag to the kind.
+        (await owner.PostErrorAsync(journals, new { kind = "accrual", postingDate = "2026-09-30", autoReverseOn = "2026-09-30", currency = "IQD", lines = new[] { Rent(5m), Line("2170", credit: 5m) } }, HttpStatusCode.UnprocessableEntity))
+            .Code.ShouldBe("journal.auto_reverse_date");
         await owner.AssertInvariantsAsync();
     }
 

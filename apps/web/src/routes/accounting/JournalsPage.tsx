@@ -8,8 +8,8 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { currentLanguage } from "../../i18n";
-import { add, compare, isDecimal } from "../../lib/decimal";
+import { add, compare, isDecimal, subtract } from "../../lib/decimal";
+import { useCurrencies } from "../../lib/currencies";
 import { journalBalance } from "../../lib/journalBalance";
 import { formatDate, formatMoney, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -19,7 +19,7 @@ import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type 
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs } from "../inventory/shared";
 import { JournalImportDialog } from "./JournalImport";
-import { costCentre, CostCentreSelect, costCentreText, emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
+import { AccountCodeField, costCentre, CostCentreSelect, costCentreText, emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
 import { CurrencyField } from "../CurrencyField";
 
@@ -29,12 +29,14 @@ interface LineForm extends LineDetails {
   accountCode: string;
   debit: string;
   credit: string;
-  /** The line's description in every language it has; the field edits the current language's. */
-  descriptionMap: Record<string, string>;
   showDetails: boolean;
 }
 
-const emptyLine = (): LineForm => ({ accountCode: "", debit: "", credit: "", ...emptyDetails(), descriptionMap: {}, showDetails: false });
+const emptyLine = (): LineForm => ({ accountCode: "", debit: "", credit: "", ...emptyDetails(), showDetails: false });
+
+/** A line the user has not touched: no account, no amount, no details. Such lines are left out when saving. */
+const isBlankLine = (line: LineForm): boolean =>
+  !line.accountCode.trim() && !line.debit.trim() && !line.credit.trim() && !line.description.trim() && !line.subledgerRef && Object.keys(line.dimensions).length === 0;
 
 interface JournalForm {
   kind: string;
@@ -67,8 +69,7 @@ function toForm(journal: Journal): JournalForm {
       accountCode: line.accountCode,
       debit: compare(line.debit, 0) > 0 ? String(line.debit) : "",
       credit: compare(line.credit, 0) > 0 ? String(line.credit) : "",
-      description: line.description[currentLanguage()] ?? "",
-      descriptionMap: line.description,
+      description: localized(line.description),
       dimensions: { ...line.dimensions },
       subledgerType: line.subledgerType ?? "",
       subledgerRef: line.subledgerRef ?? "",
@@ -89,8 +90,10 @@ function toRequest(form: JournalForm): components["schemas"]["SaveJournalRequest
     autoReverseOn: form.kind === "accrual" && form.autoReverseOn ? form.autoReverseOn : null,
     rateType: "spot",
     customFields: form.customFields,
-    lines: form.lines.filter((line) => line.accountCode.trim()).map((line) => {
-      const description = Object.fromEntries(Object.entries({ ...line.descriptionMap, [currentLanguage()]: line.description.trim() }).filter(([, text]) => text));
+    lines: form.lines.filter((line) => !isBlankLine(line)).map((line) => {
+      // Like the journal's, a line's description is one text in any language, shown the same in every language.
+      const text = line.description.trim();
+      const description = text ? { en: text, ar: text } : {};
       return {
         accountCode: line.accountCode.trim(),
         debit: line.debit || "0",
@@ -104,15 +107,20 @@ function toRequest(form: JournalForm): components["schemas"]["SaveJournalRequest
   };
 }
 
+/** A form line's number among the lines sent to the server (blank lines are left out), as the server's messages count. */
+function sentNumber(lines: LineForm[], index: number): number | null {
+  return isBlankLine(lines[index] ?? emptyLine()) ? null : lines.slice(0, index + 1).filter((line) => !isBlankLine(line)).length;
+}
+
 /** The side's total as an exact decimal; amounts still being typed (not yet a number) count as nothing. */
 function sum(lines: LineForm[], side: "debit" | "credit"): string {
   return add("0", ...lines.map((line) => line[side].trim()).filter(isDecimal));
 }
 
-function BalanceNote({ kind, debit, credit, currency }: { kind: string; debit: string | number; credit: string | number; currency: string }) {
+function BalanceNote({ kind, debit, credit, currency, minorUnits }: { kind: string; debit: string | number; credit: string | number; currency: string; minorUnits: number }) {
   const { t } = useTranslation();
   const { state, difference } = journalBalance(kind, debit, credit);
-  const amount = formatMoney(difference.replace(/^-/u, ""), currency);
+  const amount = formatMoney(difference.replace(/^-/u, ""), currency, minorUnits);
   const tone = state === "balanced" ? "text-success" : state === "unbalanced" ? "text-danger" : "text-fg-muted";
   const text = state === "balanced" ? t("accounting.balanced")
     : state === "empty" ? t("accounting.noAmounts")
@@ -140,7 +148,20 @@ export function JournalsPage() {
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [detailTab, setDetailTab] = useState("lines");
+  const [cancelling, setCancelling] = useState(false);
+  const [correcting, setCorrecting] = useState(false);
   const openId = search.open;
+  const currencies = useCurrencies();
+  /** Amounts show as many decimals as the journal's currency has (3 for IQD, KWD, JOD; 0 for JPY), never a fixed two. */
+  const minorUnitsOf = (code: string | undefined): number => Number(currencies.data?.find((c) => c.code === code)?.minorUnits ?? 2);
+  // Whether this company sends journals for approval before posting: then a draft is submitted, otherwise posted directly.
+  const companySettings = useQuery({
+    queryKey: ["settings", companyId],
+    enabled: Boolean(companyId),
+    retry: false,
+    queryFn: async () => unwrap(await api.GET("/api/v1/organization/companies/{companyId}/settings", { params: { path: { companyId } } })),
+  });
+  const approvalRequired = companySettings.data?.find((s) => s.key === "accounting.journals.approval")?.value === "required";
   const journal = useQuery({
     queryKey: ["journal", openId],
     enabled: Boolean(openId),
@@ -168,7 +189,15 @@ export function JournalsPage() {
       await queryClient.invalidateQueries({ queryKey: ["journal", id] });
     }
   };
-  const open = (id: string | null): void => { setDetailTab("lines"); void navigate({ to: "/accounting/journals", search: id ? { open: id } : {} }); };
+  const open = (id: string | null): void => {
+    // A message, reason or pending cancellation belongs to the journal it was given for, not the next one opened.
+    setDetailTab("lines");
+    setProblem(null);
+    setReason("");
+    setCancelling(false);
+    setCorrecting(false);
+    void navigate({ to: "/accounting/journals", search: id ? { open: id } : {} });
+  };
 
   const save = useMutation({
     mutationFn: async (input: { id: string | null; form: JournalForm }) =>
@@ -204,6 +233,8 @@ export function JournalsPage() {
     onSuccess: async (result) => {
       setProblem(null);
       setReason("");
+      setCancelling(false);
+      setCorrecting(false);
       await refresh(openId);
       if (result.id !== openId) {
         open(result.id);
@@ -218,25 +249,64 @@ export function JournalsPage() {
       { id: "postingDate", accessorKey: "postingDate", header: t("accounting.date"), size: 120, cell: ({ row }) => formatDate(row.original.postingDate) },
       { id: "kind", accessorKey: "kind", header: t("accounting.kind"), size: 110, cell: ({ row }) => t(`accounting.kinds.${row.original.kind}`) },
       { id: "description", accessorFn: (row) => localized(row.description), header: t("accounting.description"), size: 260 },
-      { id: "total", accessorKey: "totalDebit", header: t("accounting.total"), size: 140, cell: ({ row }) => <Amount value={row.original.totalDebit} /> },
+      { id: "reference", accessorFn: (row) => row.reference ?? "", header: t("accounting.reference"), size: 130, cell: ({ row }) => <span dir="auto">{row.original.reference ?? ""}</span> },
+      { id: "total", accessorKey: "totalDebit", header: t("accounting.total"), size: 140, cell: ({ row }) => <Amount value={row.original.totalDebit} minorUnits={minorUnitsOf(row.original.currency)} /> },
       { id: "currency", accessorKey: "currency", header: t("accounting.currency"), size: 90 },
       { id: "status", accessorKey: "status", header: t("common.status"), size: 140, cell: ({ row }) => <StatusBadge status={row.original.status} label={t(`accounting.statuses.${row.original.status}`)} /> },
     ],
-    [t],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the decimals follow the currency list, which only loads once
+    [t, currencies.data],
   );
 
   const rows = journals.data?.pages.flatMap((page) => page.items) ?? [];
   const detail = journal.data;
   const editable = detail?.status === "draft" || detail?.status === "rejected";
   const detailBalance = detail ? journalBalance(detail.kind, detail.totalDebit, detail.totalCredit).state : "empty";
+  const detailMinor = minorUnitsOf(detail?.currency);
+  // A posted journal's entry may since have been reversed (an accrual on its date, or by hand in the journal entries).
+  const postedEntry = useQuery({
+    queryKey: ["journal-entry", detail?.journalEntryId],
+    enabled: Boolean(detail?.journalEntryId),
+    queryFn: async () => unwrap(await api.GET("/api/v1/accounting/journal-entries/{entryId}", { params: { path: { entryId: detail?.journalEntryId ?? "" } } })),
+  });
+  const reversedBy = postedEntry.data?.reversedByEntryId ?? null;
   const canGoFurther = detailBalance === "balanced" || detailBalance === "opening";
 
   const submitForm = (event: FormEvent): void => {
     event.preventDefault();
-    if (editing) {
-      save.mutate(editing);
+    if (!editing) {
+      return;
     }
+    // A line with an amount or details but no account would otherwise vanish on saving, and the journal with it.
+    const orphan = editing.form.lines.findIndex((line) => !isBlankLine(line) && !line.accountCode.trim());
+    if (orphan >= 0) {
+      setProblem({ message: t("accounting.lineWithoutAccount", { line: orphan + 1 }), fields: {}, why: { line: sentNumber(editing.form.lines, orphan) } });
+      return;
+    }
+    save.mutate(editing);
   };
+  /** A new line: when the journal is out of balance it starts with the amount that balances it, on the side that does. */
+  const addLine = (): void => {
+    if (!editing) {
+      return;
+    }
+    const difference = subtract(sum(editing.form.lines, "debit"), sum(editing.form.lines, "credit"));
+    const side = compare(difference, 0);
+    const line = emptyLine();
+    if (editing.form.kind !== "opening" && side !== 0) {
+      if (side > 0) {
+        line.credit = difference;
+      } else {
+        line.debit = subtract("0", difference);
+      }
+    }
+    setEditing({ ...editing, form: { ...editing.form, lines: [...editing.form.lines, line] } });
+  };
+  /** The line the server refused, when it said which: it numbers from 1 among the lines sent (blank lines are not). */
+  const problemLine = typeof problem?.why?.line === "number" ? problem.why.line : null;
+  /** Problems a field of the editor shows next to itself; any other is shown at the top, never swallowed. */
+  const shownFields = ["postingDate", "currency", "autoReverseOn"];
+  const editorShowsField = Boolean(problem && Object.keys(problem.fields).some((key) => shownFields.includes(key) || key.startsWith("customFields.")));
   const updateLine = (index: number, patch: Partial<LineForm>): void => {
     if (!editing) {
       return;
@@ -311,6 +381,32 @@ export function JournalsPage() {
                 ) : null}
                 {detail.rejectionReason ? <span className="text-danger">{t("accounting.rejectedBecause", { reason: detail.rejectionReason })}</span> : null}
               </div>
+              <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-3" data-testid="journal-facts">
+                <div>
+                  <dt className="text-fg-muted">{t("accounting.currency")}</dt>
+                  <dd dir="ltr">{detail.currency}</dd>
+                </div>
+                <div>
+                  <dt className="text-fg-muted">{t("accounting.reference")}</dt>
+                  <dd dir="auto">{detail.reference ?? "—"}</dd>
+                </div>
+                {detail.autoReverse && detail.autoReverseOn ? (
+                  <div>
+                    <dt className="text-fg-muted">{t("accounting.autoReverseOn")}</dt>
+                    <dd>{formatDate(detail.autoReverseOn)}</dd>
+                  </div>
+                ) : null}
+                {reversedBy ? (
+                  <div>
+                    <dt className="text-fg-muted">{t("accounting.reversed")}</dt>
+                    <dd>
+                      <Link to="/accounting/journal-entries" search={{ open: reversedBy }} className="underline-offset-2 hover:underline" data-testid="journal-reversed-by">
+                        {t("accounting.viewReversal")}
+                      </Link>
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
               <Tabs
                 value={detailTab}
                 onChange={setDetailTab}
@@ -341,18 +437,19 @@ export function JournalsPage() {
                         <LineDetailsSummary dimensions={Object.fromEntries(Object.entries(line.dimensions).filter(([code]) => code !== costCentre))} subledgerType={line.subledgerType} subledgerRef={line.subledgerRef} description={line.description} reference={reference} />
                       </TableCell>
                       {hasCostCentre ? <TableCell data-testid="journal-line-cost-centre">{costCentreText(line.dimensions, reference)}</TableCell> : null}
-                      <TableNumberCell><Amount value={line.debit} /></TableNumberCell>
-                      <TableNumberCell><Amount value={line.credit} /></TableNumberCell>
+                      {/* A line has one side; the other stays empty rather than reading 0.00. */}
+                      <TableNumberCell>{compare(line.debit, 0) === 0 ? null : <Amount value={line.debit} minorUnits={detailMinor} />}</TableNumberCell>
+                      <TableNumberCell>{compare(line.credit, 0) === 0 ? null : <Amount value={line.credit} minorUnits={detailMinor} />}</TableNumberCell>
                     </TableRow>
                   ))}
                   <TableRow className="font-semibold">
                     <TableCell colSpan={hasCostCentre ? 3 : 2}>{t("accounting.totals")}</TableCell>
-                    <TableNumberCell><Amount value={detail.totalDebit} /></TableNumberCell>
-                    <TableNumberCell><Amount value={detail.totalCredit} /></TableNumberCell>
+                    <TableNumberCell><Amount value={detail.totalDebit} minorUnits={detailMinor} /></TableNumberCell>
+                    <TableNumberCell><Amount value={detail.totalCredit} minorUnits={detailMinor} /></TableNumberCell>
                   </TableRow>
                 </TableBody>
               </Table>
-              {detail.status !== "posted" && detail.status !== "cancelled" ? <BalanceNote kind={detail.kind} debit={detail.totalDebit} credit={detail.totalCredit} currency={detail.currency} /> : null}
+              {detail.status !== "posted" && detail.status !== "cancelled" ? <BalanceNote kind={detail.kind} debit={detail.totalDebit} credit={detail.totalCredit} currency={detail.currency} minorUnits={detailMinor} /> : null}
               <CustomFieldValuesList entityType="manual_journal" values={detail.customFields} />
               <AttachmentsPanel entityType="manual_journal" entityId={detail.id} />
               </>
@@ -360,9 +457,14 @@ export function JournalsPage() {
               {detailTab === "discussion" ? <RecordDiscussion entityType="manual_journal" entityId={detail.id} files={false} /> : null}
               {detailTab === "history" ? <RecordHistory entityType="manual_journal" entityId={detail.id} /> : null}
               <FormError message={problem?.message ?? null} />
-              {detail.status === "pending_approval" || detail.status === "posted" ? (
-                <Field label={t("common.reason")}>
+              {detail.status === "pending_approval" ? (
+                <Field label={t("accounting.rejectReason")}>
                   <TextField value={reason} onChange={(e) => { setReason(e.target.value); }} data-testid="journal-reason" />
+                </Field>
+              ) : null}
+              {correcting ? (
+                <Field label={t("accounting.correctionReason")} description={t("accounting.correctionHint")} required>
+                  <TextField value={reason} onChange={(e) => { setReason(e.target.value); }} required data-testid="journal-reason" />
                 </Field>
               ) : null}
               <DialogFooter>
@@ -371,14 +473,14 @@ export function JournalsPage() {
                     {t("accounting.edit")}
                   </Button>
                 ) : null}
-                {editable ? (
-                  <Button variant="secondary" onClick={() => { act.mutate("submit"); }} loading={act.isPending} disabled={!canGoFurther} data-testid="submit-journal">
-                    {t("accounting.submit")}
+                {editable && (approvalRequired || detail.status === "rejected") ? (
+                  <Button onClick={() => { act.mutate("submit"); }} loading={act.isPending} disabled={!canGoFurther} data-testid="submit-journal">
+                    {approvalRequired ? t("accounting.submitForApproval") : t("accounting.submit")}
                   </Button>
                 ) : null}
                 {detail.status === "pending_approval" ? (
                   <>
-                    <Button variant="secondary" onClick={() => { act.mutate("reject"); }} loading={act.isPending}>
+                    <Button variant="secondary" onClick={() => { act.mutate("reject"); }} loading={act.isPending} disabled={!reason.trim()} data-testid="reject-journal">
                       {t("accounting.reject")}
                     </Button>
                     <Button onClick={() => { act.mutate("approve"); }} loading={act.isPending} data-testid="approve-journal">
@@ -386,20 +488,42 @@ export function JournalsPage() {
                     </Button>
                   </>
                 ) : null}
-                {detail.status === "draft" || detail.status === "approved" ? (
+                {(detail.status === "draft" && !approvalRequired) || detail.status === "approved" ? (
                   <Button onClick={() => { act.mutate("post"); }} loading={act.isPending} disabled={!canGoFurther} data-testid="post-journal">
                     {t("accounting.post")}
                   </Button>
                 ) : null}
-                {detail.status !== "posted" && detail.status !== "cancelled" ? (
-                  <Button variant="secondary" onClick={() => { act.mutate("cancel"); }} loading={act.isPending}>
-                    {t("common.cancel")}
+                {detail.status !== "posted" && detail.status !== "cancelled" && !cancelling ? (
+                  // Cancelling a journal cannot be undone, and "Cancel" next to a dialog reads as "close": it asks first.
+                  <Button variant="secondary" onClick={() => { setCancelling(true); }} data-testid="cancel-journal">
+                    {t("accounting.cancelJournal")}
                   </Button>
                 ) : null}
-                {detail.status === "posted" && !detail.correctedByJournalId ? (
-                  <Button variant="secondary" onClick={() => { act.mutate("correct"); }} loading={act.isPending} data-testid="correct-journal">
+                {cancelling ? (
+                  <>
+                    <span className="me-auto text-sm text-danger" role="alert">{t("accounting.cancelJournalWarning")}</span>
+                    <Button variant="secondary" onClick={() => { setCancelling(false); }} data-testid="keep-journal">
+                      {t("accounting.keepJournal")}
+                    </Button>
+                    <Button variant="danger" onClick={() => { act.mutate("cancel"); }} loading={act.isPending} data-testid="confirm-cancel-journal">
+                      {t("accounting.confirmCancelJournal")}
+                    </Button>
+                  </>
+                ) : null}
+                {detail.status === "posted" && !detail.correctedByJournalId && !reversedBy && !correcting ? (
+                  <Button variant="secondary" onClick={() => { setCorrecting(true); }} data-testid="correct-journal">
                     {t("accounting.correct")}
                   </Button>
+                ) : null}
+                {correcting ? (
+                  <>
+                    <Button variant="secondary" onClick={() => { setCorrecting(false); setReason(""); }}>
+                      {t("accounting.keepJournal")}
+                    </Button>
+                    <Button onClick={() => { act.mutate("correct"); }} loading={act.isPending} disabled={!reason.trim()} data-testid="confirm-correct-journal">
+                      {t("accounting.createCorrection")}
+                    </Button>
+                  </>
                 ) : null}
               </DialogFooter>
             </div>
@@ -414,7 +538,7 @@ export function JournalsPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold">{editing.id ? t("accounting.editJournal") : t("accounting.newJournal")}</DialogTitle>
               </DialogHeader>
-              <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
+              <FormError message={problem && !editorShowsField ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("accounting.kind")}>
                   <SelectField value={editing.form.kind} onChange={(e) => { setEditing({ ...editing, form: { ...editing.form, kind: e.target.value } }); }}>
@@ -459,10 +583,15 @@ export function JournalsPage() {
                     const extras = Object.keys(line.dimensions).filter((code) => code !== costCentre).length + (line.subledgerRef ? 1 : 0) + (line.description.trim() ? 1 : 0);
                     return (
                     <Fragment key={index}>
-                    <TableRow>
+                    <TableRow className={problemLine === sentNumber(editing.form.lines, index) ? "bg-danger-soft" : undefined} data-testid={problemLine === sentNumber(editing.form.lines, index) ? "journal-line-problem" : undefined}>
                       <TableCell>
-                        <TextField aria-label={t("accounting.accountCode")} value={line.accountCode} onChange={(e) => { updateLine(index, { accountCode: e.target.value, ...(reference.accounts.get(e.target.value.trim())?.subledgerType === line.subledgerType ? {} : { subledgerType: "", subledgerRef: "" }) }); }} dir="ltr" data-testid={`line-account-${index}`} />
-                        {account ? <p className="mt-0.5 truncate text-xs text-fg-muted">{localized(account.name)}</p> : null}
+                        <AccountCodeField
+                          label={t("accounting.accountOfLine", { line: index + 1 })}
+                          value={line.accountCode}
+                          accounts={reference.accounts}
+                          onChange={(code) => { updateLine(index, { accountCode: code, ...(reference.accounts.get(code.trim())?.subledgerType === line.subledgerType ? {} : { subledgerType: "", subledgerRef: "" }) }); }}
+                          testId={`line-account-${String(index)}`}
+                        />
                       </TableCell>
                       {hasCostCentre ? (
                         <TableCell>
@@ -516,19 +645,19 @@ export function JournalsPage() {
                   })}
                   <TableRow className="font-semibold">
                     <TableCell>
-                      <Button type="button" variant="secondary" onClick={() => { setEditing({ ...editing, form: { ...editing.form, lines: [...editing.form.lines, emptyLine()] } }); }} data-testid="add-line">
+                      <Button type="button" variant="secondary" onClick={addLine} data-testid="add-line">
                         <Plus aria-hidden="true" />
                         {t("accounting.addLine")}
                       </Button>
                     </TableCell>
                     {hasCostCentre ? <TableCell /> : null}
-                    <TableNumberCell><Amount value={sum(editing.form.lines, "debit")} /></TableNumberCell>
-                    <TableNumberCell><Amount value={sum(editing.form.lines, "credit")} /></TableNumberCell>
+                    <TableNumberCell><Amount value={sum(editing.form.lines, "debit")} minorUnits={minorUnitsOf(editing.form.currency)} /></TableNumberCell>
+                    <TableNumberCell><Amount value={sum(editing.form.lines, "credit")} minorUnits={minorUnitsOf(editing.form.currency)} /></TableNumberCell>
                     <TableCell />
                   </TableRow>
                 </TableBody>
               </Table>
-              <BalanceNote kind={editing.form.kind} debit={sum(editing.form.lines, "debit")} credit={sum(editing.form.lines, "credit")} currency={editing.form.currency} />
+              <BalanceNote kind={editing.form.kind} debit={sum(editing.form.lines, "debit")} credit={sum(editing.form.lines, "credit")} currency={editing.form.currency} minorUnits={minorUnitsOf(editing.form.currency)} />
               <CustomFieldsFieldset entityType="manual_journal" values={editing.form.customFields} onChange={(customFields) => { setEditing({ ...editing, form: { ...editing.form, customFields } }); }} errors={problem?.fields} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setEditing(null); }}>

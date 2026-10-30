@@ -1831,7 +1831,25 @@
       "automatic": "تلقائي"
     },
     "costCentre": "مركز التكلفة",
-    "costCentreOfLine": "مركز التكلفة للسطر {line}"
+    "costCentreOfLine": "مركز التكلفة للسطر {line}",
+    "unknownAccount": "لا يوجد حساب بهذا الرمز",
+    "headerAccount": "حساب رئيسي: اختر أحد الحسابات التابعة له",
+    "inactiveAccount": "هذا الحساب غير نشط",
+    "documentsOnlyAccount": "يُرحَّل إلى هذا الحساب من المستندات فقط، لا من القيود",
+    "controlAccountHint": "حساب رقابي: حدّد العميل أو المورد في تفاصيل السطر",
+    "lineWithoutAccount": "في السطر {line} مبلغ أو تفاصيل بلا حساب. اختر حساباً أو احذف السطر.",
+    "accountOfLine": "حساب السطر {line}",
+    "submitForApproval": "تقديم للاعتماد",
+    "cancelJournal": "إلغاء القيد",
+    "cancelJournalWarning": "سيُلغى القيد ولن يمكن ترحيله بعد ذلك. لا يمكن التراجع عن هذا.",
+    "keepJournal": "إبقاء القيد",
+    "confirmCancelJournal": "نعم، ألغِ القيد",
+    "viewReversal": "عرض القيد العكسي",
+    "roundingLine": "فرق تقريب",
+    "rejectReason": "السبب (مطلوب للرفض)",
+    "correctionReason": "لماذا يحتاج إلى تصحيح؟",
+    "correctionHint": "تُنشأ نسخة من هذا القيد كمسودة في أول فترة مفتوحة لتعدّلها. ترحيلها يعكس هذا القيد ويقيّد القيد المصحَّح.",
+    "createCorrection": "إنشاء مسودة التصحيح"
   },
   "mobile": {
     "receive": {
