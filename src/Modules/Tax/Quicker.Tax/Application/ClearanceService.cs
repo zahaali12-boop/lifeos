@@ -23,8 +23,14 @@ public sealed class TaxClearanceRegistry(IEnumerable<ITaxClearanceProvider> prov
 /// No adapter (ZATCA, Peppol, ETA) ships yet, so a regime that names a scheme is refused until one is: this wires the
 /// interface end to end without claiming compliance no adapter provides.
 /// </summary>
-public sealed class ClearanceService(TaxDbContext db, UblExportService ubl, ITaxClearanceRegistry registry)
+public sealed class ClearanceService(TaxDbContext db, UblExportService ubl, ITaxClearanceRegistry registry) : ITaxClearance
 {
+    async Task<Result<ClearanceOutcome>> ITaxClearance.SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, CancellationToken cancellationToken)
+    {
+        var submitted = await SubmitAsync(sourceDocumentType, sourceDocumentId, cancellationToken);
+        return submitted.IsFailure ? submitted.Error! : new ClearanceOutcome(submitted.Value.Scheme, submitted.Value.Status, submitted.Value.SubmissionId, submitted.Value.QrPayload, submitted.Value.Messages);
+    }
+
     public async Task<Result<ClearanceSubmission>> SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, CancellationToken cancellationToken)
     {
         var exported = await ubl.ExportAsync(sourceDocumentType, sourceDocumentId, cancellationToken);

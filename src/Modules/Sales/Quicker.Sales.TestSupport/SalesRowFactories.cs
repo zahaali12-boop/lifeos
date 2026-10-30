@@ -28,6 +28,22 @@ public static class SalesRowFactories
         IsolationRegistry.Register("app.sls_shipment_package_lines", static async (c, tx, t) => new RowRef("app.sls_shipment_package_lines", $"id = '{(await PackageAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.sls_invoices", static async (c, tx, t) => new RowRef("app.sls_invoices", $"id = '{(await InvoiceAsync(c, tx, t)).Invoice}'"));
         IsolationRegistry.Register("app.sls_invoice_lines", static async (c, tx, t) => new RowRef("app.sls_invoice_lines", $"id = '{(await InvoiceAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.sls_recurring_invoices", static async (c, tx, t) =>
+        {
+            var company = await CompanyAsync(c, tx, t);
+            var partner = await PartnerAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.sls_recurring_invoices (tenant_id, id, company_id, partner_id, code, cron, time_zone, currency) VALUES (@t, @id, @company, @partner, @code, '0 9 1 * *', 'Asia/Baghdad', 'IQD')", new { t, id, company, partner, code = Suffix(id) }, tx);
+            return new RowRef("app.sls_recurring_invoices", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.sls_commission_entries", static async (c, tx, t) =>
+        {
+            var (invoice, line) = await InvoiceAsync(c, tx, t);
+            var company = await c.QuerySingleAsync<Guid>("SELECT company_id FROM app.sls_invoices WHERE tenant_id = @t AND id = @invoice", new { t, invoice }, tx);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.sls_commission_entries (tenant_id, id, company_id, invoice_id, invoice_line_id, sales_rep_id, plan_id, posting_date, basis, basis_amount, commission_amount, currency) VALUES (@t, @id, @company, @invoice, @line, @rep, @plan, '2026-09-22', 'revenue', 100, 2, 'IQD')", new { t, id, company, invoice, line, rep = Guid.CreateVersion7(), plan = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.sls_commission_entries", $"id = '{id}'");
+        });
     }
 
     private static async Task<(Guid Invoice, Guid Line)> InvoiceAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

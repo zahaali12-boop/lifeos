@@ -2033,7 +2033,7 @@ sketch's `reverses_id`, `customer_reference`, a `cancelled` status for a draft t
 kind `shipment | order | item | service | invoice` carrying `shipment_line_id`, `order_line_id` or the credited
 `invoice_line_id`, an `account_role` instead of an `account_id` for service lines, `quantity_base`, `qty_credited`
 and `net_credited`; `sls_order_lines.net_invoiced` and `sls_shipment_lines.qty_invoiced` record what the invoices
-took. `return_id`, `recurring_template_id`, `deferral_schedule_id` and `sle_id` wait for 5.6b and 5.8. The other
+took. 5.6b (A-160, migration `V0054`) adds `recurring_invoice_id`, the e-invoice columns (`einvoice_scheme`, `einvoice_submission_id`, `einvoice_qr`, `einvoice_messages`, `einvoice_submitted_at`) on the invoice and `deferral_periods`/`deferral_starts_on`/`deferral_schedule_id` on the line (the schedule itself is Accounting's `gl_deferral_schedules`); `sls_recurring_invoices` replaces the sketch's `sls_recurring_templates` (keyed by `partner_id`, lines as json line requests, `auto_post`, no `auto_email` until the print pipeline) and `sls_commission_entries` is built with `plan_id`, `basis`, `posting_date`, a `company_id` and a status of `accrued | reversed` (payable and paid come with the commission settlement of 5.7). `return_id` and `sle_id` wait for 5.8. The other
 `sls_*` tables below are still the Phase-0 sketch, not yet built; expect the same corrections on each as it is
 implemented.
 

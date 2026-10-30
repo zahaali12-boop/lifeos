@@ -137,7 +137,7 @@ public sealed record TaxDocumentRequest(
 public sealed record TaxLineDetermination(string Key, string Reason, Guid? TaxCodeId, string? TaxCode, Guid? RuleId, string? CertificateNumber, Guid? ItemTaxGroupId);
 
 /// <summary>A document taxed: its lines, per-code summary and totals, and why each line took its code. The rounding level is the regime's or the company's, whichever asks for document level (ADR-0005).</summary>
-public sealed record TaxedDocumentResult(TaxedDocument Document, IReadOnlyList<TaxLineDetermination> Determinations, Guid? RegimeId, string? RegimeCode, Guid? PartnerTaxGroupId);
+public sealed record TaxedDocumentResult(TaxedDocument Document, IReadOnlyList<TaxLineDetermination> Determinations, Guid? RegimeId, string? RegimeCode, Guid? PartnerTaxGroupId, string? EinvoicingScheme = null);
 
 /// <summary>One line to tax: its amount on the document's basis (net when prices exclude tax, gross when they include it).</summary>
 public sealed record TaxLineInput(string Key, decimal Amount, TaxCodeInfo? Code);
@@ -218,3 +218,16 @@ public interface ITaxClearanceProvider
 public sealed record ClearanceDocument(Guid DocumentId, string DocumentNumber, string Xml, string? PreviousHash);
 
 public sealed record ClearanceResult(string Status, string? SubmissionId, string? Hash, string? QrPayload, IReadOnlyList<string> Messages);
+
+/// <summary>What a clearance scheme answered for a document: its status in the scheme's own words (for example cleared, reported, rejected), the submission id, the QR payload to print and any messages.</summary>
+public sealed record ClearanceOutcome(string Scheme, string Status, string? SubmissionId, string? QrPayload, IReadOnlyList<string> Messages);
+
+/// <summary>
+/// Clearance of a posted document with its regime's e-invoicing scheme, for the documents that carry an e-invoice
+/// status (sales invoices and credit notes, 5.6): <c>tax.clearance_not_required</c> when the regime names no scheme,
+/// <c>tax.clearance_not_configured</c> while no adapter is registered for it.
+/// </summary>
+public interface ITaxClearance
+{
+    Task<Result<ClearanceOutcome>> SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, CancellationToken cancellationToken = default);
+}

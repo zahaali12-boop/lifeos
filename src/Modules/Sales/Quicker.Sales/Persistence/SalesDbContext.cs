@@ -27,6 +27,10 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
 
     public DbSet<SalesInvoiceLine> InvoiceLines => Set<SalesInvoiceLine>();
 
+    public DbSet<SalesRecurringInvoice> RecurringInvoices => Set<SalesRecurringInvoice>();
+
+    public DbSet<SalesCommissionEntry> CommissionEntries => Set<SalesCommissionEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -102,8 +106,26 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.CustomerSnapshot).HasColumnType("jsonb");
             b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.Property(static x => x.EinvoiceMessages).HasColumnType("jsonb");
             b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.InvoiceId });
             b.HasAuditTrail("sales_invoice", static x => x.Number);
+        });
+
+        modelBuilder.Entity<SalesRecurringInvoice>(b =>
+        {
+            b.ToTable("sls_recurring_invoices", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Name).HasColumnName("name_i18n");
+            b.Property(static x => x.Lines).HasColumnType("jsonb");
+            b.HasAuditTrail("sales_recurring_invoice", static x => x.Code);
+        });
+
+        modelBuilder.Entity<SalesCommissionEntry>(b =>
+        {
+            b.ToTable("sls_commission_entries", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.BasisAmount).HasPrecision(24, 6);
+            b.Property(static x => x.CommissionAmount).HasPrecision(24, 6);
         });
 
         modelBuilder.Entity<SalesInvoiceLine>(b =>

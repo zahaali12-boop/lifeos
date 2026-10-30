@@ -47,6 +47,9 @@ public sealed class InvoiceService(
     ITaxLedger taxLedger,
     IPostingService posting,
     IReceivables receivables,
+    IDeferralSchedules deferrals,
+    IChartOfAccounts chart,
+    ITaxClearance clearance,
     INumberAllocator numbering,
     ICustomFieldValidator customFields,
     IDimensionSets dimensionSets,
@@ -58,6 +61,9 @@ public sealed class InvoiceService(
 
     /// <summary>Credit notes are numbered in a series of their own (CN-), as tax regimes expect, though they live with the invoices.</summary>
     public const string CreditNoteNumberingType = "sales_credit_note";
+
+    /// <summary>The source document type of the commission accrual's journal, so it reads apart from the invoice's own entry.</summary>
+    public const string CommissionDocumentType = "sales_commission";
 
     public static readonly IReadOnlyList<string> Kinds = ["invoice", "credit_note"];
 
@@ -144,10 +150,12 @@ public sealed class InvoiceService(
         return invoice is null ? Error.NotFound(DocumentType, id) : await MapAsync(invoice, cancellationToken);
     }
 
-    public async Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, CancellationToken cancellationToken)
+    public Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, CancellationToken cancellationToken) => CreateAsync(request, null, cancellationToken);
+
+    internal async Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, Guid? recurringInvoiceId, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var invoice = new SalesInvoice { Id = Guid.CreateVersion7(), CreatedBy = principal.Principal?.MembershipId.Value, CreatedAt = clock.UtcNow, UpdatedAt = clock.UtcNow };
+        var invoice = new SalesInvoice { Id = Guid.CreateVersion7(), RecurringInvoiceId = recurringInvoiceId, CreatedBy = principal.Principal?.MembershipId.Value, CreatedAt = clock.UtcNow, UpdatedAt = clock.UtcNow };
         var applied = await ApplyAsync(invoice, request, cancellationToken);
         if (applied.IsFailure)
         {
@@ -298,8 +306,10 @@ public sealed class InvoiceService(
                 }
             }
 
+            // A deferred line parks its net on deferred revenue (POSTING_RULES §2 "Sales invoice with deferred revenue schedule"); the schedule releases it to revenue period by period.
             var item = line.ItemId is { } itemId ? await items.FindAsync(itemId, cancellationToken) : null;
-            postingLines.Add(new PostingLine(line.AccountRole ?? AccountRoles.Revenue, -sign * line.NetAmount, new PostingKeys(DocumentType, item?.ItemPostingGroupId, customer.Value.PostingGroupId), Dimensions: dimensions, PartnerId: invoice.PartnerId,
+            var role = line.DeferralPeriods is not null ? AccountRoles.DeferredRevenue : line.AccountRole ?? AccountRoles.Revenue;
+            postingLines.Add(new PostingLine(role, -sign * line.NetAmount, new PostingKeys(DocumentType, item?.ItemPostingGroupId, customer.Value.PostingGroupId), Dimensions: dimensions, PartnerId: invoice.PartnerId,
                 Description: line.Description is null ? null : LocalizedText.Bilingual(line.Description, line.Description)));
         }
 
@@ -393,6 +403,21 @@ public sealed class InvoiceService(
                 invoice.PostingDate, invoice.DocumentDate, instalment.DueOn, instalment.DiscountUntil, instalment.DiscountPct, invoice.Currency, sign * instalment.Amount, shares[i].Amount, rate.Value, posted.Value.EntryId, invoice.BranchId, null, invoice.SalesRepId), cancellationToken));
         }
 
+        // Deferred lines: Accounting's schedule releases each one from the account the journal parked it on to the line's revenue account.
+        var scheduled = await ScheduleDeferralsAsync(invoice, company, posted.Value, cancellationToken);
+        if (scheduled.IsFailure)
+        {
+            return scheduled.Error!;
+        }
+
+        // The sales rep's commission under their plan, when the plan accrues at invoice (POSTING_RULES §2).
+        var accrued = await AccrueCommissionAsync(invoice, company, customer.Value, sign, shipmentLines, cancellationToken);
+        if (accrued.IsFailure)
+        {
+            return accrued.Error!;
+        }
+
+        invoice.EinvoiceStatus = invoice.EinvoiceScheme is null ? "not_required" : "pending";
         invoice.DueDate = instalments.Value.Count > 0 ? instalments.Value[^1].DueOn : invoice.DocumentDate;
         invoice.JournalEntryId = posted.Value.EntryId;
         invoice.Status = "posted";
@@ -426,7 +451,7 @@ public sealed class InvoiceService(
             }
         }
 
-        await audit.RecordAsync(new AuditEntry(DocumentType, invoice.Id, invoice.Number, AuditActions.Posted, After: new { status = invoice.Status, journal = posted.Value.Number, invoice.TotalNet, invoice.TotalTax, invoice.TotalGross, invoice.Currency, instalments = openItems.Count, applications }, CompanyId: invoice.CompanyId), cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, invoice.Id, invoice.Number, AuditActions.Posted, After: new { status = invoice.Status, journal = posted.Value.Number, invoice.TotalNet, invoice.TotalTax, invoice.TotalGross, invoice.Currency, instalments = openItems.Count, applications, deferrals = scheduled.Value, commission = accrued.Value, invoice.EinvoiceStatus }, CompanyId: invoice.CompanyId), cancellationToken);
         return await MapAsync(invoice, cancellationToken);
     }
 
@@ -453,6 +478,25 @@ public sealed class InvoiceService(
 
         var company = await companies.FindAsync(new CompanyId(invoice.CompanyId), cancellationToken);
         var reversalDate = request.ReversalDate ?? clock.TodayIn(company?.TimeZone ?? "UTC");
+
+        // Revenue a schedule already released stays released: the invoice is credited, not reversed, once recognition began.
+        var schedules = new List<DeferralScheduleState>();
+        foreach (var line in invoice.Lines.Where(static l => l.DeferralScheduleId is not null))
+        {
+            var state = await deferrals.FindAsync(line.DeferralScheduleId!.Value, cancellationToken);
+            if (state is null)
+            {
+                continue;
+            }
+
+            if (state.Posted != 0m)
+            {
+                return Error.Conflict("invoice.deferral_recognised", "Part of the invoice's deferred revenue has been recognised; credit the invoice instead of reversing it.").WithWhy(("lineNo", line.LineNo), ("recognised", state.Posted));
+            }
+
+            schedules.Add(state);
+        }
+
         var itemsReversed = await receivables.ReverseDocumentAsync(DocumentType, invoice.Id, reversalDate, cancellationToken);
         if (itemsReversed.IsFailure)
         {
@@ -471,6 +515,34 @@ public sealed class InvoiceService(
         if (taxReversed.IsFailure)
         {
             return taxReversed.Error!;
+        }
+
+        foreach (var schedule in schedules.Where(static s => s.Status == "active"))
+        {
+            var cancelled = await deferrals.CancelAsync(schedule.Id, cancellationToken);
+            if (cancelled.IsFailure)
+            {
+                return cancelled.Error!;
+            }
+        }
+
+        var commissions = await db.CommissionEntries.Where(e => e.InvoiceId == invoice.Id && e.Status == "accrued").ToListAsync(cancellationToken);
+        Guid? commissionReversal = null;
+        if (commissions.Count > 0 && commissions[0].JournalEntryId is { } commissionEntry)
+        {
+            var mirrored = await posting.ReverseAsync(commissionEntry, reversalDate, reason, false, cancellationToken);
+            if (mirrored.IsFailure)
+            {
+                return mirrored.Error!;
+            }
+
+            commissionReversal = mirrored.Value.EntryId;
+        }
+
+        foreach (var entry in commissions)
+        {
+            entry.Status = "reversed";
+            entry.ReversalEntryId = commissionReversal;
         }
 
         var shipmentLineIds = invoice.Lines.Where(static l => l.ShipmentLineId is not null).Select(static l => l.ShipmentLineId!.Value).Distinct().ToList();
@@ -512,7 +584,215 @@ public sealed class InvoiceService(
         return await MapAsync(invoice, cancellationToken);
     }
 
+    /// <summary>Submits a posted invoice to its regime's e-invoicing scheme through the tax module and records what the scheme answered; nothing changes when the scheme refuses or no adapter is registered yet.</summary>
+    public async Task<Result<SalesInvoiceSummary>> SubmitEinvoiceAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var invoice = await db.Invoices.Include(static i => i.Lines.OrderBy(static l => l.LineNo)).SingleOrDefaultAsync(i => i.Id == id, cancellationToken);
+        if (invoice is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (invoice.Status != "posted")
+        {
+            return Error.Conflict("invoice.not_posted", "Only a posted invoice is submitted for clearance.").WithWhy(("status", invoice.Status));
+        }
+
+        if (invoice.EinvoiceScheme is null)
+        {
+            return Error.Conflict("invoice.einvoice_not_required", "The invoice's tax regime names no e-invoicing scheme.").WithWhy(("einvoiceStatus", invoice.EinvoiceStatus));
+        }
+
+        var outcome = await clearance.SubmitAsync(DocumentType, invoice.Id, cancellationToken);
+        if (outcome.IsFailure)
+        {
+            return outcome.Error!;
+        }
+
+        invoice.EinvoiceStatus = outcome.Value.Status;
+        invoice.EinvoiceSubmissionId = outcome.Value.SubmissionId;
+        invoice.EinvoiceQr = outcome.Value.QrPayload;
+        invoice.EinvoiceMessages = JsonSerializer.Serialize(outcome.Value.Messages, Json);
+        invoice.EinvoiceSubmittedAt = clock.UtcNow;
+        invoice.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, invoice.Id, invoice.Number, AuditActions.StateChanged, After: new { einvoiceStatus = invoice.EinvoiceStatus, scheme = outcome.Value.Scheme, submissionId = invoice.EinvoiceSubmissionId }, CompanyId: invoice.CompanyId), cancellationToken);
+        return await MapAsync(invoice, cancellationToken);
+    }
+
     // ------------------------------------------------------------------ internals
+
+    /// <summary>One deferral schedule per deferred line: from the account the journal parked the net on, to the first account the chart names for the line's revenue role.</summary>
+    private async Task<Result<int>> ScheduleDeferralsAsync(SalesInvoice invoice, CompanyInfo company, PostingResult posted, CancellationToken cancellationToken)
+    {
+        var deferred = invoice.Lines.Where(static l => l.DeferralPeriods is not null).ToList();
+        if (deferred.Count == 0)
+        {
+            return 0;
+        }
+
+        var chartId = await chart.ChartForCompanyAsync(company.Id, cancellationToken);
+        if (chartId is null)
+        {
+            return Error.Conflict("company.chart_missing", $"Company '{company.Code}' has no chart of accounts yet.");
+        }
+
+        foreach (var line in deferred)
+        {
+            // The revenue lines were given to the engine in the order of the invoice lines, one each, so the n-th posted line is the n-th invoice line's.
+            var parked = posted.Lines.FirstOrDefault(p => p.LineNo == line.LineNo);
+            var targets = await chart.AccountsForRoleAsync(chartId.Value, line.AccountRole ?? AccountRoles.Revenue, cancellationToken);
+            var target = targets.FirstOrDefault(static a => !a.IsHeader && a.IsActive);
+            if (parked is null || target is null)
+            {
+                return Error.Conflict("invoice.deferral_accounts_missing", "The chart names no account for the line's revenue role, so its deferral cannot be scheduled.").WithWhy(("lineNo", line.LineNo), ("role", line.AccountRole ?? AccountRoles.Revenue));
+            }
+
+            var dimensions = line.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null;
+            var what = line.Description ?? line.AccountRole ?? AccountRoles.Revenue;
+            var schedule = await deferrals.CreateAsync(new NewDeferralSchedule(invoice.CompanyId, DeferralKinds.DeferredRevenue, parked.AccountCode, target.Code, line.DeferralStartsOn!.Value, line.DeferralPeriods!.Value, line.NetAmount, invoice.Currency,
+                dimensions, LocalizedText.Bilingual($"{invoice.Number} line {line.LineNo}: {what}", $"{invoice.Number} بند {line.LineNo}: {what}"), DocumentType, line.Id), cancellationToken);
+            if (schedule.IsFailure)
+            {
+                return schedule.Error!.WithWhy(("lineNo", line.LineNo));
+            }
+
+            line.DeferralScheduleId = schedule.Value.Id;
+        }
+
+        return deferred.Count;
+    }
+
+    /// <summary>
+    /// The sales rep's commission on the invoice under their plan when it accrues at invoice: each line's basis (revenue,
+    /// or margin for a shipped line net of its cost of goods sold) in the plan's currency, quoted against what the rep
+    /// earned so far in the plan's tier period, booked Dr commission expense / Cr commission payable in one journal.
+    /// A credit note's negative basis gives back what the same bands earned.
+    /// </summary>
+    private async Task<Result<decimal>> AccrueCommissionAsync(SalesInvoice invoice, CompanyInfo company, CustomerTermsInfo customer, decimal sign, Dictionary<Guid, SalesShipmentLine> shipmentLines, CancellationToken cancellationToken)
+    {
+        if (invoice.SalesRepId is not { } repId)
+        {
+            return 0m;
+        }
+
+        var rep = await customers.FindSalesRepAsync(repId, cancellationToken);
+        if (rep is null || !rep.IsActive || rep.CommissionPlanId is not { } planId)
+        {
+            return 0m;
+        }
+
+        var plan = await customers.FindCommissionPlanAsync(planId, cancellationToken);
+        if (plan is null || !plan.IsActive || plan.AccrualPoint != CommissionAccrualPoints.Invoice || plan.Basis == CommissionBases.Collected)
+        {
+            return 0m;
+        }
+
+        var planCurrency = await companies.FindCurrencyAsync(plan.Currency, cancellationToken);
+        if (planCurrency is null)
+        {
+            return Error.Validation("invoice.commission_currency_unknown", "The commission plan's currency is not known.").WithWhy(("currency", plan.Currency));
+        }
+
+        var toPlan = 1m;
+        if (!string.Equals(plan.Currency, company.FunctionalCurrency.Code, StringComparison.Ordinal))
+        {
+            var resolved = await rates.ResolveAsync(company.Id, company.FunctionalCurrency.Code, plan.Currency, invoice.PostingDate, RateTypes.Spot, cancellationToken);
+            if (resolved.IsFailure)
+            {
+                return Error.Validation("invoice.commission_rate_missing", "No spot rate from the company's currency to the commission plan's currency on the posting date.").WithWhy(("from", company.FunctionalCurrency.Code), ("to", plan.Currency), ("date", invoice.PostingDate));
+            }
+
+            toPlan = resolved.Value.Rate.Rate;
+        }
+
+        var (periodStart, periodEnd) = TierPeriod(plan.TierPeriod, invoice.PostingDate);
+        var periodToDate = await db.CommissionEntries.AsNoTracking()
+            .Where(e => e.SalesRepId == repId && e.PlanId == planId && e.Status == "accrued" && e.PostingDate >= periodStart && e.PostingDate <= periodEnd)
+            .SumAsync(static e => (decimal?)e.BasisAmount, cancellationToken) ?? 0m;
+        var entries = new List<SalesCommissionEntry>();
+        var total = 0m;
+        foreach (var line in invoice.Lines)
+        {
+            var basisFc = line.NetAmountFc;
+            if (plan.Basis == CommissionBases.Margin && line.ShipmentLineId is { } shipped && shipmentLines.TryGetValue(shipped, out var shipmentLine) && shipmentLine.Quantity > 0m)
+            {
+                basisFc -= Shared.Round(shipmentLine.CogsAmount * line.QuantityBase / shipmentLine.Quantity, company.FunctionalCurrency);
+            }
+
+            var basis = Shared.Round(sign * basisFc * toPlan, planCurrency.Value);
+            if (basis == 0m)
+            {
+                continue;
+            }
+
+            var item = line.ItemId is { } itemId ? await items.FindAsync(itemId, cancellationToken) : null;
+            var quote = await customers.QuoteCommissionAsync(planId, item?.CategoryId, customer.CustomerGroupId, periodToDate, basis, cancellationToken);
+            if (quote.IsFailure)
+            {
+                return quote.Error!.WithWhy(("lineNo", line.LineNo));
+            }
+
+            entries.Add(new SalesCommissionEntry
+            {
+                Id = Guid.CreateVersion7(),
+                CompanyId = invoice.CompanyId,
+                InvoiceId = invoice.Id,
+                InvoiceLineId = line.Id,
+                SalesRepId = repId,
+                PlanId = planId,
+                PostingDate = invoice.PostingDate,
+                Basis = plan.Basis,
+                BasisAmount = basis,
+                CommissionAmount = quote.Value.Commission,
+                Currency = plan.Currency,
+                Status = "accrued",
+                CreatedAt = clock.UtcNow,
+            });
+            periodToDate += basis;
+            total += quote.Value.Commission;
+        }
+
+        if (entries.Count == 0)
+        {
+            return 0m;
+        }
+
+        Guid? journalId = null;
+        if (total != 0m)
+        {
+            var description = LocalizedText.Bilingual($"Commission on {invoice.Number} ({rep.Code})", $"عمولة على {invoice.Number} ({rep.Code})");
+            var lines = new List<PostingLine>
+            {
+                new(AccountRoles.CommissionExpense, total, new PostingKeys(CommissionDocumentType), PartnerId: invoice.PartnerId, Description: description),
+                new(AccountRoles.CommissionPayable, -total, new PostingKeys(CommissionDocumentType), PartnerId: invoice.PartnerId, Description: description),
+            };
+            var posted = await posting.PostAsync(new PostingRequest(company.Id, "sales", CommissionDocumentType, invoice.Id, invoice.PostingDate, plan.Currency, lines, invoice.Number, invoice.DocumentDate, description,
+                invoice.BranchId is { } b ? new BranchId(b) : null, RateTypes.Spot, null, null, $"sales_commission:{invoice.Id}"), cancellationToken);
+            if (posted.IsFailure)
+            {
+                return posted.Error!;
+            }
+
+            journalId = posted.Value.EntryId;
+        }
+
+        foreach (var entry in entries)
+        {
+            entry.JournalEntryId = journalId;
+        }
+
+        db.CommissionEntries.AddRange(entries);
+        return total;
+    }
+
+    /// <summary>The calendar period a plan's tiers accumulate over (month, quarter or year) around a date.</summary>
+    private static (DateOnly Start, DateOnly End) TierPeriod(string tierPeriod, DateOnly date) => tierPeriod switch
+    {
+        CommissionTierPeriods.Year => (new DateOnly(date.Year, 1, 1), new DateOnly(date.Year, 12, 31)),
+        CommissionTierPeriods.Quarter => (new DateOnly(date.Year, ((date.Month - 1) / 3 * 3) + 1, 1), new DateOnly(date.Year, ((date.Month - 1) / 3 * 3) + 3, 1).AddMonths(1).AddDays(-1)),
+        _ => (new DateOnly(date.Year, date.Month, 1), new DateOnly(date.Year, date.Month, 1).AddMonths(1).AddDays(-1)),
+    };
 
     private sealed record Instalment(DateOnly DueOn, decimal Amount, DateOnly? DiscountUntil, decimal DiscountPct);
 
@@ -618,6 +898,22 @@ public sealed class InvoiceService(
             if (dimensionSet.IsFailure)
             {
                 return dimensionSet.Error!;
+            }
+
+            if (l.DeferralPeriods is { } deferralPeriods)
+            {
+                if (isCredit)
+                {
+                    return Error.Validation("invoice.deferral_on_credit_note", "A credit note is not deferred; it credits what was invoiced.").WithWhy(("lineNo", lineNo));
+                }
+
+                if (deferralPeriods is < 1 or > 120)
+                {
+                    return Error.Validation("invoice.deferral_periods", "Revenue is deferred over 1 to 120 monthly periods.").WithWhy(("lineNo", lineNo), ("periods", deferralPeriods));
+                }
+
+                line.DeferralPeriods = deferralPeriods;
+                line.DeferralStartsOn = l.DeferralStartsOn ?? documentDate;
             }
 
             switch (l.Kind)
@@ -896,6 +1192,7 @@ public sealed class InvoiceService(
         invoice.TotalTax = totalTax;
         invoice.TotalGross = totalNet + totalTax;
         invoice.TaxRoundingLevel = taxed.Value.Document.RoundingLevel;
+        invoice.EinvoiceScheme = taxed.Value.EinvoicingScheme;
         invoice.PricesIncludeTax = pricesIncludeTax;
         invoice.CustomerSnapshot = JsonSerializer.Serialize(new { code = customer.Value.PartnerCode, name = customer.Value.PartnerName.Values }, Json);
         invoice.Notes = Shared.Trim(request.Notes);
@@ -940,7 +1237,7 @@ public sealed class InvoiceService(
     private static SaveSalesInvoiceRequest Request(SalesInvoice invoice) =>
         new(invoice.CompanyId, invoice.PartnerId,
             invoice.Lines.OrderBy(static l => l.LineNo).Select(l => new SaveSalesInvoiceLineRequest(l.Kind, l.Kind is "shipment" or "order" ? l.QuantityBase : l.Quantity, l.ShipmentLineId, l.OrderLineId, l.InvoiceLineId, l.ItemId, null, l.VariantId, null, l.Kind == "item" ? l.UomId : null,
-                l.Kind is "item" or "service" ? l.UnitPrice : null, l.Kind is "item" or "service" ? l.DiscountPct : 0m, l.Kind is "item" or "service" ? l.AccountRole : null, l.Description, l.Kind is "item" or "service" ? l.TaxCodeId : null, null)).ToList(),
+                l.Kind is "item" or "service" ? l.UnitPrice : null, l.Kind is "item" or "service" ? l.DiscountPct : 0m, l.Kind is "item" or "service" ? l.AccountRole : null, l.Description, l.Kind is "item" or "service" ? l.TaxCodeId : null, null, l.DeferralPeriods, l.DeferralStartsOn)).ToList(),
             invoice.Kind, invoice.CustomerReference, invoice.CreditsInvoiceId, invoice.DocumentDate, invoice.PostingDate, invoice.Currency, invoice.PaymentTermsId, invoice.SalesRepId, invoice.PriceListId, invoice.BranchId, invoice.Notes, Shared.Parse(invoice.CustomFields));
 
     private async Task<Result<IReadOnlyList<Instalment>>> InstalmentsAsync(SalesInvoice invoice, CustomerTermsInfo customer, CancellationToken cancellationToken)
@@ -998,11 +1295,17 @@ public sealed class InvoiceService(
                 l.InvoiceLineId, l.InvoiceLineId is { } il ? creditedNumbers.GetValueOrDefault(il) : null, l.ItemId, item?.Code, item?.Name.Values, l.VariantId, l.AccountRole, l.Description,
                 l.Kind is "shipment" or "order" ? l.QuantityBase : l.Quantity, uomId, uom?.UomCode, l.QuantityBase, l.UnitPrice, l.DiscountPct, l.DiscountAmount, l.NetAmount, l.TaxAmount, l.QtyCredited,
                 l.TaxCodeId, l.TaxCodeId is { } code ? taxCodes.GetValueOrDefault(code)?.Code : null, l.TaxRatePct, l.TaxReverseCharge, l.TaxRecoverable, l.TaxReason,
-                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
+                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null, l.DeferralPeriods, l.DeferralStartsOn, l.DeferralScheduleId));
         }
 
         var openItems = i.Status is "posted" or "reversed" ? await receivables.ItemsOfAsync(DocumentType, i.Id, cancellationToken) : [];
+        var lineNos = i.Lines.ToDictionary(static l => l.Id, static l => l.LineNo);
+        var commissions = i.Status is "posted" or "reversed"
+            ? (await db.CommissionEntries.AsNoTracking().Where(e => e.InvoiceId == i.Id).OrderBy(static e => e.CreatedAt).ToListAsync(cancellationToken))
+                .Select(e => new CommissionEntrySummary(e.Id, e.InvoiceLineId, lineNos.GetValueOrDefault(e.InvoiceLineId), e.SalesRepId, e.PlanId, e.Basis, e.BasisAmount, e.CommissionAmount, e.Currency, e.Status, e.JournalEntryId)).ToList()
+            : [];
         return new SalesInvoiceSummary(i.Id, i.CompanyId, i.Number, i.Kind, i.Status, i.PartnerId, partner.Item1, partner.Item2, i.CustomerReference, i.CreditsInvoiceId, credited, i.DocumentDate, i.PostingDate, i.DueDate, i.Currency, i.ExchangeRate, company?.FunctionalCurrency.Code ?? i.Currency,
-            i.PaymentTermsId, terms, i.SalesRepId, i.TotalNet, i.TotalTax, i.TotalGross, i.TaxRoundingLevel, i.PricesIncludeTax, i.JournalEntryId, i.ReversalEntryId, i.ReversalReason, i.EinvoiceStatus, i.Notes, Shared.Parse(i.CustomFields), lines, openItems, i.PostedAt, i.UpdatedAt);
+            i.PaymentTermsId, terms, i.SalesRepId, i.TotalNet, i.TotalTax, i.TotalGross, i.TaxRoundingLevel, i.PricesIncludeTax, i.JournalEntryId, i.ReversalEntryId, i.ReversalReason, i.EinvoiceStatus, i.Notes, Shared.Parse(i.CustomFields), lines, openItems, i.PostedAt, i.UpdatedAt,
+            i.EinvoiceScheme, i.EinvoiceSubmissionId, i.EinvoiceQr, JsonSerializer.Deserialize<List<string>>(i.EinvoiceMessages, Json) ?? [], i.EinvoiceSubmittedAt, i.RecurringInvoiceId, commissions);
     }
 }

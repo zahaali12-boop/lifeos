@@ -25,7 +25,9 @@ public sealed record SaveSalesInvoiceLineRequest(
     string? AccountRole = null,
     string? Description = null,
     Guid? TaxCodeId = null,
-    IReadOnlyDictionary<string, Guid>? Dimensions = null);
+    IReadOnlyDictionary<string, Guid>? Dimensions = null,
+    int? DeferralPeriods = null,
+    DateOnly? DeferralStartsOn = null);
 
 public sealed record SaveSalesInvoiceRequest(
     Guid CompanyId,
@@ -80,7 +82,13 @@ public sealed record SalesInvoiceLineSummary(
     bool TaxReverseCharge,
     bool TaxRecoverable,
     string? TaxReason,
-    IReadOnlyDictionary<string, Guid>? Dimensions);
+    IReadOnlyDictionary<string, Guid>? Dimensions,
+    int? DeferralPeriods = null,
+    DateOnly? DeferralStartsOn = null,
+    Guid? DeferralScheduleId = null);
+
+/// <summary>What a sales rep earned on a line of the invoice under their plan, in the plan's currency.</summary>
+public sealed record CommissionEntrySummary(Guid Id, Guid InvoiceLineId, int LineNo, Guid SalesRepId, Guid PlanId, string Basis, decimal BasisAmount, decimal CommissionAmount, string Currency, string Status, Guid? JournalEntryId);
 
 public sealed record SalesInvoiceSummary(
     Guid Id,
@@ -117,7 +125,60 @@ public sealed record SalesInvoiceSummary(
     IReadOnlyList<SalesInvoiceLineSummary> Lines,
     IReadOnlyList<ReceivableInfo> OpenItems,
     DateTimeOffset? PostedAt,
+    DateTimeOffset UpdatedAt,
+    string? EinvoiceScheme = null,
+    string? EinvoiceSubmissionId = null,
+    string? EinvoiceQr = null,
+    IReadOnlyList<string>? EinvoiceMessages = null,
+    DateTimeOffset? EinvoiceSubmittedAt = null,
+    Guid? RecurringInvoiceId = null,
+    IReadOnlyList<CommissionEntrySummary>? Commissions = null);
+
+// ------------------------------------------------------------------ recurring invoices (5.6b)
+
+public sealed record SaveRecurringInvoiceRequest(
+    Guid CompanyId,
+    Guid PartnerId,
+    string Code,
+    IReadOnlyDictionary<string, string> Name,
+    string Cron,
+    IReadOnlyList<SaveSalesInvoiceLineRequest> Lines,
+    string? Currency = null,
+    DateOnly? StartsOn = null,
+    DateOnly? EndsOn = null,
+    string? CustomerReference = null,
+    Guid? PaymentTermsId = null,
+    bool AutoPost = false,
+    bool IsActive = true,
+    string? Notes = null);
+
+public sealed record GenerateRecurringInvoiceRequest(DateOnly? RunDate = null);
+
+public sealed record RecurringInvoiceSummary(
+    Guid Id,
+    Guid CompanyId,
+    Guid PartnerId,
+    string PartnerCode,
+    IReadOnlyDictionary<string, string> PartnerName,
+    string Code,
+    IReadOnlyDictionary<string, string> Name,
+    string Cron,
+    string TimeZone,
+    DateOnly? NextRunOn,
+    DateOnly? EndsOn,
+    string Currency,
+    IReadOnlyList<SaveSalesInvoiceLineRequest> Lines,
+    string? CustomerReference,
+    Guid? PaymentTermsId,
+    bool AutoPost,
+    bool IsActive,
+    DateOnly? LastGeneratedOn,
+    string? Notes,
+    int Generated,
     DateTimeOffset UpdatedAt);
+
+/// <summary>One recurring invoice's run: generated (the invoice), or waiting with the problem that stopped it.</summary>
+public sealed record RecurringInvoiceRun(Guid RecurringInvoiceId, string Code, DateOnly RunDate, string Outcome, Guid? InvoiceId, string? InvoiceNumber, string? Problem);
 
 /// <summary>What can still be invoiced to a customer: posted shipment lines with an uninvoiced quantity and open service lines of its orders; quantities in the item's base unit.</summary>
 public sealed record InvoicableSalesLine(

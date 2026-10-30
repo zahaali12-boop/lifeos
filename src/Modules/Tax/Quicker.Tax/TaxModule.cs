@@ -24,6 +24,7 @@ public static class TaxModule
         services.AddScoped<TaxReturnService>();
         services.AddScoped<UblExportService>();
         services.AddScoped<ClearanceService>();
+        services.AddScoped<ITaxClearance>(static sp => sp.GetRequiredService<ClearanceService>());
         services.AddSingleton<ITaxClearanceRegistry, TaxClearanceRegistry>();
         return services;
     }

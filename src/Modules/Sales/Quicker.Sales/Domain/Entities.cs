@@ -1,3 +1,4 @@
+using Quicker.Kernel.Text;
 using Quicker.Persistence.EntityFramework;
 
 namespace Quicker.Sales.Domain;
@@ -468,8 +469,21 @@ public sealed class SalesInvoice : ITenantEntity
 
     public Guid? ReversedBy { get; set; }
 
-    /// <summary>not_required until a regime's clearance scheme is wired to the document (5.6b).</summary>
+    /// <summary>not_required when the regime names no e-invoicing scheme; pending once posted under one; then the clearance adapter's own status (5.6b).</summary>
     public string EinvoiceStatus { get; set; } = "not_required";
+
+    public string? EinvoiceScheme { get; set; }
+
+    public string? EinvoiceSubmissionId { get; set; }
+
+    public string? EinvoiceQr { get; set; }
+
+    public string EinvoiceMessages { get; set; } = "[]";
+
+    public DateTimeOffset? EinvoiceSubmittedAt { get; set; }
+
+    /// <summary>The recurring invoice that generated this one, when one did.</summary>
+    public Guid? RecurringInvoiceId { get; set; }
 
     public string CustomerSnapshot { get; set; } = "{}";
 
@@ -553,6 +567,96 @@ public sealed class SalesInvoiceLine : ITenantEntity
     public Guid? DimensionSetId { get; set; }
 
     public string PriceBreakdown { get; set; } = "[]";
+
+    /// <summary>Set when the line's revenue is deferred: parked on deferred revenue and released over this many monthly periods from the start date by Accounting's schedule (5.6b).</summary>
+    public int? DeferralPeriods { get; set; }
+
+    public DateOnly? DeferralStartsOn { get; set; }
+
+    public Guid? DeferralScheduleId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A recurring invoice (roadmap 5.6b): the lines of a direct invoice issued to a customer on a cron schedule in the company's time zone, posted at once or left as a draft to review, as the recurring journals are.</summary>
+public sealed class SalesRecurringInvoice : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public string Code { get; set; } = string.Empty;
+
+    public LocalizedText Name { get; set; } = new();
+
+    public string Cron { get; set; } = string.Empty;
+
+    public string TimeZone { get; set; } = string.Empty;
+
+    public DateOnly? NextRunOn { get; set; }
+
+    public DateOnly? EndsOn { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    /// <summary>The invoice lines as a json array of line requests (items and service lines only).</summary>
+    public string Lines { get; set; } = "[]";
+
+    public string? CustomerReference { get; set; }
+
+    public Guid? PaymentTermsId { get; set; }
+
+    public bool AutoPost { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    public DateOnly? LastGeneratedOn { get; set; }
+
+    public string? Notes { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>What a sales rep earned on an invoice line under their plan (DOMAIN_MODEL §11): basis and commission in the plan's currency, booked with the invoice and reversed with it.</summary>
+public sealed class SalesCommissionEntry : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid InvoiceId { get; set; }
+
+    public Guid InvoiceLineId { get; set; }
+
+    public Guid SalesRepId { get; set; }
+
+    public Guid PlanId { get; set; }
+
+    public DateOnly PostingDate { get; set; }
+
+    public string Basis { get; set; } = "revenue";
+
+    public decimal BasisAmount { get; set; }
+
+    public decimal CommissionAmount { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public string Status { get; set; } = "accrued";
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalEntryId { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }

@@ -232,6 +232,9 @@ public sealed record CustomerTermsInfo(
 
 public sealed record SalesRepInfo(Guid Id, string Code, LocalizedText Name, Guid? MembershipId, Guid? PartnerId, Guid? CompanyId, Guid? CommissionPlanId, bool IsActive);
 
+/// <summary>A commission plan as invoicing reads it: what the commission is measured on, when it is accrued, over which period the tiers accumulate, and in which currency.</summary>
+public sealed record CommissionPlanInfo(Guid Id, string Code, string Basis, string AccrualPoint, string TierPeriod, string Currency, bool IsActive);
+
 /// <summary>One band of a commission: the part of the basis that fell between two thresholds, at its rate.</summary>
 public sealed record CommissionBand(decimal FromAmount, decimal? ToAmount, decimal RatePct, decimal Basis, decimal Commission);
 
@@ -256,6 +259,8 @@ public interface ICustomerDirectory
     Task<Result<CustomerTermsInfo>> EnsureCustomerAsync(Guid companyId, Guid partnerId, string purpose, CancellationToken cancellationToken = default);
 
     Task<SalesRepInfo?> FindSalesRepAsync(Guid salesRepId, CancellationToken cancellationToken = default);
+
+    Task<CommissionPlanInfo?> FindCommissionPlanAsync(Guid planId, CancellationToken cancellationToken = default);
 
     /// <summary>The commission a sale earns under the plan (see <see cref="CommissionQuote"/>).</summary>
     Task<Result<CommissionQuote>> QuoteCommissionAsync(Guid planId, Guid? itemCategoryId, Guid? customerGroupId, decimal periodToDate, decimal basis, CancellationToken cancellationToken = default);

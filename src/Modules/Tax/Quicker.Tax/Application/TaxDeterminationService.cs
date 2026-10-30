@@ -121,7 +121,7 @@ public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory c
             ? TaxRoundingLevels.Document
             : TaxRoundingLevels.Line;
         var document = TaxCalculator.Calculate(inputs, request.PricesIncludeTax, level, currency, new RoundingPolicy(scope.Company.RoundingMode));
-        return new TaxedDocumentResult(document, determinations, scope.Regime?.Id, scope.Regime?.Code, partnerGroup);
+        return new TaxedDocumentResult(document, determinations, scope.Regime?.Id, scope.Regime?.Code, partnerGroup, scope.Regime?.EinvoicingScheme);
     }
 
     // ------------------------------------------------------------------ the steps

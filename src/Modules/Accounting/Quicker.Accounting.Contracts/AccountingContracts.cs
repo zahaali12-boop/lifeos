@@ -210,3 +210,42 @@ public interface IPostingGroupDirectory
 
     Task<IReadOnlyList<PostingGroupInfo>> ListAsync(string kind, CancellationToken cancellationToken = default);
 }
+
+public static class DeferralKinds
+{
+    public const string Prepayment = "prepayment";
+    public const string Accrual = "accrual";
+    public const string DeferredRevenue = "deferred_revenue";
+}
+
+/// <summary>A schedule a document asks Accounting to run: the balance account it parked the amount on, the target account the periods release it to.</summary>
+public sealed record NewDeferralSchedule(
+    Guid CompanyId,
+    string Kind,
+    string BalanceAccountCode,
+    string TargetAccountCode,
+    DateOnly StartsOn,
+    int Periods,
+    decimal TotalAmount,
+    string Currency,
+    IReadOnlyDictionary<string, Guid>? Dimensions,
+    LocalizedText Description,
+    string SourceDocumentType,
+    Guid SourceLineId);
+
+public sealed record DeferralScheduleState(Guid Id, string Status, int Periods, decimal TotalAmount, decimal Posted, decimal Remaining);
+
+/// <summary>
+/// The deferral engine (roadmap 2.7) as the documents that defer revenue or expense see it: an invoice line with a
+/// deferral parks its amount on the balance account and asks for the schedule; the daily routines post the periods
+/// (POSTING_RULES §9 "Deferred revenue recognition"). A document reversed cancels what is still planned.
+/// </summary>
+public interface IDeferralSchedules
+{
+    Task<Result<DeferralScheduleState>> CreateAsync(NewDeferralSchedule schedule, CancellationToken cancellationToken = default);
+
+    Task<DeferralScheduleState?> FindAsync(Guid scheduleId, CancellationToken cancellationToken = default);
+
+    /// <summary>Cancels the periods still planned; refused when none is left to cancel (<c>deferral.not_active</c>).</summary>
+    Task<Result<DeferralScheduleState>> CancelAsync(Guid scheduleId, CancellationToken cancellationToken = default);
+}

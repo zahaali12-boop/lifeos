@@ -32,6 +32,7 @@ public static class AccountingModule
         services.AddScoped<ManualJournalService>();
         services.AddScoped<RecurringService>();
         services.AddScoped<DeferralService>();
+        services.AddScoped<IDeferralSchedules, DeferralSchedulesFacade>();
         services.AddScoped<AccountingRoutines>();
         services.AddScoped<InquiryService>();
         services.AddScoped<ILedgerReader, LedgerReader>();

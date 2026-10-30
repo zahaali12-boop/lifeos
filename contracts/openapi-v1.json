@@ -25709,7 +25709,7 @@
         "tags": [
           "Sales"
         ],
-        "summary": "Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled",
+        "summary": "Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled or deferred revenue was recognised",
         "operationId": "postSalesInvoicesByInvoiceIdReverse",
         "parameters": [
           {
@@ -25739,6 +25739,271 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/invoices/{invoiceId}/einvoice/submit": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Submits a posted invoice to its regime's e-invoicing scheme and records the scheme's answer (status, submission id, QR); refused when the regime names no scheme or no adapter is registered for it yet",
+        "operationId": "postSalesInvoicesByInvoiceIdEinvoiceSubmit",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/recurring-invoices": {
+      "get": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Recurring invoices by company, customer or active state, with their next run",
+        "operationId": "getSalesRecurringInvoices",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecurringInvoiceSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "A recurring invoice: a customer's item and service lines issued on a cron schedule in the company's time zone, posted at once or left as a draft to review",
+        "operationId": "postSalesRecurringInvoices",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecurringInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/recurring-invoices/{recurringId}": {
+      "get": {
+        "tags": [
+          "Sales"
+        ],
+        "operationId": "getSalesRecurringInvoicesByRecurringId",
+        "parameters": [
+          {
+            "name": "recurringId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Changes the schedule, lines or settings; a new start date re-plans the next run",
+        "operationId": "putSalesRecurringInvoicesByRecurringId",
+        "parameters": [
+          {
+            "name": "recurringId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRecurringInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/recurring-invoices/{recurringId}/generate": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Issues the invoice for the next due run (or a given date) now and advances the schedule",
+        "operationId": "postSalesRecurringInvoicesByRecurringIdGenerate",
+        "parameters": [
+          {
+            "name": "recurringId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateRecurringInvoiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInvoiceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/recurring-invoices/run": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Generates every recurring invoice due on or before the date, as the daily job does at 00:40 UTC",
+        "operationId": "postSalesRecurringInvoicesRun",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecurringInvoiceRun"
+                  }
                 }
               }
             }
@@ -30198,6 +30463,81 @@
         },
         "description": "One band of a commission: the part of the basis that fell between two thresholds, at its rate."
       },
+      "CommissionEntrySummary": {
+        "required": [
+          "id",
+          "invoiceLineId",
+          "lineNo",
+          "salesRepId",
+          "planId",
+          "basis",
+          "basisAmount",
+          "commissionAmount",
+          "currency",
+          "status",
+          "journalEntryId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "salesRepId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "basisAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "commissionAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "What a sales rep earned on a line of the invoice under their plan, in the plan's currency."
+      },
       "CommissionPlanSummary": {
         "required": [
           "id",
@@ -34615,6 +34955,18 @@
           "shared": {
             "type": "boolean",
             "default": true
+          }
+        }
+      },
+      "GenerateRecurringInvoiceRequest": {
+        "type": "object",
+        "properties": {
+          "runDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -47756,6 +48108,185 @@
           }
         }
       },
+      "RecurringInvoiceRun": {
+        "required": [
+          "recurringInvoiceId",
+          "code",
+          "runDate",
+          "outcome",
+          "invoiceId",
+          "invoiceNumber",
+          "problem"
+        ],
+        "type": "object",
+        "properties": {
+          "recurringInvoiceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "runDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "invoiceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "invoiceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One recurring invoice's run: generated (the invoice), or waiting with the problem that stopped it."
+      },
+      "RecurringInvoiceSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "code",
+          "name",
+          "cron",
+          "timeZone",
+          "nextRunOn",
+          "endsOn",
+          "currency",
+          "lines",
+          "customerReference",
+          "paymentTermsId",
+          "autoPost",
+          "isActive",
+          "lastGeneratedOn",
+          "notes",
+          "generated",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cron": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "nextRunOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "endsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveSalesInvoiceLineRequest"
+            }
+          },
+          "customerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "autoPost": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "lastGeneratedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "generated": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "RecurringLineRequest": {
         "required": [
           "accountCode"
@@ -50716,6 +51247,29 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "deferralPeriods": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "deferralStartsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "deferralScheduleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -50941,6 +51495,56 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "einvoiceScheme": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceSubmissionId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceQr": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceMessages": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "einvoiceSubmittedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "recurringInvoiceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "commissions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CommissionEntrySummary"
+            }
           }
         }
       },
@@ -56229,6 +56833,92 @@
           "customFields": { }
         }
       },
+      "SaveRecurringInvoiceRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "code",
+          "name",
+          "cron",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cron": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveSalesInvoiceLineRequest"
+            }
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "endsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "customerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentTermsId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "autoPost": {
+            "type": "boolean",
+            "default": false
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "SaveRecurringTemplateRequest": {
         "required": [
           "code",
@@ -56927,6 +57617,22 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "deferralPeriods": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "deferralStartsOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         },
         "description": "One line of an invoice or credit note. `shipment` and `order` lines take their price from the order line\nand their quantity in the item's base unit (like the shipment and the order's fulfilment quantities, A-152);\n`item` lines are priced here by the pricing engine (non-stock items only until direct stock invoices ship);\n`service` lines are free lines on an account role; `invoice` lines credit a posted invoice's line."
@@ -62650,6 +63356,12 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "einvoicingScheme": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "description": "A document taxed: its lines, per-code summary and totals, and why each line took its code. The rounding level is the regime's or the company's, whichever asks for document level (ADR-0005)."

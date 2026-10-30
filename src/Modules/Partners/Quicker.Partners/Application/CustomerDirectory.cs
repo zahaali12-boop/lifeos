@@ -53,6 +53,12 @@ public sealed class CustomerDirectory(PartnersDbContext db, CustomerService cust
         return r is null ? null : new SalesRepInfo(r.Id, r.Code, r.Name, r.MembershipId, r.PartnerId, r.CompanyId, r.CommissionPlanId, r.IsActive);
     }
 
+    public async Task<CommissionPlanInfo?> FindCommissionPlanAsync(Guid planId, CancellationToken cancellationToken = default)
+    {
+        var p = await db.CommissionPlans.AsNoTracking().SingleOrDefaultAsync(x => x.Id == planId, cancellationToken);
+        return p is null ? null : new CommissionPlanInfo(p.Id, p.Code, p.Basis, p.AccrualPoint, p.TierPeriod, p.Currency, p.IsActive);
+    }
+
     public Task<Result<CommissionQuote>> QuoteCommissionAsync(Guid planId, Guid? itemCategoryId, Guid? customerGroupId, decimal periodToDate, decimal basis, CancellationToken cancellationToken = default) =>
         salesSetup.QuoteAsync(planId, itemCategoryId, customerGroupId, periodToDate, basis, cancellationToken);
 }

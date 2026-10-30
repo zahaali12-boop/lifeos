@@ -8833,8 +8833,94 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled */
+        /** Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled or deferred revenue was recognised */
         post: operations["postSalesInvoicesByInvoiceIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/invoices/{invoiceId}/einvoice/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submits a posted invoice to its regime's e-invoicing scheme and records the scheme's answer (status, submission id, QR); refused when the regime names no scheme or no adapter is registered for it yet */
+        post: operations["postSalesInvoicesByInvoiceIdEinvoiceSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/recurring-invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recurring invoices by company, customer or active state, with their next run */
+        get: operations["getSalesRecurringInvoices"];
+        put?: never;
+        /** A recurring invoice: a customer's item and service lines issued on a cron schedule in the company's time zone, posted at once or left as a draft to review */
+        post: operations["postSalesRecurringInvoices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/recurring-invoices/{recurringId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSalesRecurringInvoicesByRecurringId"];
+        /** Changes the schedule, lines or settings; a new start date re-plans the next run */
+        put: operations["putSalesRecurringInvoicesByRecurringId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/recurring-invoices/{recurringId}/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issues the invoice for the next due run (or a given date) now and advances the schedule */
+        post: operations["postSalesRecurringInvoicesByRecurringIdGenerate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/recurring-invoices/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generates every recurring invoice due on or before the date, as the daily job does at 00:40 UTC */
+        post: operations["postSalesRecurringInvoicesRun"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10034,6 +10120,28 @@ export interface components {
             /** Format: double */
             commission: number | string;
         };
+        /** @description What a sales rep earned on a line of the invoice under their plan, in the plan's currency. */
+        CommissionEntrySummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            invoiceLineId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            salesRepId: string;
+            /** Format: uuid */
+            planId: string;
+            basis: string;
+            /** Format: double */
+            basisAmount: number | string;
+            /** Format: double */
+            commissionAmount: number | string;
+            currency: string;
+            status: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+        };
         CommissionPlanSummary: {
             /** Format: uuid */
             id: string;
@@ -11222,6 +11330,10 @@ export interface components {
             companyId?: null | string;
             /** @default true */
             shared: boolean;
+        };
+        GenerateRecurringInvoiceRequest: {
+            /** Format: date */
+            runDate?: null | string;
         };
         GenerateRecurringRequest: {
             /** Format: date */
@@ -14618,6 +14730,55 @@ export interface components {
         RecoveryCodesResponse: {
             codes: string[];
         };
+        /** @description One recurring invoice's run: generated (the invoice), or waiting with the problem that stopped it. */
+        RecurringInvoiceRun: {
+            /** Format: uuid */
+            recurringInvoiceId: string;
+            code: string;
+            /** Format: date */
+            runDate: string;
+            outcome: string;
+            /** Format: uuid */
+            invoiceId: null | string;
+            invoiceNumber: null | string;
+            problem: null | string;
+        };
+        RecurringInvoiceSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            cron: string;
+            timeZone: string;
+            /** Format: date */
+            nextRunOn: null | string;
+            /** Format: date */
+            endsOn: null | string;
+            currency: string;
+            lines: components["schemas"]["SaveSalesInvoiceLineRequest"][];
+            customerReference: null | string;
+            /** Format: uuid */
+            paymentTermsId: null | string;
+            autoPost: boolean;
+            isActive: boolean;
+            /** Format: date */
+            lastGeneratedOn: null | string;
+            notes: null | string;
+            /** Format: int32 */
+            generated: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         /** @description A template line: amounts in fixed mode, percentages of the base amount in percentage mode (debit or credit side), accounts only in variable mode. */
         RecurringLineRequest: {
             accountCode: string;
@@ -15396,6 +15557,12 @@ export interface components {
             dimensions: null | {
                 [key: string]: string;
             };
+            /** Format: int32 */
+            deferralPeriods?: null | number | string;
+            /** Format: date */
+            deferralStartsOn?: null | string;
+            /** Format: uuid */
+            deferralScheduleId?: null | string;
         };
         SalesInvoiceSummary: {
             /** Format: uuid */
@@ -15452,6 +15619,15 @@ export interface components {
             postedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
+            einvoiceScheme?: null | string;
+            einvoiceSubmissionId?: null | string;
+            einvoiceQr?: null | string;
+            einvoiceMessages?: null | string[];
+            /** Format: date-time */
+            einvoiceSubmittedAt?: null | string;
+            /** Format: uuid */
+            recurringInvoiceId?: null | string;
+            commissions?: null | components["schemas"]["CommissionEntrySummary"][];
         };
         SalesRepSummary: {
             /** Format: uuid */
@@ -17035,6 +17211,31 @@ export interface components {
             branchId?: null | string;
             customFields?: unknown;
         };
+        SaveRecurringInvoiceRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            cron: string;
+            lines: components["schemas"]["SaveSalesInvoiceLineRequest"][];
+            currency?: null | string;
+            /** Format: date */
+            startsOn?: null | string;
+            /** Format: date */
+            endsOn?: null | string;
+            customerReference?: null | string;
+            /** Format: uuid */
+            paymentTermsId?: null | string;
+            /** @default false */
+            autoPost: boolean;
+            /** @default true */
+            isActive: boolean;
+            notes?: null | string;
+        };
         SaveRecurringTemplateRequest: {
             code: string;
             name: {
@@ -17233,6 +17434,10 @@ export interface components {
             dimensions?: null | {
                 [key: string]: string;
             };
+            /** Format: int32 */
+            deferralPeriods?: null | number | string;
+            /** Format: date */
+            deferralStartsOn?: null | string;
         };
         SaveSalesInvoiceRequest: {
             /** Format: uuid */
@@ -18836,6 +19041,7 @@ export interface components {
             regimeCode: null | string;
             /** Format: uuid */
             partnerTaxGroupId: null | string;
+            einvoicingScheme?: null | string;
         };
         /** @description A line's net, tax and gross; reverse charge lines carry the tax self-assessed on both sides but add nothing to the gross. */
         TaxedLine: {
@@ -36118,6 +36324,173 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    postSalesInvoicesByInvoiceIdEinvoiceSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoiceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    getSalesRecurringInvoices: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                partnerId?: string;
+                active?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringInvoiceSummary"][];
+                };
+            };
+        };
+    };
+    postSalesRecurringInvoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRecurringInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringInvoiceSummary"];
+                };
+            };
+        };
+    };
+    getSalesRecurringInvoicesByRecurringId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recurringId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringInvoiceSummary"];
+                };
+            };
+        };
+    };
+    putSalesRecurringInvoicesByRecurringId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recurringId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRecurringInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringInvoiceSummary"];
+                };
+            };
+        };
+    };
+    postSalesRecurringInvoicesByRecurringIdGenerate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recurringId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateRecurringInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    postSalesRecurringInvoicesRun: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringInvoiceRun"][];
                 };
             };
         };

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Quicker.Kernel.Time;
 using Quicker.Sales.Application;
 using Quicker.Web;
 
@@ -127,7 +128,29 @@ public static class SalesEndpoints
             .WithSummary("Posts the invoice: Dr receivables / Cr revenue per line / Cr output tax per code, the tax ledger, one receivable open item per instalment; a credit note naming its invoice is applied to it at once");
         invoices.MapPost("/{invoiceId:guid}/reverse", async (Guid invoiceId, ReverseSalesInvoiceRequest request, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(invoiceId, request, ct)))
             .RequirePermission(SalesPermissions.InvoicePost)
-            .WithSummary("Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled");
+            .WithSummary("Reverses a posted invoice with a reason: the journal and tax ledger mirrored, the open items closed, the billed quantities given back; refused while an open item is settled or deferred revenue was recognised");
+        invoices.MapPost("/{invoiceId:guid}/einvoice/submit", async (Guid invoiceId, InvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.SubmitEinvoiceAsync(invoiceId, ct)))
+            .RequirePermission(SalesPermissions.InvoicePost)
+            .WithSummary("Submits a posted invoice to its regime's e-invoicing scheme and records the scheme's answer (status, submission id, QR); refused when the regime names no scheme or no adapter is registered for it yet");
+
+        var recurring = sales.MapGroup("/recurring-invoices");
+        recurring.MapGet("/", async (Guid? companyId, Guid? partnerId, bool? active, RecurringInvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, partnerId, active, ct)))
+            .RequirePermission(SalesPermissions.InvoiceRead)
+            .WithSummary("Recurring invoices by company, customer or active state, with their next run");
+        recurring.MapPost("/", async (SaveRecurringInvoiceRequest request, RecurringInvoiceService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static r => $"/api/v1/sales/recurring-invoices/{r.Id}"))
+            .RequirePermission(SalesPermissions.InvoiceManage)
+            .WithSummary("A recurring invoice: a customer's item and service lines issued on a cron schedule in the company's time zone, posted at once or left as a draft to review");
+        recurring.MapGet("/{recurringId:guid}", async (Guid recurringId, RecurringInvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(recurringId, ct)))
+            .RequirePermission(SalesPermissions.InvoiceRead);
+        recurring.MapPut("/{recurringId:guid}", async (Guid recurringId, SaveRecurringInvoiceRequest request, RecurringInvoiceService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(recurringId, request, ct)))
+            .RequirePermission(SalesPermissions.InvoiceManage)
+            .WithSummary("Changes the schedule, lines or settings; a new start date re-plans the next run");
+        recurring.MapPost("/{recurringId:guid}/generate", async (Guid recurringId, GenerateRecurringInvoiceRequest request, RecurringInvoiceService service, CancellationToken ct) => ApiProblems.Created(await service.GenerateAsync(recurringId, request, ct), static i => $"/api/v1/sales/invoices/{i.Id}"))
+            .RequirePermission(SalesPermissions.InvoiceManage)
+            .WithSummary("Issues the invoice for the next due run (or a given date) now and advances the schedule");
+        recurring.MapPost("/run", async (Guid? companyId, DateOnly? asOf, RecurringInvoiceService service, IClock clock, CancellationToken ct) => TypedResults.Ok(await service.GenerateDueAsync(companyId, asOf ?? DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), ct)))
+            .RequirePermission(SalesPermissions.InvoiceManage)
+            .WithSummary("Generates every recurring invoice due on or before the date, as the daily job does at 00:40 UTC");
 
         return api;
     }
