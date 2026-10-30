@@ -51,6 +51,7 @@ public static class InventoryModule
         services.AddScoped<IInventoryCosting>(static sp => sp.GetRequiredService<CostingService>());
         services.AddScoped<CostInquiryService>();
         services.AddScoped<ReasonCodeService>();
+        services.AddScoped<IReasonCodeDirectory>(static sp => sp.GetRequiredService<ReasonCodeService>());
         services.AddScoped<AdjustmentService>();
         services.AddScoped<IWorkflowSubjectProvider, AdjustmentWorkflowSubject>();
         services.AddScoped<RevaluationService>();
@@ -58,6 +59,7 @@ public static class InventoryModule
         services.AddScoped<TrackingResolver>();
         services.AddScoped<LotService>();
         services.AddScoped<SerialService>();
+        services.AddScoped<ITrackingDirectory, TrackingDirectory>();
         services.AddScoped<CountService>();
         services.AddScoped<PickListService>();
         services.AddScoped<IPickLists>(static sp => sp.GetRequiredService<PickListService>());

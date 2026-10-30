@@ -350,6 +350,26 @@ public sealed record LotInfo(Guid Id, Guid ItemId, string ItemCode, string LotNu
 
 public sealed record SerialInfo(Guid Id, Guid ItemId, string ItemCode, string SerialNumber, Guid? LotId, string? LotNumber, string Status, Guid? CurrentWarehouseId, string? CurrentWarehouseCode, Guid? CurrentBinId, Guid? CurrentPartnerId, DateOnly? WarrantyUntil, System.Text.Json.JsonElement CustomFields, DateTimeOffset UpdatedAt);
 
+/// <summary>Lots and serials as other modules read and steer them (sales returns, 5.8): a lot's status (a recalled or
+/// quarantined lot comes back on hold), a serial by number, and the repair chain of a returned serial
+/// (<c>returned</c> or <c>in_stock</c> to <c>in_repair</c> and back to <c>in_stock</c>; any other change is a stock movement).</summary>
+public interface ITrackingDirectory
+{
+    Task<LotInfo?> FindLotAsync(Guid lotId, CancellationToken cancellationToken = default);
+
+    Task<SerialInfo?> FindSerialAsync(Guid itemId, string serialNumber, CancellationToken cancellationToken = default);
+
+    Task<Result<SerialInfo>> SetSerialStatusAsync(Guid serialId, string status, string? note, CancellationToken cancellationToken = default);
+}
+
+/// <summary>A reason code of the inventory catalogue (adjustment, count, return, scrap, write-off, shortage).</summary>
+public sealed record ReasonCodeInfo(Guid Id, string Code, LocalizedText Name, string AppliesTo, bool RequiresNote, bool IsActive);
+
+public interface IReasonCodeDirectory
+{
+    Task<ReasonCodeInfo?> FindReasonAsync(string code, CancellationToken cancellationToken = default);
+}
+
 // ------------------------------------------------------------------ replenishment (roadmap 3.7)
 
 /// <summary>Stock on its way into a warehouse from outside the stock ledger (open purchase order lines, M4); transfers in transit are read from the ledger itself.</summary>

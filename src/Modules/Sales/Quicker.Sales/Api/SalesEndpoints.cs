@@ -152,6 +152,47 @@ public static class SalesEndpoints
             .RequirePermission(SalesPermissions.InvoiceManage)
             .WithSummary("Generates every recurring invoice due on or before the date, as the daily job does at 00:40 UTC");
 
+        var returns = sales.MapGroup("/returns");
+        returns.MapGet("/", async (Guid? companyId, string? status, Guid? partnerId, ReturnService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, partnerId, ct)))
+            .RequirePermission(SalesPermissions.ReturnRead)
+            .WithSummary("Sales returns (RMAs), newest first, filtered by company, status or customer");
+        returns.MapGet("/returnable", async (Guid companyId, Guid partnerId, Guid? shipmentId, ReturnService service, CancellationToken ct) => TypedResults.Ok(await service.ReturnableAsync(companyId, partnerId, shipmentId, ct)))
+            .RequirePermission(SalesPermissions.ReturnRead)
+            .WithSummary("A customer's posted shipment lines with goods not yet returned, and the serials that can still come back");
+        returns.MapPost("/", async (SaveSalesReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static r => $"/api/v1/sales/returns/{r.Id}"))
+            .RequirePermission(SalesPermissions.ReturnManage)
+            .WithSummary("A return request against a customer's posted shipment lines: quantities in the base unit, serials, reason codes, the proposed disposition, the cost policy");
+        returns.MapGet("/{returnId:guid}", async (Guid returnId, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(returnId, ct)))
+            .RequirePermission(SalesPermissions.ReturnRead)
+            .WithSummary("The return with its lines, what each came back at, the lot's status, the dispositions and the credit notes issued");
+        returns.MapPut("/{returnId:guid}", async (Guid returnId, SaveSalesReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(returnId, request, ct)))
+            .RequirePermission(SalesPermissions.ReturnManage)
+            .WithSummary("Re-validates a requested or authorised return's lines; nothing is edited once the goods were received");
+        returns.MapDelete("/{returnId:guid}", async (Guid returnId, ReturnService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(returnId, ct)))
+            .RequirePermission(SalesPermissions.ReturnManage)
+            .WithSummary("Deletes a requested or authorised return; a received one is reversed instead");
+        returns.MapPost("/{returnId:guid}/authorise", async (Guid returnId, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.AuthoriseAsync(returnId, ct)))
+            .RequirePermission(SalesPermissions.ReturnManage)
+            .WithSummary("Authorises the return: the customer may send the goods back");
+        returns.MapPost("/{returnId:guid}/reject", async (Guid returnId, RejectSalesReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.RejectAsync(returnId, request, ct)))
+            .RequirePermission(SalesPermissions.ReturnManage)
+            .WithSummary("Rejects a requested or authorised return with a reason");
+        returns.MapPost("/{returnId:guid}/receive", async (Guid returnId, ReceiveSalesReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.ReceiveAsync(returnId, request, ct)))
+            .RequirePermission(SalesPermissions.ReturnReceive)
+            .WithSummary("Receives the goods into stock against the shipment's own ledger entries at the return's cost policy (Dr Inventory / Cr Cogs); serials come back as returned, a blocked lot comes back on hold and forces quarantine");
+        returns.MapPost("/{returnId:guid}/inspect", async (Guid returnId, InspectSalesReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.InspectAsync(returnId, request, ct)))
+            .RequirePermission(SalesPermissions.ReturnReceive)
+            .WithSummary("Settles each line's disposition: restock (a returned serial back in stock), quarantine, scrap (leaves again at the return's cost) or repair (the serial goes into repair)");
+        returns.MapPost("/{returnId:guid}/credit", async (Guid returnId, CreditSalesReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.CreditAsync(returnId, request, ct)))
+            .RequirePermission(SalesPermissions.ReturnCredit)
+            .WithSummary("Issues and posts one credit note per invoice that billed the returned lines, at the invoice's price and tax on the SalesReturns role, applied to the invoice");
+        returns.MapPost("/{returnId:guid}/close", async (Guid returnId, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.CloseAsync(returnId, ct)))
+            .RequirePermission(SalesPermissions.ReturnManage)
+            .WithSummary("Closes a received, inspected or credited return");
+        returns.MapPost("/{returnId:guid}/reverse", async (Guid returnId, ReverseSalesReturnRequest request, ReturnService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(returnId, request, ct)))
+            .RequirePermission(SalesPermissions.ReturnReceive)
+            .WithSummary("Reverses a received return as a whole: its credit notes are reversed and the goods leave again against the return's own entries; refused once anything was scrapped");
+
         return api;
     }
 }

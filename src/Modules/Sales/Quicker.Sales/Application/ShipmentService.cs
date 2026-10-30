@@ -971,7 +971,7 @@ public sealed class ShipmentService(
             var uom = (await items.UomsAsync(l.ItemId, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
             lines.Add(new ShipmentLineSummary(l.Id, l.LineNo, l.OrderLineId, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.VariantId, l.Quantity, l.UomId, uom?.UomCode ?? string.Empty,
                 l.BinId, l.LotNumber, Serials(l.SerialNumbers), l.CogsAmount, Allocations(l.Allocations), picked is null ? null : picked.GetValueOrDefault(l.Id), packedByOrderLine.GetValueOrDefault(l.OrderLineId),
-                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null));
+                l.DimensionSetId is { } set ? await dimensionSets.GetAsync(set, cancellationToken) : null, l.QtyReturned));
         }
 
         var packages = new List<ShipmentPackageSummary>(s.Packages.Count);

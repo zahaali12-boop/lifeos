@@ -36,6 +36,8 @@ public static class SalesRowFactories
             await c.ExecuteAsync("INSERT INTO app.sls_recurring_invoices (tenant_id, id, company_id, partner_id, code, cron, time_zone, currency) VALUES (@t, @id, @company, @partner, @code, '0 9 1 * *', 'Asia/Baghdad', 'IQD')", new { t, id, company, partner, code = Suffix(id) }, tx);
             return new RowRef("app.sls_recurring_invoices", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.sls_returns", static async (c, tx, t) => new RowRef("app.sls_returns", $"id = '{(await ReturnAsync(c, tx, t)).Return}'"));
+        IsolationRegistry.Register("app.sls_return_lines", static async (c, tx, t) => new RowRef("app.sls_return_lines", $"id = '{(await ReturnAsync(c, tx, t)).Line}'"));
         IsolationRegistry.Register("app.sls_commission_entries", static async (c, tx, t) =>
         {
             var (invoice, line) = await InvoiceAsync(c, tx, t);
@@ -44,6 +46,17 @@ public static class SalesRowFactories
             await c.ExecuteAsync("INSERT INTO app.sls_commission_entries (tenant_id, id, company_id, invoice_id, invoice_line_id, sales_rep_id, plan_id, posting_date, basis, basis_amount, commission_amount, currency) VALUES (@t, @id, @company, @invoice, @line, @rep, @plan, '2026-09-22', 'revenue', 100, 2, 'IQD')", new { t, id, company, invoice, line, rep = Guid.CreateVersion7(), plan = Guid.CreateVersion7() }, tx);
             return new RowRef("app.sls_commission_entries", $"id = '{id}'");
         });
+    }
+
+    private static async Task<(Guid Return, Guid Line)> ReturnAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (shipment, shipmentLine, orderLine) = await ShipmentAsync(c, tx, t);
+        var header = await c.QuerySingleAsync<(Guid CompanyId, Guid PartnerId, Guid WarehouseId)>("SELECT company_id AS \"CompanyId\", partner_id AS \"PartnerId\", warehouse_id AS \"WarehouseId\" FROM app.sls_shipments WHERE tenant_id = @t AND id = @shipment", new { t, shipment }, tx);
+        var id = Guid.CreateVersion7();
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.sls_returns (tenant_id, id, company_id, number, partner_id, warehouse_id, request_date) VALUES (@t, @id, @company, @number, @partner, @warehouse, '2026-09-22')", new { t, id, company = header.CompanyId, number = Suffix(id), partner = header.PartnerId, warehouse = header.WarehouseId }, tx);
+        await c.ExecuteAsync("INSERT INTO app.sls_return_lines (tenant_id, id, return_id, line_no, shipment_line_id, order_line_id, item_id, quantity, uom_id) VALUES (@t, @line, @id, 1, @shipmentLine, @orderLine, @item, 1, @uom)", new { t, line, id, shipmentLine, orderLine, item = Guid.CreateVersion7(), uom = Guid.CreateVersion7() }, tx);
+        return (id, line);
     }
 
     private static async Task<(Guid Invoice, Guid Line)> InvoiceAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

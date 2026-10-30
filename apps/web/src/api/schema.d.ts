@@ -9243,6 +9243,179 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales returns (RMAs), newest first, filtered by company, status or customer */
+        get: operations["getSalesReturns"];
+        put?: never;
+        /** A return request against a customer's posted shipment lines: quantities in the base unit, serials, reason codes, the proposed disposition, the cost policy */
+        post: operations["postSalesReturns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/returnable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A customer's posted shipment lines with goods not yet returned, and the serials that can still come back */
+        get: operations["getSalesReturnsReturnable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The return with its lines, what each came back at, the lot's status, the dispositions and the credit notes issued */
+        get: operations["getSalesReturnsByReturnId"];
+        /** Re-validates a requested or authorised return's lines; nothing is edited once the goods were received */
+        put: operations["putSalesReturnsByReturnId"];
+        post?: never;
+        /** Deletes a requested or authorised return; a received one is reversed instead */
+        delete: operations["deleteSalesReturnsByReturnId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}/authorise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Authorises the return: the customer may send the goods back */
+        post: operations["postSalesReturnsByReturnIdAuthorise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rejects a requested or authorised return with a reason */
+        post: operations["postSalesReturnsByReturnIdReject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Receives the goods into stock against the shipment's own ledger entries at the return's cost policy (Dr Inventory / Cr Cogs); serials come back as returned, a blocked lot comes back on hold and forces quarantine */
+        post: operations["postSalesReturnsByReturnIdReceive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Settles each line's disposition: restock (a returned serial back in stock), quarantine, scrap (leaves again at the return's cost) or repair (the serial goes into repair) */
+        post: operations["postSalesReturnsByReturnIdInspect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}/credit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issues and posts one credit note per invoice that billed the returned lines, at the invoice's price and tax on the SalesReturns role, applied to the invoice */
+        post: operations["postSalesReturnsByReturnIdCredit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Closes a received, inspected or credited return */
+        post: operations["postSalesReturnsByReturnIdClose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sales/returns/{returnId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a received return as a whole: its credit notes are reversed and the goods leave again against the return's own entries; refused once anything was scrapped */
+        post: operations["postSalesReturnsByReturnIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -10974,6 +11147,10 @@ export interface components {
             /** Format: uuid */
             warehouseId?: null | string;
         };
+        CreditSalesReturnRequest: {
+            /** Format: date */
+            documentDate?: null | string;
+        };
         /** @description status on_hold (new orders wait for release) or blocked (orders, shipments and invoices refused), with a reason; ok releases. */
         CreditStatusRequest: {
             status: string;
@@ -11882,6 +12059,18 @@ export interface components {
             /** Format: uuid */
             journalEntryId: null | string;
             run: null | components["schemas"]["CostAdjustmentRunInfo"];
+        };
+        InspectSalesReturnLineRequest: {
+            /** Format: uuid */
+            lineId: string;
+            disposition: string;
+            note?: null | string;
+        };
+        /** @description The inspection's verdict per line; the date is the posting date of what it moves (scrap) and defaults to today. */
+        InspectSalesReturnRequest: {
+            lines: components["schemas"]["InspectSalesReturnLineRequest"][];
+            /** Format: date */
+            postingDate?: null | string;
         };
         /** @description A run of the harness for one tenant (optionally one company): every check with its outcome. */
         InvariantReport: {
@@ -15209,6 +15398,10 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        ReceiveSalesReturnRequest: {
+            /** Format: date */
+            postingDate?: null | string;
+        };
         ReceiveTransferRequest: {
             /** Format: date */
             receiveDate?: null | string;
@@ -15342,6 +15535,9 @@ export interface components {
             reason: string;
         };
         RejectRequest: {
+            reason: string;
+        };
+        RejectSalesReturnRequest: {
             reason: string;
         };
         ReleaseReservationRequest: {
@@ -15679,6 +15875,43 @@ export interface components {
             /** Format: uuid */
             warehouseId: string;
         };
+        /** @description A posted shipment line of a customer with goods not yet returned: what can still come back, and which serials. */
+        ReturnableSalesLine: {
+            /** Format: uuid */
+            shipmentLineId: string;
+            /** Format: uuid */
+            shipmentId: string;
+            shipmentNumber: string;
+            /** Format: date */
+            shipmentDate: string;
+            /** Format: uuid */
+            warehouseId: string;
+            /** Format: uuid */
+            orderLineId: string;
+            orderNumber: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            tracking: string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            qtyReturned: number | string;
+            /** Format: double */
+            remaining: number | string;
+            /** Format: double */
+            qtyInvoiced: number | string;
+            lotNumber: null | string;
+            serialNumbers: string[];
+        };
         ReturnLineSummary: {
             /** Format: uuid */
             id: string;
@@ -15840,6 +16073,11 @@ export interface components {
             reversalDate?: null | string;
         };
         ReverseSalesInvoiceRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
+        ReverseSalesReturnRequest: {
             reason: string;
             /** Format: date */
             reversalDate?: null | string;
@@ -16140,6 +16378,8 @@ export interface components {
             /** Format: uuid */
             recurringInvoiceId?: null | string;
             commissions?: null | components["schemas"]["CommissionEntrySummary"][];
+            /** Format: uuid */
+            returnId?: null | string;
         };
         SalesRepSummary: {
             /** Format: uuid */
@@ -16167,6 +16407,142 @@ export interface components {
             customers: number | string;
             /** Format: int32 */
             openOpportunities: number | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /**
+         * @description A shipment ledger entry the return applies to: the entry, its serial and how much of it came back; once
+         *                 received, the return's own inbound entry that brought it back and where it was put (what scrap and reversal apply to).
+         */
+        SalesReturnAppliedEntry: {
+            /** Format: uuid */
+            sleId: string;
+            serialNumber: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            returnSleId?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+            /** Format: uuid */
+            lotId?: null | string;
+        };
+        SalesReturnCreditNoteRef: {
+            /** Format: uuid */
+            id: string;
+            number: string;
+            status: string;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            currency: string;
+        };
+        SalesReturnLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            shipmentLineId: string;
+            /** Format: uuid */
+            shipmentId: string;
+            shipmentNumber: string;
+            /** Format: int32 */
+            shipmentLineNo: number | string;
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            tracking: string;
+            /** Format: uuid */
+            variantId: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: uuid */
+            binId: null | string;
+            lotNumber: null | string;
+            lotStatus: null | string;
+            lotBlocked: boolean;
+            serialNumbers: string[];
+            /** Format: uuid */
+            reasonCodeId: null | string;
+            reasonCode: null | string;
+            reason: null | string;
+            disposition: null | string;
+            dispositionNote: null | string;
+            /** Format: double */
+            unitCost: null | number | string;
+            applied: components["schemas"]["SalesReturnAppliedEntry"][];
+            /** Format: double */
+            costAmount: number | string;
+            /** Format: uuid */
+            sleId: null | string;
+            /** Format: uuid */
+            scrapSleId: null | string;
+            /** Format: double */
+            scrapCostAmount: number | string;
+            /** Format: double */
+            qtyCredited: number | string;
+            /** Format: double */
+            netCredited: number | string;
+        };
+        SalesReturnSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: null | string;
+            /** Format: date */
+            requestDate: string;
+            /** Format: date */
+            postingDate: null | string;
+            costPolicy: string;
+            reason: null | string;
+            customerReference: null | string;
+            currency: null | string;
+            functionalCurrency: string;
+            /** Format: double */
+            totalCost: number | string;
+            /** Format: double */
+            totalCredited: number | string;
+            creditNotes: components["schemas"]["SalesReturnCreditNoteRef"][];
+            /** Format: uuid */
+            stockPostingId: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            reversalReason: null | string;
+            rejectionReason: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            lines: components["schemas"]["SalesReturnLineSummary"][];
+            /** Format: date-time */
+            authorisedAt: null | string;
+            /** Format: date-time */
+            receivedAt: null | string;
+            /** Format: date-time */
+            inspectedAt: null | string;
+            /** Format: date-time */
+            creditedAt: null | string;
+            /** Format: date-time */
+            closedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -18060,6 +18436,46 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        /**
+         * @description One shipment line's goods coming back on a sales return (roadmap 5.8a). The quantity is in the item's base unit like
+         *     the shipment line's own; a serial-tracked line names the serials coming back; a reason code of the inventory
+         *     catalogue (`return`) and free text say why; the disposition proposed here is settled at inspection; the bin is
+         *     where the goods are put away (the shipment's own bin when none is named); the unit cost, in the company's currency,
+         *     counts only under the `specified` cost policy.
+         */
+        SaveSalesReturnLineRequest: {
+            /** Format: uuid */
+            shipmentLineId: string;
+            /** Format: double */
+            quantity: number | string;
+            serialNumbers?: null | string[];
+            reasonCode?: null | string;
+            reason?: null | string;
+            disposition?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+            /** Format: double */
+            unitCost?: null | number | string;
+        };
+        SaveSalesReturnRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            lines: components["schemas"]["SaveSalesReturnLineRequest"][];
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: date */
+            requestDate?: null | string;
+            /** @default original */
+            costPolicy: string;
+            reason?: null | string;
+            customerReference?: null | string;
+            notes?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            customFields?: unknown;
+        };
         SaveScheduleRequest: {
             code: string;
             jobType: string;
@@ -18832,6 +19248,11 @@ export interface components {
             dimensions?: null | {
                 [key: string]: string;
             };
+            /**
+             * Format: double
+             * @default 0
+             */
+            qtyReturned: number | string;
         };
         ShipmentPackageLineSummary: {
             /** Format: uuid */
@@ -37708,6 +38129,320 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecurringInvoiceRun"][];
+                };
+            };
+        };
+    };
+    getSalesReturns: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+                partnerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"][];
+                };
+            };
+        };
+    };
+    postSalesReturns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSalesReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    getSalesReturnsReturnable: {
+        parameters: {
+            query: {
+                companyId: string;
+                partnerId: string;
+                shipmentId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnableSalesLine"][];
+                };
+            };
+        };
+    };
+    getSalesReturnsByReturnId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    putSalesReturnsByReturnId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveSalesReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    deleteSalesReturnsByReturnId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postSalesReturnsByReturnIdAuthorise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    postSalesReturnsByReturnIdReject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectSalesReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    postSalesReturnsByReturnIdReceive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReceiveSalesReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    postSalesReturnsByReturnIdInspect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InspectSalesReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    postSalesReturnsByReturnIdCredit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditSalesReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    postSalesReturnsByReturnIdClose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
+                };
+            };
+        };
+    };
+    postSalesReturnsByReturnIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                returnId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseSalesReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesReturnSummary"];
                 };
             };
         };

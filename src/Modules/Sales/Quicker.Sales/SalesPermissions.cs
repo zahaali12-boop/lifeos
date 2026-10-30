@@ -19,6 +19,11 @@ public static class SalesPermissions
     public const string InvoiceManage = "sales.invoice.manage";
     public const string InvoicePost = "sales.invoice.post";
 
+    public const string ReturnRead = "sales.return.read";
+    public const string ReturnManage = "sales.return.manage";
+    public const string ReturnReceive = "sales.return.receive";
+    public const string ReturnCredit = "sales.return.credit";
+
     public static readonly PermissionDefinition[] All =
     [
         new(QuoteRead, "sales", "Read sales quotations"),
@@ -31,5 +36,9 @@ public static class SalesPermissions
         new(InvoiceRead, "sales", "Read sales invoices and credit notes"),
         new(InvoiceManage, "sales", "Create, edit and delete draft sales invoices and credit notes"),
         new(InvoicePost, "sales", "Post sales invoices and credit notes into the books and reverse them"),
+        new(ReturnRead, "sales", "Read sales returns"),
+        new(ReturnManage, "sales", "Request, edit, authorise, reject, inspect and close sales returns"),
+        new(ReturnReceive, "sales", "Receive returned goods into stock, dispose of them and reverse a receipt"),
+        new(ReturnCredit, "sales", "Issue the credit notes of a sales return"),
     ];
 }

@@ -114,14 +114,14 @@ public sealed class InvoiceService(
                                   join s in db.Shipments.AsNoTracking() on new { l.TenantId, Id = l.ShipmentId } equals new { s.TenantId, s.Id }
                                   join ol in db.OrderLines.AsNoTracking() on new { l.TenantId, Id = l.OrderLineId } equals new { ol.TenantId, ol.Id }
                                   join o in db.Orders.AsNoTracking() on new { s.TenantId, Id = s.OrderId } equals new { o.TenantId, o.Id }
-                                  where s.CompanyId == companyId && s.PartnerId == partnerId && s.Status == "posted" && l.QtyInvoiced < l.Quantity
+                                  where s.CompanyId == companyId && s.PartnerId == partnerId && s.Status == "posted" && l.QtyInvoiced + l.QtyReturned - l.QtyReturnCredited < l.Quantity
                                   orderby s.PostingDate, s.Number, l.LineNo
                                   select new { Line = l, Shipment = s, OrderLine = ol, Order = o }).ToListAsync(cancellationToken);
         foreach (var row in shipmentRows)
         {
             var item = await items.FindAsync(row.Line.ItemId, cancellationToken);
             result.Add(new InvoicableSalesLine("shipment", row.Line.Id, row.Shipment.Number, row.Shipment.Id, row.OrderLine.Id, row.Order.Number, row.Order.Id, row.OrderLine.LineNo, row.Line.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? Empty(),
-                item?.BaseUomId ?? row.Line.UomId, item?.BaseUomCode ?? string.Empty, row.Line.Quantity, row.Line.QtyInvoiced, row.Line.Quantity - row.Line.QtyInvoiced, BaseUnitPrice(row.OrderLine), row.OrderLine.DiscountPct, row.Order.Currency, row.Shipment.PostingDate));
+                item?.BaseUomId ?? row.Line.UomId, item?.BaseUomCode ?? string.Empty, row.Line.Quantity, row.Line.QtyInvoiced, row.Line.Quantity - row.Line.QtyInvoiced - (row.Line.QtyReturned - row.Line.QtyReturnCredited), BaseUnitPrice(row.OrderLine), row.OrderLine.DiscountPct, row.Order.Currency, row.Shipment.PostingDate));
         }
 
         var orderRows = await (from l in db.OrderLines.AsNoTracking()
@@ -150,12 +150,15 @@ public sealed class InvoiceService(
         return invoice is null ? Error.NotFound(DocumentType, id) : await MapAsync(invoice, cancellationToken);
     }
 
-    public Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, CancellationToken cancellationToken) => CreateAsync(request, null, cancellationToken);
+    public Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, CancellationToken cancellationToken) => CreateAsync(request, null, null, cancellationToken);
 
-    internal async Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, Guid? recurringInvoiceId, CancellationToken cancellationToken)
+    internal Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, Guid? recurringInvoiceId, CancellationToken cancellationToken) => CreateAsync(request, recurringInvoiceId, null, cancellationToken);
+
+    /// <summary>Creates the invoice, recording the recurring template or the sales return (5.8a) that issued it.</summary>
+    internal async Task<Result<SalesInvoiceSummary>> CreateAsync(SaveSalesInvoiceRequest request, Guid? recurringInvoiceId, Guid? returnId, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var invoice = new SalesInvoice { Id = Guid.CreateVersion7(), RecurringInvoiceId = recurringInvoiceId, CreatedBy = principal.Principal?.MembershipId.Value, CreatedAt = clock.UtcNow, UpdatedAt = clock.UtcNow };
+        var invoice = new SalesInvoice { Id = Guid.CreateVersion7(), RecurringInvoiceId = recurringInvoiceId, ReturnId = returnId, CreatedBy = principal.Principal?.MembershipId.Value, CreatedAt = clock.UtcNow, UpdatedAt = clock.UtcNow };
         var applied = await ApplyAsync(invoice, request, cancellationToken);
         if (applied.IsFailure)
         {
@@ -456,7 +459,10 @@ public sealed class InvoiceService(
     }
 
     /// <summary>Reverses a posted invoice: the journal and tax ledger mirrored, the open items closed, the billed quantities given back.</summary>
-    public async Task<Result<SalesInvoiceSummary>> ReverseAsync(Guid id, ReverseSalesInvoiceRequest request, CancellationToken cancellationToken)
+    public Task<Result<SalesInvoiceSummary>> ReverseAsync(Guid id, ReverseSalesInvoiceRequest request, CancellationToken cancellationToken) => ReverseAsync(id, request, false, cancellationToken);
+
+    /// <summary>Reverses a posted invoice or credit note; a credit note a sales return issued is reversed only through the return (<paramref name="viaReturn"/>).</summary>
+    internal async Task<Result<SalesInvoiceSummary>> ReverseAsync(Guid id, ReverseSalesInvoiceRequest request, bool viaReturn, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var reason = Shared.Trim(request.Reason);
@@ -469,6 +475,11 @@ public sealed class InvoiceService(
         if (invoice is null)
         {
             return Error.NotFound(DocumentType, id);
+        }
+
+        if (invoice.ReturnId is { } returnId && !viaReturn)
+        {
+            return Error.Conflict("invoice.credited_by_return", "The credit note was issued by a sales return; reverse the return instead.").WithWhy(("returnId", returnId));
         }
 
         if (invoice.Status != "posted")
@@ -945,7 +956,8 @@ public sealed class InvoiceService(
                         }
 
                         var alreadyHere = lines.Where(x => x.ShipmentLineId == shipmentLine.Id).Sum(static x => x.QuantityBase);
-                        var remaining = shipmentLine.Quantity - shipmentLine.QtyInvoiced - alreadyHere;
+                        // Returned goods that were never invoiced are not invoiced now either (5.8a).
+                        var remaining = shipmentLine.Quantity - shipmentLine.QtyInvoiced - (shipmentLine.QtyReturned - shipmentLine.QtyReturnCredited) - alreadyHere;
                         if (l.Quantity > remaining)
                         {
                             return Error.Validation("invoice.quantity_exceeds_uninvoiced", "The quantity exceeds what the shipment line has left to invoice.").WithWhy(("lineNo", lineNo), ("shipment", shipment.Number), ("remaining", remaining));
@@ -1050,7 +1062,7 @@ public sealed class InvoiceService(
                         var net = completes ? creditedLine.NetAmount - creditedLine.NetCredited - alreadyHere.Sum(static x => x.NetAmount) : Shared.Round(creditedLine.NetAmount * l.Quantity / creditedLine.Quantity, currency.Value);
                         var discount = completes ? creditedLine.DiscountAmount : Shared.Round(creditedLine.DiscountAmount * l.Quantity / creditedLine.Quantity, currency.Value);
                         var baseQuantity = creditedLine.Quantity == 0m ? 0m : creditedLine.QuantityBase * l.Quantity / creditedLine.Quantity;
-                        priced[lineNo] = new Priced(net, discount, creditedLine.UnitPrice, baseQuantity, creditedLine.UomId, creditedLine.ItemId, creditedLine.VariantId, l.TaxCodeId ?? creditedLine.TaxCodeId, explicitDimensions ? dimensionSet.Value : creditedLine.DimensionSetId, creditedLine.AccountRole, "[]");
+                        priced[lineNo] = new Priced(net, discount, creditedLine.UnitPrice, baseQuantity, creditedLine.UomId, creditedLine.ItemId, creditedLine.VariantId, l.TaxCodeId ?? creditedLine.TaxCodeId, explicitDimensions ? dimensionSet.Value : creditedLine.DimensionSetId, Shared.Trim(l.AccountRole) ?? creditedLine.AccountRole, "[]");
                         line.DiscountPct = creditedLine.DiscountPct;
                         break;
                     }
@@ -1237,7 +1249,7 @@ public sealed class InvoiceService(
     private static SaveSalesInvoiceRequest Request(SalesInvoice invoice) =>
         new(invoice.CompanyId, invoice.PartnerId,
             invoice.Lines.OrderBy(static l => l.LineNo).Select(l => new SaveSalesInvoiceLineRequest(l.Kind, l.Kind is "shipment" or "order" ? l.QuantityBase : l.Quantity, l.ShipmentLineId, l.OrderLineId, l.InvoiceLineId, l.ItemId, null, l.VariantId, null, l.Kind == "item" ? l.UomId : null,
-                l.Kind is "item" or "service" ? l.UnitPrice : null, l.Kind is "item" or "service" ? l.DiscountPct : 0m, l.Kind is "item" or "service" ? l.AccountRole : null, l.Description, l.Kind is "item" or "service" ? l.TaxCodeId : null, null, l.DeferralPeriods, l.DeferralStartsOn)).ToList(),
+                l.Kind is "item" or "service" ? l.UnitPrice : null, l.Kind is "item" or "service" ? l.DiscountPct : 0m, l.Kind is "item" or "service" or "invoice" ? l.AccountRole : null, l.Description, l.Kind is "item" or "service" ? l.TaxCodeId : null, null, l.DeferralPeriods, l.DeferralStartsOn)).ToList(),
             invoice.Kind, invoice.CustomerReference, invoice.CreditsInvoiceId, invoice.DocumentDate, invoice.PostingDate, invoice.Currency, invoice.PaymentTermsId, invoice.SalesRepId, invoice.PriceListId, invoice.BranchId, invoice.Notes, Shared.Parse(invoice.CustomFields));
 
     private async Task<Result<IReadOnlyList<Instalment>>> InstalmentsAsync(SalesInvoice invoice, CustomerTermsInfo customer, CancellationToken cancellationToken)
@@ -1306,6 +1318,6 @@ public sealed class InvoiceService(
             : [];
         return new SalesInvoiceSummary(i.Id, i.CompanyId, i.Number, i.Kind, i.Status, i.PartnerId, partner.Item1, partner.Item2, i.CustomerReference, i.CreditsInvoiceId, credited, i.DocumentDate, i.PostingDate, i.DueDate, i.Currency, i.ExchangeRate, company?.FunctionalCurrency.Code ?? i.Currency,
             i.PaymentTermsId, terms, i.SalesRepId, i.TotalNet, i.TotalTax, i.TotalGross, i.TaxRoundingLevel, i.PricesIncludeTax, i.JournalEntryId, i.ReversalEntryId, i.ReversalReason, i.EinvoiceStatus, i.Notes, Shared.Parse(i.CustomFields), lines, openItems, i.PostedAt, i.UpdatedAt,
-            i.EinvoiceScheme, i.EinvoiceSubmissionId, i.EinvoiceQr, JsonSerializer.Deserialize<List<string>>(i.EinvoiceMessages, Json) ?? [], i.EinvoiceSubmittedAt, i.RecurringInvoiceId, commissions);
+            i.EinvoiceScheme, i.EinvoiceSubmissionId, i.EinvoiceQr, JsonSerializer.Deserialize<List<string>>(i.EinvoiceMessages, Json) ?? [], i.EinvoiceSubmittedAt, i.RecurringInvoiceId, commissions, i.ReturnId);
     }
 }

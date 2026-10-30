@@ -24,9 +24,16 @@ public sealed record SaveReasonCodeRequest(string Code, IReadOnlyDictionary<stri
 public sealed record ReasonCodeSummary(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, string AppliesTo, string? AccountRoleOverride, bool RequiresNote, bool IsActive, DateTimeOffset UpdatedAt);
 
 /// <summary>Reason codes for adjustments, scrap, counts, returns, write-offs and transfer shortages; a reason may override the account the movement offsets.</summary>
-public sealed class ReasonCodeService(InventoryDbContext db, IClock clock)
+public sealed class ReasonCodeService(InventoryDbContext db, IClock clock) : IReasonCodeDirectory
 {
     public static readonly IReadOnlyList<string> AppliesTo = ["adjustment", "count", "return", "scrap", "write_off", "shortage"];
+
+    public async Task<ReasonCodeInfo?> FindReasonAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var upper = (code ?? string.Empty).Trim().ToUpperInvariant();
+        var reason = await db.ReasonCodes.AsNoTracking().SingleOrDefaultAsync(r => r.Code == upper, cancellationToken);
+        return reason is null ? null : new ReasonCodeInfo(reason.Id, reason.Code, reason.Name, reason.AppliesTo, reason.RequiresNote, reason.IsActive);
+    }
 
     public static readonly IReadOnlyList<string> OverridableRoles = ["InventoryAdjustment", "CountVariance", "Scrap", "InventoryWriteDown", "Cogs"];
 

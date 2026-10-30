@@ -31,6 +31,10 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
 
     public DbSet<SalesCommissionEntry> CommissionEntries => Set<SalesCommissionEntry>();
 
+    public DbSet<SalesReturn> Returns => Set<SalesReturn>();
+
+    public DbSet<SalesReturnLine> ReturnLines => Set<SalesReturnLine>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -126,6 +130,25 @@ public sealed class SalesDbContext(DbContextOptions<SalesDbContext> options, IUn
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.BasisAmount).HasPrecision(24, 6);
             b.Property(static x => x.CommissionAmount).HasPrecision(24, 6);
+        });
+
+        modelBuilder.Entity<SalesReturn>(b =>
+        {
+            b.ToTable("sls_returns", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.CustomFields).HasColumnType("jsonb");
+            b.Property(static x => x.CreditNoteIds).HasColumnType("jsonb");
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.ReturnId });
+            b.HasAuditTrail("sales_return", static x => x.Number);
+        });
+
+        modelBuilder.Entity<SalesReturnLine>(b =>
+        {
+            b.ToTable("sls_return_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.SerialNumbers).HasColumnType("jsonb");
+            b.Property(static x => x.Applied).HasColumnType("jsonb");
+            b.Property(static x => x.SleIds).HasColumnType("jsonb");
         });
 
         modelBuilder.Entity<SalesInvoiceLine>(b =>

@@ -132,7 +132,8 @@ public sealed record SalesInvoiceSummary(
     IReadOnlyList<string>? EinvoiceMessages = null,
     DateTimeOffset? EinvoiceSubmittedAt = null,
     Guid? RecurringInvoiceId = null,
-    IReadOnlyList<CommissionEntrySummary>? Commissions = null);
+    IReadOnlyList<CommissionEntrySummary>? Commissions = null,
+    Guid? ReturnId = null);
 
 // ------------------------------------------------------------------ recurring invoices (5.6b)
 

@@ -351,6 +351,11 @@ public sealed class SalesShipmentLine : ITenantEntity
     /// <summary>What the line has been invoiced so far, in base units like its quantity (5.6a).</summary>
     public decimal QtyInvoiced { get; set; }
 
+    /// <summary>What came back through sales returns (5.8a), in base units, and how much of that a return's credit note credited; the difference was never invoiced and reduces what the line can still be invoiced.</summary>
+    public decimal QtyReturned { get; set; }
+
+    public decimal QtyReturnCredited { get; set; }
+
     public Guid? SleId { get; set; }
 
     public string SleIds { get; set; } = "[]";
@@ -484,6 +489,9 @@ public sealed class SalesInvoice : ITenantEntity
 
     /// <summary>The recurring invoice that generated this one, when one did.</summary>
     public Guid? RecurringInvoiceId { get; set; }
+
+    /// <summary>For a credit note a sales return issued (5.8a): the return; such a note is reversed through the return.</summary>
+    public Guid? ReturnId { get; set; }
 
     public string CustomerSnapshot { get; set; } = "{}";
 
@@ -657,6 +665,167 @@ public sealed class SalesCommissionEntry : ITenantEntity
     public Guid? JournalEntryId { get; set; }
 
     public Guid? ReversalEntryId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A sales return, the RMA of roadmap 5.8 (DOMAIN_MODEL §11, A-163): a customer's request to send back goods of
+/// posted shipment lines, authorised or rejected, received into stock at the cost the goods left with, inspected with a
+/// disposition per line, credited against the invoices that billed the shipment and closed.</summary>
+public sealed class SalesReturn : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid? BranchId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public Guid PartnerId { get; set; }
+
+    public Guid WarehouseId { get; set; }
+
+    public DateOnly RequestDate { get; set; }
+
+    /// <summary>The day the goods were received into stock; null until then.</summary>
+    public DateOnly? PostingDate { get; set; }
+
+    /// <summary>requested, authorised, received, inspected, credited, closed, rejected or reversed.</summary>
+    public string Status { get; set; } = "requested";
+
+    /// <summary>original (the shipment entries' own cost), current (the item's cost today) or specified (a unit cost per line).</summary>
+    public string CostPolicy { get; set; } = "original";
+
+    public string? Reason { get; set; }
+
+    public string? CustomerReference { get; set; }
+
+    /// <summary>The currency of the credit notes issued (the invoices'); null until credited.</summary>
+    public string? Currency { get; set; }
+
+    /// <summary>What the goods came back at, in the company's currency.</summary>
+    public decimal TotalCost { get; set; }
+
+    /// <summary>What the credit notes credited net, in their currency.</summary>
+    public decimal TotalCredited { get; set; }
+
+    /// <summary>The credit notes issued, as a json array of ids (one per invoice credited).</summary>
+    public string CreditNoteIds { get; set; } = "[]";
+
+    public Guid? StockPostingId { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? ReversalPostingId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public string? RejectionReason { get; set; }
+
+    public DateTimeOffset? AuthorisedAt { get; set; }
+
+    public Guid? AuthorisedBy { get; set; }
+
+    public DateTimeOffset? ReceivedAt { get; set; }
+
+    public Guid? ReceivedBy { get; set; }
+
+    public DateTimeOffset? InspectedAt { get; set; }
+
+    public Guid? InspectedBy { get; set; }
+
+    public DateTimeOffset? CreditedAt { get; set; }
+
+    public DateTimeOffset? ClosedAt { get; set; }
+
+    public string? Notes { get; set; }
+
+    public string CustomFields { get; set; } = "{}";
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<SalesReturnLine> Lines { get; } = [];
+}
+
+/// <summary>One shipment line's goods coming back: the quantity in base units, the serials named, the lot it came from
+/// (and that lot's status when received), the reason, the disposition decided at inspection and what the stock engine
+/// wrote on the way in and, for scrap, on the way out again.</summary>
+public sealed class SalesReturnLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ReturnId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ShipmentLineId { get; set; }
+
+    public Guid OrderLineId { get; set; }
+
+    public Guid ItemId { get; set; }
+
+    public Guid? VariantId { get; set; }
+
+    /// <summary>In the item's base unit, like the shipment line's own quantity.</summary>
+    public decimal Quantity { get; set; }
+
+    public Guid UomId { get; set; }
+
+    public Guid? BinId { get; set; }
+
+    public Guid? LotId { get; set; }
+
+    public string? LotNumber { get; set; }
+
+    /// <summary>The lot's status when the goods came back: a blocked lot (quarantine, recalled, expired) forces quarantine.</summary>
+    public string? LotStatus { get; set; }
+
+    public string SerialNumbers { get; set; } = "[]";
+
+    public Guid? ReasonCodeId { get; set; }
+
+    public string? ReasonCode { get; set; }
+
+    public string? Reason { get; set; }
+
+    /// <summary>restock, quarantine, scrap or repair; proposed at request, settled at inspection.</summary>
+    public string? Disposition { get; set; }
+
+    public string? DispositionNote { get; set; }
+
+    /// <summary>The unit cost in the company's currency when the return's cost policy is <c>specified</c>.</summary>
+    public decimal? UnitCost { get; set; }
+
+    /// <summary>The shipment's ledger entries the return applies to, as a json array of <see cref="Application.SalesReturnAppliedEntry"/>.</summary>
+    public string Applied { get; set; } = "[]";
+
+    /// <summary>What the goods came back at, in the company's currency.</summary>
+    public decimal CostAmount { get; set; }
+
+    public Guid? SleId { get; set; }
+
+    public string SleIds { get; set; } = "[]";
+
+    public Guid? ScrapSleId { get; set; }
+
+    public decimal ScrapCostAmount { get; set; }
+
+    public decimal QtyCredited { get; set; }
+
+    public decimal NetCredited { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }

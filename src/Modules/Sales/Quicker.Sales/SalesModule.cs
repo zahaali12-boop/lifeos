@@ -22,12 +22,14 @@ public static class SalesModule
         services.AddScoped<ShipmentService>();
         services.AddScoped<InvoiceService>();
         services.AddScoped<RecurringInvoiceService>();
+        services.AddScoped<ReturnService>();
         services.AddJobHandler<RecurringInvoiceJob, RecurringInvoicePayload>();
         // Entries of this module belong to its invoices, which keep their own subledger (A-140).
         services.AddSingleton(new PostingDocumentModule("sales"));
         NumberedDocumentTypes.Register(
             new(InvoiceService.DocumentType, SalesPermissions.InvoiceRead),
-            new(InvoiceService.CreditNoteNumberingType, SalesPermissions.InvoiceRead));
+            new(InvoiceService.CreditNoteNumberingType, SalesPermissions.InvoiceRead),
+            new(ReturnService.DocumentType, SalesPermissions.ReturnRead));
         services.AddScoped<IWorkflowSubjectProvider, SalesOrderWorkflowSubject>();
         return services;
     }

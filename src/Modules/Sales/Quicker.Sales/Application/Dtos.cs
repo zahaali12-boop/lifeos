@@ -229,7 +229,8 @@ public sealed record ShipmentLineSummary(
     IReadOnlyList<ShipmentAllocation> Allocations,
     decimal? QtyPicked,
     decimal QtyPacked,
-    IReadOnlyDictionary<string, Guid>? Dimensions = null);
+    IReadOnlyDictionary<string, Guid>? Dimensions = null,
+    decimal QtyReturned = 0m);
 
 public sealed record ShipmentPackageLineSummary(Guid OrderLineId, int OrderLineNo, Guid ItemId, string ItemCode, decimal Quantity);
 
