@@ -20,6 +20,7 @@ public static class PrintingModule
         services.AddSingleton<IPdfRenderer, ChromiumPdfRenderer>();
         services.AddScoped<TemplateService>();
         services.AddScoped<PrintService>();
+        services.AddScoped<ShareService>();
         services.AddScoped<PrintFailureRecorder>();
         services.AddJobHandler<PrintRenderJob, PrintRenderPayload>();
         services.AddJobHandler<PrintEmailJob, PrintEmailPayload>();

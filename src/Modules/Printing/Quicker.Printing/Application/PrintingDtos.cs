@@ -95,6 +95,26 @@ public sealed record PrintEmailSummary(
     DateTimeOffset RequestedAt,
     DateTimeOffset? SentAt);
 
+/// <summary>A link to a ready render for someone without an account: the channel it goes by (link or whatsapp), the phone it is for, and how long it lives (1 to 30 days).</summary>
+public sealed record PrintShareRequest(Guid RenderId, string Channel = "link", string? Recipient = null, int ExpiresInDays = 7);
+
+/// <summary>A share link; the URL is given once, on creation, since only the token's hash is kept.</summary>
+public sealed record PrintShareSummary(
+    Guid Id,
+    Guid RenderId,
+    string DocumentType,
+    Guid? DocumentId,
+    string Number,
+    string Channel,
+    string? Recipient,
+    string? Url,
+    DateTimeOffset ExpiresAt,
+    DateTimeOffset? RevokedAt,
+    int OpenCount,
+    DateTimeOffset? LastOpenedAt,
+    DateTimeOffset CreatedAt,
+    bool IsLive);
+
 /// <summary>A document rendered as HTML for the browser's own print preview (the same template the PDF uses).</summary>
 public sealed record PrintPreview(string Html, string Title, string FileName, string LanguageMode, Guid TemplateId, int TemplateVersion, bool IsFinal);
 

@@ -17,6 +17,7 @@ import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/
 import { useCompanyCustomers } from "../sales/pricing/shared";
 import { money, num, SalesStatus } from "../sales/shared";
 import { DunningPanel } from "./DunningPanel";
+import { PrintButton } from "../print/PrintDialog";
 
 type ReceivableRow = components["schemas"]["ReceivableSummary"];
 
@@ -156,6 +157,7 @@ export function ReceivablesPage() {
             <Field label={t("purchasing.analysis.to")}>
               <TextField type="date" value={asOf} onChange={(e) => { setAsOf(e.target.value); }} dir="ltr" data-testid="statement-to" />
             </Field>
+            {partnerId ? <PrintButton subject={{ documentType: "customer_statement", parameters: { companyId, partnerId, from: statementFrom, to: asOf }, number: t("payables.statement.title"), partnerId }} testId="print-statement" /> : null}
           </>
         ) : (
           <Field label={t("payables.asOf")}>

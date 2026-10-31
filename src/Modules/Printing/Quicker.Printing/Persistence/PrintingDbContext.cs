@@ -15,6 +15,8 @@ public sealed class PrintingDbContext(DbContextOptions<PrintingDbContext> option
 
     public DbSet<PrintEmail> Emails => Set<PrintEmail>();
 
+    public DbSet<PrintShareLink> Shares => Set<PrintShareLink>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<PrintTemplate>(b =>
@@ -43,6 +45,12 @@ public sealed class PrintingDbContext(DbContextOptions<PrintingDbContext> option
         modelBuilder.Entity<PrintEmail>(b =>
         {
             b.ToTable("prt_emails", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+        });
+
+        modelBuilder.Entity<PrintShareLink>(b =>
+        {
+            b.ToTable("prt_share_links", "app");
             b.HasKey(static x => new { x.TenantId, x.Id });
         });
 

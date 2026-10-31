@@ -3729,6 +3729,8 @@ erDiagram
   rpt_financial_layouts ||--|{ rpt_layout_columns : "columns"
   prt_templates ||--|{ prt_template_versions : "versioned"
   prt_template_versions ||--o{ prt_renders : "rendered"
+  prt_renders ||--o{ prt_emails : "emailed"
+  prt_renders ||--o{ prt_share_links : "shared"
   onb_industry_templates ||--o{ onb_config_bundles : "packaged"
 
   rpt_models {
@@ -3862,6 +3864,29 @@ erDiagram
     text storage_key
     bytea sha256
     timestamptz rendered_at
+  }
+  prt_emails {
+    uuid id PK
+    uuid render_id FK
+    text document_type
+    uuid document_id
+    text to_address
+    text subject
+    text status "queued | sent | failed"
+    timestamptz sent_at
+  }
+  prt_share_links {
+    uuid id PK
+    uuid render_id FK
+    text document_type
+    uuid document_id
+    text token_hash "sha256 of the token; the token is shown once"
+    text channel "link | whatsapp"
+    text recipient "phone digits"
+    timestamptz expires_at
+    timestamptz revoked_at
+    int open_count
+    timestamptz last_opened_at
   }
   onb_setup_progress {
     uuid company_id PK

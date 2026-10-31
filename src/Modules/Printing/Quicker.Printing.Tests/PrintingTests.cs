@@ -204,6 +204,72 @@ public sealed class PrintingTests(ApiHostFixture host)
         await owner.AssertInvariantsAsync();
     }
 
+    [Fact]
+    public async Task A_share_link_opens_the_pdf_without_signing_in_counts_its_openings_and_dies_when_revoked_or_expired_while_a_queued_render_and_a_bad_phone_are_refused()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        var (invoiceId, number) = await DraftInvoiceAsync(s);
+        await owner.PostAsync($"/api/v1/sales/invoices/{invoiceId}/post", new { }, HttpStatusCode.OK);
+        var requested = await owner.PostAsync("/api/v1/print/renders", new { documentType = "sales_invoice", documentId = invoiceId });
+        var renderId = requested.GetProperty("id").GetGuid();
+
+        // Nothing to share until the worker has rendered; a phone without its country code, a life beyond the limit and an unknown channel are refused.
+        (await owner.PostErrorAsync("/api/v1/print/shares", new { renderId, channel = "whatsapp" }, HttpStatusCode.Conflict)).Code.ShouldBe("print.render_not_ready");
+        await RenderedAsync(host, owner, renderId);
+        (await owner.PostErrorAsync("/api/v1/print/shares", new { renderId, channel = "whatsapp", recipient = "12345" }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("print.share_phone_invalid");
+        (await owner.PostErrorAsync("/api/v1/print/shares", new { renderId, expiresInDays = 31 }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("print.share_expiry_invalid");
+        (await owner.PostErrorAsync("/api/v1/print/shares", new { renderId, channel = "pigeon" }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("print.share_channel_unknown");
+
+        // The WhatsApp link: the phone kept as digits, the URL given once, seven days of life.
+        var share = await owner.PostAsync("/api/v1/print/shares", new { renderId, channel = "whatsapp", recipient = "+966 50 123 4567" });
+        (share.GetProperty("recipient").GetString(), share.GetProperty("channel").GetString(), share.GetProperty("isLive").GetBoolean()).ShouldBe(("966501234567", "whatsapp", true));
+        share.GetProperty("expiresAt").GetDateTimeOffset().ShouldBe(Api.Clock.UtcNow.AddDays(7));
+        var url = share.GetProperty("url").GetString()!;
+        url.ShouldContain("/api/v1/public/prints/");
+        var token = url[(url.LastIndexOf('/') + 1)..];
+
+        // Anyone with the link and no account: the PDF shown inline; two openings counted, and the list never repeats the URL.
+        var anonymous = Api.Client;
+        var opened = await anonymous.GetAsync(new Uri($"/api/v1/public/prints/{token}", UriKind.Relative));
+        opened.StatusCode.ShouldBe(HttpStatusCode.OK);
+        opened.Content.Headers.ContentType!.MediaType.ShouldBe("application/pdf");
+        opened.Content.Headers.ContentDisposition!.DispositionType.ShouldBe("inline");
+        (await opened.Content.ReadAsByteArrayAsync()).Take(5).ToArray().ShouldBe("%PDF-"u8.ToArray());
+        (await anonymous.GetAsync(new Uri($"/api/v1/public/prints/{token}", UriKind.Relative))).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var listed = (await owner.GetOkAsync($"/api/v1/print/shares?documentType=sales_invoice&documentId={invoiceId}")).EnumerateArray().Single();
+        (listed.GetProperty("openCount").GetInt32(), listed.GetProperty("number").GetString()).ShouldBe((2, number));
+        (!listed.TryGetProperty("url", out var listedUrl) || listedUrl.ValueKind == JsonValueKind.Null).ShouldBeTrue("the token is kept only as a hash");
+        var activity = (await owner.GetOkAsync($"/api/v1/collaboration/activities?entityType=sales_invoice&entityId={invoiceId}")).GetProperty("items");
+        activity.EnumerateArray().Any(static a => a.GetProperty("kind").GetString() == "print.shared").ShouldBeTrue(activity.ToString());
+
+        // A tampered token and a malformed one read the same as none; revoked, the link is gone for good.
+        (await anonymous.GetAsync(new Uri($"/api/v1/public/prints/{token[..^4]}AAAA", UriKind.Relative))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await anonymous.GetAsync(new Uri("/api/v1/public/prints/not-a-token", UriKind.Relative))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var revoked = await owner.PostAsync($"/api/v1/print/shares/{share.GetProperty("id").GetGuid()}/revoke", new { }, HttpStatusCode.OK);
+        revoked.GetProperty("isLive").GetBoolean().ShouldBeFalse();
+        (await anonymous.GetAsync(new Uri($"/api/v1/public/prints/{token}", UriKind.Relative))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // A plain link of one day: past its life it answers expired, and says so.
+        var brief = await owner.PostAsync("/api/v1/print/shares", new { renderId, expiresInDays = 1 });
+        var briefToken = brief.GetProperty("url").GetString()!.Split('/')[^1];
+        var jump = TimeSpan.FromDays(1) + TimeSpan.FromMinutes(1);
+        Api.Clock.Advance(jump);
+        try
+        {
+            var expired = await anonymous.GetAsync(new Uri($"/api/v1/public/prints/{briefToken}", UriKind.Relative));
+            expired.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            (await expired.ReadJsonAsync()).GetProperty("code").GetString().ShouldBe("print.share_expired");
+        }
+        finally
+        {
+            Api.Clock.Advance(-jump);
+        }
+
+        (await owner.GetOkAsync($"/api/v1/print/shares?documentType=sales_invoice&documentId={invoiceId}")).GetArrayLength().ShouldBe(2);
+        await owner.AssertInvariantsAsync();
+    }
+
     private async Task<HttpClient> InviteAsync(HttpClient owner, Workspace ws, string roleCode, params string[] grants)
     {
         var role = await owner.PostAsync("/api/v1/roles", new { code = roleCode, name = Name(roleCode, roleCode), description = "", grants });

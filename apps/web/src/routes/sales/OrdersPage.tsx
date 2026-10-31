@@ -19,6 +19,7 @@ import { emptySalesLine, Money, money, orderLineBodies, SalesLinesEditor, SalesL
 import { CurrencyField } from "../CurrencyField";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, salesFlow } from "../StatusBar";
+import { PrintButton } from "../print/PrintDialog";
 import { QuickCreateButton } from "../QuickCreate";
 import { MoreFields } from "../MoreFields";
 import { usePref } from "../../lib/prefs";
@@ -195,6 +196,7 @@ export function OrdersPage() {
             <div className="flex flex-col gap-4">
               <StatusBar {...salesFlow("order", o.status, t)} actions={(
                 <>
+                {o.status !== "cancelled" ? <PrintButton subject={{ documentType: "sales_order", documentId: o.id, number: o.number, partnerId: o.partnerId }} /> : null}
                 {o.status === "draft" && canManage ? <Button onClick={() => { act.mutate({ id: o.id, action: "confirm" }); }} loading={act.isPending} data-testid="confirm-order">{t("sales.confirmOrder")}</Button> : null}
                 {o.status === "confirmed" && hasBackorders && canManage ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "retry" }); }} loading={act.isPending} data-testid="retry-backorders"><RefreshCw aria-hidden="true" />{t("sales.retryBackorders")}</Button> : null}
                 {(o.status === "confirmed" || o.status === "partially_shipped") && can("sales.shipment.manage") ? (

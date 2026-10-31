@@ -10,6 +10,7 @@ public static class PrintingPermissions
     public const string TemplateManage = "print.template.manage";
     public const string Render = "print.document.render";
     public const string Email = "print.document.email";
+    public const string Share = "print.document.share";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -17,5 +18,6 @@ public static class PrintingPermissions
         new(TemplateManage, "print", "Edit print templates (every edit is a new version), roll back and choose defaults"),
         new(Render, "print", "Render documents to PDF and read the renders"),
         new(Email, "print", "Email rendered documents"),
+        new(Share, "print", "Share rendered documents by link (WhatsApp) and revoke the links"),
     ];
 }

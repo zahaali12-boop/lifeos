@@ -28146,6 +28146,140 @@
         }
       }
     },
+    "/api/v1/print/shares": {
+      "get": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "The share links made for a document, newest first, with their openings; the URLs themselves are shown once, when made",
+        "operationId": "getPrintShares",
+        "parameters": [
+          {
+            "name": "documentType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrintShareSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "A link anyone can open without signing in, to a ready render, for WhatsApp or a plain link: it expires (7 days unless said otherwise, 30 at most) and the share is logged on the document",
+        "operationId": "postPrintShares",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrintShareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintShareSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/print/shares/{shareId}/revoke": {
+      "post": {
+        "tags": [
+          "Printing"
+        ],
+        "summary": "Stops a link working from now on",
+        "operationId": "postPrintSharesByShareIdRevoke",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintShareSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/prints/{token}": {
+      "get": {
+        "tags": [
+          "Public links"
+        ],
+        "summary": "The PDF behind a share link, shown in the browser; expired, revoked and unknown links are refused",
+        "operationId": "getPublicPrintsByToken",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/onboarding/status": {
       "get": {
         "tags": [
@@ -52606,6 +52740,129 @@
         },
         "description": "What to print: the document, the variant (tax invoice or pro forma), and which template when not the default."
       },
+      "PrintShareRequest": {
+        "required": [
+          "renderId"
+        ],
+        "type": "object",
+        "properties": {
+          "renderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel": {
+            "type": "string",
+            "default": "link"
+          },
+          "recipient": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresInDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 7
+          }
+        },
+        "description": "A link to a ready render for someone without an account: the channel it goes by (link or whatsapp), the phone it is for, and how long it lives (1 to 30 days)."
+      },
+      "PrintShareSummary": {
+        "required": [
+          "id",
+          "renderId",
+          "documentType",
+          "documentId",
+          "number",
+          "channel",
+          "recipient",
+          "url",
+          "expiresAt",
+          "revokedAt",
+          "openCount",
+          "lastOpenedAt",
+          "createdAt",
+          "isLive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "renderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "recipient": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "openCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastOpenedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isLive": {
+            "type": "boolean"
+          }
+        },
+        "description": "A share link; the URL is given once, on creation, since only the token's hash is kept."
+      },
       "PrintTemplateSummary": {
         "required": [
           "id",
@@ -76666,6 +76923,9 @@
     },
     {
       "name": "Printing"
+    },
+    {
+      "name": "Public links"
     },
     {
       "name": "Onboarding"

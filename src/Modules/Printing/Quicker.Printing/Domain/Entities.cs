@@ -160,3 +160,43 @@ public sealed class PrintEmail : ITenantEntity
 
     public DateTimeOffset? SentAt { get; set; }
 }
+
+/// <summary>
+/// A link that opens one rendered PDF without signing in, for WhatsApp and the like (roadmap 5.9, ADR-0022): the
+/// token is given once and only its hash is kept; the link expires, can be revoked, and counts its openings.
+/// </summary>
+public sealed class PrintShareLink : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid RenderId { get; set; }
+
+    public string DocumentType { get; set; } = string.Empty;
+
+    public Guid? DocumentId { get; set; }
+
+    /// <summary>SHA-256 of the token, hex; the token itself is never stored.</summary>
+    public string TokenHash { get; set; } = string.Empty;
+
+    /// <summary>link or whatsapp.</summary>
+    public string Channel { get; set; } = "link";
+
+    /// <summary>The phone number (digits) the link was made for, when the channel has one.</summary>
+    public string? Recipient { get; set; }
+
+    public DateTimeOffset ExpiresAt { get; set; }
+
+    public DateTimeOffset? RevokedAt { get; set; }
+
+    public int OpenCount { get; set; }
+
+    public DateTimeOffset? LastOpenedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}

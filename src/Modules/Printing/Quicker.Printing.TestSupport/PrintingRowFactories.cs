@@ -29,6 +29,15 @@ public static class PrintingRowFactories
             await c.ExecuteAsync("INSERT INTO app.prt_emails (tenant_id, id, company_id, render_id, document_type, to_address, subject) VALUES (@t, @id, @company, @render, 'sales_invoice', 'probe@example.test', 'Probe')", new { t, id, company, render }, tx);
             return new RowRef("app.prt_emails", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.prt_share_links", static async (c, tx, t) =>
+        {
+            var render = await RenderAsync(c, tx, t);
+            var company = await c.QuerySingleAsync<Guid>("SELECT company_id FROM app.prt_renders WHERE tenant_id = @t AND id = @render", new { t, render }, tx);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.prt_share_links (tenant_id, id, company_id, render_id, document_type, token_hash, expires_at) VALUES (@t, @id, @company, @render, 'sales_invoice', @hash, now() + interval '7 days')",
+                new { t, id, company, render, hash = Suffix(id) }, tx);
+            return new RowRef("app.prt_share_links", $"id = '{id}'");
+        });
     }
 
     private static async Task<Guid> RenderAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

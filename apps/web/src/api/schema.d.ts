@@ -9657,6 +9657,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/print/shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The share links made for a document, newest first, with their openings; the URLs themselves are shown once, when made */
+        get: operations["getPrintShares"];
+        put?: never;
+        /** A link anyone can open without signing in, to a ready render, for WhatsApp or a plain link: it expires (7 days unless said otherwise, 30 at most) and the share is logged on the document */
+        post: operations["postPrintShares"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/print/shares/{shareId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stops a link working from now on */
+        post: operations["postPrintSharesByShareIdRevoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/prints/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The PDF behind a share link, shown in the browser; expired, revoked and unknown links are refused */
+        get: operations["getPublicPrintsByToken"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/onboarding/status": {
         parameters: {
             query?: never;
@@ -16258,6 +16310,44 @@ export interface components {
             variant: string;
             /** Format: uuid */
             templateId?: null | string;
+        };
+        /** @description A link to a ready render for someone without an account: the channel it goes by (link or whatsapp), the phone it is for, and how long it lives (1 to 30 days). */
+        PrintShareRequest: {
+            /** Format: uuid */
+            renderId: string;
+            /** @default link */
+            channel: string;
+            recipient?: null | string;
+            /**
+             * Format: int32
+             * @default 7
+             */
+            expiresInDays: number | string;
+        };
+        /** @description A share link; the URL is given once, on creation, since only the token's hash is kept. */
+        PrintShareSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            renderId: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: null | string;
+            number: string;
+            channel: string;
+            recipient: null | string;
+            url: null | string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            revokedAt: null | string;
+            /** Format: int32 */
+            openCount: number | string;
+            /** Format: date-time */
+            lastOpenedAt: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            isLive: boolean;
         };
         PrintTemplateSummary: {
             /** Format: uuid */
@@ -40977,6 +41067,97 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PrintEmailSummary"];
+                };
+            };
+        };
+    };
+    getPrintShares: {
+        parameters: {
+            query: {
+                documentType: string;
+                documentId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintShareSummary"][];
+                };
+            };
+        };
+    };
+    postPrintShares: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrintShareRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintShareSummary"];
+                };
+            };
+        };
+    };
+    postPrintSharesByShareIdRevoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrintShareSummary"];
+                };
+            };
+        };
+    };
+    getPublicPrintsByToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": components["schemas"]["Stream"];
                 };
             };
         };

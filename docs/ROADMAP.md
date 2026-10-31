@@ -23,7 +23,7 @@ The founder reviewed the product after the M5 returns slice and set the order of
 | 1 | **UI ease**: a home dashboard with today's numbers and drill-down; document screens with a status bar and the next action only; quick create from anywhere and inline create of a customer, supplier or item; smart defaults and advanced fields hidden; keyboard-first line entry with paste from Excel; saved views with filters and group-by over 25–30 fields (the founder's "group by" request, pulled into this phase because the grid and the saved views are one piece of work); a first-run setup wizard with Excel import of customers, suppliers, items and opening balances. | part of 1.10, 7.5 (first cut), 8.3, 8.5 |
 | 2 | **Expenses** (the founder's request): every expense recorded with its details and date, confirmation posts the accrual, payment on its own date posts the settlement, all through the posting engine; petty cash funds and replenishment. | 6.4 |
 | 3 | **Fixed assets and depreciation**, more capable than the systems around us (multiple books, every method and convention, components, revaluation, impairment, transfers with history, partial disposals, verification, GL tie-out). | 6.6 |
-| 4 | Print and send completion: template screen, print and email buttons on documents, WhatsApp. | 5.9 (rest) |
+| 4 | Print and send completion: template screen, print and email buttons on documents, WhatsApp. Done 2026-10-31 (A-176). | 5.9 (rest) |
 | 5 | Cheques and post-dated cheques, bank statement import and reconciliation. | 6.2, 6.3 |
 | 6 | E-invoicing: ZATCA phase 2. | 8.6 (first adapter) |
 | 7 | Point of sale, offline-capable. | new |
@@ -128,7 +128,7 @@ Goal: customers, pricing, tax, quotes to receipts with credit control, shipping,
 | 5.6 Invoicing | Invoices from shipments/orders (partial, consolidated), direct invoices, service lines, recurring invoices, credit notes, deferred revenue schedules, commissions accrual. | AR = control invariant; e-invoice status placeholder wired to the provider interface. |
 | 5.7 Receivables | Open items, receipts with allocation (partial, overpayment, on-account, deposits and application), write-offs, realized FX with bank fees, aging at any date, statements, dunning levels and runs, promise-to-pay. | Scenario 3 realized-FX part with two instalments and fees; aging equals control at sampled dates. |
 | 5.8 Returns | RMA workflow (request, authorise, receive, inspect, disposition), credit notes linked to returns at original cost, lot recall interaction, serial status chain. | Scenarios 12 and 13 tests. |
-| 5.9 Print pipeline | Scriban templates, Chromium rendering in the worker, bilingual invoice/order/statement templates, email with PDF, render cache and evidence copy. | Arabic invoice renders correctly (visual regression test); draft invoices refuse to print as tax invoices. |
+| 5.9 Print pipeline | Scriban templates, Chromium rendering in the worker, bilingual invoice/order/statement templates, email with PDF, render cache and evidence copy. | Arabic invoice renders correctly (visual regression test); draft invoices refuse to print as tax invoices. **Built 2026-10-31 (ADR-0022, A-176)**: the pipeline, the print dialog with email, WhatsApp and share links, the template screen. |
 | 5.10 Demo seed v5 | A year of quotes, orders, shipments, invoices, receipts, returns across three companies and currencies. | |
 
 Hard scenarios proven: **3** (realized part), **4** (sales path), **6**, **12**, **13**, **14**, **15** (AR part).

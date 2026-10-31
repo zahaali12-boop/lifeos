@@ -23,7 +23,7 @@ public static class FixedAssetsRowFactories
         IsolationRegistry.Register("app.fa_asset_books", static async (c, tx, t) => new RowRef("app.fa_asset_books", $"id = '{(await AssetBookAsync(c, tx, t)).Value}'"));
         IsolationRegistry.Register("app.fa_schedule_lines", static async (c, tx, t) =>
         {
-            var (value, _, _) = await AssetBookAsync(c, tx, t);
+            var (value, _, _, _) = await AssetBookAsync(c, tx, t);
             var id = Guid.CreateVersion7();
             await c.ExecuteAsync("INSERT INTO app.fa_schedule_lines (tenant_id, id, asset_book_id, period_start, period_end, planned_amount) VALUES (@t, @id, @value, '2026-10-01', '2026-10-31', 10)", new { t, id, value }, tx);
             return new RowRef("app.fa_schedule_lines", $"id = '{id}'");
@@ -44,7 +44,7 @@ public static class FixedAssetsRowFactories
         });
         IsolationRegistry.Register("app.fa_usage", static async (c, tx, t) =>
         {
-            var (value, _, _) = await AssetBookAsync(c, tx, t);
+            var (value, _, _, _) = await AssetBookAsync(c, tx, t);
             var id = Guid.CreateVersion7();
             await c.ExecuteAsync("INSERT INTO app.fa_usage (tenant_id, id, asset_book_id, period_start, units) VALUES (@t, @id, @value, '2026-10-01', 5)", new { t, id, value }, tx);
             return new RowRef("app.fa_usage", $"id = '{id}'");

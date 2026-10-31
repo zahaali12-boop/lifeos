@@ -98,7 +98,7 @@ public sealed class PrintService(
         }
 
         var html = ScribanModel.Render(content.Html, globals);
-        return html.IsFailure ? html.Error! : new PrintPreview(html.Value, PrintFormat.Resolve(template.Name, mode), template.Code.ToLowerInvariant() + ".pdf", mode, template.Id, content.Version, false);
+        return html.IsFailure ? html.Error! : new PrintPreview(Stamp(html.Value), PrintFormat.Resolve(template.Name, mode), template.Code.ToLowerInvariant() + ".pdf", mode, template.Id, content.Version, false);
     }
 
     /// <summary>Asks for the PDF: a render with the same HTML already made is reused; otherwise a queued render the worker fills.</summary>
@@ -360,9 +360,17 @@ public sealed class PrintService(
             return html.Error!.WithWhy(("template", template.Code), ("version", version.Version));
         }
 
+        // The fingerprint is of the document and the template, not of the moment: the generation time goes in after
+        // hashing, so the same document under the same template version reuses its PDF whenever it was asked for.
+        var fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(html.Value)));
         var fileName = model.Value.FileName ?? SafeFileName(model.Value.Number) + ".pdf";
-        return new Composed(model.Value, template, version, html.Value, Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(html.Value))), fileName, partner, request with { Variant = variant });
+        return new Composed(model.Value, template, version, Stamp(html.Value), fingerprint, fileName, partner, request with { Variant = variant });
     }
+
+    /// <summary>Stands in for the generation time while the HTML is hashed; a template prints it as <c>{{ generated_at }}</c>.</summary>
+    private const string GeneratedAtMarker = "\u2063generated-at\u2063";
+
+    private string Stamp(string html) => html.Replace(GeneratedAtMarker, PrintFormat.DateTime(clock.UtcNow), StringComparison.Ordinal);
 
     private void AddCommon(ScriptObject globals, string mode, string variant, string paper, string css, bool forPdf)
     {
@@ -370,7 +378,7 @@ public sealed class PrintService(
         globals["is_rtl"] = string.Equals(mode, LanguageModes.Arabic, StringComparison.Ordinal);
         globals["variant"] = variant;
         globals["paper"] = paper;
-        globals["generated_at"] = PrintFormat.DateTime(clock.UtcNow);
+        globals["generated_at"] = GeneratedAtMarker;
         globals["font_dir"] = forPdf ? renderer.FontDirectoryUrl : string.Empty;
         globals["css"] = ShippedTemplates.BaseCss + "\n" + css;
         globals["L"] = PrintLabels.For(mode);
@@ -493,4 +501,5 @@ public static class PrintActivityKinds
 {
     public const string Rendered = "print.rendered";
     public const string Emailed = "print.emailed";
+    public const string Shared = "print.shared";
 }

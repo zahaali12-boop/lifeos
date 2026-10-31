@@ -73,6 +73,30 @@ public static class PrintingEndpoints
             .RequirePermission(PrintingPermissions.Email)
             .WithSummary("Emails the document's PDF to the partner's address or the one given; the worker renders first when it must, and the send is logged on the document");
 
+        var shares = print.MapGroup("/shares");
+        shares.MapGet("/", async (string documentType, Guid? documentId, ShareService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(documentType, documentId, ct)))
+            .RequirePermission(PrintingPermissions.Share)
+            .WithSummary("The share links made for a document, newest first, with their openings; the URLs themselves are shown once, when made");
+        shares.MapPost("/", async (PrintShareRequest request, HttpContext http, ShareService service, CancellationToken ct) =>
+            ApiProblems.Created(await service.ShareAsync(request, $"{http.Request.Scheme}://{http.Request.Host}", ct), static s => $"/api/v1/print/shares/{s.Id}"))
+            .RequirePermission(PrintingPermissions.Share)
+            .WithSummary("A link anyone can open without signing in, to a ready render, for WhatsApp or a plain link: it expires (7 days unless said otherwise, 30 at most) and the share is logged on the document");
+        shares.MapPost("/{shareId:guid}/revoke", async (Guid shareId, ShareService service, CancellationToken ct) => ApiProblems.Ok(await service.RevokeAsync(shareId, ct)))
+            .RequirePermission(PrintingPermissions.Share)
+            .WithSummary("Stops a link working from now on");
+
+        // The public side of share links: no sign-in; the token names the tenant and the hash of it the link.
+        api.MapGroup("/public/prints").WithTags("Public links")
+            .MapGet("/{token}", async (string token, HttpContext http, ShareService service, CancellationToken ct) =>
+                ApiProblems.From(await service.OpenAsync(token, ct), f =>
+                {
+                    http.Response.Headers.ContentDisposition = $"inline; filename=\"{f.FileName}\"";
+                    http.Response.Headers.CacheControl = "private, no-store";
+                    return Results.Stream(f.Content, f.ContentType);
+                }))
+            .Produces<Stream>(StatusCodes.Status200OK, "application/pdf")
+            .WithSummary("The PDF behind a share link, shown in the browser; expired, revoked and unknown links are refused");
+
         return api;
     }
 

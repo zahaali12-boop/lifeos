@@ -15,6 +15,12 @@ public sealed class PrintOptions
 
     /// <summary>How long the evidence copy of a final document's first render is retained in the immutable store.</summary>
     public int EvidenceRetentionYears { get; set; } = 10;
+
+    /// <summary>The origin share links are built on (https://api.example.com); the request's own scheme and host when empty.</summary>
+    public string? PublicOrigin { get; set; }
+
+    /// <summary>The longest a share link may live; a request asking for more is refused.</summary>
+    public int ShareMaxDays { get; set; } = 30;
 }
 
 /// <summary>Renders HTML to PDF; the one the worker runs is headless Chromium (ADR-0022).</summary>

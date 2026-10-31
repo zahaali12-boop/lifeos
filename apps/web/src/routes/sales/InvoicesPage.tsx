@@ -23,6 +23,7 @@ import { useCompanyCustomers } from "./pricing/shared";
 import { money, Money, num, SalesStatus } from "./shared";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, salesFlow } from "../StatusBar";
+import { PrintButton } from "../print/PrintDialog";
 import { QuickCreateButton } from "../QuickCreate";
 import { lineKeys, pastedNumber } from "../lineKeys";
 
@@ -431,6 +432,7 @@ export function InvoicesPage() {
             <div className="flex flex-col gap-4">
               <StatusBar {...salesFlow("invoice", i.status, t, { creditNote: i.kind === "credit_note", paid: i.openItems.length > 0 && i.openItems.every((o) => Number(o.remainingTc) === 0) })} actions={(
                 <>
+                {i.status !== "cancelled" ? <PrintButton subject={{ documentType: "sales_invoice", documentId: i.id, number: i.number, partnerId: i.partnerId, ...(i.status === "draft" ? { variants: ["proforma"] } : {}) }} /> : null}
                 {i.status === "draft" && canManage ? <Button variant="secondary" onClick={() => { openEdit(i); }} data-testid="edit-sales-invoice">{t("common.edit")}</Button> : null}
                 {i.status === "draft" && canManage && cancelReason === null ? <Button variant="secondary" onClick={() => { setCancelReason(""); }} data-testid="start-cancel-invoice">{t("sales.invoicing.cancelDraft")}</Button> : null}
                 {cancelReason !== null ? <Button variant="danger" onClick={() => { act.mutate({ id: i.id, action: "cancel", reason: cancelReason }); }} loading={act.isPending} disabled={!cancelReason.trim()} data-testid="confirm-cancel-invoice">{t("sales.confirmCancel")}</Button> : null}

@@ -26,3 +26,12 @@ Designable print templates for invoices, orders, statements and more, including 
 
 * Chromium in the worker image adds ~300 MB; acceptable, and Playwright is already used for tests.
 * Bilingual documents are a first-class template mode, not a hack.
+
+## Amendment (2026-10-31): share links and the print dialog
+
+* A rendered PDF can be opened without signing in through a **share link** (`prt_share_links`, A-176): the token carries the tenant id and 32 random bytes and is handed out once; only its SHA-256 is stored, so a copy of the database yields no working links. Links expire (7 days by default, 30 at most), can be revoked and count their openings. The public endpoint (`/api/v1/public/prints/{token}`) switches the unit of work to the token's tenant and reads the row under RLS; unknown, tampered and revoked links read alike.
+* **WhatsApp** is a share link in a `wa.me` message composed in the browser from the partner's phone; the server sends nothing and needs no WhatsApp account. A Business API adapter is a later addition behind the same link.
+* The **print dialog** previews the template's HTML in a sandboxed frame (opaque origin) and prints through the PDF in the browser's viewer, so a template's markup can neither reach the app nor differ from what prints.
+* The render **fingerprint** hashes the HTML with the generation time left out, so a document reuses its PDF across minutes; the time printed on a reused PDF is the time it was made.
+* The **template screen** edits HTML and CSS as text with versions, a sample-data preview, rollback and copies; the block editor described above stays with the designer in M7.
+
