@@ -168,18 +168,23 @@ Conventions:
 
 ## 7. Fixed assets
 
-| Event | Journal (Dr / Cr) | Notes |
-|-------|-------------------|-------|
-| Acquisition from supplier invoice | Dr `FaCost` / Dr `InputTax` / Cr `AP` (via `FaClearing` when receipt precedes invoice) | FA transaction `acquisition` |
-| Acquisition from stock (item capitalised) | Dr `FaCost` / Cr `Inventory` | SLE negative adjustment with reason `capitalised` |
-| Addition (improvement) | Dr `FaCost` / Cr `AP` or `Bank` | |
-| Depreciation (monthly run per book that posts to GL) | Dr `DepreciationExpense` (dimensioned by asset location/cost centre) / Cr `FaAccDep` | FA transaction per asset per period; schedule updated |
-| Revaluation upward (IAS 16 revaluation model) | Dr `FaCost` / Cr `RevaluationSurplus` (OCI); accumulated depreciation restated or eliminated per policy | reversal of a prior impairment goes to P&L first |
-| Impairment | Dr `ImpairmentLoss` / Cr `FaAccImpairment` (against `RevaluationSurplus` first if one exists for the asset) | |
-| Disposal / sale | Dr `Bank` or `AR` proceeds / Dr `FaAccDep` / Dr `FaAccImpairment` / Dr or Cr `GainLossOnDisposal` / Cr `FaCost`; any `RevaluationSurplus` for the asset transfers to `RetainedEarnings` | tax on sale proceeds via invoice |
-| Scrapping | as disposal with zero proceeds | |
-| Transfer between branches/cost centres | Dr `FaCost`(new dims) / Cr `FaCost`(old dims), same for `FaAccDep` | dimension change only |
-| Intercompany asset transfer | disposal in A at NBV (or agreed price) + acquisition in B; IC receivable/payable | eliminated in consolidation |
+Built 2026-10-31 (A-175): the `FixedAssets` module. Every line below carries the asset category as a posting key (`AssetCategoryId`), so a category's own accounts win over the template's; lines on `FaCost`, `FaAccDep` and `FaAccImpairment` carry the FA subledger (`SubledgerType` `FA`, `SubledgerRef` the `fa_transactions` row). Memo books (a tax book) record transactions without journals.
+
+| Event | Journal (Dr / Cr) | Subledger effects | Notes |
+|-------|-------------------|-------------------|-------|
+| Acquisition from a supplier | Dr `FaCost` / Dr `InputTax` (recoverable; tax that cannot be recovered is capitalised into cost) / Cr `AP` | FA transaction `acquisition`; AP open item kind `invoice`, document type `fa_asset`, due on the due date | paid through Banking like any payable |
+| Acquisition paid at once | Dr `FaCost` / Cr `Bank`, `Cash` or `PettyCash` | FA `acquisition`; bank transaction `disbursement` | the account is in the company's currency |
+| Acquisition from the clearing account | Dr `FaCost` / Cr `FaClearing` | FA `acquisition` | the purchase invoice line was posted on the `FaClearing` role (its `accountRole`) |
+| Opening balance (asset held before go-live) | Dr `FaCost` cost / Cr `FaAccDep` accumulated depreciation to date / Cr `OpeningBalanceEquity` net book value | FA `acquisition` with both deltas | posted on the cut-over day (the day after the month the opening balances run through); the plan continues from the next month |
+| Addition (improvement) | Dr `FaCost` / Cr the source as above | FA `addition`; the plan continues over the remaining life | |
+| Depreciation run (a book through a month) | Dr `DepreciationExpense` per asset, with the asset's dimensions and branch / Cr `FaAccDep` | FA `depreciation` per asset; schedule lines `posted`; one `DEP-` run per posting | catches up months left behind; only the latest run of a book is reversed (mirror journal, lines back to `planned`) |
+| Impairment (IAS 36) | Dr `RevaluationSurplus` (the asset's surplus first) / Dr `ImpairmentLoss` (the rest) / Cr `FaAccImpairment` | FA `impairment`; the plan continues on the lower amount | |
+| Revaluation upward (IAS 16, elimination approach) | Dr `FaAccDep` and Dr `FaAccImpairment` (eliminated) / Cr `FaCost`; then Dr `FaCost` / Cr `ImpairmentLoss` (reversing earlier losses first) / Cr `RevaluationSurplus` (the rest) | FA `revaluation`; the plan restarts on the fair value over the life left (or a new one) | |
+| Revaluation downward | eliminated as above; Dr `RevaluationSurplus` (first) / Dr `ImpairmentLoss` (beyond it) / Cr `FaCost` | FA `revaluation` | |
+| Transfer (branch, location dimensions) | Dr `FaCost`(new) / Cr `FaCost`(old); `FaAccDep` and `FaAccImpairment` likewise | FA `transfer` (zero deltas) | a custodian change alone posts nothing |
+| Disposal: sale or scrap, full or by quantity | catch-up depreciation to the day by the convention's leaving weight; then Dr `Bank` or `AR` proceeds / Dr `FaAccDep` / Dr `FaAccImpairment` / Cr `FaCost` / Dr or Cr `GainLossOnDisposal`; Dr `RevaluationSurplus` / Cr `RetainedEarnings` for the asset's surplus | FA `disposal` (negative deltas, proceeds, gain or loss); bank transaction `receipt` or AR open item of type `fa_disposal`; a partial disposal takes the quantity's share and the rest continues | VAT on a sale goes through a sales invoice (deferred) |
+| Reversal of a run | mirror journal | FA `reversal` rows against each `depreciation` row | an asset disposed of since blocks the reversal |
+| Intercompany asset transfer | not built: disposal in A at agreed price + acquisition in B; IC receivable/payable | | eliminated in consolidation (M6) |
 
 ## 8. Journals, deferrals, budgets, intercompany, closing
 

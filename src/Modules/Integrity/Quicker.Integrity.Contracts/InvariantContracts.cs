@@ -39,7 +39,10 @@ public static class InvariantCodes
     /// <summary>Per bank account, the control account's lines referencing the bank subledger net to the bank transactions' functional amounts (roadmap 4.7 / 6.1).</summary>
     public const string BankMatchesTransactions = "bank_matches_transactions";
 
-    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts, PayablesMatchOpenItems, ReceivablesMatchOpenItems, BankMatchesTransactions];
+    /// <summary>The fixed-asset control accounts (cost, accumulated depreciation, accumulated impairment) equal the FA subledger, asset by asset.</summary>
+    public const string FixedAssetsMatchRegister = "fixed_assets_match_register";
+
+    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts, PayablesMatchOpenItems, ReceivablesMatchOpenItems, BankMatchesTransactions, FixedAssetsMatchRegister];
 }
 
 /// <summary>One check: what it looked at, whether it holds, and the first problems it found (never more than a page).</summary>

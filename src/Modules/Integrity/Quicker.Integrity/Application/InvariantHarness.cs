@@ -44,6 +44,7 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             await PayablesMatchOpenItemsAsync(uow, companyId, cancellationToken),
             await ReceivablesMatchOpenItemsAsync(uow, companyId, cancellationToken),
             await BankMatchesTransactionsAsync(uow, companyId, cancellationToken),
+            await FixedAssetsMatchRegisterAsync(uow, companyId, cancellationToken),
         };
         return new InvariantReport(uow.Context.TenantId.Value, companyId, clock.UtcNow, checks, checks.TrueForAll(static c => c.Passed));
     }
@@ -394,6 +395,42 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
         var problems = mismatches.Select(m => $"company {m.CompanyId} bank account {m.Control}: control lines {N(m.Booked)}, transactions {N(m.Expected)}").ToList();
         return Result(InvariantCodes.BankMatchesTransactions, checkedCount, problems, $"{checkedCount} bank transaction(s), every bank account's control lines equal to its transactions");
     }
+
+    /// <summary>Asset by asset, the lines on the FA control accounts (cost, accumulated depreciation, accumulated impairment) equal the FA subledger of the book that posts to the ledger.</summary>
+    private static async Task<InvariantResult> FixedAssetsMatchRegisterAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(*) FROM app.fa_transactions t JOIN app.fa_books b ON b.tenant_id = t.tenant_id AND b.id = t.book_id AND b.posts_to_gl WHERE (@company::uuid IS NULL OR t.company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<AssetMismatch>(new CommandDefinition("""
+            WITH booked AS (
+              SELECT t.asset_id, l.account_role AS role, sum(l.debit_fc - l.credit_fc) AS booked
+              FROM app.gl_journal_lines l
+              JOIN app.fa_transactions t ON t.tenant_id = l.tenant_id AND t.id = l.subledger_ref
+              WHERE l.subledger_type = 'FA' AND (@company::uuid IS NULL OR l.company_id = @company)
+              GROUP BY 1, 2
+            ), expected AS (
+              SELECT t.asset_id, r.role, sum(r.amount) AS expected
+              FROM app.fa_transactions t
+              JOIN app.fa_books b ON b.tenant_id = t.tenant_id AND b.id = t.book_id AND b.posts_to_gl
+              CROSS JOIN LATERAL (VALUES ('FaCost', t.cost_delta), ('FaAccDep', -t.accumulated_depreciation_delta), ('FaAccImpairment', -t.impairment_delta)) AS r(role, amount)
+              WHERE (@company::uuid IS NULL OR t.company_id = @company)
+              GROUP BY 1, 2
+            ), keys AS (
+              SELECT asset_id, role FROM booked UNION SELECT asset_id, role FROM expected
+            )
+            SELECT k.asset_id, k.role, coalesce(b.booked, 0) AS booked, coalesce(e.expected, 0) AS expected
+            FROM keys k
+            LEFT JOIN booked b ON b.asset_id = k.asset_id AND b.role = k.role
+            LEFT JOIN expected e ON e.asset_id = k.asset_id AND e.role = k.role
+            WHERE coalesce(b.booked, 0) <> coalesce(e.expected, 0)
+            ORDER BY k.asset_id, k.role
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"asset {m.AssetId} {m.Role}: control lines {N(m.Booked)}, register {N(m.Expected)}").ToList();
+        return Result(InvariantCodes.FixedAssetsMatchRegister, checkedCount, problems, $"{checkedCount} fixed-asset transaction(s), every asset's control lines equal to its register");
+    }
+
+    private sealed record AssetMismatch(Guid AssetId, string Role, decimal Booked, decimal Expected);
 
     private sealed record ControlMismatch(Guid CompanyId, string Control, decimal Booked, decimal Expected);
 

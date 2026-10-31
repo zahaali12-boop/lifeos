@@ -1,4 +1,4 @@
-# Quicker ERP: Roadmap
+| 6.6 Fixed assets | Categories, books (IFRS, tax), methods and conventions, acquisition from invoices/stock, depreciation runs, revaluation, impairment, transfers, disposals, register and schedules. | FA subledger equals FA control accounts; depreciation to the cent over the asset life. **Built 2026-10-31 (A-175)**: every method and convention to the cent, runs that catch up and reverse, additions, impairment, revaluation, transfers, full and partial disposals, opening balances, verification, register and reconciliation, invariant `fixed_assets_match_register`. Open: capitalising from stock, component roll-up, intercompany transfers. |# Quicker ERP: Roadmap
 
 Milestones M1–M10 from the brief, refined into vertical slices. Each slice is a thin end-to-end path (database → posting → API → UI → tests) that leaves the system runnable and fully tested. Every milestone ends with the founder's review and a report (built, how to see it, test results, decisions, gaps, next).
 

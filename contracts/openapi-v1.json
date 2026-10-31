@@ -28955,6 +28955,1059 @@
         }
       }
     },
+    "/api/v1/fixed-assets/books": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Asset books of a company: the one that posts to the ledger (created as MAIN with the first asset) and memo books such as a tax book",
+        "operationId": "getFixedAssetsBooks",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssetBookSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "A new book; one book per company posts to the ledger",
+        "operationId": "postFixedAssetsBooks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssetBookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetBookSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/books/{bookId}": {
+      "put": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Changes a book's name or activity",
+        "operationId": "putFixedAssetsBooksByBookId",
+        "parameters": [
+          {
+            "name": "bookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssetBookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetBookSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/categories": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Asset categories: the defaults an asset starts with (method, life, salvage share, convention, declining rate) and the accounts its postings land on",
+        "operationId": "getFixedAssetsCategories",
+        "parameters": [
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssetCategorySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "A new asset category",
+        "operationId": "postFixedAssetsCategories",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssetCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetCategorySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/categories/{categoryId}": {
+      "put": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Changes a category; assets already created keep their own values",
+        "operationId": "putFixedAssetsCategoriesByCategoryId",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssetCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetCategorySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "The register of a company: every asset with its ledger book's cost, depreciation, impairment and net book value; by status, category and text",
+        "operationId": "getFixedAssetsAssets",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssetSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Drafts an asset: category, cost, acquisition and in-service dates, the source of the money (supplier, bank, clearing, opening), location, custodian; a value per book from the category's defaults, overridable per book; custom fields under host 'fa_asset'",
+        "operationId": "postFixedAssetsAssets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "One asset with its books, their plans, its transactions (the FA subledger) and its verifications",
+        "operationId": "getFixedAssetsAssetsByAssetId",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Changes a draft in full, an active asset's descriptive fields only",
+        "operationId": "putFixedAssetsAssetsByAssetId",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Deletes a draft asset",
+        "operationId": "deleteFixedAssetsAssetsByAssetId",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/activate": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Activates the asset: the acquisition posted from its source (Dr cost, and input tax from a supplier / Cr the payable, the bank, the clearing account or opening equity), the plan of every book generated",
+        "operationId": "postFixedAssetsAssetsByAssetIdActivate",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/additions": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Capital added to an active asset (an improvement): Dr cost / Cr the source; the plan continues over the remaining life",
+        "operationId": "postFixedAssetsAssetsByAssetIdAdditions",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdditionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/impair": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Writes the asset down (IAS 36): any revaluation surplus first, then a loss; Cr accumulated impairment",
+        "operationId": "postFixedAssetsAssetsByAssetIdImpair",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImpairmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/revalue": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Restates the asset at fair value (IAS 16 revaluation model, elimination approach): earlier impairment losses reversed through profit or loss first, the rest to the revaluation surplus; a fall uses the surplus first",
+        "operationId": "postFixedAssetsAssetsByAssetIdRevalue",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/transfer": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Moves the asset to another branch, location (dimensions) or custodian; a change of branch or dimensions moves its balances in the ledger",
+        "operationId": "postFixedAssetsAssetsByAssetIdTransfer",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/dispose": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Sells or scraps the asset, or part of it by quantity: depreciation caught up to the day by the convention, cost and accumulated amounts out, proceeds to a bank account or a receivable on a customer, the gain or loss, the surplus to retained earnings",
+        "operationId": "postFixedAssetsAssetsByAssetIdDispose",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/verify": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Records a physical verification: when, by whom, where, in what condition",
+        "operationId": "postFixedAssetsAssetsByAssetIdVerify",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/usage": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Units produced in a month, for a book on the units-of-production method; the plan follows",
+        "operationId": "postFixedAssetsAssetsByAssetIdUsage",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/assets/{assetId}/estimates": {
+      "put": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "A change of estimate in one book (remaining life, salvage, method, rate, total units): prospective, from the next unposted month",
+        "operationId": "putFixedAssetsAssetsByAssetIdEstimates",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEstimatesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/depreciation-runs": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Depreciation runs of a company, newest first",
+        "operationId": "getFixedAssetsDepreciationRuns",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bookId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DepreciationRunSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Posts every planned month of the book through a date as one run (one journal: Dr depreciation expense per asset with its dimensions / Cr accumulated depreciation in the FA subledger); the ledger book by default",
+        "operationId": "postFixedAssetsDepreciationRuns",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepreciationRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepreciationRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/depreciation-runs/{runId}": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "One run",
+        "operationId": "getFixedAssetsDepreciationRunsByRunId",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepreciationRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/depreciation-runs/{runId}/reverse": {
+      "post": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Reverses the book's latest run: the mirror journal, the months back to planned",
+        "operationId": "postFixedAssetsDepreciationRunsByRunIdReverse",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseDepreciationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepreciationRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/forecast": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "Planned and posted depreciation by month over a range",
+        "operationId": "getFixedAssetsForecast",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bookId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ForecastRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/register": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "The register at a date: cost, accumulated depreciation, impairment and net book value per asset from the subledger, with the depreciation of the range",
+        "operationId": "getFixedAssetsRegister",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bookId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fixed-assets/reconciliation": {
+      "get": {
+        "tags": [
+          "Fixed assets"
+        ],
+        "summary": "The subledger's totals per control role and whether the ledger agrees, asset by asset",
+        "operationId": "getFixedAssetsReconciliation",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/reporting/home": {
       "get": {
         "tags": [
@@ -29443,6 +30496,71 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "AdditionRequest": {
+        "required": [
+          "amount",
+          "date",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "source": {
+            "type": "string"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "supplierPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -31096,6 +32214,846 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AssetBookSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "postsToGl",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "postsToGl": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AssetBookValueRequest": {
+        "required": [
+          "bookId"
+        ],
+        "type": "object",
+        "properties": {
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "method": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lifeMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "salvageValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "convention": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "totalUnits": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "How one book values the asset, where it departs from the category's defaults; blanks take the defaults."
+      },
+      "AssetBookValueSummary": {
+        "required": [
+          "id",
+          "bookId",
+          "bookCode",
+          "postsToGl",
+          "method",
+          "lifeMonths",
+          "salvageValue",
+          "ratePct",
+          "convention",
+          "depreciationStart",
+          "totalUnits",
+          "cost",
+          "accumulatedDepreciation",
+          "accumulatedImpairment",
+          "revaluationSurplus",
+          "netBookValue",
+          "monthsConsumed",
+          "depreciatedThrough",
+          "status",
+          "schedule"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookCode": {
+            "type": "string"
+          },
+          "postsToGl": {
+            "type": "boolean"
+          },
+          "method": {
+            "type": "string"
+          },
+          "lifeMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "salvageValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "convention": {
+            "type": "string"
+          },
+          "depreciationStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalUnits": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedDepreciation": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedImpairment": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "revaluationSurplus": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netBookValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "monthsConsumed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depreciatedThrough": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ScheduleLineSummary"
+            }
+          }
+        }
+      },
+      "AssetCategorySummary": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "defaultMethod",
+          "defaultLifeMonths",
+          "defaultSalvagePct",
+          "defaultRatePct",
+          "convention",
+          "costAccountCode",
+          "accumulatedDepreciationAccountCode",
+          "depreciationExpenseAccountCode",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "defaultMethod": {
+            "type": "string"
+          },
+          "defaultLifeMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "defaultSalvagePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "defaultRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "convention": {
+            "type": "string"
+          },
+          "costAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accumulatedDepreciationAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "depreciationExpenseAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AssetSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "name",
+          "description",
+          "categoryId",
+          "categoryCode",
+          "categoryName",
+          "parentAssetId",
+          "acquisitionDate",
+          "inServiceDate",
+          "cost",
+          "currency",
+          "quantity",
+          "unit",
+          "branchId",
+          "dimensionSetId",
+          "dimensions",
+          "custodianMembershipId",
+          "serialNumber",
+          "supplierPartnerId",
+          "supplierCode",
+          "supplierReference",
+          "warrantyUntil",
+          "status",
+          "acquisitionSource",
+          "acquisitionBankAccountId",
+          "acquisitionTaxCodeId",
+          "acquisitionDueDate",
+          "openingAccumulatedDepreciation",
+          "acquisitionEntryId",
+          "disposedOn",
+          "disposalKind",
+          "notes",
+          "customFields",
+          "method",
+          "lifeMonths",
+          "accumulatedDepreciation",
+          "accumulatedImpairment",
+          "netBookValue",
+          "depreciatedThrough",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryCode": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "parentAssetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "acquisitionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "inServiceDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensionSetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "custodianMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "serialNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "supplierPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "supplierCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "supplierReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warrantyUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "acquisitionSource": {
+            "type": "string"
+          },
+          "acquisitionBankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "acquisitionTaxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "acquisitionDueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "openingAccumulatedDepreciation": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "acquisitionEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "disposedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "disposalKind": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "method": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lifeMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "accumulatedDepreciation": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedImpairment": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netBookValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depreciatedThrough": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "books": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AssetBookValueSummary"
+            }
+          },
+          "transactions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AssetTransactionSummary"
+            }
+          },
+          "verifications": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AssetVerificationSummary"
+            }
+          }
+        }
+      },
+      "AssetTransactionSummary": {
+        "required": [
+          "id",
+          "bookId",
+          "bookCode",
+          "postingDate",
+          "kind",
+          "costDelta",
+          "accumulatedDepreciationDelta",
+          "impairmentDelta",
+          "surplusDelta",
+          "proceeds",
+          "gainLoss",
+          "journalEntryId",
+          "reversesId",
+          "runId",
+          "reference",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookCode": {
+            "type": "string"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "costDelta": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedDepreciationDelta": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "impairmentDelta": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "surplusDelta": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "proceeds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "gainLoss": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversesId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "runId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AssetVerificationSummary": {
+        "required": [
+          "id",
+          "verifiedOn",
+          "verifiedBy",
+          "condition",
+          "locationNote",
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "verifiedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "verifiedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "locationNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -33142,6 +35100,60 @@
           },
           "headHash": {
             "type": "string"
+          }
+        }
+      },
+      "ChangeEstimatesRequest": {
+        "required": [
+          "bookId"
+        ],
+        "type": "object",
+        "properties": {
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lifeMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "salvageValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "method": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalUnits": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -36855,6 +38867,125 @@
           }
         }
       },
+      "DepreciationRunRequest": {
+        "required": [
+          "companyId",
+          "through"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "through": {
+            "type": "string",
+            "format": "date"
+          },
+          "bookId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "DepreciationRunSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "bookId",
+          "bookCode",
+          "number",
+          "periodStart",
+          "periodEnd",
+          "postingDate",
+          "status",
+          "journalEntryId",
+          "reversalEntryId",
+          "assetCount",
+          "total",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookCode": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "assetCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "DimensionBalanceRow": {
         "required": [
           "valueId",
@@ -37409,6 +39540,71 @@
         "properties": {
           "reason": {
             "type": "string"
+          }
+        }
+      },
+      "DisposalRequest": {
+        "required": [
+          "date",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "proceeds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "proceedsSource": {
+            "type": "string",
+            "default": "none"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -38853,6 +41049,50 @@
         },
         "description": "One document of a purchasing flow, as the smart buttons and the flow list show it."
       },
+      "ForecastRow": {
+        "required": [
+          "periodStart",
+          "periodEnd",
+          "planned",
+          "posted",
+          "assets"
+        ],
+        "type": "object",
+        "properties": {
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "planned": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "posted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "assets": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "ForgotPasswordRequest": {
         "required": [
           "email"
@@ -39559,6 +41799,31 @@
           }
         },
         "description": "Net sales (invoices less credit notes, before tax) of the day, the month so far and the same days of the month before, with a day-by-day series for the last thirty days."
+      },
+      "ImpairmentRequest": {
+        "required": [
+          "amount",
+          "date",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
       },
       "ImportRatesRequest": {
         "required": [
@@ -53516,6 +55781,65 @@
           }
         }
       },
+      "ReconciliationReport": {
+        "required": [
+          "companyId",
+          "bookId",
+          "currency",
+          "rows",
+          "ledgerAgrees",
+          "problems"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationRow"
+            }
+          },
+          "ledgerAgrees": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ReconciliationRow": {
+        "required": [
+          "role",
+          "register"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "register": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "RecordRef": {
         "required": [
           "id",
@@ -53931,6 +56255,185 @@
         "properties": {
           "refreshToken": {
             "type": "string"
+          }
+        }
+      },
+      "RegisterReport": {
+        "required": [
+          "companyId",
+          "bookId",
+          "bookCode",
+          "from",
+          "asOf",
+          "currency",
+          "rows",
+          "totals"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookCode": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegisterRow"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/RegisterTotals"
+          }
+        }
+      },
+      "RegisterRow": {
+        "required": [
+          "assetId",
+          "number",
+          "name",
+          "categoryCode",
+          "status",
+          "acquisitionDate",
+          "cost",
+          "accumulatedDepreciation",
+          "accumulatedImpairment",
+          "netBookValue",
+          "depreciationInRange"
+        ],
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "categoryCode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "acquisitionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedDepreciation": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedImpairment": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netBookValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depreciationInRange": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "RegisterTotals": {
+        "required": [
+          "cost",
+          "accumulatedDepreciation",
+          "accumulatedImpairment",
+          "netBookValue",
+          "depreciationInRange"
+        ],
+        "type": "object",
+        "properties": {
+          "cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedDepreciation": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "accumulatedImpairment": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netBookValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depreciationInRange": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -55875,6 +58378,40 @@
           }
         }
       },
+      "RevaluationRequest": {
+        "required": [
+          "fairValue",
+          "date",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "fairValue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "newLifeMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "RevaluationSummary": {
         "required": [
           "id",
@@ -55965,6 +58502,24 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ReverseDepreciationRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -58820,6 +61375,292 @@
               "string"
             ]
           }
+        }
+      },
+      "SaveAssetBookRequest": {
+        "required": [
+          "companyId",
+          "code",
+          "name",
+          "postsToGl"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "postsToGl": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveAssetCategoryRequest": {
+        "required": [
+          "code",
+          "name",
+          "defaultMethod",
+          "defaultLifeMonths"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "defaultMethod": {
+            "type": "string"
+          },
+          "defaultLifeMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "defaultSalvagePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "defaultRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "convention": {
+            "type": "string",
+            "default": "full_month"
+          },
+          "costAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accumulatedDepreciationAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "depreciationExpenseAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveAssetRequest": {
+        "required": [
+          "companyId",
+          "name",
+          "categoryId",
+          "acquisitionDate",
+          "cost",
+          "acquisitionSource"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "acquisitionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "acquisitionSource": {
+            "type": "string"
+          },
+          "inServiceDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "parentAssetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 1
+          },
+          "unit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "custodianMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "serialNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "supplierPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "supplierReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warrantyUntil": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "acquisitionBankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "acquisitionTaxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "acquisitionDueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "openingAccumulatedDepreciation": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "openingDepreciatedThrough": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "books": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AssetBookValueRequest"
+            }
+          },
+          "customFields": { }
         }
       },
       "SaveAttributeRequest": {
@@ -66392,6 +69233,67 @@
           }
         }
       },
+      "ScheduleLineSummary": {
+        "required": [
+          "id",
+          "periodStart",
+          "periodEnd",
+          "weight",
+          "plannedAmount",
+          "postedAmount",
+          "status",
+          "runId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "plannedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "postedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "runId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "SchedulePreviewRequest": {
         "required": [
           "companyId",
@@ -72107,6 +75009,48 @@
         },
         "description": "A quantity for one line of a ship or receive, in the line's unit; lines left out take everything outstanding. On a\nreceipt, Shortage is what shipped but never arrived: it is written off from transit with the reason code."
       },
+      "TransferRequest": {
+        "required": [
+          "date"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "custodianMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "TransferSummary": {
         "required": [
           "id",
@@ -72716,6 +75660,38 @@
           }
         }
       },
+      "UsageRequest": {
+        "required": [
+          "bookId",
+          "month",
+          "units"
+        ],
+        "type": "object",
+        "properties": {
+          "bookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "month": {
+            "type": "string",
+            "format": "date"
+          },
+          "units": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "UserSummary": {
         "required": [
           "id",
@@ -72982,6 +75958,34 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "VerificationRequest": {
+        "required": [
+          "verifiedOn"
+        ],
+        "type": "object",
+        "properties": {
+          "verifiedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "condition": {
+            "type": "string",
+            "default": "good"
+          },
+          "locationNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -73668,6 +76672,9 @@
     },
     {
       "name": "Expenses"
+    },
+    {
+      "name": "Fixed assets"
     },
     {
       "name": "Reporting"

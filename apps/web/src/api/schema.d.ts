@@ -9918,6 +9918,369 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/fixed-assets/books": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Asset books of a company: the one that posts to the ledger (created as MAIN with the first asset) and memo books such as a tax book */
+        get: operations["getFixedAssetsBooks"];
+        put?: never;
+        /** A new book; one book per company posts to the ledger */
+        post: operations["postFixedAssetsBooks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/books/{bookId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Changes a book's name or activity */
+        put: operations["putFixedAssetsBooksByBookId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Asset categories: the defaults an asset starts with (method, life, salvage share, convention, declining rate) and the accounts its postings land on */
+        get: operations["getFixedAssetsCategories"];
+        put?: never;
+        /** A new asset category */
+        post: operations["postFixedAssetsCategories"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/categories/{categoryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Changes a category; assets already created keep their own values */
+        put: operations["putFixedAssetsCategoriesByCategoryId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The register of a company: every asset with its ledger book's cost, depreciation, impairment and net book value; by status, category and text */
+        get: operations["getFixedAssetsAssets"];
+        put?: never;
+        /** Drafts an asset: category, cost, acquisition and in-service dates, the source of the money (supplier, bank, clearing, opening), location, custodian; a value per book from the category's defaults, overridable per book; custom fields under host 'fa_asset' */
+        post: operations["postFixedAssetsAssets"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One asset with its books, their plans, its transactions (the FA subledger) and its verifications */
+        get: operations["getFixedAssetsAssetsByAssetId"];
+        /** Changes a draft in full, an active asset's descriptive fields only */
+        put: operations["putFixedAssetsAssetsByAssetId"];
+        post?: never;
+        /** Deletes a draft asset */
+        delete: operations["deleteFixedAssetsAssetsByAssetId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activates the asset: the acquisition posted from its source (Dr cost, and input tax from a supplier / Cr the payable, the bank, the clearing account or opening equity), the plan of every book generated */
+        post: operations["postFixedAssetsAssetsByAssetIdActivate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/additions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Capital added to an active asset (an improvement): Dr cost / Cr the source; the plan continues over the remaining life */
+        post: operations["postFixedAssetsAssetsByAssetIdAdditions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/impair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Writes the asset down (IAS 36): any revaluation surplus first, then a loss; Cr accumulated impairment */
+        post: operations["postFixedAssetsAssetsByAssetIdImpair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/revalue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restates the asset at fair value (IAS 16 revaluation model, elimination approach): earlier impairment losses reversed through profit or loss first, the rest to the revaluation surplus; a fall uses the surplus first */
+        post: operations["postFixedAssetsAssetsByAssetIdRevalue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Moves the asset to another branch, location (dimensions) or custodian; a change of branch or dimensions moves its balances in the ledger */
+        post: operations["postFixedAssetsAssetsByAssetIdTransfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/dispose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sells or scraps the asset, or part of it by quantity: depreciation caught up to the day by the convention, cost and accumulated amounts out, proceeds to a bank account or a receivable on a customer, the gain or loss, the surplus to retained earnings */
+        post: operations["postFixedAssetsAssetsByAssetIdDispose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Records a physical verification: when, by whom, where, in what condition */
+        post: operations["postFixedAssetsAssetsByAssetIdVerify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Units produced in a month, for a book on the units-of-production method; the plan follows */
+        post: operations["postFixedAssetsAssetsByAssetIdUsage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/assets/{assetId}/estimates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** A change of estimate in one book (remaining life, salvage, method, rate, total units): prospective, from the next unposted month */
+        put: operations["putFixedAssetsAssetsByAssetIdEstimates"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/depreciation-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Depreciation runs of a company, newest first */
+        get: operations["getFixedAssetsDepreciationRuns"];
+        put?: never;
+        /** Posts every planned month of the book through a date as one run (one journal: Dr depreciation expense per asset with its dimensions / Cr accumulated depreciation in the FA subledger); the ledger book by default */
+        post: operations["postFixedAssetsDepreciationRuns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/depreciation-runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One run */
+        get: operations["getFixedAssetsDepreciationRunsByRunId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/depreciation-runs/{runId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses the book's latest run: the mirror journal, the months back to planned */
+        post: operations["postFixedAssetsDepreciationRunsByRunIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Planned and posted depreciation by month over a range */
+        get: operations["getFixedAssetsForecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The register at a date: cost, accumulated depreciation, impairment and net book value per asset from the subledger, with the depreciation of the range */
+        get: operations["getFixedAssetsRegister"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fixed-assets/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The subledger's totals per control role and whether the ledger agrees, asset by asset */
+        get: operations["getFixedAssetsReconciliation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/home": {
         parameters: {
             query?: never;
@@ -10059,6 +10422,23 @@ export interface components {
             mentions?: null | string[];
             /** Format: uuid */
             parentId?: null | string;
+        };
+        AdditionRequest: {
+            /** Format: double */
+            amount: number | string;
+            /** Format: date */
+            date: string;
+            source: string;
+            /** Format: uuid */
+            bankAccountId?: null | string;
+            /** Format: uuid */
+            supplierPartnerId?: null | string;
+            /** Format: date */
+            dueDate?: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            reference?: null | string;
+            description?: null | string;
         };
         AddressSummary: {
             /** Format: uuid */
@@ -10502,6 +10882,215 @@ export interface components {
             lines: components["schemas"]["AssemblyLineSummary"][];
             /** Format: date-time */
             updatedAt: string;
+        };
+        AssetBookSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            postsToGl: boolean;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description How one book values the asset, where it departs from the category's defaults; blanks take the defaults. */
+        AssetBookValueRequest: {
+            /** Format: uuid */
+            bookId: string;
+            method?: null | string;
+            /** Format: int32 */
+            lifeMonths?: null | number | string;
+            /** Format: double */
+            salvageValue?: null | number | string;
+            /** Format: double */
+            ratePct?: null | number | string;
+            convention?: null | string;
+            /** Format: double */
+            totalUnits?: null | number | string;
+        };
+        AssetBookValueSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            bookId: string;
+            bookCode: string;
+            postsToGl: boolean;
+            method: string;
+            /** Format: int32 */
+            lifeMonths: number | string;
+            /** Format: double */
+            salvageValue: number | string;
+            /** Format: double */
+            ratePct: null | number | string;
+            convention: string;
+            /** Format: date */
+            depreciationStart: string;
+            /** Format: double */
+            totalUnits: null | number | string;
+            /** Format: double */
+            cost: number | string;
+            /** Format: double */
+            accumulatedDepreciation: number | string;
+            /** Format: double */
+            accumulatedImpairment: number | string;
+            /** Format: double */
+            revaluationSurplus: number | string;
+            /** Format: double */
+            netBookValue: number | string;
+            /** Format: double */
+            monthsConsumed: number | string;
+            /** Format: date */
+            depreciatedThrough: null | string;
+            status: string;
+            schedule: null | components["schemas"]["ScheduleLineSummary"][];
+        };
+        AssetCategorySummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            defaultMethod: string;
+            /** Format: int32 */
+            defaultLifeMonths: number | string;
+            /** Format: double */
+            defaultSalvagePct: number | string;
+            /** Format: double */
+            defaultRatePct: null | number | string;
+            convention: string;
+            costAccountCode: null | string;
+            accumulatedDepreciationAccountCode: null | string;
+            depreciationExpenseAccountCode: null | string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AssetSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            name: {
+                [key: string]: string;
+            };
+            description: null | string;
+            /** Format: uuid */
+            categoryId: string;
+            categoryCode: string;
+            categoryName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            parentAssetId: null | string;
+            /** Format: date */
+            acquisitionDate: string;
+            /** Format: date */
+            inServiceDate: string;
+            /** Format: double */
+            cost: number | string;
+            currency: string;
+            /** Format: double */
+            quantity: number | string;
+            unit: null | string;
+            /** Format: uuid */
+            branchId: null | string;
+            /** Format: uuid */
+            dimensionSetId: null | string;
+            dimensions: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            custodianMembershipId: null | string;
+            serialNumber: null | string;
+            /** Format: uuid */
+            supplierPartnerId: null | string;
+            supplierCode: null | string;
+            supplierReference: null | string;
+            /** Format: date */
+            warrantyUntil: null | string;
+            status: string;
+            acquisitionSource: string;
+            /** Format: uuid */
+            acquisitionBankAccountId: null | string;
+            /** Format: uuid */
+            acquisitionTaxCodeId: null | string;
+            /** Format: date */
+            acquisitionDueDate: null | string;
+            /** Format: double */
+            openingAccumulatedDepreciation: number | string;
+            /** Format: uuid */
+            acquisitionEntryId: null | string;
+            /** Format: date */
+            disposedOn: null | string;
+            disposalKind: null | string;
+            notes: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            method: null | string;
+            /** Format: int32 */
+            lifeMonths: null | number | string;
+            /** Format: double */
+            accumulatedDepreciation: number | string;
+            /** Format: double */
+            accumulatedImpairment: number | string;
+            /** Format: double */
+            netBookValue: number | string;
+            /** Format: date */
+            depreciatedThrough: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            books?: null | components["schemas"]["AssetBookValueSummary"][];
+            transactions?: null | components["schemas"]["AssetTransactionSummary"][];
+            verifications?: null | components["schemas"]["AssetVerificationSummary"][];
+        };
+        AssetTransactionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            bookId: string;
+            bookCode: string;
+            /** Format: date */
+            postingDate: string;
+            kind: string;
+            /** Format: double */
+            costDelta: number | string;
+            /** Format: double */
+            accumulatedDepreciationDelta: number | string;
+            /** Format: double */
+            impairmentDelta: number | string;
+            /** Format: double */
+            surplusDelta: number | string;
+            /** Format: double */
+            proceeds: number | string;
+            /** Format: double */
+            gainLoss: number | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversesId: null | string;
+            /** Format: uuid */
+            runId: null | string;
+            reference: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AssetVerificationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            verifiedOn: string;
+            /** Format: uuid */
+            verifiedBy: null | string;
+            condition: string;
+            locationNote: null | string;
+            note: null | string;
         };
         AssignChartRequest: {
             /** Format: uuid */
@@ -11046,6 +11635,19 @@ export interface components {
             /** Format: int32 */
             durationMs: number | string;
             headHash: string;
+        };
+        ChangeEstimatesRequest: {
+            /** Format: uuid */
+            bookId: string;
+            /** Format: int32 */
+            lifeMonths?: null | number | string;
+            /** Format: double */
+            salvageValue?: null | number | string;
+            method?: null | string;
+            /** Format: double */
+            ratePct?: null | number | string;
+            /** Format: double */
+            totalUnits?: null | number | string;
         };
         /** @description A change order: the same shape as a save, plus why; the previous revision is kept and the order goes through approval again. */
         ChangeOrderRequest: {
@@ -12059,6 +12661,43 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        DepreciationRunRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            through: string;
+            /** Format: uuid */
+            bookId?: null | string;
+            /** Format: date */
+            postingDate?: null | string;
+        };
+        DepreciationRunSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bookId: string;
+            bookCode: string;
+            number: string;
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            /** Format: date */
+            postingDate: string;
+            status: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            /** Format: int32 */
+            assetCount: number | string;
+            /** Format: double */
+            total: number | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         DimensionBalanceRow: {
             /** Format: uuid */
             valueId: null | string;
@@ -12195,6 +12834,27 @@ export interface components {
         };
         DismissSuggestionRequest: {
             reason: string;
+        };
+        DisposalRequest: {
+            /** Format: date */
+            date: string;
+            kind: string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            proceeds: number | string;
+            /** @default none */
+            proceedsSource: string;
+            /** Format: uuid */
+            bankAccountId?: null | string;
+            /** Format: uuid */
+            customerPartnerId?: null | string;
+            /** Format: date */
+            dueDate?: null | string;
+            /** Format: double */
+            quantity?: null | number | string;
+            reason?: null | string;
         };
         /**
          * @description The purchasing documents connected to one document: where it came from (requisition, request for quotation,
@@ -12602,6 +13262,18 @@ export interface components {
             kind: null | string;
             isCurrent: boolean;
         };
+        ForecastRow: {
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            /** Format: double */
+            planned: number | string;
+            /** Format: double */
+            posted: number | string;
+            /** Format: int32 */
+            assets: number | string;
+        };
         ForgotPasswordRequest: {
             email: string;
         };
@@ -12788,6 +13460,13 @@ export interface components {
             /** Format: int32 */
             draftInvoices: number | string;
             days: components["schemas"]["HomeDay"][];
+        };
+        ImpairmentRequest: {
+            /** Format: double */
+            amount: number | string;
+            /** Format: date */
+            date: string;
+            reason: string;
         };
         ImportRatesRequest: {
             provider: string;
@@ -16408,6 +17087,21 @@ export interface components {
             receiveDate?: null | string;
             lines?: null | components["schemas"]["TransferQuantityRequest"][];
         };
+        ReconciliationReport: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bookId: string;
+            currency: string;
+            rows: components["schemas"]["ReconciliationRow"][];
+            ledgerAgrees: boolean;
+            problems: string[];
+        };
+        ReconciliationRow: {
+            role: string;
+            /** Format: double */
+            register: number | string;
+        };
         /** @description A record another module owns, as a pricing screen shows it. */
         RecordRef: {
             /** Format: uuid */
@@ -16528,6 +17222,54 @@ export interface components {
         };
         RefreshRequest: {
             refreshToken: string;
+        };
+        RegisterReport: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bookId: string;
+            bookCode: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            asOf: string;
+            currency: string;
+            rows: components["schemas"]["RegisterRow"][];
+            totals: components["schemas"]["RegisterTotals"];
+        };
+        RegisterRow: {
+            /** Format: uuid */
+            assetId: string;
+            number: string;
+            name: {
+                [key: string]: string;
+            };
+            categoryCode: string;
+            status: string;
+            /** Format: date */
+            acquisitionDate: string;
+            /** Format: double */
+            cost: number | string;
+            /** Format: double */
+            accumulatedDepreciation: number | string;
+            /** Format: double */
+            accumulatedImpairment: number | string;
+            /** Format: double */
+            netBookValue: number | string;
+            /** Format: double */
+            depreciationInRange: number | string;
+        };
+        RegisterTotals: {
+            /** Format: double */
+            cost: number | string;
+            /** Format: double */
+            accumulatedDepreciation: number | string;
+            /** Format: double */
+            accumulatedImpairment: number | string;
+            /** Format: double */
+            netBookValue: number | string;
+            /** Format: double */
+            depreciationInRange: number | string;
         };
         RejectJournalRequest: {
             reason: string;
@@ -17042,6 +17784,15 @@ export interface components {
             amount: number | string;
             note: null | string;
         };
+        RevaluationRequest: {
+            /** Format: double */
+            fairValue: number | string;
+            /** Format: date */
+            date: string;
+            reason: string;
+            /** Format: int32 */
+            newLifeMonths?: null | number | string;
+        };
         RevaluationSummary: {
             /** Format: uuid */
             id: string;
@@ -17064,6 +17815,11 @@ export interface components {
             totalAmount: number | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ReverseDepreciationRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
         };
         ReverseExpenseRequest: {
             reason: string;
@@ -17793,6 +18549,94 @@ export interface components {
             postingDate?: null | string;
             reference?: null | string;
             notes?: null | string;
+        };
+        SaveAssetBookRequest: {
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            postsToGl: boolean;
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveAssetCategoryRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            defaultMethod: string;
+            /** Format: int32 */
+            defaultLifeMonths: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            defaultSalvagePct: number | string;
+            /** Format: double */
+            defaultRatePct?: null | number | string;
+            /** @default full_month */
+            convention: string;
+            costAccountCode?: null | string;
+            accumulatedDepreciationAccountCode?: null | string;
+            depreciationExpenseAccountCode?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveAssetRequest: {
+            /** Format: uuid */
+            companyId: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            categoryId: string;
+            /** Format: date */
+            acquisitionDate: string;
+            /** Format: double */
+            cost: number | string;
+            acquisitionSource: string;
+            /** Format: date */
+            inServiceDate?: null | string;
+            description?: null | string;
+            /** Format: uuid */
+            parentAssetId?: null | string;
+            /**
+             * Format: double
+             * @default 1
+             */
+            quantity: number | string;
+            unit?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            custodianMembershipId?: null | string;
+            serialNumber?: null | string;
+            /** Format: uuid */
+            supplierPartnerId?: null | string;
+            supplierReference?: null | string;
+            /** Format: date */
+            warrantyUntil?: null | string;
+            /** Format: uuid */
+            acquisitionBankAccountId?: null | string;
+            /** Format: uuid */
+            acquisitionTaxCodeId?: null | string;
+            /** Format: date */
+            acquisitionDueDate?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            openingAccumulatedDepreciation: number | string;
+            /** Format: date */
+            openingDepreciatedThrough?: null | string;
+            notes?: null | string;
+            books?: null | components["schemas"]["AssetBookValueRequest"][];
+            customFields?: unknown;
         };
         SaveAttributeRequest: {
             code: string;
@@ -20102,6 +20946,23 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        ScheduleLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            /** Format: double */
+            weight: number | string;
+            /** Format: double */
+            plannedAmount: number | string;
+            /** Format: double */
+            postedAmount: number | string;
+            status: string;
+            /** Format: uuid */
+            runId: null | string;
+        };
         SchedulePreviewRequest: {
             /** Format: uuid */
             companyId: string;
@@ -21670,6 +22531,18 @@ export interface components {
             serialNumbers?: null | string[];
             shortageSerialNumbers?: null | string[];
         };
+        TransferRequest: {
+            /** Format: date */
+            date: string;
+            /** Format: uuid */
+            branchId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            custodianMembershipId?: null | string;
+            reason?: null | string;
+        };
         TransferSummary: {
             /** Format: uuid */
             id: string;
@@ -21823,6 +22696,15 @@ export interface components {
         UpdateProposalLinesRequest: {
             lines: components["schemas"]["ProposalLineChange"][];
         };
+        UsageRequest: {
+            /** Format: uuid */
+            bookId: string;
+            /** Format: date */
+            month: string;
+            /** Format: double */
+            units: number | string;
+            note?: null | string;
+        };
         UserSummary: {
             /** Format: uuid */
             id: string;
@@ -21900,6 +22782,14 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        VerificationRequest: {
+            /** Format: date */
+            verifiedOn: string;
+            /** @default good */
+            condition: string;
+            locationNote?: null | string;
+            note?: null | string;
         };
         WarehouseSettingsSummary: {
             /** Format: uuid */
@@ -40596,6 +41486,664 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+        };
+    };
+    getFixedAssetsBooks: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetBookSummary"][];
+                };
+            };
+        };
+    };
+    postFixedAssetsBooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssetBookRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetBookSummary"];
+                };
+            };
+        };
+    };
+    putFixedAssetsBooksByBookId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bookId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssetBookRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetBookSummary"];
+                };
+            };
+        };
+    };
+    getFixedAssetsCategories: {
+        parameters: {
+            query?: {
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetCategorySummary"][];
+                };
+            };
+        };
+    };
+    postFixedAssetsCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssetCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetCategorySummary"];
+                };
+            };
+        };
+    };
+    putFixedAssetsCategoriesByCategoryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssetCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetCategorySummary"];
+                };
+            };
+        };
+    };
+    getFixedAssetsAssets: {
+        parameters: {
+            query: {
+                companyId: string;
+                status?: string;
+                categoryId?: string;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"][];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssetRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    getFixedAssetsAssetsByAssetId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    putFixedAssetsAssetsByAssetId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAssetRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    deleteFixedAssetsAssetsByAssetId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdActivate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdAdditions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdditionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdImpair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImpairmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdRevalue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdTransfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdDispose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisposalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdVerify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsAssetsByAssetIdUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UsageRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    putFixedAssetsAssetsByAssetIdEstimates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeEstimatesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSummary"];
+                };
+            };
+        };
+    };
+    getFixedAssetsDepreciationRuns: {
+        parameters: {
+            query: {
+                companyId: string;
+                bookId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepreciationRunSummary"][];
+                };
+            };
+        };
+    };
+    postFixedAssetsDepreciationRuns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepreciationRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepreciationRunSummary"];
+                };
+            };
+        };
+    };
+    getFixedAssetsDepreciationRunsByRunId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepreciationRunSummary"];
+                };
+            };
+        };
+    };
+    postFixedAssetsDepreciationRunsByRunIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseDepreciationRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepreciationRunSummary"];
+                };
+            };
+        };
+    };
+    getFixedAssetsForecast: {
+        parameters: {
+            query: {
+                companyId: string;
+                bookId?: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForecastRow"][];
+                };
+            };
+        };
+    };
+    getFixedAssetsRegister: {
+        parameters: {
+            query: {
+                companyId: string;
+                bookId?: string;
+                from?: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterReport"];
+                };
+            };
+        };
+    };
+    getFixedAssetsReconciliation: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationReport"];
                 };
             };
         };

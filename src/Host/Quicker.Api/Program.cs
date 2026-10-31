@@ -11,6 +11,8 @@ using Quicker.Collaboration;
 using Quicker.Collaboration.Api;
 using Quicker.Expenses;
 using Quicker.Expenses.Api;
+using Quicker.FixedAssets;
+using Quicker.FixedAssets.Api;
 using Quicker.Identity;
 using Quicker.Identity.Api;
 using Quicker.Integration;
@@ -141,6 +143,7 @@ builder.Services.AddSalesModule();
 builder.Services.AddPrintingModule(builder.Configuration);
 builder.Services.AddOnboardingModule();
 builder.Services.AddExpensesModule();
+builder.Services.AddFixedAssetsModule();
 builder.Services.AddReportingModule();
 
 var app = builder.Build();
@@ -190,6 +193,7 @@ api.MapSalesEndpoints();
 api.MapPrintingEndpoints();
 api.MapOnboardingEndpoints();
 api.MapExpensesEndpoints();
+api.MapFixedAssetsEndpoints();
 api.MapReportingEndpoints();
 
 app.Run();

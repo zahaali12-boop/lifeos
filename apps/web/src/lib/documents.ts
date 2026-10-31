@@ -33,6 +33,8 @@ export type RecordScreen =
   | "/banking/receipts"
   | "/expenses"
   | "/expenses/funds"
+  | "/fixed-assets"
+  | "/fixed-assets/depreciation"
   | "/payables/proposals"
   | "/companies";
 
@@ -65,6 +67,10 @@ const screens: Record<string, RecordScreen> = {
   expense: "/expenses",
   petty_cash_fund: "/expenses/funds",
   fund_replenishment: "/expenses/funds",
+  fixed_asset: "/fixed-assets",
+  fa_asset: "/fixed-assets",
+  depreciation_run: "/fixed-assets/depreciation",
+  fa_depreciation_run: "/fixed-assets/depreciation",
   payment_proposal: "/payables/proposals",
   item: "/inventory/items",
   partner: "/purchasing/suppliers",

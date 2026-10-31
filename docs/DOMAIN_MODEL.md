@@ -3126,96 +3126,152 @@ Post-dated cheque life cycle (hard scenario 10): `received` (customer balance re
 
 ## 15. Fixed assets
 
+Built 2026-10-31 (A-175) in the `FixedAssets` module; `fa_transactions` is the FA subledger (append-only).
+
 ```mermaid
 erDiagram
   fa_asset_categories ||--o{ fa_assets : "classifies"
   fa_books ||--o{ fa_asset_books : "values in"
   fa_assets ||--|{ fa_asset_books : "per book"
-  fa_asset_books ||--|{ fa_depreciation_schedules : "plans"
-  fa_assets ||--o{ fa_asset_transactions : "history"
+  fa_asset_books ||--o{ fa_schedule_lines : "plans"
+  fa_asset_books ||--o{ fa_usage : "units produced"
+  fa_assets ||--o{ fa_transactions : "history"
+  fa_books ||--o{ fa_depreciation_runs : "runs"
+  fa_depreciation_runs ||--o{ fa_transactions : "posts"
+  fa_assets ||--o{ fa_verifications : "seen"
   fa_assets ||--o{ fa_assets : "component of"
 
-  fa_asset_categories {
-    uuid id PK
-    uuid company_id
-    text code
-    i18n name
-    uuid posting_group_id
-    text default_method
-    int default_life_months
-    numeric default_salvage_pct
-    text convention "full_month | mid_month | daily"
-  }
   fa_books {
     uuid id PK
     uuid company_id
-    text code "IFRS | TAX"
-    i18n name
-    bool posts_to_gl
-    uuid fiscal_calendar_id
+    text code "MAIN posts to the ledger; memo books compute"
+    jsonb name_i18n
+    boolean posts_to_gl "one per company"
+    boolean is_active
+  }
+  fa_asset_categories {
+    uuid id PK
+    text code "tenant-wide"
+    jsonb name_i18n
+    text default_method "straight_line | declining_balance | double_declining | sum_of_years | units_of_production | none"
+    int default_life_months
+    numeric default_salvage_pct
+    numeric default_rate_pct
+    text convention "full_month | mid_month | daily | next_month"
+    text cost_account_code "kept as posting rules keyed by asset_category_id"
+    text accumulated_depreciation_account_code
+    text depreciation_expense_account_code
+    boolean is_active
   }
   fa_assets {
     uuid id PK
     uuid company_id
-    text number
-    i18n name
+    text number "FA-"
+    jsonb name_i18n
     uuid category_id FK
     uuid parent_asset_id FK
     date acquisition_date
     date in_service_date
-    numeric acquisition_cost
-    text currency
+    numeric cost "functional currency"
+    numeric quantity "for partial disposals"
     uuid branch_id
-    uuid location_dimension_set_id
+    uuid dimension_set_id
     uuid custodian_membership_id
     text serial_number
-    text status "draft | active | fully_depreciated | disposed | transferred"
-    text source_document_type
-    uuid source_document_id
+    uuid supplier_partner_id
+    text status "draft | active | fully_depreciated | disposed"
+    text acquisition_source "supplier | bank | clearing | opening"
+    uuid acquisition_bank_account_id
+    uuid acquisition_tax_code_id
+    date acquisition_due_date
+    numeric opening_accumulated_depreciation
+    date opening_depreciated_through "cut-over month"
+    uuid acquisition_entry_id
+    date disposed_on
+    text disposal_kind "sale | scrap"
     jsonb custom_fields
   }
   fa_asset_books {
     uuid id PK
     uuid asset_id FK
     uuid book_id FK
-    text method "straight_line | declining_balance | double_declining | sum_of_years | units_of_production | none"
+    text method
     int life_months
     numeric salvage_value
     numeric rate_pct
+    text convention
     date depreciation_start
+    numeric total_units
     numeric cost
     numeric accumulated_depreciation
     numeric accumulated_impairment
-    numeric net_book_value
-    date last_depreciated_through
+    numeric revaluation_surplus
+    numeric impairment_recognised "the most a revaluation may reverse through P&L"
+    numeric months_consumed "weighted months depreciated"
+    date depreciated_through
     text status
   }
-  fa_depreciation_schedules {
+  fa_schedule_lines {
+    uuid id PK
     uuid asset_book_id FK
-    uuid fiscal_period_id
+    date period_start
+    date period_end
+    numeric weight "1 for a full month"
     numeric planned_amount
     numeric posted_amount
-    uuid transaction_id
     text status "planned | posted | skipped"
+    uuid transaction_id
+    uuid run_id
   }
-  fa_asset_transactions {
+  fa_transactions {
     uuid id PK
+    uuid company_id
     uuid asset_id FK
-    uuid book_id
+    uuid book_id FK
     date posting_date
-    text kind "acquisition addition depreciation revaluation impairment transfer disposal reversal"
-    numeric amount
+    text kind "acquisition | addition | depreciation | impairment | revaluation | transfer | disposal | reversal"
+    numeric cost_delta
+    numeric accumulated_depreciation_delta
+    numeric impairment_delta
+    numeric surplus_delta
     numeric proceeds
     numeric gain_loss
-    text source_document_type
-    uuid source_document_id
-    uuid journal_entry_id
+    uuid journal_entry_id "null in memo books"
     uuid reverses_id
+    uuid run_id
     jsonb detail
+  }
+  fa_depreciation_runs {
+    uuid id PK
+    uuid company_id
+    uuid book_id FK
+    text number "DEP-"
+    date period_start
+    date period_end
+    date posting_date
+    text status "posted | reversed"
+    uuid journal_entry_id
+    uuid reversal_entry_id
+    int asset_count
+    numeric total
+  }
+  fa_usage {
+    uuid id PK
+    uuid asset_book_id FK
+    date period_start
+    numeric units
+  }
+  fa_verifications {
+    uuid id PK
+    uuid asset_id FK
+    date verified_on
+    uuid verified_by
+    text condition "good | damaged | missing"
+    text location_note
   }
 ```
 
-`fa_asset_transactions` is the FA subledger (append-only): net book value per book = Σ transactions; the FA control accounts (cost, accumulated depreciation) must equal Σ over assets at any date.
+Net book value per book = Σ `fa_transactions` deltas; the `FaCost`, `FaAccDep` and `FaAccImpairment` control accounts equal Σ over the ledger book's transactions asset by asset at any moment (invariant `fixed_assets_match_register`).
 
 ## 16. Budgeting
 

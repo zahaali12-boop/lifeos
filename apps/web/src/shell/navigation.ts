@@ -1,11 +1,11 @@
-import { Anchor, Undo2, ArrowRightLeft, BadgePercent, ChartColumn, Banknote, CircleDollarSign, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Contact, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, Kanban, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, ListTodo, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, Percent, PiggyBank, ReceiptText, Repeat, Rocket, Route, Ruler, Scale, ScanLine, SearchCheck, Settings, Settings2, ShieldCheck, Shapes, Ship, ShoppingCart, SlidersHorizontal, Gift, Stamp, Tags, TrendingDown, Truck, Users, Wallet, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, Undo2, ArrowRightLeft, BadgePercent, ChartColumn, Banknote, CircleDollarSign, Barcode, Bell, BookMarked, BookOpen, Boxes, Building, Building2, Calculator, CalendarCheck, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Contact, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, Kanban, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, ListTodo, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, Percent, PiggyBank, ReceiptText, Repeat, Rocket, Route, Ruler, Scale, ScanLine, SearchCheck, Settings, Settings2, ShieldCheck, Shapes, Ship, ShoppingCart, SlidersHorizontal, Gift, Stamp, Tags, TrendingDown, Truck, Users, Wallet, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The modules, in order: each is a menu of the top bar (labelled `nav.modules.<id>`) and a section of the small-screen drawer (`nav.groups.<id>`). */
 export const navigationGroups = ["accounting", "sales", "purchasing", "inventory", "finance", "organization", "administration"] as const;
 export type NavigationGroup = (typeof navigationGroups)[number];
 
 /** The sections within a module, in the order the menus show them; each is labelled `nav.sections.<id>`. */
-export const navigationSections = ["customers", "orders", "invoicing", "operations", "products", "receivables", "payables", "expenses", "bank", "tax", "planning", "pricing", "reporting", "setup", "users", "automation", "configuration"] as const;
+export const navigationSections = ["customers", "orders", "invoicing", "operations", "products", "receivables", "payables", "expenses", "assets", "bank", "tax", "planning", "pricing", "reporting", "setup", "users", "automation", "configuration"] as const;
 export type NavigationSection = (typeof navigationSections)[number];
 
 /**
@@ -95,6 +95,10 @@ export const navigation: NavigationItem[] = [
   { to: "/expenses", label: "nav.expenses", icon: Wallet, shortcut: "x e", permission: "expenses.expense.read", group: "finance", section: "expenses" },
   { to: "/expenses/funds", label: "nav.pettyCashFunds", icon: PiggyBank, shortcut: "x f", permission: "expenses.fund.read", group: "finance", section: "expenses" },
   { to: "/expenses/categories", label: "nav.expenseCategories", icon: Tags, shortcut: "x c", permission: "expenses.expense.read", group: "finance", section: "expenses" },
+  { to: "/fixed-assets", label: "nav.fixedAssets", icon: Building, shortcut: "x a", permission: "fixed_assets.asset.read", group: "finance", section: "assets" },
+  { to: "/fixed-assets/depreciation", label: "nav.depreciation", icon: CalendarCheck, shortcut: "x d", permission: "fixed_assets.asset.read", group: "finance", section: "assets" },
+  { to: "/fixed-assets/categories", label: "nav.assetCategories", icon: Tags, shortcut: "x t", permission: "fixed_assets.asset.read", group: "finance", section: "assets" },
+  { to: "/fixed-assets/books", label: "nav.assetBooks", icon: BookMarked, shortcut: "x b", permission: "fixed_assets.asset.read", group: "finance", section: "assets" },
   { to: "/approvals", label: "nav.approvals", icon: Inbox, shortcut: "g 1" },
   { to: "/workflows", label: "nav.workflows", icon: GitBranch, shortcut: "g 2", permission: "workflow.definition.read", group: "administration", section: "automation" },
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read", group: "administration", section: "users" },
