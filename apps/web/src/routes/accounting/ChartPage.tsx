@@ -12,6 +12,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { ExportChartButton, ImportChartDialog, StatutoryMappingDialog } from "./ChartTools";
 import { CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
 import { CurrencyField } from "../CurrencyField";
+import { CodeField } from "../CodeField";
 
 type Account = components["schemas"]["AccountSummary"];
 type DimensionRule = components["schemas"]["DimensionRuleSummary"];
@@ -332,7 +333,7 @@ export function ChartPage() {
               <FormError message={problem && !Object.keys(problem.fields).some((field) => accountFormFields.has(field)) ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("accounting.accountCode")} required error={problem?.fields.code}>
-                  <TextField value={editing.form.code} onChange={(e) => { setForm({ code: e.target.value }); }} required dir="ltr" data-testid="account-code" />
+                  <CodeField kind="account" scope={chartId} parent={editing.form.parentCode} recordId={editing.id} value={editing.form.code} onChange={(v) => { setForm({ code: v }); }} required data-testid="account-code" />
                 </Field>
                 <Field label={t("accounting.parentCode")} error={problem?.fields.parentCode}>
                   <TextField value={editing.form.parentCode} onChange={(e) => { setForm({ parentCode: e.target.value }); }} dir="ltr" />

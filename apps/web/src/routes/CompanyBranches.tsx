@@ -8,6 +8,7 @@ import { localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, TextField } from "./common";
 import { DocStatus } from "./inventory/shared";
+import { CodeField } from "./CodeField";
 
 interface BranchForm {
   code: string;
@@ -92,7 +93,7 @@ export function CompanyBranches({ companyId }: { companyId: string }) {
           <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t("branches.code")} required error={problem?.fields.code}>
-              <TextField value={editing.form.code} onChange={(e) => { setForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="branch-code" />
+              <CodeField kind="branch" scope={companyId} recordId={editing.id} value={editing.form.code} onChange={(v) => { setForm({ code: v.toUpperCase() }); }} required data-testid="branch-code" />
             </Field>
             <Field label={t("branches.nameEn")} required error={problem?.fields.name}>
               <TextField value={editing.form.nameEn} onChange={(e) => { setForm({ nameEn: e.target.value }); }} required data-testid="branch-name-en" />

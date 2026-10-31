@@ -15,6 +15,7 @@ import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { CompanyBranches } from "./CompanyBranches";
 import { CustomFieldsFieldset } from "./CustomFieldsFieldset";
 import { CurrencyField } from "./CurrencyField";
+import { CodeField } from "./CodeField";
 
 type Company = components["schemas"]["CompanySummary"];
 
@@ -224,7 +225,7 @@ export function CompaniesPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("companies.code")} required error={problem?.fields.code}>
-                  <TextField value={form.code} onChange={(e) => { setForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" name="code" />
+                  <CodeField kind="company" recordId={editing.id} value={form.code} onChange={(v) => { setForm({ code: v.toUpperCase() }); }} required name="code" />
                 </Field>
                 <Field label={t("companies.country")} required error={problem?.fields.country} description={t("companies.countryHint")}>
                   <TextField value={form.country} onChange={(e) => { setForm({ country: e.target.value.toUpperCase() }); }} required maxLength={2} dir="ltr" name="country" />

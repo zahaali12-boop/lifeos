@@ -15,6 +15,7 @@ import { CompanyFilter, useCompanyContext } from "../../inventory/shared";
 import { useCustomerGroups } from "../shared";
 import { Validity, refLabel, useCompanyCustomers, usePriceLists, type PriceList } from "./shared";
 import { CurrencyField } from "../../CurrencyField";
+import { CodeField } from "../../CodeField";
 
 export interface PriceListForm {
   code: string;
@@ -118,7 +119,7 @@ export function PriceListDialog({ list, companyId, currency, onClose, onSaved }:
           <FormError message={problem?.message ?? null} />
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t("pricing.code")} required>
-              <TextField value={form.code} onChange={(e) => { patch({ code: e.target.value }); }} required dir="ltr" data-testid="list-code" />
+              <CodeField kind="price-list" scope={companyId} recordId={list?.id} value={form.code} onChange={(v) => { patch({ code: v }); }} required data-testid="list-code" />
             </Field>
             <Field label={t("pricing.nameEn")} required>
               <TextField value={form.nameEn} onChange={(e) => { patch({ nameEn: e.target.value }); }} required data-testid="list-name" />

@@ -12,6 +12,7 @@ import { toFormProblem, type FormProblem } from "../lib/problem";
 import { PageHeader, SelectField, TextField } from "./common";
 import { Tabs } from "./inventory/shared";
 import { PermissionPicker, sodConflicts } from "./PermissionPicker";
+import { CodeField } from "./CodeField";
 
 type Role = components["schemas"]["RoleSummary"];
 type FieldRule = components["schemas"]["FieldRule"];
@@ -191,7 +192,7 @@ export function RolesPage() {
               ) : null}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("roles.code")} required description={t("roles.codeHint")} error={problem?.fields.code}>
-                  <TextField value={draft.code} onChange={(e) => { setDraft({ ...draft, code: e.target.value.toLowerCase() }); }} required disabled={Boolean(draft.id)} dir="ltr" data-testid="role-code" />
+                  <CodeField kind="role" recordId={draft.id} value={draft.code} onChange={(v) => { setDraft({ ...draft, code: v.toLowerCase() }); }} required disabled={Boolean(draft.id)} data-testid="role-code" />
                 </Field>
                 <Field label={t("roles.descriptionColumn")}>
                   <TextField value={draft.description} onChange={(e) => { setDraft({ ...draft, description: e.target.value }); }} disabled={locked} data-testid="role-description" />

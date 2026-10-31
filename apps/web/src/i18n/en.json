@@ -4401,5 +4401,12 @@
       "markSent": "Mark as sent",
       "daysLate": "Days late"
     }
+  },
+  "codes": {
+    "suggest": "Fill in the next free code",
+    "taken": "{code} is already used.",
+    "useNext": "Use {code}",
+    "next": "Next free code: {code}",
+    "suggested": "Filled in automatically; you can change it."
   }
 }

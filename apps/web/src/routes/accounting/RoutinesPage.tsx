@@ -14,6 +14,7 @@ import { DocStatus, KeyValues, Tabs } from "../inventory/shared";
 import { AccountPicker } from "./JournalLineDetails";
 import { RoutineRuns } from "./RoutineRuns";
 import { Amount, CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
+import { CodeField } from "../CodeField";
 
 type Template = components["schemas"]["RecurringTemplateSummary"];
 type Schedule = components["schemas"]["DeferralScheduleSummary"];
@@ -314,7 +315,7 @@ export function RoutinesPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("routines.code")} required error={problem?.fields.code}>
-                  <TextField value={editing.form.code} onChange={(e) => { setForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="template-code" />
+                  <CodeField kind="recurring-template" scope={companyId} recordId={editing.id} value={editing.form.code} onChange={(v) => { setForm({ code: v.toUpperCase() }); }} required data-testid="template-code" />
                 </Field>
                 <Field label={t("routines.nameEn")} required error={problem?.fields.name}>
                   <TextField value={editing.form.nameEn} onChange={(e) => { setForm({ nameEn: e.target.value }); }} required data-testid="template-name-en" />

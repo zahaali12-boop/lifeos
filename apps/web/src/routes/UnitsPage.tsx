@@ -11,6 +11,7 @@ import { formatNumber, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { DocStatus } from "./inventory/shared";
+import { CodeField } from "./CodeField";
 
 type Uom = components["schemas"]["UomSummary"];
 
@@ -177,7 +178,7 @@ export function UnitsPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("units.code")} required error={problem?.fields.code}>
-                  <TextField value={unit.code} onChange={(e) => { setUnit({ ...unit, code: e.target.value.toUpperCase() }); }} required dir="ltr" disabled={unit.isSystem} data-testid="unit-code" />
+                  <CodeField kind="uom" recordId={unit.id} value={unit.code} onChange={(v) => { setUnit({ ...unit, code: v.toUpperCase() }); }} required disabled={unit.isSystem} data-testid="unit-code" />
                 </Field>
                 <Field label={t("units.family")} error={problem?.fields.family}>
                   <SelectField value={unit.family} onChange={(e) => { setUnit({ ...unit, family: e.target.value }); }} disabled={unit.isSystem} data-testid="unit-family">

@@ -52,6 +52,9 @@ public static class NumberingEndpoints
         numbering.MapGet("/documents", async (string? q, int? limit, DocumentSearchService service, CancellationToken ct) =>
             ApiProblems.Ok(await service.SearchAsync(q, limit, ct)))
             .WithSummary("Find documents by number across modules (\"PO-2026-00027\", \"00027\", \"PO-27\"): only the types the member may read, in the companies their grant covers");
+        numbering.MapGet("/codes/{kind}", async (string kind, string? code, string? scope, string? parent, Guid? except, CodeSuggestionService service, CancellationToken ct) =>
+            ApiProblems.Ok(await service.SuggestAsync(kind, code, scope, parent, except, ct)))
+            .WithSummary("For a master record's code (customer, item, warehouse, account and the rest): the next free code continuing the existing pattern, and whether a typed code is already taken in its scope (company, chart, warehouse); `except` leaves out the record being edited, `parent` places an account under its parent");
         numbering.MapGet("/drafts/{documentId:guid}", (Guid documentId) => TypedResults.Ok(new DraftIdentifier(documentId, DraftIdentifiers.For(documentId))))
             .RequirePermission(NumberingPermissions.SeriesRead);
 

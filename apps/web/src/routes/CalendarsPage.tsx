@@ -8,6 +8,7 @@ import { formatDate, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { DocStatus, Tabs } from "./inventory/shared";
+import { CodeField } from "./CodeField";
 
 const weekdays = [0, 1, 2, 3, 4, 5, 6];
 
@@ -266,7 +267,7 @@ export function CalendarsPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("calendars.code")} required error={problem?.fields.code}>
-                  <TextField value={newFiscal.code} onChange={(e) => { setNewFiscal({ ...newFiscal, code: e.target.value.toLowerCase() }); }} required dir="ltr" data-testid="fiscal-code" />
+                  <CodeField kind="fiscal-calendar" value={newFiscal.code} onChange={(v) => { setNewFiscal({ ...newFiscal, code: v.toLowerCase() }); }} required data-testid="fiscal-code" />
                 </Field>
                 <Field label={t("calendars.startMonth")}>
                   <SelectField value={newFiscal.startMonth} onChange={(e) => { setNewFiscal({ ...newFiscal, startMonth: e.target.value }); }} data-testid="fiscal-start-month">
@@ -340,7 +341,7 @@ export function CalendarsPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("calendars.code")} required error={problem?.fields.code}>
-                  <TextField value={newBusiness.code} onChange={(e) => { setNewBusiness({ ...newBusiness, code: e.target.value.toLowerCase() }); }} required dir="ltr" data-testid="business-code" />
+                  <CodeField kind="business-calendar" value={newBusiness.code} onChange={(v) => { setNewBusiness({ ...newBusiness, code: v.toLowerCase() }); }} required data-testid="business-code" />
                 </Field>
                 <Field label={t("calendars.nameEn")} required error={problem?.fields.name}>
                   <TextField value={newBusiness.nameEn} onChange={(e) => { setNewBusiness({ ...newBusiness, nameEn: e.target.value }); }} required data-testid="business-name-en" />

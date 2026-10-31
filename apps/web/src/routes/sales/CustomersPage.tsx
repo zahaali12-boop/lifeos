@@ -15,6 +15,7 @@ import { CustomFieldsFieldset, type CustomFieldValues } from "../CustomFieldsFie
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
 import { CustomerAccountFields, customerAccountBody, emptyCustomerAccount, type CustomerAccountForm } from "./CustomerAccountFields";
 import { CreditBadge, money, useSalesReps, type CustomerAccount } from "./shared";
+import { CodeField } from "../CodeField";
 
 interface PartnerForm {
   code: string;
@@ -155,7 +156,7 @@ export function CustomersPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("partners.code")} required>
-                  <TextField value={creating.partner.code} onChange={(e) => { setPartner({ code: e.target.value }); }} dir="ltr" required data-testid="partner-code" />
+                  <CodeField kind="customer" value={creating.partner.code} onChange={(v) => { setPartner({ code: v }); }} required data-testid="partner-code" />
                 </Field>
                 <Field label={t("partners.kind")}>
                   <SelectField value={creating.partner.kind} onChange={(e) => { setPartner({ kind: e.target.value }); }}>

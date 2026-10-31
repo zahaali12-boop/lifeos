@@ -4734,6 +4734,66 @@
         }
       }
     },
+    "/api/v1/numbering/codes/{kind}": {
+      "get": {
+        "tags": [
+          "Numbering"
+        ],
+        "summary": "For a master record's code (customer, item, warehouse, account and the rest): the next free code continuing the existing pattern, and whether a typed code is already taken in its scope (company, chart, warehouse); `except` leaves out the record being edited, `parent` places an account under its parent",
+        "operationId": "getNumberingCodesByKind",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "parent",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "except",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeSuggestion"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/numbering/drafts/{documentId}": {
       "get": {
         "tags": [
@@ -32340,6 +32400,37 @@
             }
           }
         }
+      },
+      "CodeSuggestion": {
+        "required": [
+          "kind",
+          "code",
+          "taken",
+          "next",
+          "autoFill"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taken": {
+            "type": "boolean"
+          },
+          "next": {
+            "type": "string"
+          },
+          "autoFill": {
+            "type": "boolean"
+          }
+        },
+        "description": "For a code being typed on a new or edited record: whether it is already taken in its scope (case-insensitively, the\nrecord itself excepted), and the next free code, continuing the most common pattern of the existing codes\n(CUS-0041 after CUS-0040, WH30 after WH10 and WH20) or, for an account, its siblings under the parent."
       },
       "CommentView": {
         "required": [

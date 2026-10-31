@@ -16,6 +16,7 @@ import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useR
 import { ItemCodeField } from "./ItemCodeField";
 import { RecordActivity } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
+import { CodeField } from "../CodeField";
 
 type Adjustment = components["schemas"]["AdjustmentSummary"];
 
@@ -456,7 +457,7 @@ function ReasonCodesDialog({ open, onOpenChange }: { open: boolean; onOpenChange
         <FormError message={problem?.message ?? null} />
         <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); add.mutate(); }}>
           <Field label={t("inventory.items.code")} required>
-            <TextField value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="reason-code" />
+            <CodeField kind="reason-code" value={form.code} onChange={(v) => { setForm({ ...form, code: v.toUpperCase() }); }} required data-testid="reason-code" />
           </Field>
           <Field label={t("inventory.reasons.applies")}>
             <SelectField value={form.appliesTo} onChange={(e) => { setForm({ ...form, appliesTo: e.target.value }); }}>

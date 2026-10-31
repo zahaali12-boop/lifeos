@@ -18,6 +18,7 @@ import { ItemCodeField } from "../inventory/ItemCodeField";
 import { useTaxRegime, useTaxRegistrations } from "../tax/shared";
 import { useCompanyCustomers } from "./pricing/shared";
 import { num } from "./shared";
+import { CodeField } from "../CodeField";
 
 type Recurring = components["schemas"]["RecurringInvoiceSummary"];
 
@@ -172,7 +173,7 @@ export function RecurringInvoicesPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("sales.invoicing.recurringCode")} required>
-                  <TextField value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="recurring-code" />
+                  <CodeField kind="recurring-invoice" scope={companyId} recordId={form.id} value={form.code} onChange={(v) => { setForm({ ...form, code: v.toUpperCase() }); }} required data-testid="recurring-code" />
                 </Field>
                 <Field label={t("sales.invoicing.customerReference")}>
                   <TextField value={form.customerReference} onChange={(e) => { setForm({ ...form, customerReference: e.target.value }); }} dir="ltr" data-testid="recurring-reference" />

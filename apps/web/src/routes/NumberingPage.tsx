@@ -11,6 +11,7 @@ import { formatDateTime } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { CompanyFilter, DocStatus, KeyValues, useCompanyContext } from "./inventory/shared";
+import { CodeField } from "./CodeField";
 
 type Series = components["schemas"]["SeriesSummary"];
 
@@ -246,7 +247,7 @@ export function NumberingPage() {
             <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t("numbering.code")} required error={problem?.fields.code}>
-                <TextField value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="series-code" />
+                <CodeField kind="series" value={form.code} onChange={(v) => { setForm({ ...form, code: v.toUpperCase() }); }} required data-testid="series-code" />
               </Field>
               <Field label={t("numbering.documentType")} required error={problem?.fields.documentType}>
                 <SelectField value={form.documentType} onChange={(e) => { setForm({ ...form, documentType: e.target.value }); }} data-testid="series-type">

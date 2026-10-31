@@ -12,6 +12,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts, type BankAccount } from "../payables/shared";
 import { CurrencyField } from "../CurrencyField";
+import { CodeField } from "../CodeField";
 
 interface AccountForm {
   id: string | null;
@@ -100,7 +101,7 @@ export function BankAccountsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("banking.code")} required>
-                  <TextField value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value.toUpperCase() }); }} dir="ltr" required data-testid="bank-code" />
+                  <CodeField kind="bank-account" scope={companyId} recordId={form.id} value={form.code} onChange={(v) => { setForm({ ...form, code: v.toUpperCase() }); }} required data-testid="bank-code" />
                 </Field>
                 <Field label={t("purchasing.kind")} required>
                   <SelectField value={form.kind} onChange={(e) => { setForm({ ...form, kind: e.target.value }); }} data-testid="bank-kind">

@@ -10,6 +10,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, Tabs, useCompanyContext } from "../inventory/shared";
 import { useCompanyCustomers } from "../sales/pricing/shared";
+import { CodeField } from "../CodeField";
 import {
   directions,
   returnFrequencies,
@@ -528,7 +529,7 @@ function RegimesTab() {
         {codeForm ? (
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t("tax.code")} required>
-              <TextField value={codeForm.code} onChange={(e) => { setCodeForm({ ...codeForm, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="code-code" />
+              <CodeField kind="tax-code" scope={selectedId} recordId={codeForm.id} value={codeForm.code} onChange={(v) => { setCodeForm({ ...codeForm, code: v.toUpperCase() }); }} required data-testid="code-code" />
             </Field>
             <Field label={t("tax.nameEn")} required>
               <TextField value={codeForm.nameEn} onChange={(e) => { setCodeForm({ ...codeForm, nameEn: e.target.value }); }} required dir="ltr" />
@@ -735,7 +736,7 @@ function GroupsTab() {
         {form ? (
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t("tax.code")} required>
-              <TextField value={form.code} onChange={(e) => { setForm({ ...form, code: e.target.value.toUpperCase() }); }} required dir="ltr" disabled={Boolean(form.id)} data-testid="group-code" />
+              <CodeField kind="tax-group" scope={kind} recordId={form.id} value={form.code} onChange={(v) => { setForm({ ...form, code: v.toUpperCase() }); }} required disabled={Boolean(form.id)} data-testid="group-code" />
             </Field>
             <Field label={t("tax.nameEn")} required>
               <TextField value={form.nameEn} onChange={(e) => { setForm({ ...form, nameEn: e.target.value }); }} required dir="ltr" />

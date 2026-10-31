@@ -15,6 +15,7 @@ import { usePaymentTerms } from "../../purchasing/shared";
 import { useCustomerGroups } from "../shared";
 import { Validity, price, refLabel, useBrands, useCategories, useCompanyCustomers, type DiscountRule, type PriceAgreement, type PriceFloor, type Promotion } from "./shared";
 import { CurrencyField } from "../../CurrencyField";
+import { CodeField } from "../../CodeField";
 
 const n = (value: string): number | null => (value.trim() === "" ? null : Number(value));
 const s = (value: number | string | null | undefined): string => (value === null ? "" : String(value));
@@ -510,7 +511,7 @@ function RulesTab({ companyId, currency }: { companyId: string; currency: string
         {form ? (
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t("pricing.code")} required>
-              <TextField value={form.code} onChange={(e) => { patch({ code: e.target.value }); }} required dir="ltr" data-testid="rule-code" />
+              <CodeField kind="discount-rule" scope={companyId} recordId={form.id} value={form.code} onChange={(v) => { patch({ code: v }); }} required data-testid="rule-code" />
             </Field>
             <Field label={t("pricing.nameEn")} required>
               <TextField value={form.nameEn} onChange={(e) => { patch({ nameEn: e.target.value }); }} required data-testid="rule-name" />
@@ -752,7 +753,7 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
         {form ? (
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t("pricing.code")} required>
-              <TextField value={form.code} onChange={(e) => { patch({ code: e.target.value }); }} required dir="ltr" data-testid="promotion-code" />
+              <CodeField kind="promotion" scope={companyId} recordId={form.id} value={form.code} onChange={(v) => { patch({ code: v }); }} required data-testid="promotion-code" />
             </Field>
             <Field label={t("pricing.nameEn")} required>
               <TextField value={form.nameEn} onChange={(e) => { patch({ nameEn: e.target.value }); }} required data-testid="promotion-name" />

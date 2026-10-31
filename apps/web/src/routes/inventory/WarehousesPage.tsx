@@ -11,6 +11,7 @@ import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, useCompanyContext, useWarehouses, type Warehouse } from "./shared";
+import { CodeField } from "../CodeField";
 
 interface WarehouseForm {
   code: string;
@@ -154,7 +155,7 @@ export function WarehousesPage() {
                   </Table>
                   <form className="grid items-end gap-3 sm:grid-cols-5" onSubmit={(e) => { e.preventDefault(); addBin.mutate(); }}>
                     <Field label={t("inventory.warehouses.bin")} required>
-                      <TextField value={bin.code} onChange={(e) => { setBin({ ...bin, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="bin-code" />
+                      <CodeField kind="bin" scope={editing?.id} value={bin.code} onChange={(v) => { setBin({ ...bin, code: v.toUpperCase() }); }} required data-testid="bin-code" />
                     </Field>
                     <Field label={t("inventory.warehouses.zone")}>
                       <TextField value={bin.zone} onChange={(e) => { setBin({ ...bin, zone: e.target.value.toUpperCase() }); }} dir="ltr" />
@@ -198,7 +199,7 @@ export function WarehousesPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("inventory.items.code")} required error={problem?.fields.code}>
-                  <TextField value={form.code} onChange={(e) => { setForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="warehouse-code" />
+                  <CodeField kind="warehouse" scope={companyId} recordId={editing.id} value={form.code} onChange={(v) => { setForm({ code: v.toUpperCase() }); }} required data-testid="warehouse-code" />
                 </Field>
                 <Field label={t("inventory.warehouses.kind")}>
                   <SelectField value={form.kind} onChange={(e) => { setForm({ kind: e.target.value }); }}>

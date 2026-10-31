@@ -18,6 +18,7 @@ import { DocStatus, Tabs, type Item } from "./shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { CurrencyField } from "../CurrencyField";
+import { CodeField } from "../CodeField";
 
 interface ItemForm {
   code: string;
@@ -255,7 +256,7 @@ export function ItemsPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("inventory.items.code")} required error={problem?.fields.code}>
-                  <TextField value={form.code} onChange={(e) => { setForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" disabled={isEdit} data-testid="item-code" />
+                  <CodeField kind="item" recordId={editing.id} value={form.code} onChange={(v) => { setForm({ code: v.toUpperCase() }); }} required disabled={isEdit} data-testid="item-code" />
                 </Field>
                 <Field label={t("inventory.items.nameEn")} required error={problem?.fields.name}>
                   <TextField value={form.nameEn} onChange={(e) => { setForm({ nameEn: e.target.value }); }} required data-testid="item-name-en" />
@@ -390,7 +391,7 @@ function MasterDataDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               ))}
             </ul>
             <Field label={t("inventory.items.code")} required>
-              <TextField value={category.code} onChange={(e) => { setCategory({ ...category, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="category-code" />
+              <CodeField kind="item-category" value={category.code} onChange={(v) => { setCategory({ ...category, code: v.toUpperCase() }); }} required data-testid="category-code" />
             </Field>
             <Field label={t("inventory.items.nameEn")} required>
               <TextField value={category.en} onChange={(e) => { setCategory({ ...category, en: e.target.value }); }} required data-testid="category-name-en" />
@@ -422,7 +423,7 @@ function MasterDataDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               ))}
             </ul>
             <Field label={t("inventory.items.code")} required>
-              <TextField value={brand.code} onChange={(e) => { setBrand({ ...brand, code: e.target.value.toUpperCase() }); }} required dir="ltr" />
+              <CodeField kind="brand" value={brand.code} onChange={(v) => { setBrand({ ...brand, code: v.toUpperCase() }); }} required />
             </Field>
             <Field label={t("inventory.items.nameEn")} required>
               <TextField value={brand.en} onChange={(e) => { setBrand({ ...brand, en: e.target.value }); }} required />

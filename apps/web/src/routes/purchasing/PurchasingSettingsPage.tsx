@@ -14,6 +14,7 @@ import { Field, FormError, PageHeader, SelectField, TextField } from "../common"
 import { Tabs, useCompanyContext } from "../inventory/shared";
 import { num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, useSupplierPostingGroups, useWhtCodes } from "./shared";
 import { CurrencyField } from "../CurrencyField";
+import { CodeField } from "../CodeField";
 
 type PaymentTerms = components["schemas"]["PaymentTermsSummary"];
 type DeliveryTerms = components["schemas"]["DeliveryTermsSummary"];
@@ -228,7 +229,7 @@ export function PurchasingSettingsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("partners.code")} required>
-                  <TextField value={terms.code} onChange={(e) => { setTermsForm({ code: e.target.value }); }} dir="ltr" required data-testid="terms-code" />
+                  <CodeField kind="payment-terms" recordId={terms.id} value={terms.code} onChange={(v) => { setTermsForm({ code: v }); }} required data-testid="terms-code" />
                 </Field>
                 <Field label={t("partners.name")} required>
                   <TextField value={terms.name} onChange={(e) => { setTermsForm({ name: e.target.value }); }} required data-testid="terms-name" />
@@ -354,7 +355,7 @@ export function PurchasingSettingsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("partners.code")} required>
-                  <TextField value={simple.form.code} onChange={(e) => { setSimpleForm({ code: e.target.value }); }} dir="ltr" required data-testid="setting-code" />
+                  <CodeField kind={simple.kind === "delivery" ? "delivery-terms" : simple.kind === "groups" ? "supplier-group" : "wht-code"} recordId={simple.form.id} value={simple.form.code} onChange={(v) => { setSimpleForm({ code: v }); }} required data-testid="setting-code" />
                 </Field>
                 <Field label={t("partners.name")} required>
                   <TextField value={simple.form.name} onChange={(e) => { setSimpleForm({ name: e.target.value }); }} required data-testid="setting-name" />

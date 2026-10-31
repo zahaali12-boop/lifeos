@@ -11,6 +11,7 @@ import { Field, FormError, SelectField, TextField } from "../common";
 import { ItemCodeField } from "./ItemCodeField";
 import { useItemRefresh } from "./ItemEditors";
 import { Qty, type Item } from "./shared";
+import { CodeField } from "../CodeField";
 
 type Bom = components["schemas"]["BomSummary"];
 type Variant = components["schemas"]["VariantSummary"];
@@ -547,7 +548,7 @@ export function ItemAttributesEditor() {
       </ul>
       <form className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_1fr_2fr_auto]" onSubmit={(e) => { e.preventDefault(); create.mutate(); }}>
         <Field label={t("inventory.items.code")} required>
-          <TextField value={draft.code} onChange={(e) => { setDraft({ ...draft, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="attribute-code" />
+          <CodeField kind="attribute" value={draft.code} onChange={(v) => { setDraft({ ...draft, code: v.toUpperCase() }); }} required data-testid="attribute-code" />
         </Field>
         <Field label={t("inventory.items.nameEn")} required>
           <TextField value={draft.en} onChange={(e) => { setDraft({ ...draft, en: e.target.value }); }} required data-testid="attribute-name-en" />

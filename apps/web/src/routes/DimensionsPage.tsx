@@ -12,6 +12,7 @@ import { toFormProblem, type FormProblem } from "../lib/problem";
 import { useCompanies } from "./accounting/shared";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { DocStatus } from "./inventory/shared";
+import { CodeField } from "./CodeField";
 
 type Dimension = components["schemas"]["DimensionSummary"];
 type DimensionValue = components["schemas"]["DimensionValueSummary"];
@@ -195,7 +196,7 @@ export function DimensionsPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("dimensions.code")} required error={problem?.fields.code}>
-                  <TextField value={editingDimension.form.code} onChange={(e) => { setDimensionForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="dimension-code" />
+                  <CodeField kind="dimension" recordId={editingDimension.id} value={editingDimension.form.code} onChange={(v) => { setDimensionForm({ code: v.toUpperCase() }); }} required data-testid="dimension-code" />
                 </Field>
                 <Field label={t("dimensions.sortOrder")}>
                   <TextField inputMode="numeric" value={editingDimension.form.sortOrder} onChange={(e) => { setDimensionForm({ sortOrder: e.target.value }); }} dir="ltr" />
@@ -240,7 +241,7 @@ export function DimensionsPage() {
               <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("dimensions.code")} required error={problem?.fields.code}>
-                  <TextField value={editingValue.form.code} onChange={(e) => { setValueForm({ code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="value-code" />
+                  <CodeField kind="dimension-value" scope={selected?.id} recordId={editingValue.id} value={editingValue.form.code} onChange={(v) => { setValueForm({ code: v.toUpperCase() }); }} required data-testid="value-code" />
                 </Field>
                 <Field label={t("dimensions.company")} description={t("dimensions.companyHint")}>
                   <SelectField value={editingValue.form.companyId} onChange={(e) => { setValueForm({ companyId: e.target.value }); }}>

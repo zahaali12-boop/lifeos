@@ -12,6 +12,7 @@ import { FormError, PageHeader, SelectField, TextField } from "../common";
 import { DocStatus, Tabs } from "../inventory/shared";
 import { cashAndBankCodes } from "./JournalLineDetails";
 import { CompanySelect, today, useCompanies, useCompanySelection } from "./shared";
+import { CodeField } from "../CodeField";
 
 type Rule = components["schemas"]["PostingRuleSummary"];
 type RuleRequest = components["schemas"]["PostingRuleRequest"];
@@ -438,7 +439,7 @@ export function PostingRulesPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("postingRules.code")} required error={problem?.fields.code}>
-                  <TextField value={group.code} onChange={(e) => { setGroup({ ...group, code: e.target.value.toUpperCase() }); }} required dir="ltr" data-testid="group-code" />
+                  <CodeField kind="posting-group" scope={group.kind} recordId={group.id} value={group.code} onChange={(v) => { setGroup({ ...group, code: v.toUpperCase() }); }} required data-testid="group-code" />
                 </Field>
                 <Field label={t("postingRules.nameEn")} required error={problem?.fields.name}>
                   <TextField value={group.nameEn} onChange={(e) => { setGroup({ ...group, nameEn: e.target.value }); }} required data-testid="group-name-en" />

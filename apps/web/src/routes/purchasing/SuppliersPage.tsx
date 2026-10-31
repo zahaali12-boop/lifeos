@@ -17,6 +17,7 @@ import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { covers } from "../../lib/permissions";
 import { CurrencyField } from "../CurrencyField";
+import { CodeField } from "../CodeField";
 
 type SupplierAccount = components["schemas"]["SupplierAccountSummary"];
 
@@ -187,7 +188,7 @@ export function SuppliersPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("partners.code")} required>
-                  <TextField value={creating.partner.code} onChange={(e) => { setPartner({ code: e.target.value }); }} dir="ltr" required data-testid="partner-code" />
+                  <CodeField kind="supplier" value={creating.partner.code} onChange={(v) => { setPartner({ code: v }); }} required data-testid="partner-code" />
                 </Field>
                 <Field label={t("partners.kind")}>
                   <SelectField value={creating.partner.kind} onChange={(e) => { setPartner({ kind: e.target.value }); }}>

@@ -13,6 +13,7 @@ import { Tabs } from "../inventory/shared";
 import { useDeliveryTerms, usePaymentTerms } from "../purchasing/shared";
 import { Money, useCommissionPlans, useCustomerGroups, useCustomerPostingGroups, usePipelineStages, useSalesReps, type CommissionPlan, type CustomerGroup, type PipelineStage, type SalesRep } from "./shared";
 import { CurrencyField } from "../CurrencyField";
+import { CodeField } from "../CodeField";
 
 /** Sales set-up (roadmap 5.1): customer groups, the sales team and how it is paid, and the pipeline's stages. */
 export function SalesSetupPage() {
@@ -143,7 +144,7 @@ function GroupsTab() {
         {editing ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("partners.code")} required>
-              <TextField value={editing.code} onChange={(e) => { setEditing({ ...editing, code: e.target.value }); }} dir="ltr" required data-testid="group-code" />
+              <CodeField kind="customer-group" recordId={editing.id} value={editing.code} onChange={(v) => { setEditing({ ...editing, code: v }); }} required data-testid="group-code" />
             </Field>
             <label className="flex items-center gap-2 self-end text-sm">
               <input type="checkbox" checked={editing.isActive} onChange={(e) => { setEditing({ ...editing, isActive: e.target.checked }); }} />
@@ -256,7 +257,7 @@ function RepsTab() {
         {editing ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("partners.code")} required>
-              <TextField value={editing.code} onChange={(e) => { setEditing({ ...editing, code: e.target.value }); }} dir="ltr" required data-testid="rep-code" />
+              <CodeField kind="sales-rep" recordId={editing.id} value={editing.code} onChange={(v) => { setEditing({ ...editing, code: v }); }} required data-testid="rep-code" />
             </Field>
             <label className="flex items-center gap-2 self-end text-sm">
               <input type="checkbox" checked={editing.isActive} onChange={(e) => { setEditing({ ...editing, isActive: e.target.checked }); }} />
@@ -424,7 +425,7 @@ function PlansTab() {
           <div className="flex flex-col gap-4">
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label={t("partners.code")} required>
-                <TextField value={editing.code} onChange={(e) => { setEditing({ ...editing, code: e.target.value }); }} dir="ltr" required data-testid="plan-code" />
+                <CodeField kind="commission-plan" recordId={editing.id} value={editing.code} onChange={(v) => { setEditing({ ...editing, code: v }); }} required data-testid="plan-code" />
               </Field>
               <Field label={t("partners.name")} required>
                 <TextField value={editing.name} onChange={(e) => { setEditing({ ...editing, name: e.target.value }); }} required data-testid="plan-name" />
@@ -678,7 +679,7 @@ function StagesTab() {
         {editing ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("partners.code")} required description={editing.isSystem ? t("sales.systemStage") : undefined}>
-              <TextField value={editing.code} onChange={(e) => { setEditing({ ...editing, code: e.target.value }); }} dir="ltr" required readOnly={editing.isSystem} data-testid="stage-code" />
+              <CodeField kind="pipeline-stage" recordId={editing.id} value={editing.code} onChange={(v) => { setEditing({ ...editing, code: v }); }} required readOnly={editing.isSystem} data-testid="stage-code" />
             </Field>
             <Field label={t("sales.outcome")}>
               <SelectField value={editing.outcome} onChange={(e) => { const outcome = e.target.value; setEditing({ ...editing, outcome, defaultProbability: outcome === "won" ? "100" : outcome === "lost" ? "0" : editing.defaultProbability }); }} disabled={editing.isSystem}>

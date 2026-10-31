@@ -18,6 +18,7 @@ import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CurrencyField } from "../CurrencyField";
+import { CodeField } from "../CodeField";
 
 type LandedCost = components["schemas"]["LandedCostSummary"];
 
@@ -208,7 +209,7 @@ export function LandedCostsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("partners.code")} required>
-                  <TextField value={chargeType.code} onChange={(e) => { setChargeType({ ...chargeType, code: e.target.value.toUpperCase() }); }} dir="ltr" required data-testid="charge-type-code" />
+                  <CodeField kind="charge-type" recordId={chargeType.id} value={chargeType.code} onChange={(v) => { setChargeType({ ...chargeType, code: v.toUpperCase() }); }} required data-testid="charge-type-code" />
                 </Field>
                 <Field label={t("purchasing.defaultBasis")}>
                   <SelectField value={chargeType.basis} onChange={(e) => { setChargeType({ ...chargeType, basis: e.target.value }); }} data-testid="charge-type-basis">

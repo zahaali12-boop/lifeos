@@ -56,7 +56,12 @@ test("English: units and conversions, calendars, company settings", async ({ pag
   await nav(page, "Units of measure");
   await expect(page.getByRole("grid")).toContainText("PCS");
   await page.getByTestId("new-unit").click();
+  // A code already in use is flagged as it is typed, with the next free code a click away (A-165).
+  await page.getByTestId("unit-code").fill("pcs");
+  await expect(page.getByTestId("unit-code-hint")).toContainText("PCS is already used.");
+  await expect(page.getByTestId("unit-code")).toHaveAttribute("aria-invalid", "true");
   await page.getByTestId("unit-code").fill("gross");
+  await expect(page.getByTestId("unit-code-hint")).not.toContainText("already used");
   await expect(page.getByTestId("unit-code")).toHaveValue("GROSS");
   await page.getByTestId("unit-family").selectOption("count");
   await page.getByTestId("unit-name-en").fill("Gross");
@@ -283,6 +288,22 @@ test("Arabic: the set-up screens read right to left and stay accessible", async 
   await expect(page.getByTestId("sod-rule-row").first()).toContainText("منع");
   await page.getByTestId("tab-policy").click();
   await expect(page.getByTestId("policy")).toContainText("الحد الأدنى لطول كلمة المرور");
+  await expectAccessible(page);
+});
+
+test("English: a new item gets the next free code, a used one is flagged and the next is a click away", async ({ page }) => {
+  await signup(page, "en");
+  await nav(page, "Items");
+  await page.getByTestId("new-item").click();
+  // An empty workspace starts the items' sequence; the code is filled in and can still be changed.
+  await expect(page.getByTestId("item-code")).toHaveValue("ITM-0001");
+  await expect(page.getByTestId("item-code-hint")).toContainText("Filled in automatically");
+  await page.getByTestId("item-code").fill("my-own");
+  await expect(page.getByTestId("item-code")).toHaveValue("MY-OWN");
+  await expect(page.getByTestId("item-code-hint")).toBeEmpty();
+  // The wand fills the next free code back in.
+  await page.getByTestId("item-code-suggest").click();
+  await expect(page.getByTestId("item-code")).toHaveValue("ITM-0001");
   await expectAccessible(page);
 });
 

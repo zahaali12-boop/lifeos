@@ -1862,6 +1862,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/numbering/codes/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** For a master record's code (customer, item, warehouse, account and the rest): the next free code continuing the existing pattern, and whether a typed code is already taken in its scope (company, chart, warehouse); `except` leaves out the record being edited, `parent` places an account under its parent */
+        get: operations["getNumberingCodesByKind"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/numbering/drafts/{documentId}": {
         parameters: {
             query?: never;
@@ -10782,6 +10799,18 @@ export interface components {
             submissionId: null | string;
             qrPayload: null | string;
             messages: string[];
+        };
+        /**
+         * @description For a code being typed on a new or edited record: whether it is already taken in its scope (case-insensitively, the
+         *     record itself excepted), and the next free code, continuing the most common pattern of the existing codes
+         *     (CUS-0041 after CUS-0040, WH30 after WH10 and WH20) or, for an account, its siblings under the parent.
+         */
+        CodeSuggestion: {
+            kind: string;
+            code: null | string;
+            taken: boolean;
+            next: string;
+            autoFill: boolean;
         };
         CommentView: {
             /** Format: uuid */
@@ -24480,6 +24509,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentSearchHit"][];
+                };
+            };
+        };
+    };
+    getNumberingCodesByKind: {
+        parameters: {
+            query?: {
+                code?: string;
+                scope?: string;
+                parent?: string;
+                except?: string;
+            };
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSuggestion"];
                 };
             };
         };

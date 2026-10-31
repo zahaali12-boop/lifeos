@@ -16,6 +16,7 @@ public static class NumberingModule
         services.AddModuleDbContext<NumberingDbContext>();
         services.AddScoped<SeriesService>();
         services.AddScoped<DocumentSearchService>();
+        services.AddScoped<CodeSuggestionService>();
         services.AddScoped<IIssuedNumbers, IssuedNumbers>();
         services.AddScoped<NumberAllocator>();
         services.AddScoped<INumberAllocator>(static sp => sp.GetRequiredService<NumberAllocator>());
