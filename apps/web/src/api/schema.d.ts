@@ -9640,6 +9640,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The home page's numbers for a company on a day (today in the company's time zone when no date is given): net sales today, this month and the month before with a thirty-day series; receivables and payables past due and due within seven days; every bank account and cash box's balance with the month's receipts and payments; quotations, orders, shipments and returns waiting for their next step. A section is left out when the member may not read that module in the company. */
+        get: operations["getReportingHome"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -12247,6 +12264,105 @@ export interface components {
             name: {
                 [key: string]: string;
             };
+        };
+        /** @description The balance of every active bank account and cash box at the date, and what came in and went out this month. */
+        HomeCash: {
+            /** Format: double */
+            total: number | string;
+            /** Format: double */
+            receivedMonthToDate: number | string;
+            /** Format: double */
+            paidMonthToDate: number | string;
+            accounts: components["schemas"]["HomeCashAccount"][];
+        };
+        HomeCashAccount: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            currency: string;
+            /** Format: double */
+            balanceTc: number | string;
+            /** Format: double */
+            balanceFc: number | string;
+        };
+        /**
+         * @description The home page's numbers for one company on one day (founder programme item 1): what was sold, what is owed and
+         *     due, the money in the bank and the cash boxes, and the documents waiting for the next step. A section is null when
+         *     the member may not read what it counts. Amounts are in the company's functional currency and come straight from
+         *     the modules' tables (posted invoices, open items, bank transactions), so they agree with the screens they open.
+         */
+        HomeDashboard: {
+            /** Format: uuid */
+            companyId: string;
+            functionalCurrency: string;
+            /** Format: date */
+            asOf: string;
+            sales: null | components["schemas"]["HomeSales"];
+            receivables: null | components["schemas"]["HomeReceivables"];
+            payables: null | components["schemas"]["HomePayables"];
+            cash: null | components["schemas"]["HomeCash"];
+            pipeline: null | components["schemas"]["HomePipeline"];
+        };
+        HomeDay: {
+            /** Format: date */
+            day: string;
+            /** Format: double */
+            amount: number | string;
+        };
+        /** @description What is owed to suppliers as the open items stand now: past due at the date, due within the seven days after it, and in all. */
+        HomePayables: {
+            /** Format: double */
+            overdue: number | string;
+            /** Format: int32 */
+            overdueSuppliers: number | string;
+            /** Format: double */
+            dueSoon: number | string;
+            /** Format: double */
+            total: number | string;
+            /** Format: int32 */
+            openItems: number | string;
+        };
+        /** @description Documents waiting for their next step; a count is null when the member may not read that document type. */
+        HomePipeline: {
+            /** Format: int32 */
+            openQuotations: null | number | string;
+            /** Format: int32 */
+            ordersToShip: null | number | string;
+            /** Format: int32 */
+            draftShipments: null | number | string;
+            /** Format: int32 */
+            openReturns: null | number | string;
+        };
+        /** @description What customers owe as the open items stand now: past due at the date, due within the seven days after it, and in all. */
+        HomeReceivables: {
+            /** Format: double */
+            overdue: number | string;
+            /** Format: int32 */
+            overdueCustomers: number | string;
+            /** Format: double */
+            dueSoon: number | string;
+            /** Format: double */
+            total: number | string;
+            /** Format: int32 */
+            openItems: number | string;
+        };
+        /** @description Net sales (invoices less credit notes, before tax) of the day, the month so far and the same days of the month before, with a day-by-day series for the last thirty days. */
+        HomeSales: {
+            /** Format: double */
+            today: number | string;
+            /** Format: double */
+            monthToDate: number | string;
+            /** Format: double */
+            previousMonthToDate: number | string;
+            /** Format: int32 */
+            invoicesToday: number | string;
+            /** Format: int32 */
+            draftInvoices: number | string;
+            days: components["schemas"]["HomeDay"][];
         };
         ImportRatesRequest: {
             provider: string;
@@ -39215,6 +39331,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PrintEmailSummary"];
+                };
+            };
+        };
+    };
+    getReportingHome: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeDashboard"];
                 };
             };
         };

@@ -309,7 +309,31 @@
     "description": "{tenant} في لمحة.",
     "unreadNotifications": "إشعارات غير مقروءة",
     "queuedJobs": "مهام في الانتظار",
-    "hint": "اضغط ⌘K / Ctrl+K للبحث أو الانتقال إلى أي مكان، و ? لعرض اختصارات لوحة المفاتيح."
+    "hint": "اضغط ⌘K / Ctrl+K للبحث أو الانتقال إلى أي مكان، و ? لعرض اختصارات لوحة المفاتيح.",
+    "today": {
+      "sales": "مبيعات اليوم",
+      "monthToDate": "{amount} هذا الشهر",
+      "vsLastMonth": "مقارنة بالأيام نفسها من الشهر الماضي",
+      "invoicesToday": "{count, plural, zero {لا فواتير اليوم} one {فاتورة واحدة اليوم} two {فاتورتان اليوم} few {# فواتير اليوم} many {# فاتورة اليوم} other {# فاتورة اليوم}}",
+      "drafts": "{count, plural, zero {لا مسودات} one {مسودة واحدة} two {مسودتان} few {# مسودات} many {# مسودة} other {# مسودة}}",
+      "received": "دخل {amount} هذا الشهر",
+      "paid": "خرج {amount}",
+      "receivablesOverdue": "متأخر على العملاء",
+      "customers": "{count, plural, zero {لا عملاء} one {عميل واحد} two {عميلان} few {# عملاء} many {# عميلًا} other {# عميل}}",
+      "suppliers": "{count, plural, zero {لا موردين} one {مورد واحد} two {موردان} few {# موردين} many {# موردًا} other {# مورد}}",
+      "dueSoon": "{amount} يستحق خلال 7 أيام",
+      "inAll": "الإجمالي {amount}",
+      "moreAccounts": "{count, plural, one {وحساب آخر} two {وحسابان آخران} few {و# حسابات أخرى} many {و# حسابًا آخر} other {و# حساب آخر}}",
+      "trend": "صافي المبيعات، آخر 30 يومًا"
+    },
+    "next": {
+      "title": "بانتظار الخطوة التالية",
+      "openQuotations": "عروض أسعار مفتوحة",
+      "ordersToShip": "أوامر بانتظار الشحن",
+      "draftShipments": "شحنات بانتظار الترحيل",
+      "draftInvoices": "فواتير مسودة",
+      "openReturns": "مرتجعات قيد المعالجة"
+    }
   },
   "grid": {
     "columns": "الأعمدة",

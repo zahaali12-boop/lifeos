@@ -128,7 +128,7 @@ public sealed class ModuleBoundaryTests
         violations.ShouldBeEmpty();
     }
 
-    /// <summary>The tiers of ARCHITECTURE §6: process modules depend on core modules, core on platform, never upwards.</summary>
+    /// <summary>The tiers of ARCHITECTURE §6: experience modules depend on process modules, process on core, core on platform, never upwards.</summary>
     private static readonly Dictionary<string, int> Tiers = new(StringComparer.Ordinal)
     {
         ["Tenancy"] = 0,
@@ -152,6 +152,7 @@ public sealed class ModuleBoundaryTests
         ["Banking"] = 2,
         ["Workflow"] = 2,
         ["Sales"] = 2,
+        ["Reporting"] = 3,
     };
 
     /// <summary>Dependencies against the tiers that exist on purpose; a new one fails, and one that disappears must be removed here.</summary>

@@ -100,6 +100,13 @@ test("English: an old invoice collected in part with a bank charge, a promise to
   await expectAccessible(page);
   await closeDialog(page);
 
+  // The home page shows the money that came in and the customer still past due.
+  await page.goto("/");
+  await expect(page.getByTestId("work-cash-value")).toContainText("59,500");
+  await expect(page.getByTestId("work-cash")).toContainText("59,500.00 in this month");
+  await expect(page.getByTestId("work-receivables-value")).toContainText("40,000");
+  await expect(page.getByTestId("work-receivables")).toContainText("1 customer");
+
   // On the receivables screen: the invoice shows 40,000 open with the receipt's settlement; the customer promises to pay, then 40 of it is written off as a small balance.
   await nav(page, "Receivables");
   await page.getByRole("grid").getByText(/INV-\d{4}-00001/u).dblclick();

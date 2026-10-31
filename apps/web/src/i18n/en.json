@@ -309,7 +309,31 @@
     "description": "{tenant} at a glance.",
     "unreadNotifications": "Unread notifications",
     "queuedJobs": "Queued jobs",
-    "hint": "Press ⌘K / Ctrl+K to search or jump anywhere, and ? to see the keyboard shortcuts."
+    "hint": "Press ⌘K / Ctrl+K to search or jump anywhere, and ? to see the keyboard shortcuts.",
+    "today": {
+      "sales": "Sales today",
+      "monthToDate": "{amount} this month",
+      "vsLastMonth": "vs the same days last month",
+      "invoicesToday": "{count, plural, =0 {no invoices today} one {# invoice today} other {# invoices today}}",
+      "drafts": "{count, plural, one {# draft} other {# drafts}}",
+      "received": "{amount} in this month",
+      "paid": "{amount} out",
+      "receivablesOverdue": "Overdue from customers",
+      "customers": "{count, plural, =0 {no customers} one {# customer} other {# customers}}",
+      "suppliers": "{count, plural, =0 {no suppliers} one {# supplier} other {# suppliers}}",
+      "dueSoon": "{amount} due within 7 days",
+      "inAll": "{amount} in all",
+      "moreAccounts": "{count, plural, one {# more account} other {# more accounts}}",
+      "trend": "Net sales, last 30 days"
+    },
+    "next": {
+      "title": "Waiting for the next step",
+      "openQuotations": "Open quotations",
+      "ordersToShip": "Orders to ship",
+      "draftShipments": "Shipments to post",
+      "draftInvoices": "Draft invoices",
+      "openReturns": "Returns in progress"
+    }
   },
   "grid": {
     "columns": "Columns",

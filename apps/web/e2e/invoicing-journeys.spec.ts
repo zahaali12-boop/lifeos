@@ -165,7 +165,17 @@ test("English: a shipment invoiced with a delivery charge, a credit note applied
   await expect(page.getByTestId("sales-invoice-open")).toContainText("95,000");
   await closeDialog(page);
 
-  // The receivables screen: the invoice's open item with the credit applied to it, the aging and the statement.
+  // The home page counts the day: net sales of 95,000 (the invoice less the credit note), the receivable due within
+  // the week and not yet past due, no drafts waiting, and the thirty-day trend ending with today.
+  await page.goto("/");
+  await expect(page.getByTestId("work-sales-value")).toContainText("95,000");
+  await expect(page.getByTestId("work-sales")).toContainText("1 invoice today");
+  await expect(page.getByTestId("work-receivables-value")).toContainText("IQD 0.00");
+  await expect(page.getByTestId("work-receivables")).toContainText("95,000.00 due within 7 days");
+  await expect(page.getByTestId("sales-trend-caption")).toContainText("95,000");
+  await expect(page.getByTestId("next-invoices-value")).toHaveText("0");
+  await expectAccessible(page);
+
   await nav(page, "Receivables");
   await expect(page.getByRole("grid")).toContainText("INV-");
   await page.getByRole("grid").getByText(/INV-\d{4}-00001/u).dblclick();
