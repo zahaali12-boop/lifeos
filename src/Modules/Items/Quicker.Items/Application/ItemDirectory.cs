@@ -222,6 +222,32 @@ public sealed class ItemDirectory(ItemsDbContext db, IUomDirectory uoms) : IItem
         _itemUoms.Remove(itemId);
     }
 
+    public async Task<IReadOnlyList<SellableItem>> SellableAsync(CancellationToken cancellationToken = default)
+    {
+        var byId = await UomsByIdAsync(cancellationToken);
+        var items = await db.Items.AsNoTracking().Where(static i => i.IsActive).OrderBy(static i => i.Code).ToListAsync(cancellationToken);
+        var ids = items.Select(static i => i.Id).ToList();
+        var units = await db.ItemUoms.AsNoTracking().Where(u => ids.Contains(u.ItemId)).ToListAsync(cancellationToken);
+        var unitIds = units.Select(static u => u.Id).ToList();
+        var barcodes = await db.Barcodes.AsNoTracking().Where(b => unitIds.Contains(b.ItemUomId)).ToListAsync(cancellationToken);
+        var variants = await db.Variants.AsNoTracking().Where(v => ids.Contains(v.ItemId) && v.IsActive).OrderBy(static v => v.Sku).ToListAsync(cancellationToken);
+        var unitById = units.ToDictionary(static u => u.Id);
+        var barcodesByItem = barcodes.GroupBy(b => unitById[b.ItemUomId].ItemId).ToDictionary(static g => g.Key, static g => g.ToList());
+        var variantsByItem = variants.GroupBy(static v => v.ItemId).ToDictionary(static g => g.Key, static g => g.ToList());
+        var result = new List<SellableItem>(items.Count);
+        foreach (var item in items)
+        {
+            var sales = item.SalesUomId is { } salesId && byId.TryGetValue(salesId, out var salesUom) ? salesUom : byId[item.BaseUomId];
+            var ownBarcodes = (barcodesByItem.GetValueOrDefault(item.Id) ?? []).OrderBy(static b => b.Barcode, StringComparer.Ordinal)
+                .Select(b => new SellableBarcode(b.Barcode, unitById[b.ItemUomId].UomId, byId[unitById[b.ItemUomId].UomId].Code, b.VariantId)).ToList();
+            var ownVariants = (variantsByItem.GetValueOrDefault(item.Id) ?? []).Select(v => new ItemVariantInfo(v.Id, v.ItemId, v.Sku, v.Name, v.IsActive)).ToList();
+            result.Add(new SellableItem(item.Id, item.Code, item.Name, item.Type, item.Tracking, item.CategoryId, item.ItemTaxGroupId, sales.Id, sales.Code, item.BaseUomId, byId[item.BaseUomId].Code,
+                item.ListPrice, item.ListPriceCurrency, item.HasVariants, ownVariants, ownBarcodes));
+        }
+
+        return result;
+    }
+
     private async Task<IReadOnlyDictionary<Guid, UomInfo>> UomsByIdAsync(CancellationToken cancellationToken) =>
         _uomsById ??= (await uoms.ListAsync(cancellationToken)).ToDictionary(static u => u.Id);
 

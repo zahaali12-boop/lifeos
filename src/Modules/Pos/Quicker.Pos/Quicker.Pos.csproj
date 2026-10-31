@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Point of sale module (founder programme item 7, ADR-0032, A-180): registers with their warehouse, cash box, card account and price list; cashier sessions with the float, the expected and counted cash and the difference; orders synced from an offline-capable till (priced from the catalogue the till cached, validated here, posted through the posting, stock, bank, receivables and tax engines, handed to e-invoicing); the catalogue a till caches; receipts.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Pos.Contracts/Quicker.Pos.Contracts.csproj" />
+    <ProjectReference Include="../../Accounting/Quicker.Accounting.Contracts/Quicker.Accounting.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Banking/Quicker.Banking.Contracts/Quicker.Banking.Contracts.csproj" />
+    <ProjectReference Include="../../Collaboration/Quicker.Collaboration.Contracts/Quicker.Collaboration.Contracts.csproj" />
+    <ProjectReference Include="../../Einvoicing/Quicker.Einvoicing.Contracts/Quicker.Einvoicing.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Inventory/Quicker.Inventory.Contracts/Quicker.Inventory.Contracts.csproj" />
+    <ProjectReference Include="../../Items/Quicker.Items.Contracts/Quicker.Items.Contracts.csproj" />
+    <ProjectReference Include="../../Numbering/Quicker.Numbering.Contracts/Quicker.Numbering.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Partners/Quicker.Partners.Contracts/Quicker.Partners.Contracts.csproj" />
+    <ProjectReference Include="../../Pricing/Quicker.Pricing.Contracts/Quicker.Pricing.Contracts.csproj" />
+    <ProjectReference Include="../../Printing/Quicker.Printing.Contracts/Quicker.Printing.Contracts.csproj" />
+    <ProjectReference Include="../../Receivables/Quicker.Receivables.Contracts/Quicker.Receivables.Contracts.csproj" />
+    <ProjectReference Include="../../Tax/Quicker.Tax.Contracts/Quicker.Tax.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Messaging/Quicker.Messaging.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+
+</Project>

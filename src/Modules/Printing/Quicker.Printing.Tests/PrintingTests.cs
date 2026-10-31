@@ -196,7 +196,7 @@ public sealed class PrintingTests(ApiHostFixture host)
         (await RenderedAsync(host, owner, statementRender.GetProperty("id").GetGuid())).GetProperty("isEvidence").GetBoolean().ShouldBeFalse();
 
         // The document types the UI offers; a member who may read invoices but not print is refused, and one who may print but not read invoices too.
-        (await owner.GetOkAsync("/api/v1/print/document-types")).EnumerateArray().Select(static d => d.GetProperty("documentType").GetString()).ShouldBe(["customer_statement", "sales_invoice", "sales_order"]);
+        (await owner.GetOkAsync("/api/v1/print/document-types")).EnumerateArray().Select(static d => d.GetProperty("documentType").GetString()).ShouldBe(["customer_statement", "pos_order", "sales_invoice", "sales_order"]);
         var reader = await InviteAsync(owner, s.Ws, "invoice_reader", "sales.invoice.read");
         (await reader.GetErrorAsync($"/api/v1/print/preview?documentType=sales_invoice&documentId={invoiceId}", HttpStatusCode.Forbidden)).Code.ShouldBe("auth.forbidden");
         var printer = await InviteAsync(owner, s.Ws, "printer_only", "print.document.render");

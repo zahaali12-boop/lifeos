@@ -99,6 +99,11 @@ import { MobileShell } from "./mobile/MobileShell";
 import { MobileTransferPage } from "./mobile/MobileTransferPage";
 import { MobileReceivePage } from "./mobile/MobileReceivePage";
 import { MobilePickPage } from "./mobile/MobilePickPage";
+import { PosShell } from "./pos/PosShell";
+import { PosHomePage } from "./pos/PosHomePage";
+import { PosSellPage } from "./pos/PosSellPage";
+import { PosOrdersPage } from "./pos/PosOrdersPage";
+import { PosPage } from "./sales/PosPage";
 import { PickListsPage } from "./inventory/PickListsPage";
 
 /** Typed routes (ADR-0013): anonymous auth screens, the shell whose children require a session, and the mobile scanner under /m. */
@@ -230,6 +235,22 @@ const mobileQueueRoute = createRoute({ getParentRoute: () => mobileRoute, path: 
 const mobileReceiveRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/receive", component: MobileReceivePage });
 const mobilePickRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/pick", component: MobilePickPage, validateSearch: searchRecord });
 
+// The till (A-180): its own full-width shell, the same session, sells offline from the catalogue it cached.
+const posRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "pos",
+  component: PosShell,
+  beforeLoad: () => {
+    if (!getSession()) {
+      throw redirect({ to: "/login" });
+    }
+  },
+});
+const posHomeRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos", component: PosHomePage });
+const posSellRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos/sell", component: PosSellPage, validateSearch: searchRecord });
+const posOrdersRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos/orders", component: PosOrdersPage });
+const posBackOfficeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pos", component: PosPage, validateSearch: searchRecord });
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
@@ -237,9 +258,10 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
+  posRoute.addChildren([posHomeRoute, posSellRoute, posOrdersRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });

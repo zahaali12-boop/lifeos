@@ -48,7 +48,13 @@ public interface ICompanyDirectory
 
     /// <summary>ISO 4217 reference: the currency with its minor units, or null for an unknown code.</summary>
     Task<Currency?> FindCurrencyAsync(string code, CancellationToken cancellationToken = default);
+
+    /// <summary>The company's settings for a currency it uses (display decimals, the increment cash is rounded to), or null when the company does not use it.</summary>
+    Task<CompanyCurrencyInfo?> FindCompanyCurrencyAsync(CompanyId companyId, string currency, CancellationToken cancellationToken = default);
 }
+
+/// <summary>A currency as one company uses it: how many decimals it shows and the increment cash amounts round to (0 when cash is not rounded).</summary>
+public sealed record CompanyCurrencyInfo(string Currency, int DisplayDecimals, decimal CashRoundingIncrement, bool IsEnabled);
 
 /// <summary>The resolved rate and how it was derived: <c>identity</c>, <c>direct</c>, <c>inverse</c> or <c>cross</c> (through the functional currency).</summary>
 public sealed record ResolvedRate(ExchangeRate Rate, string Method, DateOnly EffectiveFrom, IReadOnlyList<Guid> RateIds);

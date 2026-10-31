@@ -20573,6 +20573,511 @@
         }
       }
     },
+    "/api/v1/pos/registers": {
+      "get": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "The registers of a company with their warehouse, cash box, card account, rules and the open session.",
+        "operationId": "getPosRegisters",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosRegisterSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "Creates a register: the till's warehouse (and bin), cash box, card account, price list, walk-in customer, cash rounding and what its cashier may do.",
+        "operationId": "postPosRegisters",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegisterSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/registers/{registerId}": {
+      "get": {
+        "tags": [
+          "Point of sale"
+        ],
+        "operationId": "getPosRegistersByRegisterId",
+        "parameters": [
+          {
+            "name": "registerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegisterSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Point of sale"
+        ],
+        "operationId": "putPosRegistersByRegisterId",
+        "parameters": [
+          {
+            "name": "registerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosRegisterSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/registers/{registerId}/catalogue": {
+      "get": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "What the till caches to sell offline: the register's rules and every sellable item priced on the register's price list and taxed as of today.",
+        "operationId": "getPosRegistersByRegisterIdCatalogue",
+        "parameters": [
+          {
+            "name": "registerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosCatalogue"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/registers/{registerId}/sessions": {
+      "post": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "Opens a session on the register with the cashier's float; one session is open per register at a time.",
+        "operationId": "postPosRegistersByRegisterIdSessions",
+        "parameters": [
+          {
+            "name": "registerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosSessionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/sessions": {
+      "get": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "Sessions, newest first, with the float, the takings by tender, the expected and counted cash and the difference.",
+        "operationId": "getPosSessions",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "registerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosSessionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/sessions/{sessionId}": {
+      "get": {
+        "tags": [
+          "Point of sale"
+        ],
+        "operationId": "getPosSessionsBySessionId",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosSessionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/sessions/{sessionId}/close": {
+      "post": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "Closes the session with the cash counted; a difference against the expected cash is booked on the cash box against suspense.",
+        "operationId": "postPosSessionsBySessionIdClose",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosSessionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/orders": {
+      "get": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "Orders synced from the tills, newest first, with their lines, tenders and the journal, stock and e-invoice they produced.",
+        "operationId": "getPosOrders",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "registerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PosOrderSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "Syncs an order from a till: validated, numbered and posted (journal, stock, cash, receivable, tax, e-invoice) in one go; sent again under the same device id it answers 200 with the order already posted.",
+        "operationId": "postPosOrders",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderSummary"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/orders/{orderId}": {
+      "get": {
+        "tags": [
+          "Point of sale"
+        ],
+        "operationId": "getPosOrdersByOrderId",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/orders/{orderId}/einvoice": {
+      "post": {
+        "tags": [
+          "Point of sale"
+        ],
+        "summary": "Submits the order to its e-invoicing scheme by hand (a device set to submit by hand, or a retry after the scheme refused).",
+        "operationId": "postPosOrdersByOrderIdEinvoice",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOrderSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payables/open-items": {
       "get": {
         "tags": [
@@ -38560,6 +39065,28 @@
           }
         }
       },
+      "CloseSessionRequest": {
+        "required": [
+          "countedCash"
+        ],
+        "type": "object",
+        "properties": {
+          "countedCash": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CodeSuggestion": {
         "required": [
           "kind",
@@ -50687,6 +51214,26 @@
           }
         }
       },
+      "OpenSessionRequest": {
+        "type": "object",
+        "properties": {
+          "openingFloat": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "OpportunityDetail": {
         "required": [
           "opportunity",
@@ -53695,6 +54242,978 @@
           }
         },
         "description": "A total of opportunities in one currency: how many, their expected amount and the probability-weighted amount."
+      },
+      "PosCatalogue": {
+        "required": [
+          "registerId",
+          "companyId",
+          "currency",
+          "minorUnits",
+          "pricesIncludeTax",
+          "taxRoundingLevel",
+          "roundingMode",
+          "cashRoundingIncrement",
+          "allowCredit",
+          "allowPriceOverride",
+          "defaultPartnerId",
+          "generatedAt",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "registerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "minorUnits": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "taxRoundingLevel": {
+            "type": "string"
+          },
+          "roundingMode": {
+            "type": "string"
+          },
+          "cashRoundingIncrement": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "allowCredit": {
+            "type": "boolean"
+          },
+          "allowPriceOverride": {
+            "type": "boolean"
+          },
+          "defaultPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosCatalogueItem"
+            }
+          }
+        },
+        "description": "What a till needs to sell offline: the register's rules and every sellable item priced and taxed as of now."
+      },
+      "PosCatalogueItem": {
+        "required": [
+          "itemId",
+          "variantId",
+          "code",
+          "name",
+          "uomId",
+          "uomCode",
+          "unitPrice",
+          "taxCodeId",
+          "taxCode",
+          "taxRatePct",
+          "isStockItem",
+          "tracking",
+          "categoryId",
+          "barcodes"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "uomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isStockItem": {
+            "type": "boolean"
+          },
+          "tracking": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "barcodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "One sellable entry of the catalogue a till caches: an item, or one variant of it, in its sales unit, with the price and the tax the till applies offline."
+      },
+      "PosOrderLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "itemId",
+          "variantId",
+          "itemCode",
+          "description",
+          "uomId",
+          "uomCode",
+          "quantity",
+          "baseQuantity",
+          "unitPrice",
+          "listUnitPrice",
+          "discountPct",
+          "discountAmount",
+          "netAmount",
+          "taxCodeId",
+          "taxRatePct",
+          "taxAmount",
+          "grossAmount",
+          "isStockItem"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "uomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "baseQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "listUnitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "taxRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "grossAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isStockItem": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PosOrderSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "registerId",
+          "registerCode",
+          "sessionId",
+          "sessionNumber",
+          "number",
+          "deviceOrderId",
+          "kind",
+          "refundsOrderId",
+          "refundsOrderNumber",
+          "partnerId",
+          "partnerName",
+          "cashierUserId",
+          "orderDate",
+          "orderedAt",
+          "postedAt",
+          "currency",
+          "pricesIncludeTax",
+          "totalNet",
+          "totalTax",
+          "totalGross",
+          "rounding",
+          "totalDue",
+          "totalPaid",
+          "changeGiven",
+          "journalEntryId",
+          "stockPostingId",
+          "einvoiceScheme",
+          "einvoiceStatus",
+          "einvoiceSubmissionId",
+          "einvoiceQr",
+          "einvoiceMessages",
+          "notes",
+          "lines",
+          "payments",
+          "replayed"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "registerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "registerCode": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sessionNumber": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "deviceOrderId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "refundsOrderId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "refundsOrderNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cashierUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "orderedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "pricesIncludeTax": {
+            "type": "boolean"
+          },
+          "totalNet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalTax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalGross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rounding": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalDue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalPaid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "changeGiven": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "stockPostingId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "einvoiceScheme": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceSubmissionId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceQr": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "einvoiceMessages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosOrderLineSummary"
+            }
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PosPaymentSummary"
+            }
+          },
+          "replayed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PosPaymentSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "method",
+          "bankAccountId",
+          "amount",
+          "reference",
+          "bankTransactionId",
+          "receivableItemId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "method": {
+            "type": "string"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bankTransactionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "receivableItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "PosRegisterSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "branchId",
+          "code",
+          "name",
+          "warehouseId",
+          "warehouseCode",
+          "binId",
+          "cashAccountId",
+          "cashAccountCode",
+          "cardAccountId",
+          "cardAccountCode",
+          "priceListId",
+          "defaultPartnerId",
+          "defaultPartnerName",
+          "allowCredit",
+          "allowPriceOverride",
+          "cashRoundingIncrement",
+          "currency",
+          "receiptFooter",
+          "isActive",
+          "openSessionId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cashAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cashAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cardAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cardAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priceListId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "defaultPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "defaultPartnerName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "allowCredit": {
+            "type": "boolean"
+          },
+          "allowPriceOverride": {
+            "type": "boolean"
+          },
+          "cashRoundingIncrement": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "receiptFooter": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "openSessionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PosSessionSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "registerId",
+          "registerCode",
+          "registerName",
+          "number",
+          "status",
+          "cashierUserId",
+          "cashierName",
+          "openedAt",
+          "closedAt",
+          "openingFloat",
+          "cashTaken",
+          "cardTaken",
+          "creditTaken",
+          "ordersCount",
+          "salesTotal",
+          "expectedCash",
+          "countedCash",
+          "difference",
+          "differenceJournalEntryId",
+          "currency",
+          "notes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "registerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "registerCode": {
+            "type": "string"
+          },
+          "registerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "cashierUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cashierName": {
+            "type": "string"
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "openingFloat": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cashTaken": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cardTaken": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "creditTaken": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ordersCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "salesTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expectedCash": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "countedCash": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "difference": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "differenceJournalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "PostedLine": {
         "required": [
@@ -71139,6 +72658,107 @@
           }
         }
       },
+      "SaveRegisterRequest": {
+        "required": [
+          "companyId",
+          "name",
+          "warehouseId",
+          "cashAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cashAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "binId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "cardAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "priceListId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "defaultPartnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "allowCredit": {
+            "type": "boolean",
+            "default": false
+          },
+          "allowPriceOverride": {
+            "type": "boolean",
+            "default": false
+          },
+          "cashRoundingIncrement": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "receiptFooter": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "description": "A register to create or change; the code is given or taken from the name; decimal? SaveRegisterRequest.CashRoundingIncrement null or 0 means the company's setting for the currency."
+      },
       "SaveRequisitionLineRequest": {
         "type": "object",
         "properties": {
@@ -77248,6 +78868,184 @@
         "type": "string",
         "format": "binary"
       },
+      "SubmitOrderLineRequest": {
+        "required": [
+          "itemId",
+          "quantity",
+          "unitPrice"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "variantId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "uomId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "taxCodeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A line as the till sold it: the unit price it charged (the catalogue's unless the cashier overrode it), the discount, and the tax code the catalogue gave the item."
+      },
+      "SubmitOrderPaymentRequest": {
+        "required": [
+          "method",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SubmitOrderRequest": {
+        "required": [
+          "registerId",
+          "sessionId",
+          "deviceOrderId",
+          "orderedAt",
+          "lines",
+          "payments",
+          "totalDue"
+        ],
+        "type": "object",
+        "properties": {
+          "registerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceOrderId": {
+            "type": "string"
+          },
+          "orderedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmitOrderLineRequest"
+            }
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmitOrderPaymentRequest"
+            }
+          },
+          "totalDue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "kind": {
+            "type": "string",
+            "default": "sale"
+          },
+          "refundsDeviceOrderId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "changeGiven": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "An order as the till synced it. string SubmitOrderRequest.DeviceOrderId is the till's own id, unique per tenant, so a sync that\nwas cut off can be sent again and is answered with the order already posted. decimal SubmitOrderRequest.TotalDue is what the\nreceipt showed the customer: the server recomputes the totals and refuses the order when they differ, so a stale\ncatalogue is caught rather than booked."
+      },
       "SubstituteRequest": {
         "type": "object",
         "properties": {
@@ -81276,6 +83074,9 @@
     },
     {
       "name": "E-invoicing"
+    },
+    {
+      "name": "Point of sale"
     },
     {
       "name": "Payables"

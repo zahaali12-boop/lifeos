@@ -128,6 +128,11 @@ public static class PrintLabels
         ["drop_ship"] = ("Drop-ship", "شحن مباشر"),
         ["thank_you"] = ("Thank you for your business.", "شكرًا لتعاملكم معنا."),
         ["qr_hint"] = ("Scan to verify", "امسح للتحقق"),
+        ["register"] = ("Register", "الصندوق"),
+        ["cashier"] = ("Cashier", "أمين الصندوق"),
+        ["refunds"] = ("Refund of", "استرجاع عن"),
+        ["rounding"] = ("Rounding", "التقريب"),
+        ["change"] = ("Change", "الباقي"),
     };
 
     public static ScriptObject For(string mode)

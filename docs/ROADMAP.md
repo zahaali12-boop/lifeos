@@ -26,7 +26,7 @@ The founder reviewed the product after the M5 returns slice and set the order of
 | 4 | Print and send completion: template screen, print and email buttons on documents, WhatsApp. Done 2026-10-31 (A-176). | 5.9 (rest) |
 | 5 | Cheques and post-dated cheques, bank statement import and reconciliation. | 6.2, 6.3 |
 | 6 | E-invoicing: ZATCA phase 2. | 8.6 (first adapter) |
-| 7 | Point of sale, offline-capable. | new |
+| 7 | Point of sale, offline-capable. Done 2026-10-31 (A-180, ADR-0032): the `Quicker.Pos` module (registers, sessions, orders posted on sync through the engines), the `/pos` till that sells from a cached catalogue offline, the back office at `/sales/pos`, receipts and ZATCA simplified invoices. | new |
 | 8 | Payroll and HR, simple. | new |
 | 9 | Reports without a programmer: builder, financial designer, dashboards, scheduling; ask-your-data in Arabic and English. | 7.1–7.5, 7.7, 9.1 |
 | 10 | Sales-rep mobile app (quotes, orders, collections, visits, offline). | new (over 3.8's PWA) |

@@ -7121,6 +7121,175 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pos/registers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The registers of a company with their warehouse, cash box, card account, rules and the open session. */
+        get: operations["getPosRegisters"];
+        put?: never;
+        /** Creates a register: the till's warehouse (and bin), cash box, card account, price list, walk-in customer, cash rounding and what its cashier may do. */
+        post: operations["postPosRegisters"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/registers/{registerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPosRegistersByRegisterId"];
+        put: operations["putPosRegistersByRegisterId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/registers/{registerId}/catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the till caches to sell offline: the register's rules and every sellable item priced on the register's price list and taxed as of today. */
+        get: operations["getPosRegistersByRegisterIdCatalogue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/registers/{registerId}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opens a session on the register with the cashier's float; one session is open per register at a time. */
+        post: operations["postPosRegistersByRegisterIdSessions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sessions, newest first, with the float, the takings by tender, the expected and counted cash and the difference. */
+        get: operations["getPosSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPosSessionsBySessionId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/sessions/{sessionId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Closes the session with the cash counted; a difference against the expected cash is booked on the cash box against suspense. */
+        post: operations["postPosSessionsBySessionIdClose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Orders synced from the tills, newest first, with their lines, tenders and the journal, stock and e-invoice they produced. */
+        get: operations["getPosOrders"];
+        put?: never;
+        /** Syncs an order from a till: validated, numbered and posted (journal, stock, cash, receivable, tax, e-invoice) in one go; sent again under the same device id it answers 200 with the order already posted. */
+        post: operations["postPosOrders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/orders/{orderId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPosOrdersByOrderId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pos/orders/{orderId}/einvoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submits the order to its e-invoicing scheme by hand (a device set to submit by hand, or a retry after the scheme refused). */
+        post: operations["postPosOrdersByOrderIdEinvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payables/open-items": {
         parameters: {
             query?: never;
@@ -12809,6 +12978,11 @@ export interface components {
             qrPayload: null | string;
             messages: string[];
         };
+        CloseSessionRequest: {
+            /** Format: double */
+            countedCash: number | string;
+            notes?: null | string;
+        };
         /**
          * @description For a code being typed on a new or edited record: whether it is already taken in its scope (case-insensitively, the
          *     record itself excepted), and the next free code, continuing the most common pattern of the existing codes
@@ -16038,6 +16212,14 @@ export interface components {
             /** Format: int32 */
             lateLines: number | string;
         };
+        OpenSessionRequest: {
+            /**
+             * Format: double
+             * @default 0
+             */
+            openingFloat: number | string;
+            notes?: null | string;
+        };
         OpportunityDetail: {
             opportunity: components["schemas"]["OpportunitySummary"];
             stageHistory: components["schemas"]["StageChangeSummary"][];
@@ -16820,6 +17002,258 @@ export interface components {
             amount: number | string;
             /** Format: double */
             weighted: number | string;
+        };
+        /** @description What a till needs to sell offline: the register's rules and every sellable item priced and taxed as of now. */
+        PosCatalogue: {
+            /** Format: uuid */
+            registerId: string;
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            /** Format: int32 */
+            minorUnits: number | string;
+            pricesIncludeTax: boolean;
+            taxRoundingLevel: string;
+            roundingMode: string;
+            /** Format: double */
+            cashRoundingIncrement: number | string;
+            allowCredit: boolean;
+            allowPriceOverride: boolean;
+            /** Format: uuid */
+            defaultPartnerId: null | string;
+            /** Format: date-time */
+            generatedAt: string;
+            items: components["schemas"]["PosCatalogueItem"][];
+        };
+        /** @description One sellable entry of the catalogue a till caches: an item, or one variant of it, in its sales unit, with the price and the tax the till applies offline. */
+        PosCatalogueItem: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            variantId: null | string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            unitPrice: null | number | string;
+            /** Format: uuid */
+            taxCodeId: null | string;
+            taxCode: null | string;
+            /** Format: double */
+            taxRatePct: number | string;
+            isStockItem: boolean;
+            tracking: string;
+            /** Format: uuid */
+            categoryId: null | string;
+            barcodes: string[];
+        };
+        PosOrderLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            /** Format: uuid */
+            variantId: null | string;
+            itemCode: string;
+            description: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            uomId: string;
+            uomCode: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            baseQuantity: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            listUnitPrice: null | number | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            discountAmount: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: uuid */
+            taxCodeId: null | string;
+            /** Format: double */
+            taxRatePct: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            /** Format: double */
+            grossAmount: number | string;
+            isStockItem: boolean;
+        };
+        PosOrderSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            registerId: string;
+            registerCode: string;
+            /** Format: uuid */
+            sessionId: string;
+            sessionNumber: string;
+            number: string;
+            deviceOrderId: string;
+            kind: string;
+            /** Format: uuid */
+            refundsOrderId: null | string;
+            refundsOrderNumber: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+            partnerName: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            cashierUserId: string;
+            /** Format: date */
+            orderDate: string;
+            /** Format: date-time */
+            orderedAt: string;
+            /** Format: date-time */
+            postedAt: string;
+            currency: string;
+            pricesIncludeTax: boolean;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalTax: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            /** Format: double */
+            rounding: number | string;
+            /** Format: double */
+            totalDue: number | string;
+            /** Format: double */
+            totalPaid: number | string;
+            /** Format: double */
+            changeGiven: number | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            stockPostingId: null | string;
+            einvoiceScheme: null | string;
+            einvoiceStatus: null | string;
+            einvoiceSubmissionId: null | string;
+            einvoiceQr: null | string;
+            einvoiceMessages: string[];
+            notes: null | string;
+            lines: components["schemas"]["PosOrderLineSummary"][];
+            payments: components["schemas"]["PosPaymentSummary"][];
+            replayed: boolean;
+        };
+        PosPaymentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            method: string;
+            /** Format: uuid */
+            bankAccountId: null | string;
+            /** Format: double */
+            amount: number | string;
+            reference: null | string;
+            /** Format: uuid */
+            bankTransactionId: null | string;
+            /** Format: uuid */
+            receivableItemId: null | string;
+        };
+        PosRegisterSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            branchId: null | string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            warehouseCode: null | string;
+            /** Format: uuid */
+            binId: null | string;
+            /** Format: uuid */
+            cashAccountId: string;
+            cashAccountCode: null | string;
+            /** Format: uuid */
+            cardAccountId: null | string;
+            cardAccountCode: null | string;
+            /** Format: uuid */
+            priceListId: null | string;
+            /** Format: uuid */
+            defaultPartnerId: null | string;
+            defaultPartnerName: null | {
+                [key: string]: string;
+            };
+            allowCredit: boolean;
+            allowPriceOverride: boolean;
+            /** Format: double */
+            cashRoundingIncrement: number | string;
+            currency: string;
+            receiptFooter: {
+                [key: string]: string;
+            };
+            isActive: boolean;
+            /** Format: uuid */
+            openSessionId: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PosSessionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            registerId: string;
+            registerCode: string;
+            registerName: {
+                [key: string]: string;
+            };
+            number: string;
+            status: string;
+            /** Format: uuid */
+            cashierUserId: string;
+            cashierName: string;
+            /** Format: date-time */
+            openedAt: string;
+            /** Format: date-time */
+            closedAt: null | string;
+            /** Format: double */
+            openingFloat: number | string;
+            /** Format: double */
+            cashTaken: number | string;
+            /** Format: double */
+            cardTaken: number | string;
+            /** Format: double */
+            creditTaken: number | string;
+            /** Format: int32 */
+            ordersCount: number | string;
+            /** Format: double */
+            salesTotal: number | string;
+            /** Format: double */
+            expectedCash: null | number | string;
+            /** Format: double */
+            countedCash: null | number | string;
+            /** Format: double */
+            difference: null | number | string;
+            /** Format: uuid */
+            differenceJournalEntryId: null | string;
+            currency: string;
+            notes: null | string;
         };
         PostedLine: {
             /** Format: uuid */
@@ -21627,6 +22061,40 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        /** @description A register to create or change; the code is given or taken from the name; decimal? SaveRegisterRequest.CashRoundingIncrement null or 0 means the company's setting for the currency. */
+        SaveRegisterRequest: {
+            /** Format: uuid */
+            companyId: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            warehouseId: string;
+            /** Format: uuid */
+            cashAccountId: string;
+            code?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            /** Format: uuid */
+            binId?: null | string;
+            /** Format: uuid */
+            cardAccountId?: null | string;
+            /** Format: uuid */
+            priceListId?: null | string;
+            /** Format: uuid */
+            defaultPartnerId?: null | string;
+            /** @default false */
+            allowCredit: boolean;
+            /** @default false */
+            allowPriceOverride: boolean;
+            /** Format: double */
+            cashRoundingIncrement?: null | number | string;
+            receiptFooter?: null | {
+                [key: string]: string;
+            };
+            /** @default true */
+            isActive: boolean;
+        };
         SaveRequisitionLineRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -23340,6 +23808,65 @@ export interface components {
         };
         /** Format: binary */
         Stream: string;
+        /** @description A line as the till sold it: the unit price it charged (the catalogue's unless the cashier overrode it), the discount, and the tax code the catalogue gave the item. */
+        SubmitOrderLineRequest: {
+            /** Format: uuid */
+            itemId: string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: uuid */
+            variantId?: null | string;
+            /** Format: uuid */
+            uomId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            discountPct: number | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            description?: null | {
+                [key: string]: string;
+            };
+        };
+        SubmitOrderPaymentRequest: {
+            method: string;
+            /** Format: double */
+            amount: number | string;
+            reference?: null | string;
+        };
+        /**
+         * @description An order as the till synced it. string SubmitOrderRequest.DeviceOrderId is the till's own id, unique per tenant, so a sync that
+         *     was cut off can be sent again and is answered with the order already posted. decimal SubmitOrderRequest.TotalDue is what the
+         *     receipt showed the customer: the server recomputes the totals and refuses the order when they differ, so a stale
+         *     catalogue is caught rather than booked.
+         */
+        SubmitOrderRequest: {
+            /** Format: uuid */
+            registerId: string;
+            /** Format: uuid */
+            sessionId: string;
+            deviceOrderId: string;
+            /** Format: date-time */
+            orderedAt: string;
+            lines: components["schemas"]["SubmitOrderLineRequest"][];
+            payments: components["schemas"]["SubmitOrderPaymentRequest"][];
+            /** Format: double */
+            totalDue: number | string;
+            /** @default sale */
+            kind: string;
+            refundsDeviceOrderId?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            changeGiven: number | string;
+            notes?: null | string;
+        };
         SubstituteRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -37714,6 +38241,324 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EinvoicePreview"];
+                };
+            };
+        };
+    };
+    getPosRegisters: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosRegisterSummary"][];
+                };
+            };
+        };
+    };
+    postPosRegisters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosRegisterSummary"];
+                };
+            };
+        };
+    };
+    getPosRegistersByRegisterId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosRegisterSummary"];
+                };
+            };
+        };
+    };
+    putPosRegistersByRegisterId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosRegisterSummary"];
+                };
+            };
+        };
+    };
+    getPosRegistersByRegisterIdCatalogue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosCatalogue"];
+                };
+            };
+        };
+    };
+    postPosRegistersByRegisterIdSessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSessionSummary"];
+                };
+            };
+        };
+    };
+    getPosSessions: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                registerId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSessionSummary"][];
+                };
+            };
+        };
+    };
+    getPosSessionsBySessionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSessionSummary"];
+                };
+            };
+        };
+    };
+    postPosSessionsBySessionIdClose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosSessionSummary"];
+                };
+            };
+        };
+    };
+    getPosOrders: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                registerId?: string;
+                sessionId?: string;
+                partnerId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosOrderSummary"][];
+                };
+            };
+        };
+    };
+    postPosOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosOrderSummary"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosOrderSummary"];
+                };
+            };
+        };
+    };
+    getPosOrdersByOrderId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosOrderSummary"];
+                };
+            };
+        };
+    };
+    postPosOrdersByOrderIdEinvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PosOrderSummary"];
                 };
             };
         };

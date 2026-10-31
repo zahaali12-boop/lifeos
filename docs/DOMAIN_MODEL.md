@@ -2458,6 +2458,129 @@ erDiagram
 
 Every priced line stores `price_breakdown` (ADR-0030): the ordered steps, candidates, winner, rate and rounding, frozen at posting. The credit check reuses the generic workflow block/override mechanism (ADR-0020) rather than a bespoke table: `sls_orders.block_kind`/`block_id`/`block_reason` point at the `wf_blocks` row it raised, and `app.wf_overrides` already logs the exposure it was raised with, who released it, when and why (A-152).
 
+### Point of sale (Pos module, ADR-0032, A-180)
+
+The till is a process module of its own that reuses the engines: a register is a till's configuration, a session a
+cashier's shift on it, an order a sale or refund the till synced. Orders are priced on the device from the catalogue
+it cached (`GET /pos/registers/{id}/catalogue`, built from the pricing and tax engines) and recomputed, validated and
+posted here when they arrive; an order is immutable once posted, a refund is a new order of the opposite sign naming
+the sale it gives back.
+
+```mermaid
+erDiagram
+  pos_registers ||--o{ pos_sessions : "worked in"
+  pos_registers ||--o{ pos_orders : "sold at"
+  pos_sessions ||--o{ pos_orders : "took"
+  pos_orders ||--|{ pos_order_lines : "has"
+  pos_orders ||--|{ pos_payments : "paid by"
+  pos_orders o|--o{ pos_orders : "refunds"
+  pos_registers {
+    uuid id PK
+    uuid company_id FK
+    uuid branch_id FK
+    text code
+    jsonb name_i18n
+    uuid warehouse_id FK
+    uuid bin_id FK
+    uuid cash_account_id FK "cash or petty cash box, company currency"
+    uuid card_account_id FK "bank account cards settle into"
+    uuid price_list_id FK
+    uuid default_partner_id FK "walk-in customer"
+    boolean allow_credit
+    boolean allow_price_override
+    numeric cash_rounding_increment "0 = the company's setting for the currency"
+    jsonb receipt_footer_i18n
+    boolean is_active
+  }
+  pos_sessions {
+    uuid id PK
+    uuid company_id FK
+    uuid register_id FK
+    text number "SES-yyyy-nnnnn"
+    text status "open | closed; one open per register"
+    uuid cashier_user_id
+    text cashier_name
+    timestamptz opened_at
+    timestamptz closed_at
+    numeric opening_float
+    numeric cash_taken "cash tendered less change, less refunds"
+    numeric card_taken
+    numeric credit_taken
+    integer orders_count
+    numeric sales_total
+    numeric expected_cash "float + cash taken, at close"
+    numeric counted_cash
+    numeric difference "booked on the cash box against Suspense"
+    uuid difference_journal_entry_id
+  }
+  pos_orders {
+    uuid id PK
+    uuid company_id FK
+    uuid register_id FK
+    uuid session_id FK
+    text number "POS-yyyy-nnnnnn"
+    text device_order_id "the till's id, unique per tenant: idempotent sync"
+    text kind "sale | refund"
+    uuid refunds_order_id FK
+    uuid partner_id FK
+    uuid cashier_user_id
+    date order_date "the order's local date: the posting date"
+    timestamptz ordered_at
+    timestamptz posted_at
+    text currency "the company's"
+    boolean prices_include_tax
+    numeric total_net
+    numeric total_tax
+    numeric total_gross
+    numeric rounding "cash rounding when paid wholly in cash"
+    numeric total_due
+    numeric total_paid
+    numeric change_given
+    uuid journal_entry_id
+    uuid stock_posting_id
+    text einvoice_scheme
+    text einvoice_status
+    text einvoice_submission_id
+    text einvoice_qr
+    jsonb einvoice_messages
+  }
+  pos_order_lines {
+    uuid id PK
+    uuid order_id FK
+    integer line_no
+    uuid item_id FK
+    uuid variant_id FK
+    text item_code
+    jsonb description_i18n
+    uuid uom_id FK
+    numeric quantity "in the sales unit"
+    numeric base_quantity
+    numeric unit_price "charged"
+    numeric list_unit_price "the engine's price when synced"
+    numeric discount_pct
+    numeric discount_amount
+    numeric net_amount
+    uuid tax_code_id FK "pinned by the catalogue"
+    numeric tax_rate_pct
+    numeric tax_amount
+    numeric gross_amount
+    boolean is_stock_item
+  }
+  pos_payments {
+    uuid id PK
+    uuid order_id FK
+    integer line_no
+    text method "cash | card | credit"
+    uuid bank_account_id FK
+    numeric amount
+    text reference
+    uuid bank_transaction_id
+    uuid receivable_item_id
+  }
+```
+
+Invariants: a session's `cash_taken`, `card_taken`, `credit_taken`, `orders_count` and `sales_total` equal the sums of its posted orders (maintained under the session's row lock on each sync); `total_due = total_gross + rounding`; the sum of an order's payments less `change_given` equals `total_due`; a refund's lines never exceed what is left of the sale's lines; every order has a journal entry and, when it has stock lines, a stock posting; the cash box's movements per order equal the cash tendered less change.
+
 ## 12. Tax
 
 Built in slices 5.3a–5.3d (ADR-0018 amended three times, A-146, A-149, A-150): regimes installed from versioned country templates, codes with dated rates and return boxes, tax groups, the determination matrix, company registrations (partners' registration numbers stay in `ptr_partner_tax_registrations`), exemption certificates, the tax ledger documents write as they post, purchase order and supplier invoice lines taxed by the engine (A-147), and return periods, filed with the figures booked into `totals` (there is no separate `tax_returns` table: a return is computed fresh from `tax_entries` each time it is previewed, `Application/TaxReturnService.cs`), the generic UBL 2.1 export built from a document's tax entries, and the setup and returns screens (`routes/tax/`). The E-invoicing module (`einv_*`, roadmap 8.6, A-179) holds the ZATCA devices a company onboards and the submissions of its documents, drawn here with the tax tables they serve; withholding certificates are planned (later milestones) and shown last.

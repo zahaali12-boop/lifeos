@@ -105,6 +105,34 @@ public interface IItemDirectory
 
     /// <summary>The items, variants, categories and brands among the ids, keyed by id (ids that name none are left out); a handful of queries whatever the count.</summary>
     Task<IReadOnlyDictionary<Guid, CatalogRef>> DescribeAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>Every active item that can be sold (stock, kit, assembly or service, not a variant parent's shell), with its sales unit, its variants and its barcodes: what a till caches to sell offline (A-180).</summary>
+    Task<IReadOnlyList<SellableItem>> SellableAsync(CancellationToken cancellationToken = default);
+}
+
+/// <summary>A barcode as a till reads it: the unit it carries and, for a variant's label, the variant.</summary>
+public sealed record SellableBarcode(string Barcode, Guid UomId, string UomCode, Guid? VariantId);
+
+/// <summary>An item as a till sells it: its sales unit (the base unit when none is marked), its variants and the barcodes of every unit.</summary>
+public sealed record SellableItem(
+    Guid Id,
+    string Code,
+    LocalizedText Name,
+    string Type,
+    string Tracking,
+    Guid? CategoryId,
+    Guid? ItemTaxGroupId,
+    Guid SalesUomId,
+    string SalesUomCode,
+    Guid BaseUomId,
+    string BaseUomCode,
+    decimal? ListPrice,
+    string? ListPriceCurrency,
+    bool HasVariants,
+    IReadOnlyList<ItemVariantInfo> Variants,
+    IReadOnlyList<SellableBarcode> Barcodes)
+{
+    public bool IsStockItem => Type is "stock" or "kit" or "assembly";
 }
 
 /// <summary>

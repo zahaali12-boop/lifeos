@@ -569,6 +569,13 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         return info;
     }
 
+    public async Task<CompanyCurrencyInfo?> FindCompanyCurrencyAsync(CompanyId companyId, string currency, CancellationToken cancellationToken = default)
+    {
+        var normalized = currency?.Trim().ToUpperInvariant() ?? string.Empty;
+        var row = await db.CompanyCurrencies.AsNoTracking().SingleOrDefaultAsync(c => c.CompanyId == companyId.Value && c.Currency == normalized, cancellationToken);
+        return row is null ? null : new CompanyCurrencyInfo(row.Currency, row.DisplayDecimals, row.CashRoundingIncrement, row.IsEnabled);
+    }
+
     public async Task<Currency?> FindCurrencyAsync(string code, CancellationToken cancellationToken = default)
     {
         var normalized = code?.Trim().ToUpperInvariant() ?? string.Empty;

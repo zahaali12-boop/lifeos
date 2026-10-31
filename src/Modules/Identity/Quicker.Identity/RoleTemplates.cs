@@ -23,6 +23,8 @@ public static class RoleTemplates
             ["sales.invoice.*", "sales.return.read", "sales.return.credit", "receivables.*", "banking.receipt.*", "banking.cheque.*", "banking.bank_account.read", "expenses.*", "fixed_assets.*", "partners.customer.read", "partners.credit.manage", "tax.setup.read", "einvoicing.submission.read", "reporting.report.run", "print.document.*"]),
         new("ap_clerk", LocalizedText.Bilingual("Payables clerk", "موظف الذمم الدائنة"), "Supplier invoices, matching and payments",
             ["purchasing.invoice.*", "purchasing.landed_cost.*", "payables.*", "banking.*", "expenses.*", "partners.supplier.read", "tax.setup.read", "reporting.report.run", "print.document.*"]),
+        new("cashier", LocalizedText.Bilingual("Cashier", "أمين صندوق"), "Sells at the till: opens and closes a session on a register, syncs its orders, refunds against a receipt",
+            ["pos.register.read", "pos.session.read", "pos.session.operate", "pos.order.read", "pos.order.sell", "pos.order.refund", "partners.customer.read", "inventory.item.read", "print.document.*"]),
         new("warehouse_operator", LocalizedText.Bilingual("Warehouse operator", "أمين مستودع"), "Receiving, picking, shipping, transfers, counts and scanning",
             ["purchasing.receipt.*", "purchasing.return.*", "purchasing.order.read", "sales.shipment.*", "sales.return.read", "sales.return.receive", "sales.order.read", "inventory.pick.*", "inventory.transfer.*", "inventory.count.*", "inventory.item.read"]),
         new("inventory_manager", LocalizedText.Bilingual("Inventory manager", "مدير المخزون"), "Item master, warehouses, stock, costing and counts",

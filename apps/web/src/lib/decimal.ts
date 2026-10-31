@@ -67,6 +67,52 @@ export function compare(a: string | number, b: string | number): number {
   return x === y ? 0 : x < y ? -1 : 1;
 }
 
+/** a × b, exact. Invalid input counts as zero. */
+export function multiply(a: string | number, b: string | number): string {
+  const x = parse(a) ?? { value: 0n, scale: 0 };
+  const y = parse(b) ?? { value: 0n, scale: 0 };
+  return format(x.value * y.value, x.scale + y.scale);
+}
+
+/** The two rounding modes a company can choose (the server's RoundingPolicy): commercial rounding, or banker's rounding to the even neighbour. */
+export type RoundingMode = "half_away_from_zero" | "half_even";
+
+/** The value rounded to a number of decimals under the mode (halves away from zero by default), so a till shows the totals the server will book. */
+export function roundTo(value: string | number, decimals: number, mode: RoundingMode = "half_away_from_zero"): string {
+  const scaled = parse(value) ?? { value: 0n, scale: 0 };
+  if (scaled.scale <= decimals) {
+    return format(scaled.value, scaled.scale);
+  }
+  const divisor = 10n ** BigInt(scaled.scale - decimals);
+  const negative = scaled.value < 0n;
+  const magnitude = negative ? -scaled.value : scaled.value;
+  let quotient = magnitude / divisor;
+  const remainder = (magnitude % divisor) * 2n;
+  if (remainder > divisor || (remainder === divisor && (mode === "half_away_from_zero" || quotient % 2n === 1n))) {
+    quotient += 1n;
+  }
+  return format(negative ? -quotient : quotient, decimals);
+}
+
+/** The value rounded to the nearest multiple of the increment (IQD 250, SAR 0.05) under the mode; an increment of zero leaves it as it is. */
+export function roundToIncrement(value: string | number, increment: string | number, mode: RoundingMode = "half_away_from_zero"): string {
+  const step = parse(increment) ?? { value: 0n, scale: 0 };
+  const amount = parse(value) ?? { value: 0n, scale: 0 };
+  if (step.value <= 0n) {
+    return format(amount.value, amount.scale);
+  }
+  const [x, y, scale] = align(amount, step);
+  const negative = x < 0n;
+  const magnitude = negative ? -x : x;
+  let steps = magnitude / y;
+  const remainder = (magnitude % y) * 2n;
+  if (remainder > y || (remainder === y && (mode === "half_away_from_zero" || steps % 2n === 1n))) {
+    steps += 1n;
+  }
+  const result = steps * y;
+  return format(negative ? -result : result, scale);
+}
+
 /** The decimal text of a wire value: a string as it is, a number as JavaScript prints it (plainly, never in exponent form); anything else is not a figure. */
 export function toDecimalString(value: unknown): string | null {
   if (typeof value === "number") {

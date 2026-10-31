@@ -1,6 +1,30 @@
-import { add, compare, isDecimal, subtract, sumDecimals, toDecimalString } from "./decimal";
+import { add, compare, isDecimal, multiply, roundTo, roundToIncrement, subtract, sumDecimals, toDecimalString } from "./decimal";
 
 describe("decimal", () => {
+  it("multiplies exactly and rounds halves away from zero like the server", () => {
+    expect(multiply("3", "2.30")).toBe("6.9");
+    expect(multiply("0.1", "0.2")).toBe("0.02");
+    expect(multiply("6.9", "0.15")).toBe("1.035");
+    expect(roundTo("1.035", 2)).toBe("1.04");
+    expect(roundTo("1.034", 2)).toBe("1.03");
+    expect(roundTo("-1.035", 2)).toBe("-1.04");
+    expect(roundTo("2.5", 0)).toBe("3");
+    expect(roundTo("12", 2)).toBe("12");
+    expect(roundTo("1.025", 2, "half_even")).toBe("1.02");
+    expect(roundTo("1.035", 2, "half_even")).toBe("1.04");
+    expect(roundTo("1.0351", 2, "half_even")).toBe("1.04");
+  });
+
+  it("rounds cash to an increment", () => {
+    expect(roundToIncrement("35.54", "0.05")).toBe("35.55");
+    expect(roundToIncrement("35.52", "0.05")).toBe("35.5");
+    expect(roundToIncrement("35.525", "0.05")).toBe("35.55");
+    expect(roundToIncrement("12375", "250")).toBe("12500");
+    expect(roundToIncrement("12374", "250")).toBe("12250");
+    expect(roundToIncrement("-2.63", "0.05")).toBe("-2.65");
+    expect(roundToIncrement("9.99", "0")).toBe("9.99");
+  });
+
   it("subtracts exactly where floating point would drift", () => {
     expect(subtract("0.3", "0.1", "0.2")).toBe("0");
     expect(subtract("12.500000", "2.5")).toBe("10");
