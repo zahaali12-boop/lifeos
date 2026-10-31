@@ -9657,6 +9657,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/sales-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every line of the company's sales invoices and credit notes in the range (posting dates; the year to date when no range is given; posted ones unless status names others, comma-separated) with what a grid groups by: the document, its month, quarter and year, the customer with their group, rep, branch, terms and price list, the item with its type, category, brand and unit, the tax code, the cost centre, department and project, and the amounts (credit notes negative). Capped at 20,000 lines; `truncated` says to narrow the range */
+        get: operations["getReportingSalesLines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -16872,6 +16889,93 @@ export interface components {
             commissions?: null | components["schemas"]["CommissionEntrySummary"][];
             /** Format: uuid */
             returnId?: null | string;
+        };
+        /**
+         * @description One line of a sales invoice or credit note with everything it can be grouped or filtered by (founder programme
+         *     item 1f: group by customer, item, rep, month and some thirty more): the document, its customer and their set-up,
+         *     the item and its catalogue, the tax, the dimensions, and the amounts. A credit note's quantities and amounts are
+         *     negative, so sums net out. Names are in both languages as the records hold them.
+         */
+        SalesLineRow: {
+            /** Format: uuid */
+            invoiceId: string;
+            invoiceNumber: string;
+            kind: string;
+            status: string;
+            /** Format: date */
+            documentDate: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            dueDate: null | string;
+            year: string;
+            quarter: string;
+            month: string;
+            /** Format: uuid */
+            customerId: string;
+            customerCode: string;
+            customerName: {
+                [key: string]: string;
+            };
+            customerGroup: null | string;
+            salesRep: null | string;
+            salesRepName: null | {
+                [key: string]: string;
+            };
+            branch: null | string;
+            paymentTerms: null | string;
+            priceList: null | string;
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            /** Format: uuid */
+            lineId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            lineKind: string;
+            /** Format: uuid */
+            itemId: null | string;
+            itemCode: null | string;
+            itemName: null | {
+                [key: string]: string;
+            };
+            itemType: null | string;
+            category: null | string;
+            brand: null | string;
+            uom: null | string;
+            description: null | string;
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            discountPct: number | string;
+            /** Format: double */
+            netAmount: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            /** Format: double */
+            grossAmount: number | string;
+            /** Format: double */
+            netAmountFc: number | string;
+            taxCode: null | string;
+            /** Format: double */
+            taxRatePct: number | string;
+            costCentre: null | string;
+            department: null | string;
+            project: null | string;
+        };
+        /** @description The lines asked for, in posting order; bool SalesLinesReport.Truncated says the cap was hit and a narrower range is needed. */
+        SalesLinesReport: {
+            /** Format: uuid */
+            companyId: string;
+            functionalCurrency: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            rows: components["schemas"]["SalesLineRow"][];
+            truncated: boolean;
         };
         SalesRepSummary: {
             /** Format: uuid */
@@ -39354,6 +39458,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HomeDashboard"];
+                };
+            };
+        };
+    };
+    getReportingSalesLines: {
+        parameters: {
+            query: {
+                companyId: string;
+                from?: string;
+                to?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesLinesReport"];
                 };
             };
         };

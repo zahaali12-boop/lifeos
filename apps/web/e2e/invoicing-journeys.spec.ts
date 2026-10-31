@@ -213,10 +213,49 @@ test("English: a shipment invoiced with a delivery charge, a credit note applied
   await expectAccessible(page);
   await closeDialog(page);
 
+  // Sales analysis: the year's posted lines (the draft retainer stays out), grouped by customer with the credit note
+  // netted, then by item with the delivery line in a group of its own; the quick filter keeps one line; a view is saved.
+  await nav(page, "Sales analysis");
+  await expect(page.getByTestId("analysis-total-netAmount")).toContainText("95,000");
+  await expect(page.getByTestId("analysis-total-invoices")).toHaveText("2");
+  await expect(page.getByTestId("grid-row-count")).toContainText("3 rows");
+  await page.getByTestId("grid-group-by").click();
+  await page.getByTestId("grid-preset-customer").click();
+  await expect(page.getByTestId("grid-group-row")).toHaveCount(1);
+  await expect(page.getByTestId("grid-group-row")).toContainText("CUST · Sales Customer LLC");
+  await expect(page.getByTestId("grid-group-row")).toContainText("(3 lines)");
+  await expect(page.getByTestId("grid-group-sum-netAmount")).toContainText("95,000");
+  await expect(page.getByTestId("grid-row-count")).toContainText("1 group");
+  await page.getByTestId("grid-group-row").click();
+  await expect(page.getByRole("treegrid").getByRole("row")).toHaveCount(5);
+  await expectAccessible(page);
+  await page.getByTestId("grid-group-by").click();
+  await page.getByTestId("grid-preset-item").click();
+  await expect(page.getByTestId("grid-group-row")).toHaveCount(2);
+  await expect(page.getByTestId("grid-group-row").first()).toContainText("TEA");
+  await expect(page.getByTestId("grid-group-sum-netAmount").first()).toContainText("80,000");
+  await expect(page.getByTestId("grid-group-row").nth(1)).toContainText("(none)");
+  await expect(page.getByTestId("grid-group-sum-netAmount").nth(1)).toContainText("15,000");
+  await page.getByTestId("grid-search").fill("Delivery");
+  await expect(page.getByTestId("grid-row-count")).toContainText("1 row");
+  await expect(page.getByTestId("grid-group-row")).toHaveCount(1);
+  await page.getByTestId("grid-search").fill("");
+  await expect(page.getByTestId("grid-group-row")).toHaveCount(2);
+  page.once("dialog", (dialog) => { void dialog.accept("Lines by item"); });
+  await page.getByTestId("grid-views").click();
+  await page.getByTestId("grid-save-view").click();
+  await page.getByTestId("grid-views").click();
+  await expect(page.getByTestId("grid-view")).toContainText("Lines by item");
+  await page.keyboard.press("Escape");
+
   // Arabic: the invoices, the receivables and the recurring invoices read right-to-left and stay accessible.
   await page.getByTestId("language-menu").click();
   await page.getByTestId("language-ar").click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("treegrid")).toContainText("الصنف: TEA");
+  await expect(page.getByTestId("grid-row-count")).toContainText("مجموعتان");
+  await expectAccessible(page);
+  await nav(page, "الفواتير الدورية");
   await expect(page.getByRole("grid")).toContainText("RET");
   await expectAccessible(page);
   await nav(page, "فواتير المبيعات");

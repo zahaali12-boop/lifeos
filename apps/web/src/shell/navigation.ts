@@ -76,6 +76,7 @@ export const navigation: NavigationItem[] = [
   { to: "/sales/invoices", label: "nav.salesInvoices", icon: ReceiptText, shortcut: "s i", permission: "sales.invoice.read", group: "sales", section: "invoicing" },
   { to: "/sales/recurring-invoices", label: "nav.recurringInvoices", icon: Repeat, shortcut: "s v", permission: "sales.invoice.read", group: "sales", section: "invoicing" },
   { to: "/sales/returns", label: "nav.salesReturns", icon: Undo2, shortcut: "s u", permission: "sales.return.read", group: "sales", section: "orders" },
+  { to: "/sales/analysis", label: "nav.salesAnalysis", icon: ChartColumn, shortcut: "s n", permission: "sales.invoice.read", group: "sales", section: "reporting" },
   { to: "/sales/pipeline", label: "nav.pipeline", icon: Kanban, shortcut: "s p", permission: "partners.customer.read", group: "sales", section: "customers" },
   { to: "/sales/activities", label: "nav.crmActivities", icon: ListTodo, shortcut: "s a", permission: "partners.customer.read", group: "sales", section: "customers" },
   { to: "/sales/price-lists", label: "nav.priceLists", icon: Tags, shortcut: "s l", permission: "pricing.price.read", group: "sales", section: "pricing" },

@@ -66,3 +66,28 @@ export function compare(a: string | number, b: string | number): number {
   const [x, y] = align(parse(a) ?? { value: 0n, scale: 0 }, parse(b) ?? { value: 0n, scale: 0 });
   return x === y ? 0 : x < y ? -1 : 1;
 }
+
+/** The decimal text of a wire value: a string as it is, a number as JavaScript prints it (plainly, never in exponent form); anything else is not a figure. */
+export function toDecimalString(value: unknown): string | null {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+    const plain = String(value);
+    return /e/i.test(plain) ? value.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 12 }) : plain;
+  }
+  return typeof value === "string" && isDecimal(value) ? value.trim() : null;
+}
+
+/** The exact sum of the figures among the values (a group's subtotal); what is not a figure counts for nothing. */
+export function sumDecimals(values: Iterable<unknown>): string {
+  let total: Scaled = { value: 0n, scale: 0 };
+  for (const value of values) {
+    const text = toDecimalString(value);
+    if (text !== null) {
+      const [a, b, scale] = align(total, parse(text) ?? { value: 0n, scale: 0 });
+      total = { value: a + b, scale };
+    }
+  }
+  return format(total.value, total.scale);
+}

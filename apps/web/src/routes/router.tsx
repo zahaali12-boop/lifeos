@@ -68,6 +68,7 @@ import { PipelinePage } from "./sales/PipelinePage";
 import { QuotationsPage } from "./sales/QuotationsPage";
 import { RecurringInvoicesPage } from "./sales/RecurringInvoicesPage";
 import { ReturnsPage as SalesReturnsPage } from "./sales/ReturnsPage";
+import { SalesAnalysisPage } from "./sales/SalesAnalysisPage";
 import { SalesSetupPage } from "./sales/SalesSetupPage";
 import { ShipmentsPage } from "./sales/ShipmentsPage";
 import { PriceCheckPage } from "./sales/pricing/PriceCheckPage";
@@ -166,6 +167,7 @@ const shipmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/s
 const salesInvoicesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/invoices", component: SalesInvoicesPage, validateSearch: searchRecord });
 const recurringInvoicesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/recurring-invoices", component: RecurringInvoicesPage, validateSearch: searchRecord });
 const salesReturnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/returns", component: SalesReturnsPage, validateSearch: searchRecord });
+const salesAnalysisRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/analysis", component: SalesAnalysisPage });
 const receivablesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/receivables/open-items", component: ReceivablesPage, validateSearch: searchRecord });
 const pipelineRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pipeline", component: PipelinePage, validateSearch: searchRecord });
 const crmActivitiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/activities", component: ActivitiesPage });
@@ -209,7 +211,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
 ]);

@@ -28113,6 +28113,61 @@
           }
         }
       }
+    },
+    "/api/v1/reporting/sales-lines": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Every line of the company's sales invoices and credit notes in the range (posting dates; the year to date when no range is given; posted ones unless status names others, comma-separated) with what a grid groups by: the document, its month, quarter and year, the customer with their group, rep, branch, terms and price list, the item with its type, category, brand and unit, the tax code, the cost centre, department and project, and the amounts (credit notes negative). Capped at 20,000 lines; `truncated` says to narrow the range",
+        "operationId": "getReportingSalesLines",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesLinesReport"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -55505,6 +55560,351 @@
             "format": "uuid"
           }
         }
+      },
+      "SalesLineRow": {
+        "required": [
+          "invoiceId",
+          "invoiceNumber",
+          "kind",
+          "status",
+          "documentDate",
+          "postingDate",
+          "dueDate",
+          "year",
+          "quarter",
+          "month",
+          "customerId",
+          "customerCode",
+          "customerName",
+          "customerGroup",
+          "salesRep",
+          "salesRepName",
+          "branch",
+          "paymentTerms",
+          "priceList",
+          "currency",
+          "exchangeRate",
+          "lineId",
+          "lineNo",
+          "lineKind",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "itemType",
+          "category",
+          "brand",
+          "uom",
+          "description",
+          "quantity",
+          "unitPrice",
+          "discountPct",
+          "netAmount",
+          "taxAmount",
+          "grossAmount",
+          "netAmountFc",
+          "taxCode",
+          "taxRatePct",
+          "costCentre",
+          "department",
+          "project"
+        ],
+        "type": "object",
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "year": {
+            "type": "string"
+          },
+          "quarter": {
+            "type": "string"
+          },
+          "month": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerCode": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "customerGroup": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesRep": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "salesRepName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "branch": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priceList": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lineKind": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "itemType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "category": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "brand": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "grossAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netAmountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "taxCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costCentre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "department": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "project": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One line of a sales invoice or credit note with everything it can be grouped or filtered by (founder programme\nitem 1f: group by customer, item, rep, month and some thirty more): the document, its customer and their set-up,\nthe item and its catalogue, the tax, the dimensions, and the amounts. A credit note's quantities and amounts are\nnegative, so sums net out. Names are in both languages as the records hold them."
+      },
+      "SalesLinesReport": {
+        "required": [
+          "companyId",
+          "functionalCurrency",
+          "from",
+          "to",
+          "rows",
+          "truncated"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SalesLineRow"
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "description": "The lines asked for, in posting order; bool SalesLinesReport.Truncated says the cap was hit and a narrower range is needed."
       },
       "SalesRepSummary": {
         "required": [

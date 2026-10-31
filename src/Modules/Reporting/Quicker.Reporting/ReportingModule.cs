@@ -10,6 +10,7 @@ public static class ReportingModule
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddScoped<HomeDashboardService>();
+        services.AddScoped<SalesLinesService>();
         return services;
     }
 }
