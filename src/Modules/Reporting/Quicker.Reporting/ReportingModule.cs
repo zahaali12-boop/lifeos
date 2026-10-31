@@ -27,6 +27,7 @@ public static class ReportingModule
         services.AddModuleDbContext<ReportingDbContext>();
         services.AddScoped<ReportService>();
         services.AddSingleton(new RecordReadPermission(ReportService.AuditEntity, ReportingPermissions.ReportRun));
+        services.AddScoped<IRecordCompanies, ReportingRecordCompanies>();
         services.AddJobHandler<ProjectionJob, ProjectionPayload>();
         // A posting kicks the tenant's projection; the platform schedule covers every tenant every two minutes.
         services.AddIntegrationEventHandler<ProjectOnJournalPosted, JournalEntryPosted>();
