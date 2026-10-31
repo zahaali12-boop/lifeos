@@ -10,6 +10,8 @@ public static class BankDocumentTypes
     public const string Transaction = "bank_transaction";
     public const string Cheque = "bank_cheque";
     public const string ChequeDeposit = "bank_cheque_deposit";
+    public const string Statement = "bank_statement";
+    public const string Reconciliation = "bank_reconciliation";
 }
 
 public static class ChequeDirections

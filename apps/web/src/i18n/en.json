@@ -159,7 +159,8 @@
     "assetBooks": "Asset books",
     "printTemplates": "Print templates",
     "cheques": "Cheques",
-    "chequeBooks": "Cheque books"
+    "chequeBooks": "Cheque books",
+    "reconciliation": "Bank reconciliation"
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -3138,6 +3139,176 @@
         "editBook": "Edit cheque book",
         "emptyTitle": "No cheque books yet",
         "emptyDescription": "Add the book the bank gave you so issued cheques take their numbers from it."
+      }
+    },
+    "reconciliation": {
+      "description": "Import the bank's statements in its own format, let the matcher pair the lines with the books (and clear cheques, book fees and interest by rule), finish the rest by hand, and reconcile each account at a date; the aging shows what the bank has not confirmed.",
+      "bankAccount": "Bank account",
+      "chooseBank": "No bank account in this company yet",
+      "tabs": {
+        "statements": "Statements",
+        "matching": "Matching",
+        "reconcile": "Reconcile",
+        "rules": "Rules",
+        "aging": "Unconfirmed aging"
+      },
+      "import": {
+        "file": "Statement file",
+        "format": "Format",
+        "formatAuto": "Detect from the file",
+        "mapping": "CSV mapping",
+        "mappingHelp": "How this bank's CSV is laid out; other formats need none.",
+        "noMapping": "Standard columns",
+        "importButton": "Import",
+        "imported": "{lines} lines imported; {skipped} already known and skipped."
+      },
+      "statements": {
+        "file": "File",
+        "format": "Format",
+        "from": "From",
+        "to": "To",
+        "period": "Period",
+        "opening": "Opening balance",
+        "closing": "Closing balance",
+        "lines": "Lines",
+        "matched": "Matched",
+        "unmatched": "Unmatched",
+        "importedAt": "Imported",
+        "counts": "Lines",
+        "countsValue": "{lines} lines · {matched} matched · {unmatched} unmatched · {excluded} excluded · {skipped} skipped on import",
+        "autoMatch": "Match automatically",
+        "autoMatchResult": "{matched} lines matched, {created} movements booked, {cheques} cheques cleared, {remaining} still to do.",
+        "emptyTitle": "No statements yet",
+        "emptyDescription": "Import the bank's CSV, OFX, MT940 or CAMT.053 file for this account."
+      },
+      "statementStatuses": {
+        "imported": "Imported",
+        "reconciled": "Reconciled"
+      },
+      "lineStatuses": {
+        "unmatched": "Unmatched",
+        "matched": "Matched",
+        "excluded": "Excluded"
+      },
+      "reconciliationStatuses": {
+        "open": "Open",
+        "completed": "Completed"
+      },
+      "matchKinds": {
+        "auto": "Matched automatically",
+        "manual": "Matched by hand",
+        "created": "Booked from the line",
+        "cheque": "Cheque cleared"
+      },
+      "directions": {
+        "in": "Money in",
+        "out": "Money out",
+        "any": "Either way"
+      },
+      "lines": {
+        "date": "Date",
+        "amount": "Amount",
+        "description": "Description",
+        "counterparty": "Counterparty",
+        "reference": "Reference",
+        "matches": "Matched with",
+        "excludeReason": "Reason to exclude",
+        "actions": {
+          "match": "Match…",
+          "unmatch": "Unmatch",
+          "exclude": "Exclude",
+          "include": "Include again"
+        }
+      },
+      "matching": {
+        "help": "Lines the bank booked that the matcher could not pair. Open a line to pair it with one or more book movements, book it as a charge or income, or set it aside.",
+        "autoMatchAccount": "Match the account",
+        "noLines": "Nothing left to match",
+        "noLinesHelp": "Every imported line is matched or excluded.",
+        "lineTitle": "Line of {date} for {amount}",
+        "noCandidates": "No book movement is waiting for the bank.",
+        "selectedSum": "Selected: {sum} · line: {amount}",
+        "matchButton": "Match the selected",
+        "bookAs": "Book the line as",
+        "createButton": "Book and match"
+      },
+      "transactions": {
+        "date": "Date",
+        "kind": "Kind",
+        "amount": "Amount",
+        "reference": "Reference"
+      },
+      "reconcile": {
+        "asOf": "As of",
+        "statementBalance": "Statement balance",
+        "statementBalanceHelp": "Blank takes the closing balance of the latest imported statement.",
+        "reportTitle": "Reconciliation at {date}",
+        "depositsInTransit": "Deposits in transit",
+        "outstandingPayments": "Outstanding payments",
+        "adjustedBank": "Adjusted bank balance",
+        "bookBalance": "Book balance",
+        "unmatchedBankItems": "Unmatched bank lines",
+        "difference": "Difference",
+        "balanced": "The bank and the books agree; the reconciliation can be completed.",
+        "notBalanced": "Not balanced yet: {count} bank lines are unmatched or the balances differ.",
+        "outstanding": "Book movements the bank has not confirmed",
+        "nothingOutstanding": "None.",
+        "unmatchedLines": "Bank lines not in the books",
+        "noUnmatchedLines": "None.",
+        "record": "Record reconciliation",
+        "complete": "Complete",
+        "number": "Number",
+        "completedAt": "Completed",
+        "emptyTitle": "No reconciliations yet",
+        "emptyDescription": "Set the date and the statement balance above, then record the reconciliation."
+      },
+      "rules": {
+        "help": "When no movement pairs with a line, a rule that recognises it books the amount to its account and pairs it at once: bank fees, interest, rounding.",
+        "newRule": "New rule",
+        "editRule": "Edit rule",
+        "role": "Books to",
+        "direction": "Direction",
+        "priority": "Priority",
+        "priorityHelp": "Lower runs first.",
+        "descriptionContains": "Text contains",
+        "descriptionContainsHelp": "Any of these words, separated by commas.",
+        "referencePattern": "Reference pattern",
+        "referencePatternHelp": "A regular expression tried on the line's text.",
+        "amountMin": "Amount at least",
+        "amountMax": "Amount at most",
+        "anyBank": "Every bank account",
+        "emptyTitle": "No rules yet",
+        "emptyDescription": "Add a rule for the bank's monthly fee to start with."
+      },
+      "mappings": {
+        "newMapping": "New CSV mapping",
+        "help": "Name the columns as the header reads them, or by position (1, 2, 3) when there is no header. Unnamed columns are found by their usual names.",
+        "delimiter": "Delimiter",
+        "tab": "Tab",
+        "dateFormat": "Date format",
+        "dateFormatHelp": "For example dd/MM/yyyy.",
+        "dateColumn": "Date column",
+        "amountColumn": "Amount column",
+        "debitColumn": "Debit column",
+        "creditColumn": "Credit column",
+        "descriptionColumn": "Description column",
+        "referenceColumn": "Reference column",
+        "counterpartyColumn": "Counterparty column",
+        "decimalSeparator": "Decimal separator",
+        "skipRows": "Rows to skip",
+        "hasHeader": "First row is a header",
+        "negateAmount": "Amounts are signed from the bank's side"
+      },
+      "aging": {
+        "asOf": "As of",
+        "help": "Book movements the bank has not confirmed, by how long they have waited; an old one is a cheque never presented or a booking error.",
+        "count": "Movements",
+        "current": "Up to 30 days",
+        "d31to60": "31 to 60 days",
+        "d61to90": "61 to 90 days",
+        "over90": "Over 90 days",
+        "total": "Total",
+        "empty": "Every movement is confirmed by the bank."
       }
     }
   },

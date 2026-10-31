@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Quicker.Banking.Application;
+using Quicker.Kernel.Results;
 using Quicker.Web;
 
 namespace Quicker.Banking.Api;
@@ -117,6 +118,110 @@ public static class BankingEndpoints
             .RequirePermission(BankingPermissions.ChequeManage)
             .WithSummary("An issued cheque the bank did not pay is cancelled: its payment is reversed and the invoices reopen.");
 
+        // ------------------------------------------------------------------ statements and reconciliation (roadmap 6.2)
+        var reconciliation = banking.MapGroup("/reconciliation");
+        reconciliation.MapGet("/mappings", async (StatementService service, CancellationToken ct) => TypedResults.Ok(await service.ListMappingsAsync(ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("Saved CSV mappings: how each bank's export is read.");
+        reconciliation.MapPost("/mappings", async (SaveStatementMappingRequest request, StatementService service, CancellationToken ct) => ApiProblems.Created(await service.SaveMappingAsync(null, request, ct), static m => $"/api/v1/banking/reconciliation/mappings/{m.Id}"))
+            .RequirePermission(BankingPermissions.ReconciliationManage);
+        reconciliation.MapPut("/mappings/{mappingId:guid}", async (Guid mappingId, SaveStatementMappingRequest request, StatementService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveMappingAsync(mappingId, request, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage);
+        reconciliation.MapPost("/preview", (StatementPreviewRequest request, string? fileName) => ApiProblems.Ok(StatementService.Preview(request, fileName ?? "statement.csv")))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("Reads a file with a mapping (or by its format) without importing it: the first lines as they would be taken, or why they cannot be.");
+        reconciliation.MapGet("/statements", async (Guid? bankAccountId, Guid? companyId, StatementService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(bankAccountId, companyId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("Imported statements, newest first, with how many lines are matched.");
+        reconciliation.MapPost("/statements/import", async (HttpRequest request, StatementService service, CancellationToken ct) =>
+        {
+            if (!request.HasFormContentType)
+            {
+                return ApiProblems.From(Error.Validation("statement.form_required", "Send multipart/form-data with bankAccountId and file."));
+            }
+
+            var form = await request.ReadFormAsync(ct);
+            var file = form.Files.GetFile("file");
+            if (file is null)
+            {
+                return ApiProblems.From(Error.Validation("statement.file_required", "The 'file' part is required."));
+            }
+
+            if (!Guid.TryParse(form["bankAccountId"].ToString(), out var bankAccountId))
+            {
+                return ApiProblems.From(Error.Validation("statement.bank_account_required", "bankAccountId must be a bank account id."));
+            }
+
+            Guid? mappingId = Guid.TryParse(form["mappingId"].ToString(), out var m) ? m : null;
+            var settingsJson = form["settings"].ToString();
+            var settings = string.IsNullOrWhiteSpace(settingsJson) ? null : StatementMappingSettings.Parse(settingsJson);
+            using var reader = new StreamReader(file.OpenReadStream(), System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            var content = await reader.ReadToEndAsync(ct);
+            return ApiProblems.Created(await service.ImportAsync(bankAccountId, form["format"].ToString(), file.FileName, content, mappingId, settings, ct), static s => $"/api/v1/banking/reconciliation/statements/{s.Id}");
+        }).RequirePermission(BankingPermissions.ReconciliationManage)
+          .WithMetadata(new MultipartFormMetadata(typeof(StatementImportForm)))
+          .WithSummary("Imports a statement file for a bank account (multipart/form-data: bankAccountId, file, optional format, mappingId or settings): lines already known are skipped.");
+        reconciliation.MapGet("/statements/{statementId:guid}", async (Guid statementId, StatementService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(statementId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("The statement with its lines and their matches.");
+        reconciliation.MapDelete("/statements/{statementId:guid}", async (Guid statementId, StatementService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(statementId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Removes a statement nothing was matched from yet.");
+        reconciliation.MapPost("/statements/{statementId:guid}/auto-match", async (Guid statementId, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.AutoMatchAsync(statementId, null, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Runs the matcher over the statement's unmatched lines: same amount near in date, cheques the bank cleared or paid, a day's movements that add up, then the rules that book fees and interest.");
+        reconciliation.MapPost("/auto-match", async (Guid bankAccountId, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.AutoMatchAsync(null, bankAccountId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Runs the matcher over every unmatched line of the bank account.");
+        reconciliation.MapGet("/lines", async (Guid bankAccountId, ReconciliationService service, CancellationToken ct) => TypedResults.Ok(await service.UnmatchedLinesAsync(bankAccountId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("The account's unmatched statement lines, oldest first.");
+        reconciliation.MapGet("/transactions", async (Guid bankAccountId, DateOnly? asOf, ReconciliationService service, CancellationToken ct) => TypedResults.Ok(await service.UnmatchedTransactionsAsync(bankAccountId, asOf, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("The account's book movements the bank has not confirmed, oldest first.");
+        reconciliation.MapPost("/lines/{lineId:guid}/match", async (Guid lineId, MatchLinesRequest request, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.MatchAsync(lineId, request, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Pairs the line with the movements chosen; their sum must be the line.");
+        reconciliation.MapPost("/lines/{lineId:guid}/unmatch", async (Guid lineId, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.UnmatchAsync(lineId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Undoes the line's matches; the movements are open again.");
+        reconciliation.MapPost("/lines/{lineId:guid}/create", async (Guid lineId, CreateFromLineRequest request, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.CreateFromLineAsync(lineId, request, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Books a movement the books lacked from the line (a bank charge, interest, another income or expense by its account role) and pairs it at once.");
+        reconciliation.MapPost("/lines/{lineId:guid}/exclude", async (Guid lineId, ExcludeLineRequest request, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.ExcludeAsync(lineId, request, true, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Sets a line aside (the bank's own error, a duplicate) so it does not count as unmatched.");
+        reconciliation.MapPost("/lines/{lineId:guid}/include", async (Guid lineId, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.ExcludeAsync(lineId, new ExcludeLineRequest(), false, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Takes an excluded line back into matching.");
+        reconciliation.MapGet("/rules", async (Guid? companyId, ReconciliationService service, CancellationToken ct) => TypedResults.Ok(await service.ListRulesAsync(companyId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("Matching rules by priority: what each looks for in a line and the account role it books to.");
+        reconciliation.MapPost("/rules", async (SaveReconciliationRuleRequest request, ReconciliationService service, CancellationToken ct) => ApiProblems.Created(await service.SaveRuleAsync(null, request, ct), static r => $"/api/v1/banking/reconciliation/rules/{r.Id}"))
+            .RequirePermission(BankingPermissions.ReconciliationManage);
+        reconciliation.MapPut("/rules/{ruleId:guid}", async (Guid ruleId, SaveReconciliationRuleRequest request, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveRuleAsync(ruleId, request, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage);
+        reconciliation.MapDelete("/rules/{ruleId:guid}", async (Guid ruleId, ReconciliationService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteRuleAsync(ruleId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage);
+        reconciliation.MapGet("/report", async (Guid bankAccountId, DateOnly asOf, decimal? statementBalance, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.ReportAsync(bankAccountId, asOf, statementBalance, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("The account at a date: the bank's balance brought to the book's by deposits in transit and outstanding payments, the bank lines still unmatched, and what still differs.");
+        reconciliation.MapGet("/reconciliations", async (Guid? bankAccountId, Guid? companyId, ReconciliationService service, CancellationToken ct) => TypedResults.Ok(await service.ListReconciliationsAsync(bankAccountId, companyId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("Reconciliations recorded, newest first.");
+        reconciliation.MapPost("/reconciliations", async (CreateReconciliationRequest request, ReconciliationService service, CancellationToken ct) => ApiProblems.Created(await service.ReconcileAsync(request, ct), static r => $"/api/v1/banking/reconciliation/reconciliations/{r.Id}"))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Records the account's reconciliation at a date with the statement balance given; completed at once when nothing differs, otherwise left open to finish.");
+        reconciliation.MapPost("/reconciliations/{reconciliationId:guid}/complete", async (Guid reconciliationId, ReconciliationService service, CancellationToken ct) => ApiProblems.Ok(await service.CompleteAsync(reconciliationId, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationManage)
+            .WithSummary("Completes an open reconciliation once the bank and the books agree: the matched movements up to its date are reconciled for good.");
+        reconciliation.MapGet("/aging", async (Guid companyId, DateOnly asOf, ReconciliationService service, CancellationToken ct) => TypedResults.Ok(await service.AgingAsync(companyId, asOf, ct)))
+            .RequirePermission(BankingPermissions.ReconciliationRead)
+            .WithSummary("Book movements the bank has not confirmed, per account, by how long they have waited: up to 30, 60, 90 days and beyond.");
+
         return api;
     }
 }
+
+/// <summary>The multipart form a statement import sends, declared so the contract shows its parts (the endpoint reads the form itself).</summary>
+public sealed record StatementImportForm(Guid BankAccountId, IFormFile File, string? Format = null, Guid? MappingId = null, string? Settings = null);

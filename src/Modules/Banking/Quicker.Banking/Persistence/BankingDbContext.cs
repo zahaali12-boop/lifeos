@@ -23,6 +23,18 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options,
 
     public DbSet<ChequeDeposit> ChequeDeposits => Set<ChequeDeposit>();
 
+    public DbSet<StatementMapping> StatementMappings => Set<StatementMapping>();
+
+    public DbSet<BankStatement> Statements => Set<BankStatement>();
+
+    public DbSet<StatementLine> StatementLines => Set<StatementLine>();
+
+    public DbSet<ReconciliationRule> ReconciliationRules => Set<ReconciliationRule>();
+
+    public DbSet<ReconciliationMatch> ReconciliationMatches => Set<ReconciliationMatch>();
+
+    public DbSet<BankReconciliation> Reconciliations => Set<BankReconciliation>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -105,6 +117,62 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options,
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.Total).HasPrecision(24, 6);
             b.HasAuditTrail("bank_cheque_deposit", static x => x.Number);
+        });
+
+        modelBuilder.Entity<StatementMapping>(b =>
+        {
+            b.ToTable("bnk_statement_mappings", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Settings).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<BankStatement>(b =>
+        {
+            b.ToTable("bnk_statements", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.OpeningBalance).HasPrecision(24, 6);
+            b.Property(static x => x.ClosingBalance).HasPrecision(24, 6);
+            b.HasMany(static x => x.Lines).WithOne().HasForeignKey(static l => new { l.TenantId, l.StatementId });
+            b.HasOne<BankAccount>().WithMany().HasForeignKey(static x => new { x.TenantId, x.BankAccountId });
+            b.HasAuditTrail("bank_statement", static x => x.FileName);
+        });
+
+        modelBuilder.Entity<StatementLine>(b =>
+        {
+            b.ToTable("bnk_statement_lines", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Amount).HasPrecision(24, 6);
+        });
+
+        modelBuilder.Entity<ReconciliationRule>(b =>
+        {
+            b.ToTable("bnk_reconciliation_rules", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Name).HasColumnName("name_i18n");
+            b.Property(static x => x.Conditions).HasColumnType("jsonb");
+            b.HasAuditTrail("bank_reconciliation_rule", static x => x.Name.Resolve("en"));
+        });
+
+        modelBuilder.Entity<ReconciliationMatch>(b =>
+        {
+            b.ToTable("bnk_reconciliation_matches", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Confidence).HasPrecision(5, 4);
+            b.HasOne<StatementLine>().WithMany().HasForeignKey(static x => new { x.TenantId, x.StatementLineId });
+            b.HasOne<BankTransaction>().WithMany().HasForeignKey(static x => new { x.TenantId, x.BankTransactionId });
+        });
+
+        modelBuilder.Entity<BankReconciliation>(b =>
+        {
+            b.ToTable("bnk_reconciliations", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.StatementBalance).HasPrecision(24, 6);
+            b.Property(static x => x.BookBalance).HasPrecision(24, 6);
+            b.Property(static x => x.DepositsInTransit).HasPrecision(24, 6);
+            b.Property(static x => x.OutstandingPayments).HasPrecision(24, 6);
+            b.Property(static x => x.UnmatchedBankItems).HasPrecision(24, 6);
+            b.Property(static x => x.Difference).HasPrecision(24, 6);
+            b.HasAuditTrail("bank_reconciliation", static x => x.Number);
         });
 
         base.OnModelCreating(modelBuilder);

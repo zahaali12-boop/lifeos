@@ -7973,6 +7973,363 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/banking/reconciliation/mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Saved CSV mappings: how each bank's export is read. */
+        get: operations["getBankingReconciliationMappings"];
+        put?: never;
+        post: operations["postBankingReconciliationMappings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/mappings/{mappingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putBankingReconciliationMappingsByMappingId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reads a file with a mapping (or by its format) without importing it: the first lines as they would be taken, or why they cannot be. */
+        post: operations["postBankingReconciliationPreview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/statements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Imported statements, newest first, with how many lines are matched. */
+        get: operations["getBankingReconciliationStatements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/statements/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Imports a statement file for a bank account (multipart/form-data: bankAccountId, file, optional format, mappingId or settings): lines already known are skipped. */
+        post: operations["postBankingReconciliationStatementsImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/statements/{statementId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The statement with its lines and their matches. */
+        get: operations["getBankingReconciliationStatementsByStatementId"];
+        put?: never;
+        post?: never;
+        /** Removes a statement nothing was matched from yet. */
+        delete: operations["deleteBankingReconciliationStatementsByStatementId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/statements/{statementId}/auto-match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the matcher over the statement's unmatched lines: same amount near in date, cheques the bank cleared or paid, a day's movements that add up, then the rules that book fees and interest. */
+        post: operations["postBankingReconciliationStatementsByStatementIdAutoMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/auto-match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the matcher over every unmatched line of the bank account. */
+        post: operations["postBankingReconciliationAutoMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's unmatched statement lines, oldest first. */
+        get: operations["getBankingReconciliationLines"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account's book movements the bank has not confirmed, oldest first. */
+        get: operations["getBankingReconciliationTransactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/lines/{lineId}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pairs the line with the movements chosen; their sum must be the line. */
+        post: operations["postBankingReconciliationLinesByLineIdMatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/lines/{lineId}/unmatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Undoes the line's matches; the movements are open again. */
+        post: operations["postBankingReconciliationLinesByLineIdUnmatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/lines/{lineId}/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Books a movement the books lacked from the line (a bank charge, interest, another income or expense by its account role) and pairs it at once. */
+        post: operations["postBankingReconciliationLinesByLineIdCreate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/lines/{lineId}/exclude": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sets a line aside (the bank's own error, a duplicate) so it does not count as unmatched. */
+        post: operations["postBankingReconciliationLinesByLineIdExclude"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/lines/{lineId}/include": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes an excluded line back into matching. */
+        post: operations["postBankingReconciliationLinesByLineIdInclude"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Matching rules by priority: what each looks for in a line and the account role it books to. */
+        get: operations["getBankingReconciliationRules"];
+        put?: never;
+        post: operations["postBankingReconciliationRules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/rules/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putBankingReconciliationRulesByRuleId"];
+        post?: never;
+        delete: operations["deleteBankingReconciliationRulesByRuleId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The account at a date: the bank's balance brought to the book's by deposits in transit and outstanding payments, the bank lines still unmatched, and what still differs. */
+        get: operations["getBankingReconciliationReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/reconciliations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reconciliations recorded, newest first. */
+        get: operations["getBankingReconciliationReconciliations"];
+        put?: never;
+        /** Records the account's reconciliation at a date with the statement balance given; completed at once when nothing differs, otherwise left open to finish. */
+        post: operations["postBankingReconciliationReconciliations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/reconciliations/{reconciliationId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Completes an open reconciliation once the bank and the books agree: the matched movements up to its date are reconciled for good. */
+        post: operations["postBankingReconciliationReconciliationsByReconciliationIdComplete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/reconciliation/aging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Book movements the bank has not confirmed, per account, by how long they have waited: up to 30, 60, 90 days and beyond. */
+        get: operations["getBankingReconciliationAging"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/document-flow/{documentType}/{documentId}": {
         parameters: {
             query?: never;
@@ -11506,6 +11863,17 @@ export interface components {
             items: components["schemas"]["AuditEventSummary"][];
             nextCursor: null | string;
         };
+        /** @description What the matcher did on a statement or an account: lines paired, movements created, lines left for a person. */
+        AutoMatchResult: {
+            /** Format: int32 */
+            matched: number | string;
+            /** Format: int32 */
+            created: number | string;
+            /** Format: int32 */
+            chequesCleared: number | string;
+            /** Format: int32 */
+            remaining: number | string;
+        };
         AwardRequest: {
             /** Format: uuid */
             quoteId: string;
@@ -11580,6 +11948,92 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        BankReconciliationReport: {
+            /** Format: uuid */
+            bankAccountId: string;
+            currency: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: double */
+            statementBalance: number | string;
+            /** Format: double */
+            bookBalance: number | string;
+            /** Format: double */
+            depositsInTransit: number | string;
+            /** Format: double */
+            outstandingPayments: number | string;
+            /** Format: double */
+            adjustedBankBalance: number | string;
+            /** Format: double */
+            unmatchedBankItems: number | string;
+            /** Format: double */
+            difference: number | string;
+            canComplete: boolean;
+            outstandingTransactions: components["schemas"]["BankTransactionSummary"][];
+            unmatchedLines: components["schemas"]["StatementLineSummary"][];
+        };
+        BankReconciliationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            number: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: double */
+            statementBalance: number | string;
+            /** Format: double */
+            bookBalance: number | string;
+            /** Format: double */
+            depositsInTransit: number | string;
+            /** Format: double */
+            outstandingPayments: number | string;
+            /** Format: double */
+            unmatchedBankItems: number | string;
+            /** Format: double */
+            difference: number | string;
+            status: string;
+            /** Format: date-time */
+            completedAt: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        BankStatementSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            format: string;
+            fileName: string;
+            /** Format: date */
+            fromDate: null | string;
+            /** Format: date */
+            toDate: null | string;
+            /** Format: double */
+            openingBalance: null | number | string;
+            /** Format: double */
+            closingBalance: null | number | string;
+            /** Format: int32 */
+            lineCount: number | string;
+            /** Format: int32 */
+            skippedCount: number | string;
+            /** Format: int32 */
+            matchedCount: number | string;
+            /** Format: int32 */
+            unmatchedCount: number | string;
+            /** Format: int32 */
+            excludedCount: number | string;
+            status: string;
+            /** Format: date-time */
+            importedAt: string;
+            lines: components["schemas"]["StatementLineSummary"][];
         };
         BankTransactionSummary: {
             /** Format: uuid */
@@ -12713,6 +13167,11 @@ export interface components {
             expiresAt?: null | string;
             ipAllowlist?: null | string[];
         };
+        /** @description A movement the books lacked, made from a statement line: a bank charge, interest, or another income or expense by its account role. */
+        CreateFromLineRequest: {
+            accountRole: string;
+            description?: null | string;
+        };
         CreateOpportunityRequest: {
             /** Format: uuid */
             companyId: string;
@@ -12745,6 +13204,14 @@ export interface components {
             partnerId?: null | string;
             /** Format: uuid */
             warehouseId?: null | string;
+        };
+        CreateReconciliationRequest: {
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: double */
+            statementBalance: number | string;
         };
         CreditSalesReturnRequest: {
             /** Format: date */
@@ -13513,6 +13980,9 @@ export interface components {
             toEntryId: string;
             relation: string;
             reason: string;
+        };
+        ExcludeLineRequest: {
+            reason?: null | string;
         };
         ExpenseCategorySummary: {
             /** Format: uuid */
@@ -14953,6 +15423,9 @@ export interface components {
                 [key: string]: string;
             };
         };
+        MatchLinesRequest: {
+            bankTransactionIds: string[];
+        };
         MatchResultSummary: {
             /** Format: uuid */
             id: string;
@@ -15550,6 +16023,19 @@ export interface components {
         PageOfStockSearchRow: {
             items: components["schemas"]["StockSearchRow"][];
             nextCursor: null | string;
+        };
+        ParsedLine: {
+            /** Format: date */
+            bookingDate: string;
+            /** Format: date */
+            valueDate: null | string;
+            /** Format: double */
+            amount: number | string;
+            description: string;
+            counterparty: null | string;
+            reference: null | string;
+            bankCode: null | string;
+            externalId: null | string;
         };
         PartnerActivityPanel: {
             source: string;
@@ -17572,6 +18058,26 @@ export interface components {
             receiveDate?: null | string;
             lines?: null | components["schemas"]["TransferQuantityRequest"][];
         };
+        ReconciliationMatchSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            bankTransactionId: string;
+            matchKind: string;
+            /** Format: double */
+            confidence: number | string;
+            /** Format: date */
+            transactionDate: string;
+            transactionKind: string;
+            /** Format: double */
+            transactionAmount: number | string;
+            transactionReference: null | string;
+            sourceDocumentType: null | string;
+            /** Format: uuid */
+            sourceDocumentId: null | string;
+            /** Format: date-time */
+            matchedAt: string;
+        };
         ReconciliationReport: {
             /** Format: uuid */
             companyId: string;
@@ -17586,6 +18092,26 @@ export interface components {
             role: string;
             /** Format: double */
             register: number | string;
+        };
+        ReconciliationRuleSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            priority: number | string;
+            isActive: boolean;
+            direction: string;
+            conditions: components["schemas"]["RuleConditions"];
+            action: string;
+            accountRole: null | string;
+            /** Format: uuid */
+            bankAccountId: null | string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         /** @description A record another module owns, as a pricing screen shows it. */
         RecordRef: {
@@ -18519,6 +19045,15 @@ export interface components {
             /** Format: int32 */
             waiting: number | string;
             items: components["schemas"]["RoutineRunItem"][];
+        };
+        /** @description What a rule looks for in a line: words in its text, a pattern on its reference, a side and an amount range. */
+        RuleConditions: {
+            descriptionContains?: null | string[];
+            referencePattern?: null | string;
+            /** Format: double */
+            amountMin?: null | number | string;
+            /** Format: double */
+            amountMax?: null | number | string;
         };
         RuleSummary: {
             /** Format: uuid */
@@ -20718,6 +21253,26 @@ export interface components {
             branchId?: null | string;
             customFields?: unknown;
         };
+        SaveReconciliationRuleRequest: {
+            /** Format: uuid */
+            companyId: string;
+            name: {
+                [key: string]: string;
+            };
+            accountRole: string;
+            /**
+             * Format: int32
+             * @default 100
+             */
+            priority: number | string;
+            /** @default any */
+            direction: string;
+            conditions?: null | components["schemas"]["RuleConditions"];
+            /** Format: uuid */
+            bankAccountId?: null | string;
+            /** @default true */
+            isActive: boolean;
+        };
         SaveRecurringInvoiceRequest: {
             /** Format: uuid */
             companyId: string;
@@ -21139,6 +21694,12 @@ export interface components {
             groupRoleMap: null | {
                 [key: string]: string;
             };
+            /** @default true */
+            isActive: boolean;
+        };
+        SaveStatementMappingRequest: {
+            name: string;
+            settings: components["schemas"]["StatementMappingSettings"];
             /** @default true */
             isActive: boolean;
         };
@@ -22128,6 +22689,88 @@ export interface components {
             amount: number | string;
             /** Format: double */
             balance: number | string;
+        };
+        StatementLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            statementId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: date */
+            bookingDate: string;
+            /** Format: date */
+            valueDate: null | string;
+            /** Format: double */
+            amount: number | string;
+            description: string;
+            counterparty: null | string;
+            reference: null | string;
+            bankCode: null | string;
+            status: string;
+            excludeReason: null | string;
+            matches: components["schemas"]["ReconciliationMatchSummary"][];
+        };
+        /** @description How a bank's CSV export reads: columns by header name or 1-based position, and how dates and numbers are written. */
+        StatementMappingSettings: {
+            /** @default , */
+            delimiter: string;
+            /** @default true */
+            hasHeader: boolean;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            skipRows: number | string;
+            dateColumn?: null | string;
+            /** @default yyyy-MM-dd */
+            dateFormat: string;
+            valueDateColumn?: null | string;
+            amountColumn?: null | string;
+            debitColumn?: null | string;
+            creditColumn?: null | string;
+            descriptionColumn?: null | string;
+            referenceColumn?: null | string;
+            counterpartyColumn?: null | string;
+            /** @default . */
+            decimalSeparator: string;
+            /** @default , */
+            thousandsSeparator: null | string;
+            /** @default false */
+            negateAmount: boolean;
+        };
+        StatementMappingSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            settings: components["schemas"]["StatementMappingSettings"];
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        StatementPreview: {
+            format: string;
+            /** Format: int32 */
+            lineCount: number | string;
+            /** Format: date */
+            from: null | string;
+            /** Format: date */
+            to: null | string;
+            /** Format: double */
+            openingBalance: null | number | string;
+            /** Format: double */
+            closingBalance: null | number | string;
+            currency: null | string;
+            accountNumber: null | string;
+            lines: components["schemas"]["ParsedLine"][];
+        };
+        /** @description A CSV read with a mapping before it is imported: the first lines as they would be taken, or why they cannot be. */
+        StatementPreviewRequest: {
+            content: string;
+            settings?: null | components["schemas"]["StatementMappingSettings"];
+            format?: null | string;
         };
         StatutoryAccount: {
             code: string;
@@ -23142,6 +23785,25 @@ export interface components {
         UnreadCount: {
             /** Format: int32 */
             count: number | string;
+        };
+        /** @description Book movements the bank has not confirmed yet, by how long they have waited. */
+        UnreconciledAgingRow: {
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            currency: string;
+            /** Format: int32 */
+            count: number | string;
+            /** Format: double */
+            current: number | string;
+            /** Format: double */
+            days31To60: number | string;
+            /** Format: double */
+            days61To90: number | string;
+            /** Format: double */
+            over90: number | string;
+            /** Format: double */
+            total: number | string;
         };
         UomConversionSummary: {
             /** Format: uuid */
@@ -38274,6 +38936,619 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChequeSummary"];
+                };
+            };
+        };
+    };
+    getBankingReconciliationMappings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementMappingSummary"][];
+                };
+            };
+        };
+    };
+    postBankingReconciliationMappings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveStatementMappingRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementMappingSummary"];
+                };
+            };
+        };
+    };
+    putBankingReconciliationMappingsByMappingId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mappingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveStatementMappingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementMappingSummary"];
+                };
+            };
+        };
+    };
+    postBankingReconciliationPreview: {
+        parameters: {
+            query?: {
+                fileName?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementPreview"];
+                };
+            };
+        };
+    };
+    getBankingReconciliationStatements: {
+        parameters: {
+            query?: {
+                bankAccountId?: string;
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankStatementSummary"][];
+                };
+            };
+        };
+    };
+    postBankingReconciliationStatementsImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: uuid */
+                    bankAccountId: string;
+                    /** Format: binary */
+                    file: string;
+                    format?: null | string;
+                    /** Format: uuid */
+                    mappingId?: null | string;
+                    settings?: null | string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankStatementSummary"];
+                };
+            };
+        };
+    };
+    getBankingReconciliationStatementsByStatementId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                statementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankStatementSummary"];
+                };
+            };
+        };
+    };
+    deleteBankingReconciliationStatementsByStatementId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                statementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postBankingReconciliationStatementsByStatementIdAutoMatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                statementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoMatchResult"];
+                };
+            };
+        };
+    };
+    postBankingReconciliationAutoMatch: {
+        parameters: {
+            query: {
+                bankAccountId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoMatchResult"];
+                };
+            };
+        };
+    };
+    getBankingReconciliationLines: {
+        parameters: {
+            query: {
+                bankAccountId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineSummary"][];
+                };
+            };
+        };
+    };
+    getBankingReconciliationTransactions: {
+        parameters: {
+            query: {
+                bankAccountId: string;
+                asOf?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransactionSummary"][];
+                };
+            };
+        };
+    };
+    postBankingReconciliationLinesByLineIdMatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchLinesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineSummary"];
+                };
+            };
+        };
+    };
+    postBankingReconciliationLinesByLineIdUnmatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineSummary"];
+                };
+            };
+        };
+    };
+    postBankingReconciliationLinesByLineIdCreate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFromLineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineSummary"];
+                };
+            };
+        };
+    };
+    postBankingReconciliationLinesByLineIdExclude: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExcludeLineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineSummary"];
+                };
+            };
+        };
+    };
+    postBankingReconciliationLinesByLineIdInclude: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementLineSummary"];
+                };
+            };
+        };
+    };
+    getBankingReconciliationRules: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationRuleSummary"][];
+                };
+            };
+        };
+    };
+    postBankingReconciliationRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReconciliationRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationRuleSummary"];
+                };
+            };
+        };
+    };
+    putBankingReconciliationRulesByRuleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReconciliationRuleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconciliationRuleSummary"];
+                };
+            };
+        };
+    };
+    deleteBankingReconciliationRulesByRuleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getBankingReconciliationReport: {
+        parameters: {
+            query: {
+                bankAccountId: string;
+                asOf: string;
+                statementBalance?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankReconciliationReport"];
+                };
+            };
+        };
+    };
+    getBankingReconciliationReconciliations: {
+        parameters: {
+            query?: {
+                bankAccountId?: string;
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankReconciliationSummary"][];
+                };
+            };
+        };
+    };
+    postBankingReconciliationReconciliations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReconciliationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankReconciliationSummary"];
+                };
+            };
+        };
+    };
+    postBankingReconciliationReconciliationsByReconciliationIdComplete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reconciliationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankReconciliationSummary"];
+                };
+            };
+        };
+    };
+    getBankingReconciliationAging: {
+        parameters: {
+            query: {
+                companyId: string;
+                asOf: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreconciledAgingRow"][];
                 };
             };
         };

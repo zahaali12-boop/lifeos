@@ -5,4 +5,7 @@
     <ProjectReference Include="../Quicker.Banking/Quicker.Banking.csproj" />
     <ProjectReference Include="../../Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Samples/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

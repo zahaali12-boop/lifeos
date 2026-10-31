@@ -88,3 +88,91 @@ public sealed record ChequeDepositSummary(Guid Id, Guid CompanyId, string Number
 
 /// <summary>Cheques falling due in a month: what is expected in from customers and out to suppliers, in the company's currency.</summary>
 public sealed record ChequeForecastRow(DateOnly PeriodStart, int ReceivedCount, decimal ReceivedFc, int IssuedCount, decimal IssuedFc, decimal NetFc);
+
+// ------------------------------------------------------------------ statements and reconciliation (roadmap 6.2)
+
+public sealed record SaveStatementMappingRequest(string Name, StatementMappingSettings Settings, bool IsActive = true);
+
+public sealed record StatementMappingSummary(Guid Id, string Name, StatementMappingSettings Settings, bool IsActive, DateTimeOffset UpdatedAt);
+
+/// <summary>A CSV read with a mapping before it is imported: the first lines as they would be taken, or why they cannot be.</summary>
+public sealed record StatementPreviewRequest(string Content, StatementMappingSettings? Settings = null, string? Format = null);
+
+public sealed record StatementPreview(string Format, int LineCount, DateOnly? From, DateOnly? To, decimal? OpeningBalance, decimal? ClosingBalance, string? Currency, string? AccountNumber, IReadOnlyList<ParsedLine> Lines);
+
+public sealed record StatementLineSummary(
+    Guid Id,
+    Guid StatementId,
+    Guid BankAccountId,
+    int LineNo,
+    DateOnly BookingDate,
+    DateOnly? ValueDate,
+    decimal Amount,
+    string Description,
+    string? Counterparty,
+    string? Reference,
+    string? BankCode,
+    string Status,
+    string? ExcludeReason,
+    IReadOnlyList<ReconciliationMatchSummary> Matches);
+
+public sealed record ReconciliationMatchSummary(Guid Id, Guid BankTransactionId, string MatchKind, decimal Confidence, DateOnly TransactionDate, string TransactionKind, decimal TransactionAmount, string? TransactionReference, string? SourceDocumentType, Guid? SourceDocumentId, DateTimeOffset MatchedAt);
+
+public sealed record BankStatementSummary(
+    Guid Id,
+    Guid CompanyId,
+    Guid BankAccountId,
+    string BankAccountCode,
+    string Format,
+    string FileName,
+    DateOnly? FromDate,
+    DateOnly? ToDate,
+    decimal? OpeningBalance,
+    decimal? ClosingBalance,
+    int LineCount,
+    int SkippedCount,
+    int MatchedCount,
+    int UnmatchedCount,
+    int ExcludedCount,
+    string Status,
+    DateTimeOffset ImportedAt,
+    IReadOnlyList<StatementLineSummary> Lines);
+
+/// <summary>What the matcher did on a statement or an account: lines paired, movements created, lines left for a person.</summary>
+public sealed record AutoMatchResult(int Matched, int Created, int ChequesCleared, int Remaining);
+
+public sealed record MatchLinesRequest(IReadOnlyList<Guid> BankTransactionIds);
+
+/// <summary>A movement the books lacked, made from a statement line: a bank charge, interest, or another income or expense by its account role.</summary>
+public sealed record CreateFromLineRequest(string AccountRole, string? Description = null);
+
+public sealed record ExcludeLineRequest(string? Reason = null);
+
+/// <summary>What a rule looks for in a line: words in its text, a pattern on its reference, a side and an amount range.</summary>
+public sealed record RuleConditions(IReadOnlyList<string>? DescriptionContains = null, string? ReferencePattern = null, decimal? AmountMin = null, decimal? AmountMax = null);
+
+public sealed record SaveReconciliationRuleRequest(Guid CompanyId, IReadOnlyDictionary<string, string> Name, string AccountRole, int Priority = 100, string Direction = "any", RuleConditions? Conditions = null, Guid? BankAccountId = null, bool IsActive = true);
+
+public sealed record ReconciliationRuleSummary(Guid Id, Guid CompanyId, IReadOnlyDictionary<string, string> Name, int Priority, bool IsActive, string Direction, RuleConditions Conditions, string Action, string? AccountRole, Guid? BankAccountId, DateTimeOffset UpdatedAt);
+
+public sealed record BankReconciliationReport(
+    Guid BankAccountId,
+    string Currency,
+    DateOnly AsOf,
+    decimal StatementBalance,
+    decimal BookBalance,
+    decimal DepositsInTransit,
+    decimal OutstandingPayments,
+    decimal AdjustedBankBalance,
+    decimal UnmatchedBankItems,
+    decimal Difference,
+    bool CanComplete,
+    IReadOnlyList<BankTransactionSummary> OutstandingTransactions,
+    IReadOnlyList<StatementLineSummary> UnmatchedLines);
+
+public sealed record CreateReconciliationRequest(Guid BankAccountId, DateOnly AsOf, decimal StatementBalance);
+
+public sealed record BankReconciliationSummary(Guid Id, Guid CompanyId, Guid BankAccountId, string BankAccountCode, string Number, DateOnly AsOf, decimal StatementBalance, decimal BookBalance, decimal DepositsInTransit, decimal OutstandingPayments, decimal UnmatchedBankItems, decimal Difference, string Status, DateTimeOffset? CompletedAt, DateTimeOffset CreatedAt);
+
+/// <summary>Book movements the bank has not confirmed yet, by how long they have waited.</summary>
+public sealed record UnreconciledAgingRow(Guid BankAccountId, string BankAccountCode, string Currency, int Count, decimal Current, decimal Days31To60, decimal Days61To90, decimal Over90, decimal Total);

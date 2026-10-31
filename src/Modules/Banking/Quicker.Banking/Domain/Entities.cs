@@ -327,3 +327,194 @@ public sealed class ChequeDeposit : ITenantEntity
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+/// <summary>A saved way of reading a bank's CSV export: which columns hold the date, the amount (or debit and credit), the text and the reference, and how numbers and dates are written (roadmap 6.2).</summary>
+public sealed class StatementMapping : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string Settings { get; set; } = "{}";
+
+    public bool IsActive { get; set; } = true;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>A bank statement imported for an account (CSV, OFX, MT940 or CAMT.053): its period, balances and lines.</summary>
+public sealed class BankStatement : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid BankAccountId { get; set; }
+
+    public string Format { get; set; } = "csv";
+
+    public string FileName { get; set; } = string.Empty;
+
+    public DateOnly? FromDate { get; set; }
+
+    public DateOnly? ToDate { get; set; }
+
+    public decimal? OpeningBalance { get; set; }
+
+    public decimal? ClosingBalance { get; set; }
+
+    public int LineCount { get; set; }
+
+    public int SkippedCount { get; set; }
+
+    /// <summary>imported, reconciled.</summary>
+    public string Status { get; set; } = "imported";
+
+    public Guid? ImportedBy { get; set; }
+
+    public DateTimeOffset ImportedAt { get; set; }
+
+    public List<StatementLine> Lines { get; } = [];
+}
+
+/// <summary>One line of a bank statement, signed in the account's currency; matched to the book's movements, created into the books, or excluded.</summary>
+public sealed class StatementLine : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid StatementId { get; set; }
+
+    public Guid BankAccountId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public DateOnly BookingDate { get; set; }
+
+    public DateOnly? ValueDate { get; set; }
+
+    public decimal Amount { get; set; }
+
+    public string Description { get; set; } = string.Empty;
+
+    public string? Counterparty { get; set; }
+
+    public string? Reference { get; set; }
+
+    public string? BankCode { get; set; }
+
+    public string? ExternalId { get; set; }
+
+    /// <summary>A hash of what identifies the line, so the same statement imported twice adds nothing.</summary>
+    public string ImportKey { get; set; } = string.Empty;
+
+    /// <summary>unmatched, matched, excluded.</summary>
+    public string Status { get; set; } = "unmatched";
+
+    public string? ExcludeReason { get; set; }
+
+    public DateTimeOffset? MatchedAt { get; set; }
+}
+
+/// <summary>A standing instruction for the matcher: lines that read a certain way are booked to an account (a bank fee, interest) and matched at once.</summary>
+public sealed class ReconciliationRule : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public LocalizedText Name { get; set; } = new();
+
+    public int Priority { get; set; } = 100;
+
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>in, out or any.</summary>
+    public string Direction { get; set; } = "any";
+
+    public string Conditions { get; set; } = "{}";
+
+    /// <summary>post_to_account.</summary>
+    public string Action { get; set; } = "post_to_account";
+
+    public string? AccountRole { get; set; }
+
+    public Guid? BankAccountId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>A statement line paired with a book movement: by the matcher, by hand, by a rule that created the movement, or through a cheque the line cleared or paid.</summary>
+public sealed class ReconciliationMatch : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid StatementLineId { get; set; }
+
+    public Guid BankTransactionId { get; set; }
+
+    public Guid? RuleId { get; set; }
+
+    /// <summary>auto, manual, created, cheque.</summary>
+    public string MatchKind { get; set; } = "auto";
+
+    public decimal Confidence { get; set; } = 1m;
+
+    public Guid? MatchedBy { get; set; }
+
+    public DateTimeOffset MatchedAt { get; set; }
+}
+
+/// <summary>A reconciliation of a bank account at a date: the bank's balance against the book's, with what is in transit either way; completed when they agree.</summary>
+public sealed class BankReconciliation : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid BankAccountId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public DateOnly AsOf { get; set; }
+
+    public decimal StatementBalance { get; set; }
+
+    public decimal BookBalance { get; set; }
+
+    public decimal DepositsInTransit { get; set; }
+
+    public decimal OutstandingPayments { get; set; }
+
+    public decimal UnmatchedBankItems { get; set; }
+
+    public decimal Difference { get; set; }
+
+    /// <summary>open, completed.</summary>
+    public string Status { get; set; } = "open";
+
+    public Guid? CompletedBy { get; set; }
+
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}

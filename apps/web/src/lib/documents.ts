@@ -38,6 +38,7 @@ export type RecordScreen =
   | "/payables/proposals"
   | "/print-templates"
   | "/banking/cheques"
+  | "/banking/reconciliation"
   | "/companies";
 
 /** Where each kind of record opens: documents by the type their number was issued under, masters by their audit entity type. */
@@ -80,6 +81,8 @@ const screens: Record<string, RecordScreen> = {
   company: "/companies",
   print_template: "/print-templates",
   bank_cheque: "/banking/cheques",
+  bank_statement: "/banking/reconciliation",
+  bank_reconciliation: "/banking/reconciliation",
 };
 
 /** The screen a record opens on, with the record open; null for kinds that have no screen of their own. */

@@ -23063,6 +23063,958 @@
         }
       }
     },
+    "/api/v1/banking/reconciliation/mappings": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Saved CSV mappings: how each bank's export is read.",
+        "operationId": "getBankingReconciliationMappings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatementMappingSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "postBankingReconciliationMappings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStatementMappingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementMappingSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/mappings/{mappingId}": {
+      "put": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "putBankingReconciliationMappingsByMappingId",
+        "parameters": [
+          {
+            "name": "mappingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStatementMappingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementMappingSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/preview": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Reads a file with a mapping (or by its format) without importing it: the first lines as they would be taken, or why they cannot be.",
+        "operationId": "postBankingReconciliationPreview",
+        "parameters": [
+          {
+            "name": "fileName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/statements": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Imported statements, newest first, with how many lines are matched.",
+        "operationId": "getBankingReconciliationStatements",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankStatementSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/statements/import": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Imports a statement file for a bank account (multipart/form-data: bankAccountId, file, optional format, mappingId or settings): lines already known are skipped.",
+        "operationId": "postBankingReconciliationStatementsImport",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "bankAccountId",
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "bankAccountId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "format": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "mappingId": {
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "format": "uuid"
+                  },
+                  "settings": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  }
+                },
+                "description": "The multipart form a statement import sends, declared so the contract shows its parts (the endpoint reads the form itself)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankStatementSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/statements/{statementId}": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The statement with its lines and their matches.",
+        "operationId": "getBankingReconciliationStatementsByStatementId",
+        "parameters": [
+          {
+            "name": "statementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankStatementSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Removes a statement nothing was matched from yet.",
+        "operationId": "deleteBankingReconciliationStatementsByStatementId",
+        "parameters": [
+          {
+            "name": "statementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/statements/{statementId}/auto-match": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Runs the matcher over the statement's unmatched lines: same amount near in date, cheques the bank cleared or paid, a day's movements that add up, then the rules that book fees and interest.",
+        "operationId": "postBankingReconciliationStatementsByStatementIdAutoMatch",
+        "parameters": [
+          {
+            "name": "statementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoMatchResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/auto-match": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Runs the matcher over every unmatched line of the bank account.",
+        "operationId": "postBankingReconciliationAutoMatch",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoMatchResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/lines": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The account's unmatched statement lines, oldest first.",
+        "operationId": "getBankingReconciliationLines",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatementLineSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/transactions": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The account's book movements the bank has not confirmed, oldest first.",
+        "operationId": "getBankingReconciliationTransactions",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankTransactionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/lines/{lineId}/match": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Pairs the line with the movements chosen; their sum must be the line.",
+        "operationId": "postBankingReconciliationLinesByLineIdMatch",
+        "parameters": [
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchLinesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/lines/{lineId}/unmatch": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Undoes the line's matches; the movements are open again.",
+        "operationId": "postBankingReconciliationLinesByLineIdUnmatch",
+        "parameters": [
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/lines/{lineId}/create": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Books a movement the books lacked from the line (a bank charge, interest, another income or expense by its account role) and pairs it at once.",
+        "operationId": "postBankingReconciliationLinesByLineIdCreate",
+        "parameters": [
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFromLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/lines/{lineId}/exclude": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Sets a line aside (the bank's own error, a duplicate) so it does not count as unmatched.",
+        "operationId": "postBankingReconciliationLinesByLineIdExclude",
+        "parameters": [
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExcludeLineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/lines/{lineId}/include": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Takes an excluded line back into matching.",
+        "operationId": "postBankingReconciliationLinesByLineIdInclude",
+        "parameters": [
+          {
+            "name": "lineId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementLineSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/rules": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Matching rules by priority: what each looks for in a line and the account role it books to.",
+        "operationId": "getBankingReconciliationRules",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReconciliationRuleSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "postBankingReconciliationRules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReconciliationRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationRuleSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/rules/{ruleId}": {
+      "put": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "putBankingReconciliationRulesByRuleId",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReconciliationRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconciliationRuleSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "deleteBankingReconciliationRulesByRuleId",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/report": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The account at a date: the bank's balance brought to the book's by deposits in transit and outstanding payments, the bank lines still unmatched, and what still differs.",
+        "operationId": "getBankingReconciliationReport",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "statementBalance",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankReconciliationReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/reconciliations": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Reconciliations recorded, newest first.",
+        "operationId": "getBankingReconciliationReconciliations",
+        "parameters": [
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankReconciliationSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Records the account's reconciliation at a date with the statement balance given; completed at once when nothing differs, otherwise left open to finish.",
+        "operationId": "postBankingReconciliationReconciliations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReconciliationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankReconciliationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/reconciliations/{reconciliationId}/complete": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Completes an open reconciliation once the bank and the books agree: the matched movements up to its date are reconciled for good.",
+        "operationId": "postBankingReconciliationReconciliationsByReconciliationIdComplete",
+        "parameters": [
+          {
+            "name": "reconciliationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankReconciliationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/reconciliation/aging": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Book movements the bank has not confirmed, per account, by how long they have waited: up to 30, 60, 90 days and beyond.",
+        "operationId": "getBankingReconciliationAging",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnreconciledAgingRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchasing/document-flow/{documentType}/{documentId}": {
       "get": {
         "tags": [
@@ -34360,6 +35312,50 @@
           }
         }
       },
+      "AutoMatchResult": {
+        "required": [
+          "matched",
+          "created",
+          "chequesCleared",
+          "remaining"
+        ],
+        "type": "object",
+        "properties": {
+          "matched": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "created": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chequesCleared": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "remaining": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "What the matcher did on a statement or an account: lines paired, movements created, lines left for a person."
+      },
       "AwardRequest": {
         "required": [
           "quoteId"
@@ -34650,6 +35646,345 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BankReconciliationReport": {
+        "required": [
+          "bankAccountId",
+          "currency",
+          "asOf",
+          "statementBalance",
+          "bookBalance",
+          "depositsInTransit",
+          "outstandingPayments",
+          "adjustedBankBalance",
+          "unmatchedBankItems",
+          "difference",
+          "canComplete",
+          "outstandingTransactions",
+          "unmatchedLines"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "statementBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bookBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depositsInTransit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "outstandingPayments": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "adjustedBankBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unmatchedBankItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "difference": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "canComplete": {
+            "type": "boolean"
+          },
+          "outstandingTransactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankTransactionSummary"
+            }
+          },
+          "unmatchedLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementLineSummary"
+            }
+          }
+        }
+      },
+      "BankReconciliationSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "bankAccountId",
+          "bankAccountCode",
+          "number",
+          "asOf",
+          "statementBalance",
+          "bookBalance",
+          "depositsInTransit",
+          "outstandingPayments",
+          "unmatchedBankItems",
+          "difference",
+          "status",
+          "completedAt",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "statementBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bookBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "depositsInTransit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "outstandingPayments": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unmatchedBankItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "difference": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BankStatementSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "bankAccountId",
+          "bankAccountCode",
+          "format",
+          "fileName",
+          "fromDate",
+          "toDate",
+          "openingBalance",
+          "closingBalance",
+          "lineCount",
+          "skippedCount",
+          "matchedCount",
+          "unmatchedCount",
+          "excludedCount",
+          "status",
+          "importedAt",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fromDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "toDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "openingBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closingBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lineCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "skippedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "matchedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unmatchedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "excludedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "importedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementLineSummary"
+            }
           }
         }
       },
@@ -38798,6 +40133,24 @@
           }
         }
       },
+      "CreateFromLineRequest": {
+        "required": [
+          "accountRole"
+        ],
+        "type": "object",
+        "properties": {
+          "accountRole": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A movement the books lacked, made from a statement line: a bank charge, interest, or another income or expense by its account role."
+      },
       "CreateOpportunityRequest": {
         "required": [
           "companyId",
@@ -38910,6 +40263,32 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "CreateReconciliationRequest": {
+        "required": [
+          "bankAccountId",
+          "asOf",
+          "statementBalance"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "statementBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -41692,6 +43071,17 @@
           },
           "reason": {
             "type": "string"
+          }
+        }
+      },
+      "ExcludeLineRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -47250,6 +48640,21 @@
           }
         }
       },
+      "MatchLinesRequest": {
+        "required": [
+          "bankTransactionIds"
+        ],
+        "type": "object",
+        "properties": {
+          "bankTransactionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "MatchResultSummary": {
         "required": [
           "id",
@@ -49475,6 +50880,67 @@
           }
         },
         "description": "One page of a list: the items and the opaque cursor of the next page (null on the last page)."
+      },
+      "ParsedLine": {
+        "required": [
+          "bookingDate",
+          "valueDate",
+          "amount",
+          "description",
+          "counterparty",
+          "reference",
+          "bankCode",
+          "externalId"
+        ],
+        "type": "object",
+        "properties": {
+          "bookingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "valueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "description": {
+            "type": "string"
+          },
+          "counterparty": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bankCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "externalId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "PartnerActivityPanel": {
         "required": [
@@ -57270,6 +58736,81 @@
           }
         }
       },
+      "ReconciliationMatchSummary": {
+        "required": [
+          "id",
+          "bankTransactionId",
+          "matchKind",
+          "confidence",
+          "transactionDate",
+          "transactionKind",
+          "transactionAmount",
+          "transactionReference",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "matchedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankTransactionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "matchKind": {
+            "type": "string"
+          },
+          "confidence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "transactionKind": {
+            "type": "string"
+          },
+          "transactionAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "transactionReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceDocumentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceDocumentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "matchedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ReconciliationReport": {
         "required": [
           "companyId",
@@ -57326,6 +58867,75 @@
               "string"
             ],
             "format": "double"
+          }
+        }
+      },
+      "ReconciliationRuleSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "priority",
+          "isActive",
+          "direction",
+          "conditions",
+          "action",
+          "accountRole",
+          "bankAccountId",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "priority": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/RuleConditions"
+          },
+          "action": {
+            "type": "string"
+          },
+          "accountRole": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -60801,6 +62411,45 @@
           }
         },
         "description": "A logged run of the daily routines for one company."
+      },
+      "RuleConditions": {
+        "type": "object",
+        "properties": {
+          "descriptionContains": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "referencePattern": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amountMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountMax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "What a rule looks for in a line: words in its text, a pattern on its reference, a side and an amount range."
       },
       "RuleSummary": {
         "required": [
@@ -68371,6 +70020,63 @@
           "customFields": { }
         }
       },
+      "SaveReconciliationRuleRequest": {
+        "required": [
+          "companyId",
+          "name",
+          "accountRole"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "accountRole": {
+            "type": "string"
+          },
+          "priority": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 100
+          },
+          "direction": {
+            "type": "string",
+            "default": "any"
+          },
+          "conditions": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RuleConditions"
+              }
+            ]
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveRecurringInvoiceRequest": {
         "required": [
           "companyId",
@@ -69808,6 +71514,25 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SaveStatementMappingRequest": {
+        "required": [
+          "name",
+          "settings"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/StatementMappingSettings"
           },
           "isActive": {
             "type": "boolean",
@@ -73320,6 +75045,326 @@
           }
         },
         "description": "One movement on a supplier's account: a document booked (what we owe goes up for an invoice, down for a debit note or a payment) or its reversal."
+      },
+      "StatementLineSummary": {
+        "required": [
+          "id",
+          "statementId",
+          "bankAccountId",
+          "lineNo",
+          "bookingDate",
+          "valueDate",
+          "amount",
+          "description",
+          "counterparty",
+          "reference",
+          "bankCode",
+          "status",
+          "excludeReason",
+          "matches"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "statementId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "bookingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "valueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "description": {
+            "type": "string"
+          },
+          "counterparty": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bankCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "excludeReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReconciliationMatchSummary"
+            }
+          }
+        }
+      },
+      "StatementMappingSettings": {
+        "type": "object",
+        "properties": {
+          "delimiter": {
+            "type": "string",
+            "default": ","
+          },
+          "hasHeader": {
+            "type": "boolean",
+            "default": true
+          },
+          "skipRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "dateColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dateFormat": {
+            "type": "string",
+            "default": "yyyy-MM-dd"
+          },
+          "valueDateColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amountColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "debitColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creditColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descriptionColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "referenceColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "counterpartyColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "decimalSeparator": {
+            "type": "string",
+            "default": "."
+          },
+          "thousandsSeparator": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "default": ","
+          },
+          "negateAmount": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "How a bank's CSV export reads: columns by header name or 1-based position, and how dates and numbers are written."
+      },
+      "StatementMappingSummary": {
+        "required": [
+          "id",
+          "name",
+          "settings",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/StatementMappingSettings"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StatementPreview": {
+        "required": [
+          "format",
+          "lineCount",
+          "from",
+          "to",
+          "openingBalance",
+          "closingBalance",
+          "currency",
+          "accountNumber",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string"
+          },
+          "lineCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "openingBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closingBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParsedLine"
+            }
+          }
+        }
+      },
+      "StatementPreviewRequest": {
+        "required": [
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "settings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatementMappingSettings"
+              }
+            ]
+          },
+          "format": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A CSV read with a mapping before it is imported: the first lines as they would be taken, or why they cannot be."
       },
       "StatutoryAccount": {
         "required": [
@@ -77012,6 +79057,81 @@
             "format": "int32"
           }
         }
+      },
+      "UnreconciledAgingRow": {
+        "required": [
+          "bankAccountId",
+          "bankAccountCode",
+          "currency",
+          "count",
+          "current",
+          "days31To60",
+          "days61To90",
+          "over90",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "current": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days31To60": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "days61To90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "over90": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Book movements the bank has not confirmed yet, by how long they have waited."
       },
       "UomConversionSummary": {
         "required": [

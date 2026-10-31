@@ -49,6 +49,37 @@ public static class BankingRowFactories
             await c.ExecuteAsync("INSERT INTO app.bnk_cheque_events (tenant_id, id, cheque_id, event, effective_date) VALUES (@t, @id, @cheque, 'issued', '2026-09-22')", new { t, id, cheque }, tx);
             return new RowRef("app.bnk_cheque_events", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.bnk_statement_mappings", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_statement_mappings (tenant_id, id, name) VALUES (@t, @id, @name)", new { t, id, name = Suffix(id) }, tx);
+            return new RowRef("app.bnk_statement_mappings", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.bnk_statements", static async (c, tx, t) => new RowRef("app.bnk_statements", $"id = '{(await StatementLineAsync(c, tx, t)).Statement}'"));
+        IsolationRegistry.Register("app.bnk_statement_lines", static async (c, tx, t) => new RowRef("app.bnk_statement_lines", $"id = '{(await StatementLineAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.bnk_reconciliation_rules", static async (c, tx, t) =>
+        {
+            var company = await CompanyAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_reconciliation_rules (tenant_id, id, company_id, name_i18n, account_role) VALUES (@t, @id, @company, '{\"en\":\"Probe\"}', 'BankCharges')", new { t, id, company }, tx);
+            return new RowRef("app.bnk_reconciliation_rules", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.bnk_reconciliation_matches", static async (c, tx, t) =>
+        {
+            var (_, line, account, company) = await StatementLineAsync(c, tx, t);
+            var transaction = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_bank_transactions (tenant_id, id, bank_account_id, company_id, posting_date, value_date, kind, amount_tc, amount_fc) VALUES (@t, @id, @account, @company, '2026-09-22', '2026-09-22', 'disbursement', -1, -1)", new { t, id = transaction, account, company }, tx);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_reconciliation_matches (tenant_id, id, statement_line_id, bank_transaction_id, match_kind) VALUES (@t, @id, @line, @transaction, 'manual')", new { t, id, line, transaction }, tx);
+            return new RowRef("app.bnk_reconciliation_matches", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.bnk_reconciliations", static async (c, tx, t) =>
+        {
+            var (account, company) = await BankAccountAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_reconciliations (tenant_id, id, company_id, bank_account_id, number, as_of, statement_balance, book_balance) VALUES (@t, @id, @company, @account, @number, '2026-09-30', 0, 0)", new { t, id, company, account, number = Suffix(id) }, tx);
+            return new RowRef("app.bnk_reconciliations", $"id = '{id}'");
+        });
     }
 
     private static async Task<Guid> ChequeAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
@@ -59,6 +90,16 @@ public static class BankingRowFactories
         await c.ExecuteAsync("INSERT INTO app.bnk_cheques (tenant_id, id, company_id, direction, cheque_number, partner_id, currency, amount, issue_date, due_date, status, payment_id, bank_account_id) VALUES (@t, @id, @company, 'issued', @number, @partner, 'IQD', 10, '2026-09-22', '2026-09-22', 'issued', @payment, @account)",
             new { t, id, company = row.Company, partner = row.Partner, account = row.Account, payment, number = Suffix(id) }, tx);
         return id;
+    }
+
+    private static async Task<(Guid Statement, Guid Line, Guid Account, Guid Company)> StatementLineAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (account, company) = await BankAccountAsync(c, tx, t);
+        var statement = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.bnk_statements (tenant_id, id, company_id, bank_account_id, format, file_name) VALUES (@t, @id, @company, @account, 'csv', 'probe.csv')", new { t, id = statement, company, account }, tx);
+        var line = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.bnk_statement_lines (tenant_id, id, statement_id, bank_account_id, line_no, booking_date, amount, import_key) VALUES (@t, @id, @statement, @account, 1, '2026-09-22', -1, @key)", new { t, id = line, statement, account, key = line.ToString("N") }, tx);
+        return (statement, line, account, company);
     }
 
     private static string Suffix(Guid id) => "B" + id.ToString("N")[^8..].ToUpperInvariant();

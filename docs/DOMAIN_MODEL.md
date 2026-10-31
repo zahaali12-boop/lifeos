@@ -2833,10 +2833,10 @@ erDiagram
   bnk_bank_accounts ||--o{ bnk_statements : "receives"
   bnk_statements ||--|{ bnk_statement_lines : "has"
   bnk_bank_accounts ||--o{ bnk_reconciliations : "reconciled"
-  bnk_reconciliations ||--o{ bnk_reconciliation_matches : "matches"
   bnk_statement_lines ||--o{ bnk_reconciliation_matches : "matched"
-  bnk_bank_transactions ||--o{ bnk_reconciliation_matches : "matched"
-  bnk_reconciliation_rules ||--o{ bnk_reconciliation_matches : "auto"
+  bnk_bank_transactions ||--o| bnk_reconciliation_matches : "matched once"
+  bnk_reconciliation_rules ||--o{ bnk_reconciliation_matches : "booked by"
+  bnk_statement_mappings ||--o{ bnk_statements : "reads a CSV"
   bnk_payments ||--|{ bnk_payment_lines : "allocates"
   bnk_payments ||--o| bnk_bank_transactions : "moves cash"
   bnk_payments ||--o| bnk_cheques : "by cheque"
@@ -2928,56 +2928,84 @@ erDiagram
     uuid dimension_set_id
     uuid settlement_id
   }
+  bnk_statement_mappings {
+    uuid id PK
+    text name "unique per tenant"
+    jsonb settings "delimiter, header, date format, columns by name or position, separators, sign"
+    bool is_active
+  }
   bnk_statements {
     uuid id PK
+    uuid company_id
     uuid bank_account_id FK
-    text format "csv | ofx | mt940 | camt053 | manual"
+    text format "csv | ofx | mt940 | camt053"
+    text file_name
     date from_date
     date to_date
     numeric opening_balance
     numeric closing_balance
-    uuid attachment_id
-    text status "imported | reconciling | reconciled"
+    int line_count
+    int skipped_count "lines already known by their import key"
+    text status "imported | reconciled"
+    uuid imported_by
+    timestamptz imported_at
   }
   bnk_statement_lines {
     uuid id PK
     uuid statement_id FK
+    uuid bank_account_id FK
+    int line_no
     date booking_date
     date value_date
-    numeric amount
+    numeric amount "signed from the account's side: in positive, out negative"
     text description
     text counterparty
     text reference
-    text bank_transaction_code
-    text status "unmatched | matched | created"
-  }
-  bnk_reconciliations {
-    uuid id PK
-    uuid bank_account_id FK
-    date as_of
-    numeric statement_balance
-    numeric book_balance
-    numeric difference
-    text status "open | completed"
-    uuid completed_by
-  }
-  bnk_reconciliation_matches {
-    uuid id PK
-    uuid reconciliation_id FK
-    uuid statement_line_id FK
-    uuid bank_transaction_id FK
-    uuid rule_id FK
-    text match_kind "auto | manual | created"
-    numeric confidence
+    text bank_code "the format's transaction code"
+    text external_id "FITID, bank reference, AcctSvcrRef"
+    text import_key "sha-256 of account, date, amount, ids and text; unique per account"
+    text status "unmatched | matched | excluded"
+    text exclude_reason
+    timestamptz matched_at
   }
   bnk_reconciliation_rules {
     uuid id PK
     uuid company_id
     i18n name
-    jsonb conditions "text patterns amount tolerance days"
-    text action "match_open_item | post_to_account | match_transaction"
-    uuid account_id
-    int priority
+    int priority "lower runs first"
+    bool is_active
+    text direction "in | out | any"
+    jsonb conditions "descriptionContains[], referencePattern, amountMin, amountMax"
+    text action "post_to_account"
+    text account_role "an income or expense role, never a control account"
+    uuid bank_account_id "null: every account of the company"
+  }
+  bnk_reconciliation_matches {
+    uuid id PK
+    uuid statement_line_id FK
+    uuid bank_transaction_id FK "unique: a movement is matched once"
+    uuid rule_id FK
+    text match_kind "auto | manual | created | cheque"
+    numeric confidence
+    uuid matched_by
+    timestamptz matched_at
+  }
+  bnk_reconciliations {
+    uuid id PK
+    uuid company_id
+    uuid bank_account_id FK
+    text number "REC-"
+    date as_of
+    numeric statement_balance
+    numeric book_balance
+    numeric deposits_in_transit "unmatched receipts up to the date"
+    numeric outstanding_payments "unmatched disbursements up to the date"
+    numeric unmatched_bank_items "statement lines not in the books"
+    numeric difference "statement + in transit - outstanding - (book + unmatched items)"
+    text status "open | completed"
+    uuid completed_by
+    timestamptz completed_at
+    uuid created_by
   }
   bnk_cheque_books {
     uuid id PK
@@ -3129,6 +3157,8 @@ erDiagram
 ```
 
 Post-dated cheque life cycle (hard scenario 10, A-177): `in_hand` (the receipt settles the invoices, PDC receivable up, the bank untouched) → `deposited` on or after the cheque's date (cheques under collection, one slip for several cheques) → `cleared` (the bank, less the collection charge) or `bounced` (the receipt is reversed so the invoices reopen at their booked values, the cheque's journey is unwound, the bank's charge is booked and a fee can be re-charged to the customer as a receivable of kind `adjustment` on the cheque; a replacement cheque links both ways). A cheque still in hand is `returned` by reversing its receipt. Issued cheques go `issued` (PDC payable, the supplier's invoices settled) → `paid` (the bank) or `bounced` (back on PDC payable) → `cancelled` (the payment reversed). Every step is a `bnk_cheque_events` row; the invariant `cheques_match_control` holds each cheque's PDC lines to its status.
+
+Bank statements and reconciliation (roadmap 6.2, A-178): a statement is a file imported for one bank account in one of four formats (a CSV read through a saved mapping, OFX, MT940 or CAMT.053); its lines are signed from the account's side and keyed so the same line imported twice adds nothing. A line is `matched` when one or more book movements (`bnk_bank_transactions`) stand for it, each movement matched once; `excluded` when set aside (the bank's own duplicate or error); `unmatched` otherwise. A movement is `unreconciled` until a line matches it, `matched` from then, and `reconciled` for good when a reconciliation completes at or after its date. A reconciliation records, at a date, the statement balance against the book balance with what is in transit either way and the bank lines not yet in the books, and completes when nothing differs and no line up to that date is unmatched.
 
 ## 15. Fixed assets
 

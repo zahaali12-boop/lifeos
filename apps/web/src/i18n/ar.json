@@ -159,7 +159,8 @@
     "assetBooks": "دفاتر الموجودات",
     "printTemplates": "قوالب الطباعة",
     "cheques": "الشيكات",
-    "chequeBooks": "دفاتر الشيكات"
+    "chequeBooks": "دفاتر الشيكات",
+    "reconciliation": "مطابقة البنك"
   },
   "shell": {
     "filterMenu": "تصفية القائمة",
@@ -3138,6 +3139,176 @@
         "editBook": "تعديل دفتر الشيكات",
         "emptyTitle": "لا دفاتر شيكات بعد",
         "emptyDescription": "أضف الدفتر الذي أعطاك إياه البنك ليأخذ الشيكات الصادرة أرقامها منه."
+      }
+    },
+    "reconciliation": {
+      "description": "استورد كشوف البنك بصيغته، ودع المطابق يقرن السطور بالدفاتر (ويصرف الشيكات ويقيد العمولات والفوائد بالقواعد)، وأكمل الباقي يدويًا، وطابق كل حساب عند تاريخ؛ ويُظهر التقادم ما لم يؤكده البنك بعد.",
+      "bankAccount": "الحساب البنكي",
+      "chooseBank": "لا حساب بنكي في هذه الشركة بعد",
+      "tabs": {
+        "statements": "الكشوف",
+        "matching": "المطابقة",
+        "reconcile": "التسوية",
+        "rules": "القواعد",
+        "aging": "تقادم غير المؤكد"
+      },
+      "import": {
+        "file": "ملف الكشف",
+        "format": "الصيغة",
+        "formatAuto": "اكتشاف من الملف",
+        "mapping": "تخطيط CSV",
+        "mappingHelp": "كيف يُقرأ ملف CSV لهذا البنك؛ الصيغ الأخرى لا تحتاج إليه.",
+        "noMapping": "الأعمدة القياسية",
+        "importButton": "استيراد",
+        "imported": "استُورد {lines} سطرًا؛ {skipped} معروف من قبل وتم تخطيه."
+      },
+      "statements": {
+        "file": "الملف",
+        "format": "الصيغة",
+        "from": "من",
+        "to": "إلى",
+        "period": "الفترة",
+        "opening": "الرصيد الافتتاحي",
+        "closing": "الرصيد الختامي",
+        "lines": "السطور",
+        "matched": "مطابَق",
+        "unmatched": "غير مطابَق",
+        "importedAt": "تاريخ الاستيراد",
+        "counts": "السطور",
+        "countsValue": "{lines} سطر · {matched} مطابَق · {unmatched} غير مطابَق · {excluded} مستبعد · {skipped} متخطى عند الاستيراد",
+        "autoMatch": "مطابقة تلقائية",
+        "autoMatchResult": "طوبق {matched} سطرًا، وقُيد {created} حركة، وصُرف {cheques} شيكًا، وبقي {remaining}.",
+        "emptyTitle": "لا كشوف بعد",
+        "emptyDescription": "استورد ملف CSV أو OFX أو MT940 أو CAMT.053 من البنك لهذا الحساب."
+      },
+      "statementStatuses": {
+        "imported": "مستورد",
+        "reconciled": "مطابَق"
+      },
+      "lineStatuses": {
+        "unmatched": "غير مطابَق",
+        "matched": "مطابَق",
+        "excluded": "مستبعد"
+      },
+      "reconciliationStatuses": {
+        "open": "مفتوحة",
+        "completed": "مكتملة"
+      },
+      "matchKinds": {
+        "auto": "مطابقة تلقائية",
+        "manual": "مطابقة يدوية",
+        "created": "قُيد من السطر",
+        "cheque": "شيك مصروف"
+      },
+      "directions": {
+        "in": "وارد",
+        "out": "صادر",
+        "any": "الاتجاهان"
+      },
+      "lines": {
+        "date": "التاريخ",
+        "amount": "المبلغ",
+        "description": "الوصف",
+        "counterparty": "الطرف المقابل",
+        "reference": "المرجع",
+        "matches": "مطابَق مع",
+        "excludeReason": "سبب الاستبعاد",
+        "actions": {
+          "match": "مطابقة…",
+          "unmatch": "إلغاء المطابقة",
+          "exclude": "استبعاد",
+          "include": "إعادة الإدراج"
+        }
+      },
+      "matching": {
+        "help": "سطور قيدها البنك ولم يستطع المطابق إقرانها. افتح سطرًا لإقرانه بحركة أو أكثر من الدفاتر، أو قيّده كعمولة أو إيراد، أو ضعه جانبًا.",
+        "autoMatchAccount": "مطابقة الحساب",
+        "noLines": "لم يبقَ ما يُطابَق",
+        "noLinesHelp": "كل سطر مستورد مطابَق أو مستبعد.",
+        "lineTitle": "سطر {date} بمبلغ {amount}",
+        "noCandidates": "لا حركة في الدفاتر تنتظر البنك.",
+        "selectedSum": "المحدد: {sum} · السطر: {amount}",
+        "matchButton": "مطابقة المحدد",
+        "bookAs": "قيد السطر على",
+        "createButton": "قيد ومطابقة"
+      },
+      "transactions": {
+        "date": "التاريخ",
+        "kind": "النوع",
+        "amount": "المبلغ",
+        "reference": "المرجع"
+      },
+      "reconcile": {
+        "asOf": "حتى تاريخ",
+        "statementBalance": "رصيد الكشف",
+        "statementBalanceHelp": "الفراغ يأخذ الرصيد الختامي لآخر كشف مستورد.",
+        "reportTitle": "التسوية في {date}",
+        "depositsInTransit": "إيداعات في الطريق",
+        "outstandingPayments": "مدفوعات معلقة",
+        "adjustedBank": "رصيد البنك المعدل",
+        "bookBalance": "رصيد الدفاتر",
+        "unmatchedBankItems": "سطور بنكية غير مطابَقة",
+        "difference": "الفرق",
+        "balanced": "البنك والدفاتر متفقان؛ يمكن إكمال التسوية.",
+        "notBalanced": "غير متوازنة بعد: {count} سطرًا بنكيًا غير مطابَق أو الرصيدان مختلفان.",
+        "outstanding": "حركات الدفاتر التي لم يؤكدها البنك",
+        "nothingOutstanding": "لا شيء.",
+        "unmatchedLines": "سطور البنك غير الموجودة في الدفاتر",
+        "noUnmatchedLines": "لا شيء.",
+        "record": "تسجيل التسوية",
+        "complete": "إكمال",
+        "number": "الرقم",
+        "completedAt": "اكتملت",
+        "emptyTitle": "لا تسويات بعد",
+        "emptyDescription": "حدد التاريخ ورصيد الكشف أعلاه ثم سجّل التسوية."
+      },
+      "rules": {
+        "help": "عندما لا تُقرن حركة بسطر، تقيّد القاعدة التي تتعرف عليه المبلغ على حسابه وتقرنه فورًا: عمولات البنك والفوائد والتقريب.",
+        "newRule": "قاعدة جديدة",
+        "editRule": "تعديل القاعدة",
+        "role": "يُقيد على",
+        "direction": "الاتجاه",
+        "priority": "الأولوية",
+        "priorityHelp": "الأقل يُنفذ أولًا.",
+        "descriptionContains": "النص يحتوي",
+        "descriptionContainsHelp": "أي من هذه الكلمات، مفصولة بفواصل.",
+        "referencePattern": "نمط المرجع",
+        "referencePatternHelp": "تعبير نمطي يُجرب على نص السطر.",
+        "amountMin": "المبلغ على الأقل",
+        "amountMax": "المبلغ على الأكثر",
+        "anyBank": "كل الحسابات البنكية",
+        "emptyTitle": "لا قواعد بعد",
+        "emptyDescription": "أضف قاعدة للرسم الشهري للبنك بدايةً."
+      },
+      "mappings": {
+        "newMapping": "تخطيط CSV جديد",
+        "help": "سمِّ الأعمدة كما يقرؤها العنوان، أو بالموضع (1، 2، 3) عندما لا يوجد عنوان. الأعمدة غير المسماة تُوجد بأسمائها المعتادة.",
+        "delimiter": "الفاصل",
+        "tab": "جدولة",
+        "dateFormat": "صيغة التاريخ",
+        "dateFormatHelp": "مثلًا dd/MM/yyyy.",
+        "dateColumn": "عمود التاريخ",
+        "amountColumn": "عمود المبلغ",
+        "debitColumn": "عمود المدين",
+        "creditColumn": "عمود الدائن",
+        "descriptionColumn": "عمود الوصف",
+        "referenceColumn": "عمود المرجع",
+        "counterpartyColumn": "عمود الطرف المقابل",
+        "decimalSeparator": "الفاصلة العشرية",
+        "skipRows": "صفوف تُتخطى",
+        "hasHeader": "الصف الأول عنوان",
+        "negateAmount": "المبالغ موقعة من جهة البنك"
+      },
+      "aging": {
+        "asOf": "حتى تاريخ",
+        "help": "حركات الدفاتر التي لم يؤكدها البنك بحسب مدة انتظارها؛ القديمة منها شيك لم يُقدم قط أو خطأ في القيد.",
+        "count": "الحركات",
+        "current": "حتى 30 يومًا",
+        "d31to60": "31 إلى 60 يومًا",
+        "d61to90": "61 إلى 90 يومًا",
+        "over90": "أكثر من 90 يومًا",
+        "total": "الإجمالي",
+        "empty": "كل الحركات مؤكدة من البنك."
       }
     }
   },
