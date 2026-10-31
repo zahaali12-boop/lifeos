@@ -170,6 +170,7 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 
 ## In progress
 
+- **Founder programme item 1, UI ease**: the home dashboard is being built (a Reporting module with the home read model and the dashboard screen); then status bars, quick create, smart defaults, keyboard lines, saved views with group-by, the setup wizard and imports.
 - 5.3 tax is done (see "M5 slices"): the engine, purchase documents taxed, prices converted between tax bases, the return, filing and e-invoicing export, and the tax screens with a journey and demo set-up.
 - 5.4 quotations, orders, credit control and drop-ship is done (see "M5 slices"): the module, credit-limit hold and override, backordering and retry, the drop-ship purchase-order round trip, the quotations and orders screens with a browser journey, and the demo seed.
 - 5.5 pick, pack, ship is done (see "M5 slices"): shipments, lot/serial lines, pick lists with FEFO/bin-sequence planning, the handheld picking screen, packages, carrier details, screens, journeys and demo seed.
@@ -217,6 +218,7 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 
 ## Next
 
+0. **Founder programme, 2026-10-31** (ROADMAP "Founder programme", A-166): thirteen items in order, starting with UI ease (home dashboard, status bars, quick create, smart defaults, keyboard lines, saved views with group-by, setup wizard and imports), then expenses, then fixed assets, then the market features. The current item is named in "In progress".
 1. **Founder decision, 2026-09-24:** start M5 (order to cash) now, built to be the best on the market ("nothing but a masterpiece"); this lifts the reservation of item 2 for M5. Order of work: 5.1 customer master and CRM (done), 5.2 pricing (done), 5.3 tax (done), 5.4 quotes and orders with credit control (done), 5.5 shipping (done), then 5.6 invoicing, 5.7 receivables, 5.8 returns, 5.9 print pipeline, 5.10 demo seed v5.
 2. **Division of work (founder decision, 2026-09-23):** until further notice the routine, additive slices (reports and inquiries, demo seeds, screens over existing services, fixes) are built without changing the foundations laid so far (posting engine, costing, payables and banking settlement mechanics, invariants). The design-heavy work is reserved for a later, more capable pass: the order-to-cash design (M5: sales documents, pricing engine, receivables with realised FX), tax engine and returns, FX revaluation with auto-reversal (6.5), financial statements and the layout engine (6.10), consolidation and intercompany (M6), and any change to ADRs 0006/0017/0031. **Founder decision, 2026-09-24:** the reservation is lifted for the known defects of M3–M4 so they are fixed now rather than in the design pass: open issues I1–I4, invoice-line dimensions reaching the journal, a receipt line invoiced at two prices, and the harness after the browser journeys. The rest of the reservation stands.
 2. Open founder question Q9 (Iraq statutory code list) can be answered at any time; nothing built depends on it.

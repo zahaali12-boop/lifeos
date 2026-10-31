@@ -14,6 +14,26 @@ The definition of done for every milestone is fixed by the brief: working code a
 | The **tax engine** is M5 as planned; **e-invoicing adapters** (ZATCA, Peppol) are M8 with the provider interface defined in M5. | Adapters need certification work that should not block order-to-cash. |
 | The **mobile scanning app** starts in M3 (counts, transfers) and grows in M4 (receiving) and M5 (picking). | Each flow ships with the module that owns it. |
 
+## Founder programme (2026-10-31)
+
+The founder reviewed the product after the M5 returns slice and set the order of work from here, with two aims: the everyday screens must be easy (Odoo is the bar) and the product must be hard to compete with in its market (Iraq and the Gulf: cash and cheques, Arabic first, local e-invoicing). The roadmap's slices stay as the definitions of done; this list fixes their order and adds what the roadmap lacked (expenses as the founder described them, point of sale, payroll, the rep app, the customer portal, light manufacturing). Each item is recorded in `docs/PROGRESS.md` as it lands.
+
+| # | Work | Covers |
+|---|------|--------|
+| 1 | **UI ease**: a home dashboard with today's numbers and drill-down; document screens with a status bar and the next action only; quick create from anywhere and inline create of a customer, supplier or item; smart defaults and advanced fields hidden; keyboard-first line entry with paste from Excel; saved views with filters and group-by over 25–30 fields (the founder's "group by" request, pulled into this phase because the grid and the saved views are one piece of work); a first-run setup wizard with Excel import of customers, suppliers, items and opening balances. | part of 1.10, 7.5 (first cut), 8.3, 8.5 |
+| 2 | **Expenses** (the founder's request): every expense recorded with its details and date, confirmation posts the accrual, payment on its own date posts the settlement, all through the posting engine; petty cash funds and replenishment. | 6.4 |
+| 3 | **Fixed assets and depreciation**, more capable than the systems around us (multiple books, every method and convention, components, revaluation, impairment, transfers with history, partial disposals, verification, GL tie-out). | 6.6 |
+| 4 | Print and send completion: template screen, print and email buttons on documents, WhatsApp. | 5.9 (rest) |
+| 5 | Cheques and post-dated cheques, bank statement import and reconciliation. | 6.2, 6.3 |
+| 6 | E-invoicing: ZATCA phase 2. | 8.6 (first adapter) |
+| 7 | Point of sale, offline-capable. | new |
+| 8 | Payroll and HR, simple. | new |
+| 9 | Reports without a programmer: builder, financial designer, dashboards, scheduling; ask-your-data in Arabic and English. | 7.1–7.5, 7.7, 9.1 |
+| 10 | Sales-rep mobile app (quotes, orders, collections, visits, offline). | new (over 3.8's PWA) |
+| 11 | Customer portal with local payment gateways. | new |
+| 12 | Budgets, closing and financial statements. | 6.7, 6.9, 6.10 |
+| 13 | Light manufacturing: work orders over bills of material. | new |
+
 ## Launch gate
 
 A tenant can go live when **M1–M7 are complete and M8 slices 8.1–8.6 are complete** (workflow UI, custom-field admin, migration toolkit, webhooks/API portal, onboarding wizard with industry templates, e-invoicing where the country requires it). M9 and M10 follow; M10's performance and security work is required before scaling beyond pilot customers.
