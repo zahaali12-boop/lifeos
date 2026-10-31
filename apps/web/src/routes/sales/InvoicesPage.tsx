@@ -24,6 +24,7 @@ import { money, Money, num, SalesStatus } from "./shared";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, salesFlow } from "../StatusBar";
 import { QuickCreateButton } from "../QuickCreate";
+import { lineKeys, pastedNumber } from "../lineKeys";
 
 type Invoice = components["schemas"]["SalesInvoiceSummary"];
 type Invoicable = components["schemas"]["InvoicableSalesLine"];
@@ -206,6 +207,8 @@ export function InvoicesPage() {
     [t],
   );
 
+  // Enter on the last line adds one of the same kind; pasted rows fill description, quantity, price and discount.
+  const invoiceKeys = form ? lineKeys<LineForm>({ lines: form.lines, onChange: (lines) => { setForm({ ...form, lines }); }, empty: () => emptyLine(form.lines[form.lines.length - 1]?.kind ?? "service"), columns: ["description", "quantity", "unitPrice", "discountPct"], parse: { quantity: pastedNumber, unitPrice: pastedNumber, discountPct: pastedNumber } }) : null;
   const openNew = (kind = "invoice"): void => { setProblem(null); setForm({ id: null, kind, partnerId: "", creditsInvoiceId: "", customerReference: "", documentDate: today(), currency: "", lines: [] }); };
   const openEdit = (i: Invoice): void => {
     setProblem(null);
@@ -382,19 +385,19 @@ export function InvoicesPage() {
                       <TableHead />
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody onKeyDown={invoiceKeys?.onKeyDown} onPaste={invoiceKeys?.onPaste}>
                     {form.lines.map((line, index) => (
                       <Fragment key={index}>
                         <TableRow data-testid="invoice-line">
                           <TableCell>{t(`sales.invoicing.lineKinds.${line.kind}`)}</TableCell>
                           <TableCell dir="auto">
-                            {line.kind === "item" ? <ItemCodeField aria-label={t("sales.itemCode")} value={line.itemCode} onChange={(code) => { patchLine(index, { itemCode: code }); }} className="w-32" data-testid={`invoice-item-${String(index)}`} />
-                              : line.kind === "service" ? <TextField aria-label={t("sales.invoicing.lineDescription")} value={line.description} onChange={(e) => { patchLine(index, { description: e.target.value }); }} className="w-56" data-testid={`invoice-description-${String(index)}`} />
+                            {line.kind === "item" ? <ItemCodeField aria-label={t("sales.itemCode")} value={line.itemCode} onChange={(code) => { patchLine(index, { itemCode: code }); }} className="w-32" data-testid={`invoice-item-${String(index)}`} {...invoiceKeys?.cell(index, "itemCode")} />
+                              : line.kind === "service" ? <TextField aria-label={t("sales.invoicing.lineDescription")} value={line.description} onChange={(e) => { patchLine(index, { description: e.target.value }); }} className="w-56" data-testid={`invoice-description-${String(index)}`} {...invoiceKeys?.cell(index, "description")} />
                                 : line.label}
                           </TableCell>
-                          <TableCell><TextField aria-label={t("sales.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} /></TableCell>
-                          <TableCell>{pricedHere(line.kind) ? <TextField aria-label={t("sales.unitPrice")} inputMode="decimal" value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" placeholder={line.kind === "item" ? t("sales.autoPrice") : ""} data-testid={`invoice-price-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.unitPrice, { maximumFractionDigits: 4 })}</span>}</TableCell>
-                          <TableCell>{pricedHere(line.kind) ? <TextField aria-label={t("sales.discountPct")} inputMode="decimal" value={line.discountPct} onChange={(e) => { patchLine(index, { discountPct: e.target.value }); }} dir="ltr" className="w-16" data-testid={`invoice-discount-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.discountPct, { maximumFractionDigits: 2 })}%</span>}</TableCell>
+                          <TableCell><TextField aria-label={t("sales.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} {...invoiceKeys?.cell(index, "quantity")} /></TableCell>
+                          <TableCell>{pricedHere(line.kind) ? <TextField aria-label={t("sales.unitPrice")} inputMode="decimal" value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" {...invoiceKeys?.cell(index, "unitPrice")} placeholder={line.kind === "item" ? t("sales.autoPrice") : ""} data-testid={`invoice-price-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.unitPrice, { maximumFractionDigits: 4 })}</span>}</TableCell>
+                          <TableCell>{pricedHere(line.kind) ? <TextField aria-label={t("sales.discountPct")} inputMode="decimal" value={line.discountPct} onChange={(e) => { patchLine(index, { discountPct: e.target.value }); }} dir="ltr" className="w-16" {...invoiceKeys?.cell(index, "discountPct")} data-testid={`invoice-discount-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.discountPct, { maximumFractionDigits: 2 })}%</span>}</TableCell>
                           <TableCell>
                             {pricedHere(line.kind) ? (
                               <SelectField aria-label={t("tax.code")} value={line.taxCodeId} onChange={(e) => { patchLine(index, { taxCodeId: e.target.value }); }} data-testid={`invoice-tax-${String(index)}`}>

@@ -17,6 +17,7 @@ import { ItemCodeField } from "./ItemCodeField";
 import { RecordActivity } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { CodeField } from "../CodeField";
+import { lineKeys, pastedCode, pastedNumber } from "../lineKeys";
 
 type Adjustment = components["schemas"]["AdjustmentSummary"];
 
@@ -101,6 +102,7 @@ export function AdjustmentsPage() {
   const [reasonsOpen, setReasonsOpen] = useState(false);
   const openId = search.open;
   const formWarehouse = warehouses.data?.find((w) => w.id === editing?.form.warehouseId);
+  const adjustmentKeys = editing ? lineKeys<LineForm>({ lines: editing.form.lines, onChange: (lines) => { setForm({ lines }); }, empty: () => ({ ...emptyLine }), columns: ["itemCode", "quantity", "uom", "unitCost", "reasonCode", "lotNumber"], parse: { itemCode: pastedCode, uom: pastedCode, reasonCode: pastedCode, quantity: pastedNumber, unitCost: pastedNumber } }) : null;
   const bins = useQuery({
     queryKey: ["bins", formWarehouse?.id ?? ""],
     enabled: formWarehouse?.binsEnabled === true,
@@ -347,11 +349,11 @@ export function AdjustmentsPage() {
                     <TableHead />
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody onKeyDown={adjustmentKeys?.onKeyDown} onPaste={adjustmentKeys?.onPaste}>
                   {editing.form.lines.map((line, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                        <ItemCodeField aria-label={t("inventory.itemCode")} value={line.itemCode} onChange={(code) => { updateLine(index, { itemCode: code }); }} data-testid={`line-item-${index}`} />
+                        <ItemCodeField aria-label={t("inventory.itemCode")} value={line.itemCode} onChange={(code) => { updateLine(index, { itemCode: code }); }} data-testid={`line-item-${index}`} {...adjustmentKeys?.cell(index, "itemCode")} />
                       </TableCell>
                       {formWarehouse?.binsEnabled ? (
                         <TableCell>
@@ -366,13 +368,13 @@ export function AdjustmentsPage() {
                         </TableCell>
                       ) : null}
                       <TableNumberCell>
-                        <TextField aria-label={t("inventory.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} />
+                        <TextField aria-label={t("inventory.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} {...adjustmentKeys?.cell(index, "quantity")} />
                       </TableNumberCell>
                       <TableCell>
-                        <TextField aria-label={t("inventory.uom")} value={line.uom} onChange={(e) => { updateLine(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" />
+                        <TextField aria-label={t("inventory.uom")} value={line.uom} onChange={(e) => { updateLine(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" {...adjustmentKeys?.cell(index, "uom")} />
                       </TableCell>
                       <TableNumberCell>
-                        <TextField aria-label={t("inventory.unitCost")} inputMode="decimal" value={line.unitCost} onChange={(e) => { updateLine(index, { unitCost: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-cost-${index}`} />
+                        <TextField aria-label={t("inventory.unitCost")} inputMode="decimal" value={line.unitCost} onChange={(e) => { updateLine(index, { unitCost: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-cost-${index}`} {...adjustmentKeys?.cell(index, "unitCost")} />
                       </TableNumberCell>
                       <TableCell>
                         <SelectField aria-label={t("inventory.reason")} value={line.reasonCode} onChange={(e) => { updateLine(index, { reasonCode: e.target.value }); }} data-testid={`line-reason-${index}`}>
@@ -385,7 +387,7 @@ export function AdjustmentsPage() {
                         </SelectField>
                       </TableCell>
                       <TableCell>
-                        <TextField aria-label={t("inventory.stock.lot")} value={line.lotNumber} onChange={(e) => { updateLine(index, { lotNumber: e.target.value }); }} dir="ltr" className="w-28" />
+                        <TextField aria-label={t("inventory.stock.lot")} value={line.lotNumber} onChange={(e) => { updateLine(index, { lotNumber: e.target.value }); }} dir="ltr" className="w-28" {...adjustmentKeys?.cell(index, "lotNumber")} />
                       </TableCell>
                       <TableCell>
                         <TextField aria-label={t("inventory.expiresOn")} type="date" value={line.expiresOn} onChange={(e) => { updateLine(index, { expiresOn: e.target.value }); }} dir="ltr" />

@@ -74,10 +74,22 @@ test("English: a quotation started from the New menu, with its customer and its 
   await expect(page.getByTestId("line-item-0")).toHaveValue("KETTLE");
   await page.getByTestId("line-qty-0").fill("2");
   await page.getByTestId("line-price-0").fill("25000");
+  // Enter on the last line adds one and lands in the same column of it; rows from a spreadsheet fill the lines.
+  await page.getByTestId("line-price-0").press("Enter");
+  await expect(page.getByTestId("line-price-1")).toBeFocused();
+  await page.getByTestId("line-item-1").focus();
+  await page.getByTestId("line-item-1").evaluate((input) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", "kettle\t3\tPCS\t20,000\n");
+    input.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
+  });
+  await expect(page.getByTestId("line-item-1")).toHaveValue("KETTLE");
+  await expect(page.getByTestId("line-qty-1")).toHaveValue("3");
+  await expect(page.getByTestId("line-price-1")).toHaveValue("20000");
   await page.getByTestId("save-quotation").click();
   await expect(page.getByTestId("quotation-detail")).toBeVisible();
   await expect(page.getByTestId("quotation-detail").getByTestId("doc-status").first()).toContainText("Draft");
-  await expect(page.getByTestId("quotation-total")).toContainText("50,000");
+  await expect(page.getByTestId("quotation-total")).toContainText("110,000");
   await expectAccessible(page);
 
   // The item and the customer exist for good, on their own screens.

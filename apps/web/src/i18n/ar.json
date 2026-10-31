@@ -29,7 +29,8 @@
     "typeToNarrow": "{count} أخرى — اكتب لتضييق القائمة",
     "allEntries": "الكل",
     "moreFields": "حقول إضافية",
-    "fewerFields": "حقول أقل"
+    "fewerFields": "حقول أقل",
+    "lineKeysHint": "Enter يضيف سطرًا، والأسهم تنتقل بين السطور، والصفوف الملصوقة من جدول بيانات تملأ السطور."
   },
   "entities": {
     "company": "الشركات"

@@ -23,6 +23,7 @@ import { AccountCodeField, costCentre, CostCentreSelect, costCentreText, emptyDe
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
 import { CurrencyField } from "../CurrencyField";
 import { useNewFromUrl } from "../../lib/documents";
+import { lineKeys, pastedCode, pastedNumber } from "../lineKeys";
 
 type Journal = components["schemas"]["ManualJournalSummary"];
 
@@ -287,6 +288,7 @@ export function JournalsPage() {
     save.mutate(editing);
   };
   /** A new line: when the journal is out of balance it starts with the amount that balances it, on the side that does. */
+  const journalKeys = editing ? lineKeys<LineForm>({ lines: editing.form.lines, onChange: (lines) => { setEditing({ ...editing, form: { ...editing.form, lines } }); }, empty: emptyLine, columns: ["accountCode", "debit", "credit"], parse: { accountCode: pastedCode, debit: pastedNumber, credit: pastedNumber } }) : null;
   const addLine = (): void => {
     if (!editing) {
       return;
@@ -579,7 +581,7 @@ export function JournalsPage() {
                     <TableHead />
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody onKeyDown={journalKeys?.onKeyDown} onPaste={journalKeys?.onPaste}>
                   {editing.form.lines.map((line, index) => {
                     const account = reference.accounts.get(line.accountCode.trim());
                     const extras = Object.keys(line.dimensions).filter((code) => code !== costCentre).length + (line.subledgerRef ? 1 : 0) + (line.description.trim() ? 1 : 0);
@@ -593,6 +595,7 @@ export function JournalsPage() {
                           accounts={reference.accounts}
                           onChange={(code) => { updateLine(index, { accountCode: code, ...(reference.accounts.get(code.trim())?.subledgerType === line.subledgerType ? {} : { subledgerType: "", subledgerRef: "" }) }); }}
                           testId={`line-account-${String(index)}`}
+                          cell={journalKeys?.cell(index, "accountCode")}
                         />
                       </TableCell>
                       {hasCostCentre ? (
@@ -610,10 +613,10 @@ export function JournalsPage() {
                         </TableCell>
                       ) : null}
                       <TableNumberCell>
-                        <TextField aria-label={t("accounting.debit")} inputMode="decimal" value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value, credit: e.target.value ? "" : line.credit }); }} dir="ltr" className="text-end" data-testid={`line-debit-${index}`} />
+                        <TextField aria-label={t("accounting.debit")} inputMode="decimal" value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value, credit: e.target.value ? "" : line.credit }); }} dir="ltr" className="text-end" {...journalKeys?.cell(index, "debit")} data-testid={`line-debit-${index}`} />
                       </TableNumberCell>
                       <TableNumberCell>
-                        <TextField aria-label={t("accounting.credit")} inputMode="decimal" value={line.credit} onChange={(e) => { updateLine(index, { credit: e.target.value, debit: e.target.value ? "" : line.debit }); }} dir="ltr" className="text-end" data-testid={`line-credit-${index}`} />
+                        <TextField aria-label={t("accounting.credit")} inputMode="decimal" value={line.credit} onChange={(e) => { updateLine(index, { credit: e.target.value, debit: e.target.value ? "" : line.debit }); }} dir="ltr" {...journalKeys?.cell(index, "credit")} className="text-end" data-testid={`line-credit-${index}`} />
                       </TableNumberCell>
                       <TableCell>
                         <div className="flex items-center">

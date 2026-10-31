@@ -29,7 +29,8 @@
     "typeToNarrow": "{count} more — type to narrow the list",
     "allEntries": "All",
     "moreFields": "More fields",
-    "fewerFields": "Fewer fields"
+    "fewerFields": "Fewer fields",
+    "lineKeysHint": "Enter adds a line, the arrows move between lines, and rows pasted from a spreadsheet fill the lines."
   },
   "entities": {
     "company": "Companies"

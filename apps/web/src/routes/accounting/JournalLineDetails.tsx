@@ -85,7 +85,7 @@ export function DimensionSelects({ testIdPrefix, values, reference, emptyLabel, 
  * (a native datalist: keyboard- and screen-reader-friendly, right to left). Under it, the account's name, or what is
  * wrong with the code before the server says so (no such account, a header, an account only documents post to).
  */
-export function AccountCodeField({ value, onChange, accounts, label, testId }: { value: string; onChange: (code: string) => void; accounts: Map<string, Account>; label: string; testId?: string }) {
+export function AccountCodeField({ value, onChange, accounts, label, testId, cell }: { value: string; onChange: (code: string) => void; accounts: Map<string, Account>; label: string; testId?: string; cell?: { "data-line": string; "data-col": string } | undefined }) {
   const { t } = useTranslation();
   const postable = useMemo(
     () => [...accounts.values()].filter((a) => a.isActive && !a.isHeader && (a.allowManualPosting || a.isControl)).sort((a, b) => a.code.localeCompare(b.code)),
@@ -107,7 +107,7 @@ export function AccountCodeField({ value, onChange, accounts, label, testId }: {
     : null;
   return (
     <>
-      <ComboField aria-label={label} value={value} onChange={onChange} options={options} pinned={pinned} allLabel={t("accounting.allAccounts")} dir="ltr" aria-invalid={problem ? true : undefined} data-testid={testId} />
+      <ComboField aria-label={label} value={value} onChange={onChange} options={options} pinned={pinned} allLabel={t("accounting.allAccounts")} dir="ltr" aria-invalid={problem ? true : undefined} data-testid={testId} {...cell} />
       {problem ? (
         <p className="mt-0.5 text-xs text-danger" data-testid={testId ? `${testId}-problem` : undefined}>{problem}</p>
       ) : account ? (
