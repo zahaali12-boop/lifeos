@@ -158,7 +158,7 @@ const returnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/pur
 const intelligenceRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/intelligence", component: SupplierIntelligencePage, validateSearch: searchRecord });
 const openLinesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/open-lines", component: OpenOrderLinesPage });
 const analysisRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/analysis", component: PurchaseAnalysisPage });
-const customersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers", component: CustomersPage });
+const customersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers", component: CustomersPage, validateSearch: searchRecord });
 const customer360Route = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers/$partnerId", component: Customer360Page });
 const quotationsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/quotations", component: QuotationsPage, validateSearch: searchRecord });
 const salesOrdersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/orders", component: OrdersPage, validateSearch: searchRecord });

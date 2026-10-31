@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
 import { compare, subtract } from "../../lib/decimal";
-import { followOn, useFollowOnSource, useOpenRecord } from "../../lib/documents";
+import { followOn, useFollowOnSource, useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -22,6 +22,9 @@ import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CurrencyField } from "../CurrencyField";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, purchaseFlow } from "../StatusBar";
+import { QuickCreateButton } from "../QuickCreate";
+import { MoreFields } from "../MoreFields";
+import { usePref } from "../../lib/prefs";
 
 interface OrderForm {
   id: string | null;
@@ -48,7 +51,8 @@ export function PurchaseOrdersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const can = useCan();
-  const { companies, companyId, setCompanyId } = useCompanyContext();
+  const { companies, companyId, setCompanyId, company } = useCompanyContext();
+  const [lastWarehouse, rememberWarehouse] = usePref(`warehouse:${companyId}`);
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [form, setForm] = useState<OrderForm | null>(null);
@@ -188,11 +192,12 @@ export function PurchaseOrdersPage() {
     setProblem(null);
     setForm(o
       ? { id: o.id, partnerId: o.partnerId, currency: o.currency, expectedDate: o.expectedDate ?? "", warehouseId: o.warehouseId ?? "", agreementId: o.agreementId ?? "", notes: o.notes ?? "", customFields: asCustomFieldValues(o.customFields), change, reason: "", lines: o.lines.map((l) => ({ itemCode: l.itemCode, description: l.description ?? "", quantity: String(l.quantity), uom: l.uomCode, price: String(l.unitPrice), supplierId: "", blanketLineId: l.blanketLineId ?? "", dimensions: { ...(l.dimensions ?? {}) } })) }
-      : { id: null, partnerId: "", currency: "", expectedDate: "", warehouseId: "", agreementId: "", notes: "", customFields: {}, change: false, reason: "", lines: [emptyLine()] });
+      : { id: null, partnerId: "", currency: "", expectedDate: "", warehouseId: lastWarehouse, agreementId: "", notes: "", customFields: {}, change: false, reason: "", lines: [emptyLine()] });
   };
-  const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
+  const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { rememberWarehouse(form.warehouseId); save.mutate(form); } };
   const o = detail.data;
 
+  useNewFromUrl("/purchasing/orders", () => { openForm(null); }, Boolean(companyId));
   return (
     <>
       <PageHeader
@@ -228,12 +233,15 @@ export function PurchaseOrdersPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("partners.supplier")} required>
-                  <SelectField value={form.partnerId} onChange={(e) => { setForm({ ...form, partnerId: e.target.value }); }} required data-testid="order-supplier">
-                    <option value="">—</option>
-                    {(suppliers.data ?? []).map((s) => (
-                      <option key={s.partnerId} value={s.partnerId}>{s.partnerCode} · {localized(s.partnerName)}</option>
-                    ))}
-                  </SelectField>
+                  <div className="flex items-start gap-1">
+                    <SelectField className="min-w-0 flex-1" value={form.partnerId} onChange={(e) => { setForm({ ...form, partnerId: e.target.value }); }} required data-testid="order-supplier">
+                      <option value="">—</option>
+                      {(suppliers.data ?? []).map((s) => (
+                        <option key={s.partnerId} value={s.partnerId}>{s.partnerCode} · {localized(s.partnerName)}</option>
+                      ))}
+                    </SelectField>
+                    <QuickCreateButton kind="supplier" companyId={companyId} currency={company?.functionalCurrency ?? ""} onCreated={(c) => { setForm({ ...form, partnerId: c.id }); }} />
+                  </div>
                 </Field>
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
                   <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="order-currency" />
@@ -242,17 +250,19 @@ export function PurchaseOrdersPage() {
                   <TextField type="date" value={form.expectedDate} onChange={(e) => { setForm({ ...form, expectedDate: e.target.value }); }} dir="ltr" data-testid="order-expected" />
                 </Field>
                 <WarehouseSelect warehouses={warehouses.data ?? []} value={form.warehouseId} onChange={(id) => { setForm({ ...form, warehouseId: id }); }} label={t("purchasing.deliverTo")} testId="order-warehouse" />
-                <Field label={t("nav.agreements")}>
-                  <SelectField value={form.agreementId} onChange={(e) => { setForm({ ...form, agreementId: e.target.value }); }} data-testid="order-agreement">
-                    <option value="">—</option>
-                    {(agreements.data ?? []).filter((a) => a.status === "active" && a.partnerId === form.partnerId).map((a) => (
-                      <option key={a.id} value={a.id}>{a.number}</option>
-                    ))}
-                  </SelectField>
-                </Field>
-                <Field label={t("purchasing.notes")}>
-                  <TextareaField value={form.notes} onChange={(e) => { setForm({ ...form, notes: e.target.value }); }} rows={2} />
-                </Field>
+                <MoreFields filled={Boolean(form.agreementId || form.notes)}>
+                  <Field label={t("nav.agreements")}>
+                    <SelectField value={form.agreementId} onChange={(e) => { setForm({ ...form, agreementId: e.target.value }); }} data-testid="order-agreement">
+                      <option value="">—</option>
+                      {(agreements.data ?? []).filter((a) => a.status === "active" && a.partnerId === form.partnerId).map((a) => (
+                        <option key={a.id} value={a.id}>{a.number}</option>
+                      ))}
+                    </SelectField>
+                  </Field>
+                  <Field label={t("purchasing.notes")} className="sm:col-span-2">
+                    <TextareaField value={form.notes} onChange={(e) => { setForm({ ...form, notes: e.target.value }); }} rows={2} />
+                  </Field>
+                </MoreFields>
                 {form.change ? (
                   <Field label={t("purchasing.changeReason")} required>
                     <TextField value={form.reason} onChange={(e) => { setForm({ ...form, reason: e.target.value }); }} required data-testid="change-reason" />

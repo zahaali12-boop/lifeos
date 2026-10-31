@@ -27,7 +27,9 @@
     "nameAr": "Name (Arabic)",
     "back": "Back",
     "typeToNarrow": "{count} more — type to narrow the list",
-    "allEntries": "All"
+    "allEntries": "All",
+    "moreFields": "More fields",
+    "fewerFields": "Fewer fields"
   },
   "entities": {
     "company": "Companies"
@@ -4438,5 +4440,35 @@
   "document": {
     "back": "Back to the list",
     "progress": "Where the document stands"
+  },
+  "quick": {
+    "new": "New",
+    "hint": "Just what the record needs now; the rest can be completed on its own screen later.",
+    "createAndUse": "Create and use",
+    "customer": "New customer",
+    "supplier": "New supplier",
+    "item": "New item",
+    "createItem": "Create item “{code}”",
+    "createCustomer": "Create customer “{name}”",
+    "createSupplier": "Create supplier “{name}”",
+    "groups": {
+      "sales": "Sales",
+      "purchasing": "Purchasing",
+      "money": "Money and books",
+      "masters": "Master data"
+    },
+    "entries": {
+      "quotation": "Quotation",
+      "salesOrder": "Sales order",
+      "salesInvoice": "Sales invoice",
+      "customerReceipt": "Customer receipt",
+      "purchaseOrder": "Purchase order",
+      "supplierInvoice": "Supplier invoice",
+      "supplierPayment": "Supplier payment",
+      "journal": "Journal entry",
+      "customer": "Customer",
+      "supplier": "Supplier",
+      "item": "Item"
+    }
   }
 }

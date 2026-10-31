@@ -7,7 +7,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
-import { followOn, useOpenRecord } from "../../lib/documents";
+import { followOn, useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -19,6 +19,9 @@ import { emptySalesLine, Money, money, orderLineBodies, SalesLinesEditor, SalesL
 import { CurrencyField } from "../CurrencyField";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, salesFlow } from "../StatusBar";
+import { QuickCreateButton } from "../QuickCreate";
+import { MoreFields } from "../MoreFields";
+import { usePref } from "../../lib/prefs";
 
 interface OrderForm {
   partnerId: string;
@@ -38,7 +41,8 @@ export function OrdersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const can = useCan();
-  const { companies, companyId, setCompanyId } = useCompanyContext();
+  const { companies, companyId, setCompanyId, company } = useCompanyContext();
+  const [lastWarehouse, rememberWarehouse] = usePref(`warehouse:${companyId}`);
   const costCentres = useLineDimensions(companyId);
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
@@ -111,10 +115,11 @@ export function OrdersPage() {
     [t],
   );
 
-  const submitCreate = (event: FormEvent): void => { event.preventDefault(); if (creating) { create.mutate(creating); } };
+  const submitCreate = (event: FormEvent): void => { event.preventDefault(); if (creating) { rememberWarehouse(creating.warehouseId); create.mutate(creating); } };
   const o = detail.data;
   const hasBackorders = Boolean(o?.lines.some((l) => l.status === "backordered"));
 
+  useNewFromUrl("/sales/orders", () => { setProblem(null); setCreating({ ...emptyForm(), warehouseId: lastWarehouse }); }, Boolean(companyId));
   return (
     <>
       <PageHeader
@@ -122,7 +127,7 @@ export function OrdersPage() {
         description={t("sales.ordersDescription")}
         actions={
           canManage ? (
-            <Button onClick={() => { setProblem(null); setCreating(emptyForm()); }} disabled={!companyId} data-testid="new-order">
+            <Button onClick={() => { setProblem(null); setCreating({ ...emptyForm(), warehouseId: lastWarehouse }); }} disabled={!companyId} data-testid="new-order">
               <Plus aria-hidden="true" />
               {t("sales.newOrder")}
             </Button>
@@ -152,12 +157,15 @@ export function OrdersPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("sales.customer")} required>
-                  <SelectField value={creating.partnerId} onChange={(e) => { setCreating({ ...creating, partnerId: e.target.value }); }} required data-testid="order-customer">
-                    <option value="">—</option>
-                    {(customers.data ?? []).map((c) => (
-                      <option key={c.partnerId} value={c.partnerId}>{c.partnerCode} · {localized(c.partnerName)}</option>
-                    ))}
-                  </SelectField>
+                  <div className="flex items-start gap-1">
+                    <SelectField className="min-w-0 flex-1" value={creating.partnerId} onChange={(e) => { setCreating({ ...creating, partnerId: e.target.value }); }} required data-testid="order-customer">
+                      <option value="">—</option>
+                      {(customers.data ?? []).map((c) => (
+                        <option key={c.partnerId} value={c.partnerId}>{c.partnerCode} · {localized(c.partnerName)}</option>
+                      ))}
+                    </SelectField>
+                    <QuickCreateButton kind="customer" companyId={companyId} currency={company?.functionalCurrency ?? ""} onCreated={(c) => { setCreating({ ...creating, partnerId: c.id }); }} />
+                  </div>
                 </Field>
                 <WarehouseSelect warehouses={warehouses.data ?? []} value={creating.warehouseId} onChange={(id) => { setCreating({ ...creating, warehouseId: id }); }} label={t("sales.shipFrom")} testId="order-warehouse" required />
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
@@ -166,9 +174,11 @@ export function OrdersPage() {
                 <Field label={t("sales.orderDate")}>
                   <TextField type="date" value={creating.orderDate} onChange={(e) => { setCreating({ ...creating, orderDate: e.target.value }); }} dir="ltr" data-testid="order-date" />
                 </Field>
-                <Field label={t("sales.notes")} className="sm:col-span-2">
-                  <TextareaField value={creating.notes} onChange={(e) => { setCreating({ ...creating, notes: e.target.value }); }} rows={2} />
-                </Field>
+                <MoreFields filled={Boolean(creating.notes)}>
+                  <Field label={t("sales.notes")} className="sm:col-span-2">
+                    <TextareaField value={creating.notes} onChange={(e) => { setCreating({ ...creating, notes: e.target.value }); }} rows={2} />
+                  </Field>
+                </MoreFields>
               </div>
               <SalesLinesEditor lines={creating.lines} onChange={(lines) => { setCreating({ ...creating, lines }); }} showDropShip costCentres={costCentres} />
               <DialogFooter>

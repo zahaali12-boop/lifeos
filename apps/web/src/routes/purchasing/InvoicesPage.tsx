@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useFollowOnSource, useOpenRecord, type FollowOnSource } from "../../lib/documents";
+import { type FollowOnSource, useFollowOnSource, useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { describeDimensions, DimensionSelects, useLineDimensions } from "../accounting/JournalLineDetails";
@@ -21,6 +21,7 @@ import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CurrencyField } from "../CurrencyField";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, purchaseFlow } from "../StatusBar";
+import { QuickCreateButton } from "../QuickCreate";
 
 type Invoice = components["schemas"]["InvoiceSummary"];
 type Invoicable = components["schemas"]["InvoicableLine"];
@@ -70,7 +71,7 @@ function lineFrom(line: Invoicable): InvoiceLineForm {
 export function InvoicesPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { companies, companyId, setCompanyId } = useCompanyContext();
+  const { companies, companyId, setCompanyId, company } = useCompanyContext();
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [form, setForm] = useState<InvoiceForm | null>(null);
@@ -223,6 +224,7 @@ export function InvoicesPage() {
   const i = detail.data;
   const latestMatch = i?.matches[0];
 
+  useNewFromUrl("/purchasing/invoices", () => { openNew(); }, Boolean(companyId));
   return (
     <>
       <PageHeader
@@ -258,12 +260,15 @@ export function InvoicesPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-4">
                 <Field label={t("partners.supplier")} required>
-                  <SelectField value={form.partnerId} onChange={(e) => { setForm({ ...form, partnerId: e.target.value, lines: form.lines.filter((l) => l.kind === "expense") }); }} required disabled={Boolean(form.id)} data-testid="invoice-supplier">
-                    <option value="">—</option>
-                    {(suppliers.data ?? []).map((s) => (
-                      <option key={s.partnerId} value={s.partnerId}>{s.partnerCode} · {localized(s.partnerName)}</option>
-                    ))}
-                  </SelectField>
+                  <div className="flex items-start gap-1">
+                    <SelectField className="min-w-0 flex-1" value={form.partnerId} onChange={(e) => { setForm({ ...form, partnerId: e.target.value, lines: form.lines.filter((l) => l.kind === "expense") }); }} required disabled={Boolean(form.id)} data-testid="invoice-supplier">
+                      <option value="">—</option>
+                      {(suppliers.data ?? []).map((s) => (
+                        <option key={s.partnerId} value={s.partnerId}>{s.partnerCode} · {localized(s.partnerName)}</option>
+                      ))}
+                    </SelectField>
+                    <QuickCreateButton kind="supplier" companyId={companyId} currency={company?.functionalCurrency ?? ""} onCreated={(c) => { setForm({ ...form, partnerId: c.id, lines: form.lines.filter((l) => l.kind === "expense") }); }} />
+                  </div>
                 </Field>
                 <Field label={t("purchasing.kind")}>
                   <SelectField value={form.kind} onChange={(e) => { setForm({ ...form, kind: e.target.value, lines: e.target.value === "expense" ? form.lines.filter((l) => l.kind === "expense") : e.target.value === "debit_note" ? form.lines.filter((l) => l.kind === "expense" || l.kind === "return") : form.lines.filter((l) => l.kind !== "return") }); }} data-testid="invoice-kind">

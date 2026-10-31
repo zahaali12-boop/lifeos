@@ -1,4 +1,5 @@
 import { cn } from "@quicker/ui";
+import { Plus } from "lucide-react";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -25,6 +26,9 @@ type ComboFieldProps = Omit<ComponentProps<typeof TextField>, "value" | "onChang
   separator?: string;
   /** Called with what is typed, for a picker whose options come from a search. */
   onQueryChange?: (query: string) => void;
+  /** Offers to create what was typed when nothing matches it exactly; the picker then calls this instead of choosing. */
+  onCreate?: ((typed: string) => void) | undefined;
+  createLabel?: ((typed: string) => string) | undefined;
   "data-testid"?: string | undefined;
 };
 
@@ -42,7 +46,9 @@ function hostOf(input: HTMLElement): HTMLElement {
  * so typing a code still works as before. The value stays plain text: anything can be typed, the list only helps.
  * An ARIA combobox with a listbox (WAI-ARIA 1.2), mirrored right to left.
  */
-export function ComboField({ value, onChange, options, pinned, allLabel, transform, separator, onQueryChange, className, onFocus, onBlur, onKeyDown, onMouseDown, "data-testid": testId, ...props }: ComboFieldProps) {
+const CREATE = "\u0000create";
+
+export function ComboField({ value, onChange, options, pinned, allLabel, transform, separator, onQueryChange, onCreate, createLabel, className, onFocus, onBlur, onKeyDown, onMouseDown, "data-testid": testId, ...props }: ComboFieldProps) {
   const { t, i18n } = useTranslation();
   const rtl = i18n.dir() === "rtl";
   const baseId = useId();
@@ -73,8 +79,12 @@ export function ComboField({ value, onChange, options, pinned, allLabel, transfo
     if (rest.length > 0) {
       result.push({ key: "all", label: top.length > 0 ? (allLabel ?? null) : null, options: rest.slice(0, MAX_SHOWN) });
     }
+    // What was typed can be made on the spot when it matches nothing exactly.
+    if (onCreate && typed && query && !options.some((o) => o.value.toLocaleLowerCase() === needle)) {
+      result.push({ key: "create", label: null, options: [{ value: CREATE, label: createLabel ? createLabel(query) : query }] });
+    }
     return { result, more: Math.max(0, rest.length - MAX_SHOWN) };
-  }, [options, pinned, allLabel, byValue, typed, needle]);
+  }, [options, pinned, allLabel, byValue, typed, needle, onCreate, createLabel, query]);
   const flat = useMemo(() => groups.result.flatMap((g) => g.options), [groups]);
   // Shown while there is something to offer; a value typed in full is a choice made, so the list gets out of the way
   // (also when the options arrive after the typing, from a search).
@@ -140,6 +150,12 @@ export function ComboField({ value, onChange, options, pinned, allLabel, transfo
     setOpen(true);
   };
   const choose = (option: ComboOption): void => {
+    if (option.value === CREATE) {
+      setOpen(false);
+      setTyped(false);
+      onCreate?.(query);
+      return;
+    }
     const next = separator ? [...tokens.slice(0, -1), (tokens.length > 1 ? " " : "") + option.value].join(separator) : option.value;
     onChange(next);
     onQueryChange?.("");
@@ -209,13 +225,14 @@ export function ComboField({ value, onChange, options, pinned, allLabel, transfo
               <div
                 key={option.value}
                 id={`${baseId}-opt-${i}`}
+                data-testid={option.value === CREATE && testId ? `${testId}-create` : undefined}
                 role="option"
                 aria-selected={selected}
                 onMouseEnter={() => { setActive(i); }}
                 onClick={() => { choose(option); }}
                 className={cn("flex cursor-pointer items-baseline gap-2 px-3 py-1.5", i === active ? "bg-surface-sunken" : "", selected ? "font-medium text-accent" : "text-fg")}
               >
-                <span className={option.label ? "shrink-0 font-mono text-xs" : "min-w-0 flex-1 truncate"} dir={option.label ? "ltr" : "auto"}>{option.value}</span>
+                {option.value === CREATE ? <Plus className="size-3.5 shrink-0 text-accent" aria-hidden="true" /> : <span className={option.label ? "shrink-0 font-mono text-xs" : "min-w-0 flex-1 truncate"} dir={option.label ? "ltr" : "auto"}>{option.value}</span>}
                 {option.label ? <span className="min-w-0 flex-1 truncate">{option.label}</span> : null}
                 {option.detail ? <span className="shrink-0 text-xs text-fg-subtle">{option.detail}</span> : null}
               </div>

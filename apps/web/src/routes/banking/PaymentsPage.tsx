@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
@@ -18,6 +18,7 @@ import { num, useSuppliers } from "../purchasing/shared";
 import { RecordActivity } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { CurrencyField } from "../CurrencyField";
+import { usePref } from "../../lib/prefs";
 
 type Payment = components["schemas"]["PaymentSummary"];
 
@@ -122,7 +123,8 @@ export function PaymentsPage() {
     [t],
   );
 
-  const blank = (): PaymentForm => ({ id: null, kind: "supplier_payment", partnerId: "", bankAccountId: "", paymentDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", customFields: {}, lines: [] });
+  const [lastBank, rememberBank] = usePref(`bank:${companyId}`);
+  const blank = (): PaymentForm => ({ id: null, kind: "supplier_payment", partnerId: "", bankAccountId: lastBank, paymentDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", customFields: {}, lines: [] });
   const patchLine = (index: number, amount: string): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, amount } : l)) }); } };
   const addItem = (id: string): void => {
     const row = (payable.data ?? []).find((o) => o.item.id === id);
@@ -131,13 +133,14 @@ export function PaymentsPage() {
     }
     setForm({ ...form, currency: row.item.currency, lines: [...form.lines, { openItemId: id, label: `${row.item.documentNumber} · ${formatMoney(row.item.remainingTc, row.item.currency)}`, remaining: Number(row.item.remainingTc), amount: String(row.item.remainingTc) }] });
   };
-  const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
+  const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { rememberBank(form.bankAccountId); save.mutate(form); } };
   const bank = form ? (banks.data ?? []).find((b) => b.id === form.bankAccountId) : undefined;
   const supplierCurrency = form ? ((suppliers.data ?? []).find((s) => s.partnerId === form.partnerId)?.currency ?? "") : "";
   const paymentCurrency = form ? (form.currency !== "" ? form.currency : supplierCurrency) : "";
   const needsBankAmount = bank !== undefined && paymentCurrency !== "" && bank.currency !== paymentCurrency;
   const p = detail.data;
 
+  useNewFromUrl("/banking/payments", () => { setProblem(null); setForm(blank()); }, Boolean(companyId));
   return (
     <>
       <PageHeader

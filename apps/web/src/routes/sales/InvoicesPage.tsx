@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useFollowOnSource, useOpenRecord, type FollowOnSource } from "../../lib/documents";
+import { type FollowOnSource, useFollowOnSource, useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -23,6 +23,7 @@ import { useCompanyCustomers } from "./pricing/shared";
 import { money, Money, num, SalesStatus } from "./shared";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, salesFlow } from "../StatusBar";
+import { QuickCreateButton } from "../QuickCreate";
 
 type Invoice = components["schemas"]["SalesInvoiceSummary"];
 type Invoicable = components["schemas"]["InvoicableSalesLine"];
@@ -79,7 +80,7 @@ export function InvoicesPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const can = useCan();
-  const { companies, companyId, setCompanyId } = useCompanyContext();
+  const { companies, companyId, setCompanyId, company } = useCompanyContext();
   const [status, setStatus] = useState("");
   const [kindFilter, setKindFilter] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
@@ -258,6 +259,7 @@ export function InvoicesPage() {
   const openTotal = i ? i.openItems.reduce((sum, o) => sum + Number(o.remainingTc), 0) : 0;
   const commissionTotal = i?.commissions?.reduce((sum, c) => (c.status === "accrued" ? sum + Number(c.commissionAmount) : sum), 0) ?? 0;
 
+  useNewFromUrl("/sales/invoices", () => { openNew(); }, Boolean(companyId));
   return (
     <>
       <PageHeader
@@ -303,12 +305,15 @@ export function InvoicesPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-4">
                 <Field label={t("sales.customer")} required>
-                  <SelectField value={form.partnerId} onChange={(e) => { setForm({ ...form, partnerId: e.target.value, creditsInvoiceId: "", lines: form.lines.filter((l) => pricedHere(l.kind)) }); }} required disabled={Boolean(form.id)} data-testid="invoice-customer">
-                    <option value="">—</option>
-                    {(customers.data ?? []).map((c) => (
-                      <option key={c.partnerId} value={c.partnerId}>{c.partnerCode} · {localized(c.partnerName)}</option>
-                    ))}
-                  </SelectField>
+                  <div className="flex items-start gap-1">
+                    <SelectField className="min-w-0 flex-1" value={form.partnerId} onChange={(e) => { setForm({ ...form, partnerId: e.target.value, creditsInvoiceId: "", lines: form.lines.filter((l) => pricedHere(l.kind)) }); }} required disabled={Boolean(form.id)} data-testid="invoice-customer">
+                      <option value="">—</option>
+                      {(customers.data ?? []).map((c) => (
+                        <option key={c.partnerId} value={c.partnerId}>{c.partnerCode} · {localized(c.partnerName)}</option>
+                      ))}
+                    </SelectField>
+                    <QuickCreateButton kind="customer" companyId={companyId} currency={company?.functionalCurrency ?? ""} onCreated={(c) => { setForm({ ...form, partnerId: c.id, creditsInvoiceId: "", lines: form.lines.filter((l) => pricedHere(l.kind)) }); }} />
+                  </div>
                 </Field>
                 <Field label={t("sales.invoicing.customerReference")} description={t("sales.invoicing.customerReferenceHint")}>
                   <TextField value={form.customerReference} onChange={(e) => { setForm({ ...form, customerReference: e.target.value }); }} dir="ltr" data-testid="invoice-reference" />

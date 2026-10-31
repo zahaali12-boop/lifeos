@@ -19,6 +19,7 @@ import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { CurrencyField } from "../CurrencyField";
 import { CodeField } from "../CodeField";
+import { useNewFromUrl } from "../../lib/documents";
 
 interface ItemForm {
   code: string;
@@ -153,6 +154,7 @@ export function ItemsPage() {
     }
   };
 
+  useNewFromUrl("/inventory/items", () => { setProblem(null); setEditing({ id: null, form: empty }); });
   return (
     <>
       <PageHeader

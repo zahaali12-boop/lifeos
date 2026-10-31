@@ -27,7 +27,9 @@
     "nameAr": "الاسم (بالعربية)",
     "back": "رجوع",
     "typeToNarrow": "{count} أخرى — اكتب لتضييق القائمة",
-    "allEntries": "الكل"
+    "allEntries": "الكل",
+    "moreFields": "حقول إضافية",
+    "fewerFields": "حقول أقل"
   },
   "entities": {
     "company": "الشركات"
@@ -4438,5 +4440,35 @@
   "document": {
     "back": "العودة إلى القائمة",
     "progress": "موقع المستند في مساره"
+  },
+  "quick": {
+    "new": "جديد",
+    "hint": "ما يحتاجه السجل الآن فقط، ويمكن إكمال الباقي لاحقًا من شاشته.",
+    "createAndUse": "إنشاء واستخدام",
+    "customer": "عميل جديد",
+    "supplier": "مورد جديد",
+    "item": "صنف جديد",
+    "createItem": "إنشاء الصنف “{code}”",
+    "createCustomer": "إنشاء العميل “{name}”",
+    "createSupplier": "إنشاء المورد “{name}”",
+    "groups": {
+      "sales": "المبيعات",
+      "purchasing": "المشتريات",
+      "money": "المال والدفاتر",
+      "masters": "البيانات الأساسية"
+    },
+    "entries": {
+      "quotation": "عرض سعر",
+      "salesOrder": "أمر بيع",
+      "salesInvoice": "فاتورة مبيعات",
+      "customerReceipt": "مقبوضات عميل",
+      "purchaseOrder": "أمر شراء",
+      "supplierInvoice": "فاتورة مورد",
+      "supplierPayment": "دفعة لمورد",
+      "journal": "قيد يومية",
+      "customer": "عميل",
+      "supplier": "مورد",
+      "item": "صنف"
+    }
   }
 }

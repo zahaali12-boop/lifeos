@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -20,6 +20,7 @@ import { useCompanyCustomers } from "../sales/pricing/shared";
 import { RecordActivity } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { CurrencyField } from "../CurrencyField";
+import { usePref } from "../../lib/prefs";
 
 type Receipt = components["schemas"]["PaymentSummary"];
 
@@ -137,7 +138,8 @@ export function ReceiptsPage() {
     [t],
   );
 
-  const blank = (): ReceiptForm => ({ id: null, kind: "customer_receipt", partnerId: "", bankAccountId: "", receiptDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", whtCodeId: "", customFields: {}, lines: [] });
+  const [lastBank, rememberBank] = usePref(`bank:${companyId}`);
+  const blank = (): ReceiptForm => ({ id: null, kind: "customer_receipt", partnerId: "", bankAccountId: lastBank, receiptDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", whtCodeId: "", customFields: {}, lines: [] });
   const patchLine = (index: number, amount: string): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, amount } : l)) }); } };
   const addItem = (id: string): void => {
     const row = (receivable.data ?? []).find((o) => o.item.id === id);
@@ -146,7 +148,7 @@ export function ReceiptsPage() {
     }
     setForm({ ...form, currency: row.item.currency, lines: [...form.lines, { openItemId: id, label: `${row.item.documentNumber} · ${formatMoney(row.item.remainingTc, row.item.currency)}`, remaining: Number(row.item.remainingTc), amount: String(row.item.remainingTc) }] });
   };
-  const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { save.mutate(form); } };
+  const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { rememberBank(form.bankAccountId); save.mutate(form); } };
   const bank = form ? (banks.data ?? []).find((b) => b.id === form.bankAccountId) : undefined;
   const customerCurrency = form ? ((customers.data ?? []).find((c) => c.partnerId === form.partnerId)?.currency ?? "") : "";
   const receiptCurrency = form ? (form.currency !== "" ? form.currency : customerCurrency) : "";
@@ -154,6 +156,7 @@ export function ReceiptsPage() {
   const collectible = (receivable.data ?? []).filter((o) => Number(o.item.originalTc) > 0 && !o.item.onHold);
   const p = detail.data;
 
+  useNewFromUrl("/banking/receipts", () => { setProblem(null); setForm(blank()); }, Boolean(companyId));
   return (
     <>
       <PageHeader

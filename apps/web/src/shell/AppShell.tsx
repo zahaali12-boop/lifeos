@@ -10,6 +10,7 @@ import { formatNumber, setDigitStyle, useDigitStyle } from "../lib/format";
 import { clearSession, useSession } from "../session/session";
 import { CommandPalette } from "./CommandPalette";
 import { navigation } from "./navigation";
+import { NewMenu } from "./NewMenu";
 import { ShortcutsOverlay } from "./ShortcutsOverlay";
 import { SidebarNav } from "./SidebarNav";
 import { StepUpDialog } from "./StepUpDialog";
@@ -138,6 +139,7 @@ export function AppShell() {
             <TopNav items={visibleNavigation} location={location} />
           </div>
           <div className="ms-auto flex items-center gap-0.5">
+            <NewMenu permissions={permissions} />
             <Button variant="secondary" className="hidden h-8 w-52 justify-start gap-2 text-fg-muted xl:inline-flex" onClick={() => { setPaletteOpen(true); }}>
               <Search aria-hidden="true" />
               <span className="flex-1 truncate text-start">{t("shell.search")}</span>

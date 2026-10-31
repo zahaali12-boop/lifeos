@@ -16,6 +16,7 @@ import { CompanyFilter, useCompanyContext } from "../inventory/shared";
 import { CustomerAccountFields, customerAccountBody, emptyCustomerAccount, type CustomerAccountForm } from "./CustomerAccountFields";
 import { CreditBadge, money, useSalesReps, type CustomerAccount } from "./shared";
 import { CodeField } from "../CodeField";
+import { useNewFromUrl } from "../../lib/documents";
 
 interface PartnerForm {
   code: string;
@@ -92,6 +93,7 @@ export function CustomersPage() {
     }
   };
 
+  useNewFromUrl("/sales/customers", () => { setProblem(null); setCreating({ partner: emptyPartner(), account: emptyCustomerAccount(company?.functionalCurrency ?? "") }); }, Boolean(companyId));
   return (
     <>
       <PageHeader

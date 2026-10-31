@@ -22,6 +22,7 @@ import { JournalImportDialog } from "./JournalImport";
 import { AccountCodeField, costCentre, CostCentreSelect, costCentreText, emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
 import { Amount, CompanySelect, StatusBadge, today, useCompanies, useCompanySelection } from "./shared";
 import { CurrencyField } from "../CurrencyField";
+import { useNewFromUrl } from "../../lib/documents";
 
 type Journal = components["schemas"]["ManualJournalSummary"];
 
@@ -315,6 +316,7 @@ export function JournalsPage() {
     setEditing({ ...editing, form: { ...editing.form, lines } });
   };
 
+  useNewFromUrl("/accounting/journals", () => { setProblem(null); setEditing({ id: null, form: emptyForm(company?.functionalCurrency ?? "IQD") }); }, Boolean(companyId));
   return (
     <>
       <PageHeader

@@ -7,7 +7,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
@@ -19,6 +19,8 @@ import { emptySalesLine, Money, money, salesLineBodies, SalesLinesEditor, SalesL
 import { CurrencyField } from "../CurrencyField";
 import { DocumentView } from "../DocumentView";
 import { StatusBar, salesFlow } from "../StatusBar";
+import { QuickCreateButton } from "../QuickCreate";
+import { MoreFields } from "../MoreFields";
 
 interface QuotationForm {
   partnerId: string;
@@ -37,7 +39,7 @@ export function QuotationsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const can = useCan();
-  const { companies, companyId, setCompanyId } = useCompanyContext();
+  const { companies, companyId, setCompanyId, company } = useCompanyContext();
   const costCentres = useLineDimensions(companyId);
   const [status, setStatus] = useState("");
   const [problem, setProblem] = useState<FormProblem | null>(null);
@@ -108,6 +110,7 @@ export function QuotationsPage() {
   const q = detail.data;
   const expired = Boolean(q?.isExpired);
 
+  useNewFromUrl("/sales/quotations", () => { setProblem(null); setCreating(emptyForm()); }, Boolean(companyId));
   return (
     <>
       <PageHeader
@@ -145,12 +148,15 @@ export function QuotationsPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label={t("sales.customer")} required>
-                  <SelectField value={creating.partnerId} onChange={(e) => { setCreating({ ...creating, partnerId: e.target.value }); }} required data-testid="quotation-customer">
-                    <option value="">—</option>
-                    {(customers.data ?? []).map((c) => (
-                      <option key={c.partnerId} value={c.partnerId}>{c.partnerCode} · {localized(c.partnerName)}</option>
-                    ))}
-                  </SelectField>
+                  <div className="flex items-start gap-1">
+                    <SelectField className="min-w-0 flex-1" value={creating.partnerId} onChange={(e) => { setCreating({ ...creating, partnerId: e.target.value }); }} required data-testid="quotation-customer">
+                      <option value="">—</option>
+                      {(customers.data ?? []).map((c) => (
+                        <option key={c.partnerId} value={c.partnerId}>{c.partnerCode} · {localized(c.partnerName)}</option>
+                      ))}
+                    </SelectField>
+                    <QuickCreateButton kind="customer" companyId={companyId} currency={company?.functionalCurrency ?? ""} onCreated={(c) => { setCreating({ ...creating, partnerId: c.id }); }} />
+                  </div>
                 </Field>
                 <Field label={t("partners.currency")} description={t("purchasing.currencyHelp")}>
                   <CurrencyField value={creating.currency} onChange={(code) => { setCreating({ ...creating, currency: code }); }} allowEmpty data-testid="quotation-currency" />
@@ -158,12 +164,14 @@ export function QuotationsPage() {
                 <Field label={t("sales.quoteDate")}>
                   <TextField type="date" value={creating.quoteDate} onChange={(e) => { setCreating({ ...creating, quoteDate: e.target.value }); }} dir="ltr" data-testid="quotation-date" />
                 </Field>
-                <Field label={t("sales.validUntil")}>
-                  <TextField type="date" value={creating.validUntil} onChange={(e) => { setCreating({ ...creating, validUntil: e.target.value }); }} dir="ltr" data-testid="quotation-valid-until" />
-                </Field>
-                <Field label={t("sales.notes")} className="sm:col-span-2">
-                  <TextareaField value={creating.notes} onChange={(e) => { setCreating({ ...creating, notes: e.target.value }); }} rows={2} />
-                </Field>
+                <MoreFields filled={Boolean(creating.validUntil || creating.notes)}>
+                  <Field label={t("sales.validUntil")}>
+                    <TextField type="date" value={creating.validUntil} onChange={(e) => { setCreating({ ...creating, validUntil: e.target.value }); }} dir="ltr" data-testid="quotation-valid-until" />
+                  </Field>
+                  <Field label={t("sales.notes")} className="sm:col-span-2">
+                    <TextareaField value={creating.notes} onChange={(e) => { setCreating({ ...creating, notes: e.target.value }); }} rows={2} />
+                  </Field>
+                </MoreFields>
               </div>
               <SalesLinesEditor lines={creating.lines} onChange={(lines) => { setCreating({ ...creating, lines }); }} costCentres={costCentres} />
               <DialogFooter>

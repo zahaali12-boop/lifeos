@@ -18,6 +18,7 @@ import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } f
 import { covers } from "../../lib/permissions";
 import { CurrencyField } from "../CurrencyField";
 import { CodeField } from "../CodeField";
+import { useNewFromUrl } from "../../lib/documents";
 
 type SupplierAccount = components["schemas"]["SupplierAccountSummary"];
 
@@ -147,6 +148,7 @@ export function SuppliersPage() {
     }
   };
 
+  useNewFromUrl("/purchasing/suppliers", () => { setProblem(null); setCreating({ partner: emptyPartner(), account: emptyAccount(functionalCurrency) }); }, Boolean(companyId));
   return (
     <>
       <PageHeader

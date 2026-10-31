@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 /** The list screens that open one record from the URL (?open=id). */
 export type RecordScreen =
@@ -106,4 +106,22 @@ export function useFollowOnSource(screen: RecordScreen): [FollowOnSource | null,
   }, [raw]);
   const clear = useCallback(() => { void navigate({ to: screen, search: {}, replace: true }); }, [navigate, screen]);
   return [source, clear];
+}
+
+/**
+ * A screen asked to open its create form from the URL (?new=1, as the "New" menu and the palette send): opens it once
+ * the screen is ready (its company chosen) and clears the parameter so a reload does not open it again.
+ */
+export function useNewFromUrl(screen: string, open: () => void, ready = true): void {
+  const search: { new?: string } = useSearch({ strict: false });
+  const navigate = useNavigate();
+  const wanted = search.new === "1";
+  const opener = useRef(open);
+  opener.current = open;
+  useEffect(() => {
+    if (wanted && ready) {
+      opener.current();
+      void navigate({ to: screen, search: {}, replace: true });
+    }
+  }, [wanted, ready, navigate, screen]);
 }
