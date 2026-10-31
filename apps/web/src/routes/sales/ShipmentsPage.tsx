@@ -16,6 +16,8 @@ import { Allocations, PickProgress, PickStatus } from "../inventory/picking";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, SalesStatus, type Shipment, type SalesOrderLine } from "./shared";
 import { PackagesEditor, PackagesTable } from "./ShipmentPackages";
+import { DocumentView } from "../DocumentView";
+import { StatusBar, salesFlow } from "../StatusBar";
 
 interface ShipmentForm {
   orderId: string;
@@ -246,16 +248,52 @@ export function ShipmentsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setReversing(false); setCancellingPick(false); setPacking(false); setCarrierForm(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-4xl">
+      {openId ? <DocumentView onClose={() => { setOpenId(null); setReversing(false); setCancellingPick(false); setPacking(false); setCarrierForm(null); }} closeLabel={t("common.close")} testId="shipment-detail" title={s?.number ?? ""} subtitle={s ? `${s.partnerCode} · ${localized(s.partnerName)}` : undefined}>
           {s ? (
-            <div className="flex flex-col gap-4" data-testid="shipment-detail">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <span dir="ltr">{s.number}</span>
-                  <SalesStatus status={s.status} />
-                </DialogTitle>
-              </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <StatusBar {...salesFlow("shipment", s.status, t)} actions={(
+                <>
+                {canManage && s.status !== "reversed" && !carrierForm ? (
+                  <Button variant="ghost" onClick={() => { setCarrierForm({ carrier: s.carrier ?? "", trackingNumber: s.trackingNumber ?? "" }); }} data-testid="edit-carrier">
+                    <Truck aria-hidden="true" />
+                    {t("packing.carrierDetails")}
+                  </Button>
+                ) : null}
+                {s.status === "draft" && canManage ? (
+                  <Button variant="secondary" onClick={() => { release.mutate(s.id); }} loading={release.isPending} data-testid="release-shipment">
+                    <ScanLine aria-hidden="true" />
+                    {t("picking.release")}
+                  </Button>
+                ) : null}
+                {s.status === "picking" && canManage && !cancellingPick ? <Button variant="secondary" onClick={() => { setCancellingPick(true); setPickCancelReason(""); }} data-testid="start-cancel-picking">{t("picking.takeBack")}</Button> : null}
+                {cancellingPick ? <Button variant="danger" onClick={() => { cancelPicking.mutate({ id: s.id, reason: pickCancelReason }); }} loading={cancelPicking.isPending} disabled={!pickCancelReason.trim()} data-testid="confirm-cancel-picking">{t("picking.confirmTakeBack")}</Button> : null}
+                {(s.status === "draft" || (s.status === "picking" && s.pickListStatus === "picked")) && canPost ? <Button onClick={() => { post.mutate(s.id); }} loading={post.isPending} data-testid="post-shipment">{s.status === "picking" ? t("picking.postPicked") : t("sales.post")}</Button> : null}
+                {s.status === "posted" && can("sales.invoice.manage") ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/invoices", search: followOn("sales_shipment", s.id) }); }} data-testid="create-invoice">
+                    <ReceiptText aria-hidden="true" />
+                    {t("sales.createInvoice")}
+                  </Button>
+                ) : null}
+                {s.status === "posted" && can("sales.return.manage") && s.lines.some((l) => Number(l.qtyReturned) < Number(l.quantity)) ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/returns", search: followOn("sales_shipment", s.id) }); }} data-testid="create-return">
+                    <Undo2 aria-hidden="true" />
+                    {t("sales.returns.returnGoods")}
+                  </Button>
+                ) : null}
+                {s.status === "posted" && canPost && !reversing ? <Button variant="secondary" onClick={() => { setReversing(true); setReversalReason(""); }} data-testid="start-reverse-shipment">{t("sales.reverse")}</Button> : null}
+                {reversing ? <Button onClick={() => { reverse.mutate({ id: s.id, reason: reversalReason }); }} loading={reverse.isPending} data-testid="confirm-reverse-shipment">{t("sales.confirmReverse")}</Button> : null}
+                </>
+              )} />
+              {cancellingPick ? (
+                <Field label={t("picking.takeBackReason")} required>
+                  <TextField value={pickCancelReason} onChange={(e) => { setPickCancelReason(e.target.value); }} required data-testid="cancel-picking-reason" />
+                </Field>
+              ) : null}
+              {reversing ? (
+                <Field label={t("sales.reversalReason")} required>
+                  <TextField value={reversalReason} onChange={(e) => { setReversalReason(e.target.value); }} required data-testid="reversal-reason" />
+                </Field>
+              ) : null}
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("sales.order"), <span key="order" dir="ltr">{s.orderNumber}</span>],
@@ -329,51 +367,9 @@ export function ShipmentsPage() {
                   </div>
                 </div>
               ) : null}
-              {cancellingPick ? (
-                <Field label={t("picking.takeBackReason")} required>
-                  <TextField value={pickCancelReason} onChange={(e) => { setPickCancelReason(e.target.value); }} required data-testid="cancel-picking-reason" />
-                </Field>
-              ) : null}
-              {reversing ? (
-                <Field label={t("sales.reversalReason")} required>
-                  <TextField value={reversalReason} onChange={(e) => { setReversalReason(e.target.value); }} required data-testid="reversal-reason" />
-                </Field>
-              ) : null}
-              <DialogFooter>
-                {canManage && s.status !== "reversed" && !carrierForm ? (
-                  <Button variant="ghost" onClick={() => { setCarrierForm({ carrier: s.carrier ?? "", trackingNumber: s.trackingNumber ?? "" }); }} data-testid="edit-carrier">
-                    <Truck aria-hidden="true" />
-                    {t("packing.carrierDetails")}
-                  </Button>
-                ) : null}
-                {s.status === "draft" && canManage ? (
-                  <Button variant="secondary" onClick={() => { release.mutate(s.id); }} loading={release.isPending} data-testid="release-shipment">
-                    <ScanLine aria-hidden="true" />
-                    {t("picking.release")}
-                  </Button>
-                ) : null}
-                {s.status === "picking" && canManage && !cancellingPick ? <Button variant="secondary" onClick={() => { setCancellingPick(true); setPickCancelReason(""); }} data-testid="start-cancel-picking">{t("picking.takeBack")}</Button> : null}
-                {cancellingPick ? <Button variant="danger" onClick={() => { cancelPicking.mutate({ id: s.id, reason: pickCancelReason }); }} loading={cancelPicking.isPending} disabled={!pickCancelReason.trim()} data-testid="confirm-cancel-picking">{t("picking.confirmTakeBack")}</Button> : null}
-                {(s.status === "draft" || (s.status === "picking" && s.pickListStatus === "picked")) && canPost ? <Button onClick={() => { post.mutate(s.id); }} loading={post.isPending} data-testid="post-shipment">{s.status === "picking" ? t("picking.postPicked") : t("sales.post")}</Button> : null}
-                {s.status === "posted" && can("sales.invoice.manage") ? (
-                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/invoices", search: followOn("sales_shipment", s.id) }); }} data-testid="create-invoice">
-                    <ReceiptText aria-hidden="true" />
-                    {t("sales.createInvoice")}
-                  </Button>
-                ) : null}
-                {s.status === "posted" && can("sales.return.manage") && s.lines.some((l) => Number(l.qtyReturned) < Number(l.quantity)) ? (
-                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/returns", search: followOn("sales_shipment", s.id) }); }} data-testid="create-return">
-                    <Undo2 aria-hidden="true" />
-                    {t("sales.returns.returnGoods")}
-                  </Button>
-                ) : null}
-                {s.status === "posted" && canPost && !reversing ? <Button variant="secondary" onClick={() => { setReversing(true); setReversalReason(""); }} data-testid="start-reverse-shipment">{t("sales.reverse")}</Button> : null}
-                {reversing ? <Button onClick={() => { reverse.mutate({ id: s.id, reason: reversalReason }); }} loading={reverse.isPending} data-testid="confirm-reverse-shipment">{t("sales.confirmReverse")}</Button> : null}
-              </DialogFooter>
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
+      </DocumentView> : null}
     </>
   );
 }

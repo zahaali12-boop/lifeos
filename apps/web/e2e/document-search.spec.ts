@@ -70,16 +70,16 @@ test("English: a receipt and its order found by number, a journal entry's source
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/purchasing\/receipts\?open=/);
   await expect(page.getByTestId("receipt-detail")).toBeVisible();
-  await expect(page.getByRole("dialog")).toContainText(posted.number);
+  await expect(page.getByTestId("document-view")).toContainText(posted.number);
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByTestId("document-view")).toHaveCount(0);
 
   // The order by its full number, from another screen.
   await nav(page, "Items");
   await palette(page, order.number);
   await page.getByTestId("palette-document").filter({ hasText: order.number }).click();
   await expect(page.getByTestId("order-detail")).toBeVisible();
-  await expect(page.getByRole("dialog")).toContainText(order.number);
+  await expect(page.getByTestId("document-view")).toContainText(order.number);
   await page.keyboard.press("Escape");
 
   // The receipt's journal entry names its source, which opens the receipt.

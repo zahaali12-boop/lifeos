@@ -17,6 +17,8 @@ import { useCompanyCustomers } from "./pricing/shared";
 import { useLineDimensions } from "../accounting/JournalLineDetails";
 import { emptySalesLine, Money, money, salesLineBodies, SalesLinesEditor, SalesLinesTable, SalesStatus, type Quotation, type SalesLineForm } from "./shared";
 import { CurrencyField } from "../CurrencyField";
+import { DocumentView } from "../DocumentView";
+import { StatusBar, salesFlow } from "../StatusBar";
 
 interface QuotationForm {
   partnerId: string;
@@ -173,16 +175,28 @@ export function QuotationsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setRejecting(null); setConverting(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-4xl">
+      {openId ? <DocumentView onClose={() => { setOpenId(null); setRejecting(null); setConverting(null); }} closeLabel={t("common.close")} testId="quotation-detail" title={q?.number ?? ""} subtitle={q ? `${q.partnerCode} · ${localized(q.partnerName)}` : undefined}>
           {q ? (
-            <div className="flex flex-col gap-4" data-testid="quotation-detail">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <span dir="ltr">{q.number}</span>
-                  <SalesStatus status={q.status} />
-                </DialogTitle>
-              </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <StatusBar {...salesFlow("quotation", q.status, t)} actions={(
+                <>
+                {q.status === "draft" && canManage ? <Button onClick={() => { act.mutate({ id: q.id, action: "send" }); }} loading={act.isPending} data-testid="send-quotation">{t("sales.send")}</Button> : null}
+                {q.status === "sent" && canManage ? <Button onClick={() => { act.mutate({ id: q.id, action: "accept" }); }} loading={act.isPending} disabled={expired} data-testid="accept-quotation">{t("sales.accept")}</Button> : null}
+                {q.status === "sent" && canManage && rejecting !== q.id ? <Button variant="secondary" onClick={() => { setRejecting(q.id); setRejectReason(""); }} data-testid="start-reject-quotation">{t("sales.reject")}</Button> : null}
+                {rejecting === q.id ? <Button variant="secondary" onClick={() => { act.mutate({ id: q.id, action: "reject", reason: rejectReason }); }} loading={act.isPending} data-testid="confirm-reject-quotation">{t("sales.confirmReject")}</Button> : null}
+                {q.status === "accepted" && !q.orderId && can("sales.order.manage") && converting !== q.id ? <Button onClick={() => { setConverting(q.id); setConvertWarehouse(""); }} data-testid="start-convert-quotation"><ShoppingCart aria-hidden="true" />{t("sales.convertToOrder")}</Button> : null}
+                {converting === q.id ? <Button onClick={() => { convert.mutate({ id: q.id, warehouseId: convertWarehouse }); }} loading={convert.isPending} disabled={!convertWarehouse} data-testid="confirm-convert-quotation">{t("sales.confirmConvert")}</Button> : null}
+                {q.orderId ? <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/orders", search: { open: q.orderId ?? "" } }); }} data-testid="open-converted-order">{t("sales.openOrder")}</Button> : null}
+                </>
+              )} />
+              {rejecting === q.id ? (
+                <Field label={t("sales.rejectionReason")} required>
+                  <TextField value={rejectReason} onChange={(e) => { setRejectReason(e.target.value); }} required data-testid="reject-reason" />
+                </Field>
+              ) : null}
+              {converting === q.id ? (
+                <WarehouseSelect warehouses={warehouses.data ?? []} value={convertWarehouse} onChange={setConvertWarehouse} label={t("sales.shipFrom")} testId="convert-warehouse" required />
+              ) : null}
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("sales.customer"), `${q.partnerCode} · ${localized(q.partnerName)}`],
@@ -192,27 +206,9 @@ export function QuotationsPage() {
                 ...(q.rejectionReason ? [[t("sales.rejectionReason"), q.rejectionReason] as [string, string]] : []),
               ]} />
               <SalesLinesTable lines={q.lines} currency={q.currency} testId="quotation-lines" costCentres={costCentres} />
-              {rejecting === q.id ? (
-                <Field label={t("sales.rejectionReason")} required>
-                  <TextField value={rejectReason} onChange={(e) => { setRejectReason(e.target.value); }} required data-testid="reject-reason" />
-                </Field>
-              ) : null}
-              {converting === q.id ? (
-                <WarehouseSelect warehouses={warehouses.data ?? []} value={convertWarehouse} onChange={setConvertWarehouse} label={t("sales.shipFrom")} testId="convert-warehouse" required />
-              ) : null}
-              <DialogFooter>
-                {q.status === "draft" && canManage ? <Button onClick={() => { act.mutate({ id: q.id, action: "send" }); }} loading={act.isPending} data-testid="send-quotation">{t("sales.send")}</Button> : null}
-                {q.status === "sent" && canManage ? <Button onClick={() => { act.mutate({ id: q.id, action: "accept" }); }} loading={act.isPending} disabled={expired} data-testid="accept-quotation">{t("sales.accept")}</Button> : null}
-                {q.status === "sent" && canManage && rejecting !== q.id ? <Button variant="secondary" onClick={() => { setRejecting(q.id); setRejectReason(""); }} data-testid="start-reject-quotation">{t("sales.reject")}</Button> : null}
-                {rejecting === q.id ? <Button variant="secondary" onClick={() => { act.mutate({ id: q.id, action: "reject", reason: rejectReason }); }} loading={act.isPending} data-testid="confirm-reject-quotation">{t("sales.confirmReject")}</Button> : null}
-                {q.status === "accepted" && !q.orderId && can("sales.order.manage") && converting !== q.id ? <Button onClick={() => { setConverting(q.id); setConvertWarehouse(""); }} data-testid="start-convert-quotation"><ShoppingCart aria-hidden="true" />{t("sales.convertToOrder")}</Button> : null}
-                {converting === q.id ? <Button onClick={() => { convert.mutate({ id: q.id, warehouseId: convertWarehouse }); }} loading={convert.isPending} disabled={!convertWarehouse} data-testid="confirm-convert-quotation">{t("sales.confirmConvert")}</Button> : null}
-                {q.orderId ? <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/orders", search: { open: q.orderId ?? "" } }); }} data-testid="open-converted-order">{t("sales.openOrder")}</Button> : null}
-              </DialogFooter>
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
+      </DocumentView> : null}
     </>
   );
 }

@@ -19,6 +19,8 @@ import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CurrencyField } from "../CurrencyField";
+import { DocumentView } from "../DocumentView";
+import { StatusBar, purchaseFlow } from "../StatusBar";
 
 type Invoice = components["schemas"]["InvoiceSummary"];
 type Invoicable = components["schemas"]["InvoicableLine"];
@@ -358,17 +360,24 @@ export function InvoicesPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setReversal(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-5xl">
+      {openId ? <DocumentView onClose={() => { setOpenId(null); setReversal(null); }} closeLabel={t("common.close")} testId="invoice-detail" title={i?.number ?? ""} subtitle={i ? `${i.partnerCode} · ${localized(i.partnerName)}` : undefined} badges={i ? <>{i.blockKind ? <Badge tone="danger" data-testid="invoice-block">{t(`purchasing.matchStatuses.${i.blockKind}`, { defaultValue: i.blockKind })}</Badge> : null}</> : null}>
           {i ? (
-            <div className="flex flex-col gap-4" data-testid="invoice-detail">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <span dir="ltr">{i.number}</span>
-                  <PurchaseStatus status={i.status} />
-                  {i.blockKind ? <Badge tone="danger" data-testid="invoice-block">{t(`purchasing.matchStatuses.${i.blockKind}`, { defaultValue: i.blockKind })}</Badge> : null}
-                </DialogTitle>
-              </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <StatusBar {...purchaseFlow("invoice", i.status, t, { paid: i.openItems.length > 0 && i.openItems.every((o) => Number(o.remainingTc) === 0) })} actions={(
+                <>
+                {editable(i.status) ? <Button variant="secondary" onClick={() => { openEdit(i); }} data-testid="edit-invoice">{t("common.edit")}</Button> : null}
+                {editable(i.status) ? <Button variant="secondary" onClick={() => { act.mutate({ id: i.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-invoice">{t("purchasing.deleteDraft")}</Button> : null}
+                {editable(i.status) ? <Button onClick={() => { act.mutate({ id: i.id, action: "submit" }); }} loading={act.isPending} data-testid="submit-invoice">{t("purchasing.submit")}</Button> : null}
+                {i.status === "approved" ? <Button onClick={() => { act.mutate({ id: i.id, action: "post" }); }} loading={act.isPending} data-testid="post-invoice">{t("purchasing.postInvoice")}</Button> : null}
+                {i.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-invoice">{t("purchasing.reverse")}</Button> : null}
+                {reversal !== null ? <Button onClick={() => { act.mutate({ id: i.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse">{t("purchasing.reverseNow")}</Button> : null}
+                </>
+              )} />
+              {reversal !== null ? (
+                <Field label={t("purchasing.reversalReason")} required>
+                  <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
+                </Field>
+              ) : null}
               <DocumentFlowBar documentType="purchase_invoice" documentId={i.id} />
               <CustomFieldValuesList entityType="purchase_invoice" values={i.customFields} />
               <FormError message={problem?.message ?? null} />
@@ -512,23 +521,9 @@ export function InvoicesPage() {
                   )}
                 </div>
               ) : null}
-              {reversal !== null ? (
-                <Field label={t("purchasing.reversalReason")} required>
-                  <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
-                </Field>
-              ) : null}
-              <DialogFooter>
-                {editable(i.status) ? <Button variant="secondary" onClick={() => { openEdit(i); }} data-testid="edit-invoice">{t("common.edit")}</Button> : null}
-                {editable(i.status) ? <Button variant="secondary" onClick={() => { act.mutate({ id: i.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-invoice">{t("purchasing.deleteDraft")}</Button> : null}
-                {editable(i.status) ? <Button onClick={() => { act.mutate({ id: i.id, action: "submit" }); }} loading={act.isPending} data-testid="submit-invoice">{t("purchasing.submit")}</Button> : null}
-                {i.status === "approved" ? <Button onClick={() => { act.mutate({ id: i.id, action: "post" }); }} loading={act.isPending} data-testid="post-invoice">{t("purchasing.postInvoice")}</Button> : null}
-                {i.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-invoice">{t("purchasing.reverse")}</Button> : null}
-                {reversal !== null ? <Button onClick={() => { act.mutate({ id: i.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse">{t("purchasing.reverseNow")}</Button> : null}
-              </DialogFooter>
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
+      </DocumentView> : null}
     </>
   );
 }

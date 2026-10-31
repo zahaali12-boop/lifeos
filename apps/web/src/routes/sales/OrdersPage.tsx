@@ -17,6 +17,8 @@ import { useCompanyCustomers } from "./pricing/shared";
 import { useLineDimensions } from "../accounting/JournalLineDetails";
 import { emptySalesLine, Money, money, orderLineBodies, SalesLinesEditor, SalesLinesTable, SalesStatus, type SalesLineForm, type SalesOrder, type SalesOrderLine } from "./shared";
 import { CurrencyField } from "../CurrencyField";
+import { DocumentView } from "../DocumentView";
+import { StatusBar, salesFlow } from "../StatusBar";
 
 interface OrderForm {
   partnerId: string;
@@ -178,16 +180,34 @@ export function OrdersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setCancelling(false); setCancellingLine(null); setLinkingLine(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-5xl">
+      {openId ? <DocumentView onClose={() => { setOpenId(null); setCancelling(false); setCancellingLine(null); setLinkingLine(null); }} closeLabel={t("common.close")} testId="order-detail" title={o?.number ?? ""} subtitle={o ? `${o.partnerCode} · ${localized(o.partnerName)}` : undefined}>
           {o ? (
-            <div className="flex flex-col gap-4" data-testid="order-detail">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <span dir="ltr">{o.number}</span>
-                  <SalesStatus status={o.status} />
-                </DialogTitle>
-              </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <StatusBar {...salesFlow("order", o.status, t)} actions={(
+                <>
+                {o.status === "draft" && canManage ? <Button onClick={() => { act.mutate({ id: o.id, action: "confirm" }); }} loading={act.isPending} data-testid="confirm-order">{t("sales.confirmOrder")}</Button> : null}
+                {o.status === "confirmed" && hasBackorders && canManage ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "retry" }); }} loading={act.isPending} data-testid="retry-backorders"><RefreshCw aria-hidden="true" />{t("sales.retryBackorders")}</Button> : null}
+                {(o.status === "confirmed" || o.status === "partially_shipped") && can("sales.shipment.manage") ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/shipments", search: followOn("sales_order", o.id) }); }} data-testid="create-shipment">
+                    <PackageCheck aria-hidden="true" />
+                    {t("sales.createShipment")}
+                  </Button>
+                ) : null}
+                {(o.status === "confirmed" || o.status === "partially_shipped" || o.status === "shipped") && can("sales.invoice.manage") ? (
+                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/invoices", search: followOn("sales_order", o.id) }); }} data-testid="create-invoice">
+                    <ReceiptText aria-hidden="true" />
+                    {t("sales.createInvoice")}
+                  </Button>
+                ) : null}
+                {o.status !== "cancelled" && canManage && !cancelling ? <Button variant="secondary" onClick={() => { setCancelling(true); setCancelReason(""); }} data-testid="start-cancel-order">{t("sales.cancelOrder")}</Button> : null}
+                {cancelling ? <Button onClick={() => { act.mutate({ id: o.id, action: "cancel", reason: cancelReason }); }} loading={act.isPending} data-testid="confirm-cancel-order">{t("sales.confirmCancel")}</Button> : null}
+                </>
+              )} />
+              {cancelling ? (
+                <Field label={t("sales.cancelReason")} required>
+                  <TextField value={cancelReason} onChange={(e) => { setCancelReason(e.target.value); }} required data-testid="cancel-reason" />
+                </Field>
+              ) : null}
               {o.status === "on_hold" ? (
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger/40 bg-danger-soft px-3 py-2 text-sm text-danger" role="alert" data-testid="credit-hold-banner">
                   <span>{t(`sales.blockKinds.${o.blockKind ?? "credit_limit"}`, { defaultValue: o.blockKind ?? "" })}: {o.blockReason}</span>
@@ -244,33 +264,9 @@ export function OrdersPage() {
                   ))}
                 </div>
               ) : null}
-              {cancelling ? (
-                <Field label={t("sales.cancelReason")} required>
-                  <TextField value={cancelReason} onChange={(e) => { setCancelReason(e.target.value); }} required data-testid="cancel-reason" />
-                </Field>
-              ) : null}
-              <DialogFooter>
-                {o.status === "draft" && canManage ? <Button onClick={() => { act.mutate({ id: o.id, action: "confirm" }); }} loading={act.isPending} data-testid="confirm-order">{t("sales.confirmOrder")}</Button> : null}
-                {o.status === "confirmed" && hasBackorders && canManage ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "retry" }); }} loading={act.isPending} data-testid="retry-backorders"><RefreshCw aria-hidden="true" />{t("sales.retryBackorders")}</Button> : null}
-                {(o.status === "confirmed" || o.status === "partially_shipped") && can("sales.shipment.manage") ? (
-                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/shipments", search: followOn("sales_order", o.id) }); }} data-testid="create-shipment">
-                    <PackageCheck aria-hidden="true" />
-                    {t("sales.createShipment")}
-                  </Button>
-                ) : null}
-                {(o.status === "confirmed" || o.status === "partially_shipped" || o.status === "shipped") && can("sales.invoice.manage") ? (
-                  <Button variant="secondary" onClick={() => { void navigate({ to: "/sales/invoices", search: followOn("sales_order", o.id) }); }} data-testid="create-invoice">
-                    <ReceiptText aria-hidden="true" />
-                    {t("sales.createInvoice")}
-                  </Button>
-                ) : null}
-                {o.status !== "cancelled" && canManage && !cancelling ? <Button variant="secondary" onClick={() => { setCancelling(true); setCancelReason(""); }} data-testid="start-cancel-order">{t("sales.cancelOrder")}</Button> : null}
-                {cancelling ? <Button onClick={() => { act.mutate({ id: o.id, action: "cancel", reason: cancelReason }); }} loading={act.isPending} data-testid="confirm-cancel-order">{t("sales.confirmCancel")}</Button> : null}
-              </DialogFooter>
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
+      </DocumentView> : null}
     </>
   );
 }

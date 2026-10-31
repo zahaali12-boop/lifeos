@@ -3150,7 +3150,8 @@
       "declined": "Declined",
       "open": "Open",
       "consumed": "Consumed",
-      "released": "Released"
+      "released": "Released",
+      "paid": "Paid"
     },
     "lines": "Lines",
     "addLine": "Add line",
@@ -3607,7 +3608,8 @@
       "received": "Received",
       "inspected": "Inspected",
       "credited": "Credited",
-      "closed": "Closed"
+      "closed": "Closed",
+      "paid": "Paid"
     },
     "createInvoice": "Create invoice",
     "invoicing": {
@@ -4432,5 +4434,9 @@
     "useNext": "Use {code}",
     "next": "Next free code: {code}",
     "suggested": "Filled in automatically; you can change it."
+  },
+  "document": {
+    "back": "Back to the list",
+    "progress": "Where the document stands"
   }
 }

@@ -19,6 +19,8 @@ import { num, PurchaseStatus } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordActivity } from "../RecordDiscussion";
+import { DocumentView } from "../DocumentView";
+import { StatusBar, purchaseFlow } from "../StatusBar";
 
 type Receipt = components["schemas"]["ReceiptSummary"];
 type Receivable = components["schemas"]["ReceivableLine"];
@@ -272,16 +274,25 @@ export function ReceiptsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setReversal(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-4xl">
+      {openId ? <DocumentView onClose={() => { setOpenId(null); setReversal(null); }} closeLabel={t("common.close")} testId="receipt-detail" title={r?.number ?? ""} subtitle={r ? `${r.partnerCode} · ${localized(r.partnerName)}` : undefined}>
           {r ? (
-            <div className="flex flex-col gap-4" data-testid="receipt-detail">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <span dir="ltr">{r.number}</span>
-                  <PurchaseStatus status={r.status} />
-                </DialogTitle>
-              </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <StatusBar {...purchaseFlow("receipt", r.status, t)} actions={(
+                <>
+                {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, customFields: asCustomFieldValues(r.customFields), orderId: r.orderId, warehouseId: r.warehouseId, postingDate: r.postingDate, supplierDeliveryNote: r.supplierDeliveryNote ?? "", lines: r.lines.map((l) => ({ orderLineId: l.orderLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", expiresOn: l.expiresOn ?? "", serialNumbers: l.serialNumbers.join(" ") })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
+                {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-receipt">{t("purchasing.deleteDraft")}</Button> : null}
+                {r.status === "draft" ? <Button onClick={() => { act.mutate({ id: r.id, action: "post" }); }} loading={act.isPending} data-testid="post-receipt">{t("purchasing.postReceipt")}</Button> : null}
+                {r.status === "posted" && can("purchasing.invoice.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_receipt", r.id) }); }} data-testid="receipt-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
+                {r.status === "posted" && can("purchasing.return.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/returns", search: followOn("purchase_receipt", r.id) }); }} data-testid="receipt-return-goods"><Undo2 aria-hidden="true" />{t("documentFlow.returnGoods")}</Button> : null}
+                {r.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-receipt">{t("purchasing.reverse")}</Button> : null}
+                {reversal !== null ? <Button onClick={() => { act.mutate({ id: r.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse">{t("purchasing.reverseNow")}</Button> : null}
+                </>
+              )} />
+              {reversal !== null ? (
+                <Field label={t("purchasing.reversalReason")} required>
+                  <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
+                </Field>
+              ) : null}
               <DocumentFlowBar documentType="purchase_receipt" documentId={r.id} />
               <CustomFieldValuesList entityType="purchase_receipt" values={r.customFields} />
               <FormError message={problem?.message ?? null} />
@@ -318,25 +329,10 @@ export function ReceiptsPage() {
                   ))}
                 </TableBody>
               </Table>
-              {reversal !== null ? (
-                <Field label={t("purchasing.reversalReason")} required>
-                  <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
-                </Field>
-              ) : null}
               <RecordActivity entityType="purchase_receipt" entityId={r.id} />
-              <DialogFooter>
-                {r.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: r.id, customFields: asCustomFieldValues(r.customFields), orderId: r.orderId, warehouseId: r.warehouseId, postingDate: r.postingDate, supplierDeliveryNote: r.supplierDeliveryNote ?? "", lines: r.lines.map((l) => ({ orderLineId: l.orderLineId, quantity: String(l.quantity), lotNumber: l.lotNumber ?? "", expiresOn: l.expiresOn ?? "", serialNumbers: l.serialNumbers.join(" ") })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
-                {r.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: r.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-receipt">{t("purchasing.deleteDraft")}</Button> : null}
-                {r.status === "draft" ? <Button onClick={() => { act.mutate({ id: r.id, action: "post" }); }} loading={act.isPending} data-testid="post-receipt">{t("purchasing.postReceipt")}</Button> : null}
-                {r.status === "posted" && can("purchasing.invoice.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_receipt", r.id) }); }} data-testid="receipt-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
-                {r.status === "posted" && can("purchasing.return.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/returns", search: followOn("purchase_receipt", r.id) }); }} data-testid="receipt-return-goods"><Undo2 aria-hidden="true" />{t("documentFlow.returnGoods")}</Button> : null}
-                {r.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-receipt">{t("purchasing.reverse")}</Button> : null}
-                {reversal !== null ? <Button onClick={() => { act.mutate({ id: r.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse">{t("purchasing.reverseNow")}</Button> : null}
-              </DialogFooter>
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
+      </DocumentView> : null}
     </>
   );
 }

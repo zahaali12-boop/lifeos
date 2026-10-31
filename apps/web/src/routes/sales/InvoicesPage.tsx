@@ -21,6 +21,8 @@ import { CurrencyField } from "../CurrencyField";
 import { useTaxRegime, useTaxRegistrations, type TaxCode } from "../tax/shared";
 import { useCompanyCustomers } from "./pricing/shared";
 import { money, Money, num, SalesStatus } from "./shared";
+import { DocumentView } from "../DocumentView";
+import { StatusBar, salesFlow } from "../StatusBar";
 
 type Invoice = components["schemas"]["SalesInvoiceSummary"];
 type Invoicable = components["schemas"]["InvoicableSalesLine"];
@@ -416,18 +418,29 @@ export function InvoicesPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setReversal(null); setCancelReason(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-5xl">
+      {openId ? <DocumentView onClose={() => { setOpenId(null); setReversal(null); setCancelReason(null); }} closeLabel={t("common.close")} testId="sales-invoice-detail" title={i?.number ?? ""} subtitle={i ? `${i.partnerCode} · ${localized(i.partnerName)}` : undefined} badges={i ? <><Badge tone="neutral">{t(`sales.invoicing.kinds.${i.kind}`)}</Badge>{i.einvoiceScheme ? <Badge tone={einvoiceTones[i.einvoiceStatus] ?? "neutral"} data-testid="einvoice-status">{t(`sales.invoicing.einvoiceStatuses.${i.einvoiceStatus}`, { defaultValue: i.einvoiceStatus })}</Badge> : null}</> : null}>
           {i ? (
-            <div className="flex flex-col gap-4" data-testid="sales-invoice-detail">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <span dir="ltr">{i.number}</span>
-                  <SalesStatus status={i.status} />
-                  <Badge tone="neutral">{t(`sales.invoicing.kinds.${i.kind}`)}</Badge>
-                  {i.einvoiceScheme ? <Badge tone={einvoiceTones[i.einvoiceStatus] ?? "neutral"} data-testid="einvoice-status">{t(`sales.invoicing.einvoiceStatuses.${i.einvoiceStatus}`, { defaultValue: i.einvoiceStatus })}</Badge> : null}
-                </DialogTitle>
-              </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <StatusBar {...salesFlow("invoice", i.status, t, { creditNote: i.kind === "credit_note", paid: i.openItems.length > 0 && i.openItems.every((o) => Number(o.remainingTc) === 0) })} actions={(
+                <>
+                {i.status === "draft" && canManage ? <Button variant="secondary" onClick={() => { openEdit(i); }} data-testid="edit-sales-invoice">{t("common.edit")}</Button> : null}
+                {i.status === "draft" && canManage && cancelReason === null ? <Button variant="secondary" onClick={() => { setCancelReason(""); }} data-testid="start-cancel-invoice">{t("sales.invoicing.cancelDraft")}</Button> : null}
+                {cancelReason !== null ? <Button variant="danger" onClick={() => { act.mutate({ id: i.id, action: "cancel", reason: cancelReason }); }} loading={act.isPending} disabled={!cancelReason.trim()} data-testid="confirm-cancel-invoice">{t("sales.confirmCancel")}</Button> : null}
+                {i.status === "draft" && canPost ? <Button onClick={() => { act.mutate({ id: i.id, action: "post" }); }} loading={act.isPending} data-testid="post-sales-invoice">{t("sales.post")}</Button> : null}
+                {i.status === "posted" && canPost && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="start-reverse-invoice">{t("sales.reverse")}</Button> : null}
+                {reversal !== null ? <Button onClick={() => { act.mutate({ id: i.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse-invoice">{t("sales.confirmReverse")}</Button> : null}
+                </>
+              )} />
+              {reversal !== null ? (
+                <Field label={t("sales.reversalReason")} required>
+                  <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
+                </Field>
+              ) : null}
+              {cancelReason !== null ? (
+                <Field label={t("sales.cancelReason")} required>
+                  <TextField value={cancelReason} onChange={(e) => { setCancelReason(e.target.value); }} data-testid="cancel-reason" />
+                </Field>
+              ) : null}
               <FormError message={problem?.message ?? null} />
               <KeyValues entries={[
                 [t("sales.customer"), `${i.partnerCode} · ${localized(i.partnerName)}`],
@@ -574,28 +587,9 @@ export function InvoicesPage() {
                   {i.status === "posted" && i.einvoiceScheme && canPost ? <div><Button variant="secondary" onClick={() => { act.mutate({ id: i.id, action: "einvoice" }); }} loading={act.isPending} data-testid="submit-einvoice">{t("sales.invoicing.submitEinvoice")}</Button></div> : null}
                 </div>
               ) : null}
-              {reversal !== null ? (
-                <Field label={t("sales.reversalReason")} required>
-                  <TextField value={reversal} onChange={(e) => { setReversal(e.target.value); }} data-testid="reversal-reason" />
-                </Field>
-              ) : null}
-              {cancelReason !== null ? (
-                <Field label={t("sales.cancelReason")} required>
-                  <TextField value={cancelReason} onChange={(e) => { setCancelReason(e.target.value); }} data-testid="cancel-reason" />
-                </Field>
-              ) : null}
-              <DialogFooter>
-                {i.status === "draft" && canManage ? <Button variant="secondary" onClick={() => { openEdit(i); }} data-testid="edit-sales-invoice">{t("common.edit")}</Button> : null}
-                {i.status === "draft" && canManage && cancelReason === null ? <Button variant="secondary" onClick={() => { setCancelReason(""); }} data-testid="start-cancel-invoice">{t("sales.invoicing.cancelDraft")}</Button> : null}
-                {cancelReason !== null ? <Button variant="danger" onClick={() => { act.mutate({ id: i.id, action: "cancel", reason: cancelReason }); }} loading={act.isPending} disabled={!cancelReason.trim()} data-testid="confirm-cancel-invoice">{t("sales.confirmCancel")}</Button> : null}
-                {i.status === "draft" && canPost ? <Button onClick={() => { act.mutate({ id: i.id, action: "post" }); }} loading={act.isPending} data-testid="post-sales-invoice">{t("sales.post")}</Button> : null}
-                {i.status === "posted" && canPost && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="start-reverse-invoice">{t("sales.reverse")}</Button> : null}
-                {reversal !== null ? <Button onClick={() => { act.mutate({ id: i.id, action: "reverse", reason: reversal }); }} loading={act.isPending} disabled={!reversal.trim()} data-testid="confirm-reverse-invoice">{t("sales.confirmReverse")}</Button> : null}
-              </DialogFooter>
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
+      </DocumentView> : null}
     </>
   );
 }

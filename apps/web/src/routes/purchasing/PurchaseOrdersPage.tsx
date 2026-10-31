@@ -20,6 +20,8 @@ import { DocumentFlowBar } from "./DocumentFlow";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { CurrencyField } from "../CurrencyField";
+import { DocumentView } from "../DocumentView";
+import { StatusBar, purchaseFlow } from "../StatusBar";
 
 interface OrderForm {
   id: string | null;
@@ -282,17 +284,32 @@ export function PurchaseOrdersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(openId)} onOpenChange={(isOpen) => { if (!isOpen) { setOpenId(null); setSendTo(null); } }}>
-        <DialogContent closeLabel={t("common.close")} className="max-w-4xl">
+      {openId ? <DocumentView onClose={() => { setOpenId(null); setSendTo(null); }} closeLabel={t("common.close")} testId="order-detail" title={o?.number ?? ""} subtitle={o ? `${o.partnerCode} · ${localized(o.partnerName)}` : undefined} badges={o ? <><span className="text-sm font-normal text-fg-muted" data-testid="order-revision">{t("purchasing.revisionN", { n: String(o.revision) })}</span></> : null}>
           {o ? (
-            <div className="flex flex-col gap-4" data-testid="order-detail">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <span dir="ltr">{o.number}</span>
-                  <span className="text-sm font-normal text-fg-muted" data-testid="order-revision">{t("purchasing.revisionN", { n: String(o.revision) })}</span>
-                  <PurchaseStatus status={o.status} />
-                </DialogTitle>
-              </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <StatusBar {...purchaseFlow("order", o.status, t)} actions={(
+                <>
+                {receivable(o.status) && can("purchasing.receipt.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/receipts", search: followOn("purchase_order", o.id) }); }} data-testid="order-receive"><PackageCheck aria-hidden="true" />{t("documentFlow.receive")}</Button> : null}
+                {invoicable(o.status) && o.lines.some((l) => compare(l.qtyInvoiced, subtract(l.quantity, l.qtyCancelled)) < 0) && can("purchasing.invoice.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_order", o.id) }); }} data-testid="order-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
+                {editable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o); }} data-testid="edit-order">{t("common.edit")}</Button> : null}
+                {editable(o.status) ? <Button onClick={() => { act.mutate({ id: o.id, action: "submit" }); }} loading={act.isPending} data-testid="submit-order">{t("purchasing.submit")}</Button> : null}
+                {changeable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o, true); }} data-testid="change-order">{t("purchasing.changeOrder")}</Button> : null}
+                {changeable(o.status) && !sendTo ? <Button onClick={() => { setSendTo({ to: "", message: "" }); }} data-testid="send-order">{t("purchasing.send")}</Button> : null}
+                {sendTo ? <Button onClick={() => { act.mutate({ id: o.id, action: "send", ...(sendTo.to ? { to: sendTo.to } : {}), ...(sendTo.message ? { message: sendTo.message } : {}) }); }} loading={act.isPending} data-testid="confirm-send">{t("purchasing.sendNow")}</Button> : null}
+                {o.status !== "cancelled" && o.status !== "closed" && o.status !== "received" ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "cancel" }); }} loading={act.isPending} data-testid="cancel-order">{t("purchasing.cancelDocument")}</Button> : null}
+                {o.status === "partially_received" || o.status === "sent" || o.status === "approved" ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "close" }); }} loading={act.isPending} data-testid="close-order">{t("purchasing.close")}</Button> : null}
+                </>
+              )} />
+              {sendTo ? (
+                <div className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-2" data-testid="send-panel">
+                  <Field label={t("purchasing.sendTo")} description={t("purchasing.sendToHelp")}>
+                    <TextField type="email" value={sendTo.to} onChange={(e) => { setSendTo({ ...sendTo, to: e.target.value }); }} dir="ltr" data-testid="send-to" />
+                  </Field>
+                  <Field label={t("purchasing.message")}>
+                    <TextField value={sendTo.message} onChange={(e) => { setSendTo({ ...sendTo, message: e.target.value }); }} data-testid="send-message" />
+                  </Field>
+                </div>
+              ) : null}
               <DocumentFlowBar documentType="purchase_order" documentId={o.id} />
               <CustomFieldValuesList entityType="purchase_order" values={o.customFields} />
               <FormError message={problem?.message ?? null} />
@@ -357,31 +374,9 @@ export function PurchaseOrdersPage() {
                   </Table>
                 )
               ) : null}
-              {sendTo ? (
-                <div className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-2" data-testid="send-panel">
-                  <Field label={t("purchasing.sendTo")} description={t("purchasing.sendToHelp")}>
-                    <TextField type="email" value={sendTo.to} onChange={(e) => { setSendTo({ ...sendTo, to: e.target.value }); }} dir="ltr" data-testid="send-to" />
-                  </Field>
-                  <Field label={t("purchasing.message")}>
-                    <TextField value={sendTo.message} onChange={(e) => { setSendTo({ ...sendTo, message: e.target.value }); }} data-testid="send-message" />
-                  </Field>
-                </div>
-              ) : null}
-              <DialogFooter>
-                {receivable(o.status) && can("purchasing.receipt.manage") ? <Button onClick={() => { void navigate({ to: "/purchasing/receipts", search: followOn("purchase_order", o.id) }); }} data-testid="order-receive"><PackageCheck aria-hidden="true" />{t("documentFlow.receive")}</Button> : null}
-                {invoicable(o.status) && o.lines.some((l) => compare(l.qtyInvoiced, subtract(l.quantity, l.qtyCancelled)) < 0) && can("purchasing.invoice.manage") ? <Button variant="secondary" onClick={() => { void navigate({ to: "/purchasing/invoices", search: followOn("purchase_order", o.id) }); }} data-testid="order-create-invoice"><FileText aria-hidden="true" />{t("documentFlow.createInvoice")}</Button> : null}
-                {editable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o); }} data-testid="edit-order">{t("common.edit")}</Button> : null}
-                {editable(o.status) ? <Button onClick={() => { act.mutate({ id: o.id, action: "submit" }); }} loading={act.isPending} data-testid="submit-order">{t("purchasing.submit")}</Button> : null}
-                {changeable(o.status) ? <Button variant="secondary" onClick={() => { openForm(o, true); }} data-testid="change-order">{t("purchasing.changeOrder")}</Button> : null}
-                {changeable(o.status) && !sendTo ? <Button onClick={() => { setSendTo({ to: "", message: "" }); }} data-testid="send-order">{t("purchasing.send")}</Button> : null}
-                {sendTo ? <Button onClick={() => { act.mutate({ id: o.id, action: "send", ...(sendTo.to ? { to: sendTo.to } : {}), ...(sendTo.message ? { message: sendTo.message } : {}) }); }} loading={act.isPending} data-testid="confirm-send">{t("purchasing.sendNow")}</Button> : null}
-                {o.status !== "cancelled" && o.status !== "closed" && o.status !== "received" ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "cancel" }); }} loading={act.isPending} data-testid="cancel-order">{t("purchasing.cancelDocument")}</Button> : null}
-                {o.status === "partially_received" || o.status === "sent" || o.status === "approved" ? <Button variant="secondary" onClick={() => { act.mutate({ id: o.id, action: "close" }); }} loading={act.isPending} data-testid="close-order">{t("purchasing.close")}</Button> : null}
-              </DialogFooter>
             </div>
           ) : null}
-        </DialogContent>
-      </Dialog>
+      </DocumentView> : null}
     </>
   );
 }
