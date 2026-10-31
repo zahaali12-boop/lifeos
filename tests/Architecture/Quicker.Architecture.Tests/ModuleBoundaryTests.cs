@@ -154,6 +154,7 @@ public sealed class ModuleBoundaryTests
         ["Sales"] = 2,
         ["Reporting"] = 3,
         ["Onboarding"] = 3,
+        ["Expenses"] = 3,
     };
 
     /// <summary>Dependencies against the tiers that exist on purpose; a new one fails, and one that disappears must be removed here.</summary>

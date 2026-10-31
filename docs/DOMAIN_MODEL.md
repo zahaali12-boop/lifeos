@@ -2825,7 +2825,7 @@ erDiagram
 
 `Σ remaining_fc` of open items for a control account at date D (computed from settlements with `settlement_date ≤ D`, plus revaluation settlements that are not yet auto-reversed at D) **equals** the control account's functional balance at D. Each settlement's `journal_entry_id` posts the cash, FX, discount, WHT, charge and write-off lines shown in POSTING_RULES §5 and §6. Aging at any date is computed from open items and settlements by date, never from a snapshot, so hard scenario 15 holds for any historical date.
 
-## 14. Banking, cash, cheques, expense claims
+## 14. Banking, cash, cheques; expenses and petty cash (Expenses module)
 
 ```mermaid
 erDiagram
@@ -2843,8 +2843,11 @@ erDiagram
   bnk_cheque_books ||--o{ bnk_cheques : "issues"
   bnk_cheques ||--|{ bnk_cheque_events : "history"
   bnk_deposits ||--o{ bnk_cheques : "deposits"
-  bnk_petty_cash_funds ||--o{ bnk_petty_cash_vouchers : "spends"
-  bnk_expense_claims ||--|{ bnk_expense_claim_lines : "has"
+  exp_funds ||--o{ exp_expenses : "vouchers spend"
+  exp_funds ||--o{ exp_replenishments : "refilled by"
+  exp_categories ||--o{ exp_expense_lines : "classifies"
+  exp_expenses ||--|{ exp_expense_lines : "has"
+  bnk_bank_accounts ||--o| exp_funds : "cash box of"
   bnk_transfers ||--o{ bnk_bank_transactions : "both sides"
 
   bnk_bank_accounts {
@@ -3028,53 +3031,80 @@ erDiagram
     text status "prepared | deposited | cleared | partially_bounced"
     uuid journal_entry_id
   }
-  bnk_petty_cash_funds {
+  exp_categories {
+    uuid id PK
+    text code
+    jsonb name_i18n
+    text account_code "resolved in each company chart; kept as a posting rule (role Expense, key expense_category_id)"
+    uuid tax_code_id
+    boolean receipt_required
+    numeric max_amount "limit per line"
+    boolean is_active
+  }
+  exp_funds {
     uuid id PK
     uuid company_id
-    uuid branch_id
-    uuid bank_account_id "kind petty_cash"
+    text code
+    jsonb name_i18n
+    uuid bank_account_id "a cash or petty_cash account; one fund per box"
     uuid custodian_membership_id
     numeric float_amount
     text currency
+    boolean is_active
   }
-  bnk_petty_cash_vouchers {
-    uuid id PK
-    uuid fund_id FK
-    text number
-    date posting_date
-    text kind "expense | replenishment | return"
-    numeric amount
-    uuid account_id
-    uuid tax_code_id
-    uuid dimension_set_id
-    uuid attachment_id
-    text status
-    uuid journal_entry_id
-  }
-  bnk_expense_claims {
+  exp_replenishments {
     uuid id PK
     uuid company_id
-    uuid employee_partner_id
-    text number
-    date claim_date
-    text currency
-    numeric total
-    text status "draft | submitted | approved | posted | paid | rejected"
-    uuid approval_request_id
+    uuid fund_id FK
+    text number "PCR-"
+    date replenished_on
+    numeric amount
+    uuid from_bank_account_id
+    text reference
+    text status "posted | reversed"
     uuid journal_entry_id
-    uuid ap_open_item_id
+    uuid reversal_entry_id
+    uuid fund_transaction_id "bnk_bank_transactions transfer_in"
+    uuid bank_transaction_id "bnk_bank_transactions transfer_out"
   }
-  bnk_expense_claim_lines {
-    uuid claim_id FK
+  exp_expenses {
+    uuid id PK
+    uuid company_id
+    text number "EXP-, on confirmation"
+    text kind "supplier | employee | petty_cash"
+    uuid partner_id "supplier or employee; null for petty_cash"
+    uuid fund_id "petty_cash only"
     date expense_date
-    uuid account_id
+    date due_date
+    text currency
+    text reference
+    text description
+    text status "draft | pending_approval | confirmed | reversed | rejected | cancelled"
+    numeric total_net
+    numeric total_tax
+    numeric total_gross
+    uuid journal_entry_id
+    uuid reversal_entry_id
+    uuid approval_request_id
+    uuid bank_transaction_id "petty_cash: the disbursement"
+    text rejection_reason
+    jsonb custom_fields
+    uuid created_by
+  }
+  exp_expense_lines {
+    uuid id PK
+    uuid expense_id FK
+    int line_no
+    uuid category_id FK
+    uuid account_id "resolved at confirmation"
     text description
     numeric amount
-    text currency
     uuid tax_code_id
+    numeric tax_rate_pct
+    numeric tax_amount
+    boolean tax_recoverable
+    boolean tax_reverse_charge
     uuid dimension_set_id
-    uuid attachment_id
-    text policy_check
   }
   bnk_transfers {
     uuid id PK

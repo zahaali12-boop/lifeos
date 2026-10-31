@@ -85,6 +85,11 @@ public static class PostingRuleMatcher
             result["chargeTypeId"] = keys.ChargeTypeId;
         }
 
+        if (keys.ExpenseCategoryId is not null)
+        {
+            result["expenseCategoryId"] = keys.ExpenseCategoryId;
+        }
+
         return result;
     }
 }

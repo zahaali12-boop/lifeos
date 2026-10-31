@@ -9691,6 +9691,233 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/expenses/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Expense categories: the account each lands on (by code, resolved in the company's chart), the usual tax code, and the policy a line must respect */
+        get: operations["getExpensesCategories"];
+        put?: never;
+        /** A new expense category */
+        post: operations["postExpensesCategories"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/categories/{categoryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Changes a category; expenses already confirmed keep the account they were posted to */
+        put: operations["putExpensesCategoriesByCategoryId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/funds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Petty cash funds with their balances (from the cash box's movements) and what it takes to bring each back to its float */
+        get: operations["getExpensesFunds"];
+        put?: never;
+        /** A fund on a cash box (a cash or petty cash account) with its custodian and float */
+        post: operations["postExpensesFunds"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/funds/{fundId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One fund with its balance */
+        get: operations["getExpensesFundsByFundId"];
+        /** Changes a fund's name, custodian, float or activity */
+        put: operations["putExpensesFundsByFundId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/funds/{fundId}/replenishments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The fund's replenishments, newest first */
+        get: operations["getExpensesFundsByFundIdReplenishments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/funds/{fundId}/replenish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cash from a bank account into the fund on a day, posted at once: Dr the fund's cash box / Cr the bank, both movements in the bank subledger */
+        post: operations["postExpensesFundsByFundIdReplenish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/replenishments/{replenishmentId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a replenishment: the mirror journal and the mirror movements, dated the reversal */
+        post: operations["postExpensesReplenishmentsByReplenishmentIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Expenses of a company, newest first (up to 500): by status, kind (supplier, employee, petty_cash), payee, fund and expense date; each with what has been paid on it */
+        get: operations["getExpenses"];
+        put?: never;
+        /** Records an expense as a draft: its payee or fund, date, currency and lines (category, amount, description, tax code, dimensions); custom fields under host 'expense' */
+        post: operations["postExpenses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/{expenseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One expense with its lines, its journal and what was paid */
+        get: operations["getExpensesByExpenseId"];
+        /** Changes a draft (or rejected) expense */
+        put: operations["putExpensesByExpenseId"];
+        post?: never;
+        /** Deletes a draft expense */
+        delete: operations["deleteExpensesByExpenseId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/{expenseId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirms the expense: policy and account checks, tax on the expense date, then the accrual posted (Dr the categories' accounts and input tax / Cr the payable, or the cash box for a petty cash voucher) and the payable opened; waits for approval when a workflow on expenses is active */
+        post: operations["postExpensesByExpenseIdConfirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/{expenseId}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pays a confirmed supplier or employee expense from a bank account on a day: one supplier payment created and posted, settling the expense's open item (the whole remainder unless an amount is given) */
+        post: operations["postExpensesByExpenseIdPay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/{expenseId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a confirmed expense: refused once a payment stands on it; the payable (or the cash movement), the tax ledger and the journal all mirrored on the reversal date */
+        post: operations["postExpensesByExpenseIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/{expenseId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels a draft, rejected or pending expense (withdrawing its approval request) */
+        post: operations["postExpensesByExpenseIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/home": {
         parameters: {
             query?: never;
@@ -12181,6 +12408,110 @@ export interface components {
             relation: string;
             reason: string;
         };
+        ExpenseCategorySummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            accountCode: string;
+            /** Format: uuid */
+            taxCodeId: null | string;
+            receiptRequired: boolean;
+            /** Format: double */
+            maxAmount: null | number | string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ExpenseLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            categoryId: string;
+            categoryCode: string;
+            categoryName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            accountId: null | string;
+            description: null | string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: uuid */
+            taxCodeId: null | string;
+            /** Format: double */
+            taxRatePct: number | string;
+            /** Format: double */
+            taxAmount: number | string;
+            taxRecoverable: boolean;
+            dimensions: null | {
+                [key: string]: string;
+            };
+        };
+        ExpensePaymentResult: {
+            /** Format: uuid */
+            paymentId: string;
+            paymentNumber: string;
+            expense: components["schemas"]["ExpenseSummary"];
+        };
+        /**
+         * @description An expense as the screens read it. PaymentStatus is derived from the payable: `unpaid`,
+         *     `partial`, `paid`, or `n/a` for a petty cash voucher (paid when it was incurred) and for anything not
+         *     yet confirmed.
+         */
+        ExpenseSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            kind: string;
+            status: string;
+            /** Format: uuid */
+            partnerId: null | string;
+            partnerCode: null | string;
+            partnerName: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            fundId: null | string;
+            fundCode: null | string;
+            /** Format: date */
+            expenseDate: string;
+            /** Format: date */
+            dueDate: null | string;
+            currency: string;
+            reference: null | string;
+            description: null | string;
+            /** Format: double */
+            totalNet: number | string;
+            /** Format: double */
+            totalTax: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            /** Format: double */
+            paidTc: number | string;
+            /** Format: double */
+            remainingTc: number | string;
+            paymentStatus: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            /** Format: uuid */
+            approvalRequestId: null | string;
+            rejectionReason: null | string;
+            customFields: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            lines: null | components["schemas"]["ExpenseLineSummary"][];
+        };
         ExpressionValidation: {
             valid: boolean;
             message: null | string;
@@ -12284,6 +12615,32 @@ export interface components {
             companyId?: null | string;
             /** @default true */
             shared: boolean;
+        };
+        /** @description A fund with where it stands: its balance from the cash box's movements, and how far below the float it is. */
+        FundSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            /** Format: uuid */
+            custodianMembershipId: null | string;
+            /** Format: double */
+            floatAmount: number | string;
+            currency: string;
+            /** Format: double */
+            balance: number | string;
+            /** Format: double */
+            toReplenish: number | string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
         };
         GenerateRecurringInvoiceRequest: {
             /** Format: date */
@@ -14180,6 +14537,18 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        /** @description A payment of a confirmed supplier or employee expense from a bank account on a day; the whole remainder unless an amount is given. */
+        PayExpenseRequest: {
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: date */
+            paymentDate?: null | string;
+            /** Format: double */
+            amount?: null | number | string;
+            /** @default transfer */
+            method: string;
+            reference?: null | string;
+        };
         /** @description One instalment of a payment schedule: its share and the amount after the currency's rounding (the parts sum to the whole). */
         PaymentInstalment: {
             /** Format: int32 */
@@ -14657,6 +15026,8 @@ export interface components {
             assetCategoryId?: null | string;
             /** Format: uuid */
             chargeTypeId?: null | string;
+            /** Format: uuid */
+            expenseCategoryId?: null | string;
         };
         PostingRuleSummary: {
             /** Format: uuid */
@@ -14682,6 +15053,8 @@ export interface components {
             assetCategoryId: null | string;
             /** Format: uuid */
             chargeTypeId: null | string;
+            /** Format: uuid */
+            expenseCategoryId: null | string;
             /** Format: int32 */
             specificity: number | string;
         };
@@ -14767,6 +15140,8 @@ export interface components {
             assetCategoryId?: null | string;
             /** Format: uuid */
             chargeTypeId?: null | string;
+            /** Format: uuid */
+            expenseCategoryId?: null | string;
             /** Format: uuid */
             accountId?: null | string;
             dimensions?: null | {
@@ -16181,6 +16556,15 @@ export interface components {
         ReorderStagesRequest: {
             stageIds: string[];
         };
+        ReplenishFundRequest: {
+            /** Format: uuid */
+            fromBankAccountId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: date */
+            replenishedOn?: null | string;
+            reference?: null | string;
+        };
         ReplenishmentRunRequest: {
             /** Format: uuid */
             companyId: string;
@@ -16249,6 +16633,29 @@ export interface components {
             decidedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ReplenishmentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            fundId: string;
+            number: string;
+            /** Format: date */
+            replenishedOn: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: uuid */
+            fromBankAccountId: string;
+            reference: null | string;
+            status: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            /** Format: date-time */
+            createdAt: string;
         };
         RequestActionSummary: {
             /** Format: uuid */
@@ -16657,6 +17064,11 @@ export interface components {
             totalAmount: number | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        ReverseExpenseRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
         };
         ReverseInvoiceRequest: {
             reason: string;
@@ -18031,6 +18443,56 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        SaveExpenseCategoryRequest: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            accountCode: string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            /** @default false */
+            receiptRequired: boolean;
+            /** Format: double */
+            maxAmount?: null | number | string;
+            /** @default true */
+            isActive: boolean;
+        };
+        /** @description One line of an expense: the category decides the account (and the usual tax code unless the line names one); dimensions by code. */
+        SaveExpenseLineRequest: {
+            /** Format: uuid */
+            categoryId: string;
+            /** Format: double */
+            amount: number | string;
+            description?: null | string;
+            /** Format: uuid */
+            taxCodeId?: null | string;
+            dimensions?: null | {
+                [key: string]: string;
+            };
+        };
+        /**
+         * @description An expense to record: owed to a supplier or an employee (PartnerId), or paid from a petty cash
+         *     fund (FundId); dated the day it was incurred, in the currency it was incurred in.
+         */
+        SaveExpenseRequest: {
+            /** Format: uuid */
+            companyId: string;
+            kind: string;
+            /** Format: date */
+            expenseDate: string;
+            lines: components["schemas"]["SaveExpenseLineRequest"][];
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: uuid */
+            fundId?: null | string;
+            /** Format: date */
+            dueDate?: null | string;
+            currency?: null | string;
+            reference?: null | string;
+            description?: null | string;
+            customFields?: unknown;
+        };
         SaveFiscalCalendarRequest: {
             code: string;
             name: {
@@ -18046,6 +18508,25 @@ export interface components {
              * @default 12
              */
             periodsPerYear: number | string;
+        };
+        SaveFundRequest: {
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: uuid */
+            custodianMembershipId?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            floatAmount: number | string;
+            /** @default true */
+            isActive: boolean;
         };
         SaveHolidayRequest: {
             /** Format: date */
@@ -39659,6 +40140,462 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpeningBalanceResult"];
+                };
+            };
+        };
+    };
+    getExpensesCategories: {
+        parameters: {
+            query?: {
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategorySummary"][];
+                };
+            };
+        };
+    };
+    postExpensesCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveExpenseCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategorySummary"];
+                };
+            };
+        };
+    };
+    putExpensesCategoriesByCategoryId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveExpenseCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategorySummary"];
+                };
+            };
+        };
+    };
+    getExpensesFunds: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundSummary"][];
+                };
+            };
+        };
+    };
+    postExpensesFunds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveFundRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundSummary"];
+                };
+            };
+        };
+    };
+    getExpensesFundsByFundId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fundId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundSummary"];
+                };
+            };
+        };
+    };
+    putExpensesFundsByFundId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fundId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveFundRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FundSummary"];
+                };
+            };
+        };
+    };
+    getExpensesFundsByFundIdReplenishments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fundId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentSummary"][];
+                };
+            };
+        };
+    };
+    postExpensesFundsByFundIdReplenish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fundId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplenishFundRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentSummary"];
+                };
+            };
+        };
+    };
+    postExpensesReplenishmentsByReplenishmentIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                replenishmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplenishmentSummary"];
+                };
+            };
+        };
+    };
+    getExpenses: {
+        parameters: {
+            query: {
+                companyId: string;
+                status?: string;
+                kind?: string;
+                partnerId?: string;
+                fundId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"][];
+                };
+            };
+        };
+    };
+    postExpenses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+        };
+    };
+    getExpensesByExpenseId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expenseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+        };
+    };
+    putExpensesByExpenseId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expenseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+        };
+    };
+    deleteExpensesByExpenseId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expenseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postExpensesByExpenseIdConfirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expenseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+        };
+    };
+    postExpensesByExpenseIdPay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expenseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpensePaymentResult"];
+                };
+            };
+        };
+    };
+    postExpensesByExpenseIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expenseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+        };
+    };
+    postExpensesByExpenseIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expenseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseSummary"];
                 };
             };
         };

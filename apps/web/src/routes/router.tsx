@@ -70,6 +70,9 @@ import { RecurringInvoicesPage } from "./sales/RecurringInvoicesPage";
 import { ReturnsPage as SalesReturnsPage } from "./sales/ReturnsPage";
 import { SalesAnalysisPage } from "./sales/SalesAnalysisPage";
 import { SetupPage } from "./setup/SetupPage";
+import { ExpensesPage } from "./expenses/ExpensesPage";
+import { ExpenseCategoriesPage } from "./expenses/ExpenseCategoriesPage";
+import { PettyCashFundsPage } from "./expenses/PettyCashFundsPage";
 import { SalesSetupPage } from "./sales/SalesSetupPage";
 import { ShipmentsPage } from "./sales/ShipmentsPage";
 import { PriceCheckPage } from "./sales/pricing/PriceCheckPage";
@@ -185,6 +188,9 @@ const proposalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/p
 const bankAccountsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/bank-accounts", component: BankAccountsPage, validateSearch: searchRecord });
 const paymentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/payments", component: PaymentsPage, validateSearch: searchRecord });
 const customerReceiptsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/receipts", component: CustomerReceiptsPage, validateSearch: searchRecord });
+const expensesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses", component: ExpensesPage, validateSearch: searchRecord });
+const expenseCategoriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses/categories", component: ExpenseCategoriesPage });
+const pettyCashFundsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses/funds", component: PettyCashFundsPage, validateSearch: searchRecord });
 const approvalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/approvals", component: ApprovalsPage, validateSearch: searchRecord });
 const workflowsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/workflows", component: WorkflowsPage, validateSearch: searchRecord });
 
@@ -213,7 +219,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
 ]);

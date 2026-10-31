@@ -25,6 +25,8 @@ public static class BankingModule
         services.AddScoped<PaymentService>();
         services.AddScoped<CustomerReceiptService>();
         services.AddScoped<IBankAccountDirectory>(static sp => sp.GetRequiredService<BankAccountService>());
+        services.AddScoped<IBankTransactions, BankTransactionService>();
+        services.AddScoped<IPayments, PaymentsGateway>();
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("bank_payment", BankingPermissions.PaymentRead));
         services.AddSingleton(new RecordReadPermission("bank_receipt", BankingPermissions.ReceiptRead));

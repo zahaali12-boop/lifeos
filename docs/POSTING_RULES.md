@@ -21,6 +21,7 @@ Conventions:
 | `GRNI` | liability, control | goods received not invoiced (accrued purchases) |
 | `LandedCostClearing` | liability, control | landed costs allocated before charge invoices |
 | `Cogs` | expense | per item posting group |
+| `Expense` | expense | expenses by category (6.4): each expense category keeps a rule on this role keyed by `expense_category_id` (ensured when the expense is confirmed, from the category's account code in the company's chart); the template account is the fallback |
 | `Revenue` | revenue | per item posting group / category |
 | `SalesReturns` | contra revenue | optional; default posts to `Revenue` |
 | `DiscountGiven`, `DiscountTaken` | expense / income | settlement discounts |
@@ -147,10 +148,11 @@ Conventions:
 | **PDC issued** (to supplier) | Dr `AP` / Cr `PdcPayable` | AP settlement by cheque open item; cheque `issued` | |
 | Issued cheque presented/paid | Dr `PdcPayable` / Cr `Bank` | cheque `paid`; bank transaction | from statement matching or manual |
 | Issued cheque bounced (returned unpaid) | Dr `Bank` / Cr `PdcPayable` reversal of clearing if applied; Dr `BankCharges` / Cr `Bank` | cheque `bounced` | AP remains settled by PdcPayable until cancelled: cancellation posts Dr `PdcPayable` / Cr `AP` (reopens the invoice) |
-| Petty cash replenishment | Dr `PettyCash` / Cr `Bank` | | |
-| Petty cash expense voucher | Dr expense / Dr `InputTax` / Cr `PettyCash` | | receipts attached |
-| Expense claim approved | Dr expense lines / Dr `InputTax` / Cr `EmployeePayable` | AP open item on the employee partner | |
-| Expense claim reimbursed | Dr `EmployeePayable` / Cr `Bank` | settlement | |
+| **Expense confirmed** (supplier bill without an order, or an employee claim; Expenses module, A-174) | Dr `Expense` per line, keyed by expense category (net, plus tax that is not recoverable) / Dr `InputTax` per code (recoverable; reverse charge also Cr `OutputTax`) / Cr `AP` (gross) | AP open item kind `invoice`, document type `expense`, on the supplier or the employee partner, due on the due date (expense date when none); tax ledger entries | posted on the expense date; a workflow definition on `expense` holds it as `pending_approval` first; the same accrual for both kinds so Banking payments settle either (the employee needs a supplier account of the company to be paid) |
+| Expense paid | Dr `AP` / Cr `Bank` (a supplier payment, Banking 4.7) | settlement of the expense's open item on the payment date | `POST /expenses/{id}/pay`; part payments allowed; reversal of the expense refused once a payment stands |
+| **Petty cash voucher confirmed** (expense of kind `petty_cash`) | Dr `Expense` per line / Dr `InputTax` / Cr `Cash` or `PettyCash` (the fund's cash box) | bank transaction `disbursement` on the cash box | nothing to pay later; the fund's balance is the box's movements |
+| Petty cash replenishment | Dr `Cash`/`PettyCash` (the fund's box) / Cr `Bank` | two bank transactions: `transfer_in` on the box, `transfer_out` on the bank | `PCR-` numbered; same currency only (a foreign-currency fund goes through a bank transfer, 6.2) |
+| Expense or replenishment reversed | mirror journal on the reversal date | open item reversed (refused when settled); cash movements mirrored as `reversal`; tax ledger reversed | |
 | Cash rounding on cash receipts (IQD 250 rule) | Dr/Cr `RoundingDifferences` for the rounding amount | | applied only for cash payment methods |
 
 ## 6. Multi-currency

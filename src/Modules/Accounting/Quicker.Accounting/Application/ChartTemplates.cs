@@ -196,6 +196,7 @@ public static class ChartTemplates
             A("6170", "6000", "Insurance", "التأمين", expense, "opex", "operating_expenses"),
             A("6180", "6000", "Repairs and maintenance", "الصيانة والإصلاح", expense, "opex", "operating_expenses"),
             A("6190", "6000", "Communication", "الاتصالات", expense, "opex", "operating_expenses"),
+            A("6189", "6000", "Other operating expenses", "مصروفات تشغيلية أخرى", expense, "opex", "operating_expenses", AccountRoles.Expense),
             A("6200", "6000", "Depreciation expense", "مصروف الإهلاك", expense, "depreciation", "operating_expenses", AccountRoles.DepreciationExpense),
             A("6210", "6000", "Impairment loss", "خسائر انخفاض القيمة", expense, "depreciation", "operating_expenses", AccountRoles.ImpairmentLoss),
             A("6300", "6000", "Bad debt expense", "مصروف الديون المعدومة", expense, "opex", "operating_expenses", AccountRoles.BadDebt),

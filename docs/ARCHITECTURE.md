@@ -130,7 +130,8 @@ flowchart TB
     Purchasing
     Receivables
     Payables
-    Banking[Banking: payments, statements, reconciliation, cheques, petty cash, expense claims]
+    Banking[Banking: payments, statements, reconciliation, cheques]
+    Expenses[Expenses: categories, supplier bills and employee claims, petty cash funds]
     FixedAssets
     Budgeting
     Intercompany[Intercompany and Consolidation]

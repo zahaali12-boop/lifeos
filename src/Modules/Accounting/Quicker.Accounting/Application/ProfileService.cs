@@ -291,7 +291,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
             }
 
             var keys = new PostingKeys(string.IsNullOrWhiteSpace(request.DocumentType) ? null : request.DocumentType.Trim().ToLowerInvariant(), request.ItemPostingGroupId, request.PartnerPostingGroupId,
-                request.TaxCodeId, request.WarehouseId, request.BranchId, request.BankAccountId, request.AssetCategoryId, request.ChargeTypeId);
+                request.TaxCodeId, request.WarehouseId, request.BranchId, request.BankAccountId, request.AssetCategoryId, request.ChargeTypeId, request.ExpenseCategoryId);
             var signature = role.Value + "|" + keys;
             if (!seen.Add(signature))
             {
@@ -312,6 +312,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
                 BankAccountId = keys.BankAccountId,
                 AssetCategoryId = keys.AssetCategoryId,
                 ChargeTypeId = keys.ChargeTypeId,
+                ExpenseCategoryId = keys.ExpenseCategoryId,
                 AccountId = account.Id,
                 Specificity = keys.Specificity,
                 CreatedAt = now,
@@ -431,6 +432,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
                 BankAccountId = keys.BankAccountId,
                 AssetCategoryId = keys.AssetCategoryId,
                 ChargeTypeId = keys.ChargeTypeId,
+                ExpenseCategoryId = keys.ExpenseCategoryId,
                 AccountId = accountId,
                 Specificity = keys.Specificity,
                 CreatedAt = clock.UtcNow,
@@ -464,7 +466,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         return (profile.Id, profile.Rules.Select(static r => new RuleCandidate(r.Id, r.AccountRole, Keys(r), r.AccountId)).ToList());
     }
 
-    private static PostingKeys Keys(PostingRule r) => new(r.DocumentType, r.ItemPostingGroupId, r.PartnerPostingGroupId, r.TaxCodeId, r.WarehouseId, r.BranchId, r.BankAccountId, r.AssetCategoryId, r.ChargeTypeId);
+    private static PostingKeys Keys(PostingRule r) => new(r.DocumentType, r.ItemPostingGroupId, r.PartnerPostingGroupId, r.TaxCodeId, r.WarehouseId, r.BranchId, r.BankAccountId, r.AssetCategoryId, r.ChargeTypeId, r.ExpenseCategoryId);
 
     private async Task<Dictionary<Guid, string>> AccountCodesAsync(IEnumerable<Guid> accountIds, CancellationToken cancellationToken)
     {
@@ -478,7 +480,7 @@ public sealed class ProfileService(AccountingDbContext db, ICompanyDirectory com
         var unresolved = AccountRoles.All.Where(r => !covered.Contains(r)).ToList();
         var rules = codes is null ? null : p.Rules.OrderBy(static r => r.AccountRole, StringComparer.Ordinal).ThenByDescending(static r => r.Specificity).Select(r => new PostingRuleSummary(
             r.Id, r.AccountRole, r.AccountId, codes.GetValueOrDefault(r.AccountId, string.Empty), r.DocumentType, r.ItemPostingGroupId, r.PartnerPostingGroupId, r.TaxCodeId, r.WarehouseId, r.BranchId,
-            r.BankAccountId, r.AssetCategoryId, r.ChargeTypeId, r.Specificity)).ToList();
+            r.BankAccountId, r.AssetCategoryId, r.ChargeTypeId, r.ExpenseCategoryId, r.Specificity)).ToList();
         return new PostingProfileSummary(p.Id, p.CompanyId, p.Code, p.Name.Values, p.Version, p.ValidFrom, p.Status, currentProfileId == p.Id, p.Rules.Count, unresolved, p.UpdatedAt, rules);
     }
 }
