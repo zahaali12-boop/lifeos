@@ -12,6 +12,7 @@ import { useSession } from "../session/session";
 import { today } from "./accounting/shared";
 import { PageHeader } from "./common";
 import { CompanyFilter, useCompanyContext } from "./inventory/shared";
+import { SetupCard } from "./setup/SetupCard";
 
 type Home = components["schemas"]["HomeDashboard"];
 type Day = components["schemas"]["HomeDay"];
@@ -148,6 +149,7 @@ function Today() {
 
   return (
     <>
+      <SetupCard companyId={companyId} />
       <section className="mb-8" aria-labelledby="work-today">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <h2 id="work-today" className="text-lg font-semibold">{t("dashboard.work.title")}</h2>

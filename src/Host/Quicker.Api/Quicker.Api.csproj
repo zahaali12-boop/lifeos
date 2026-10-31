@@ -44,6 +44,7 @@
     <ProjectReference Include="../../Modules/Purchasing/Quicker.Purchasing/Quicker.Purchasing.csproj" />
     <ProjectReference Include="../../Modules/Sales/Quicker.Sales/Quicker.Sales.csproj" />
     <ProjectReference Include="../../Modules/Printing/Quicker.Printing/Quicker.Printing.csproj" />
+    <ProjectReference Include="../../Modules/Onboarding/Quicker.Onboarding/Quicker.Onboarding.csproj" />
     <ProjectReference Include="../../Modules/Reporting/Quicker.Reporting/Quicker.Reporting.csproj" />
   </ItemGroup>
 

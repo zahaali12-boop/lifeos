@@ -1141,9 +1141,30 @@ public sealed class ItemService(
     }
 
     /// <summary>Upserts by code, all or nothing: the first failing row is named and nothing is written.</summary>
-    public async Task<Result<ItemImportResult>> ImportAsync(IReadOnlyList<SaveItemRequest> rows, CancellationToken cancellationToken)
+    /// <summary>Upserts by code, all or nothing; a dry run does the same work and then rolls it back, so the file is checked as a whole before it is committed (A-173).</summary>
+    public async Task<Result<ItemImportResult>> ImportAsync(IReadOnlyList<SaveItemRequest> rows, bool dryRun, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(rows);
+        const string savepoint = "item_import";
+        var transaction = unitOfWork.Current.Transaction;
+        if (dryRun)
+        {
+            await transaction.SaveAsync(savepoint, cancellationToken);
+        }
+
+        var result = await UpsertAllAsync(rows, cancellationToken);
+        if (dryRun)
+        {
+            await transaction.RollbackAsync(savepoint, cancellationToken);
+            db.ChangeTracker.Clear();
+            return result.IsSuccess ? result.Value with { DryRun = true } : result;
+        }
+
+        return result;
+    }
+
+    private async Task<Result<ItemImportResult>> UpsertAllAsync(IReadOnlyList<SaveItemRequest> rows, CancellationToken cancellationToken)
+    {
         var created = 0;
         var updated = 0;
         var seen = new HashSet<string>(StringComparer.Ordinal);

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Quicker.Kernel.Results;
 using Quicker.Partners.Application;
 using Quicker.Partners.Contracts;
 using Quicker.Web;
+using Quicker.Web.Imports;
 
 namespace Quicker.Partners.Api;
 
@@ -143,6 +145,42 @@ public static class PartnersEndpoints
         partners.MapPost("/", async (SavePartnerRequest request, PartnerService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static p => $"/api/v1/partners/{p.Id}"))
             .RequireAnyPermission(PartnersPermissions.SupplierManage, PartnersPermissions.CustomerManage)
             .WithSummary("A partner: one record per legal person wearing the supplier, customer and employee roles (each role given only with its side's permission); custom fields under host 'partner'");
+        partners.MapPost("/import", async (Guid? companyId, bool? dryRun, HttpRequest http, PartnerImportService service, CancellationToken ct) =>
+        {
+            IReadOnlyList<PartnerImportRow> rows;
+            if (Sheet.IsSpreadsheet(http))
+            {
+                var sheet = await Sheet.ReadAsync(http, ct);
+                if (sheet.IsFailure)
+                {
+                    return ApiProblems.From(sheet.Error!);
+                }
+
+                var parsed = PartnerCsv.Read(sheet.Value);
+                if (parsed.IsFailure)
+                {
+                    return ApiProblems.From(parsed.Error!);
+                }
+
+                rows = parsed.Value;
+            }
+            else
+            {
+                var body = await http.ReadFromJsonAsync<PartnerImportRequest>(ct);
+                if (body?.Rows is null)
+                {
+                    return ApiProblems.From(Error.Validation("import.body_required", "Send text/csv, an .xlsx workbook or a JSON body {rows: [...]}."));
+                }
+
+                rows = body.Rows;
+            }
+
+            return ApiProblems.From(await service.ImportAsync(companyId, rows, dryRun == true, ct), static r => TypedResults.Ok(r));
+        })
+            .Accepts<PartnerImportRequest>("application/json", "text/csv", Sheet.XlsxContentType)
+            .Produces<PartnerImportResult>()
+            .RequireAnyPermission(PartnersPermissions.SupplierManage, PartnersPermissions.CustomerManage)
+            .WithSummary("Customers and suppliers upserted by code from CSV, an Excel workbook (.xlsx: code, name_en, name_ar, kind, customer, supplier, email, phone, currency, payment_terms, credit_limit, customer_group, supplier_group…) or JSON, all or nothing; with companyId each row keeps its customer or supplier account in that company. dryRun=true checks the whole file and keeps nothing");
         partners.MapGet("/by-code/{code}", async (string code, PartnerService service, CancellationToken ct) => ApiProblems.Found(await service.GetByCodeAsync(code, ct), "partner", code))
             .RequireAnyPermission(PartnersPermissions.SupplierRead, PartnersPermissions.CustomerRead);
         partners.MapGet("/{partnerId:guid}", async (Guid partnerId, PartnerService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(partnerId, ct), "partner", partnerId))

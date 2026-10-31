@@ -23,6 +23,7 @@ public static class PartnersModule
         services.AddScoped<PartnerService>();
         services.AddScoped<SupplierService>();
         services.AddScoped<CustomerService>();
+        services.AddScoped<PartnerImportService>();
         services.AddScoped<SalesSetupService>();
         services.AddScoped<OpportunityService>();
         services.AddScoped<CrmActivityService>();

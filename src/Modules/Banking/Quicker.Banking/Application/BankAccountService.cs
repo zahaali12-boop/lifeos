@@ -24,6 +24,14 @@ public sealed class BankAccountService(BankingDbContext db, ICompanyDirectory co
         return account is null ? null : Info(account);
     }
 
+    public async Task<BankAccountInfo?> FindByCodeAsync(Guid companyId, string code, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(code);
+        var upper = code.Trim().ToUpperInvariant();
+        var account = await db.BankAccounts.AsNoTracking().SingleOrDefaultAsync(a => a.CompanyId == companyId && a.Code == upper, cancellationToken);
+        return account is null ? null : Info(account);
+    }
+
     async Task<IReadOnlyList<BankAccountInfo>> IBankAccountDirectory.ListAsync(Guid companyId, CancellationToken cancellationToken) =>
         (await db.BankAccounts.AsNoTracking().Where(a => a.CompanyId == companyId).OrderBy(static a => a.Code).ToListAsync(cancellationToken)).Select(Info).ToList();
 

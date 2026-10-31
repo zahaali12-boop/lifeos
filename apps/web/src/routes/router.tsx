@@ -69,6 +69,7 @@ import { QuotationsPage } from "./sales/QuotationsPage";
 import { RecurringInvoicesPage } from "./sales/RecurringInvoicesPage";
 import { ReturnsPage as SalesReturnsPage } from "./sales/ReturnsPage";
 import { SalesAnalysisPage } from "./sales/SalesAnalysisPage";
+import { SetupPage } from "./setup/SetupPage";
 import { SalesSetupPage } from "./sales/SalesSetupPage";
 import { ShipmentsPage } from "./sales/ShipmentsPage";
 import { PriceCheckPage } from "./sales/pricing/PriceCheckPage";
@@ -109,6 +110,7 @@ const searchRecord = (search: Record<string, unknown>): Record<string, string> =
   Object.fromEntries(Object.entries(search).filter(([, value]) => typeof value === "string").map(([key, value]) => [key, value as string]));
 
 const dashboardRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: DashboardPage });
+const setupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/setup", component: SetupPage });
 const companiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/companies", component: CompaniesPage, validateSearch: searchRecord });
 const ratesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/rates", component: RatesPage });
 const dimensionsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dimensions", component: DimensionsPage });
@@ -208,7 +210,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   signupRoute,
   shellRoute.addChildren([
-    dashboardRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
+    dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute,

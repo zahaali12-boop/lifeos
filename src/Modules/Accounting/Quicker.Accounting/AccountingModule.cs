@@ -30,6 +30,7 @@ public static class AccountingModule
         services.AddScoped<IPostingService>(static sp => sp.GetRequiredService<PostingService>());
         services.AddScoped<JournalService>();
         services.AddScoped<ManualJournalService>();
+        services.AddScoped<IOpeningJournals, OpeningJournals>();
         services.AddScoped<RecurringService>();
         services.AddScoped<DeferralService>();
         services.AddScoped<IDeferralSchedules, DeferralSchedulesFacade>();

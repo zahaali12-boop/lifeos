@@ -24,5 +24,8 @@ public interface IBankAccountDirectory
 {
     Task<BankAccountInfo?> FindAsync(Guid bankAccountId, CancellationToken cancellationToken = default);
 
+    /// <summary>A company's bank account or cash box by its code (codes are kept upper-case), for imports that name it.</summary>
+    Task<BankAccountInfo?> FindByCodeAsync(Guid companyId, string code, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<BankAccountInfo>> ListAsync(Guid companyId, CancellationToken cancellationToken = default);
 }

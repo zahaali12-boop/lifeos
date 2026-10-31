@@ -9484,8 +9484,17 @@
         "tags": [
           "Items"
         ],
-        "summary": "Upsert by code from CSV or JSON, all or nothing: the first failing row is named",
+        "summary": "Upsert by code from CSV, an Excel workbook (.xlsx, first sheet, the export's columns) or JSON, all or nothing: the first failing row is named. dryRun=true checks the whole file and keeps nothing",
         "operationId": "postItemsImport",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -9494,6 +9503,11 @@
               }
             },
             "text/csv": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemImportRequest"
+              }
+            },
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
               "schema": {
                 "$ref": "#/components/schemas/ItemImportRequest"
               }
@@ -16675,6 +16689,64 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PartnerSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/import": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Customers and suppliers upserted by code from CSV, an Excel workbook (.xlsx: code, name_en, name_ar, kind, customer, supplier, email, phone, currency, payment_terms, credit_limit, customer_group, supplier_group…) or JSON, all or nothing; with companyId each row keeps its customer or supplier account in that company. dryRun=true checks the whole file and keeps nothing",
+        "operationId": "postPartnersImport",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerImportRequest"
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerImportRequest"
+              }
+            },
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerImportResult"
                 }
               }
             }
@@ -28067,6 +28139,104 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PrintEmailSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/status": {
+      "get": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "What the tenant has set up so far: companies, the chosen (or first) company's chart, tax regimes, customers, suppliers, items and its posted opening journals, so the setup wizard can show each step done",
+        "operationId": "getOnboardingStatus",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/companies/{companyId}/opening-balances": {
+      "post": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Opening balances as of a day from CSV, an Excel workbook (.xlsx: account, debit, credit, partner, bank_account, due_date, description) or JSON: one opening journal created and posted, a partner on each receivable or payable line opening its item, a bank account or cash box on each cash line, the difference to opening balance equity. dryRun=true checks the whole file and keeps nothing",
+        "operationId": "postOnboardingCompaniesByCompanyIdOpeningBalances",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "dryRun",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpeningBalanceImportRequest"
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "$ref": "#/components/schemas/OpeningBalanceImportRequest"
+              }
+            },
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+              "schema": {
+                "$ref": "#/components/schemas/OpeningBalanceImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpeningBalanceResult"
                 }
               }
             }
@@ -39753,8 +39923,13 @@
               "string"
             ],
             "format": "int32"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": false
           }
-        }
+        },
+        "description": "What an import did, or would do when bool ItemImportResult.DryRun: nothing was kept, the counts say what a real run would create and update."
       },
       "ItemSummary": {
         "required": [
@@ -42931,6 +43106,147 @@
         },
         "description": "Opens the fiscal year that starts in StartYear (on the calendar's start month) as `open` or `future`."
       },
+      "OpeningBalanceImportRequest": {
+        "required": [
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpeningBalanceRow"
+            }
+          }
+        }
+      },
+      "OpeningBalanceResult": {
+        "required": [
+          "journalId",
+          "number",
+          "debit",
+          "credit",
+          "difference",
+          "lines",
+          "partnerLines"
+        ],
+        "type": "object",
+        "properties": {
+          "journalId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "number": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "difference": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "partnerLines": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "What an opening-balance import did, or would do when bool OpeningBalanceResult.DryRun: the journal posted (none on a dry run),\nboth sides, the difference opening balance equity absorbed, and how many lines and partners were involved."
+      },
+      "OpeningBalanceRow": {
+        "required": [
+          "account",
+          "debit",
+          "credit"
+        ],
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "debit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "credit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "partner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bankAccount": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One line of an opening-balance import: the account by code, one side, and what its control needs: the partner's code with the due date, or the bank account or cash box's code."
+      },
       "OpenItemInfo": {
         "required": [
           "id",
@@ -44572,6 +44888,113 @@
           }
         },
         "description": "One of the partner's documents as the module that owns it shows it in the 360 view."
+      },
+      "PartnerImportRequest": {
+        "required": [
+          "rows"
+        ],
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerImportRow"
+            }
+          }
+        }
+      },
+      "PartnerImportResult": {
+        "required": [
+          "created",
+          "updated",
+          "accounts",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "updated": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "accounts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "What an import did, or would do when bool PartnerImportResult.DryRun: partners created and updated, company accounts kept, rows in all."
+      },
+      "PartnerImportRow": {
+        "required": [
+          "partner"
+        ],
+        "type": "object",
+        "properties": {
+          "partner": {
+            "$ref": "#/components/schemas/SavePartnerRequest"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentTerms": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "creditLimit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "customerGroup": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "supplierGroup": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One partner of an import: the partner itself and, for the company the import names, its account's currency, terms, limit and groups by code."
       },
       "PartnerSummary": {
         "required": [
@@ -65510,6 +65933,80 @@
           }
         }
       },
+      "SetupStatus": {
+        "required": [
+          "companyId",
+          "companies",
+          "hasChart",
+          "taxRegimes",
+          "customers",
+          "suppliers",
+          "items",
+          "openingJournals"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "companies": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hasChart": {
+            "type": "boolean"
+          },
+          "taxRegimes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "customers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "suppliers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "openingJournals": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Where a tenant stands on the way to its first posted document (setup wizard, A-173): what exists already, counted\nso a step can show itself done. Company-bound parts (the chart, the opening journal) read for the company asked\nfor, or the tenant's first company when none is."
+      },
       "ShipmentAllocation": {
         "required": [
           "binId",
@@ -71585,6 +72082,9 @@
     },
     {
       "name": "Printing"
+    },
+    {
+      "name": "Onboarding"
     },
     {
       "name": "Reporting"

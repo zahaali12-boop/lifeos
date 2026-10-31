@@ -25,6 +25,8 @@ using Quicker.Messaging;
 using Quicker.Numbering;
 using Quicker.Numbering.Api;
 using Quicker.Observability;
+using Quicker.Onboarding;
+using Quicker.Onboarding.Api;
 using Quicker.Organization;
 using Quicker.Organization.Api;
 using Quicker.Partners;
@@ -135,6 +137,7 @@ builder.Services.AddBankingModule();
 builder.Services.AddPurchasingModule();
 builder.Services.AddSalesModule();
 builder.Services.AddPrintingModule(builder.Configuration);
+builder.Services.AddOnboardingModule();
 builder.Services.AddReportingModule();
 
 var app = builder.Build();
@@ -182,6 +185,7 @@ api.MapBankingEndpoints();
 api.MapPurchasingEndpoints();
 api.MapSalesEndpoints();
 api.MapPrintingEndpoints();
+api.MapOnboardingEndpoints();
 api.MapReportingEndpoints();
 
 app.Run();

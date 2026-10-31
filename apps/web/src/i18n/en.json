@@ -120,6 +120,7 @@
     "customerReceipts": "Customer receipts",
     "salesReturns": "Sales returns",
     "salesAnalysis": "Sales analysis",
+    "setupWizard": "Setup wizard",
     "modules": {
       "accounting": "Accounting",
       "sales": "Sales",
@@ -295,6 +296,13 @@
     "recoverySaved": "I have saved them"
   },
   "dashboard": {
+    "setup": {
+      "title": "Set up Quicker",
+      "progress": "{done} of {total} steps",
+      "next": "Next: {step}",
+      "continue": "Continue setup",
+      "hide": "Hide"
+    },
     "workspace": "Workspace",
     "work": {
       "title": "Your work today",
@@ -337,6 +345,86 @@
       "draftShipments": "Shipments to post",
       "draftInvoices": "Draft invoices",
       "openReturns": "Returns in progress"
+    }
+  },
+  "setup": {
+    "title": "Setup wizard",
+    "description": "From an empty workspace to your first posted document in eight steps. Each step shows what is already in place; spreadsheets are checked as a whole before anything is kept.",
+    "progress": "{done} of {total} steps done",
+    "done": "Done",
+    "todo": "To do",
+    "expand": "Open {step}",
+    "collapse": "Close {step}",
+    "import": {
+      "columns": "Columns (first row, any order):",
+      "file": "File (.xlsx or .csv)",
+      "template": "Download template",
+      "paste": "Or paste rows (CSV)",
+      "check": "Check file",
+      "run": "Import",
+      "nothing": "Choose a file or paste rows first.",
+      "failed": "The import failed; the first wrong row is named above."
+    },
+    "steps": {
+      "company": {
+        "title": "Company",
+        "description": "The legal entity that keeps the books: its currency, time zone and how stock is costed.",
+        "create": "Create company"
+      },
+      "chart": {
+        "title": "Chart of accounts",
+        "description": "Start from a template; accounts can be added or renamed later.",
+        "template": "Template",
+        "accounts": "{count, plural, one {# account} other {# accounts}}",
+        "create": "Create chart",
+        "exists": "The company has its chart of accounts."
+      },
+      "tax": {
+        "title": "Taxes",
+        "description": "Install your country's tax regime, or say the company is not registered.",
+        "installed": "Installed",
+        "install": "Install",
+        "skip": "Not registered for tax — skip",
+        "unskip": "Skipped — undo"
+      },
+      "bank": {
+        "title": "Cash and bank accounts",
+        "description": "At least one cash box or bank account, so receipts, payments and opening cash have somewhere to go.",
+        "kind": "Kind",
+        "create": "Add account"
+      },
+      "partners": {
+        "title": "Customers and suppliers",
+        "description": "Import them from a spreadsheet: one row each, customer and supplier as yes/no, with currency, terms and credit limit for this company.",
+        "count": "{customers, plural, one {# customer} other {# customers}} and {suppliers, plural, one {# supplier} other {# suppliers}} so far.",
+        "checked": "Checked: {created} to create, {updated} to update, {accounts} company accounts. Nothing was kept.",
+        "imported": "Imported: {created} created, {updated} updated, {accounts} company accounts."
+      },
+      "items": {
+        "title": "Items",
+        "description": "Import the item master from a spreadsheet: codes, names in both languages, units, barcodes and list prices.",
+        "count": "{count, plural, =0 {No items yet.} one {# item so far.} other {# items so far.}}",
+        "checked": "Checked: {created} to create, {updated} to update. Nothing was kept.",
+        "imported": "Imported: {created} created, {updated} updated."
+      },
+      "opening": {
+        "title": "Opening balances",
+        "description": "Your trial balance as of the day before you start: one row per account; the partner on customer and supplier balances (with the due date), the cash box or bank account on cash balances. What does not balance goes to opening balance equity.",
+        "asOf": "Balances as of",
+        "checked": "{lines, plural, one {Checked: # line.} other {Checked: # lines.}}",
+        "posted": "Posted as {number}.",
+        "sides": "Debits {debit}, credits {credit}.",
+        "balanced": "The sheet balances.",
+        "difference": "{amount} goes to opening balance equity."
+      },
+      "ready": {
+        "title": "Ready to work",
+        "description": "Everything a first invoice needs is in place.",
+        "home": "Go to the home page",
+        "invite": "Invite your team",
+        "firstInvoice": "Open sales invoices",
+        "counts": "{customers} customers, {suppliers} suppliers and {items} items are set up."
+      }
     }
   },
   "grid": {

@@ -1,4 +1,4 @@
-import { Anchor, Undo2, ArrowRightLeft, BadgePercent, ChartColumn, Banknote, CircleDollarSign, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Contact, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, Kanban, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, ListTodo, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, Percent, ReceiptText, Repeat, Route, Ruler, Scale, ScanLine, SearchCheck, Settings, Settings2, ShieldCheck, Shapes, Ship, ShoppingCart, SlidersHorizontal, Gift, Stamp, Tags, TrendingDown, Truck, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, Undo2, ArrowRightLeft, BadgePercent, ChartColumn, Banknote, CircleDollarSign, Barcode, Bell, BookMarked, BookOpen, Boxes, Building2, Calculator, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Contact, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, Kanban, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, ListTodo, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, Percent, ReceiptText, Repeat, Rocket, Route, Ruler, Scale, ScanLine, SearchCheck, Settings, Settings2, ShieldCheck, Shapes, Ship, ShoppingCart, SlidersHorizontal, Gift, Stamp, Tags, TrendingDown, Truck, Users, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The modules, in order: each is a menu of the top bar (labelled `nav.modules.<id>`) and a section of the small-screen drawer (`nav.groups.<id>`). */
 export const navigationGroups = ["accounting", "sales", "purchasing", "inventory", "finance", "organization", "administration"] as const;
@@ -27,6 +27,7 @@ export interface NavigationItem {
 
 export const navigation: NavigationItem[] = [
   { to: "/", label: "nav.dashboard", icon: LayoutDashboard, shortcut: "g d" },
+  { to: "/setup", label: "nav.setupWizard", icon: Rocket, shortcut: "g ~", permission: "organization.company.read", group: "organization", section: "setup" },
   { to: "/companies", label: "nav.companies", icon: Building2, shortcut: "g c", permission: "organization.company.read", group: "organization", section: "setup" },
   { to: "/rates", label: "nav.rates", icon: Coins, shortcut: "g r", permission: "organization.company.read", group: "organization", section: "setup" },
   { to: "/numbering", label: "nav.numbering", icon: Hash, shortcut: "g '", permission: "numbering.series.read", group: "organization", section: "configuration" },

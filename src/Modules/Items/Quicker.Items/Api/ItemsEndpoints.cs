@@ -5,6 +5,7 @@ using Quicker.Items.Application;
 using Quicker.Items.Contracts;
 using Quicker.Kernel.Results;
 using Quicker.Web;
+using Quicker.Web.Imports;
 
 namespace Quicker.Items.Api;
 
@@ -36,31 +37,36 @@ public static class ItemsEndpoints
             .Produces<string>(StatusCodes.Status200OK, "text/csv")
             .RequirePermission(ItemsPermissions.ItemRead)
             .WithSummary("CSV with one row per item, units and barcodes packed (the import format)");
-        items.MapPost("/import", async (HttpRequest http, ItemService service, CancellationToken ct) =>
+        items.MapPost("/import", async (HttpRequest http, bool? dryRun, ItemService service, CancellationToken ct) =>
         {
             IReadOnlyList<SaveItemRequest> rows;
-            if (http.ContentType?.StartsWith("text/csv", StringComparison.OrdinalIgnoreCase) == true)
+            if (Sheet.IsSpreadsheet(http))
             {
-                using var reader = new StreamReader(http.Body);
-                rows = ItemCsv.Read(await reader.ReadToEndAsync(ct));
+                var sheet = await Sheet.ReadAsync(http, ct);
+                if (sheet.IsFailure)
+                {
+                    return ApiProblems.From(sheet.Error!);
+                }
+
+                rows = ItemCsv.Read(sheet.Value);
             }
             else
             {
                 var body = await http.ReadFromJsonAsync<ItemImportRequest>(ct);
-                if (body is null)
+                if (body?.Items is null)
                 {
-                    return ApiProblems.From(Error.Validation("import.body_required", "Send text/csv or a JSON body {items: [...]}."));
+                    return ApiProblems.From(Error.Validation("import.body_required", "Send text/csv, an .xlsx workbook or a JSON body {items: [...]}."));
                 }
 
                 rows = body.Items;
             }
 
-            return ApiProblems.From(await service.ImportAsync(rows, ct), static r => TypedResults.Ok(r));
+            return ApiProblems.From(await service.ImportAsync(rows, dryRun == true, ct), static r => TypedResults.Ok(r));
         })
-            .Accepts<ItemImportRequest>("application/json", "text/csv")
+            .Accepts<ItemImportRequest>("application/json", "text/csv", Sheet.XlsxContentType)
             .Produces<ItemImportResult>()
             .RequirePermission(ItemsPermissions.ItemManage)
-            .WithSummary("Upsert by code from CSV or JSON, all or nothing: the first failing row is named");
+            .WithSummary("Upsert by code from CSV, an Excel workbook (.xlsx, first sheet, the export's columns) or JSON, all or nothing: the first failing row is named. dryRun=true checks the whole file and keeps nothing");
         items.MapGet("/{itemId:guid}", async (Guid itemId, string? expand, ItemService service, CancellationToken ct) =>
             ApiProblems.Found(await service.GetAsync(itemId, expand, ct), "item", itemId))
             .RequirePermission(ItemsPermissions.ItemRead)

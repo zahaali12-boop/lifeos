@@ -1,12 +1,14 @@
 using System.Globalization;
 using System.Text;
+using Quicker.Web.Imports;
 
 namespace Quicker.Items.Application;
 
 /// <summary>
 /// The exchange format of the item master: one row per item with its units and barcodes packed into two columns
 /// (<c>uoms</c>: "CTN:24/1;DZ:12/1", <c>barcodes</c>: "PCS=6291041500213|CTN=16291041500210|CTN=...:CODE128"), so a
-/// spreadsheet round-trips. Booleans are true/false, empty means null, quotes and commas follow RFC 4180.
+/// spreadsheet round-trips. Booleans are true/false, empty means null, quotes and commas follow RFC 4180; an Excel
+/// workbook with the same columns reads the same way.
 /// </summary>
 public static class ItemCsv
 {
@@ -37,55 +39,39 @@ public static class ItemCsv
     }
 
     /// <summary>Parses the CSV into save requests; the first line names the columns (any order, unknown columns ignored).</summary>
-    public static IReadOnlyList<SaveItemRequest> Read(string csv)
+    public static IReadOnlyList<SaveItemRequest> Read(string csv) => Read(Sheet.FromCsv(csv));
+
+    /// <summary>The rows of a sheet (CSV or Excel) as save requests, blank rows skipped.</summary>
+    public static IReadOnlyList<SaveItemRequest> Read(Sheet sheet)
     {
-        ArgumentNullException.ThrowIfNull(csv);
-        var rows = Rows(csv);
-        if (rows.Count == 0)
+        ArgumentNullException.ThrowIfNull(sheet);
+        var result = new List<SaveItemRequest>(sheet.Rows.Count);
+        foreach (var row in sheet.Rows)
         {
-            return [];
-        }
-
-        var header = rows[0].Select(static h => h.Trim().ToLowerInvariant()).ToList();
-        var result = new List<SaveItemRequest>(rows.Count - 1);
-        for (var i = 1; i < rows.Count; i++)
-        {
-            var row = rows[i];
-            if (row.Count == 1 && string.IsNullOrWhiteSpace(row[0]))
-            {
-                continue;
-            }
-
-            string? Get(string column)
-            {
-                var index = header.IndexOf(column);
-                return index >= 0 && index < row.Count && row[index].Length > 0 ? row[index] : null;
-            }
-
             var name = new Dictionary<string, string>(StringComparer.Ordinal);
-            if (Get("name_en") is { } en)
+            if (row.Get("name_en") is { } en)
             {
                 name["en"] = en;
             }
 
-            if (Get("name_ar") is { } ar)
+            if (row.Get("name_ar") is { } ar)
             {
                 name["ar"] = ar;
             }
 
             var description = new Dictionary<string, string>(StringComparer.Ordinal);
-            if (Get("description_en") is { } den)
+            if (row.Get("description_en") is { } den)
             {
                 description["en"] = den;
             }
 
-            if (Get("description_ar") is { } dar)
+            if (row.Get("description_ar") is { } dar)
             {
                 description["ar"] = dar;
             }
 
             var uoms = new List<SaveItemUomRequest>();
-            foreach (var part in (Get("uoms") ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            foreach (var part in (row.Get("uoms") ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
                 var colon = part.IndexOf(':', StringComparison.Ordinal);
                 var code = colon < 0 ? part : part[..colon];
@@ -97,7 +83,7 @@ public static class ItemCsv
             }
 
             var barcodes = new List<SaveBarcodeRequest>();
-            foreach (var part in (Get("barcodes") ?? string.Empty).Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            foreach (var part in (row.Get("barcodes") ?? string.Empty).Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
                 var eq = part.IndexOf('=', StringComparison.Ordinal);
                 var uom = eq < 0 ? null : part[..eq];
@@ -109,9 +95,9 @@ public static class ItemCsv
             }
 
             result.Add(new SaveItemRequest(
-                Get("code") ?? string.Empty, name, Get("type") ?? "stock", Get("base_uom"), null, description.Count == 0 ? null : description, Get("category"), null, Get("brand"), null,
-                Get("sales_uom"), Get("purchase_uom"), Get("tracking") ?? "none", Bool(Get("expiry_required")), I(Get("shelf_life_days")), Bool(Get("fefo")), null, null, null,
-                D(Get("list_price")), Get("list_price_currency"), D(Get("weight_kg")), D(Get("volume_m3")), Get("hs_code"), Get("country_of_origin"), Bool(Get("is_active"), true), null,
+                row.Get("code") ?? string.Empty, name, row.Get("type") ?? "stock", row.Get("base_uom"), null, description.Count == 0 ? null : description, row.Get("category"), null, row.Get("brand"), null,
+                row.Get("sales_uom"), row.Get("purchase_uom"), row.Get("tracking") ?? "none", row.Bool("expiry_required"), I(row.Get("shelf_life_days")), row.Bool("fefo"), null, null, null,
+                D(row.Get("list_price")), row.Get("list_price_currency"), D(row.Get("weight_kg")), D(row.Get("volume_m3")), row.Get("hs_code"), row.Get("country_of_origin"), row.Bool("is_active", true), null,
                 uoms.Count == 0 ? null : uoms, barcodes.Count == 0 ? null : barcodes));
         }
 
@@ -123,8 +109,6 @@ public static class ItemCsv
     private static decimal? D(string? value) => decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) ? d : null;
 
     private static int? I(string? value) => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i) ? i : null;
-
-    private static bool Bool(string? value, bool whenEmpty = false) => value is null ? whenEmpty : value.Trim().ToLowerInvariant() is "true" or "1" or "yes" or "y";
 
     private static string B(bool value) => value ? "true" : "false";
 
@@ -138,69 +122,5 @@ public static class ItemCsv
         return value.Contains(',', StringComparison.Ordinal) || value.Contains('"', StringComparison.Ordinal) || value.Contains('\n', StringComparison.Ordinal)
             ? "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\""
             : value;
-    }
-
-    private static List<List<string>> Rows(string csv)
-    {
-        var rows = new List<List<string>>();
-        var row = new List<string>();
-        var field = new StringBuilder();
-        var quoted = false;
-        for (var i = 0; i < csv.Length; i++)
-        {
-            var c = csv[i];
-            if (quoted)
-            {
-                if (c == '"')
-                {
-                    if (i + 1 < csv.Length && csv[i + 1] == '"')
-                    {
-                        field.Append('"');
-                        i++;
-                    }
-                    else
-                    {
-                        quoted = false;
-                    }
-                }
-                else
-                {
-                    field.Append(c);
-                }
-            }
-            else if (c == '"')
-            {
-                quoted = true;
-            }
-            else if (c == ',')
-            {
-                row.Add(field.ToString());
-                field.Clear();
-            }
-            else if (c == '\n' || c == '\r')
-            {
-                if (c == '\r' && i + 1 < csv.Length && csv[i + 1] == '\n')
-                {
-                    i++;
-                }
-
-                row.Add(field.ToString());
-                field.Clear();
-                rows.Add(row);
-                row = [];
-            }
-            else
-            {
-                field.Append(c);
-            }
-        }
-
-        if (field.Length > 0 || row.Count > 0)
-        {
-            row.Add(field.ToString());
-            rows.Add(row);
-        }
-
-        return rows;
     }
 }

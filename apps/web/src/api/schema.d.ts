@@ -3519,7 +3519,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Upsert by code from CSV or JSON, all or nothing: the first failing row is named */
+        /** Upsert by code from CSV, an Excel workbook (.xlsx, first sheet, the export's columns) or JSON, all or nothing: the first failing row is named. dryRun=true checks the whole file and keeps nothing */
         post: operations["postItemsImport"];
         delete?: never;
         options?: never;
@@ -5879,6 +5879,23 @@ export interface paths {
         put?: never;
         /** A partner: one record per legal person wearing the supplier, customer and employee roles (each role given only with its side's permission); custom fields under host 'partner' */
         post: operations["postPartners"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/partners/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Customers and suppliers upserted by code from CSV, an Excel workbook (.xlsx: code, name_en, name_ar, kind, customer, supplier, email, phone, currency, payment_terms, credit_limit, customer_group, supplier_group…) or JSON, all or nothing; with companyId each row keeps its customer or supplier account in that company. dryRun=true checks the whole file and keeps nothing */
+        post: operations["postPartnersImport"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9640,6 +9657,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/onboarding/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the tenant has set up so far: companies, the chosen (or first) company's chart, tax regimes, customers, suppliers, items and its posted opening journals, so the setup wizard can show each step done */
+        get: operations["getOnboardingStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding/companies/{companyId}/opening-balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opening balances as of a day from CSV, an Excel workbook (.xlsx: account, debit, credit, partner, bank_account, due_date, description) or JSON: one opening journal created and posted, a partner on each receivable or payable line opening its item, a bank account or cash box on each cash line, the difference to opening balance equity. dryRun=true checks the whole file and keeps nothing */
+        post: operations["postOnboardingCompaniesByCompanyIdOpeningBalances"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/home": {
         parameters: {
             query?: never;
@@ -12759,6 +12810,7 @@ export interface components {
         ItemImportRequest: {
             items: components["schemas"]["SaveItemRequest"][];
         };
+        /** @description What an import did, or would do when bool ItemImportResult.DryRun: nothing was kept, the counts say what a real run would create and update. */
         ItemImportResult: {
             /** Format: int32 */
             created: number | string;
@@ -12766,6 +12818,8 @@ export interface components {
             updated: number | string;
             /** Format: int32 */
             total: number | string;
+            /** @default false */
+            dryRun: boolean;
         };
         ItemSummary: {
             /** Format: uuid */
@@ -13599,6 +13653,43 @@ export interface components {
             /** @default open */
             status: string;
         };
+        OpeningBalanceImportRequest: {
+            lines: components["schemas"]["OpeningBalanceRow"][];
+        };
+        /**
+         * @description What an opening-balance import did, or would do when bool OpeningBalanceResult.DryRun: the journal posted (none on a dry run),
+         *     both sides, the difference opening balance equity absorbed, and how many lines and partners were involved.
+         */
+        OpeningBalanceResult: {
+            /** Format: uuid */
+            journalId: null | string;
+            number: null | string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            /** Format: double */
+            difference: number | string;
+            /** Format: int32 */
+            lines: number | string;
+            /** Format: int32 */
+            partnerLines: number | string;
+            /** @default false */
+            dryRun: boolean;
+        };
+        /** @description One line of an opening-balance import: the account by code, one side, and what its control needs: the partner's code with the due date, or the bank account or cash box's code. */
+        OpeningBalanceRow: {
+            account: string;
+            /** Format: double */
+            debit: number | string;
+            /** Format: double */
+            credit: number | string;
+            partner?: null | string;
+            bankAccount?: null | string;
+            /** Format: date */
+            dueDate?: null | string;
+            description?: null | string;
+        };
         OpenItemInfo: {
             /** Format: uuid */
             id: string;
@@ -14029,6 +14120,32 @@ export interface components {
             /** Format: double */
             open: number | string;
             status: string;
+        };
+        PartnerImportRequest: {
+            rows: components["schemas"]["PartnerImportRow"][];
+        };
+        /** @description What an import did, or would do when bool PartnerImportResult.DryRun: partners created and updated, company accounts kept, rows in all. */
+        PartnerImportResult: {
+            /** Format: int32 */
+            created: number | string;
+            /** Format: int32 */
+            updated: number | string;
+            /** Format: int32 */
+            accounts: number | string;
+            /** Format: int32 */
+            total: number | string;
+            /** @default false */
+            dryRun: boolean;
+        };
+        /** @description One partner of an import: the partner itself and, for the company the import names, its account's currency, terms, limit and groups by code. */
+        PartnerImportRow: {
+            partner: components["schemas"]["SavePartnerRequest"];
+            currency?: null | string;
+            paymentTerms?: null | string;
+            /** Format: double */
+            creditLimit?: null | number | string;
+            customerGroup?: null | string;
+            supplierGroup?: null | string;
         };
         PartnerSummary: {
             /** Format: uuid */
@@ -19801,6 +19918,28 @@ export interface components {
             status: string;
             /** Format: date-time */
             createdAt: string;
+        };
+        /**
+         * @description Where a tenant stands on the way to its first posted document (setup wizard, A-173): what exists already, counted
+         *     so a step can show itself done. Company-bound parts (the chart, the opening journal) read for the company asked
+         *     for, or the tenant's first company when none is.
+         */
+        SetupStatus: {
+            /** Format: uuid */
+            companyId: null | string;
+            /** Format: int32 */
+            companies: number | string;
+            hasChart: boolean;
+            /** Format: int32 */
+            taxRegimes: number | string;
+            /** Format: int32 */
+            customers: number | string;
+            /** Format: int32 */
+            suppliers: number | string;
+            /** Format: int32 */
+            items: number | string;
+            /** Format: int32 */
+            openingJournals: number | string;
         };
         /**
          * @description One part of a shipment line's quantity: the bin and lot it comes from, its serials, and once posted the
@@ -27754,7 +27893,9 @@ export interface operations {
     };
     postItemsImport: {
         parameters: {
-            query?: never;
+            query?: {
+                dryRun?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -27763,6 +27904,7 @@ export interface operations {
             content: {
                 "application/json": components["schemas"]["ItemImportRequest"];
                 "text/csv": components["schemas"]["ItemImportRequest"];
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": components["schemas"]["ItemImportRequest"];
             };
         };
         responses: {
@@ -32259,6 +32401,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PartnerSummary"];
+                };
+            };
+        };
+    };
+    postPartnersImport: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                dryRun?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerImportRequest"];
+                "text/csv": components["schemas"]["PartnerImportRequest"];
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": components["schemas"]["PartnerImportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerImportResult"];
                 };
             };
         };
@@ -39435,6 +39606,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PrintEmailSummary"];
+                };
+            };
+        };
+    };
+    getOnboardingStatus: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupStatus"];
+                };
+            };
+        };
+    };
+    postOnboardingCompaniesByCompanyIdOpeningBalances: {
+        parameters: {
+            query?: {
+                asOf?: string;
+                dryRun?: boolean;
+            };
+            header?: never;
+            path: {
+                companyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpeningBalanceImportRequest"];
+                "text/csv": components["schemas"]["OpeningBalanceImportRequest"];
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": components["schemas"]["OpeningBalanceImportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpeningBalanceResult"];
                 };
             };
         };

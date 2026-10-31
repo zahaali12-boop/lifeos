@@ -160,7 +160,8 @@ public sealed record ConversionResult(Guid ItemId, decimal Quantity, Guid FromUo
 
 public sealed record ItemImportRequest(IReadOnlyList<SaveItemRequest> Items);
 
-public sealed record ItemImportResult(int Created, int Updated, int Total);
+/// <summary>What an import did, or would do when <see cref="DryRun"/>: nothing was kept, the counts say what a real run would create and update.</summary>
+public sealed record ItemImportResult(int Created, int Updated, int Total, bool DryRun = false);
 
 // ------------------------------------------------------------------ bills of material
 
