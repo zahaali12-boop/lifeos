@@ -1,10 +1,11 @@
-import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { InputHTMLAttributes, Ref, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "../lib/cn";
 
 const control =
   "w-full rounded-md border border-border bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle transition-colors duration-fast ease-standard hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger";
 
-export type InputProps = InputHTMLAttributes<HTMLInputElement>;
+/** The ref reaches the input itself (React 19 passes it as a prop), so a field can focus or select its own text. */
+export type InputProps = InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> | undefined };
 
 /** Text input; `dir="auto"` lets mixed Arabic/Latin content pick its own direction (ADR-0027). */
 export function Input({ className, dir = "auto", ...props }: InputProps) {

@@ -31,6 +31,8 @@ export function CodeField({ kind, value, onChange, scope, parent, recordId, "dat
   const [term, setTerm] = useState(value.trim());
   const typed = useRef(false);
   const filled = useRef<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const selectFilled = useRef(false);
   const ready = scope === undefined || Boolean(scope);
   const locked = Boolean(props.disabled) || Boolean(props.readOnly);
 
@@ -58,9 +60,19 @@ export function CodeField({ kind, value, onChange, scope, parent, recordId, "dat
     }
     if ((value === "" || value === filled.current) && value !== data.next) {
       filled.current = data.next;
+      selectFilled.current = true;
       onChange(data.next);
     }
   }, [data, recordId, locked, value, onChange]);
+  // A code filled in while the person is already in the field is selected, so their first keystroke replaces it.
+  useEffect(() => {
+    if (selectFilled.current && value === filled.current) {
+      selectFilled.current = false;
+      if (input.current && document.activeElement === input.current) {
+        input.current.select();
+      }
+    }
+  }, [value]);
 
   const current = value.trim();
   // The answer must be about what is in the field now, not what was in it a moment ago.
@@ -78,6 +90,7 @@ export function CodeField({ kind, value, onChange, scope, parent, recordId, "dat
       <div className="flex items-center gap-1">
         <TextField
           {...props}
+          ref={input}
           value={value}
           onChange={(e) => { typed.current = true; onChange(e.target.value); }}
           aria-invalid={taken ? true : props["aria-invalid"]}
