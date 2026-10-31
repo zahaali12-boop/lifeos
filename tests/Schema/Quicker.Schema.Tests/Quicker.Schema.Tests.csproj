@@ -31,6 +31,7 @@
     <ProjectReference Include="../../../src/Modules/Einvoicing/Quicker.Einvoicing.TestSupport/Quicker.Einvoicing.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Pos/Quicker.Pos.TestSupport/Quicker.Pos.TestSupport.csproj" />
     <ProjectReference Include="../../../src/Modules/Payroll/Quicker.Payroll.TestSupport/Quicker.Payroll.TestSupport.csproj" />
+    <ProjectReference Include="../../../src/Modules/Reporting/Quicker.Reporting.TestSupport/Quicker.Reporting.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

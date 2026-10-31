@@ -11531,7 +11531,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The home page's numbers for a company on a day (today in the company's time zone when no date is given): net sales today, this month and the month before with a thirty-day series; receivables and payables past due and due within seven days; every bank account and cash box's balance with the month's receipts and payments; quotations, orders, shipments and returns waiting for their next step. A section is left out when the member may not read that module in the company. */
+        /** The home page's numbers for a company on a day (today in the company's time zone when no date is given): net sales today, this month and the month before with a thirty-day series, receivables and payables due and overdue, cash by account, documents waiting for a step; each section only for those who may read its module. */
         get: operations["getReportingHome"];
         put?: never;
         post?: never;
@@ -11548,10 +11548,129 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every line of the company's sales invoices and credit notes in the range (posting dates; the year to date when no range is given; posted ones unless status names others, comma-separated) with what a grid groups by: the document, its month, quarter and year, the customer with their group, rep, branch, terms and price list, the item with its type, category, brand and unit, the tax code, the cost centre, department and project, and the amounts (credit notes negative). Capped at 20,000 lines; `truncated` says to narrow the range */
+        /** Every line of the company's sales invoices and credit notes in the range (posting dates; the year to date when no range is given; posted ones unless status names others, comma-separated) with the attributes a grid groups by; capped at 20,000 lines. */
         get: operations["getReportingSalesLines"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The semantic models the reader may query, each with its fields (dimensions and measures, bilingual labels, folders) including the tenant's own dimensions. */
+        get: operations["getReportingModels"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs a query: dimensions on rows and columns, measures, filters, sort, top-N, calculated fields and a prior-period or prior-year comparison; compiled with the reader's scopes over facts refreshed within the minute. */
+        post: operations["postReportingQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/query/explain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The statement a query compiles to, with its parameters and with the values written in, and the scope that applies; nothing runs. */
+        post: operations["postReportingQueryExplain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/query/drill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The lines behind a cell: the query's filters plus the cell's dimension keys, at line grain, each with the document it came from. */
+        post: operations["postReportingQueryDrill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/projections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The projected facts of the tenant: how far each is projected, how many rows it holds, when it last ran. */
+        get: operations["getReportingProjections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/projections/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Projects what was posted since each fact's watermark, now. */
+        post: operations["postReportingProjectionsRefresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/projections/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Empties the tenant's facts and projects them again from the books; the result equals what the increments built. */
+        post: operations["postReportingProjectionsRebuild"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12910,6 +13029,16 @@ export interface components {
             workingDays: (number | string)[];
             isSystem: boolean;
             holidays: components["schemas"]["HolidaySummary"][];
+        };
+        /** @description A field computed after aggregation from the measures of the row: arithmetic over their keys, such as `(net_amount - cost_amount) / net_amount * 100`. */
+        CalculatedField: {
+            key: string;
+            label: {
+                [key: string]: string;
+            };
+            expression: string;
+            /** @default number */
+            type: string;
         };
         CancelOrderLineRequest: {
             /** Format: double */
@@ -14460,6 +14589,22 @@ export interface components {
             /** Format: uuid */
             documentId: string;
             identifier: string;
+        };
+        /** @description The lines behind a cell: the query's filters plus the cell's dimension keys (a null key means the rows where that dimension is empty). */
+        DrillRequest: {
+            definition: components["schemas"]["QueryDefinition"];
+            keys: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            limit?: null | number | string;
+        };
+        DrillResult: {
+            columns: components["schemas"]["ResultField"][];
+            rows: Record<string, never>[];
+            /** Format: int32 */
+            rowCount: number | string;
+            truncated: boolean;
         };
         /** @description One overdue item as a letter names it: what was open on the date, how late, and the level it reached. */
         DunningLetterItem: {
@@ -18500,6 +18645,26 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** @description What a refresh did: rows added or updated per fact. */
+        ProjectionRun: {
+            facts: components["schemas"]["ProjectionStatus"][];
+            /** Format: int64 */
+            rowsProjected: number | string;
+            /** Format: int32 */
+            durationMs: number | string;
+        };
+        /** @description The state of one fact's projection for the tenant. */
+        ProjectionStatus: {
+            fact: string;
+            /** Format: date-time */
+            watermark: string;
+            /** Format: int64 */
+            rowCount: number | string;
+            /** Format: date-time */
+            lastRunAt: null | string;
+            /** Format: int32 */
+            lastDurationMs: null | number | string;
+        };
         /** @description A promise to pay on an item: the date the customer promised, and what they said; a null date clears the promise. */
         PromiseToPayRequest: {
             /** Format: date */
@@ -18829,6 +18994,79 @@ export interface components {
             /** Format: double */
             denominator: number | string;
             method: string;
+        };
+        /**
+         * @description A query over a semantic model (ADR-0034 §3): the dimensions on rows and columns, the measures, the filters, the
+         *     sort and top-N, calculated fields, an optional comparison (prior_period or prior_year), and the date range on
+         *     the model's date (the year to date when none is given). The company is always named; the reader's scopes apply.
+         */
+        QueryDefinition: {
+            model: string;
+            /** Format: uuid */
+            companyId: string;
+            rows?: null | string[];
+            columns?: null | string[];
+            values?: null | components["schemas"]["QueryValue"][];
+            filters?: null | components["schemas"]["QueryFilter"][];
+            sort?: null | components["schemas"]["QuerySort"][];
+            /** Format: int32 */
+            topN?: null | number | string;
+            calculated?: null | components["schemas"]["CalculatedField"][];
+            comparison?: null | string;
+            /** Format: date */
+            from?: null | string;
+            /** Format: date */
+            to?: null | string;
+        };
+        /** @description The compiled statement with its parameters, and the same statement with the values written in for reading. */
+        QueryExplanation: {
+            sql: string;
+            parameters: Record<string, never>;
+            sqlWithValues: string;
+            scope: components["schemas"]["QueryScope"];
+            joins: string[];
+        };
+        /** @description A filter on a dimension: operators eq, ne, in, not_in, gt, gte, lt, lte, between, contains, starts_with, is_null, not_null; values typed by the field. */
+        QueryFilter: {
+            field: string;
+            op: string;
+            value?: unknown;
+        };
+        QueryResult: {
+            model: string;
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            /** Format: date */
+            from: null | string;
+            /** Format: date */
+            to: null | string;
+            fields: components["schemas"]["ResultField"][];
+            rows: Record<string, never>[];
+            /** Format: int32 */
+            rowCount: number | string;
+            truncated: boolean;
+            /** Format: date-time */
+            projectedUpTo: null | string;
+            scope: components["schemas"]["QueryScope"];
+            /** Format: int32 */
+            durationMs: number | string;
+        };
+        QueryScope: {
+            companies: string[];
+            branches: string[];
+            warehouses: string[];
+            sides: string[];
+        };
+        QuerySort: {
+            field: string;
+            /** @default false */
+            descending: boolean;
+        };
+        /** @description A measure to aggregate; the aggregation defaults to the field's own. */
+        QueryValue: {
+            field: string;
+            aggregation?: null | string;
         };
         QuotationLineSummary: {
             /** Format: uuid */
@@ -19636,6 +19874,32 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        ReportCatalogueField: {
+            key: string;
+            label: {
+                [key: string]: string;
+            };
+            role: string;
+            type: string;
+            folder: string;
+            aggregation: null | string;
+            description: null | {
+                [key: string]: string;
+            };
+        };
+        ReportCatalogueModel: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            hasDate: boolean;
+            permissions: string[];
+            canDrill: boolean;
+            fields: components["schemas"]["ReportCatalogueField"][];
+        };
         RequestActionSummary: {
             /** Format: uuid */
             id: string;
@@ -19851,6 +20115,20 @@ export interface components {
         ResetPasswordRequest: {
             token: string;
             password: string;
+        };
+        /** @description A column of a result: a dimension (its label column; the key travels as `&lt;key&gt;_key`), a measure, a calculated field, or a comparison column (`group` prior or change). */
+        ResultField: {
+            key: string;
+            label: {
+                [key: string]: string;
+            };
+            role: string;
+            type: string;
+            aggregation?: null | string;
+            folder?: null | string;
+            /** @default false */
+            isCalculated: boolean;
+            group?: null | string;
         };
         /** @description A posted receipt line with something left to return, and what has already gone back. */
         ReturnableLine: {
@@ -46970,6 +47248,158 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalesLinesReport"];
+                };
+            };
+        };
+    };
+    getReportingModels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportCatalogueModel"][];
+                };
+            };
+        };
+    };
+    postReportingQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryDefinition"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResult"];
+                };
+            };
+        };
+    };
+    postReportingQueryExplain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryDefinition"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryExplanation"];
+                };
+            };
+        };
+    };
+    postReportingQueryDrill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DrillRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DrillResult"];
+                };
+            };
+        };
+    };
+    getReportingProjections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectionStatus"][];
+                };
+            };
+        };
+    };
+    postReportingProjectionsRefresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectionRun"];
+                };
+            };
+        };
+    };
+    postReportingProjectionsRebuild: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectionRun"];
                 };
             };
         };

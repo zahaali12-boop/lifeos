@@ -54,4 +54,12 @@ internal static class ReportingApi
         response.StatusCode.ShouldBe(HttpStatusCode.OK, json.ToString());
         return json;
     }
+
+    public static async Task<(string Code, JsonElement Problem)> PostErrorAsync(this HttpClient client, string path, object body, HttpStatusCode expected)
+    {
+        var response = await client.PostAsJsonAsync(path, body, Json);
+        var json = await response.ReadJsonAsync();
+        response.StatusCode.ShouldBe(expected, json.ToString());
+        return (json.GetProperty("code").GetString()!, json);
+    }
 }

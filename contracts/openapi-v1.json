@@ -33456,7 +33456,7 @@
         "tags": [
           "Reporting"
         ],
-        "summary": "The home page's numbers for a company on a day (today in the company's time zone when no date is given): net sales today, this month and the month before with a thirty-day series; receivables and payables past due and due within seven days; every bank account and cash box's balance with the month's receipts and payments; quotations, orders, shipments and returns waiting for their next step. A section is left out when the member may not read that module in the company.",
+        "summary": "The home page's numbers for a company on a day (today in the company's time zone when no date is given): net sales today, this month and the month before with a thirty-day series, receivables and payables due and overdue, cash by account, documents waiting for a step; each section only for those who may read its module.",
         "operationId": "getReportingHome",
         "parameters": [
           {
@@ -33496,7 +33496,7 @@
         "tags": [
           "Reporting"
         ],
-        "summary": "Every line of the company's sales invoices and credit notes in the range (posting dates; the year to date when no range is given; posted ones unless status names others, comma-separated) with what a grid groups by: the document, its month, quarter and year, the customer with their group, rep, branch, terms and price list, the item with its type, category, brand and unit, the tax code, the cost centre, department and project, and the amounts (credit notes negative). Capped at 20,000 lines; `truncated` says to narrow the range",
+        "summary": "Every line of the company's sales invoices and credit notes in the range (posting dates; the year to date when no range is given; posted ones unless status names others, comma-separated) with the attributes a grid groups by; capped at 20,000 lines.",
         "operationId": "getReportingSalesLines",
         "parameters": [
           {
@@ -33539,6 +33539,189 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SalesLinesReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/models": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The semantic models the reader may query, each with its fields (dimensions and measures, bilingual labels, folders) including the tenant's own dimensions.",
+        "operationId": "getReportingModels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportCatalogueModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/query": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Runs a query: dimensions on rows and columns, measures, filters, sort, top-N, calculated fields and a prior-period or prior-year comparison; compiled with the reader's scopes over facts refreshed within the minute.",
+        "operationId": "postReportingQuery",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryDefinition"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/query/explain": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The statement a query compiles to, with its parameters and with the values written in, and the scope that applies; nothing runs.",
+        "operationId": "postReportingQueryExplain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryDefinition"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryExplanation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/query/drill": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The lines behind a cell: the query's filters plus the cell's dimension keys, at line grain, each with the document it came from.",
+        "operationId": "postReportingQueryDrill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DrillRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrillResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/projections": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The projected facts of the tenant: how far each is projected, how many rows it holds, when it last ran.",
+        "operationId": "getReportingProjections",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectionStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/projections/refresh": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Projects what was posted since each fact's watermark, now.",
+        "operationId": "postReportingProjectionsRefresh",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionRun"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/projections/rebuild": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Empties the tenant's facts and projects them again from the books; the result equals what the increments built.",
+        "operationId": "postReportingProjectionsRebuild",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectionRun"
                 }
               }
             }
@@ -38637,6 +38820,33 @@
             }
           }
         }
+      },
+      "CalculatedField": {
+        "required": [
+          "key",
+          "label",
+          "expression"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "expression": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "default": "number"
+          }
+        },
+        "description": "A field computed after aggregation from the measures of the row: arithmetic over their keys, such as `(net_amount - cost_amount) / net_amount * 100`."
       },
       "CancelOrderLineRequest": {
         "required": [
@@ -44350,6 +44560,68 @@
           }
         },
         "description": "The identifier a draft shows until numbering issues its number."
+      },
+      "DrillRequest": {
+        "required": [
+          "definition",
+          "keys"
+        ],
+        "type": "object",
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/QueryDefinition"
+          },
+          "keys": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "limit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The lines behind a cell: the query's filters plus the cell's dimension keys (a null key means the rows where that dimension is empty)."
+      },
+      "DrillResult": {
+        "required": [
+          "columns",
+          "rows",
+          "rowCount",
+          "truncated"
+        ],
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultField"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "rowCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        }
       },
       "DunningLetterItem": {
         "required": [
@@ -59789,6 +60061,83 @@
           }
         }
       },
+      "ProjectionRun": {
+        "required": [
+          "facts",
+          "rowsProjected",
+          "durationMs"
+        ],
+        "type": "object",
+        "properties": {
+          "facts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectionStatus"
+            }
+          },
+          "rowsProjected": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "durationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "What a refresh did: rows added or updated per fact."
+      },
+      "ProjectionStatus": {
+        "required": [
+          "fact",
+          "watermark",
+          "rowCount",
+          "lastRunAt",
+          "lastDurationMs"
+        ],
+        "type": "object",
+        "properties": {
+          "fact": {
+            "type": "string"
+          },
+          "watermark": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rowCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "lastRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastDurationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The state of one fact's projection for the tenant."
+      },
       "PromiseToPayRequest": {
         "required": [
           "promisedOn"
@@ -61119,6 +61468,309 @@
             "type": "string"
           }
         }
+      },
+      "QueryDefinition": {
+        "required": [
+          "model",
+          "companyId"
+        ],
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rows": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "columns": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "values": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/QueryValue"
+            }
+          },
+          "filters": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/QueryFilter"
+            }
+          },
+          "sort": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/QuerySort"
+            }
+          },
+          "topN": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "calculated": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CalculatedField"
+            }
+          },
+          "comparison": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "A query over a semantic model (ADR-0034 §3): the dimensions on rows and columns, the measures, the filters, the\nsort and top-N, calculated fields, an optional comparison (prior_period or prior_year), and the date range on\nthe model's date (the year to date when none is given). The company is always named; the reader's scopes apply."
+      },
+      "QueryExplanation": {
+        "required": [
+          "sql",
+          "parameters",
+          "sqlWithValues",
+          "scope",
+          "joins"
+        ],
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "sqlWithValues": {
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/QueryScope"
+          },
+          "joins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "The compiled statement with its parameters, and the same statement with the values written in for reading."
+      },
+      "QueryFilter": {
+        "required": [
+          "field",
+          "op"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "value": { }
+        },
+        "description": "A filter on a dimension: operators eq, ne, in, not_in, gt, gte, lt, lte, between, contains, starts_with, is_null, not_null; values typed by the field."
+      },
+      "QueryResult": {
+        "required": [
+          "model",
+          "companyId",
+          "currency",
+          "from",
+          "to",
+          "fields",
+          "rows",
+          "rowCount",
+          "truncated",
+          "projectedUpTo",
+          "scope",
+          "durationMs"
+        ],
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultField"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "rowCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "projectedUpTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/QueryScope"
+          },
+          "durationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "QueryScope": {
+        "required": [
+          "companies",
+          "branches",
+          "warehouses",
+          "sides"
+        ],
+        "type": "object",
+        "properties": {
+          "companies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "warehouses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "sides": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "QuerySort": {
+        "required": [
+          "field"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "descending": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "QueryValue": {
+        "required": [
+          "field"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "aggregation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A measure to aggregate; the aggregation defaults to the field's own."
       },
       "QuotationLineSummary": {
         "required": [
@@ -64062,6 +64714,100 @@
           }
         }
       },
+      "ReportCatalogueField": {
+        "required": [
+          "key",
+          "label",
+          "role",
+          "type",
+          "folder",
+          "aggregation",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "role": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "folder": {
+            "type": "string"
+          },
+          "aggregation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ReportCatalogueModel": {
+        "required": [
+          "code",
+          "name",
+          "description",
+          "hasDate",
+          "permissions",
+          "canDrill",
+          "fields"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "hasDate": {
+            "type": "boolean"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canDrill": {
+            "type": "boolean"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportCatalogueField"
+            }
+          }
+        }
+      },
       "RequestActionSummary": {
         "required": [
           "id",
@@ -64924,6 +65670,55 @@
             "type": "string"
           }
         }
+      },
+      "ResultField": {
+        "required": [
+          "key",
+          "label",
+          "role",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "role": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "aggregation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "folder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isCalculated": {
+            "type": "boolean",
+            "default": false
+          },
+          "group": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A column of a result: a dimension (its label column; the key travels as `&lt;key&gt;_key`), a measure, a calculated field, or a comparison column (`group` prior or change)."
       },
       "ReturnableLine": {
         "required": [

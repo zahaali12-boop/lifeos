@@ -4019,6 +4019,88 @@ erDiagram
 
 ## 21. Reporting, print and onboarding
 
+### Reporting facts and the semantic layer (ADR-0034, A-182)
+
+The `reporting` schema holds projections of the append-only ledgers and documents, one row per source line, keyed
+for the joins the models make and carrying the document each line came from. A watermark per tenant and fact says
+how far the projection reached; a rebuild starts it again. State the subledgers keep live (open items, stock on hand)
+is read through views. The catalogue of models and fields is code; the query compiler is the one way in.
+
+```mermaid
+erDiagram
+  reporting_projections {
+    uuid tenant_id PK
+    text fact PK "journal_lines | sales_lines | purchase_lines | stock_movements | stock_values"
+    timestamptz watermark
+    bigint row_count
+    timestamptz last_run_at
+  }
+  fact_journal_lines {
+    uuid line_id PK
+    uuid entry_id
+    uuid company_id
+    date posting_date
+    uuid account_id
+    text account_role
+    uuid partner_id
+    uuid dimension_set_id
+    numeric debit_fc
+    numeric credit_fc
+    text source_document_type
+    uuid source_document_id
+  }
+  fact_sales_lines {
+    uuid line_id PK
+    uuid invoice_id
+    uuid company_id
+    text kind "invoice | credit_note (signed)"
+    date posting_date
+    uuid partner_id
+    uuid item_id
+    numeric quantity
+    numeric net_amount
+    numeric tax_amount
+    numeric gross_amount
+  }
+  fact_purchase_lines {
+    uuid line_id PK
+    uuid invoice_id
+    uuid partner_id
+    uuid item_id
+    numeric net_amount
+    numeric wht_amount
+  }
+  fact_stock_movements {
+    uuid entry_id PK
+    bigint sequence
+    uuid item_id
+    uuid warehouse_id
+    text entry_type
+    numeric quantity
+  }
+  fact_stock_values {
+    uuid value_id PK
+    uuid entry_id
+    text value_type
+    numeric cost_amount
+  }
+  v_open_items {
+    uuid id PK
+    text side "AR | AP"
+    uuid partner_id
+    date due_date
+    numeric remaining_fc
+    text status
+  }
+  v_stock_on_hand {
+    uuid item_id PK
+    uuid warehouse_id PK
+    numeric on_hand
+    numeric reserved
+    numeric quality_hold
+  }
+```
+
 ```mermaid
 erDiagram
   rpt_models ||--|{ rpt_fields : "exposes"
