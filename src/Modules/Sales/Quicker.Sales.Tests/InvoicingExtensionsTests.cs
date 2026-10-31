@@ -163,7 +163,7 @@ public sealed class InvoicingExtensionsTests(ApiHostFixture host)
     }
 
     [Fact]
-    public async Task A_posted_invoice_under_a_regime_with_an_einvoicing_scheme_waits_for_clearance_and_submission_is_refused_until_an_adapter_exists()
+    public async Task A_posted_invoice_under_a_regime_with_an_einvoicing_scheme_waits_for_clearance_and_submission_is_refused_until_a_device_is_onboarded()
     {
         var s = await SetUpAsync();
         var owner = s.Owner;
@@ -175,7 +175,7 @@ public sealed class InvoicingExtensionsTests(ApiHostFixture host)
 
         var posted = await owner.PostAsync($"/api/v1/sales/invoices/{invoiceId}/post", new { }, HttpStatusCode.OK);
         posted.GetProperty("einvoiceStatus").GetString().ShouldBe("pending");
-        (await owner.PostErrorAsync($"/api/v1/sales/invoices/{invoiceId}/einvoice/submit", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("tax.clearance_not_configured");
+        (await owner.PostErrorAsync($"/api/v1/sales/invoices/{invoiceId}/einvoice/submit", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("einvoice.no_device");
         (await owner.GetOkAsync($"/api/v1/sales/invoices/{invoiceId}")).GetProperty("einvoiceStatus").GetString().ShouldBe("pending");
     }
 }

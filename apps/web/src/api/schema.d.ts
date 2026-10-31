@@ -6909,8 +6909,212 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Submits the document's UBL export to its regime's clearance scheme, when a provider is registered for it (none ship yet: zatca, peppol and eta are later adapters) */
+        /** Submits the document to its regime's clearance scheme through the adapter registered for it (zatca; peppol and eta are later adapters) */
         post: operations["postTaxDocumentsBySourceDocumentTypeBySourceDocumentIdClearanceSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The e-invoicing devices of a company with their status, certificate and counter; secrets are never returned. */
+        get: operations["getEinvoicingDevices"];
+        put?: never;
+        /** Creates a device: its key and certificate request, named after the company's VAT registration in the regime that uses the scheme. */
+        post: operations["postEinvoicingDevices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/devices/{deviceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getEinvoicingDevicesByDeviceId"];
+        /** Changes the device's name, the seller details printed on its invoices and whether posted documents are submitted on their own; the request itself while nothing is issued yet. */
+        put: operations["putEinvoicingDevicesByDeviceId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/devices/{deviceId}/compliance-csid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Requests the compliance certificate with the OTP from the scheme's portal. */
+        post: operations["postEinvoicingDevicesByDeviceIdComplianceCsid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/devices/{deviceId}/compliance-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sends one sample of each document kind the device will issue to the scheme's compliance check; the device is checked when every sample is accepted. */
+        post: operations["postEinvoicingDevicesByDeviceIdComplianceChecks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/devices/{deviceId}/production-csid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Requests the production certificate once the compliance checks passed; the device is live from here. */
+        post: operations["postEinvoicingDevicesByDeviceIdProductionCsid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/devices/{deviceId}/renew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Renews a live device's production certificate with a fresh OTP. */
+        post: operations["postEinvoicingDevicesByDeviceIdRenew"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/devices/{deviceId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes the device out of service. */
+        post: operations["postEinvoicingDevicesByDeviceIdRevoke"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Submissions, newest first: one row per attempt with the counter, the hash, the status and what the scheme said. */
+        get: operations["getEinvoicingSubmissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/submissions/{submissionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getEinvoicingSubmissionsBySubmissionId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/submissions/{submissionId}/xml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The XML as submitted (signed for a simplified invoice), or with cleared=true as the scheme returned it for a cleared one. */
+        get: operations["getEinvoicingSubmissionsBySubmissionIdXml"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/submissions/{submissionId}/qr.svg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The submission's QR code as an SVG. */
+        get: operations["getEinvoicingSubmissionsBySubmissionIdQrSvg"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/einvoicing/documents/{documentType}/{documentId}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The XML the adapter would submit for the document, unsigned, with the counter the next submission would take. */
+        get: operations["getEinvoicingDocumentsByDocumentTypeByDocumentIdPreview"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -12895,6 +13099,16 @@ export interface components {
         CompleteCrmActivityRequest: {
             outcome?: null | string;
         };
+        /** @description One sample document the compliance checks sent and what the scheme answered. */
+        ComplianceCheck: {
+            kind: string;
+            typeCode: string;
+            status: string;
+            warnings: string[];
+            errors: string[];
+            /** Format: date-time */
+            checkedAt: string;
+        };
         ContactSummary: {
             /** Format: uuid */
             id: string;
@@ -13972,6 +14186,77 @@ export interface components {
             /** Format: uuid */
             postingGroupId: null | string;
             whtCode: null | string;
+        };
+        EinvoiceDeviceSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            scheme: string;
+            name: string;
+            environment: string;
+            status: string;
+            serialNumber: string;
+            commonName: string;
+            organizationUnit: string;
+            organization: string;
+            industry: string;
+            invoiceTypes: string;
+            vatNumber: string;
+            seller: components["schemas"]["SellerDetails"];
+            autoSubmit: boolean;
+            csr: null | string;
+            certificateSubject: null | string;
+            certificateIssuer: null | string;
+            /** Format: date-time */
+            certificateExpiresAt: null | string;
+            complianceChecks: components["schemas"]["ComplianceCheck"][];
+            /** Format: int64 */
+            invoiceCounter: number | string;
+            lastInvoiceHash: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description The XML of a document as the scheme would receive it, before any submission: to inspect what the adapter builds. */
+        EinvoicePreview: {
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            kind: string;
+            typeCode: string;
+            xml: string;
+            invoiceHash: string;
+        };
+        EinvoiceSubmissionSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            deviceId: string;
+            deviceName: string;
+            documentType: string;
+            /** Format: uuid */
+            documentId: string;
+            documentNumber: string;
+            kind: string;
+            typeCode: string;
+            /** Format: int64 */
+            invoiceCounter: number | string;
+            invoiceHash: string;
+            previousHash: string;
+            status: string;
+            warnings: string[];
+            errors: string[];
+            hasClearedXml: boolean;
+            qr: null | string;
+            requestId: null | string;
+            /** Format: date-time */
+            submittedAt: string;
+            /** Format: date-time */
+            respondedAt: null | string;
         };
         EntryLinkSummary: {
             /** Format: uuid */
@@ -15920,6 +16205,9 @@ export interface components {
             lines: components["schemas"]["OrderLineSummary"][];
             /** Format: date-time */
             updatedAt: string;
+        };
+        OtpRequest: {
+            otp: string;
         };
         /** @description A stored outbox row as the dispatcher and the operator UI see it. */
         OutboxMessage: {
@@ -20207,6 +20495,21 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveDeviceRequest: {
+            /** Format: uuid */
+            companyId: string;
+            name: string;
+            /** @default simulator */
+            environment: string;
+            organizationUnit?: null | string;
+            industry?: null | string;
+            /** @default 1100 */
+            invoiceTypes: string;
+            seller?: null | components["schemas"]["SellerDetails"];
+            /** @default true */
+            autoSubmit: boolean;
+            model?: null | string;
+        };
         SaveDimensionRequest: {
             code: string;
             name: {
@@ -22115,6 +22418,18 @@ export interface components {
         SelectTenantRequest: {
             challengeToken: string;
             tenantSlug: string;
+        };
+        /** @description The seller as the scheme prints it on every invoice of the device: the commercial registration and the address parts ZATCA requires. */
+        SellerDetails: {
+            registrationNumber?: null | string;
+            /** @default CRN */
+            registrationScheme: null | string;
+            street?: null | string;
+            buildingNumber?: null | string;
+            plot?: null | string;
+            district?: null | string;
+            city?: null | string;
+            postalCode?: null | string;
         };
         SendOrderRequest: {
             to?: null | string;
@@ -37071,6 +37386,334 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClearanceSubmission"];
+                };
+            };
+        };
+    };
+    getEinvoicingDevices: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"][];
+                };
+            };
+        };
+    };
+    postEinvoicingDevices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    getEinvoicingDevicesByDeviceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    putEinvoicingDevicesByDeviceId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    postEinvoicingDevicesByDeviceIdComplianceCsid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OtpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    postEinvoicingDevicesByDeviceIdComplianceChecks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    postEinvoicingDevicesByDeviceIdProductionCsid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    postEinvoicingDevicesByDeviceIdRenew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OtpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    postEinvoicingDevicesByDeviceIdRevoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deviceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceDeviceSummary"];
+                };
+            };
+        };
+    };
+    getEinvoicingSubmissions: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                documentType?: string;
+                documentId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceSubmissionSummary"][];
+                };
+            };
+        };
+    };
+    getEinvoicingSubmissionsBySubmissionId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                submissionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoiceSubmissionSummary"];
+                };
+            };
+        };
+    };
+    getEinvoicingSubmissionsBySubmissionIdXml: {
+        parameters: {
+            query?: {
+                cleared?: boolean;
+            };
+            header?: never;
+            path: {
+                submissionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/xml": string;
+                };
+            };
+        };
+    };
+    getEinvoicingSubmissionsBySubmissionIdQrSvg: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                submissionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/svg+xml": string;
+                };
+            };
+        };
+    };
+    getEinvoicingDocumentsByDocumentTypeByDocumentIdPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentType: string;
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EinvoicePreview"];
                 };
             };
         };

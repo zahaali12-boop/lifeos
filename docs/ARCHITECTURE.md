@@ -131,6 +131,7 @@ flowchart TB
     Receivables
     Payables
     Banking[Banking: payments, statements, reconciliation, cheques]
+    Einvoicing[Einvoicing: ZATCA phase 2 adapter, devices, submissions, simulator]
     Expenses[Expenses: categories, supplier bills and employee claims, petty cash funds]
     FixedAssets
     Budgeting

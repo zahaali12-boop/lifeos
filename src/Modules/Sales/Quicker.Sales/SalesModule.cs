@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Accounting.Contracts;
+using Quicker.Einvoicing.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Messaging;
 using Quicker.Numbering.Contracts;
@@ -27,6 +28,8 @@ public static class SalesModule
         services.AddScoped<IPrintModelProvider, SalesInvoicePrintModel>();
         services.AddScoped<IPrintModelProvider, SalesOrderPrintModel>();
         services.AddJobHandler<RecurringInvoiceJob, RecurringInvoicePayload>();
+        services.AddJobHandler<EinvoiceSubmitJob, EinvoiceSubmitPayload>();
+        services.AddScoped<IEinvoiceSource, SalesEinvoiceSource>();
         // Entries of this module belong to its invoices, which keep their own subledger (A-140).
         services.AddSingleton(new PostingDocumentModule("sales"));
         NumberedDocumentTypes.Register(

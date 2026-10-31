@@ -160,7 +160,8 @@
     "printTemplates": "Print templates",
     "cheques": "Cheques",
     "chequeBooks": "Cheque books",
-    "reconciliation": "Bank reconciliation"
+    "reconciliation": "Bank reconciliation",
+    "einvoicing": "E-invoicing"
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -4160,7 +4161,9 @@
       "generated": "Issued",
       "issued": "Invoices issued",
       "nothingIssued": "No invoice has been issued from this schedule yet.",
-      "issueNow": "Issue now"
+      "issueNow": "Issue now",
+      "einvoiceQr": "E-invoice QR code",
+      "openSubmission": "Open the submission"
     },
     "returns": {
       "description": "Goods a customer sends back: requested against posted shipment lines, authorised, received into stock at the cost they left with, inspected and dispositioned, credited against the invoices that billed them.",
@@ -5299,5 +5302,100 @@
       "copyHelp": "A copy starts from the current version, for a company or a branch, and prints there instead of the shipped one once it is the default.",
       "sameAsSource": "Same as the source"
     }
+  },
+  "einvoicing": {
+    "description": "ZATCA phase 2: onboard a device for each company with the certificate the scheme issues, run its compliance checks, then every posted invoice is cleared (standard) or signed and reported (simplified) with its QR.",
+    "tabs": {
+      "devices": "Devices",
+      "submissions": "Submissions"
+    },
+    "devicesHelp": "A device is the unit the scheme certifies: its key never leaves this system, its certificate signs simplified invoices, and its counter and hash chain every submission to the one before.",
+    "newDevice": "New device",
+    "editDevice": "Edit device",
+    "deviceHelp": "The certificate request is named after the company's VAT registration in the Saudi regime. The seller details are printed on every invoice; they start from the company's address and commercial registration.",
+    "environment": "Environment",
+    "environmentHelp": "The simulator answers like the scheme without reaching it; the sandbox and simulation are the scheme's test portals; production is live.",
+    "environments": {
+      "simulator": "Simulator",
+      "sandbox": "ZATCA sandbox",
+      "simulation": "ZATCA simulation",
+      "production": "ZATCA production"
+    },
+    "organizationUnit": "Branch or unit",
+    "organizationUnitHelp": "Printed in the certificate; the company's name when empty.",
+    "industry": "Industry",
+    "invoiceTypes": "Invoice types",
+    "kinds": {
+      "standard": "Standard (B2B, cleared)",
+      "simplified": "Simplified (B2C, reported)"
+    },
+    "autoSubmit": "Submit posted invoices automatically",
+    "seller": {
+      "registrationNumber": "Commercial registration",
+      "registrationNumberHelp": "The CRN printed as the seller's identification.",
+      "address": "Address",
+      "street": "Street",
+      "buildingNumber": "Building number",
+      "district": "District",
+      "city": "City",
+      "postalCode": "Postal code",
+      "plot": "Plot"
+    },
+    "vatNumber": "VAT number",
+    "serialNumber": "Serial number",
+    "certificate": "Certificate",
+    "certificateIssuer": "Issued by",
+    "certificateExpires": "Certificate expires",
+    "counter": "Counter",
+    "lastHash": "Last invoice hash",
+    "csr": "Certificate request",
+    "deviceStatuses": {
+      "csr": "Request ready",
+      "compliance": "Compliance certificate",
+      "checked": "Checks passed",
+      "active": "Live",
+      "revoked": "Revoked"
+    },
+    "actions": {
+      "requestCompliance": "Request compliance certificate",
+      "runChecks": "Run compliance checks",
+      "requestProduction": "Request production certificate",
+      "renew": "Renew certificate",
+      "revoke": "Revoke"
+    },
+    "otp": "OTP",
+    "otpHelp": "The one-time password from the scheme's portal for this company.",
+    "otpSimulatorHelp": "The simulator accepts any six digits.",
+    "simulatorNote": "This device talks to the in-process simulator, not to ZATCA: use it to see the flow and test, then onboard a sandbox and a production device.",
+    "complianceChecks": "Compliance checks",
+    "messages": "Messages",
+    "document": "Document",
+    "kind": "Kind",
+    "typeCode": "Type",
+    "typeCodes": {
+      "381": "Credit note",
+      "383": "Debit note",
+      "388": "Invoice"
+    },
+    "device": "Device",
+    "warnings": "Warnings",
+    "submittedAt": "Submitted",
+    "requestId": "Request id",
+    "submissionStatuses": {
+      "pending": "Pending",
+      "cleared": "Cleared",
+      "reported": "Reported",
+      "rejected": "Rejected",
+      "failed": "Not reached"
+    },
+    "invoiceHash": "Invoice hash",
+    "previousHash": "Previous hash",
+    "qr": "QR code",
+    "downloadXml": "Download XML",
+    "downloadClearedXml": "Download cleared XML",
+    "emptyDevices": "No devices yet",
+    "emptyDevicesDescription": "Create a device for the company, request its certificate with the OTP from the scheme's portal and run the compliance checks.",
+    "emptySubmissions": "No submissions yet",
+    "emptySubmissionsDescription": "Posted invoices are submitted by their company's live device; each attempt appears here."
   }
 }

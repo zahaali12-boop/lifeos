@@ -57,7 +57,13 @@ public sealed class PartnerDirectory(PartnersDbContext db, SupplierService suppl
         return rows.Select(static a => new PartnerAddressInfo(a.Id, a.Role, a.Country, a.Region, Lines(a.Address), a.IsDefault)).ToList();
     }
 
-    /// <summary>The address JSON as the flat text lines it holds (nested values are left out).</summary>
+    public async Task<IReadOnlyList<PartnerTaxRegistrationInfo>> TaxRegistrationsAsync(Guid partnerId, CancellationToken cancellationToken = default)
+    {
+        var rows = await db.TaxRegistrations.AsNoTracking().Where(r => r.PartnerId == partnerId).OrderBy(static r => r.RegistrationType).ThenBy(static r => r.Country).ToListAsync(cancellationToken);
+        return rows.Select(static r => new PartnerTaxRegistrationInfo(r.Id, r.Country, r.RegistrationType, r.Number, r.ValidFrom, r.ValidTo)).ToList();
+    }
+
+    /// <summary>The address JSON as flat text lines: plain values as they are, bilingual parts by their English text.</summary>
     private static Dictionary<string, string> Lines(string json)
     {
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -72,6 +78,17 @@ public sealed class PartnerDirectory(PartnersDbContext db, SupplierService suppl
             if (property.Value.ValueKind is System.Text.Json.JsonValueKind.String or System.Text.Json.JsonValueKind.Number)
             {
                 result[property.Name] = property.Value.ToString();
+            }
+            else if (property.Value.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                // A bilingual part ({"en": ..., "ar": ...}) reads as its English text, else its first text.
+                var texts = property.Value.EnumerateObject().Where(static p => p.Value.ValueKind == System.Text.Json.JsonValueKind.String).ToList();
+                var chosen = texts.FirstOrDefault(static p => string.Equals(p.Name, "en", StringComparison.OrdinalIgnoreCase));
+                var text = chosen.Value.ValueKind == System.Text.Json.JsonValueKind.String ? chosen.Value.GetString() : texts.Count > 0 ? texts[0].Value.GetString() : null;
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    result[property.Name] = text;
+                }
             }
         }
 

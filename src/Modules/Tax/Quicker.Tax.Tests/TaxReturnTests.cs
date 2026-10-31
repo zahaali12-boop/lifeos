@@ -178,7 +178,7 @@ public sealed class TaxReturnTests(ApiHostFixture host)
     }
 
     [Fact]
-    public async Task The_generic_UBL_export_carries_the_header_parties_and_tax_summary_and_clearance_is_wired_without_an_adapter()
+    public async Task The_generic_UBL_export_carries_the_header_parties_and_tax_summary_and_clearance_goes_through_the_registered_adapter()
     {
         var s = await SetUpAsync();
         var owner = s.Owner;
@@ -207,9 +207,9 @@ public sealed class TaxReturnTests(ApiHostFixture host)
         // A document with nothing in the tax ledger has nothing to export.
         (await owner.PostErrorAsync("/api/v1/tax/documents/purchase_invoice/00000000-0000-0000-0000-000000000000/clearance/submit", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("tax.document_not_taxed");
 
-        // Saudi Arabia's regime names a scheme (ZATCA), but no adapter is registered yet: submission is refused
-        // honestly rather than pretending to clear it.
-        (await owner.PostErrorAsync($"/api/v1/tax/documents/purchase_invoice/{id}/clearance/submit", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("tax.clearance_not_configured");
+        // Saudi Arabia's regime names a scheme (ZATCA): the adapter answers, and with no device onboarded for the company
+        // the submission is refused honestly rather than pretending to clear it (A-179).
+        (await owner.PostErrorAsync($"/api/v1/tax/documents/purchase_invoice/{id}/clearance/submit", new { }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("einvoice.document_type_unknown");
 
         // A regime that names no scheme needs no clearance at all.
         var uaeCompany = (await owner.PostAsync("/api/v1/organization/companies", new { code = "DXB", legalName = Name("Dubai Trading", "دبي للتجارة"), country = "AE", functionalCurrency = "AED", timeZone = "Asia/Dubai" })).GetProperty("id").GetGuid();

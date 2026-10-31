@@ -23,4 +23,17 @@ public sealed class TaxDirectory(TaxDbContext db) : ITaxDirectory
             .Select(static c => new TaxCodeRef(c.Id, c.Code, c.Name, c.Treatment, c.ExemptionReasonCode, c.ExemptionReason))
             .ToDictionaryAsync(static c => c.Id, cancellationToken);
     }
+
+    public async Task<TaxRegistrationInfo?> FindRegistrationAsync(Guid companyId, string einvoicingScheme, CancellationToken cancellationToken = default)
+    {
+        var regimeIds = await db.Regimes.AsNoTracking().Where(r => r.IsActive && r.EinvoicingScheme == einvoicingScheme).Select(static r => r.Id).ToListAsync(cancellationToken);
+        var registration = await db.Registrations.AsNoTracking().Where(r => r.CompanyId == companyId && regimeIds.Contains(r.RegimeId)).OrderByDescending(static r => r.IsPrimary).FirstOrDefaultAsync(cancellationToken);
+        if (registration is null)
+        {
+            return null;
+        }
+
+        var regime = await db.Regimes.AsNoTracking().SingleAsync(r => r.Id == registration.RegimeId, cancellationToken);
+        return new TaxRegistrationInfo(regime.Id, regime.Code, regime.Country, registration.RegistrationNumber, registration.RegisteredFrom);
+    }
 }

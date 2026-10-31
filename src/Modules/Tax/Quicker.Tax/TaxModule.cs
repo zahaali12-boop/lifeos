@@ -25,7 +25,8 @@ public static class TaxModule
         services.AddScoped<UblExportService>();
         services.AddScoped<ClearanceService>();
         services.AddScoped<ITaxClearance>(static sp => sp.GetRequiredService<ClearanceService>());
-        services.AddSingleton<ITaxClearanceRegistry, TaxClearanceRegistry>();
+        // Scoped, since an adapter reads its own tables in the caller's unit of work.
+        services.AddScoped<ITaxClearanceRegistry, TaxClearanceRegistry>();
         return services;
     }
 }

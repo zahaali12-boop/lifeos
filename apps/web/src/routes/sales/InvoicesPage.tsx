@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
@@ -145,7 +146,7 @@ export function InvoicesPage() {
     },
   });
   const refresh = async (): Promise<void> => {
-    await Promise.all([["sales-invoices"], ["sales-invoice"], ["sales-invoicable"], ["sales-orders"], ["sales-order"], ["sales-shipments"], ["sales-shipment"], ["ar-open-items"], ["ar-open-item"], ["ar-settlements"], ["ar-aging"], ["customer-360"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    await Promise.all([["sales-invoices"], ["sales-invoice"], ["sales-invoicable"], ["sales-orders"], ["sales-order"], ["sales-shipments"], ["sales-shipment"], ["ar-open-items"], ["ar-open-item"], ["ar-settlements"], ["ar-aging"], ["customer-360"], ["einvoice-submissions"], ["einvoice-submission"], ["einvoice-devices"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
 
@@ -593,6 +594,8 @@ export function InvoicesPage() {
                     [t("sales.invoicing.submittedAt"), i.einvoiceSubmittedAt ? formatDate(i.einvoiceSubmittedAt) : "—"],
                   ]} />
                   {(i.einvoiceMessages ?? []).length > 0 ? <ul className="list-disc ps-5 text-sm">{(i.einvoiceMessages ?? []).map((m, idx) => <li key={idx}>{m}</li>)}</ul> : null}
+                  {i.einvoiceQr && i.einvoiceSubmissionId ? <EinvoiceQr submissionId={i.einvoiceSubmissionId} label={t("sales.invoicing.einvoiceQr")} /> : null}
+                  {i.einvoiceSubmissionId ? <Link to="/tax/einvoicing" search={{ open: i.einvoiceSubmissionId }} className="text-sm text-accent underline" data-testid="open-submission">{t("sales.invoicing.openSubmission")}</Link> : null}
                   <p className="text-xs text-fg-muted">{t("sales.invoicing.einvoiceHelp")}</p>
                   {i.status === "posted" && i.einvoiceScheme && canPost ? <div><Button variant="secondary" onClick={() => { act.mutate({ id: i.id, action: "einvoice" }); }} loading={act.isPending} data-testid="submit-einvoice">{t("sales.invoicing.submitEinvoice")}</Button></div> : null}
                 </div>
@@ -602,4 +605,21 @@ export function InvoicesPage() {
       </DocumentView> : null}
     </>
   );
+}
+
+/** The scheme's QR of a cleared or reported invoice, fetched with the session so the image needs no public address. */
+function EinvoiceQr({ submissionId, label }: { submissionId: string; label: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    let created: string | null = null;
+    void api.GET("/api/v1/einvoicing/submissions/{submissionId}/qr.svg", { params: { path: { submissionId } }, parseAs: "blob" }).then((r) => {
+      if (active && r.data) {
+        created = URL.createObjectURL(r.data);
+        setUrl(created);
+      }
+    });
+    return () => { active = false; if (created) { URL.revokeObjectURL(created); } };
+  }, [submissionId]);
+  return url ? <img src={url} alt={label} width={160} height={160} className="rounded-md border border-border bg-white p-1" data-testid="einvoice-qr" /> : null;
 }

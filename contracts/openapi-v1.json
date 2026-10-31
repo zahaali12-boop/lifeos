@@ -20026,7 +20026,7 @@
         "tags": [
           "Tax"
         ],
-        "summary": "Submits the document's UBL export to its regime's clearance scheme, when a provider is registered for it (none ship yet: zatca, peppol and eta are later adapters)",
+        "summary": "Submits the document to its regime's clearance scheme through the adapter registered for it (zatca; peppol and eta are later adapters)",
         "operationId": "postTaxDocumentsBySourceDocumentTypeBySourceDocumentIdClearanceSubmit",
         "parameters": [
           {
@@ -20054,6 +20054,518 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClearanceSubmission"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/devices": {
+      "get": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "The e-invoicing devices of a company with their status, certificate and counter; secrets are never returned.",
+        "operationId": "getEinvoicingDevices",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Creates a device: its key and certificate request, named after the company's VAT registration in the regime that uses the scheme.",
+        "operationId": "postEinvoicingDevices",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/devices/{deviceId}": {
+      "get": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "operationId": "getEinvoicingDevicesByDeviceId",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Changes the device's name, the seller details printed on its invoices and whether posted documents are submitted on their own; the request itself while nothing is issued yet.",
+        "operationId": "putEinvoicingDevicesByDeviceId",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/devices/{deviceId}/compliance-csid": {
+      "post": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Requests the compliance certificate with the OTP from the scheme's portal.",
+        "operationId": "postEinvoicingDevicesByDeviceIdComplianceCsid",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/devices/{deviceId}/compliance-checks": {
+      "post": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Sends one sample of each document kind the device will issue to the scheme's compliance check; the device is checked when every sample is accepted.",
+        "operationId": "postEinvoicingDevicesByDeviceIdComplianceChecks",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/devices/{deviceId}/production-csid": {
+      "post": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Requests the production certificate once the compliance checks passed; the device is live from here.",
+        "operationId": "postEinvoicingDevicesByDeviceIdProductionCsid",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/devices/{deviceId}/renew": {
+      "post": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Renews a live device's production certificate with a fresh OTP.",
+        "operationId": "postEinvoicingDevicesByDeviceIdRenew",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/devices/{deviceId}/revoke": {
+      "post": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Takes the device out of service.",
+        "operationId": "postEinvoicingDevicesByDeviceIdRevoke",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceDeviceSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/submissions": {
+      "get": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "Submissions, newest first: one row per attempt with the counter, the hash, the status and what the scheme said.",
+        "operationId": "getEinvoicingSubmissions",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "documentType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EinvoiceSubmissionSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/submissions/{submissionId}": {
+      "get": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "operationId": "getEinvoicingSubmissionsBySubmissionId",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoiceSubmissionSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/submissions/{submissionId}/xml": {
+      "get": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "The XML as submitted (signed for a simplified invoice), or with cleared=true as the scheme returned it for a cleared one.",
+        "operationId": "getEinvoicingSubmissionsBySubmissionIdXml",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cleared",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/submissions/{submissionId}/qr.svg": {
+      "get": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "The submission's QR code as an SVG.",
+        "operationId": "getEinvoicingSubmissionsBySubmissionIdQrSvg",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/einvoicing/documents/{documentType}/{documentId}/preview": {
+      "get": {
+        "tags": [
+          "E-invoicing"
+        ],
+        "summary": "The XML the adapter would submit for the document, unsigned, with the counter the next submission would take.",
+        "operationId": "getEinvoicingDocumentsByDocumentTypeByDocumentIdPreview",
+        "parameters": [
+          {
+            "name": "documentType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EinvoicePreview"
                 }
               }
             }
@@ -39075,6 +39587,45 @@
           }
         }
       },
+      "ComplianceCheck": {
+        "required": [
+          "kind",
+          "typeCode",
+          "status",
+          "warnings",
+          "errors",
+          "checkedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "typeCode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "One sample document the compliance checks sent and what the scheme answered."
+      },
       "ContactSummary": {
         "required": [
           "id",
@@ -43046,6 +43597,283 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "EinvoiceDeviceSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "scheme",
+          "name",
+          "environment",
+          "status",
+          "serialNumber",
+          "commonName",
+          "organizationUnit",
+          "organization",
+          "industry",
+          "invoiceTypes",
+          "vatNumber",
+          "seller",
+          "autoSubmit",
+          "csr",
+          "certificateSubject",
+          "certificateIssuer",
+          "certificateExpiresAt",
+          "complianceChecks",
+          "invoiceCounter",
+          "lastInvoiceHash",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheme": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "commonName": {
+            "type": "string"
+          },
+          "organizationUnit": {
+            "type": "string"
+          },
+          "organization": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "string"
+          },
+          "invoiceTypes": {
+            "type": "string"
+          },
+          "vatNumber": {
+            "type": "string"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/SellerDetails"
+          },
+          "autoSubmit": {
+            "type": "boolean"
+          },
+          "csr": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "certificateSubject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "certificateIssuer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "certificateExpiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "complianceChecks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComplianceCheck"
+            }
+          },
+          "invoiceCounter": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "lastInvoiceHash": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EinvoicePreview": {
+        "required": [
+          "documentType",
+          "documentId",
+          "kind",
+          "typeCode",
+          "xml",
+          "invoiceHash"
+        ],
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "typeCode": {
+            "type": "string"
+          },
+          "xml": {
+            "type": "string"
+          },
+          "invoiceHash": {
+            "type": "string"
+          }
+        },
+        "description": "The XML of a document as the scheme would receive it, before any submission: to inspect what the adapter builds."
+      },
+      "EinvoiceSubmissionSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "deviceId",
+          "deviceName",
+          "documentType",
+          "documentId",
+          "documentNumber",
+          "kind",
+          "typeCode",
+          "invoiceCounter",
+          "invoiceHash",
+          "previousHash",
+          "status",
+          "warnings",
+          "errors",
+          "hasClearedXml",
+          "qr",
+          "requestId",
+          "submittedAt",
+          "respondedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "typeCode": {
+            "type": "string"
+          },
+          "invoiceCounter": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "invoiceHash": {
+            "type": "string"
+          },
+          "previousHash": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasClearedXml": {
+            "type": "boolean"
+          },
+          "qr": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requestId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "respondedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -50490,6 +51318,17 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "OtpRequest": {
+        "required": [
+          "otp"
+        ],
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string"
           }
         }
       },
@@ -66509,6 +67348,62 @@
           }
         }
       },
+      "SaveDeviceRequest": {
+        "required": [
+          "companyId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string",
+            "default": "simulator"
+          },
+          "organizationUnit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "industry": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "invoiceTypes": {
+            "type": "string",
+            "default": "1100"
+          },
+          "seller": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SellerDetails"
+              }
+            ]
+          },
+          "autoSubmit": {
+            "type": "boolean",
+            "default": true
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "SaveDimensionRequest": {
         "required": [
           "code",
@@ -72905,6 +73800,61 @@
             "type": "string"
           }
         }
+      },
+      "SellerDetails": {
+        "type": "object",
+        "properties": {
+          "registrationNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "registrationScheme": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "default": "CRN"
+          },
+          "street": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "buildingNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "plot": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "district": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "city": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postalCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The seller as the scheme prints it on every invoice of the device: the commercial registration and the address parts ZATCA requires."
       },
       "SendOrderRequest": {
         "type": "object",
@@ -80323,6 +81273,9 @@
     },
     {
       "name": "Tax"
+    },
+    {
+      "name": "E-invoicing"
     },
     {
       "name": "Payables"

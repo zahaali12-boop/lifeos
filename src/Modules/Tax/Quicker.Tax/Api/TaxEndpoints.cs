@@ -105,7 +105,7 @@ public static class TaxEndpoints
             .WithSummary("The document's generic UBL 2.1 export (header, parties and tax summary), built from its tax ledger entries");
         tax.MapPost("/documents/{sourceDocumentType}/{sourceDocumentId:guid}/clearance/submit", async (string sourceDocumentType, Guid sourceDocumentId, ClearanceService service, CancellationToken ct) => ApiProblems.Ok(await service.SubmitAsync(sourceDocumentType, sourceDocumentId, ct)))
             .RequirePermission(TaxPermissions.ReturnFile)
-            .WithSummary("Submits the document's UBL export to its regime's clearance scheme, when a provider is registered for it (none ship yet: zatca, peppol and eta are later adapters)");
+            .WithSummary("Submits the document to its regime's clearance scheme through the adapter registered for it (zatca; peppol and eta are later adapters)");
 
         return tax;
     }

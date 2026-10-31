@@ -152,6 +152,7 @@ public sealed class ModuleBoundaryTests
         ["Banking"] = 2,
         ["Workflow"] = 2,
         ["Sales"] = 2,
+        ["Einvoicing"] = 2,
         ["Reporting"] = 3,
         ["Onboarding"] = 3,
         ["Expenses"] = 3,

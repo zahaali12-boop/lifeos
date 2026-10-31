@@ -61,7 +61,13 @@ public interface ITaxDirectory
     Task<TaxGroupInfo?> FindGroupAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<Guid, TaxCodeRef>> DescribeCodesAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>The company's registration in the regime that names the e-invoicing scheme (its tax number), or null when it is not registered in such a regime.</summary>
+    Task<TaxRegistrationInfo?> FindRegistrationAsync(Guid companyId, string einvoicingScheme, CancellationToken cancellationToken = default);
 }
+
+/// <summary>A company's registration in a regime as another module reads it: the regime, the country and the registration number.</summary>
+public sealed record TaxRegistrationInfo(Guid RegimeId, string RegimeCode, string Country, string? RegistrationNumber, DateOnly? RegisteredFrom);
 
 /// <summary>A tax code as a document line takes it, with the rate in force on the tax date.</summary>
 public sealed record TaxCodeInfo(
@@ -215,7 +221,8 @@ public interface ITaxClearanceProvider
     Task<Result<ClearanceResult>> GetStatusAsync(string submissionId, CancellationToken cancellationToken = default);
 }
 
-public sealed record ClearanceDocument(Guid DocumentId, string DocumentNumber, string Xml, string? PreviousHash);
+/// <summary>The document a scheme adapter receives: its type and id (so the adapter can load the full content from the module that owns it), its number, and the generic UBL export.</summary>
+public sealed record ClearanceDocument(string DocumentType, Guid DocumentId, string DocumentNumber, string Xml, string? PreviousHash, bool Automatic = false);
 
 public sealed record ClearanceResult(string Status, string? SubmissionId, string? Hash, string? QrPayload, IReadOnlyList<string> Messages);
 
@@ -229,5 +236,6 @@ public sealed record ClearanceOutcome(string Scheme, string Status, string? Subm
 /// </summary>
 public interface ITaxClearance
 {
-    Task<Result<ClearanceOutcome>> SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, CancellationToken cancellationToken = default);
+    /// <summary><paramref name="automatic"/> marks a submission a posted document triggers on its own, which a device set to submit by hand refuses (<c>einvoice.manual_only</c>).</summary>
+    Task<Result<ClearanceOutcome>> SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, bool automatic = false, CancellationToken cancellationToken = default);
 }

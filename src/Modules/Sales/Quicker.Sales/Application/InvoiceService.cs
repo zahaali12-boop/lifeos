@@ -11,6 +11,7 @@ using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Text;
 using Quicker.Kernel.Time;
+using Quicker.Messaging.Jobs;
 using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
 using Quicker.Partners.Contracts;
@@ -50,6 +51,7 @@ public sealed class InvoiceService(
     IDeferralSchedules deferrals,
     IChartOfAccounts chart,
     ITaxClearance clearance,
+    IJobQueue jobs,
     INumberAllocator numbering,
     ICustomFieldValidator customFields,
     IDimensionSets dimensionSets,
@@ -428,6 +430,11 @@ public sealed class InvoiceService(
         invoice.PostedBy = principal.Principal?.MembershipId.Value;
         invoice.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+        if (invoice.EinvoiceScheme is not null)
+        {
+            // The scheme is asked in the background (A-179): posting never waits on it, and a device set to submit by hand leaves the invoice pending.
+            await jobs.EnqueueAsync(new JobRequest(EinvoiceSubmitJob.JobType, new EinvoiceSubmitPayload(invoice.Id), IdempotencyKey: $"einvoice:{invoice.Id}", MaxAttempts: 8), cancellationToken);
+        }
 
         // 4. A credit note naming the invoice it credits is applied to that invoice's open items at once, oldest due first.
         var applications = 0;
@@ -595,8 +602,10 @@ public sealed class InvoiceService(
         return await MapAsync(invoice, cancellationToken);
     }
 
-    /// <summary>Submits a posted invoice to its regime's e-invoicing scheme through the tax module and records what the scheme answered; nothing changes when the scheme refuses or no adapter is registered yet.</summary>
-    public async Task<Result<SalesInvoiceSummary>> SubmitEinvoiceAsync(Guid id, CancellationToken cancellationToken)
+    /// <summary>Submits a posted invoice to its regime's e-invoicing scheme through the tax module and records what the scheme answered (cleared, reported or rejected with its messages); nothing changes when the scheme cannot be reached or no device is ready.</summary>
+    public Task<Result<SalesInvoiceSummary>> SubmitEinvoiceAsync(Guid id, CancellationToken cancellationToken) => SubmitEinvoiceAsync(id, false, cancellationToken);
+
+    public async Task<Result<SalesInvoiceSummary>> SubmitEinvoiceAsync(Guid id, bool automatic, CancellationToken cancellationToken)
     {
         var invoice = await db.Invoices.Include(static i => i.Lines.OrderBy(static l => l.LineNo)).SingleOrDefaultAsync(i => i.Id == id, cancellationToken);
         if (invoice is null)
@@ -614,7 +623,7 @@ public sealed class InvoiceService(
             return Error.Conflict("invoice.einvoice_not_required", "The invoice's tax regime names no e-invoicing scheme.").WithWhy(("einvoiceStatus", invoice.EinvoiceStatus));
         }
 
-        var outcome = await clearance.SubmitAsync(DocumentType, invoice.Id, cancellationToken);
+        var outcome = await clearance.SubmitAsync(DocumentType, invoice.Id, automatic, cancellationToken);
         if (outcome.IsFailure)
         {
             return outcome.Error!;

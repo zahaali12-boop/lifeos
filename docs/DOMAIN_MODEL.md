@@ -2460,7 +2460,7 @@ Every priced line stores `price_breakdown` (ADR-0030): the ordered steps, candid
 
 ## 12. Tax
 
-Built in slices 5.3a–5.3d (ADR-0018 amended three times, A-146, A-149, A-150): regimes installed from versioned country templates, codes with dated rates and return boxes, tax groups, the determination matrix, company registrations (partners' registration numbers stay in `ptr_partner_tax_registrations`), exemption certificates, the tax ledger documents write as they post, purchase order and supplier invoice lines taxed by the engine (A-147), and return periods, filed with the figures booked into `totals` (there is no separate `tax_returns` table: a return is computed fresh from `tax_entries` each time it is previewed, `Application/TaxReturnService.cs`), the generic UBL 2.1 export built from a document's tax entries, and the setup and returns screens (`routes/tax/`). Persisted e-invoice clearance submissions and withholding certificates are planned (later milestones) and shown last.
+Built in slices 5.3a–5.3d (ADR-0018 amended three times, A-146, A-149, A-150): regimes installed from versioned country templates, codes with dated rates and return boxes, tax groups, the determination matrix, company registrations (partners' registration numbers stay in `ptr_partner_tax_registrations`), exemption certificates, the tax ledger documents write as they post, purchase order and supplier invoice lines taxed by the engine (A-147), and return periods, filed with the figures booked into `totals` (there is no separate `tax_returns` table: a return is computed fresh from `tax_entries` each time it is previewed, `Application/TaxReturnService.cs`), the generic UBL 2.1 export built from a document's tax entries, and the setup and returns screens (`routes/tax/`). The E-invoicing module (`einv_*`, roadmap 8.6, A-179) holds the ZATCA devices a company onboards and the submissions of its documents, drawn here with the tax tables they serve; withholding certificates are planned (later milestones) and shown last.
 
 ```mermaid
 erDiagram
@@ -2476,7 +2476,8 @@ erDiagram
   tax_codes ||--o{ tax_exemptions : "exempt code"
   tax_codes ||--o{ tax_entries : "recorded"
   tax_regimes ||--o{ tax_return_periods : "periods"
-  tax_einvoice_submissions }o--|| sls_invoices : "clears (planned)"
+  einv_devices ||--o{ einv_submissions : "submits"
+  einv_submissions }o--|| sls_invoices : "clears or reports"
 
   tax_regimes {
     uuid id PK
@@ -2591,19 +2592,55 @@ erDiagram
     text reference
     jsonb totals "the boxes, netPayable and currency filed (A-149); computed fresh on every preview before filing"
   }
-  tax_einvoice_submissions {
+  einv_devices {
     uuid id PK
+    uuid company_id
+    text scheme "zatca"
+    text name
+    text environment "simulator | sandbox | simulation | production"
+    text status "csr | compliance | checked | active | revoked"
+    text serial_number "1-Quicker|2-model|3-unit"
+    text common_name
+    text organization_unit
+    text organization
+    text industry
+    text invoice_types "standard, simplified, two reserved flags: 1100"
+    jsonb seller "commercial registration and address parts printed on invoices"
+    bool auto_submit
+    text csr
+    text private_key_enc "secp256k1 key, protected"
+    text compliance_request_id
+    text compliance_token_enc
+    text compliance_secret_enc
+    text production_token_enc
+    text production_secret_enc
+    text certificate "base64 DER, compliance then production"
+    timestamptz certificate_expires_at
+    jsonb compliance_checks
+    bigint invoice_counter "ICV of the last submission"
+    text last_invoice_hash "PIH of the next"
+  }
+  einv_submissions {
+    uuid id PK "the invoice's UUID"
+    uuid company_id
+    uuid device_id FK
     text document_type
     uuid document_id
-    text provider "zatca | peppol | eta"
-    text scheme_uuid
-    bytea invoice_hash
-    bytea previous_hash
-    text qr_payload
-    text xml_storage_key
-    text status "pending | cleared | reported | rejected | cancelled"
-    jsonb response
+    text document_number
+    text kind "standard | simplified"
+    text type_code "388 | 381 | 383"
+    bigint invoice_counter
+    text invoice_hash
+    text previous_hash
+    text status "pending | cleared | reported | rejected | failed"
+    jsonb warnings
+    jsonb errors
+    text signed_xml "as submitted"
+    text cleared_xml "as the scheme returned it"
+    text qr "TLV, base64"
+    text request_id
     timestamptz submitted_at
+    timestamptz responded_at
   }
   tax_wht_certificates {
     uuid id PK

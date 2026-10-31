@@ -39,6 +39,7 @@ export type RecordScreen =
   | "/print-templates"
   | "/banking/cheques"
   | "/banking/reconciliation"
+  | "/tax/einvoicing"
   | "/companies";
 
 /** Where each kind of record opens: documents by the type their number was issued under, masters by their audit entity type. */
@@ -83,6 +84,8 @@ const screens: Record<string, RecordScreen> = {
   bank_cheque: "/banking/cheques",
   bank_statement: "/banking/reconciliation",
   bank_reconciliation: "/banking/reconciliation",
+  einvoice_device: "/tax/einvoicing",
+  einvoice_submission: "/tax/einvoicing",
 };
 
 /** The screen a record opens on, with the record open; null for kinds that have no screen of their own. */

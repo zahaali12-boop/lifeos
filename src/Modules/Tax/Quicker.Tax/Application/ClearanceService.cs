@@ -5,7 +5,7 @@ using Quicker.Tax.Persistence;
 
 namespace Quicker.Tax.Application;
 
-/// <summary>Finds the clearance provider registered for a regime's e-invoicing scheme (ADR-0018); a module adds an adapter with <c>services.AddSingleton&lt;ITaxClearanceProvider, MyProvider&gt;()</c>.</summary>
+/// <summary>Finds the clearance provider registered for a regime's e-invoicing scheme (ADR-0018); a module adds an adapter with <c>services.AddScoped&lt;ITaxClearanceProvider, MyProvider&gt;()</c>.</summary>
 public interface ITaxClearanceRegistry
 {
     ITaxClearanceProvider? Find(string scheme);
@@ -19,19 +19,22 @@ public sealed class TaxClearanceRegistry(IEnumerable<ITaxClearanceProvider> prov
 }
 
 /// <summary>
-/// Submits a taxed document's generic UBL export to its regime's clearance scheme (ADR-0018), when one is registered.
-/// No adapter (ZATCA, Peppol, ETA) ships yet, so a regime that names a scheme is refused until one is: this wires the
-/// interface end to end without claiming compliance no adapter provides.
+/// Submits a taxed document to its regime's clearance scheme (ADR-0018), when an adapter is registered for it: the
+/// adapter receives the document's type and id with the generic UBL export, and loads the full content from the module
+/// that owns the document when the scheme needs lines and parties (ZATCA does). A regime naming a scheme with no
+/// adapter is refused rather than cleared.
 /// </summary>
 public sealed class ClearanceService(TaxDbContext db, UblExportService ubl, ITaxClearanceRegistry registry) : ITaxClearance
 {
-    async Task<Result<ClearanceOutcome>> ITaxClearance.SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, CancellationToken cancellationToken)
+    async Task<Result<ClearanceOutcome>> ITaxClearance.SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, bool automatic, CancellationToken cancellationToken)
     {
-        var submitted = await SubmitAsync(sourceDocumentType, sourceDocumentId, cancellationToken);
+        var submitted = await SubmitAsync(sourceDocumentType, sourceDocumentId, automatic, cancellationToken);
         return submitted.IsFailure ? submitted.Error! : new ClearanceOutcome(submitted.Value.Scheme, submitted.Value.Status, submitted.Value.SubmissionId, submitted.Value.QrPayload, submitted.Value.Messages);
     }
 
-    public async Task<Result<ClearanceSubmission>> SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, CancellationToken cancellationToken)
+    public Task<Result<ClearanceSubmission>> SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, CancellationToken cancellationToken) => SubmitAsync(sourceDocumentType, sourceDocumentId, false, cancellationToken);
+
+    public async Task<Result<ClearanceSubmission>> SubmitAsync(string sourceDocumentType, Guid sourceDocumentId, bool automatic, CancellationToken cancellationToken)
     {
         var exported = await ubl.ExportAsync(sourceDocumentType, sourceDocumentId, cancellationToken);
         if (exported.IsFailure)
@@ -52,7 +55,7 @@ public sealed class ClearanceService(TaxDbContext db, UblExportService ubl, ITax
             return Error.Validation("tax.clearance_not_configured", $"No clearance adapter is registered yet for the '{regime.EinvoicingScheme}' scheme.").WithWhy(("regime", regime.Code), ("scheme", regime.EinvoicingScheme));
         }
 
-        var submitted = await provider.SubmitAsync(new ClearanceDocument(sourceDocumentId, entry.SourceDocumentNumber ?? sourceDocumentId.ToString(), exported.Value.Xml, null), cancellationToken);
+        var submitted = await provider.SubmitAsync(new ClearanceDocument(sourceDocumentType, sourceDocumentId, entry.SourceDocumentNumber ?? sourceDocumentId.ToString(), exported.Value.Xml, null, automatic), cancellationToken);
         return submitted.IsFailure ? submitted.Error! : new ClearanceSubmission(provider.Scheme, submitted.Value.Status, submitted.Value.SubmissionId, submitted.Value.QrPayload, submitted.Value.Messages);
     }
 }

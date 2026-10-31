@@ -50,6 +50,8 @@ public static class WithholdingPoints
 /// <summary>One address of a partner: its role, country and region and the free lines as entered (street, city, postal code, ...).</summary>
 public sealed record PartnerAddressInfo(Guid Id, string Role, string Country, string? Region, IReadOnlyDictionary<string, string> Address, bool IsDefault);
 
+public sealed record PartnerTaxRegistrationInfo(Guid Id, string Country, string RegistrationType, string Number, DateOnly? ValidFrom, DateOnly? ValidTo);
+
 public sealed record PartnerInfo(Guid Id, string Code, LocalizedText LegalName, LocalizedText TradeName, string Kind, bool IsSupplier, bool IsCustomer, bool IsActive, string? Email, string DefaultLanguage, Guid? IntercompanyCompanyId);
 
 /// <summary>A company's supplier terms with the group's defaults applied: what a purchase order, receipt, invoice or payment reads.</summary>
@@ -100,6 +102,9 @@ public interface IPartnerDirectory
 
     /// <summary>The partner's addresses (legal, billing, shipping), the default first; printed on documents (roadmap 5.9).</summary>
     Task<IReadOnlyList<PartnerAddressInfo>> AddressesAsync(Guid partnerId, CancellationToken cancellationToken = default);
+
+    /// <summary>The partner's tax registrations (VAT, tax number, commercial registration) by country, as an e-invoice names the buyer.</summary>
+    Task<IReadOnlyList<PartnerTaxRegistrationInfo>> TaxRegistrationsAsync(Guid partnerId, CancellationToken cancellationToken = default);
 
     /// <summary>The partner's supplier account in the company with group defaults applied, or null when the partner is not a supplier there.</summary>
     Task<SupplierTermsInfo?> FindSupplierAsync(Guid companyId, Guid partnerId, CancellationToken cancellationToken = default);

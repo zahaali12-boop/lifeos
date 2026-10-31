@@ -89,6 +89,7 @@ import { PriceListsPage } from "./sales/pricing/PriceListsPage";
 import { PricingRulesPage } from "./sales/pricing/PricingRulesPage";
 import { TaxReturnsPage } from "./tax/TaxReturnsPage";
 import { TaxSetupPage } from "./tax/TaxSetupPage";
+import { EinvoicingPage } from "./tax/EinvoicingPage";
 import { ApprovalsPage } from "./workflow/ApprovalsPage";
 import { WorkflowsPage } from "./workflow/WorkflowsPage";
 import { MobileCountPage } from "./mobile/MobileCountPage";
@@ -191,6 +192,7 @@ const pricingRulesRoute = createRoute({ getParentRoute: () => shellRoute, path: 
 const priceCheckRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/price-check", component: PriceCheckPage });
 const taxSetupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/tax/setup", component: TaxSetupPage });
 const taxReturnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/tax/returns", component: TaxReturnsPage });
+const einvoicingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/tax/einvoicing", component: EinvoicingPage, validateSearch: searchRecord });
 const payablesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/open-items", component: OpenItemsPage, validateSearch: searchRecord });
 const proposalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/proposals", component: ProposalsPage, validateSearch: searchRecord });
 const bankAccountsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/bank-accounts", component: BankAccountsPage, validateSearch: searchRecord });
@@ -235,7 +237,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
 ]);

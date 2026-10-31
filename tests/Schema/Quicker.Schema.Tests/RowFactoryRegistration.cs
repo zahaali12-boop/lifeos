@@ -33,6 +33,7 @@ internal static class RowFactoryRegistration
         Quicker.Printing.TestSupport.PrintingRowFactories.RegisterAll();
         Quicker.Expenses.TestSupport.ExpensesRowFactories.RegisterAll();
         Quicker.FixedAssets.TestSupport.FixedAssetsRowFactories.RegisterAll();
+        Quicker.Einvoicing.TestSupport.EinvoicingRowFactories.RegisterAll();
     }
 #pragma warning restore CA2255
 }
