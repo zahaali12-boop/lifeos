@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 /** The list screens that open one record from the URL (?open=id). */
 export type RecordScreen =
   | "/purchasing/requisitions"
+  | "/hr/employees"
+  | "/hr/leave"
+  | "/hr/payroll"
+  | "/hr/pay-components"
   | "/purchasing/rfqs"
   | "/purchasing/agreements"
   | "/purchasing/orders"
@@ -90,6 +94,10 @@ const screens: Record<string, RecordScreen> = {
   pos_register: "/sales/pos",
   pos_session: "/sales/pos",
   pos_order: "/sales/pos",
+  employee: "/hr/employees",
+  leave: "/hr/leave",
+  payroll_run: "/hr/payroll",
+  pay_component: "/hr/pay-components",
 };
 
 /** The screen a record opens on, with the record open; null for kinds that have no screen of their own. */

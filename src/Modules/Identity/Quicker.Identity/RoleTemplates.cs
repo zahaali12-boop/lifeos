@@ -25,6 +25,8 @@ public static class RoleTemplates
             ["purchasing.invoice.*", "purchasing.landed_cost.*", "payables.*", "banking.*", "expenses.*", "partners.supplier.read", "tax.setup.read", "reporting.report.run", "print.document.*"]),
         new("cashier", LocalizedText.Bilingual("Cashier", "أمين صندوق"), "Sells at the till: opens and closes a session on a register, syncs its orders, refunds against a receipt",
             ["pos.register.read", "pos.session.read", "pos.session.operate", "pos.order.read", "pos.order.sell", "pos.order.refund", "partners.customer.read", "inventory.item.read", "print.document.*"]),
+        new("hr_payroll", LocalizedText.Bilingual("HR and payroll", "الموارد البشرية والرواتب"), "Employees, leave, pay components and payroll runs through posting and payment",
+            ["payroll.*", "partners.supplier.read", "banking.bank_account.read", "accounting.ledger.read", "workflow.request.read", "print.document.*"]),
         new("warehouse_operator", LocalizedText.Bilingual("Warehouse operator", "أمين مستودع"), "Receiving, picking, shipping, transfers, counts and scanning",
             ["purchasing.receipt.*", "purchasing.return.*", "purchasing.order.read", "sales.shipment.*", "sales.return.read", "sales.return.receive", "sales.order.read", "inventory.pick.*", "inventory.transfer.*", "inventory.count.*", "inventory.item.read"]),
         new("inventory_manager", LocalizedText.Bilingual("Inventory manager", "مدير المخزون"), "Item master, warehouses, stock, costing and counts",

@@ -7290,6 +7290,246 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payroll/components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The pay components of a company (BASIC, the basic salary, is created on first use): earnings, deductions and employer contributions with how each is calculated and the accounts it lands on. */
+        get: operations["getPayrollComponents"];
+        put?: never;
+        /** Creates a pay component; its accounts become posting rules keyed by the component in the company's posting profile. */
+        post: operations["postPayrollComponents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/components/{componentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPayrollComponentsByComponentId"];
+        put: operations["putPayrollComponentsByComponentId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/employees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The employees of a company with their job, pay, components, leave balance and whether they can be paid. */
+        get: operations["getPayrollEmployees"];
+        put?: never;
+        /** Hires a partner with the employee role into the company: number (EMP-0001 when none is given), job, hire date, basic salary, the components carried and how the employee is paid. */
+        post: operations["postPayrollEmployees"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/employees/{employeeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPayrollEmployeesByEmployeeId"];
+        /** Changes an employee's job, pay or components, or terminates them on a date. */
+        put: operations["putPayrollEmployeesByEmployeeId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/leaves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leave records of a company, newest first, filtered by employee or year. */
+        get: operations["getPayrollLeaves"];
+        put?: never;
+        /** Records approved leave: annual (against the yearly entitlement), sick, or unpaid (deducted from the pay of the period it falls in). */
+        post: operations["postPayrollLeaves"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/leaves/{leaveId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels a leave record; unpaid leave in a period already paid stays until the run is reversed. */
+        post: operations["postPayrollLeavesByLeaveIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Payroll runs of a company, newest period first, with their lines and items. */
+        get: operations["getPayrollRuns"];
+        put?: never;
+        /** Creates and calculates the run of a month: every employee employed in it, prorated over thirty days for the days not employed and unpaid leave, with the components applied in order. */
+        post: operations["postPayrollRuns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPayrollRunsByRunId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs/{runId}/calculate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recalculates a draft or calculated run after employees, components or leave changed. */
+        post: operations["postPayrollRunsByRunIdCalculate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs/{runId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submits the run: held for approval when a workflow definition is active for payroll runs, approved at once otherwise. */
+        post: operations["postPayrollRunsByRunIdSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs/{runId}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Posts an approved run: salaries and employer contributions by component against the liabilities withheld, and each employee's net pay as a payable due on the pay date. */
+        post: operations["postPayrollRunsByRunIdPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs/{runId}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pays every unpaid employee of a posted run from one bank account on a date, one payment per employee settling the payable. */
+        post: operations["postPayrollRunsByRunIdPay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs/{runId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a posted, unpaid run: the journal is mirrored and the payables closed; the period can then be run again. */
+        post: operations["postPayrollRunsByRunIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payroll/runs/{runId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels a run that is not yet posted, withdrawing its approval request when one is pending. */
+        post: operations["postPayrollRunsByRunIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payables/open-items": {
         parameters: {
             query?: never;
@@ -13601,6 +13841,19 @@ export interface components {
             /** Format: double */
             statementBalance: number | string;
         };
+        CreateRunRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: int32 */
+            year: number | string;
+            /** Format: int32 */
+            month: number | string;
+            /** Format: date */
+            payDate?: null | string;
+            /** Format: date */
+            postingDate?: null | string;
+            notes?: null | string;
+        };
         CreditSalesReturnRequest: {
             /** Format: date */
             documentDate?: null | string;
@@ -14431,6 +14684,85 @@ export interface components {
             submittedAt: string;
             /** Format: date-time */
             respondedAt: null | string;
+        };
+        /** @description A component the employee carries, with the amount or rate that overrides the component's default when given. */
+        EmployeeComponentRequest: {
+            /** Format: uuid */
+            componentId: string;
+            /** Format: double */
+            amount?: null | number | string;
+            /** Format: double */
+            ratePct?: null | number | string;
+            /** Format: date */
+            validFrom?: null | string;
+            /** Format: date */
+            validTo?: null | string;
+        };
+        EmployeeComponentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            componentId: string;
+            componentCode: string;
+            componentName: {
+                [key: string]: string;
+            };
+            kind: string;
+            calculation: string;
+            /** Format: double */
+            amount: null | number | string;
+            /** Format: double */
+            ratePct: null | number | string;
+            /** Format: date */
+            validFrom: null | string;
+            /** Format: date */
+            validTo: null | string;
+        };
+        EmployeeSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            name: {
+                [key: string]: string;
+            };
+            number: string;
+            /** Format: uuid */
+            branchId: null | string;
+            /** Format: uuid */
+            departmentValueId: null | string;
+            departmentCode: null | string;
+            jobTitle: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            hireDate: string;
+            /** Format: date */
+            terminationDate: null | string;
+            /** Format: double */
+            basicSalary: number | string;
+            currency: string;
+            paymentMethod: string;
+            bankName: null | string;
+            iban: null | string;
+            nationalId: null | string;
+            /** Format: int32 */
+            leaveEntitlementDays: number | string;
+            /** Format: double */
+            leaveTakenThisYear: number | string;
+            /** Format: double */
+            leaveBalance: number | string;
+            status: string;
+            notes: null | string;
+            canBePaid: boolean;
+            components: components["schemas"]["EmployeeComponentSummary"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         EntryLinkSummary: {
             /** Format: uuid */
@@ -15637,6 +15969,29 @@ export interface components {
             /** Format: double */
             onTimePct: null | number | string;
         };
+        LeaveSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            employeeId: string;
+            employeeNumber: string;
+            employeeName: {
+                [key: string]: string;
+            };
+            kind: string;
+            /** Format: date */
+            fromDate: string;
+            /** Format: date */
+            toDate: string;
+            /** Format: double */
+            days: number | string;
+            status: string;
+            notes: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         /**
          * @description What a figure drills to: the ledger of the account over the same window with the same dimension filters and, for
          *     a row of a built-in grouping, that grouping's value (query keys `g.KEY=value`; `~` for lines without one).
@@ -16618,6 +16973,30 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        PayComponentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            calculation: string;
+            /** Format: double */
+            defaultAmount: number | string;
+            /** Format: double */
+            defaultRatePct: number | string;
+            appliesToAll: boolean;
+            expenseAccountCode: null | string;
+            liabilityAccountCode: null | string;
+            /** Format: int32 */
+            sortOrder: number | string;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         /** @description A payment of a confirmed supplier or employee expense from a bank account on a day; the whole remainder unless an amount is given. */
         PayExpenseRequest: {
             /** Format: uuid */
@@ -16780,6 +17159,125 @@ export interface components {
             paymentDate?: null | string;
             /** @default transfer */
             method: string;
+        };
+        PayrollRunItemSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            componentId: string;
+            componentCode: string;
+            componentName: {
+                [key: string]: string;
+            };
+            kind: string;
+            calculation: string;
+            /** Format: double */
+            baseAmount: number | string;
+            /** Format: double */
+            ratePct: number | string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: int32 */
+            sortOrder: number | string;
+        };
+        PayrollRunLineSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            employeeId: string;
+            /** Format: uuid */
+            partnerId: string;
+            employeeNumber: string;
+            employeeName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            branchId: null | string;
+            /** Format: int32 */
+            daysInPeriod: number | string;
+            /** Format: double */
+            paidDays: number | string;
+            /** Format: double */
+            unpaidDays: number | string;
+            /** Format: double */
+            basicSalary: number | string;
+            /** Format: double */
+            basicAmount: number | string;
+            /** Format: double */
+            earningsTotal: number | string;
+            /** Format: double */
+            gross: number | string;
+            /** Format: double */
+            deductionsTotal: number | string;
+            /** Format: double */
+            employerTotal: number | string;
+            /** Format: double */
+            net: number | string;
+            /** Format: uuid */
+            openItemId: null | string;
+            /** Format: uuid */
+            paymentId: null | string;
+            paymentNumber: null | string;
+            /** Format: date */
+            paidOn: null | string;
+            items: components["schemas"]["PayrollRunItemSummary"][];
+        };
+        PayrollRunSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: int32 */
+            periodYear: number | string;
+            /** Format: int32 */
+            periodMonth: number | string;
+            /** Format: date */
+            periodStart: string;
+            /** Format: date */
+            periodEnd: string;
+            /** Format: date */
+            postingDate: string;
+            /** Format: date */
+            payDate: string;
+            status: string;
+            /** Format: uuid */
+            approvalRequestId: null | string;
+            rejectionReason: null | string;
+            /** Format: int32 */
+            employeesCount: number | string;
+            /** Format: double */
+            totalBasic: number | string;
+            /** Format: double */
+            totalEarnings: number | string;
+            /** Format: double */
+            totalGross: number | string;
+            /** Format: double */
+            totalDeductions: number | string;
+            /** Format: double */
+            totalEmployer: number | string;
+            /** Format: double */
+            totalNet: number | string;
+            currency: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            notes: null | string;
+            lines: components["schemas"]["PayrollRunLineSummary"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PayRunRequest: {
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: date */
+            payDate?: null | string;
+            reference?: null | string;
         };
         /** @description Gapless audit for one reset period of a series: what was issued and which numbers are missing (expected: none). */
         PeriodGaps: {
@@ -17362,6 +17860,8 @@ export interface components {
             chargeTypeId?: null | string;
             /** Format: uuid */
             expenseCategoryId?: null | string;
+            /** Format: uuid */
+            payComponentId?: null | string;
         };
         PostingRuleSummary: {
             /** Format: uuid */
@@ -17389,6 +17889,8 @@ export interface components {
             chargeTypeId: null | string;
             /** Format: uuid */
             expenseCategoryId: null | string;
+            /** Format: uuid */
+            payComponentId: null | string;
             /** Format: int32 */
             specificity: number | string;
         };
@@ -17481,6 +17983,8 @@ export interface components {
             dimensions?: null | {
                 [key: string]: string;
             };
+            /** Format: uuid */
+            payComponentId?: null | string;
             /** Format: uuid */
             partnerId?: null | string;
             subledgerType?: null | string;
@@ -19599,6 +20103,11 @@ export interface components {
             /** Format: date */
             reversalDate?: null | string;
         };
+        ReverseRunRequest: {
+            reason: string;
+            /** Format: date */
+            reversalDate?: null | string;
+        };
         ReverseSalesInvoiceRequest: {
             reason: string;
             /** Format: date */
@@ -21058,6 +21567,38 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        SaveEmployeeRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: date */
+            hireDate: string;
+            /** Format: double */
+            basicSalary: number | string;
+            number?: null | string;
+            /** Format: uuid */
+            branchId?: null | string;
+            /** Format: uuid */
+            departmentValueId?: null | string;
+            jobTitle?: null | {
+                [key: string]: string;
+            };
+            /** Format: date */
+            terminationDate?: null | string;
+            /** @default transfer */
+            paymentMethod: string;
+            bankName?: null | string;
+            iban?: null | string;
+            nationalId?: null | string;
+            /**
+             * Format: int32
+             * @default 21
+             */
+            leaveEntitlementDays: number | string;
+            notes?: null | string;
+            components?: null | components["schemas"]["EmployeeComponentRequest"][];
+        };
         SaveExpenseCategoryRequest: {
             code: string;
             name: {
@@ -21356,6 +21897,18 @@ export interface components {
             notes?: null | string;
             customFields?: unknown;
         };
+        SaveLeaveRequest: {
+            /** Format: uuid */
+            employeeId: string;
+            kind: string;
+            /** Format: date */
+            fromDate: string;
+            /** Format: date */
+            toDate: string;
+            /** Format: double */
+            days?: null | number | string;
+            notes?: null | string;
+        };
         SaveLotRequest: {
             /** Format: uuid */
             itemId: string;
@@ -21471,6 +22024,37 @@ export interface components {
             parentPartnerId?: null | string;
             notes?: null | string;
             customFields?: unknown;
+            /** @default true */
+            isActive: boolean;
+        };
+        SavePayComponentRequest: {
+            /** Format: uuid */
+            companyId: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            calculation: string;
+            code?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            defaultAmount: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            defaultRatePct: number | string;
+            /** @default false */
+            appliesToAll: boolean;
+            expenseAccountCode?: null | string;
+            liabilityAccountCode?: null | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            sortOrder: number | string;
             /** @default true */
             isActive: boolean;
         };
@@ -38559,6 +39143,476 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PosOrderSummary"];
+                };
+            };
+        };
+    };
+    getPayrollComponents: {
+        parameters: {
+            query: {
+                companyId: string;
+                isActive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayComponentSummary"][];
+                };
+            };
+        };
+    };
+    postPayrollComponents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePayComponentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayComponentSummary"];
+                };
+            };
+        };
+    };
+    getPayrollComponentsByComponentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                componentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayComponentSummary"];
+                };
+            };
+        };
+    };
+    putPayrollComponentsByComponentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                componentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePayComponentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayComponentSummary"];
+                };
+            };
+        };
+    };
+    getPayrollEmployees: {
+        parameters: {
+            query: {
+                companyId: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeSummary"][];
+                };
+            };
+        };
+    };
+    postPayrollEmployees: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeSummary"];
+                };
+            };
+        };
+    };
+    getPayrollEmployeesByEmployeeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeSummary"];
+                };
+            };
+        };
+    };
+    putPayrollEmployeesByEmployeeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employeeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveEmployeeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeSummary"];
+                };
+            };
+        };
+    };
+    getPayrollLeaves: {
+        parameters: {
+            query: {
+                companyId: string;
+                employeeId?: string;
+                year?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveSummary"][];
+                };
+            };
+        };
+    };
+    postPayrollLeaves: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLeaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveSummary"];
+                };
+            };
+        };
+    };
+    postPayrollLeavesByLeaveIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leaveId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveSummary"];
+                };
+            };
+        };
+    };
+    getPayrollRuns: {
+        parameters: {
+            query: {
+                companyId: string;
+                status?: string;
+                year?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"][];
+                };
+            };
+        };
+    };
+    postPayrollRuns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
+                };
+            };
+        };
+    };
+    getPayrollRunsByRunId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
+                };
+            };
+        };
+    };
+    postPayrollRunsByRunIdCalculate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
+                };
+            };
+        };
+    };
+    postPayrollRunsByRunIdSubmit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
+                };
+            };
+        };
+    };
+    postPayrollRunsByRunIdPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
+                };
+            };
+        };
+    };
+    postPayrollRunsByRunIdPay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRunRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
+                };
+            };
+        };
+    };
+    postPayrollRunsByRunIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseRunRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
+                };
+            };
+        };
+    };
+    postPayrollRunsByRunIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayrollRunSummary"];
                 };
             };
         };

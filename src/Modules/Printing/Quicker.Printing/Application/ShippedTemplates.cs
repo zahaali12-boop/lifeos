@@ -16,6 +16,7 @@ public static class ShippedTemplates
         new("sales_order", "standard", "SALES-ORDER", LocalizedText.Bilingual("Order confirmation", "تأكيد الطلب"), LanguageModes.Bilingual, "sales_order.html", "sample.sales_order.json"),
         new("customer_statement", "standard", "CUSTOMER-STATEMENT", LocalizedText.Bilingual("Statement of account", "كشف حساب"), LanguageModes.Bilingual, "customer_statement.html", "sample.customer_statement.json"),
         new("pos_order", "standard", "POS-RECEIPT", LocalizedText.Bilingual("Till receipt", "إيصال نقطة البيع"), LanguageModes.Bilingual, "pos_receipt.html", "sample.pos_receipt.json"),
+        new("payslip", "standard", "PAYSLIP", LocalizedText.Bilingual("Payslip", "قسيمة راتب"), LanguageModes.Bilingual, "payslip.html", "sample.payslip.json"),
     ];
 
     public static readonly IReadOnlyList<string> FontFiles = ["DejaVuSans.ttf", "DejaVuSans-Bold.ttf"];

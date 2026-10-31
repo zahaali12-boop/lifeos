@@ -90,6 +90,11 @@ public static class PostingRuleMatcher
             result["expenseCategoryId"] = keys.ExpenseCategoryId;
         }
 
+        if (keys.PayComponentId is not null)
+        {
+            result["payComponentId"] = keys.PayComponentId;
+        }
+
         return result;
     }
 }

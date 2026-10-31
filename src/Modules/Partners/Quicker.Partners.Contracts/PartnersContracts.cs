@@ -52,7 +52,7 @@ public sealed record PartnerAddressInfo(Guid Id, string Role, string Country, st
 
 public sealed record PartnerTaxRegistrationInfo(Guid Id, string Country, string RegistrationType, string Number, DateOnly? ValidFrom, DateOnly? ValidTo);
 
-public sealed record PartnerInfo(Guid Id, string Code, LocalizedText LegalName, LocalizedText TradeName, string Kind, bool IsSupplier, bool IsCustomer, bool IsActive, string? Email, string DefaultLanguage, Guid? IntercompanyCompanyId);
+public sealed record PartnerInfo(Guid Id, string Code, LocalizedText LegalName, LocalizedText TradeName, string Kind, bool IsSupplier, bool IsCustomer, bool IsActive, string? Email, string DefaultLanguage, Guid? IntercompanyCompanyId, bool IsEmployee = false);
 
 /// <summary>A company's supplier terms with the group's defaults applied: what a purchase order, receipt, invoice or payment reads.</summary>
 public sealed record SupplierTermsInfo(

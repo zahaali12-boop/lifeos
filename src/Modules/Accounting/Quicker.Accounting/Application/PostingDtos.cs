@@ -18,7 +18,8 @@ public sealed record PostingRuleRequest(
     Guid? BankAccountId = null,
     Guid? AssetCategoryId = null,
     Guid? ChargeTypeId = null,
-    Guid? ExpenseCategoryId = null);
+    Guid? ExpenseCategoryId = null,
+    Guid? PayComponentId = null);
 
 public sealed record PostingRuleSummary(
     Guid Id,
@@ -35,6 +36,7 @@ public sealed record PostingRuleSummary(
     Guid? AssetCategoryId,
     Guid? ChargeTypeId,
     Guid? ExpenseCategoryId,
+    Guid? PayComponentId,
     int Specificity);
 
 public sealed record PostingProfileSummary(
@@ -66,6 +68,7 @@ public sealed record PostLineRequest(
     Guid? ExpenseCategoryId = null,
     Guid? AccountId = null,
     IReadOnlyDictionary<string, Guid>? Dimensions = null,
+    Guid? PayComponentId = null,
     Guid? PartnerId = null,
     string? SubledgerType = null,
     Guid? SubledgerRef = null,

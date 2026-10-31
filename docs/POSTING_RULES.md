@@ -39,6 +39,8 @@ Conventions:
 | `PurchasePriceVariance` | expense | standard costing |
 | `AssemblyVariance` | expense | |
 | `EmployeePayable` | liability | expense claims |
+| `PayrollExpense` | expense | salaries, allowances and employer contributions; rules keyed by pay component (Payroll module) |
+| `PayrollLiability` | liability | amounts withheld from pay and employer contributions until paid over; rules keyed by pay component |
 | `CommissionExpense`, `CommissionPayable` | expense / liability | |
 | `BadDebt`, `WriteOff` | expense | |
 | `RoundingDifferences` | expense/income | engine-generated |
@@ -211,6 +213,10 @@ Built 2026-10-31 (A-175): the `FixedAssets` module. Every line below carries the
 | **Year-end close** | Dr every P&L account with a credit balance / Cr every P&L account with a debit balance, net to `RetainedEarnings` (per dimension set when `by_dimension`); flagged `is_closing_entry` in the closing period | hard scenario 16 |
 | Year reopen | mirror of the closing entry (`closing_of` link reversed), audited with reason; re-close posts a new closing entry | |
 | Opening balances (go-live) | Dr/Cr each balance sheet account / `OpeningBalanceEquity`; AR/AP opening items posted as individual open items against the control (so aging works); stock via opening SLEs; fixed assets via acquisition + accumulated depreciation transactions; `OpeningBalanceEquity` must be zero after migration | import toolkit validates that the sum is zero and subledgers equal controls before allowing go-live |
+| **Payroll run posted** (Payroll module, ADR-0033, A-181) | Dr `PayrollExpense` (key: the component) per earning item and per employer-contribution item / Cr `PayrollLiability` (key: the component) per deduction item and per employer-contribution item / Cr `AP` (the employee's supplier posting group, AP subledger) per employee for the net pay; the employee's dimensions on every line | one AP open item per employee: kind `invoice`, document `payroll_run`, instalment = line number, due on the pay date | posted on the run's posting date (the month's last day by default); refused while an employee has no active supplier account in the company (`payroll_run.employee_not_payable`); an approval workflow may hold the run before posting |
+| Payroll run paid | per employee, as a supplier payment through Banking: Dr `AP` / Cr `Bank` (or `Cash`) settling the employee's open item | bank transaction per payment | one bank account in the company's currency; transfer from a bank account, cash from a cash box; the run is `paid` once every employee is |
+| Payroll run reversed | mirror of the run's journal | the AP open items closed by reversal | only while no employee has been paid; the month can then be run again |
+| Withheld amounts paid over (social insurance, recovered advances) | manual payment or bank transaction: Dr `PayrollLiability` (the component's account) / Cr `Bank` | | the liability account reconciles to what was withheld less what was paid over |
 
 ## 9. Reversals: general rules
 

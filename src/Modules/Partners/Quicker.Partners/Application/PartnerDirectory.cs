@@ -41,14 +41,14 @@ public sealed class PartnerDirectory(PartnersDbContext db, SupplierService suppl
     public async Task<PartnerInfo?> FindAsync(Guid partnerId, CancellationToken cancellationToken = default)
     {
         var p = await db.Partners.AsNoTracking().SingleOrDefaultAsync(x => x.Id == partnerId, cancellationToken);
-        return p is null ? null : new PartnerInfo(p.Id, p.Code, p.LegalName, p.TradeName, p.Kind, p.IsSupplier, p.IsCustomer, p.IsActive, p.Email, p.DefaultLanguage, p.IntercompanyCompanyId);
+        return p is null ? null : new PartnerInfo(p.Id, p.Code, p.LegalName, p.TradeName, p.Kind, p.IsSupplier, p.IsCustomer, p.IsActive, p.Email, p.DefaultLanguage, p.IntercompanyCompanyId, p.IsEmployee);
     }
 
     public async Task<PartnerInfo?> FindByCodeAsync(string code, CancellationToken cancellationToken = default)
     {
         var normalized = (code ?? string.Empty).Trim().ToUpperInvariant();
         var p = await db.Partners.AsNoTracking().SingleOrDefaultAsync(x => x.Code == normalized, cancellationToken);
-        return p is null ? null : new PartnerInfo(p.Id, p.Code, p.LegalName, p.TradeName, p.Kind, p.IsSupplier, p.IsCustomer, p.IsActive, p.Email, p.DefaultLanguage, p.IntercompanyCompanyId);
+        return p is null ? null : new PartnerInfo(p.Id, p.Code, p.LegalName, p.TradeName, p.Kind, p.IsSupplier, p.IsCustomer, p.IsActive, p.Email, p.DefaultLanguage, p.IntercompanyCompanyId, p.IsEmployee);
     }
 
     public async Task<IReadOnlyList<PartnerAddressInfo>> AddressesAsync(Guid partnerId, CancellationToken cancellationToken = default)

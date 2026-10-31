@@ -133,6 +133,7 @@ flowchart TB
     Banking[Banking: payments, statements, reconciliation, cheques]
     Einvoicing[Einvoicing: ZATCA phase 2 adapter, devices, submissions, simulator]
     Pos[Point of sale: registers, cashier sessions, orders synced from the offline till]
+    Payroll[Payroll and HR: pay components as posting keys, employees, leave, monthly runs posted and paid through the engines]
     Expenses[Expenses: categories, supplier bills and employee claims, petty cash funds]
     FixedAssets
     Budgeting

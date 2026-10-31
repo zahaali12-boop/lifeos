@@ -40,6 +40,7 @@
     <ProjectReference Include="../../Modules/Tax/Quicker.Tax/Quicker.Tax.csproj" />
     <ProjectReference Include="../../Modules/Einvoicing/Quicker.Einvoicing/Quicker.Einvoicing.csproj" />
     <ProjectReference Include="../../Modules/Pos/Quicker.Pos/Quicker.Pos.csproj" />
+    <ProjectReference Include="../../Modules/Payroll/Quicker.Payroll/Quicker.Payroll.csproj" />
     <ProjectReference Include="../../Modules/Banking/Quicker.Banking/Quicker.Banking.csproj" />
     <ProjectReference Include="../../Modules/Payables/Quicker.Payables/Quicker.Payables.csproj" />
     <ProjectReference Include="../../Modules/Receivables/Quicker.Receivables/Quicker.Receivables.csproj" />

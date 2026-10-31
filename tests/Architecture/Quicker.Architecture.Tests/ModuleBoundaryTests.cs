@@ -158,6 +158,7 @@ public sealed class ModuleBoundaryTests
         ["Expenses"] = 3,
         ["FixedAssets"] = 3,
         ["Pos"] = 3,
+        ["Payroll"] = 3,
     };
 
     /// <summary>Dependencies against the tiers that exist on purpose; a new one fails, and one that disappears must be removed here.</summary>

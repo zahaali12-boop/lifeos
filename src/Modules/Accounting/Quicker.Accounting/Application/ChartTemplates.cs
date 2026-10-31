@@ -139,6 +139,7 @@ public static class ChartTemplates
             A("2170", "2100", "Accrued expenses", "مصروفات مستحقة", liability, "accrual", "current_liabilities", AccountRoles.AccruedExpenses, cashFlow: CashFlowCategories.Operating),
             A("2180", "2100", "Deferred revenue", "إيرادات مؤجلة", liability, "deferral", "current_liabilities", AccountRoles.DeferredRevenue, cashFlow: CashFlowCategories.Operating),
             A("2190", "2100", "Employee payables", "ذمم الموظفين الدائنة", liability, "payable", "current_liabilities", AccountRoles.EmployeePayable, cashFlow: CashFlowCategories.Operating),
+            A("2195", "2100", "Payroll liabilities", "مستحقات الرواتب", liability, "payable", "current_liabilities", AccountRoles.PayrollLiability, cashFlow: CashFlowCategories.Operating),
             H("2200", "2100", "Taxes payable", "الضرائب المستحقة", liability, "current_liabilities"),
             A("2210", "2200", "Output tax", "ضريبة المخرجات", liability, "tax", "current_liabilities", AccountRoles.OutputTax, cashFlow: CashFlowCategories.Operating),
             A("2220", "2200", "Withholding tax payable", "ضريبة الاستقطاع المستحقة الدفع", liability, "tax", "current_liabilities", AccountRoles.WhtPayable, cashFlow: CashFlowCategories.Operating),
@@ -185,7 +186,7 @@ public static class ChartTemplates
             A("5400", "5000", "Freight and handling expensed", "مصاريف الشحن والمناولة", expense, "cogs", "cost_of_sales"),
 
             H("6000", null, "Operating expenses", "المصروفات التشغيلية", expense, "operating_expenses"),
-            A("6100", "6000", "Salaries and wages", "الرواتب والأجور", expense, "opex", "operating_expenses"),
+            A("6100", "6000", "Salaries and wages", "الرواتب والأجور", expense, "opex", "operating_expenses", AccountRoles.PayrollExpense),
             A("6110", "6000", "Rent", "الإيجار", expense, "opex", "operating_expenses"),
             A("6120", "6000", "Utilities", "الخدمات (كهرباء وماء)", expense, "opex", "operating_expenses"),
             A("6130", "6000", "Marketing and advertising", "التسويق والإعلان", expense, "opex", "operating_expenses"),

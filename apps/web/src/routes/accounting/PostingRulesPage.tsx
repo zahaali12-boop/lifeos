@@ -25,7 +25,7 @@ interface RuleRow extends RuleRequest {
 }
 
 function toRequest(r: Rule): RuleRequest {
-  return { accountRole: r.accountRole, accountCode: r.accountCode, documentType: r.documentType, itemPostingGroupId: r.itemPostingGroupId, partnerPostingGroupId: r.partnerPostingGroupId, taxCodeId: r.taxCodeId, warehouseId: r.warehouseId, branchId: r.branchId, bankAccountId: r.bankAccountId, assetCategoryId: r.assetCategoryId, chargeTypeId: r.chargeTypeId, expenseCategoryId: r.expenseCategoryId };
+  return { accountRole: r.accountRole, accountCode: r.accountCode, documentType: r.documentType, itemPostingGroupId: r.itemPostingGroupId, partnerPostingGroupId: r.partnerPostingGroupId, taxCodeId: r.taxCodeId, warehouseId: r.warehouseId, branchId: r.branchId, bankAccountId: r.bankAccountId, assetCategoryId: r.assetCategoryId, chargeTypeId: r.chargeTypeId, expenseCategoryId: r.expenseCategoryId, payComponentId: r.payComponentId };
 }
 
 /**
@@ -82,7 +82,7 @@ export function PostingRulesPage() {
   };
   const fail = (error: unknown): void => { setProblem(toFormProblem(error, t("common.saveFailed"))); };
   const saveRules = useMutation({
-    mutationFn: async () => unwrap(await api.PUT("/api/v1/accounting/posting-profiles/{profileId}/rules", { params: { path: { profileId: selectedId } }, body: (rows ?? []).filter((r) => r.accountRole && r.accountCode.trim()).map((r) => ({ accountRole: r.accountRole, accountCode: r.accountCode.trim(), documentType: r.documentType?.trim() ? r.documentType.trim() : null, itemPostingGroupId: r.itemPostingGroupId ?? null, partnerPostingGroupId: r.partnerPostingGroupId ?? null, taxCodeId: r.taxCodeId ?? null, warehouseId: r.warehouseId ?? null, branchId: r.branchId ?? null, bankAccountId: r.bankAccountId ?? null, assetCategoryId: r.assetCategoryId ?? null, chargeTypeId: r.chargeTypeId ?? null, expenseCategoryId: r.expenseCategoryId ?? null })) })),
+    mutationFn: async () => unwrap(await api.PUT("/api/v1/accounting/posting-profiles/{profileId}/rules", { params: { path: { profileId: selectedId } }, body: (rows ?? []).filter((r) => r.accountRole && r.accountCode.trim()).map((r) => ({ accountRole: r.accountRole, accountCode: r.accountCode.trim(), documentType: r.documentType?.trim() ? r.documentType.trim() : null, itemPostingGroupId: r.itemPostingGroupId ?? null, partnerPostingGroupId: r.partnerPostingGroupId ?? null, taxCodeId: r.taxCodeId ?? null, warehouseId: r.warehouseId ?? null, branchId: r.branchId ?? null, bankAccountId: r.bankAccountId ?? null, assetCategoryId: r.assetCategoryId ?? null, chargeTypeId: r.chargeTypeId ?? null, expenseCategoryId: r.expenseCategoryId ?? null, payComponentId: r.payComponentId ?? null })) })),
     onSuccess: async () => { setRows(null); setProblem(null); await refresh(); },
     onError: fail,
   });
@@ -146,6 +146,7 @@ export function PostingRulesPage() {
     if (r.bankAccountId) { parts.push(t("postingRules.bankAccount")); }
     if (r.chargeTypeId) { parts.push(t("postingRules.chargeType")); }
     if (r.expenseCategoryId) { parts.push(t("postingRules.expenseCategory")); }
+    if (r.payComponentId) { parts.push(t("postingRules.payComponent")); }
     if (r.taxCodeId) { parts.push(t("postingRules.taxCode")); }
     if (r.assetCategoryId) { parts.push(t("postingRules.assetCategory")); }
     return parts;

@@ -16,14 +16,15 @@ public sealed record PostingKeys(
     Guid? BankAccountId = null,
     Guid? AssetCategoryId = null,
     Guid? ChargeTypeId = null,
-    Guid? ExpenseCategoryId = null)
+    Guid? ExpenseCategoryId = null,
+    Guid? PayComponentId = null)
 {
     public static readonly PostingKeys None = new();
 
     /// <summary>How many keys the rule names: the most specific matching rule wins.</summary>
     public int Specificity =>
         (DocumentType is null ? 0 : 1) + (ItemPostingGroupId is null ? 0 : 1) + (PartnerPostingGroupId is null ? 0 : 1) + (TaxCodeId is null ? 0 : 1)
-        + (WarehouseId is null ? 0 : 1) + (BranchId is null ? 0 : 1) + (BankAccountId is null ? 0 : 1) + (AssetCategoryId is null ? 0 : 1) + (ChargeTypeId is null ? 0 : 1) + (ExpenseCategoryId is null ? 0 : 1);
+        + (WarehouseId is null ? 0 : 1) + (BranchId is null ? 0 : 1) + (BankAccountId is null ? 0 : 1) + (AssetCategoryId is null ? 0 : 1) + (ChargeTypeId is null ? 0 : 1) + (ExpenseCategoryId is null ? 0 : 1) + (PayComponentId is null ? 0 : 1);
 
     /// <summary>True when every key this rule names equals the line's key.</summary>
     public bool Covers(PostingKeys line)
@@ -38,7 +39,8 @@ public sealed record PostingKeys(
             && (BankAccountId is null || BankAccountId == line.BankAccountId)
             && (AssetCategoryId is null || AssetCategoryId == line.AssetCategoryId)
             && (ChargeTypeId is null || ChargeTypeId == line.ChargeTypeId)
-            && (ExpenseCategoryId is null || ExpenseCategoryId == line.ExpenseCategoryId);
+            && (ExpenseCategoryId is null || ExpenseCategoryId == line.ExpenseCategoryId)
+            && (PayComponentId is null || PayComponentId == line.PayComponentId);
     }
 }
 

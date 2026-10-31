@@ -2985,6 +2985,113 @@ erDiagram
 
 `Σ remaining_fc` of open items for a control account at date D (computed from settlements with `settlement_date ≤ D`, plus revaluation settlements that are not yet auto-reversed at D) **equals** the control account's functional balance at D. Each settlement's `journal_entry_id` posts the cash, FX, discount, WHT, charge and write-off lines shown in POSTING_RULES §5 and §6. Aging at any date is computed from open items and settlements by date, never from a snapshot, so hard scenario 15 holds for any historical date.
 
+### Payroll and HR (Payroll module, ADR-0033, A-181)
+
+Payroll is a process module of its own that reuses the engines: a pay component is one piece of a salary and a
+posting key, an employee is a partner with the employee role hired into a company, leave is recorded against the
+employee, and a run is one month of one company calculated line by line (one per employee) and item by item (one
+per component). The net pay of each employee is an AP open item the bank pays; what is withheld sits on the liability
+the component names until it is paid over.
+
+```mermaid
+erDiagram
+  org_companies ||--o{ pay_components : "defines"
+  org_companies ||--o{ pay_employees : "employs"
+  ptr_partners ||--o| pay_employees : "is"
+  pay_employees ||--o{ pay_employee_components : "carries"
+  pay_components ||--o{ pay_employee_components : "assigned as"
+  pay_employees ||--o{ pay_leaves : "takes"
+  org_companies ||--o{ pay_runs : "runs"
+  pay_runs ||--|{ pay_run_lines : "has"
+  pay_employees ||--o{ pay_run_lines : "paid in"
+  pay_run_lines ||--|{ pay_run_items : "made of"
+  pay_components ||--o{ pay_run_items : "applied as"
+  pay_components {
+    uuid id PK
+    text code
+    text kind "earning | deduction | employer"
+    text calculation "basic | fixed | percent_of_basic | percent_of_gross"
+    numeric default_amount
+    numeric default_rate_pct
+    boolean applies_to_all
+    text expense_account_code
+    text liability_account_code
+  }
+  pay_employees {
+    uuid id PK
+    uuid partner_id FK
+    text number "EMP-0001"
+    uuid branch_id FK
+    uuid department_value_id
+    uuid dimension_set_id
+    date hire_date
+    date termination_date
+    numeric basic_salary
+    text payment_method "transfer | cash"
+    text iban
+    integer leave_entitlement_days
+    text status "active | left"
+  }
+  pay_leaves {
+    uuid id PK
+    text kind "annual | sick | unpaid"
+    date from_date
+    date to_date
+    numeric days
+    text status "approved | cancelled"
+  }
+  pay_runs {
+    uuid id PK
+    text number "PRL-2026-001"
+    integer period_year
+    integer period_month
+    date posting_date
+    date pay_date
+    text status "calculated | pending_approval | approved | posted | paid | reversed | cancelled"
+    uuid approval_request_id
+    numeric total_gross
+    numeric total_deductions
+    numeric total_employer
+    numeric total_net
+    uuid journal_entry_id
+    uuid reversal_entry_id
+  }
+  pay_run_lines {
+    uuid id PK
+    integer line_no
+    uuid employee_id FK
+    uuid partner_id FK
+    numeric paid_days "of 30"
+    numeric unpaid_days
+    numeric basic_amount
+    numeric gross
+    numeric deductions_total
+    numeric employer_total
+    numeric net
+    uuid open_item_id "AP open item"
+    uuid payment_id
+  }
+  pay_run_items {
+    uuid id PK
+    uuid component_id FK
+    text kind
+    numeric base_amount
+    numeric rate_pct
+    numeric amount
+  }
+```
+
+Rules:
+
+* A component's accounts are posting rules in the company's profile (role `PayrollExpense` or `PayrollLiability`,
+  key `pay_component_id`); the run never names an account. Saving a component writes or moves its rules.
+* The month has thirty days: days before the hire date, after the last day and unpaid leave come off; the basic and
+  fixed earnings are prorated, fixed deductions are not; percentages apply to the prorated basic or the gross.
+* One run per company and month, unless it was cancelled or reversed. A run is calculated while editable, approved
+  through the workflow engine (or at once), posted once, paid one employee at a time, reversed only while unpaid.
+* An employee who is paid is also a supplier of the company: the supplier account gives the posting group and the
+  payment terms, and the net pay is settled as a supplier payment through Banking.
+
 ## 14. Banking, cash, cheques; expenses and petty cash (Expenses module)
 
 ```mermaid

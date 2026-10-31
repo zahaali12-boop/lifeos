@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Contracts of the Payroll module: the document types payroll runs, payslips and employees are numbered and printed under, and the kinds of pay components (founder programme item 8, ADR-0033).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+</Project>

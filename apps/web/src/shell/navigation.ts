@@ -1,11 +1,11 @@
-import { Anchor, QrCode, GitCompareArrows, Printer, FileCheck, BookOpenCheck, Undo2, ArrowRightLeft, BadgePercent, ChartColumn, Banknote, CircleDollarSign, Barcode, Bell, BookMarked, BookOpen, Boxes, Building, Building2, Calculator, CalendarCheck, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Contact, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, Kanban, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, ListTodo, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, Percent, PiggyBank, ReceiptText, Repeat, Rocket, Route, Ruler, Scale, ScanLine, SearchCheck, Settings, Settings2, ShieldCheck, Shapes, Ship, ShoppingCart, SlidersHorizontal, Gift, Stamp, Store, Tags, TrendingDown, Truck, Users, Wallet, Warehouse, Webhook, type LucideIcon } from "lucide-react";
+import { Anchor, CalendarOff, QrCode, GitCompareArrows, Printer, FileCheck, BookOpenCheck, Undo2, ArrowRightLeft, BadgePercent, ChartColumn, Banknote, CircleDollarSign, Barcode, Bell, BookMarked, BookOpen, Boxes, Building, Building2, Calculator, CalendarCheck, CalendarClock, CalendarDays, CalendarRange, ClipboardCheck, ClipboardList, Coins, Contact, Diff, FileSignature, Gauge, FileText, GitBranch, Hammer, HandCoins, Handshake, Hash, Hourglass, Inbox, Kanban, KeyRound, Landmark, Layers, LayoutDashboard, ListChecks, ListTodo, MessageSquareQuote, NotebookPen, Package, PackageCheck, PackageX, Percent, PiggyBank, ReceiptText, Repeat, Rocket, Route, Ruler, Scale, ScanLine, SearchCheck, Settings, Settings2, ShieldCheck, Shapes, Ship, ShoppingCart, SlidersHorizontal, Gift, Stamp, Store, Tags, TrendingDown, Truck, Users, Wallet, Warehouse, Webhook, type LucideIcon } from "lucide-react";
 
 /** The modules, in order: each is a menu of the top bar (labelled `nav.modules.<id>`) and a section of the small-screen drawer (`nav.groups.<id>`). */
 export const navigationGroups = ["accounting", "sales", "purchasing", "inventory", "finance", "organization", "administration"] as const;
 export type NavigationGroup = (typeof navigationGroups)[number];
 
 /** The sections within a module, in the order the menus show them; each is labelled `nav.sections.<id>`. */
-export const navigationSections = ["customers", "orders", "invoicing", "operations", "products", "receivables", "payables", "expenses", "assets", "bank", "tax", "planning", "pricing", "reporting", "setup", "users", "automation", "configuration"] as const;
+export const navigationSections = ["customers", "orders", "invoicing", "operations", "products", "receivables", "payables", "expenses", "assets", "bank", "tax", "planning", "pricing", "reporting", "people", "setup", "users", "automation", "configuration"] as const;
 export type NavigationSection = (typeof navigationSections)[number];
 
 /**
@@ -110,6 +110,10 @@ export const navigation: NavigationItem[] = [
   { to: "/members", label: "nav.members", icon: Users, shortcut: "g m", permission: "identity.user.read", group: "administration", section: "users" },
   { to: "/roles", label: "nav.roles", icon: ShieldCheck, shortcut: "g o", permission: "identity.role.read", group: "administration", section: "users" },
   { to: "/security", label: "nav.security", icon: KeyRound, shortcut: "g &", permission: "identity.sod.read", group: "administration", section: "users" },
+  { to: "/hr/employees", label: "nav.employees", icon: Users, shortcut: "h e", permission: "payroll.employee.read", group: "organization", section: "people" },
+  { to: "/hr/leave", label: "nav.leave", icon: CalendarOff, shortcut: "h l", permission: "payroll.leave.read", group: "organization", section: "people" },
+  { to: "/hr/payroll", label: "nav.payroll", icon: Banknote, shortcut: "h p", permission: "payroll.run.read", group: "organization", section: "people" },
+  { to: "/hr/pay-components", label: "nav.payComponents", icon: SlidersHorizontal, shortcut: "h c", permission: "payroll.setup.read", group: "organization", section: "people" },
   { to: "/custom-fields", label: "nav.customFields", icon: SlidersHorizontal, shortcut: "g f", group: "organization", section: "configuration" },
   { to: "/print-templates", label: "nav.printTemplates", icon: Printer, shortcut: "g :", permission: "print.template.read", group: "organization", section: "configuration" },
   { to: "/notifications", label: "nav.notifications", icon: Bell, shortcut: "g n" },

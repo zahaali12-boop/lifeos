@@ -104,6 +104,10 @@ import { PosHomePage } from "./pos/PosHomePage";
 import { PosSellPage } from "./pos/PosSellPage";
 import { PosOrdersPage } from "./pos/PosOrdersPage";
 import { PosPage } from "./sales/PosPage";
+import { EmployeesPage } from "./hr/EmployeesPage";
+import { LeavePage } from "./hr/LeavePage";
+import { PayComponentsPage } from "./hr/PayComponentsPage";
+import { PayrollRunsPage } from "./hr/PayrollRunsPage";
 import { PickListsPage } from "./inventory/PickListsPage";
 
 /** Typed routes (ADR-0013): anonymous auth screens, the shell whose children require a session, and the mobile scanner under /m. */
@@ -250,6 +254,10 @@ const posHomeRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos",
 const posSellRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos/sell", component: PosSellPage, validateSearch: searchRecord });
 const posOrdersRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos/orders", component: PosOrdersPage });
 const posBackOfficeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pos", component: PosPage, validateSearch: searchRecord });
+const payComponentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/pay-components", component: PayComponentsPage });
+const employeesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/employees", component: EmployeesPage, validateSearch: searchRecord });
+const leaveRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/leave", component: LeavePage, validateSearch: searchRecord });
+const payrollRunsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/payroll", component: PayrollRunsPage, validateSearch: searchRecord });
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -258,7 +266,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute, payComponentsRoute, employeesRoute, leaveRoute, payrollRunsRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
   posRoute.addChildren([posHomeRoute, posSellRoute, posOrdersRoute]),

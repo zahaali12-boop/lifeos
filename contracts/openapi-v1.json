@@ -21078,6 +21078,731 @@
         }
       }
     },
+    "/api/v1/payroll/components": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "The pay components of a company (BASIC, the basic salary, is created on first use): earnings, deductions and employer contributions with how each is calculated and the accounts it lands on.",
+        "operationId": "getPayrollComponents",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayComponentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Creates a pay component; its accounts become posting rules keyed by the component in the company's posting profile.",
+        "operationId": "postPayrollComponents",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePayComponentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayComponentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/components/{componentId}": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "operationId": "getPayrollComponentsByComponentId",
+        "parameters": [
+          {
+            "name": "componentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayComponentSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Payroll"
+        ],
+        "operationId": "putPayrollComponentsByComponentId",
+        "parameters": [
+          {
+            "name": "componentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePayComponentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayComponentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/employees": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "The employees of a company with their job, pay, components, leave balance and whether they can be paid.",
+        "operationId": "getPayrollEmployees",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmployeeSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Hires a partner with the employee role into the company: number (EMP-0001 when none is given), job, hire date, basic salary, the components carried and how the employee is paid.",
+        "operationId": "postPayrollEmployees",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEmployeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/employees/{employeeId}": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "operationId": "getPayrollEmployeesByEmployeeId",
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Changes an employee's job, pay or components, or terminates them on a date.",
+        "operationId": "putPayrollEmployeesByEmployeeId",
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveEmployeeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/leaves": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Leave records of a company, newest first, filtered by employee or year.",
+        "operationId": "getPayrollLeaves",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "employeeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaveSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Records approved leave: annual (against the yearly entitlement), sick, or unpaid (deducted from the pay of the period it falls in).",
+        "operationId": "postPayrollLeaves",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLeaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/leaves/{leaveId}/cancel": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Cancels a leave record; unpaid leave in a period already paid stays until the run is reversed.",
+        "operationId": "postPayrollLeavesByLeaveIdCancel",
+        "parameters": [
+          {
+            "name": "leaveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaveSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Payroll runs of a company, newest period first, with their lines and items.",
+        "operationId": "getPayrollRuns",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PayrollRunSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Creates and calculates the run of a month: every employee employed in it, prorated over thirty days for the days not employed and unpaid leave, with the components applied in order.",
+        "operationId": "postPayrollRuns",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs/{runId}": {
+      "get": {
+        "tags": [
+          "Payroll"
+        ],
+        "operationId": "getPayrollRunsByRunId",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs/{runId}/calculate": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Recalculates a draft or calculated run after employees, components or leave changed.",
+        "operationId": "postPayrollRunsByRunIdCalculate",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs/{runId}/submit": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Submits the run: held for approval when a workflow definition is active for payroll runs, approved at once otherwise.",
+        "operationId": "postPayrollRunsByRunIdSubmit",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs/{runId}/post": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Posts an approved run: salaries and employer contributions by component against the liabilities withheld, and each employee's net pay as a payable due on the pay date.",
+        "operationId": "postPayrollRunsByRunIdPost",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs/{runId}/pay": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Pays every unpaid employee of a posted run from one bank account on a date, one payment per employee settling the payable.",
+        "operationId": "postPayrollRunsByRunIdPay",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs/{runId}/reverse": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Reverses a posted, unpaid run: the journal is mirrored and the payables closed; the period can then be run again.",
+        "operationId": "postPayrollRunsByRunIdReverse",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payroll/runs/{runId}/cancel": {
+      "post": {
+        "tags": [
+          "Payroll"
+        ],
+        "summary": "Cancels a run that is not yet posted, withdrawing its approval request when one is pending.",
+        "operationId": "postPayrollRunsByRunIdCancel",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayrollRunSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payables/open-items": {
       "get": {
         "tags": [
@@ -41370,6 +42095,56 @@
           }
         }
       },
+      "CreateRunRequest": {
+        "required": [
+          "companyId",
+          "year",
+          "month"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "year": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "month": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "payDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CreditSalesReturnRequest": {
         "type": "object",
         "properties": {
@@ -44400,6 +45175,300 @@
               "null",
               "string"
             ],
+            "format": "date-time"
+          }
+        }
+      },
+      "EmployeeComponentRequest": {
+        "required": [
+          "componentId"
+        ],
+        "type": "object",
+        "properties": {
+          "componentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "A component the employee carries, with the amount or rate that overrides the component's default when given."
+      },
+      "EmployeeComponentSummary": {
+        "required": [
+          "id",
+          "componentId",
+          "componentCode",
+          "componentName",
+          "kind",
+          "calculation",
+          "amount",
+          "ratePct",
+          "validFrom",
+          "validTo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "componentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "componentCode": {
+            "type": "string"
+          },
+          "componentName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "calculation": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "validFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "validTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "EmployeeSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "partnerId",
+          "partnerCode",
+          "name",
+          "number",
+          "branchId",
+          "departmentValueId",
+          "departmentCode",
+          "jobTitle",
+          "hireDate",
+          "terminationDate",
+          "basicSalary",
+          "currency",
+          "paymentMethod",
+          "bankName",
+          "iban",
+          "nationalId",
+          "leaveEntitlementDays",
+          "leaveTakenThisYear",
+          "leaveBalance",
+          "status",
+          "notes",
+          "canBePaid",
+          "components",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "number": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "departmentValueId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "departmentCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "jobTitle": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "hireDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "terminationDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "basicSalary": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "paymentMethod": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nationalId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "leaveEntitlementDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "leaveTakenThisYear": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "leaveBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "canBePaid": {
+            "type": "boolean"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeComponentSummary"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
             "format": "date-time"
           }
         }
@@ -49059,6 +50128,78 @@
           }
         }
       },
+      "LeaveSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "employeeId",
+          "employeeNumber",
+          "employeeName",
+          "kind",
+          "fromDate",
+          "toDate",
+          "days",
+          "status",
+          "notes",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeNumber": {
+            "type": "string"
+          },
+          "employeeName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "fromDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "toDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "days": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "LedgerDrill": {
         "required": [
           "accountId",
@@ -52783,6 +53924,96 @@
           }
         }
       },
+      "PayComponentSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "code",
+          "name",
+          "kind",
+          "calculation",
+          "defaultAmount",
+          "defaultRatePct",
+          "appliesToAll",
+          "expenseAccountCode",
+          "liabilityAccountCode",
+          "sortOrder",
+          "isActive",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "calculation": {
+            "type": "string"
+          },
+          "defaultAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "defaultRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "appliesToAll": {
+            "type": "boolean"
+          },
+          "expenseAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "liabilityAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "PayExpenseRequest": {
         "required": [
           "bankAccountId"
@@ -53397,6 +54628,466 @@
           "method": {
             "type": "string",
             "default": "transfer"
+          }
+        }
+      },
+      "PayrollRunItemSummary": {
+        "required": [
+          "id",
+          "componentId",
+          "componentCode",
+          "componentName",
+          "kind",
+          "calculation",
+          "baseAmount",
+          "ratePct",
+          "amount",
+          "sortOrder"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "componentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "componentCode": {
+            "type": "string"
+          },
+          "componentName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "calculation": {
+            "type": "string"
+          },
+          "baseAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PayrollRunLineSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "employeeId",
+          "partnerId",
+          "employeeNumber",
+          "employeeName",
+          "branchId",
+          "daysInPeriod",
+          "paidDays",
+          "unpaidDays",
+          "basicSalary",
+          "basicAmount",
+          "earningsTotal",
+          "gross",
+          "deductionsTotal",
+          "employerTotal",
+          "net",
+          "openItemId",
+          "paymentId",
+          "paymentNumber",
+          "paidOn",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeNumber": {
+            "type": "string"
+          },
+          "employeeName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "daysInPeriod": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "paidDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unpaidDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "basicSalary": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "basicAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "earningsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "gross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "deductionsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "employerTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "net": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "openItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paymentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paidOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayrollRunItemSummary"
+            }
+          }
+        }
+      },
+      "PayrollRunSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "periodYear",
+          "periodMonth",
+          "periodStart",
+          "periodEnd",
+          "postingDate",
+          "payDate",
+          "status",
+          "approvalRequestId",
+          "rejectionReason",
+          "employeesCount",
+          "totalBasic",
+          "totalEarnings",
+          "totalGross",
+          "totalDeductions",
+          "totalEmployer",
+          "totalNet",
+          "currency",
+          "journalEntryId",
+          "reversalEntryId",
+          "notes",
+          "lines",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "periodYear": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "periodMonth": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "payDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "approvalRequestId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "rejectionReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "employeesCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalBasic": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalEarnings": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalGross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalDeductions": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalEmployer": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "totalNet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayrollRunLineSummary"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PayRunRequest": {
+        "required": [
+          "bankAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -55615,6 +57306,13 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "payComponentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -55634,6 +57332,7 @@
           "assetCategoryId",
           "chargeTypeId",
           "expenseCategoryId",
+          "payComponentId",
           "specificity"
         ],
         "type": "object",
@@ -55715,6 +57414,13 @@
             "format": "uuid"
           },
           "expenseCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "payComponentId": {
             "type": [
               "null",
               "string"
@@ -56047,6 +57753,13 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "payComponentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           },
           "partnerId": {
             "type": [
@@ -64142,6 +65855,24 @@
           }
         }
       },
+      "ReverseRunRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reversalDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "ReverseSalesInvoiceRequest": {
         "required": [
           "reason"
@@ -69284,6 +71015,119 @@
           }
         }
       },
+      "SaveEmployeeRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "hireDate",
+          "basicSalary"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hireDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "basicSalary": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "number": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "departmentValueId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "jobTitle": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "terminationDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "default": "transfer"
+          },
+          "bankName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nationalId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "leaveEntitlementDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 21
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "components": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EmployeeComponentRequest"
+            }
+          }
+        }
+      },
       "SaveExpenseCategoryRequest": {
         "required": [
           "code",
@@ -70276,6 +72120,47 @@
           "customFields": { }
         }
       },
+      "SaveLeaveRequest": {
+        "required": [
+          "employeeId",
+          "kind",
+          "fromDate",
+          "toDate"
+        ],
+        "type": "object",
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "fromDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "toDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "days": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "SaveLotRequest": {
         "required": [
           "itemId",
@@ -70671,6 +72556,86 @@
             ]
           },
           "customFields": { },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "SavePayComponentRequest": {
+        "required": [
+          "companyId",
+          "name",
+          "kind",
+          "calculation"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "calculation": {
+            "type": "string"
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "defaultRatePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "appliesToAll": {
+            "type": "boolean",
+            "default": false
+          },
+          "expenseAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "liabilityAccountCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
           "isActive": {
             "type": "boolean",
             "default": true
@@ -83077,6 +85042,9 @@
     },
     {
       "name": "Point of sale"
+    },
+    {
+      "name": "Payroll"
     },
     {
       "name": "Payables"

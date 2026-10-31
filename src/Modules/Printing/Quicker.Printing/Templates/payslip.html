@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans.ttf"); font-weight: 400; }
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans-Bold.ttf"); font-weight: 700; }
+@page { size: {{ paper }}; margin: 14mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Sans", sans-serif; font-size: 8pt; color: #666; } }
+{{ css }}
+.payslip .employee { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-block: 4mm; }
+.payslip .employee table { inline-size: 100%; border-collapse: collapse; }
+.payslip .employee td { padding: 0.6mm 0; vertical-align: top; }
+.payslip .employee td.k { color: #555; inline-size: 40%; }
+.payslip h3 { font-size: 10pt; margin-block: 4mm 1.5mm; border-block-end: 1px solid #333; padding-block-end: 1mm; }
+.payslip table.items { inline-size: 100%; border-collapse: collapse; }
+.payslip table.items th { text-align: start; font-size: 8pt; color: #555; padding: 1mm; border-block-end: 1px solid #999; }
+.payslip table.items th.num, .payslip table.items td.num { text-align: end; direction: ltr; unicode-bidi: isolate; }
+.payslip table.items td { padding: 1mm; border-block-end: 1px solid #e5e5e5; }
+.payslip table.items td.code { color: #666; font-size: 8pt; }
+.payslip table.items tr.subtotal td { font-weight: 700; border-block-end: none; }
+.payslip table.summary { inline-size: 60%; margin-inline-start: auto; border-collapse: collapse; margin-block-start: 5mm; }
+.payslip table.summary td { padding: 1mm 1.5mm; }
+.payslip table.summary tr.net td { border-block-start: 2px solid #333; font-weight: 700; font-size: 11pt; padding-block: 2mm; }
+.payslip .payment { margin-block-start: 6mm; padding: 3mm; border: 1px solid #ccc; }
+.payslip .payment p { margin: 0.5mm 0; }
+</style>
+</head>
+<body class="{{ mode }} {{ variant }}">
+{{ if document.status == "calculated" || document.status == "pending_approval" || document.status == "approved" }}<div class="watermark">{{ L.draft_watermark }}</div>{{ else if document.status == "reversed" || document.status == "cancelled" }}<div class="watermark">{{ L.cancelled_watermark }}</div>{{ end }}
+<div class="sheet payslip">
+  <header class="doc-header">
+    <div class="company">
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+      {{ if branch }}<p>{{ branch.name | html.escape }}</p>{{ end }}
+    </div>
+    <div class="doc">
+      <p class="title">{{ title | html.escape }}</p>
+      <p class="number">{{ number | html.escape }}</p>
+      <table>
+        <tr><td class="k">{{ L.pay_period }}</td><td class="v">{{ document.period | html.escape }}</td></tr>
+        <tr><td class="k">{{ L.pay_date }}</td><td class="v">{{ document.pay_date }}</td></tr>
+        <tr><td class="k">{{ L.currency }}</td><td class="v">{{ document.currency }}</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="employee">
+    <table>
+      <tr><td class="k">{{ L.employee }}</td><td>{{ document.employee_name | html.escape }}</td></tr>
+      <tr><td class="k">{{ L.employee_number }}</td><td class="ltr">{{ document.employee_number | html.escape }}</td></tr>
+      {{ if document.job_title }}<tr><td class="k">{{ L.job_title }}</td><td>{{ document.job_title | html.escape }}</td></tr>{{ end }}
+      {{ if document.department }}<tr><td class="k">{{ L.department }}</td><td>{{ document.department | html.escape }}</td></tr>{{ end }}
+    </table>
+    <table>
+      {{ if document.hire_date }}<tr><td class="k">{{ L.hire_date }}</td><td class="v">{{ document.hire_date }}</td></tr>{{ end }}
+      <tr><td class="k">{{ L.days_paid }}</td><td class="v">{{ document.paid_days }} / {{ document.days_in_period }}</td></tr>
+      {{ if document.has_unpaid }}<tr><td class="k">{{ L.unpaid_days }}</td><td class="v">{{ document.unpaid_days }}</td></tr>{{ end }}
+      <tr><td class="k">{{ L.basic_salary }}</td><td class="v">{{ document.basic_salary }}</td></tr>
+    </table>
+  </section>
+
+  <h3>{{ L.earnings }}</h3>
+  <table class="items">
+    <thead><tr><th>{{ L.description }}</th><th class="num">{{ L.basis }}</th><th class="num">{{ L.rate }}</th><th class="num">{{ L.amount }}</th></tr></thead>
+    <tbody>
+      {{ for i in document.earnings }}
+      <tr><td>{{ i.name | html.escape }} <span class="code ltr">{{ i.code | html.escape }}</span></td><td class="num">{{ if i.has_rate }}{{ i.base }}{{ end }}</td><td class="num">{{ if i.has_rate }}{{ i.rate }}%{{ end }}</td><td class="num">{{ i.amount }}</td></tr>
+      {{ end }}
+      <tr class="subtotal"><td colspan="3">{{ L.gross }}</td><td class="num">{{ document.gross }}</td></tr>
+    </tbody>
+  </table>
+
+  {{ if document.has_deductions }}
+  <h3>{{ L.deductions }}</h3>
+  <table class="items">
+    <thead><tr><th>{{ L.description }}</th><th class="num">{{ L.basis }}</th><th class="num">{{ L.rate }}</th><th class="num">{{ L.amount }}</th></tr></thead>
+    <tbody>
+      {{ for i in document.deductions }}
+      <tr><td>{{ i.name | html.escape }} <span class="code ltr">{{ i.code | html.escape }}</span></td><td class="num">{{ if i.has_rate }}{{ i.base }}{{ end }}</td><td class="num">{{ if i.has_rate }}{{ i.rate }}%{{ end }}</td><td class="num">{{ i.amount }}</td></tr>
+      {{ end }}
+      <tr class="subtotal"><td colspan="3">{{ L.total_deductions }}</td><td class="num">{{ document.deductions_total }}</td></tr>
+    </tbody>
+  </table>
+  {{ end }}
+
+  <table class="summary">
+    <tr><td class="k">{{ L.gross }}</td><td class="num">{{ document.gross }}</td></tr>
+    <tr><td class="k">{{ L.total_deductions }}</td><td class="num">{{ document.deductions_total }}</td></tr>
+    <tr class="net"><td class="k">{{ L.net_pay }}</td><td class="num">{{ document.net }} {{ document.currency }}</td></tr>
+  </table>
+
+  {{ if document.has_employer }}
+  <h3>{{ L.employer_contributions }}</h3>
+  <table class="items">
+    <thead><tr><th>{{ L.description }}</th><th class="num">{{ L.basis }}</th><th class="num">{{ L.rate }}</th><th class="num">{{ L.amount }}</th></tr></thead>
+    <tbody>
+      {{ for i in document.employer }}
+      <tr><td>{{ i.name | html.escape }} <span class="code ltr">{{ i.code | html.escape }}</span></td><td class="num">{{ if i.has_rate }}{{ i.base }}{{ end }}</td><td class="num">{{ if i.has_rate }}{{ i.rate }}%{{ end }}</td><td class="num">{{ i.amount }}</td></tr>
+      {{ end }}
+      <tr class="subtotal"><td colspan="3">{{ L.total }}</td><td class="num">{{ document.employer_total }}</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">{{ L.employer_contributions_note }}</p>
+  {{ end }}
+
+  <section class="payment">
+    <p><strong>{{ L.payment_method }}:</strong> {{ document.payment_method_label | html.escape }}{{ if document.bank_name }} · {{ document.bank_name | html.escape }}{{ end }}{{ if document.iban }} · <span class="ltr">{{ document.iban | html.escape }}</span>{{ end }}</p>
+    {{ if document.is_paid }}<p>{{ L.paid_on }} {{ document.paid_on }}{{ if document.payment_number }} · <span class="ltr">{{ document.payment_number | html.escape }}</span>{{ end }}</p>{{ end }}
+  </section>
+
+  <footer class="doc-footer"><p class="muted">{{ L.generated }} {{ generated_at }}</p></footer>
+</div>
+</body>
+</html>

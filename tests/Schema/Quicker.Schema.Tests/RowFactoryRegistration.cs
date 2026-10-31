@@ -35,6 +35,7 @@ internal static class RowFactoryRegistration
         Quicker.FixedAssets.TestSupport.FixedAssetsRowFactories.RegisterAll();
         Quicker.Einvoicing.TestSupport.EinvoicingRowFactories.RegisterAll();
         Quicker.Pos.TestSupport.PosRowFactories.RegisterAll();
+        Quicker.Payroll.TestSupport.PayrollRowFactories.RegisterAll();
     }
 #pragma warning restore CA2255
 }

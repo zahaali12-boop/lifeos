@@ -77,6 +77,8 @@ public sealed class PostingRule : ITenantEntity
 
     public Guid? ExpenseCategoryId { get; set; }
 
+    public Guid? PayComponentId { get; set; }
+
     public Guid AccountId { get; set; }
 
     public int Specificity { get; set; }

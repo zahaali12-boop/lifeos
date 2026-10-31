@@ -27,7 +27,7 @@ The founder reviewed the product after the M5 returns slice and set the order of
 | 5 | Cheques and post-dated cheques, bank statement import and reconciliation. | 6.2, 6.3 |
 | 6 | E-invoicing: ZATCA phase 2. | 8.6 (first adapter) |
 | 7 | Point of sale, offline-capable. Done 2026-10-31 (A-180, ADR-0032): the `Quicker.Pos` module (registers, sessions, orders posted on sync through the engines), the `/pos` till that sells from a cached catalogue offline, the back office at `/sales/pos`, receipts and ZATCA simplified invoices. | new |
-| 8 | Payroll and HR, simple. | new |
+| 8 | Payroll and HR, simple. Done 2026-10-31 (A-181, ADR-0033): the `Quicker.Payroll` module (pay components as posting keys, employees over partners with the employee role, leave, monthly runs prorated over thirty days, approved through the workflow engine, posted with each employee's net as a payable and paid through Banking), the payslip, and the screens under "People and payroll". | new |
 | 9 | Reports without a programmer: builder, financial designer, dashboards, scheduling; ask-your-data in Arabic and English. | 7.1–7.5, 7.7, 9.1 |
 | 10 | Sales-rep mobile app (quotes, orders, collections, visits, offline). | new (over 3.8's PWA) |
 | 11 | Customer portal with local payment gateways. | new |

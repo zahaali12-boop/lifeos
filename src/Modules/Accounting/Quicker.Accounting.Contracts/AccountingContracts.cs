@@ -127,6 +127,12 @@ public static class AccountRoles
     public const string OpeningBalanceEquity = "OpeningBalanceEquity";
     public const string Suspense = "Suspense";
 
+    /// <summary>Salaries and the employer's contributions, keyed by pay component (Payroll module, ADR-0033).</summary>
+    public const string PayrollExpense = "PayrollExpense";
+
+    /// <summary>What payroll withheld or accrued for a third party (social insurance, payroll tax, the employer's contributions), keyed by pay component.</summary>
+    public const string PayrollLiability = "PayrollLiability";
+
     public static readonly IReadOnlyList<string> All =
     [
         AR, AP, Inventory, InventoryInTransit, InventoryConsignedOut, GRNI, LandedCostClearing, Cogs, PurchaseExpense, Expense, Revenue, SalesReturns,
@@ -136,7 +142,7 @@ public static class AccountRoles
         PurchasePriceVariance, AssemblyVariance, EmployeePayable, CommissionExpense, CommissionPayable, BadDebt, WriteOff,
         RoundingDifferences, FaCost, FaAccDep, FaAccImpairment, DepreciationExpense, ImpairmentLoss, RevaluationSurplus,
         GainLossOnDisposal, FaClearing, AccruedExpenses, Prepayments, DeferredRevenue, IcReceivable, IcPayable, RetainedEarnings,
-        CurrentYearEarnings, OpeningBalanceEquity, Suspense,
+        CurrentYearEarnings, OpeningBalanceEquity, Suspense, PayrollExpense, PayrollLiability,
     ];
 
     /// <summary>Roles whose lines carry a subledger reference, and the subledger they reconcile to.</summary>

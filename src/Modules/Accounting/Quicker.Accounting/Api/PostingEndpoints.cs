@@ -111,7 +111,7 @@ public static class PostingEndpoints
         var lines = (r.Lines ?? []).Select(l => new PostingLine(
             l.AccountRole,
             l.Amount,
-            new PostingKeys(l.DocumentType, l.ItemPostingGroupId, l.PartnerPostingGroupId, l.TaxCodeId, l.WarehouseId, l.BranchId, l.BankAccountId, l.AssetCategoryId, l.ChargeTypeId, l.ExpenseCategoryId),
+            new PostingKeys(l.DocumentType, l.ItemPostingGroupId, l.PartnerPostingGroupId, l.TaxCodeId, l.WarehouseId, l.BranchId, l.BankAccountId, l.AssetCategoryId, l.ChargeTypeId, l.ExpenseCategoryId, l.PayComponentId),
             l.AccountId,
             l.Dimensions,
             l.PartnerId,

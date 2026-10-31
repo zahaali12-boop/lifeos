@@ -305,7 +305,19 @@ public sealed class RegisterService(
 
     private static object Snapshot(PosRegister r) => new
     {
-        r.Code, name = r.Name, r.BranchId, r.WarehouseId, r.BinId, r.CashAccountId, r.CardAccountId, r.PriceListId, r.DefaultPartnerId, r.AllowCredit, r.AllowPriceOverride, r.CashRoundingIncrement, r.IsActive,
+        r.Code,
+        name = r.Name,
+        r.BranchId,
+        r.WarehouseId,
+        r.BinId,
+        r.CashAccountId,
+        r.CardAccountId,
+        r.PriceListId,
+        r.DefaultPartnerId,
+        r.AllowCredit,
+        r.AllowPriceOverride,
+        r.CashRoundingIncrement,
+        r.IsActive,
     };
 
     internal static string Text(LocalizedText text, string language) => text.Resolve(language, "en");
