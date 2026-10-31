@@ -14,6 +14,7 @@ import { today } from "../accounting/shared";
 import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { ItemStatus, useBankAccounts, useOpenItems } from "../payables/shared";
+import { useChequeBooks } from "./chequeShared";
 import { num, useSuppliers } from "../purchasing/shared";
 import { RecordActivity } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
@@ -42,6 +43,9 @@ interface PaymentForm {
   onAccount: string;
   charges: string;
   bankAmount: string;
+  chequeBookId: string;
+  chequeNumber: string;
+  chequeDueDate: string;
   customFields: CustomFieldValues;
   lines: PaymentLineForm[];
 }
@@ -58,6 +62,7 @@ export function PaymentsPage() {
   const [reversal, setReversal] = useState<string | null>(null);
   const suppliers = useSuppliers(companyId);
   const banks = useBankAccounts(companyId);
+  const chequeBooks = useChequeBooks(companyId);
   const payable = useOpenItems(companyId, form?.partnerId ?? "", "live");
   const list = useQuery({
     queryKey: ["payments", companyId, status],
@@ -91,6 +96,7 @@ export function PaymentsPage() {
         bankAmount: f.bankAmount ? num(f.bankAmount) : null,
         applyWht: true,
         customFields: f.customFields,
+        cheque: f.method === "cheque" ? { chequeBookId: f.chequeBookId || null, chequeNumber: f.chequeNumber || null, dueDate: f.chequeDueDate || null } : null,
       };
       return f.id ? unwrap(await api.PUT("/api/v1/banking/payments/{paymentId}", { params: { path: { paymentId: f.id } }, body })) : unwrap(await api.POST("/api/v1/banking/payments", { body }));
     },
@@ -124,7 +130,7 @@ export function PaymentsPage() {
   );
 
   const [lastBank, rememberBank] = usePref(`bank:${companyId}`);
-  const blank = (): PaymentForm => ({ id: null, kind: "supplier_payment", partnerId: "", bankAccountId: lastBank, paymentDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", customFields: {}, lines: [] });
+  const blank = (): PaymentForm => ({ id: null, kind: "supplier_payment", partnerId: "", bankAccountId: lastBank, paymentDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", chequeBookId: "", chequeNumber: "", chequeDueDate: "", customFields: {}, lines: [] });
   const patchLine = (index: number, amount: string): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, amount } : l)) }); } };
   const addItem = (id: string): void => {
     const row = (payable.data ?? []).find((o) => o.item.id === id);
@@ -210,6 +216,24 @@ export function PaymentsPage() {
                 <Field label={t("banking.reference")}>
                   <TextField value={form.reference} onChange={(e) => { setForm({ ...form, reference: e.target.value }); }} dir="ltr" data-testid="payment-reference" />
                 </Field>
+                {form.method === "cheque" ? (
+                  <>
+                    <Field label={t("banking.chequeBook")} description={t("banking.chequeBookHelp")}>
+                      <SelectField value={form.chequeBookId} onChange={(e) => { setForm({ ...form, chequeBookId: e.target.value }); }} data-testid="payment-cheque-book">
+                        <option value="">—</option>
+                        {(chequeBooks.data ?? []).filter((b) => b.isActive && b.bankAccountId === form.bankAccountId).map((b) => <option key={b.id} value={b.id}>{b.prefix}{String(b.nextNumber)} ({t("banking.cheques.books.remaining")}: {String(b.remaining)})</option>)}
+                      </SelectField>
+                    </Field>
+                    {!form.chequeBookId ? (
+                      <Field label={t("banking.chequeNumber")} required>
+                        <TextField value={form.chequeNumber} onChange={(e) => { setForm({ ...form, chequeNumber: e.target.value }); }} dir="ltr" required data-testid="payment-cheque-number" />
+                      </Field>
+                    ) : null}
+                    <Field label={t("banking.chequeDueDate")} description={t("banking.chequeDueDateHelp")}>
+                      <TextField type="date" value={form.chequeDueDate} onChange={(e) => { setForm({ ...form, chequeDueDate: e.target.value }); }} dir="ltr" data-testid="payment-cheque-due" />
+                    </Field>
+                  </>
+                ) : null}
                 {form.kind === "supplier_advance" || form.lines.length === 0 ? (
                   <Field label={t("partners.currency")} description={t("banking.currencyHelp")}>
                     <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="payment-currency" />
@@ -294,6 +318,7 @@ export function PaymentsPage() {
                 [t("nav.bankAccounts"), `${p.bankAccountCode} · ${p.bankCurrency}`],
                 [t("banking.paymentDate"), formatDate(p.paymentDate)],
                 [t("banking.method"), `${t(`banking.methods.${p.method}`)}${p.reference ? ` · ${p.reference}` : ""}`],
+                ...(p.cheque ? [[t("banking.chequeDetails"), <span key="cheque" dir="ltr" data-testid="payment-cheque">{p.cheque.chequeNumber} · {t(`banking.cheques.statuses.${p.cheque.status}`)} · {formatDate(p.cheque.dueDate)}</span>] as [string, React.ReactNode]] : []),
                 [t("purchasing.amount"), <span key="amount" data-testid="payment-amount">{formatMoney(p.amountTc, p.currency)}{Number(p.exchangeRate) !== 1 ? ` @ ${formatNumber(p.exchangeRate, { maximumFractionDigits: 6 })}` : ""}</span>],
                 [t("payables.discount"), formatMoney(p.discountTc, p.currency)],
                 [t("purchasing.withheld"), formatMoney(p.whtTc, p.currency)],
@@ -338,7 +363,7 @@ export function PaymentsPage() {
               <CustomFieldValuesList entityType="bank_payment" values={p.customFields} />
               <RecordActivity entityType="bank_payment" entityId={p.id} />
               <DialogFooter>
-                {p.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: p.id, customFields: asCustomFieldValues(p.customFields), kind: p.kind, partnerId: p.partnerId, bankAccountId: p.bankAccountId, paymentDate: p.paymentDate, method: p.method, reference: p.reference ?? "", currency: p.currency, exchangeRate: "", onAccount: p.onAccountTc ? String(p.onAccountTc) : "", charges: p.chargesBank ? String(p.chargesBank) : "", bankAmount: p.bankCurrency !== p.currency ? String(p.bankAmount) : "", lines: p.lines.map((l) => ({ openItemId: l.openItemId, label: `${l.documentNumber} · ${formatMoney(l.itemRemainingTc, p.currency)}`, remaining: Number(l.itemRemainingTc), amount: String(l.amountTc) })) }); }} data-testid="edit-payment">{t("common.edit")}</Button> : null}
+                {p.status === "draft" ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: p.id, customFields: asCustomFieldValues(p.customFields), kind: p.kind, partnerId: p.partnerId, bankAccountId: p.bankAccountId, paymentDate: p.paymentDate, method: p.method, reference: p.reference ?? "", currency: p.currency, exchangeRate: "", onAccount: p.onAccountTc ? String(p.onAccountTc) : "", charges: p.chargesBank ? String(p.chargesBank) : "", chequeBookId: p.cheque?.chequeBookId ?? "", chequeNumber: p.cheque?.chequeNumber ?? "", chequeDueDate: p.cheque?.dueDate ?? "", bankAmount: p.bankCurrency !== p.currency ? String(p.bankAmount) : "", lines: p.lines.map((l) => ({ openItemId: l.openItemId, label: `${l.documentNumber} · ${formatMoney(l.itemRemainingTc, p.currency)}`, remaining: Number(l.itemRemainingTc), amount: String(l.amountTc) })) }); }} data-testid="edit-payment">{t("common.edit")}</Button> : null}
                 {p.status === "draft" ? <Button variant="secondary" onClick={() => { act.mutate({ id: p.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-payment">{t("purchasing.deleteDraft")}</Button> : null}
                 {p.status === "draft" ? <Button onClick={() => { act.mutate({ id: p.id, action: "post" }); }} loading={act.isPending} data-testid="post-payment">{t("banking.postPayment")}</Button> : null}
                 {p.status === "posted" && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-payment">{t("purchasing.reverse")}</Button> : null}

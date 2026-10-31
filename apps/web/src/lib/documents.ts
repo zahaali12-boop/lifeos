@@ -37,6 +37,7 @@ export type RecordScreen =
   | "/fixed-assets/depreciation"
   | "/payables/proposals"
   | "/print-templates"
+  | "/banking/cheques"
   | "/companies";
 
 /** Where each kind of record opens: documents by the type their number was issued under, masters by their audit entity type. */
@@ -78,6 +79,7 @@ const screens: Record<string, RecordScreen> = {
   warehouse: "/inventory/warehouses",
   company: "/companies",
   print_template: "/print-templates",
+  bank_cheque: "/banking/cheques",
 };
 
 /** The screen a record opens on, with the record open; null for kinds that have no screen of their own. */

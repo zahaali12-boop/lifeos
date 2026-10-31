@@ -24,6 +24,10 @@ public static class BankingModule
         services.AddScoped<BankAccountService>();
         services.AddScoped<PaymentService>();
         services.AddScoped<CustomerReceiptService>();
+        services.AddScoped<ChequeRegistry>();
+        services.AddScoped<ChequeBookService>();
+        services.AddScoped<ChequeService>();
+        NumberedDocumentTypes.Register(new NumberedDocumentType(BankDocumentTypes.ChequeDeposit, BankingPermissions.ChequeRead));
         services.AddScoped<IBankAccountDirectory>(static sp => sp.GetRequiredService<BankAccountService>());
         services.AddScoped<IBankTransactions, BankTransactionService>();
         services.AddScoped<IPayments, PaymentsGateway>();
@@ -31,6 +35,9 @@ public static class BankingModule
         services.AddSingleton(new RecordReadPermission("bank_payment", BankingPermissions.PaymentRead));
         services.AddSingleton(new RecordReadPermission("bank_receipt", BankingPermissions.ReceiptRead));
         services.AddSingleton(new RecordReadPermission("bank_account", BankingPermissions.BankAccountRead));
+        services.AddSingleton(new RecordReadPermission("bank_cheque", BankingPermissions.ChequeRead));
+        services.AddSingleton(new RecordReadPermission("bank_cheque_deposit", BankingPermissions.ChequeRead));
+        services.AddSingleton(new RecordReadPermission("bank_cheque_book", BankingPermissions.ChequeRead));
         services.AddScoped<IRecordCompanies, BankingRecordCompanies>();
         return services;
     }

@@ -53,6 +53,8 @@ import { ProposalsPage } from "./payables/ProposalsPage";
 import { BankAccountsPage } from "./banking/BankAccountsPage";
 import { PaymentsPage } from "./banking/PaymentsPage";
 import { ReceiptsPage as CustomerReceiptsPage } from "./banking/ReceiptsPage";
+import { ChequesPage } from "./banking/ChequesPage";
+import { ChequeBooksPage } from "./banking/ChequeBooksPage";
 import { PurchaseOrdersPage } from "./purchasing/PurchaseOrdersPage";
 import { PurchasingSettingsPage } from "./purchasing/PurchasingSettingsPage";
 import { ReceiptsPage } from "./purchasing/ReceiptsPage";
@@ -193,6 +195,8 @@ const proposalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/p
 const bankAccountsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/bank-accounts", component: BankAccountsPage, validateSearch: searchRecord });
 const paymentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/payments", component: PaymentsPage, validateSearch: searchRecord });
 const customerReceiptsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/receipts", component: CustomerReceiptsPage, validateSearch: searchRecord });
+const chequesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/cheques", component: ChequesPage, validateSearch: searchRecord });
+const chequeBooksRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/cheque-books", component: ChequeBooksPage });
 const expensesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses", component: ExpensesPage, validateSearch: searchRecord });
 const expenseCategoriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses/categories", component: ExpenseCategoriesPage });
 const pettyCashFundsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses/funds", component: PettyCashFundsPage, validateSearch: searchRecord });
@@ -229,7 +233,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
 ]);

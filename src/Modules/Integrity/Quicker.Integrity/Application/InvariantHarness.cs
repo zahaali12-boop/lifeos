@@ -45,6 +45,7 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             await ReceivablesMatchOpenItemsAsync(uow, companyId, cancellationToken),
             await BankMatchesTransactionsAsync(uow, companyId, cancellationToken),
             await FixedAssetsMatchRegisterAsync(uow, companyId, cancellationToken),
+            await ChequesMatchControlAsync(uow, companyId, cancellationToken),
         };
         return new InvariantReport(uow.Context.TenantId.Value, companyId, clock.UtcNow, checks, checks.TrueForAll(static c => c.Passed));
     }
@@ -430,7 +431,48 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
         return Result(InvariantCodes.FixedAssetsMatchRegister, checkedCount, problems, $"{checkedCount} fixed-asset transaction(s), every asset's control lines equal to its register");
     }
 
+    /// <summary>
+    /// Every cheque's lines on the three PDC control accounts (its subledger refs) equal what its status says it carries:
+    /// a received cheque in hand sits on PDC receivable, a deposited one under collection, an issued one not yet paid
+    /// on PDC payable; anywhere else it carries nothing (roadmap 6.3, hard scenario 10).
+    /// </summary>
+    private static async Task<InvariantResult> ChequesMatchControlAsync(IUnitOfWork uow, Guid? companyId, CancellationToken cancellationToken)
+    {
+        var checkedCount = await uow.Connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT count(*) FROM app.bnk_cheques c WHERE c.status <> 'draft' AND (@company::uuid IS NULL OR c.company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
+        var mismatches = (await uow.Connection.QueryAsync<ChequeMismatch>(new CommandDefinition("""
+            WITH booked AS (
+              SELECT c.id AS cheque_id, l.account_role AS role, sum(l.debit_fc - l.credit_fc) AS booked
+              FROM app.gl_journal_lines l
+              JOIN app.bnk_cheques c ON c.tenant_id = l.tenant_id AND c.id = l.subledger_ref
+              WHERE l.subledger_type = 'PDC' AND (@company::uuid IS NULL OR l.company_id = @company)
+              GROUP BY 1, 2
+            ), expected AS (
+              SELECT c.id AS cheque_id, r.role, r.amount AS expected
+              FROM app.bnk_cheques c
+              CROSS JOIN LATERAL (VALUES
+                ('PdcReceivable', CASE WHEN c.direction = 'received' AND c.status = 'in_hand' THEN c.amount_fc ELSE 0 END),
+                ('ChequesUnderCollection', CASE WHEN c.direction = 'received' AND c.status = 'deposited' THEN c.amount_fc ELSE 0 END),
+                ('PdcPayable', CASE WHEN c.direction = 'issued' AND c.status IN ('issued', 'bounced') THEN -c.amount_fc ELSE 0 END)) AS r(role, amount)
+              WHERE c.status <> 'draft' AND (@company::uuid IS NULL OR c.company_id = @company)
+            ), keys AS (
+              SELECT cheque_id, role FROM booked UNION SELECT cheque_id, role FROM expected
+            )
+            SELECT k.cheque_id, k.role, coalesce(b.booked, 0) AS booked, coalesce(e.expected, 0) AS expected
+            FROM keys k
+            LEFT JOIN booked b ON b.cheque_id = k.cheque_id AND b.role = k.role
+            LEFT JOIN expected e ON e.cheque_id = k.cheque_id AND e.role = k.role
+            WHERE coalesce(b.booked, 0) <> coalesce(e.expected, 0)
+            ORDER BY k.cheque_id, k.role
+            LIMIT @limit
+            """, new { company = companyId, limit = ProblemLimit }, uow.Transaction, cancellationToken: cancellationToken))).ToList();
+        var problems = mismatches.Select(m => $"cheque {m.ChequeId} {m.Role}: control lines {N(m.Booked)}, status says {N(m.Expected)}").ToList();
+        return Result(InvariantCodes.ChequesMatchControl, checkedCount, problems, $"{checkedCount} cheque(s), every one's PDC control lines equal to what its status carries");
+    }
+
     private sealed record AssetMismatch(Guid AssetId, string Role, decimal Booked, decimal Expected);
+
+    private sealed record ChequeMismatch(Guid ChequeId, string Role, decimal Booked, decimal Expected);
 
     private sealed record ControlMismatch(Guid CompanyId, string Control, decimal Booked, decimal Expected);
 

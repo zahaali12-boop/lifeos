@@ -2842,7 +2842,7 @@ erDiagram
   bnk_payments ||--o| bnk_cheques : "by cheque"
   bnk_cheque_books ||--o{ bnk_cheques : "issues"
   bnk_cheques ||--|{ bnk_cheque_events : "history"
-  bnk_deposits ||--o{ bnk_cheques : "deposits"
+  bnk_cheque_deposits ||--o{ bnk_cheques : "deposits"
   exp_funds ||--o{ exp_expenses : "vouchers spend"
   exp_funds ||--o{ exp_replenishments : "refilled by"
   exp_categories ||--o{ exp_expense_lines : "classifies"
@@ -2981,11 +2981,13 @@ erDiagram
   }
   bnk_cheque_books {
     uuid id PK
+    uuid company_id
     uuid bank_account_id
     text prefix
     bigint first_number
     bigint last_number
-    bigint next_number
+    bigint next_number "the leaf the next issued cheque takes"
+    bool is_active
   }
   bnk_cheques {
     uuid id PK
@@ -3001,19 +3003,22 @@ erDiagram
     date issue_date
     date due_date
     bool is_post_dated
-    text status "received | in_hand | deposited | cleared | bounced | returned_to_customer | issued | presented | paid | cancelled | replaced"
-    uuid payment_id
+    numeric amount_fc "the document's booked functional value, carried through the PDC accounts"
+    text status "draft | in_hand | deposited | cleared | bounced | returned (received); draft | issued | paid | bounced | cancelled (issued)"
+    uuid payment_id "the receipt or payment, one cheque each"
     uuid deposit_id FK
-    uuid bank_account_id
+    uuid bank_account_id "deposited to (received) or drawn on (issued)"
     uuid replaced_by_id
-    uuid open_item_id
-    jsonb custom_fields
+    uuid replaces_id
+    uuid fee_open_item_id "the receivable for the fee re-charged on a bounce"
+    uuid bank_transaction_id "the clearing or the payment movement"
+    text notes
   }
   bnk_cheque_events {
     uuid id PK
     uuid cheque_id FK
     timestamptz occurred_at
-    text event "received deposited cleared bounced redeposited returned issued presented paid cancelled"
+    text event "received deposited cleared bounced returned replaced issued paid cancelled"
     date effective_date
     numeric bank_charge
     numeric customer_fee
@@ -3021,14 +3026,15 @@ erDiagram
     uuid journal_entry_id
     uuid actor
   }
-  bnk_deposits {
+  bnk_cheque_deposits {
     uuid id PK
     uuid company_id
-    text number
+    text number "CHD-"
     uuid bank_account_id
     date deposit_date
+    text currency
     numeric total
-    text status "prepared | deposited | cleared | partially_bounced"
+    text status "deposited | cleared | partially_bounced | bounced"
     uuid journal_entry_id
   }
   exp_categories {
@@ -3122,7 +3128,7 @@ erDiagram
   }
 ```
 
-Post-dated cheque life cycle (hard scenario 10): `received` (customer balance reduced, PDC receivable up) → `deposited` at maturity (cheques-under-collection clearing) → `cleared` (bank) or `bounced` (customer balance restored via a new AR open item referencing the original invoice, bank charge posted, optional fee re-charged to the customer, cheque status `bounced`, history in `bnk_cheque_events`). Issued cheques mirror this on the AP side.
+Post-dated cheque life cycle (hard scenario 10, A-177): `in_hand` (the receipt settles the invoices, PDC receivable up, the bank untouched) → `deposited` on or after the cheque's date (cheques under collection, one slip for several cheques) → `cleared` (the bank, less the collection charge) or `bounced` (the receipt is reversed so the invoices reopen at their booked values, the cheque's journey is unwound, the bank's charge is booked and a fee can be re-charged to the customer as a receivable of kind `adjustment` on the cheque; a replacement cheque links both ways). A cheque still in hand is `returned` by reversing its receipt. Issued cheques go `issued` (PDC payable, the supplier's invoices settled) → `paid` (the bank) or `bounced` (back on PDC payable) → `cancelled` (the payment reversed). Every step is a `bnk_cheque_events` row; the invariant `cheques_match_control` holds each cheque's PDC lines to its status.
 
 ## 15. Fixed assets
 

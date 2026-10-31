@@ -39,6 +39,7 @@ public sealed class CustomerReceiptService(
     INumberAllocator numbering,
     ICustomFieldValidator customFields,
     IPostingService posting,
+    ChequeRegistry cheques,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
@@ -254,7 +255,11 @@ public sealed class CustomerReceiptService(
 
         var bankTc = cash - chargesTc;
         var bankFc = bankIsTc ? Fc(bankTc) : receipt.BankAmount;
-        lines.Add(new PostingLine(BankAccountService.RoleOf(bank.Kind), bankTc, new PostingKeys(DocumentType, BankAccountId: bank.Id), SubledgerType: SubledgerTypes.Bank, SubledgerRef: transactionId, AmountFc: bankFc));
+        // A cheque is not money in the bank yet: it sits on PDC receivable, in its own subledger, until deposited and cleared.
+        var cheque = receipt.Method == ChequeRegistry.Method ? await cheques.OfPaymentAsync(receipt.Id, cancellationToken) : null;
+        lines.Add(cheque is null
+            ? new PostingLine(BankAccountService.RoleOf(bank.Kind), bankTc, new PostingKeys(DocumentType, BankAccountId: bank.Id), SubledgerType: SubledgerTypes.Bank, SubledgerRef: transactionId, AmountFc: bankFc)
+            : new PostingLine(AccountRoles.PdcReceivable, bankTc, new PostingKeys(DocumentType), PartnerId: receipt.PartnerId, SubledgerType: SubledgerTypes.PostDatedCheques, SubledgerRef: cheque.Id, AmountFc: bankFc));
         fcTotal += bankFc;
         if (fcTotal != 0m)
         {
@@ -288,30 +293,39 @@ public sealed class CustomerReceiptService(
             line.SettlementId = recorded.Value.Id;
         }
 
-        db.Transactions.Add(new BankTransaction
+        if (cheque is null)
         {
-            Id = transactionId,
-            BankAccountId = bank.Id,
-            CompanyId = receipt.CompanyId,
-            PostingDate = receipt.PaymentDate,
-            ValueDate = receipt.PaymentDate,
-            Kind = "receipt",
-            AmountTc = bankIsTc ? bankTc : receipt.BankAmount,
-            AmountFc = bankFc,
-            Reference = receipt.Reference ?? receipt.Number,
-            SourceDocumentType = DocumentType,
-            SourceDocumentId = receipt.Id,
-            JournalEntryId = posted.Value.EntryId,
-            CreatedAt = clock.UtcNow,
-        });
+            db.Transactions.Add(new BankTransaction
+            {
+                Id = transactionId,
+                BankAccountId = bank.Id,
+                CompanyId = receipt.CompanyId,
+                PostingDate = receipt.PaymentDate,
+                ValueDate = receipt.PaymentDate,
+                Kind = "receipt",
+                AmountTc = bankIsTc ? bankTc : receipt.BankAmount,
+                AmountFc = bankFc,
+                Reference = receipt.Reference ?? receipt.Number,
+                SourceDocumentType = DocumentType,
+                SourceDocumentId = receipt.Id,
+                JournalEntryId = posted.Value.EntryId,
+                CreatedAt = clock.UtcNow,
+            });
+        }
+
         receipt.BankAmount = bankIsTc ? bankTc : receipt.BankAmount;
         receipt.OpenItemId = own.Id;
         receipt.JournalEntryId = posted.Value.EntryId;
-        receipt.BankTransactionId = transactionId;
+        receipt.BankTransactionId = cheque is null ? transactionId : null;
         receipt.Status = "posted";
         receipt.PostedAt = clock.UtcNow;
         receipt.PostedBy = principal.Principal?.MembershipId.Value;
         receipt.UpdatedAt = clock.UtcNow;
+        if (cheque is not null)
+        {
+            await cheques.OnPostedAsync(receipt, bankFc, cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry(DocumentType, receipt.Id, receipt.Number, AuditActions.Posted, After: new { status = receipt.Status, journal = posted.Value.Number, receipt.AmountTc, receipt.Currency, receipt.BankAmount, receipt.BankCurrency, fx = fcTotal }, CompanyId: receipt.CompanyId), cancellationToken);
         return await MapAsync(receipt, cancellationToken);
@@ -344,6 +358,12 @@ public sealed class CustomerReceiptService(
             return Error.Validation("receipt.reversal_date_invalid", "A receipt is reversed on or after its date.").WithWhy(("receiptDate", receipt.PaymentDate), ("reversalDate", reversalDate));
         }
 
+        var chequeGuard = await cheques.OnReversingAsync(receipt, reversalDate, reason, null, false, cancellationToken);
+        if (chequeGuard.IsFailure)
+        {
+            return chequeGuard.Error!;
+        }
+
         var reversed = await posting.ReverseAsync(receipt.JournalEntryId!.Value, reversalDate, reason, false, cancellationToken);
         if (reversed.IsFailure)
         {
@@ -362,24 +382,29 @@ public sealed class CustomerReceiptService(
             return own.Error!;
         }
 
-        var original = await db.Transactions.SingleAsync(t => t.Id == receipt.BankTransactionId, cancellationToken);
-        db.Transactions.Add(new BankTransaction
+        if (receipt.BankTransactionId is { } movedId)
         {
-            Id = Guid.CreateVersion7(),
-            BankAccountId = original.BankAccountId,
-            CompanyId = original.CompanyId,
-            PostingDate = reversed.Value.PostingDate,
-            ValueDate = reversed.Value.PostingDate,
-            Kind = "reversal",
-            AmountTc = -original.AmountTc,
-            AmountFc = -original.AmountFc,
-            Reference = original.Reference,
-            SourceDocumentType = DocumentType,
-            SourceDocumentId = receipt.Id,
-            JournalEntryId = reversed.Value.EntryId,
-            ReversesTransactionId = original.Id,
-            CreatedAt = clock.UtcNow,
-        });
+            var original = await db.Transactions.SingleAsync(t => t.Id == movedId, cancellationToken);
+            db.Transactions.Add(new BankTransaction
+            {
+                Id = Guid.CreateVersion7(),
+                BankAccountId = original.BankAccountId,
+                CompanyId = original.CompanyId,
+                PostingDate = reversed.Value.PostingDate,
+                ValueDate = reversed.Value.PostingDate,
+                Kind = "reversal",
+                AmountTc = -original.AmountTc,
+                AmountFc = -original.AmountFc,
+                Reference = original.Reference,
+                SourceDocumentType = DocumentType,
+                SourceDocumentId = receipt.Id,
+                JournalEntryId = reversed.Value.EntryId,
+                ReversesTransactionId = original.Id,
+                CreatedAt = clock.UtcNow,
+            });
+        }
+
+        await cheques.OnReversingAsync(receipt, reversed.Value.PostingDate, reason, reversed.Value.EntryId, true, cancellationToken);
         receipt.Status = "reversed";
         receipt.ReversalEntryId = reversed.Value.EntryId;
         receipt.ReversalReason = reason;
@@ -595,7 +620,7 @@ public sealed class CustomerReceiptService(
         receipt.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         receipt.CustomFields = custom.Value;
         receipt.Lines.AddRange(lines);
-        return Result.Success();
+        return await cheques.UpsertDraftAsync(receipt, request.Cheque, ChequeDirections.Received, bank, cancellationToken);
     }
 
     private async Task<PaymentSummary> MapAsync(Payment p, CancellationToken cancellationToken)
@@ -611,7 +636,8 @@ public sealed class CustomerReceiptService(
             lines.Add(new PaymentLineSummary(l.Id, l.LineNo, l.OpenItemId, item?.DocumentNumber ?? string.Empty, item?.Instalment ?? 1, item?.DueDate ?? p.PaymentDate, item?.RemainingTc ?? 0m, l.AmountTc, l.DiscountTc, l.WhtTc, l.AmountTc - l.DiscountTc - l.WhtTc, l.SettlementId));
         }
 
+        var cheque = p.Method == ChequeRegistry.Method ? await cheques.OfPaymentAsync(p.Id, cancellationToken) : null;
         return new PaymentSummary(p.Id, p.CompanyId, p.Number, p.Kind, p.Status, p.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), p.BankAccountId, bank?.Code ?? string.Empty, p.PaymentDate, p.Method, p.Reference, p.Currency, p.ExchangeRate, company?.FunctionalCurrency.Code ?? p.Currency,
-            p.AmountTc, p.OnAccountTc, p.DiscountTc, p.WhtTc, p.ChargesBank, p.BankAmount, p.BankCurrency, p.ApplyWht, p.WhtCodeId, wht?.Code, p.OpenItemId, p.JournalEntryId, p.BankTransactionId, p.ReversalEntryId, p.ReversalReason, p.ProposalId, p.Notes, JsonDocument.Parse(p.CustomFields).RootElement.Clone(), lines, p.PostedAt, p.UpdatedAt);
+            p.AmountTc, p.OnAccountTc, p.DiscountTc, p.WhtTc, p.ChargesBank, p.BankAmount, p.BankCurrency, p.ApplyWht, p.WhtCodeId, wht?.Code, p.OpenItemId, p.JournalEntryId, p.BankTransactionId, p.ReversalEntryId, p.ReversalReason, p.ProposalId, p.Notes, JsonDocument.Parse(p.CustomFields).RootElement.Clone(), lines, p.PostedAt, p.UpdatedAt, cheque is null ? null : await cheques.MapAsync(cheque, true, cancellationToken));
     }
 }

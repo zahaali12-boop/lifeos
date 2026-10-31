@@ -13,6 +13,8 @@ public static class BankingPermissions
     public const string ReceiptRead = "banking.receipt.read";
     public const string ReceiptManage = "banking.receipt.manage";
     public const string ReceiptPost = "banking.receipt.post";
+    public const string ChequeRead = "banking.cheque.read";
+    public const string ChequeManage = "banking.cheque.manage";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -24,5 +26,7 @@ public static class BankingPermissions
         new(ReceiptRead, "banking", "Read customer receipts and deposits"),
         new(ReceiptManage, "banking", "Create, edit and delete draft customer receipts and deposits"),
         new(ReceiptPost, "banking", "Post customer receipts and deposits and reverse them"),
+        new(ChequeRead, "banking", "Read the cheque registers, deposit slips and the maturity forecast"),
+        new(ChequeManage, "banking", "Deposit, clear, bounce, pay and cancel cheques and keep cheque books"),
     ];
 }

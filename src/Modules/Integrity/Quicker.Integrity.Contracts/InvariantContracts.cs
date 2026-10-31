@@ -41,8 +41,9 @@ public static class InvariantCodes
 
     /// <summary>The fixed-asset control accounts (cost, accumulated depreciation, accumulated impairment) equal the FA subledger, asset by asset.</summary>
     public const string FixedAssetsMatchRegister = "fixed_assets_match_register";
+    public const string ChequesMatchControl = "cheques_match_control";
 
-    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts, PayablesMatchOpenItems, ReceivablesMatchOpenItems, BankMatchesTransactions, FixedAssetsMatchRegister];
+    public static readonly IReadOnlyList<string> All = [EntriesBalanced, TrialBalanceZero, BalancesMatchLines, AuditChainIntact, TenantIsolation, GaplessNumbering, StockBalancesMatchLedger, InventoryMatchesGl, GrniMatchesReceipts, PayablesMatchOpenItems, ReceivablesMatchOpenItems, BankMatchesTransactions, FixedAssetsMatchRegister, ChequesMatchControl];
 }
 
 /// <summary>One check: what it looked at, whether it holds, and the first problems it found (never more than a page).</summary>

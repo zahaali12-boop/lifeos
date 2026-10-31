@@ -8,6 +8,28 @@ public static class BankDocumentTypes
     public const string Payment = "bank_payment";
     public const string Receipt = "bank_receipt";
     public const string Transaction = "bank_transaction";
+    public const string Cheque = "bank_cheque";
+    public const string ChequeDeposit = "bank_cheque_deposit";
+}
+
+public static class ChequeDirections
+{
+    public const string Received = "received";
+    public const string Issued = "issued";
+}
+
+/// <summary>Where a cheque stands: a received one from in hand to the bank, an issued one from written to paid.</summary>
+public static class ChequeStatuses
+{
+    public const string Draft = "draft";
+    public const string InHand = "in_hand";
+    public const string Deposited = "deposited";
+    public const string Cleared = "cleared";
+    public const string Bounced = "bounced";
+    public const string Returned = "returned";
+    public const string Issued = "issued";
+    public const string Paid = "paid";
+    public const string Cancelled = "cancelled";
 }
 
 public static class BankAccountKinds

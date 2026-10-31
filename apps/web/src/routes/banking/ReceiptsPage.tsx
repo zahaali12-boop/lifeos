@@ -45,6 +45,9 @@ interface ReceiptForm {
   charges: string;
   bankAmount: string;
   whtCodeId: string;
+  chequeNumber: string;
+  drawerBank: string;
+  chequeDueDate: string;
   customFields: CustomFieldValues;
   lines: ReceiptLineForm[];
 }
@@ -106,6 +109,7 @@ export function ReceiptsPage() {
         bankAmount: f.bankAmount ? num(f.bankAmount) : null,
         whtCodeId: f.whtCodeId || null,
         customFields: f.customFields,
+        cheque: f.method === "cheque" ? { chequeNumber: f.chequeNumber || null, drawerBank: f.drawerBank || null, dueDate: f.chequeDueDate || null } : null,
       };
       return f.id ? unwrap(await api.PUT("/api/v1/banking/receipts/{receiptId}", { params: { path: { receiptId: f.id } }, body })) : unwrap(await api.POST("/api/v1/banking/receipts", { body }));
     },
@@ -139,7 +143,7 @@ export function ReceiptsPage() {
   );
 
   const [lastBank, rememberBank] = usePref(`bank:${companyId}`);
-  const blank = (): ReceiptForm => ({ id: null, kind: "customer_receipt", partnerId: "", bankAccountId: lastBank, receiptDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", whtCodeId: "", customFields: {}, lines: [] });
+  const blank = (): ReceiptForm => ({ id: null, kind: "customer_receipt", partnerId: "", bankAccountId: lastBank, receiptDate: today(), method: "transfer", reference: "", currency: "", exchangeRate: "", onAccount: "", charges: "", bankAmount: "", whtCodeId: "", chequeNumber: "", drawerBank: "", chequeDueDate: "", customFields: {}, lines: [] });
   const patchLine = (index: number, amount: string): void => { if (form) { setForm({ ...form, lines: form.lines.map((l, i) => (i === index ? { ...l, amount } : l)) }); } };
   const addItem = (id: string): void => {
     const row = (receivable.data ?? []).find((o) => o.item.id === id);
@@ -226,6 +230,19 @@ export function ReceiptsPage() {
                 <Field label={t("banking.reference")}>
                   <TextField value={form.reference} onChange={(e) => { setForm({ ...form, reference: e.target.value }); }} dir="ltr" data-testid="receipt-reference" />
                 </Field>
+                {form.method === "cheque" ? (
+                  <>
+                    <Field label={t("banking.chequeNumber")} required>
+                      <TextField value={form.chequeNumber} onChange={(e) => { setForm({ ...form, chequeNumber: e.target.value }); }} dir="ltr" required data-testid="receipt-cheque-number" />
+                    </Field>
+                    <Field label={t("banking.drawerBank")}>
+                      <TextField value={form.drawerBank} onChange={(e) => { setForm({ ...form, drawerBank: e.target.value }); }} dir="auto" data-testid="receipt-drawer-bank" />
+                    </Field>
+                    <Field label={t("banking.chequeDueDate")} description={t("banking.chequeDueDateHelp")}>
+                      <TextField type="date" value={form.chequeDueDate} onChange={(e) => { setForm({ ...form, chequeDueDate: e.target.value }); }} dir="ltr" data-testid="receipt-cheque-due" />
+                    </Field>
+                  </>
+                ) : null}
                 {form.kind === "customer_deposit" || form.lines.length === 0 ? (
                   <Field label={t("partners.currency")} description={t("banking.receiptCurrencyHelp")}>
                     <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="receipt-currency" />
@@ -237,9 +254,11 @@ export function ReceiptsPage() {
                 <Field label={form.kind === "customer_deposit" ? t("banking.depositAmount") : t("banking.onAccount")} required={form.kind === "customer_deposit"}>
                   <TextField inputMode="decimal" value={form.onAccount} onChange={(e) => { setForm({ ...form, onAccount: e.target.value }); }} dir="ltr" data-testid="receipt-on-account" />
                 </Field>
-                <Field label={t("banking.charges")} description={bank ? bank.currency : undefined}>
-                  <TextField inputMode="decimal" value={form.charges} onChange={(e) => { setForm({ ...form, charges: e.target.value }); }} dir="ltr" data-testid="receipt-charges" />
-                </Field>
+                {form.method !== "cheque" ? (
+                  <Field label={t("banking.charges")} description={bank ? bank.currency : undefined}>
+                    <TextField inputMode="decimal" value={form.charges} onChange={(e) => { setForm({ ...form, charges: e.target.value }); }} dir="ltr" data-testid="receipt-charges" />
+                  </Field>
+                ) : null}
                 {needsBankAmount ? (
                   <Field label={t("banking.bankCredited")} description={t("banking.bankCreditedHelp", { currency: bank.currency })} required>
                     <TextField inputMode="decimal" value={form.bankAmount} onChange={(e) => { setForm({ ...form, bankAmount: e.target.value }); }} dir="ltr" required data-testid="receipt-bank-amount" />
@@ -320,6 +339,7 @@ export function ReceiptsPage() {
                 [t("nav.bankAccounts"), `${p.bankAccountCode} · ${p.bankCurrency}`],
                 [t("banking.receiptDate"), formatDate(p.paymentDate)],
                 [t("banking.method"), `${t(`banking.methods.${p.method}`)}${p.reference ? ` · ${p.reference}` : ""}`],
+                ...(p.cheque ? [[t("banking.chequeDetails"), <span key="cheque" dir="ltr" data-testid="receipt-cheque">{p.cheque.chequeNumber} · {t(`banking.cheques.statuses.${p.cheque.status}`)} · {formatDate(p.cheque.dueDate)}</span>] as [string, React.ReactNode]] : []),
                 [t("purchasing.amount"), <span key="amount" data-testid="receipt-amount">{formatMoney(p.amountTc, p.currency)}{Number(p.exchangeRate) !== 1 ? ` @ ${formatNumber(p.exchangeRate, { maximumFractionDigits: 6 })}` : ""}</span>],
                 [t("banking.discountGiven"), formatMoney(p.discountTc, p.currency)],
                 [t("banking.withheldByCustomer"), `${formatMoney(p.whtTc, p.currency)}${p.whtCode ? ` · ${p.whtCode}` : ""}`],
@@ -364,7 +384,7 @@ export function ReceiptsPage() {
               <CustomFieldValuesList entityType="bank_receipt" values={p.customFields} />
               <RecordActivity entityType="bank_receipt" entityId={p.id} />
               <DialogFooter>
-                {p.status === "draft" && canManage ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: p.id, customFields: asCustomFieldValues(p.customFields), kind: p.kind, partnerId: p.partnerId, bankAccountId: p.bankAccountId, receiptDate: p.paymentDate, method: p.method, reference: p.reference ?? "", currency: p.currency, exchangeRate: "", onAccount: p.onAccountTc ? String(p.onAccountTc) : "", charges: p.chargesBank ? String(p.chargesBank) : "", bankAmount: p.bankCurrency !== p.currency ? String(p.bankAmount) : "", whtCodeId: p.whtCodeId ?? "", lines: p.lines.map((l) => ({ openItemId: l.openItemId, label: `${l.documentNumber} · ${formatMoney(l.itemRemainingTc, p.currency)}`, remaining: Number(l.itemRemainingTc), amount: String(l.amountTc) })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
+                {p.status === "draft" && canManage ? <Button variant="secondary" onClick={() => { setProblem(null); setForm({ id: p.id, customFields: asCustomFieldValues(p.customFields), kind: p.kind, partnerId: p.partnerId, bankAccountId: p.bankAccountId, receiptDate: p.paymentDate, method: p.method, reference: p.reference ?? "", currency: p.currency, exchangeRate: "", onAccount: p.onAccountTc ? String(p.onAccountTc) : "", charges: p.chargesBank ? String(p.chargesBank) : "", bankAmount: p.bankCurrency !== p.currency ? String(p.bankAmount) : "", whtCodeId: p.whtCodeId ?? "", chequeNumber: p.cheque?.chequeNumber ?? "", drawerBank: p.cheque?.drawerBank ?? "", chequeDueDate: p.cheque?.dueDate ?? "", lines: p.lines.map((l) => ({ openItemId: l.openItemId, label: `${l.documentNumber} · ${formatMoney(l.itemRemainingTc, p.currency)}`, remaining: Number(l.itemRemainingTc), amount: String(l.amountTc) })) }); }} data-testid="edit-receipt">{t("common.edit")}</Button> : null}
                 {p.status === "draft" && canManage ? <Button variant="secondary" onClick={() => { act.mutate({ id: p.id, action: "delete" }); }} loading={act.isPending} data-testid="delete-receipt">{t("purchasing.deleteDraft")}</Button> : null}
                 {p.status === "draft" && canPost ? <Button onClick={() => { act.mutate({ id: p.id, action: "post" }); }} loading={act.isPending} data-testid="post-receipt">{t("banking.postReceipt")}</Button> : null}
                 {p.status === "posted" && canPost && reversal === null ? <Button variant="secondary" onClick={() => { setReversal(""); }} data-testid="reverse-receipt">{t("purchasing.reverse")}</Button> : null}

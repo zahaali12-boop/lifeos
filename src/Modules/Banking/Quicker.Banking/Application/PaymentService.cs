@@ -36,6 +36,7 @@ public sealed class PaymentService(
     INumberAllocator numbering,
     ICustomFieldValidator customFields,
     IPostingService posting,
+    ChequeRegistry cheques,
     ICurrentPrincipal principal,
     IAuditSink audit,
     IClock clock)
@@ -309,7 +310,11 @@ public sealed class PaymentService(
 
         var bankTc = cash + chargesTc;
         var bankFc = bankIsTc ? Fc(bankTc) : payment.BankAmount;
-        lines.Add(new PostingLine(BankAccountService.RoleOf(bank.Kind), -bankTc, new PostingKeys(DocumentType, BankAccountId: bank.Id), SubledgerType: SubledgerTypes.Bank, SubledgerRef: transactionId, AmountFc: -bankFc));
+        // A cheque written is not money out of the bank yet: it sits on PDC payable, in its own subledger, until the bank pays it.
+        var cheque = payment.Method == ChequeRegistry.Method ? await cheques.OfPaymentAsync(payment.Id, cancellationToken) : null;
+        lines.Add(cheque is null
+            ? new PostingLine(BankAccountService.RoleOf(bank.Kind), -bankTc, new PostingKeys(DocumentType, BankAccountId: bank.Id), SubledgerType: SubledgerTypes.Bank, SubledgerRef: transactionId, AmountFc: -bankFc)
+            : new PostingLine(AccountRoles.PdcPayable, -bankTc, new PostingKeys(DocumentType), PartnerId: payment.PartnerId, SubledgerType: SubledgerTypes.PostDatedCheques, SubledgerRef: cheque.Id, AmountFc: -bankFc));
         fcTotal -= bankFc;
         if (fcTotal != 0m)
         {
@@ -343,30 +348,39 @@ public sealed class PaymentService(
             line.SettlementId = recorded.Value.Id;
         }
 
-        db.Transactions.Add(new BankTransaction
+        if (cheque is null)
         {
-            Id = transactionId,
-            BankAccountId = bank.Id,
-            CompanyId = payment.CompanyId,
-            PostingDate = payment.PaymentDate,
-            ValueDate = payment.PaymentDate,
-            Kind = "disbursement",
-            AmountTc = -(bankIsTc ? bankTc : payment.BankAmount),
-            AmountFc = -bankFc,
-            Reference = payment.Reference ?? payment.Number,
-            SourceDocumentType = DocumentType,
-            SourceDocumentId = payment.Id,
-            JournalEntryId = posted.Value.EntryId,
-            CreatedAt = clock.UtcNow,
-        });
+            db.Transactions.Add(new BankTransaction
+            {
+                Id = transactionId,
+                BankAccountId = bank.Id,
+                CompanyId = payment.CompanyId,
+                PostingDate = payment.PaymentDate,
+                ValueDate = payment.PaymentDate,
+                Kind = "disbursement",
+                AmountTc = -(bankIsTc ? bankTc : payment.BankAmount),
+                AmountFc = -bankFc,
+                Reference = payment.Reference ?? payment.Number,
+                SourceDocumentType = DocumentType,
+                SourceDocumentId = payment.Id,
+                JournalEntryId = posted.Value.EntryId,
+                CreatedAt = clock.UtcNow,
+            });
+        }
+
         payment.BankAmount = bankIsTc ? bankTc : payment.BankAmount;
         payment.OpenItemId = own.Id;
         payment.JournalEntryId = posted.Value.EntryId;
-        payment.BankTransactionId = transactionId;
+        payment.BankTransactionId = cheque is null ? transactionId : null;
         payment.Status = "posted";
         payment.PostedAt = clock.UtcNow;
         payment.PostedBy = principal.Principal?.MembershipId.Value;
         payment.UpdatedAt = clock.UtcNow;
+        if (cheque is not null)
+        {
+            await cheques.OnPostedAsync(payment, bankFc, cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry(DocumentType, payment.Id, payment.Number, AuditActions.Posted, After: new { status = payment.Status, journal = posted.Value.Number, payment.AmountTc, payment.Currency, payment.BankAmount, payment.BankCurrency, fx = -fcTotal }, CompanyId: payment.CompanyId), cancellationToken);
         return await MapAsync(payment, cancellationToken);
@@ -399,6 +413,12 @@ public sealed class PaymentService(
             return Error.Validation("payment.reversal_date_invalid", "A payment is reversed on or after its date.").WithWhy(("paymentDate", payment.PaymentDate), ("reversalDate", reversalDate));
         }
 
+        var chequeGuard = await cheques.OnReversingAsync(payment, reversalDate, reason, null, false, cancellationToken);
+        if (chequeGuard.IsFailure)
+        {
+            return chequeGuard.Error!;
+        }
+
         var reversed = await posting.ReverseAsync(payment.JournalEntryId!.Value, reversalDate, reason, false, cancellationToken);
         if (reversed.IsFailure)
         {
@@ -417,24 +437,29 @@ public sealed class PaymentService(
             return own.Error!;
         }
 
-        var original = await db.Transactions.SingleAsync(t => t.Id == payment.BankTransactionId, cancellationToken);
-        db.Transactions.Add(new BankTransaction
+        if (payment.BankTransactionId is { } movedId)
         {
-            Id = Guid.CreateVersion7(),
-            BankAccountId = original.BankAccountId,
-            CompanyId = original.CompanyId,
-            PostingDate = reversed.Value.PostingDate,
-            ValueDate = reversed.Value.PostingDate,
-            Kind = "reversal",
-            AmountTc = -original.AmountTc,
-            AmountFc = -original.AmountFc,
-            Reference = original.Reference,
-            SourceDocumentType = DocumentType,
-            SourceDocumentId = payment.Id,
-            JournalEntryId = reversed.Value.EntryId,
-            ReversesTransactionId = original.Id,
-            CreatedAt = clock.UtcNow,
-        });
+            var original = await db.Transactions.SingleAsync(t => t.Id == movedId, cancellationToken);
+            db.Transactions.Add(new BankTransaction
+            {
+                Id = Guid.CreateVersion7(),
+                BankAccountId = original.BankAccountId,
+                CompanyId = original.CompanyId,
+                PostingDate = reversed.Value.PostingDate,
+                ValueDate = reversed.Value.PostingDate,
+                Kind = "reversal",
+                AmountTc = -original.AmountTc,
+                AmountFc = -original.AmountFc,
+                Reference = original.Reference,
+                SourceDocumentType = DocumentType,
+                SourceDocumentId = payment.Id,
+                JournalEntryId = reversed.Value.EntryId,
+                ReversesTransactionId = original.Id,
+                CreatedAt = clock.UtcNow,
+            });
+        }
+
+        await cheques.OnReversingAsync(payment, reversed.Value.PostingDate, reason, reversed.Value.EntryId, true, cancellationToken);
         payment.Status = "reversed";
         payment.ReversalEntryId = reversed.Value.EntryId;
         payment.ReversalReason = reason;
@@ -651,7 +676,7 @@ public sealed class PaymentService(
         payment.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         payment.CustomFields = custom.Value;
         payment.Lines.AddRange(lines);
-        return Result.Success();
+        return await cheques.UpsertDraftAsync(payment, request.Cheque, ChequeDirections.Issued, bank, cancellationToken);
     }
 
     private async Task<PaymentSummary> MapAsync(Payment p, CancellationToken cancellationToken)
@@ -667,7 +692,8 @@ public sealed class PaymentService(
             lines.Add(new PaymentLineSummary(l.Id, l.LineNo, l.OpenItemId, item?.DocumentNumber ?? string.Empty, item?.Instalment ?? 1, item?.DueDate ?? p.PaymentDate, item?.RemainingTc ?? 0m, l.AmountTc, l.DiscountTc, l.WhtTc, l.AmountTc - l.DiscountTc - l.WhtTc, l.SettlementId));
         }
 
+        var cheque = p.Method == ChequeRegistry.Method ? await cheques.OfPaymentAsync(p.Id, cancellationToken) : null;
         return new PaymentSummary(p.Id, p.CompanyId, p.Number, p.Kind, p.Status, p.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), p.BankAccountId, bank?.Code ?? string.Empty, p.PaymentDate, p.Method, p.Reference, p.Currency, p.ExchangeRate, company?.FunctionalCurrency.Code ?? p.Currency,
-            p.AmountTc, p.OnAccountTc, p.DiscountTc, p.WhtTc, p.ChargesBank, p.BankAmount, p.BankCurrency, p.ApplyWht, p.WhtCodeId, wht?.Code, p.OpenItemId, p.JournalEntryId, p.BankTransactionId, p.ReversalEntryId, p.ReversalReason, p.ProposalId, p.Notes, JsonDocument.Parse(p.CustomFields).RootElement.Clone(), lines, p.PostedAt, p.UpdatedAt);
+            p.AmountTc, p.OnAccountTc, p.DiscountTc, p.WhtTc, p.ChargesBank, p.BankAmount, p.BankCurrency, p.ApplyWht, p.WhtCodeId, wht?.Code, p.OpenItemId, p.JournalEntryId, p.BankTransactionId, p.ReversalEntryId, p.ReversalReason, p.ProposalId, p.Notes, JsonDocument.Parse(p.CustomFields).RootElement.Clone(), lines, p.PostedAt, p.UpdatedAt, cheque is null ? null : await cheques.MapAsync(cheque, true, cancellationToken));
     }
 }

@@ -7752,6 +7752,227 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/banking/cheque-books": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cheque books of the bank accounts, with the leaves left in each. */
+        get: operations["getBankingChequeBooks"];
+        put?: never;
+        /** A new cheque book: a run of numbered leaves of a bank account, issued in order. */
+        post: operations["postBankingChequeBooks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheque-books/{bookId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putBankingChequeBooksByBookId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The cheque registers: received and issued cheques by status, partner and due date. */
+        get: operations["getBankingCheques"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cheques falling due month by month: received ones still to clear and issued ones still to be paid, in the company's currency. */
+        get: operations["getBankingChequesForecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Deposit slips, newest first. */
+        get: operations["getBankingChequesDeposits"];
+        put?: never;
+        /** Deposits cheques in hand to a bank account on one slip: each moves from PDC receivable to cheques under collection at its booked value. */
+        post: operations["postBankingChequesDeposits"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/deposits/{depositId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBankingChequesDepositsByDepositId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/deposits/{depositId}/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clears every cheque of the slip still under collection on one day; a charge given is taken once. */
+        post: operations["postBankingChequesDepositsByDepositIdClear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/{chequeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The cheque with every step of its life. */
+        get: operations["getBankingChequesByChequeId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/{chequeId}/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The bank credited a deposited cheque: cheques under collection to the bank, less what the bank charged. */
+        post: operations["postBankingChequesByChequeIdClear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/{chequeId}/bounce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The bank returned the cheque unpaid: a received one reverses its receipt (the invoices reopen), books the charge and re-charges a fee to the customer; an issued one goes back on PDC payable. */
+        post: operations["postBankingChequesByChequeIdBounce"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/{chequeId}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A cheque in hand given back to the customer: its receipt is reversed. */
+        post: operations["postBankingChequesByChequeIdReturn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/{chequeId}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The bank paid an issued cheque: PDC payable to the bank, plus what the bank charged. */
+        post: operations["postBankingChequesByChequeIdPay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/cheques/{chequeId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** An issued cheque the bank did not pay is cancelled: its payment is reversed and the invoices reopen. */
+        post: operations["postBankingChequesByChequeIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/document-flow/{documentType}/{documentId}": {
         parameters: {
             query?: never;
@@ -11566,6 +11787,22 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        /** @description A received cheque the bank returned unpaid: what the bank charged, and what is re-charged to the customer as a new receivable. */
+        BounceChequeRequest: {
+            /** Format: date */
+            date?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            bankCharge: number | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            customerFee: number | string;
+            reason?: null | string;
+        };
         BranchSummary: {
             /** Format: uuid */
             id: string;
@@ -11758,6 +11995,154 @@ export interface components {
             dimensions: {
                 [key: string]: string;
             };
+        };
+        /** @description A step of a cheque's life on a date: clearing or paying (with what the bank charged), or cancelling an issued one. */
+        ChequeActionRequest: {
+            /** Format: date */
+            date?: null | string;
+            /**
+             * Format: double
+             * @default 0
+             */
+            bankCharge: number | string;
+            reason?: null | string;
+        };
+        ChequeBookSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            prefix: string;
+            /** Format: int64 */
+            firstNumber: number | string;
+            /** Format: int64 */
+            lastNumber: number | string;
+            /** Format: int64 */
+            nextNumber: number | string;
+            /** Format: int64 */
+            remaining: number | string;
+            isActive: boolean;
+        };
+        ChequeDepositSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            /** Format: date */
+            depositDate: string;
+            currency: string;
+            /** Format: double */
+            total: number | string;
+            /** Format: int32 */
+            chequeCount: number | string;
+            status: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            cheques: components["schemas"]["ChequeSummary"][];
+        };
+        /** @description The cheque behind a receipt or payment by cheque: its number (or the book an issued one takes it from), the drawer and the due date (post-dated when after the document's date). */
+        ChequeDetailsRequest: {
+            chequeNumber?: null | string;
+            /** Format: uuid */
+            chequeBookId?: null | string;
+            drawerBank?: null | string;
+            drawerName?: null | string;
+            /** Format: date */
+            dueDate?: null | string;
+            /** Format: uuid */
+            replacesChequeId?: null | string;
+            notes?: null | string;
+        };
+        ChequeEventSummary: {
+            /** Format: uuid */
+            id: string;
+            event: string;
+            /** Format: date */
+            effectiveDate: string;
+            /** Format: double */
+            bankCharge: number | string;
+            /** Format: double */
+            customerFee: number | string;
+            reason: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: date-time */
+            occurredAt: string;
+        };
+        /** @description Cheques falling due in a month: what is expected in from customers and out to suppliers, in the company's currency. */
+        ChequeForecastRow: {
+            /** Format: date */
+            periodStart: string;
+            /** Format: int32 */
+            receivedCount: number | string;
+            /** Format: double */
+            receivedFc: number | string;
+            /** Format: int32 */
+            issuedCount: number | string;
+            /** Format: double */
+            issuedFc: number | string;
+            /** Format: double */
+            netFc: number | string;
+        };
+        ChequeSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            direction: string;
+            chequeNumber: string;
+            /** Format: uuid */
+            chequeBookId: null | string;
+            drawerBank: null | string;
+            drawerName: null | string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            currency: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            amountFc: number | string;
+            functionalCurrency: string;
+            /** Format: date */
+            issueDate: string;
+            /** Format: date */
+            dueDate: string;
+            isPostDated: boolean;
+            status: string;
+            /** Format: uuid */
+            paymentId: string;
+            paymentNumber: string;
+            /** Format: uuid */
+            depositId: null | string;
+            depositNumber: null | string;
+            /** Format: uuid */
+            bankAccountId: string;
+            bankAccountCode: string;
+            /** Format: uuid */
+            replacedById: null | string;
+            /** Format: uuid */
+            replacesId: null | string;
+            /** Format: uuid */
+            feeOpenItemId: null | string;
+            /** Format: uuid */
+            bankTransactionId: null | string;
+            notes: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+            events: components["schemas"]["ChequeEventSummary"][];
         };
         ClearanceSubmission: {
             scheme: string;
@@ -12712,6 +13097,15 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        DepositChequesRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            chequeIds: string[];
+            /** Format: date */
+            depositDate?: null | string;
         };
         DepreciationRunRequest: {
             /** Format: uuid */
@@ -15390,6 +15784,7 @@ export interface components {
             postedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
+            cheque?: null | components["schemas"]["ChequeSummary"];
         };
         PaymentTermLineSummary: {
             /** Format: int32 */
@@ -18923,6 +19318,19 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveChequeBookRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            prefix: null | string;
+            /** Format: int64 */
+            firstNumber: number | string;
+            /** Format: int64 */
+            lastNumber: number | string;
+            /** @default true */
+            isActive: boolean;
+        };
         SaveCommissionPlanRequest: {
             code: string;
             name: {
@@ -19174,6 +19582,7 @@ export interface components {
             whtCodeId?: null | string;
             notes?: null | string;
             customFields?: unknown;
+            cheque?: null | components["schemas"]["ChequeDetailsRequest"];
         };
         SaveCustomFieldRequest: {
             entityType: string;
@@ -19844,6 +20253,7 @@ export interface components {
             whtCodeId?: null | string;
             notes?: null | string;
             customFields?: unknown;
+            cheque?: null | components["schemas"]["ChequeDetailsRequest"];
         };
         SavePaymentTermLineRequest: {
             /** Format: int32 */
@@ -37494,6 +37904,376 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    getBankingChequeBooks: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                bankAccountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeBookSummary"][];
+                };
+            };
+        };
+    };
+    postBankingChequeBooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveChequeBookRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeBookSummary"];
+                };
+            };
+        };
+    };
+    putBankingChequeBooksByBookId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bookId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveChequeBookRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeBookSummary"];
+                };
+            };
+        };
+    };
+    getBankingCheques: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                direction?: string;
+                status?: string;
+                partnerId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeSummary"][];
+                };
+            };
+        };
+    };
+    getBankingChequesForecast: {
+        parameters: {
+            query: {
+                companyId: string;
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeForecastRow"][];
+                };
+            };
+        };
+    };
+    getBankingChequesDeposits: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeDepositSummary"][];
+                };
+            };
+        };
+    };
+    postBankingChequesDeposits: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepositChequesRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeDepositSummary"];
+                };
+            };
+        };
+    };
+    getBankingChequesDepositsByDepositId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                depositId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeDepositSummary"];
+                };
+            };
+        };
+    };
+    postBankingChequesDepositsByDepositIdClear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                depositId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeDepositSummary"];
+                };
+            };
+        };
+    };
+    getBankingChequesByChequeId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chequeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeSummary"];
+                };
+            };
+        };
+    };
+    postBankingChequesByChequeIdClear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chequeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeSummary"];
+                };
+            };
+        };
+    };
+    postBankingChequesByChequeIdBounce: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chequeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BounceChequeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeSummary"];
+                };
+            };
+        };
+    };
+    postBankingChequesByChequeIdReturn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chequeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeSummary"];
+                };
+            };
+        };
+    };
+    postBankingChequesByChequeIdPay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chequeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeSummary"];
+                };
+            };
+        };
+    };
+    postBankingChequesByChequeIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chequeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeActionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeSummary"];
                 };
             };
         };

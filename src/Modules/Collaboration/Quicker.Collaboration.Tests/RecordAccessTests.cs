@@ -156,12 +156,12 @@ public sealed class RecordAccessTests(ApiHostFixture host)
         services.GetRequiredService<IUnitOfWorkAccessor>().Set(unitOfWork);
         using var ambient = services.GetRequiredService<ITenantContextAccessor>().Use(context);
 
-        // Items and partners are shared by every company of a workspace; every other record type names its company.
+        // Items, partners and asset categories are shared by every company of a workspace; every other record type names its company.
         var lookups = services.GetServices<IRecordCompanies>().ToList();
         var placed = lookups.SelectMany(static l => l.EntityTypes).ToList();
         placed.ShouldBeUnique();
         var registered = services.GetServices<RecordReadPermission>().Select(static r => r.EntityType).Distinct().ToList();
-        registered.Except(placed).OrderBy(static t => t, StringComparer.Ordinal).ShouldBe(["item", "partner"]);
+        registered.Except(placed).OrderBy(static t => t, StringComparer.Ordinal).ShouldBe(["asset_category", "item", "partner"]);
 
         // Each module's lookup runs against its own table (a record that does not exist has no company).
         foreach (var lookup in lookups)

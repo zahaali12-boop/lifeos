@@ -22448,6 +22448,621 @@
         }
       }
     },
+    "/api/v1/banking/cheque-books": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Cheque books of the bank accounts, with the leaves left in each.",
+        "operationId": "getBankingChequeBooks",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChequeBookSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "A new cheque book: a run of numbered leaves of a bank account, issued in order.",
+        "operationId": "postBankingChequeBooks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveChequeBookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeBookSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheque-books/{bookId}": {
+      "put": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "putBankingChequeBooksByBookId",
+        "parameters": [
+          {
+            "name": "bookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveChequeBookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeBookSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The cheque registers: received and issued cheques by status, partner and due date.",
+        "operationId": "getBankingCheques",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "partnerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChequeSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/forecast": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Cheques falling due month by month: received ones still to clear and issued ones still to be paid, in the company's currency.",
+        "operationId": "getBankingChequesForecast",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChequeForecastRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/deposits": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Deposit slips, newest first.",
+        "operationId": "getBankingChequesDeposits",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChequeDepositSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Deposits cheques in hand to a bank account on one slip: each moves from PDC receivable to cheques under collection at its booked value.",
+        "operationId": "postBankingChequesDeposits",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepositChequesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeDepositSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/deposits/{depositId}": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "getBankingChequesDepositsByDepositId",
+        "parameters": [
+          {
+            "name": "depositId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeDepositSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/deposits/{depositId}/clear": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Clears every cheque of the slip still under collection on one day; a charge given is taken once.",
+        "operationId": "postBankingChequesDepositsByDepositIdClear",
+        "parameters": [
+          {
+            "name": "depositId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChequeActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeDepositSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/{chequeId}": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The cheque with every step of its life.",
+        "operationId": "getBankingChequesByChequeId",
+        "parameters": [
+          {
+            "name": "chequeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/{chequeId}/clear": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The bank credited a deposited cheque: cheques under collection to the bank, less what the bank charged.",
+        "operationId": "postBankingChequesByChequeIdClear",
+        "parameters": [
+          {
+            "name": "chequeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChequeActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/{chequeId}/bounce": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The bank returned the cheque unpaid: a received one reverses its receipt (the invoices reopen), books the charge and re-charges a fee to the customer; an issued one goes back on PDC payable.",
+        "operationId": "postBankingChequesByChequeIdBounce",
+        "parameters": [
+          {
+            "name": "chequeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BounceChequeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/{chequeId}/return": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "A cheque in hand given back to the customer: its receipt is reversed.",
+        "operationId": "postBankingChequesByChequeIdReturn",
+        "parameters": [
+          {
+            "name": "chequeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChequeActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/{chequeId}/pay": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "The bank paid an issued cheque: PDC payable to the bank, plus what the bank charged.",
+        "operationId": "postBankingChequesByChequeIdPay",
+        "parameters": [
+          {
+            "name": "chequeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChequeActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/cheques/{chequeId}/cancel": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "An issued cheque the bank did not pay is cancelled: its payment is reversed and the invoices reopen.",
+        "operationId": "postBankingChequesByChequeIdCancel",
+        "parameters": [
+          {
+            "name": "chequeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChequeActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChequeSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchasing/document-flow/{documentType}/{documentId}": {
       "get": {
         "tags": [
@@ -34780,6 +35395,43 @@
           }
         }
       },
+      "BounceChequeRequest": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "bankCharge": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "customerFee": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A received cheque the bank returned unpaid: what the bank charged, and what is re-charged to the customer as a new receivable."
+      },
       "BranchSummary": {
         "required": [
           "id",
@@ -35483,6 +36135,544 @@
             "additionalProperties": {
               "type": "string",
               "format": "uuid"
+            }
+          }
+        }
+      },
+      "ChequeActionRequest": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "bankCharge": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double",
+            "default": 0
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A step of a cheque's life on a date: clearing or paying (with what the bank charged), or cancelling an issued one."
+      },
+      "ChequeBookSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "bankAccountId",
+          "bankAccountCode",
+          "prefix",
+          "firstNumber",
+          "lastNumber",
+          "nextNumber",
+          "remaining",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "firstNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "lastNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "nextNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "remaining": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ChequeDepositSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "bankAccountId",
+          "bankAccountCode",
+          "depositDate",
+          "currency",
+          "total",
+          "chequeCount",
+          "status",
+          "journalEntryId",
+          "createdAt",
+          "cheques"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "depositDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "chequeCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cheques": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChequeSummary"
+            }
+          }
+        }
+      },
+      "ChequeDetailsRequest": {
+        "type": "object",
+        "properties": {
+          "chequeNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "chequeBookId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "drawerBank": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "drawerName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "replacesChequeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The cheque behind a receipt or payment by cheque: its number (or the book an issued one takes it from), the drawer and the due date (post-dated when after the document's date)."
+      },
+      "ChequeEventSummary": {
+        "required": [
+          "id",
+          "event",
+          "effectiveDate",
+          "bankCharge",
+          "customerFee",
+          "reason",
+          "journalEntryId",
+          "occurredAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event": {
+            "type": "string"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "bankCharge": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "customerFee": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChequeForecastRow": {
+        "required": [
+          "periodStart",
+          "receivedCount",
+          "receivedFc",
+          "issuedCount",
+          "issuedFc",
+          "netFc"
+        ],
+        "type": "object",
+        "properties": {
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "receivedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "receivedFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "issuedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "issuedFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Cheques falling due in a month: what is expected in from customers and out to suppliers, in the company's currency."
+      },
+      "ChequeSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "direction",
+          "chequeNumber",
+          "chequeBookId",
+          "drawerBank",
+          "drawerName",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "currency",
+          "amount",
+          "amountFc",
+          "functionalCurrency",
+          "issueDate",
+          "dueDate",
+          "isPostDated",
+          "status",
+          "paymentId",
+          "paymentNumber",
+          "depositId",
+          "depositNumber",
+          "bankAccountId",
+          "bankAccountCode",
+          "replacedById",
+          "replacesId",
+          "feeOpenItemId",
+          "bankTransactionId",
+          "notes",
+          "updatedAt",
+          "events"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "chequeNumber": {
+            "type": "string"
+          },
+          "chequeBookId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "drawerBank": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "drawerName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "currency": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "isPostDated": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentNumber": {
+            "type": "string"
+          },
+          "depositId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "depositNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "replacedById": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "replacesId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "feeOpenItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankTransactionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChequeEventSummary"
             }
           }
         }
@@ -38998,6 +40188,38 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "DepositChequesRequest": {
+        "required": [
+          "companyId",
+          "bankAccountId",
+          "chequeIds"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chequeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "depositDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -49173,6 +50395,16 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "cheque": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChequeSummary"
+              }
+            ]
           }
         }
       },
@@ -62506,6 +63738,52 @@
           }
         }
       },
+      "SaveChequeBookRequest": {
+        "required": [
+          "companyId",
+          "bankAccountId",
+          "prefix",
+          "firstNumber",
+          "lastNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "prefix": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "firstNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "lastNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveCommissionPlanRequest": {
         "required": [
           "code",
@@ -63289,7 +64567,17 @@
               "string"
             ]
           },
-          "customFields": { }
+          "customFields": { },
+          "cheque": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChequeDetailsRequest"
+              }
+            ]
+          }
         },
         "description": "A customer receipt: lines settle invoice open items (amount, early-payment discount given, tax the customer withheld),\nthe remainder goes on account; a deposit (kind `customer_deposit`) has no lines. Charges are what the bank kept,\nin the bank account's currency; the bank amount is what it credited and is required when that currency differs\nfrom the receipt's."
       },
@@ -65474,7 +66762,17 @@
               "string"
             ]
           },
-          "customFields": { }
+          "customFields": { },
+          "cheque": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChequeDetailsRequest"
+              }
+            ]
+          }
         },
         "description": "A supplier payment: lines settle invoice open items (amount, early-payment discount, withholding at payment), the\nremainder goes on account; an advance (kind `supplier_advance`) has no lines. Charges and the bank amount are\nin the bank account's currency; the bank amount is required when that differs from the payment currency."
       },

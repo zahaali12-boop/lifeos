@@ -27,6 +27,38 @@ public static class BankingRowFactories
         });
         IsolationRegistry.Register("app.bnk_payments", static async (c, tx, t) => new RowRef("app.bnk_payments", $"id = '{(await PaymentAsync(c, tx, t)).Payment}'"));
         IsolationRegistry.Register("app.bnk_payment_lines", static async (c, tx, t) => new RowRef("app.bnk_payment_lines", $"id = '{(await PaymentAsync(c, tx, t)).Line}'"));
+        IsolationRegistry.Register("app.bnk_cheque_books", static async (c, tx, t) =>
+        {
+            var (account, company) = await BankAccountAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_cheque_books (tenant_id, id, company_id, bank_account_id, prefix, first_number, last_number, next_number) VALUES (@t, @id, @company, @account, 'P', 1, 50, 1)", new { t, id, company, account }, tx);
+            return new RowRef("app.bnk_cheque_books", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.bnk_cheque_deposits", static async (c, tx, t) =>
+        {
+            var (account, company) = await BankAccountAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_cheque_deposits (tenant_id, id, company_id, number, bank_account_id, deposit_date, currency, total) VALUES (@t, @id, @company, @number, @account, '2026-09-22', 'IQD', 10)", new { t, id, company, account, number = Suffix(id) }, tx);
+            return new RowRef("app.bnk_cheque_deposits", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.bnk_cheques", static async (c, tx, t) => new RowRef("app.bnk_cheques", $"id = '{await ChequeAsync(c, tx, t)}'"));
+        IsolationRegistry.Register("app.bnk_cheque_events", static async (c, tx, t) =>
+        {
+            var cheque = await ChequeAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_cheque_events (tenant_id, id, cheque_id, event, effective_date) VALUES (@t, @id, @cheque, 'issued', '2026-09-22')", new { t, id, cheque }, tx);
+            return new RowRef("app.bnk_cheque_events", $"id = '{id}'");
+        });
+    }
+
+    private static async Task<Guid> ChequeAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (payment, _) = await PaymentAsync(c, tx, t);
+        var row = await c.QuerySingleAsync<(Guid Company, Guid Partner, Guid Account)>("SELECT company_id, partner_id, bank_account_id FROM app.bnk_payments WHERE tenant_id = @t AND id = @payment", new { t, payment }, tx);
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.bnk_cheques (tenant_id, id, company_id, direction, cheque_number, partner_id, currency, amount, issue_date, due_date, status, payment_id, bank_account_id) VALUES (@t, @id, @company, 'issued', @number, @partner, 'IQD', 10, '2026-09-22', '2026-09-22', 'issued', @payment, @account)",
+            new { t, id, company = row.Company, partner = row.Partner, account = row.Account, payment, number = Suffix(id) }, tx);
+        return id;
     }
 
     private static string Suffix(Guid id) => "B" + id.ToString("N")[^8..].ToUpperInvariant();

@@ -175,3 +175,155 @@ public sealed class PaymentLine : ITenantEntity
 
     public Guid? SettlementId { get; set; }
 }
+
+/// <summary>A book of cheque leaves of a bank account: issued cheques take the next number from it (roadmap 6.3).</summary>
+public sealed class ChequeBook : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid BankAccountId { get; set; }
+
+    public string Prefix { get; set; } = string.Empty;
+
+    public long FirstNumber { get; set; }
+
+    public long LastNumber { get; set; }
+
+    public long NextNumber { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// A cheque received from a customer or issued to a supplier (roadmap 6.3, POSTING_RULES §5): one per receipt or
+/// payment by cheque, with its life from in hand through deposit, clearing or bounce (received), or from issued to
+/// paid, bounced or cancelled (issued). Post-dated when due after the day it was taken or written.
+/// </summary>
+public sealed class Cheque : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    /// <summary>received or issued.</summary>
+    public string Direction { get; set; } = "received";
+
+    public string ChequeNumber { get; set; } = string.Empty;
+
+    public Guid? ChequeBookId { get; set; }
+
+    public string? DrawerBank { get; set; }
+
+    public string? DrawerName { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal Amount { get; set; }
+
+    /// <summary>The amount in the company's currency at the receipt's or payment's rate: what the cheque carries through the PDC accounts.</summary>
+    public decimal AmountFc { get; set; }
+
+    public DateOnly IssueDate { get; set; }
+
+    public DateOnly DueDate { get; set; }
+
+    public bool IsPostDated { get; set; }
+
+    /// <summary>received: draft, in_hand, deposited, cleared, bounced, returned; issued: draft, issued, paid, bounced, cancelled.</summary>
+    public string Status { get; set; } = "draft";
+
+    public Guid PaymentId { get; set; }
+
+    public Guid? DepositId { get; set; }
+
+    /// <summary>The account the cheque is deposited to (received) or drawn on (issued).</summary>
+    public Guid BankAccountId { get; set; }
+
+    public Guid? ReplacedById { get; set; }
+
+    public Guid? ReplacesId { get; set; }
+
+    /// <summary>The receivable opened on the customer for the fee re-charged when the cheque bounced.</summary>
+    public Guid? FeeOpenItemId { get; set; }
+
+    /// <summary>The bank movement of the clearing (received) or the payment (issued).</summary>
+    public Guid? BankTransactionId { get; set; }
+
+    public string? Notes { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<ChequeEvent> Events { get; } = [];
+}
+
+/// <summary>One step of a cheque's life, with the charges it cost and the journal it posted.</summary>
+public sealed class ChequeEvent : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ChequeId { get; set; }
+
+    public DateTimeOffset OccurredAt { get; set; }
+
+    /// <summary>received, deposited, cleared, bounced, returned, replaced, issued, paid, cancelled.</summary>
+    public string Event { get; set; } = string.Empty;
+
+    public DateOnly EffectiveDate { get; set; }
+
+    public decimal BankCharge { get; set; }
+
+    public decimal CustomerFee { get; set; }
+
+    public string? Reason { get; set; }
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? Actor { get; set; }
+}
+
+/// <summary>A deposit slip: cheques in hand taken to a bank account together, moving from PDC receivable to cheques under collection.</summary>
+public sealed class ChequeDeposit : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public Guid BankAccountId { get; set; }
+
+    public DateOnly DepositDate { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal Total { get; set; }
+
+    /// <summary>deposited, cleared, partially_bounced, bounced.</summary>
+    public string Status { get; set; } = "deposited";
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
