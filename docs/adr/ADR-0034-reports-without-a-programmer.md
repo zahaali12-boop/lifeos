@@ -19,8 +19,8 @@ ask-your-data works without an AI provider key on the machine.
    source document (type, id, line id) for drill-through. Each fact has a projection: an `INSERT … SELECT … ON
    CONFLICT DO NOTHING` from the append-only source after a watermark (the source row's `created_at`, re-scanned with a
    two-minute overlap so a late commit is never missed), run by the worker on a platform schedule every two minutes, kicked by
-   `JournalEntryPosted` and `StockPosted` (one job per tenant and minute), run before any query whose facts are
-   older than a minute, and callable on demand (`POST /reporting/projections/refresh`) and as a full rebuild (`/rebuild`, truncating and re-projecting a tenant). Open items
+   `JournalEntryPosted` and `StockPosted` (one job per tenant and minute), run before any query whose sources
+   hold rows newer than the fact's watermark (each source's latest stamp is an indexed `max`, so the check costs nothing when nothing changed and a query always sees what was posted before it), and callable on demand (`POST /reporting/projections/refresh`) and as a full rebuild (`/rebuild`, truncating and re-projecting a tenant). Open items
    (AR and AP) and stock on hand are read from the subledgers' live tables through views, since they are state, not
    history. Row-level security applies to the fact tables as to any tenant table.
 2. **The semantic catalogue is code first, data second.** System models (`journal_lines`, `sales_lines`,
@@ -63,6 +63,22 @@ compiler with scope predicates, filters, sort, top-N, comparisons and calculated
 /reporting/models`, `POST /reporting/query`, `/query/explain`, `/query/drill`, `/projections` (`/refresh`, `/rebuild`),
 the permissions `reporting.report.run/manage` and `reporting.projection.manage`, and the tests. The saved reports,
 the builder, the designer, dashboards, schedules and ask-your-data follow in slices 9b–9e.
+
+## Delivered in slice 9b (2026-10-31)
+
+Saved reports and shares (`V0069__reporting_reports.sql`: `rpt_reports`, `rpt_report_shares`; A-183), the report
+service (list what the member owns or is shared with, save after compiling the definition for the author, shares the
+owner alone sets, delete by the owner, run as the caller with a company or range override) and its endpoints under
+`/reporting/reports`; the **Reports** screen (the saved reports, a new report from any model) and the **report
+builder** (`/reports/builder`): the model and its fields by folder, rows, columns and values by a click, aggregation
+per value, filters with typed operators, date range, prior-period and prior-year comparison, top-N, sort, calculated
+fields, the result as a flat table, a client-side pivot with totals where they add up, or a chart (bars, lines, area;
+stacked or horizontal; one series per measure or per dimension) drawn with the chart system's palette and specs, the
+drill from any cell to the lines and their documents, the statement behind the report, CSV and XLSX through the table
+export, saving with a bilingual name and shares. The freshness rule of slice 9a changed from "facts older than a
+minute" to "a source holds rows newer than the fact's watermark" (decision 1 above), because a query a few seconds
+after a posting must see it. The designer, dashboards, schedules (and PDF export through the print pipeline) and
+ask-your-data follow in slices 9c–9e.
 
 ## Consequences
 

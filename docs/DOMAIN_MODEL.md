@@ -4099,7 +4099,33 @@ erDiagram
     numeric reserved
     numeric quality_hold
   }
+  rpt_reports {
+    uuid id PK
+    uuid company_id FK
+    text model
+    jsonb name_i18n
+    uuid owner_membership_id
+    jsonb definition "the query definition"
+    text kind "table | pivot | chart"
+    jsonb chart "type stacked horizontal category series measures"
+    boolean is_template
+  }
+  rpt_report_shares {
+    uuid id PK
+    uuid report_id FK
+    text share_with "tenant | role | membership"
+    uuid target_id
+    text access "view | edit"
+  }
+  rpt_reports ||--o{ rpt_report_shares : "shared with"
 ```
+
+A **saved report** (`rpt_reports`, slice 9b, A-183) keeps one query definition under a bilingual name with how it is
+shown (a table, a pivot with column dimensions across the top, or a chart with its options) and belongs to the member
+who saved it. Its **shares** (`rpt_report_shares`) name who else sees it (everyone in the tenant, a role, a member) and
+whether they may change it. Whoever runs a saved report runs it as themselves: the compiler applies the runner's
+permissions and scopes, so a share never widens access; the owner alone changes the audience or deletes the report,
+an editor changes the query, a viewer saves a copy. Every change is on the audit trail as `saved_report`.
 
 ```mermaid
 erDiagram

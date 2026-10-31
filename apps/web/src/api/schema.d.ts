@@ -11677,6 +11677,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The saved reports the caller owns or that are shared with them, optionally those for one company. */
+        get: operations["getReportingReports"];
+        put?: never;
+        /** Saves a report: the definition is compiled for the author first, so a broken one is refused with the field at fault. */
+        post: operations["postReportingReports"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/reports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReportingReportsByReportId"];
+        put: operations["putReportingReportsByReportId"];
+        post?: never;
+        delete: operations["deleteReportingReportsByReportId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/reports/{reportId}/shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replaces who the report is shared with; only its owner may. */
+        put: operations["putReportingReportsByReportIdShares"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/reports/{reportId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the saved definition as the caller, with the company or the range changed when asked; the caller's own scopes apply. */
+        post: operations["postReportingReportsByReportIdRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -13155,6 +13223,18 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description How a saved report draws: the chart type, whether series stack, which dimension gives the categories and which the series, and which measures plot. */
+        ChartOptions: {
+            /** @default bar */
+            type: string;
+            /** @default false */
+            stacked: boolean;
+            /** @default false */
+            horizontal: boolean;
+            categoryField?: null | string;
+            seriesField?: null | string;
+            measures?: null | string[];
         };
         ChartSummary: {
             /** Format: uuid */
@@ -19900,6 +19980,32 @@ export interface components {
             canDrill: boolean;
             fields: components["schemas"]["ReportCatalogueField"][];
         };
+        ReportSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: null | string;
+            model: string;
+            name: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            kind: string;
+            chart: components["schemas"]["ChartOptions"];
+            definition: components["schemas"]["QueryDefinition"];
+            /** Format: uuid */
+            ownerMembershipId: string;
+            isOwner: boolean;
+            canEdit: boolean;
+            isShared: boolean;
+            shares: components["schemas"]["ShareSummary"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         RequestActionSummary: {
             /** Format: uuid */
             id: string;
@@ -20574,6 +20680,15 @@ export interface components {
             };
             condition: string;
             steps: components["schemas"]["StepSummary"][];
+        };
+        /** @description Overrides when running a saved report: another company, another range; everything else is the saved definition. */
+        RunReportRequest: {
+            /** Format: uuid */
+            companyId?: null | string;
+            /** Format: date */
+            from?: null | string;
+            /** Format: date */
+            to?: null | string;
         };
         SalesInvoiceLineSummary: {
             /** Format: uuid */
@@ -22957,6 +23072,21 @@ export interface components {
             /** @default true */
             isActive: boolean;
         };
+        SaveReportRequest: {
+            name: {
+                [key: string]: string;
+            };
+            definition: components["schemas"]["QueryDefinition"];
+            /** @default pivot */
+            kind: string;
+            chart?: null | components["schemas"]["ChartOptions"];
+            description?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId?: null | string;
+            shares?: null | components["schemas"]["ShareRequest"][];
+        };
         SaveRequisitionLineRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -23988,6 +24118,21 @@ export interface components {
             items: number | string;
             /** Format: int32 */
             openingJournals: number | string;
+        };
+        ShareRequest: {
+            shareWith: string;
+            /** Format: uuid */
+            targetId?: null | string;
+            /** @default view */
+            access: string;
+        };
+        ShareSummary: {
+            /** Format: uuid */
+            id: string;
+            shareWith: string;
+            /** Format: uuid */
+            targetId: null | string;
+            access: string;
         };
         /**
          * @description One part of a shipment line's quantity: the bin and lot it comes from, its serials, and once posted the
@@ -47400,6 +47545,172 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectionRun"];
+                };
+            };
+        };
+    };
+    getReportingReports: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSummary"][];
+                };
+            };
+        };
+    };
+    postReportingReports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSummary"];
+                };
+            };
+        };
+    };
+    getReportingReportsByReportId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSummary"];
+                };
+            };
+        };
+    };
+    putReportingReportsByReportId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSummary"];
+                };
+            };
+        };
+    };
+    deleteReportingReportsByReportId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    putReportingReportsByReportIdShares: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareRequest"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSummary"];
+                };
+            };
+        };
+    };
+    postReportingReportsByReportIdRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["RunReportRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResult"];
                 };
             };
         };

@@ -1,11 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Accounting.Contracts;
+using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Inventory.Contracts;
 using Quicker.Messaging;
+using Quicker.Persistence.EntityFramework;
 using Quicker.Reporting.Application;
 using Quicker.Reporting.Application.Facts;
+using Quicker.Reporting.Application.Reports;
 using Quicker.Reporting.Application.Semantic;
+using Quicker.Reporting.Persistence;
 
 namespace Quicker.Reporting;
 
@@ -20,6 +24,9 @@ public static class ReportingModule
         services.AddScoped<SalesLinesService>();
         services.AddScoped<ProjectionService>();
         services.AddScoped<QueryService>();
+        services.AddModuleDbContext<ReportingDbContext>();
+        services.AddScoped<ReportService>();
+        services.AddSingleton(new RecordReadPermission(ReportService.AuditEntity, ReportingPermissions.ReportRun));
         services.AddJobHandler<ProjectionJob, ProjectionPayload>();
         // A posting kicks the tenant's projection; the platform schedule covers every tenant every two minutes.
         services.AddIntegrationEventHandler<ProjectOnJournalPosted, JournalEntryPosted>();

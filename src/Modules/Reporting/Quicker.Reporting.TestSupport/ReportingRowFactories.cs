@@ -66,6 +66,26 @@ public static class ReportingRowFactories
                 """, new { t, id, company = Guid.CreateVersion7(), item = Guid.CreateVersion7(), warehouse = Guid.CreateVersion7(), doc = Guid.CreateVersion7() }, tx);
             return new RowRef("reporting.fact_stock_values", $"value_id = '{id}'");
         });
+        IsolationRegistry.Register("app.rpt_reports", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_reports (tenant_id, id, model, name_i18n, owner_membership_id, definition)
+                VALUES (@t, @id, 'sales_lines', '{"en":"Probe"}'::jsonb, @owner, '{"model":"sales_lines"}'::jsonb)
+                """, new { t, id, owner = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.rpt_reports", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.rpt_report_shares", static async (c, tx, t) =>
+        {
+            var report = Guid.CreateVersion7();
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_reports (tenant_id, id, model, name_i18n, owner_membership_id, definition)
+                VALUES (@t, @report, 'sales_lines', '{"en":"Probe"}'::jsonb, @owner, '{"model":"sales_lines"}'::jsonb);
+                INSERT INTO app.rpt_report_shares (tenant_id, id, report_id, share_with) VALUES (@t, @id, @report, 'tenant')
+                """, new { t, report, id, owner = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.rpt_report_shares", $"id = '{id}'");
+        });
     }
 
     private static string Suffix(Guid id) => "P" + id.ToString("N")[^8..].ToUpperInvariant();

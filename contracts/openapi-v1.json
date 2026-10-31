@@ -33728,6 +33728,254 @@
           }
         }
       }
+    },
+    "/api/v1/reporting/reports": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The saved reports the caller owns or that are shared with them, optionally those for one company.",
+        "operationId": "getReportingReports",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Saves a report: the definition is compiled for the author first, so a broken one is refused with the field at fault.",
+        "operationId": "postReportingReports",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/reports/{reportId}": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "getReportingReportsByReportId",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "putReportingReportsByReportId",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "deleteReportingReportsByReportId",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/reports/{reportId}/shares": {
+      "put": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Replaces who the report is shared with; only its owner may.",
+        "operationId": "putReportingReportsByReportIdShares",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ShareRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/reports/{reportId}/run": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Runs the saved definition as the caller, with the company or the range changed when asked; the caller's own scopes apply.",
+        "operationId": "postReportingReportsByReportIdRun",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RunReportRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResult"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -39300,6 +39548,45 @@
             "format": "date-time"
           }
         }
+      },
+      "ChartOptions": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "default": "bar"
+          },
+          "stacked": {
+            "type": "boolean",
+            "default": false
+          },
+          "horizontal": {
+            "type": "boolean",
+            "default": false
+          },
+          "categoryField": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seriesField": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "measures": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "How a saved report draws: the chart type, whether series stack, which dimension gives the categories and which the series, and which measures plot."
       },
       "ChartSummary": {
         "required": [
@@ -64808,6 +65095,90 @@
           }
         }
       },
+      "ReportSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "model",
+          "name",
+          "description",
+          "kind",
+          "chart",
+          "definition",
+          "ownerMembershipId",
+          "isOwner",
+          "canEdit",
+          "isShared",
+          "shares",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "model": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "chart": {
+            "$ref": "#/components/schemas/ChartOptions"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/QueryDefinition"
+          },
+          "ownerMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isOwner": {
+            "type": "boolean"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "isShared": {
+            "type": "boolean"
+          },
+          "shares": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShareSummary"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "RequestActionSummary": {
         "required": [
           "id",
@@ -67373,6 +67744,33 @@
             }
           }
         }
+      },
+      "RunReportRequest": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Overrides when running a saved report: another company, another range; everything else is the saved definition."
       },
       "SalesInvoiceLineSummary": {
         "required": [
@@ -75519,6 +75917,63 @@
         },
         "description": "A register to create or change; the code is given or taken from the name; decimal? SaveRegisterRequest.CashRoundingIncrement null or 0 means the company's setting for the currency."
       },
+      "SaveReportRequest": {
+        "required": [
+          "name",
+          "definition"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "definition": {
+            "$ref": "#/components/schemas/QueryDefinition"
+          },
+          "kind": {
+            "type": "string",
+            "default": "pivot"
+          },
+          "chart": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChartOptions"
+              }
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shares": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ShareRequest"
+            }
+          }
+        }
+      },
       "SaveRequisitionLineRequest": {
         "type": "object",
         "properties": {
@@ -79098,6 +79553,56 @@
           }
         },
         "description": "Where a tenant stands on the way to its first posted document (setup wizard, A-173): what exists already, counted\nso a step can show itself done. Company-bound parts (the chart, the opening journal) read for the company asked\nfor, or the tenant's first company when none is."
+      },
+      "ShareRequest": {
+        "required": [
+          "shareWith"
+        ],
+        "type": "object",
+        "properties": {
+          "shareWith": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "access": {
+            "type": "string",
+            "default": "view"
+          }
+        }
+      },
+      "ShareSummary": {
+        "required": [
+          "id",
+          "shareWith",
+          "targetId",
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shareWith": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "access": {
+            "type": "string"
+          }
+        }
       },
       "ShipmentAllocation": {
         "required": [

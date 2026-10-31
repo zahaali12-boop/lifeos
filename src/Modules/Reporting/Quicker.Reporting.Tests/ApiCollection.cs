@@ -55,6 +55,26 @@ internal static class ReportingApi
         return json;
     }
 
+    public static async Task<HttpStatusCode> GetStatusAsync(this HttpClient client, string path)
+    {
+        using var response = await client.GetAsync(path);
+        return response.StatusCode;
+    }
+
+    public static async Task DeleteAsync(this HttpClient client, string path, HttpStatusCode expected)
+    {
+        using var response = await client.DeleteAsync(path);
+        response.StatusCode.ShouldBe(expected, await response.Content.ReadAsStringAsync());
+    }
+
+    public static async Task<(string Code, JsonElement Problem)> PutErrorAsync(this HttpClient client, string path, object body, HttpStatusCode expected)
+    {
+        var response = await client.PutAsJsonAsync(path, body, Json);
+        var json = await response.ReadJsonAsync();
+        response.StatusCode.ShouldBe(expected, json.ToString());
+        return (json.GetProperty("code").GetString()!, json);
+    }
+
     public static async Task<(string Code, JsonElement Problem)> PostErrorAsync(this HttpClient client, string path, object body, HttpStatusCode expected)
     {
         var response = await client.PostAsJsonAsync(path, body, Json);

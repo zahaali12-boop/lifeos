@@ -113,12 +113,31 @@ public sealed class ProjectionService(IUnitOfWorkAccessor unitOfWork, IClock clo
         return Facts.Select(f => rows.TryGetValue(f.Fact, out var r) ? new ProjectionStatus(r.Fact, r.Watermark, r.RowCount, r.LastRunAt, r.LastDurationMs) : new ProjectionStatus(f.Fact, Epoch, 0, null, null)).ToList();
     }
 
-    /// <summary>Projects what is new since each fact's watermark; cheap when nothing is, so it runs before a query whose facts are older than <paramref name="maxAge"/>.</summary>
-    public async Task<ProjectionRun?> EnsureFreshAsync(TimeSpan maxAge, CancellationToken cancellationToken)
+    /// <summary>
+    /// Projects what the books hold that the facts do not yet: each fact's source is asked for its latest stamp (an
+    /// indexed max), and a refresh runs only when one is newer than its watermark or a fact was never projected. A
+    /// query therefore always sees what was posted before it, however recently; nothing is projected when nothing changed.
+    /// </summary>
+    public async Task<ProjectionRun?> EnsureFreshAsync(CancellationToken cancellationToken)
     {
-        var status = await StatusAsync(cancellationToken);
-        var now = clock.UtcNow;
-        return status.Any(s => s.LastRunAt is null || now - s.LastRunAt.Value > maxAge) ? await RefreshAsync(cancellationToken) : null;
+        var uow = unitOfWork.Current;
+        var status = (await StatusAsync(cancellationToken)).ToDictionary(static s => s.Fact, StringComparer.Ordinal);
+        foreach (var fact in Facts)
+        {
+            var current = status[fact.Fact];
+            if (current.LastRunAt is null)
+            {
+                return await RefreshAsync(cancellationToken);
+            }
+
+            var latestRaw = await uow.Connection.ExecuteScalarAsync<DateTime?>(new CommandDefinition(fact.WatermarkSql, transaction: uow.Transaction, cancellationToken: cancellationToken));
+            if (latestRaw is { } raw && new DateTimeOffset(DateTime.SpecifyKind(raw, DateTimeKind.Utc), TimeSpan.Zero) > current.Watermark)
+            {
+                return await RefreshAsync(cancellationToken);
+            }
+        }
+
+        return null;
     }
 
     public async Task<ProjectionRun> RefreshAsync(CancellationToken cancellationToken)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Quicker.Reporting.Application;
 using Quicker.Reporting.Application.Facts;
+using Quicker.Reporting.Application.Reports;
 using Quicker.Reporting.Application.Semantic;
 using Quicker.Web;
 
@@ -43,6 +44,27 @@ public static class ReportingEndpoints
         projections.MapPost("/rebuild", async (ProjectionService service, CancellationToken ct) => TypedResults.Ok(await service.RebuildAsync(ct)))
             .RequirePermission(ReportingPermissions.ProjectionManage)
             .WithSummary("Empties the tenant's facts and projects them again from the books; the result equals what the increments built.");
+
+        // Saved reports (slice 9b): a definition under a name, shared with the tenant, a role or a member; run as the caller.
+        var reports = reporting.MapGroup("/reports");
+        reports.MapGet("/", async (Guid? companyId, ReportService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("The saved reports the caller owns or that are shared with them, optionally those for one company.");
+        reports.MapGet("/{reportId:guid}", async (Guid reportId, ReportService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(reportId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun);
+        reports.MapPost("/", async (SaveReportRequest request, ReportService service, CancellationToken ct) => ApiProblems.Created(await service.SaveAsync(null, request, ct), static r => $"/api/v1/reporting/reports/{r.Id}"))
+            .RequirePermission(ReportingPermissions.ReportManage)
+            .WithSummary("Saves a report: the definition is compiled for the author first, so a broken one is refused with the field at fault.");
+        reports.MapPut("/{reportId:guid}", async (Guid reportId, SaveReportRequest request, ReportService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveAsync(reportId, request, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage);
+        reports.MapPut("/{reportId:guid}/shares", async (Guid reportId, IReadOnlyList<ShareRequest> shares, ReportService service, CancellationToken ct) => ApiProblems.Ok(await service.ShareAsync(reportId, shares, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage)
+            .WithSummary("Replaces who the report is shared with; only its owner may.");
+        reports.MapDelete("/{reportId:guid}", async (Guid reportId, ReportService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(reportId, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage);
+        reports.MapPost("/{reportId:guid}/run", async (Guid reportId, RunReportRequest? request, ReportService service, CancellationToken ct) => ApiProblems.Ok(await service.RunAsync(reportId, request, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("Runs the saved definition as the caller, with the company or the range changed when asked; the caller's own scopes apply.");
 
         return api;
     }

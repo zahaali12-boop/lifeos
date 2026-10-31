@@ -21,8 +21,6 @@ namespace Quicker.Reporting.Application.Semantic;
 /// </summary>
 public sealed class QueryService(IUnitOfWorkAccessor unitOfWork, ICurrentPrincipal principal, ICompanyDirectory companies, IDimensionDirectory dimensions, ProjectionService projections, IClock clock)
 {
-    public static readonly TimeSpan FreshnessWindow = TimeSpan.FromSeconds(60);
-
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public async Task<IReadOnlyList<ReportCatalogueModel>> CatalogueAsync(CancellationToken cancellationToken)
@@ -60,7 +58,7 @@ public sealed class QueryService(IUnitOfWorkAccessor unitOfWork, ICurrentPrincip
         DateTimeOffset? projectedUpTo = null;
         if (FactOf(model) is { } fact)
         {
-            await projections.EnsureFreshAsync(FreshnessWindow, cancellationToken);
+            await projections.EnsureFreshAsync(cancellationToken);
             projectedUpTo = (await projections.StatusAsync(cancellationToken)).FirstOrDefault(s => s.Fact == fact)?.Watermark;
         }
 
@@ -197,7 +195,7 @@ public sealed class QueryService(IUnitOfWorkAccessor unitOfWork, ICurrentPrincip
         var (model, scope, _, _) = prepared.Value;
         if (FactOf(model) is not null)
         {
-            await projections.EnsureFreshAsync(FreshnessWindow, cancellationToken);
+            await projections.EnsureFreshAsync(cancellationToken);
         }
 
         var compiled = QueryCompiler.CompileDrill(model, request.Definition, scope, request.Keys, request.Limit ?? 200);

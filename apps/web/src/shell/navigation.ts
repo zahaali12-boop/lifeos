@@ -98,6 +98,7 @@ export const navigation: NavigationItem[] = [
   { to: "/banking/cheques", label: "nav.cheques", icon: FileCheck, shortcut: "b q", permission: "banking.cheque.read", group: "finance", section: "bank" },
   { to: "/banking/cheque-books", label: "nav.chequeBooks", icon: BookOpenCheck, shortcut: "b k", permission: "banking.cheque.read", group: "finance", section: "bank" },
   { to: "/banking/reconciliation", label: "nav.reconciliation", icon: GitCompareArrows, shortcut: "b r", permission: "banking.reconciliation.read", group: "finance", section: "bank" },
+  { to: "/reports", label: "nav.reports", icon: ChartColumn, shortcut: "r p", permission: "reporting.report.run", group: "finance", section: "reporting" },
   { to: "/expenses", label: "nav.expenses", icon: Wallet, shortcut: "x e", permission: "expenses.expense.read", group: "finance", section: "expenses" },
   { to: "/expenses/funds", label: "nav.pettyCashFunds", icon: PiggyBank, shortcut: "x f", permission: "expenses.fund.read", group: "finance", section: "expenses" },
   { to: "/expenses/categories", label: "nav.expenseCategories", icon: Tags, shortcut: "x c", permission: "expenses.expense.read", group: "finance", section: "expenses" },
