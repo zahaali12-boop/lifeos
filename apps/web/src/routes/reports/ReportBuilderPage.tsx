@@ -195,7 +195,7 @@ function ResultTable({ table, label, canDrill, onDrill, id, caption }: { table: 
         <TableRow>
           {table.rowDims.map((d) => <TableHead key={d} rowSpan={grouped ? 2 : 1}>{label(d)}</TableHead>)}
           {grouped
-            ? table.columns.map((c) => <TableHead key={c.key} colSpan={table.measures.length} className="text-center">{c.label || "—"}</TableHead>)
+            ? table.columns.map((c) => <TableHead key={c.key} colSpan={table.measures.length} className="text-center">{c.label || t("reports.blank")}</TableHead>)
             : table.measures.map((m) => <TableHead key={m.key} className="text-end">{localized(m.label)}</TableHead>)}
         </TableRow>
         {grouped ? (
@@ -207,7 +207,7 @@ function ResultTable({ table, label, canDrill, onDrill, id, caption }: { table: 
       <TableBody>
         {table.rows.map((row, index) => (
           <TableRow key={row.key} data-testid={`report-row-${index + 1}`}>
-            {row.cells.map((cell, i) => <TableCell key={table.rowDims[i] ?? i} dir="auto">{cell || "—"}</TableCell>)}
+            {row.cells.map((cell, i) => <TableCell key={table.rowDims[i] ?? i} dir="auto">{cell || t("reports.blank")}</TableCell>)}
             {table.columns.flatMap((c) => table.measures.map((m) => {
               const value = row.values[c.key]?.[m.key] ?? null;
               const text = measureText(value, m.type);
@@ -332,7 +332,7 @@ function Builder({ reportId, initialModel }: { reportId: string | null; initialM
     return draft.kind === "table" ? pivot(result.data, [...rows, ...columns], []) : pivot(result.data, rows, columns);
   }, [result.data, executed, draft.kind]);
   const chartOptions = useMemo(() => toChartOptions(draft.chart), [draft.chart]);
-  const chart = useMemo(() => (result.data && executed ? chartData(result.data, chartOptions, [...(executed.rows ?? []), ...(executed.columns ?? [])], t("reports.other")) : null), [result.data, executed, chartOptions, t]);
+  const chart = useMemo(() => (result.data && executed ? chartData(result.data, chartOptions, [...(executed.rows ?? []), ...(executed.columns ?? [])], { other: t("reports.other"), blank: t("reports.blank") }) : null), [result.data, executed, chartOptions, t]);
   const chartType = chart?.measure?.type;
   const chartFormat = useCallback((value: number): string => measureText(value, chartType), [chartType]);
 

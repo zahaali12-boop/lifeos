@@ -5865,7 +5865,8 @@
       "edit": "View, run and change"
     },
     "addShare": "Add share",
-    "removeShare": "Remove share"
+    "removeShare": "Remove share",
+    "blank": "(none)"
   },
   "statements": {
     "pageDescription": "Profit and loss, balance sheet and trial balance from the books, for any period, drilled to the accounts and the ledger; design your own layouts of rows and columns.",

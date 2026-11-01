@@ -198,7 +198,9 @@ function fold(names: string[], totalOf: (name: string) => number, max: number, o
  * of the series dimension (one measure) or one series per chosen measure. Past forty categories or seven series the
  * tail is folded into "Other"; colours follow the entity, never its rank.
  */
-export function chartData(result: QueryResult, options: ChartOptions, dims: string[], otherLabel: string): ChartData {
+/** `labels.other` names the bucket the long tail folds into; `labels.blank` names a dimension value that is empty (a line without an item, a document without a project). */
+export function chartData(result: QueryResult, options: ChartOptions, dims: string[], labels: { other: string; blank: string }): ChartData {
+  const otherLabel = labels.other;
   const measures = result.fields.filter((f) => f.role === "measure");
   const category = options.categoryField && dims.includes(options.categoryField) ? options.categoryField : dims[0];
   const chosen = (options.measures ?? []).filter((key) => measures.some((m) => m.key === key));
@@ -228,9 +230,9 @@ export function chartData(result: QueryResult, options: ChartOptions, dims: stri
     }
   };
   for (const raw of result.rows as ResultRow[]) {
-    const c = cellText(raw[category]) || "—";
+    const c = cellText(raw[category]) || labels.blank;
     if (seriesDim) {
-      add(c, cellText(raw[seriesDim]) || "—", numberOf(raw[first.key]));
+      add(c, cellText(raw[seriesDim]) || labels.blank, numberOf(raw[first.key]));
     } else {
       for (const key of plotted) {
         const m = measures.find((x) => x.key === key);
