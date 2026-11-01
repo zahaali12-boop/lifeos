@@ -15,7 +15,7 @@ One-command local setup; CI running lint, type checks and the full suite on ever
 
 ### Local development
 
-`make up` (or `./dev up`) runs Docker Compose: PostgreSQL, MinIO, Mailpit (email catcher), the migrator (migrations + reference seed + demo tenant), API with hot reload, worker, web dev server. `make test` runs the whole suite the way CI does. `make demo` reseeds the demo tenant. A devcontainer definition gives the same environment in VS Code and cloud sessions.
+`make up` (or `./dev up`) runs Docker Compose: PostgreSQL, MinIO, Mailpit (email catcher), the migrator (migrations + reference seed + demo tenant), API with hot reload, worker, web dev server. Without `make` (Windows), the same three Compose commands run by hand (README "Run it"); the migrator image takes its verb as the container command (`docker compose run --rm migrator demo`), the API's host port is `QUICKER_API_PORT`, and the web container keeps the image's installed packages under anonymous volumes so a host checkout without `node_modules` still starts. `make test` runs the whole suite the way CI does. `make demo` reseeds the demo tenant. A devcontainer definition gives the same environment in VS Code and cloud sessions.
 
 ### Environments
 

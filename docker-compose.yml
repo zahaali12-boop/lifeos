@@ -67,7 +67,8 @@ services:
       Quicker__Audit__Anchoring__Store: file
       Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
     ports:
-      - "8080:8080"
+      # QUICKER_API_PORT (in .env) when another program already answers on 8080 on your machine.
+      - "${QUICKER_API_PORT:-8080}:8080"
     volumes:
       - auditanchors:/app/.data/audit-anchors
     depends_on:
@@ -110,13 +111,17 @@ services:
       dockerfile: deploy/docker/web.Dockerfile
       target: dev
     environment:
-      VITE_API_BASE_URL: http://localhost:8080
+      VITE_API_BASE_URL: http://localhost:${QUICKER_API_PORT:-8080}
     ports:
       - "5173:5173"
     volumes:
+      # The sources come from the host for hot reload; the installed packages stay the image's own (pnpm keeps a
+      # node_modules inside every workspace package, so each one needs its own anonymous volume).
       - ./apps/web:/workspace/apps/web
       - ./packages:/workspace/packages
       - /workspace/node_modules
+      - /workspace/apps/web/node_modules
+      - /workspace/packages/ui/node_modules
 
 volumes:
   pgdata:

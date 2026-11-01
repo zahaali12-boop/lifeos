@@ -2,7 +2,31 @@
 
 A production-grade ERP built to beat the incumbents where it matters: books that are always right, depth for the hardest real-world operations, speed and usability, and reporting people love. First markets: Iraq and the Middle East; English and Arabic with full right-to-left support; 80+ currencies; cloud SaaS and on-premise from one codebase.
 
-**Status:** Phase 0 (blueprint) complete and awaiting founder approval. No application code yet. See [docs/PROGRESS.md](docs/PROGRESS.md).
+**Status:** in build; what is done, what is next and the known gaps are in [docs/PROGRESS.md](docs/PROGRESS.md).
+
+## Run it
+
+With Docker Desktop running, from the repository folder (Command Prompt, PowerShell or a shell; `make up` does the
+same on macOS and Linux):
+
+```
+docker compose up -d postgres minio mailpit
+docker compose run --rm migrator            # migrations, reference data, the demo tenant when it is missing
+docker compose up -d api worker web
+```
+
+Then open http://localhost:5173 and sign in as `owner@quicker.example` with `DemoPass2026!`. The API answers on
+http://localhost:8080 (`/health/ready` says whether it is up); when another program already uses 8080, copy
+`.env.example` to `.env`, set `QUICKER_API_PORT` to a free port and start again. Useful afterwards:
+
+```
+docker compose run --rm migrator demo       # rebuild the demo tenant from scratch (about ten minutes)
+docker compose logs --tail=100 api          # why something did not work
+docker compose down                         # stop everything (keeps the data); `down -v` also deletes the database
+```
+
+To work on the web app with hot reload outside Docker: `pnpm install`, then `set VITE_API_BASE_URL=http://localhost:8080`
+(`export` on macOS and Linux) and `pnpm --filter @quicker/web dev`.
 
 ## Start here
 

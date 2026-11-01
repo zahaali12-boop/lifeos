@@ -314,7 +314,10 @@ Branches: `claude/quicker-erp-founding-arch-4cq18i` (Phase 0 and slices 1.1–1.
 ## How to run what exists
 
 ```
-# prerequisites: .NET 10 SDK, Node 22 + pnpm, PostgreSQL 16+ (or Docker for `make up`)
+# Docker only, any OS (the README's "Run it"): docker compose up -d postgres minio mailpit; docker compose run --rm migrator;
+#   docker compose up -d api worker web; then http://localhost:5173 as owner@quicker.example / DemoPass2026!.
+#   docker compose run --rm migrator demo rebuilds the demo tenant; QUICKER_API_PORT in .env moves the API off 8080.
+# prerequisites for the targets below: .NET 10 SDK, Node 22 + pnpm, PostgreSQL 16+ (or Docker for `make up`)
 make migrate            # applies db/migrations and db/repeatable to the local database
 make test-dotnet        # 253 tests: kernel, schema contract, RLS isolation, append-only, migration replay, identity API, audit API and chain integrity, organization API, numbering API, outbox/jobs/scheduler, webhooks and idempotency, notifications/email, attachments and storage, comments/activities/links/views/custom fields rate limits, filter/paging/ETags, tracing and health, the demo seeder, charts of accounts, the posting engine, journals and routines, period control, GL inquiry, the invariant harness, the item master and unit conversions, the workflow engine, the supplier master, purchasing from requisition to order, goods receipts, supplier invoices, landed costs, supplier returns, the payables subledger, supplier payments, supplier intelligence, document search, the customer master, commission plans, the pipeline, CRM activities and the Customer 360 with its timing on the demo tenant (the S3 test runs when QUICKER_TEST_S3_ENDPOINT points at MinIO)
 pnpm install && pnpm -r test && pnpm --filter @quicker/tools check-diagrams   # includes the design system's axe suite

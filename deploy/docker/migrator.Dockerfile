@@ -9,4 +9,7 @@ RUN dotnet publish src/Host/Quicker.Migrator/Quicker.Migrator.csproj -c Release 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /out .
-ENTRYPOINT ["dotnet", "Quicker.Migrator.dll", "all"]
+# The command is the migrator's verb: `all` by default (migrate, seed, create the demo tenant when missing);
+# `docker compose run --rm migrator demo` rebuilds the demo tenant, `... migrator verify` runs the invariant harness.
+ENTRYPOINT ["dotnet", "Quicker.Migrator.dll"]
+CMD ["all"]
