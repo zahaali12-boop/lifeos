@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Quicker.Identity.TestSupport;
+using Quicker.Messaging.Jobs;
+using Quicker.Messaging.Outbox;
 
 namespace Quicker.Reporting.Tests;
 
@@ -11,6 +14,20 @@ public sealed class ApiHostFixture : IAsyncLifetime
     public ApiFixture Api { get; private set; } = null!;
 
     public async ValueTask InitializeAsync() => Api = await ApiFixture.StartAsync();
+
+    /// <summary>Drains the outbox and runs every queued job in the test host, as the worker would.</summary>
+    public async Task RunWorkerAsync()
+    {
+        var dispatcher = Api.Services.GetRequiredService<OutboxDispatcher>();
+        var runner = Api.Services.GetRequiredService<JobRunner>();
+        while (await dispatcher.RunOnceAsync(CancellationToken.None) > 0)
+        {
+        }
+
+        while (await runner.RunOneAsync(CancellationToken.None))
+        {
+        }
+    }
 
     public async ValueTask DisposeAsync()
     {
@@ -73,6 +90,13 @@ internal static class ReportingApi
         var json = await response.ReadJsonAsync();
         response.StatusCode.ShouldBe(expected, json.ToString());
         return (json.GetProperty("code").GetString()!, json);
+    }
+
+    /// <summary>The invariant harness after a scenario (ADR-0029).</summary>
+    public static async Task AssertInvariantsAsync(this HttpClient client)
+    {
+        var report = await client.PostAsync("/api/v1/platform/integrity/run", new { }, HttpStatusCode.OK);
+        report.GetProperty("passed").GetBoolean().ShouldBeTrue("invariants violated: " + string.Join(" | ", report.GetProperty("checks").EnumerateArray().Where(static c => !c.GetProperty("passed").GetBoolean()).Select(static c => c.GetProperty("code").GetString() + ": " + string.Join("; ", c.GetProperty("problems").EnumerateArray().Select(static p => p.GetString())))));
     }
 
     public static async Task<(string Code, JsonElement Problem)> PostErrorAsync(this HttpClient client, string path, object body, HttpStatusCode expected)

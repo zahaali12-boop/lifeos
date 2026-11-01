@@ -54,3 +54,15 @@ public static class PrintErrors
     public const string DocumentCancelled = "print.document_cancelled";
     public const string ParameterRequired = "print.parameter_required";
 }
+
+/// <summary>A PDF made now through the print pipeline, with the file name its template gives it.</summary>
+public sealed record PrintedPdf(byte[] Content, string FileName, string Title);
+
+/// <summary>
+/// Prints a subject to PDF in the caller's unit of work (composed with the company's template, rendered by the
+/// worker's own renderer, cached like any render): what a scheduled report calls to attach its file.
+/// </summary>
+public interface IPdfPrinter
+{
+    Task<Result<PrintedPdf>> PrintAsync(PrintSubject subject, string variant = PrintVariants.Standard, CancellationToken cancellationToken = default);
+}

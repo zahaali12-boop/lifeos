@@ -1,0 +1,46 @@
+{
+  "title": "Financial statement / قائمة مالية",
+  "number": "PL 2026-09",
+  "status": "ready",
+  "is_final": false,
+  "document_date": "2026-09-30",
+  "currency": "IQD",
+  "company": {
+    "code": "IQT",
+    "name": "Iraq Trading Co. / شركة العراق للتجارة",
+    "name_en": "Iraq Trading Co.",
+    "name_ar": "شركة العراق للتجارة",
+    "country": "IQ",
+    "currency": "IQD",
+    "address": { "street": "Al-Karrada, Arasat St. 14", "city": "Baghdad" },
+    "address_text": "Al-Karrada, Arasat St. 14, Baghdad",
+    "registration_numbers": { "tax": "IQ-1234567" },
+    "tax_number": "IQ-1234567"
+  },
+  "branch": null,
+  "partner": null,
+  "document": {
+    "name": "Profit and loss / قائمة الأرباح والخسائر",
+    "line_label": "Line / البند",
+    "period_from": "2026-09-01",
+    "period_to": "2026-09-30",
+    "closing_note": "Closing entries left out / قيود الإقفال مستبعدة",
+    "scope_note": "Functional currency / العملة الوظيفية",
+    "columns": [
+      { "label": "Period / الفترة", "dates": "2026-09-01 → 2026-09-30" },
+      { "label": "Year to date / منذ بداية السنة", "dates": "2026-01-01 → 2026-09-30" },
+      { "label": "Prior year / السنة السابقة", "dates": "2025-09-01 → 2025-09-30" }
+    ],
+    "rows": [
+      { "kind": "header", "label": "Revenue / الإيرادات", "indent": 0, "bold": false, "values": [ "", "", "" ], "accounts": [] },
+      { "kind": "accounts", "label": "Sales / المبيعات", "indent": 1, "bold": false, "values": [ "79,125,000.00", "612,400,000.00", "71,900,000.00" ], "accounts": [
+        { "code": "4100", "name": "Sales of goods / مبيعات البضائع", "values": [ "79,125,000.00", "612,400,000.00", "71,900,000.00" ] }
+      ] },
+      { "kind": "accounts", "label": "Cost of sales / تكلفة المبيعات", "indent": 1, "bold": false, "values": [ "51,430,000.00", "398,100,000.00", "47,250,000.00" ], "accounts": [] },
+      { "kind": "formula", "label": "Gross profit / مجمل الربح", "indent": 0, "bold": true, "values": [ "27,695,000.00", "214,300,000.00", "24,650,000.00" ], "accounts": [] },
+      { "kind": "blank", "label": "", "indent": 0, "bold": false, "values": [ "", "", "" ], "accounts": [] },
+      { "kind": "accounts", "label": "Operating expenses / المصروفات التشغيلية", "indent": 1, "bold": false, "values": [ "9,850,000.00", "81,200,000.00", "9,100,000.00" ], "accounts": [] },
+      { "kind": "formula", "label": "Net profit / صافي الربح", "indent": 0, "bold": true, "values": [ "17,845,000.00", "133,100,000.00", "15,550,000.00" ], "accounts": [] }
+    ]
+  }
+}

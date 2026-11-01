@@ -17,6 +17,14 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
 
     public DbSet<LayoutColumn> LayoutColumns => Set<LayoutColumn>();
 
+    public DbSet<Dashboard> Dashboards => Set<Dashboard>();
+
+    public DbSet<DashboardWidget> Widgets => Set<DashboardWidget>();
+
+    public DbSet<ReportSchedule> Schedules => Set<ReportSchedule>();
+
+    public DbSet<ReportRun> Runs => Set<ReportRun>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -64,6 +72,41 @@ public sealed class ReportingDbContext(DbContextOptions<ReportingDbContext> opti
         {
             b.ToTable("rpt_report_shares", "app");
             b.HasKey(static x => new { x.TenantId, x.Id });
+        });
+
+        modelBuilder.Entity<Dashboard>(b =>
+        {
+            b.ToTable("rpt_dashboards", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Name).HasColumnName("name_i18n");
+            b.Property(static x => x.Description).HasColumnName("description_i18n");
+            b.Property(static x => x.Layout).HasColumnType("jsonb");
+            b.HasMany(static x => x.Widgets).WithOne().HasForeignKey(static w => new { w.TenantId, w.DashboardId });
+            b.HasAuditTrail("dashboard", static x => x.Name.Resolve("en", "ar"));
+        });
+
+        modelBuilder.Entity<DashboardWidget>(b =>
+        {
+            b.ToTable("rpt_dashboard_widgets", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Title).HasColumnName("title_i18n");
+            b.Property(static x => x.Options).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<ReportSchedule>(b =>
+        {
+            b.ToTable("rpt_schedules", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Name).HasColumnName("name_i18n");
+            b.Property(static x => x.Recipients).HasColumnType("jsonb");
+            b.HasAuditTrail("report_schedule", static x => x.Name.Resolve("en", "ar"));
+        });
+
+        modelBuilder.Entity<ReportRun>(b =>
+        {
+            b.ToTable("rpt_runs", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Recipients).HasColumnType("jsonb");
         });
 
         base.OnModelCreating(modelBuilder);

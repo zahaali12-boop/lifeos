@@ -17,6 +17,8 @@ public static class ShippedTemplates
         new("customer_statement", "standard", "CUSTOMER-STATEMENT", LocalizedText.Bilingual("Statement of account", "كشف حساب"), LanguageModes.Bilingual, "customer_statement.html", "sample.customer_statement.json"),
         new("pos_order", "standard", "POS-RECEIPT", LocalizedText.Bilingual("Till receipt", "إيصال نقطة البيع"), LanguageModes.Bilingual, "pos_receipt.html", "sample.pos_receipt.json"),
         new("payslip", "standard", "PAYSLIP", LocalizedText.Bilingual("Payslip", "قسيمة راتب"), LanguageModes.Bilingual, "payslip.html", "sample.payslip.json"),
+        new("report", "standard", "REPORT", LocalizedText.Bilingual("Report", "تقرير"), LanguageModes.Bilingual, "report.html", "sample.report.json"),
+        new("financial_statement", "standard", "FINANCIAL-STATEMENT", LocalizedText.Bilingual("Financial statement", "قائمة مالية"), LanguageModes.Bilingual, "financial_statement.html", "sample.financial_statement.json"),
     ];
 
     public static readonly IReadOnlyList<string> FontFiles = ["DejaVuSans.ttf", "DejaVuSans-Bold.ttf"];

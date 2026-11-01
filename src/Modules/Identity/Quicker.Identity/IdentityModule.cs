@@ -39,6 +39,7 @@ public static class IdentityModule
         services.AddSingleton(static sp => new SecretProtector(sp.GetRequiredService<AuthOptions>().SecretProtectionKey));
         services.AddSingleton<Quicker.Identity.Contracts.ISecretProtector>(static sp => sp.GetRequiredService<SecretProtector>());
         services.AddScoped<Quicker.Identity.Contracts.IMemberDirectory, MemberDirectory>();
+        services.AddScoped<Quicker.Identity.Contracts.IMemberPrincipals, MemberPrincipals>();
         services.AddSingleton<IFido2>(static sp =>
         {
             var options = sp.GetRequiredService<AuthOptions>();

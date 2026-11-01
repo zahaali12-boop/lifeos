@@ -101,6 +101,29 @@ public sealed class PrintService(
         return html.IsFailure ? html.Error! : new PrintPreview(Stamp(html.Value), PrintFormat.Resolve(template.Name, mode), template.Code.ToLowerInvariant() + ".pdf", mode, template.Id, content.Version, false);
     }
 
+    /// <summary>Composes and renders the PDF now, in the caller's unit of work (a scheduled report attaches it), and returns its bytes; a render with the same HTML is reused.</summary>
+    public async Task<Result<PrintedPdf>> PrintNowAsync(PrintRequest request, CancellationToken cancellationToken)
+    {
+        var composed = await ComposeAsync(request, forPdf: true, cancellationToken);
+        if (composed.IsFailure)
+        {
+            return composed.Error!;
+        }
+
+        var (render, _) = await RequestRenderAsync(composed.Value, cancellationToken);
+        var ready = await RenderNowAsync(render.Id, cancellationToken);
+        if (ready.IsFailure)
+        {
+            return ready.Error!;
+        }
+
+        var stored = await db.Renders.AsNoTracking().SingleAsync(r => r.Id == render.Id, cancellationToken);
+        await using var file = await storage.GetAsync(stored.StorageKey!, cancellationToken: cancellationToken) ?? throw new InvalidOperationException($"Render {render.Id} has no file in the store.");
+        using var buffer = new MemoryStream();
+        await file.Content.CopyToAsync(buffer, cancellationToken);
+        return new PrintedPdf(buffer.ToArray(), stored.FileName, stored.Title);
+    }
+
     /// <summary>Asks for the PDF: a render with the same HTML already made is reused; otherwise a queued render the worker fills.</summary>
     public async Task<Result<PrintRenderSummary>> RequestAsync(PrintRequest request, CancellationToken cancellationToken)
     {

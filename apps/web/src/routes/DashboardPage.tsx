@@ -11,6 +11,7 @@ import { useCan } from "../lib/permissions";
 import { useSession } from "../session/session";
 import { today } from "./accounting/shared";
 import { PageHeader } from "./common";
+import { DashboardGrid, useDashboardRun, useDashboards, type Dashboard } from "./dashboards/shared";
 import { CompanyFilter, useCompanyContext } from "./inventory/shared";
 import { SetupCard } from "./setup/SetupCard";
 
@@ -253,6 +254,33 @@ function Today() {
   );
 }
 
+/** The dashboards pinned to the home page (founder programme item 9d), each run for the selected company over its default period. */
+function HomeDashboards() {
+  const { t } = useTranslation();
+  const { companyId } = useCompanyContext();
+  const pinned = useDashboards(companyId, true);
+  if (!companyId || !pinned.data || pinned.data.length === 0) {
+    return null;
+  }
+  return (
+    <div className="mb-6 flex flex-col gap-6" data-testid="home-dashboards">
+      {pinned.data.map((d) => <HomeDashboard key={d.id} dashboard={d} companyId={companyId} />)}
+    </div>
+  );
+  function HomeDashboard({ dashboard, companyId: company }: { dashboard: Dashboard; companyId: string }) {
+    const run = useDashboardRun(dashboard.id, company, dashboard.defaultPeriod, "", "", dashboard.refreshSeconds);
+    return (
+      <section aria-labelledby={`home-dashboard-${dashboard.id}`}>
+        <div className="mb-3 flex items-baseline justify-between gap-2">
+          <h2 id={`home-dashboard-${dashboard.id}`} className="text-lg font-semibold" dir="auto">{localized(dashboard.name)}</h2>
+          <Link to="/dashboards/view" search={{ dashboard: dashboard.id }} className="text-sm text-accent hover:underline">{t("dashboards.open")}</Link>
+        </div>
+        {run.data ? <DashboardGrid run={run.data} /> : null}
+      </section>
+    );
+  }
+}
+
 export function DashboardPage() {
   const { t } = useTranslation();
   const session = useSession();
@@ -265,6 +293,7 @@ export function DashboardPage() {
     <>
       <PageHeader title={t("dashboard.title", { name: session?.user.displayName ?? "" })} description={t("dashboard.description", { tenant: session?.tenant.name ?? "" })} />
       <Today />
+      <HomeDashboards />
       <h2 className="mb-3 text-lg font-semibold">{t("dashboard.workspace")}</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label={t("nav.companies")} value={formatNumber(companies.data?.length ?? 0)} to="/companies" />

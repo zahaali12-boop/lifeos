@@ -118,3 +118,14 @@ public interface ICurrentPrincipal
 
     Principal Required { get; }
 }
+
+/// <summary>
+/// The principal a member would have if they acted now, for work that runs on their behalf without a request: a
+/// scheduled report runs as the member who scheduled it, with that member's permissions and scopes at run time, so a
+/// report never shows more than its owner may see today.
+/// </summary>
+public interface IMemberPrincipals
+{
+    /// <summary>The member's principal in the current tenant, or null when the membership or the user is no longer active.</summary>
+    Task<Principal?> ForMemberAsync(MembershipId membershipId, CancellationToken cancellationToken = default);
+}

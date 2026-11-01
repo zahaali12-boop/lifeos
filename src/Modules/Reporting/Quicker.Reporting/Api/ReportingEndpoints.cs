@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Quicker.Reporting.Application;
+using Quicker.Reporting.Application.Dashboards;
 using Quicker.Reporting.Application.Facts;
 using Quicker.Reporting.Application.Reports;
+using Quicker.Reporting.Application.Schedules;
 using Quicker.Reporting.Application.Semantic;
 using Quicker.Reporting.Application.Statements;
 using Quicker.Web;
@@ -93,6 +95,50 @@ public static class ReportingEndpoints
         statements.MapPost("/drill", async (StatementDrillRequest request, StatementService service, CancellationToken ct) => ApiProblems.Ok(await service.DrillAsync(request, ct)))
             .RequirePermission(ReportingPermissions.ReportRun)
             .WithSummary("The accounts behind one cell of a statement, with the column's window so each opens in the ledger.");
+
+        // Dashboards (slice 9d): widgets over saved reports and statements, run as whoever opens them.
+        var dashboards = reporting.MapGroup("/dashboards");
+        dashboards.MapGet("/", async (Guid? companyId, bool? home, DashboardService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, home == true, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("The dashboards the caller owns or that are shared with the workspace, optionally those for one company or only those pinned to the home page.");
+        dashboards.MapGet("/{dashboardId:guid}", async (Guid dashboardId, DashboardService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(dashboardId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun);
+        dashboards.MapPost("/", async (SaveDashboardRequest request, DashboardService service, CancellationToken ct) => ApiProblems.Created(await service.SaveAsync(null, request, ct), static d => $"/api/v1/reporting/dashboards/{d.Id}"))
+            .RequirePermission(ReportingPermissions.ReportManage)
+            .WithSummary("Saves a dashboard and its widgets after checking each widget's source, drawing, period and width.");
+        dashboards.MapPut("/{dashboardId:guid}", async (Guid dashboardId, SaveDashboardRequest request, DashboardService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveAsync(dashboardId, request, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage);
+        dashboards.MapDelete("/{dashboardId:guid}", async (Guid dashboardId, DashboardService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(dashboardId, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage);
+        dashboards.MapPost("/{dashboardId:guid}/run", async (Guid dashboardId, RunDashboardRequest request, DashboardService service, CancellationToken ct) => ApiProblems.Ok(await service.RunAsync(dashboardId, request, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("Runs every widget for a company over the period (the dashboard's, a named one, or fixed dates) as the caller; a widget that fails reports its error in place.");
+
+        // Schedules (slice 9d): a saved report or a statement run as its owner on a cron, filed and emailed; every run kept.
+        var schedules = reporting.MapGroup("/schedules");
+        schedules.MapGet("/", async (Guid? companyId, ScheduleService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("The caller's schedules (every schedule for a workspace owner), with the next and the last run.");
+        schedules.MapGet("/{scheduleId:guid}", async (Guid scheduleId, ScheduleService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(scheduleId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun);
+        schedules.MapPost("/", async (SaveReportScheduleRequest request, ScheduleService service, CancellationToken ct) => ApiProblems.Created(await service.SaveAsync(null, request, ct), static s => $"/api/v1/reporting/schedules/{s.Id}"))
+            .RequirePermission(ReportingPermissions.ReportManage)
+            .WithSummary("Saves a schedule (source, relative period, cron and time zone, format, recipients) and the platform entry that fires it.");
+        schedules.MapPut("/{scheduleId:guid}", async (Guid scheduleId, SaveReportScheduleRequest request, ScheduleService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveAsync(scheduleId, request, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage);
+        schedules.MapDelete("/{scheduleId:guid}", async (Guid scheduleId, ScheduleService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(scheduleId, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage);
+        schedules.MapPost("/{scheduleId:guid}/run", async (Guid scheduleId, ScheduleService service, CancellationToken ct) => ApiProblems.Ok(await service.RunNowAsync(scheduleId, ct)))
+            .RequirePermission(ReportingPermissions.ReportManage)
+            .WithSummary("Runs the schedule now through the worker; the run is recorded like a scheduled one, marked manual.");
+        schedules.MapGet("/{scheduleId:guid}/runs", async (Guid scheduleId, ScheduleService service, CancellationToken ct) => ApiProblems.Ok(await service.RunsAsync(scheduleId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("The last hundred runs of the schedule, newest first: when, as whom, the window, the row count, the file, the recipients, or the error.");
+        schedules.MapGet("/runs/{runId:guid}/file", async (Guid runId, ScheduleService service, CancellationToken ct) =>
+            ApiProblems.From(await service.OpenRunFileAsync(runId, ct), static f => Results.Stream(f.Content, f.ContentType, f.FileName)))
+            .Produces<Stream>(StatusCodes.Status200OK, "application/octet-stream")
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("The file a run produced.");
 
         return api;
     }

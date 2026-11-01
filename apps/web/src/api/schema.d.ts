@@ -11847,6 +11847,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/dashboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The dashboards the caller owns or that are shared with the workspace, optionally those for one company or only those pinned to the home page. */
+        get: operations["getReportingDashboards"];
+        put?: never;
+        /** Saves a dashboard and its widgets after checking each widget's source, drawing, period and width. */
+        post: operations["postReportingDashboards"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/dashboards/{dashboardId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReportingDashboardsByDashboardId"];
+        put: operations["putReportingDashboardsByDashboardId"];
+        post?: never;
+        delete: operations["deleteReportingDashboardsByDashboardId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/dashboards/{dashboardId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs every widget for a company over the period (the dashboard's, a named one, or fixed dates) as the caller; a widget that fails reports its error in place. */
+        post: operations["postReportingDashboardsByDashboardIdRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's schedules (every schedule for a workspace owner), with the next and the last run. */
+        get: operations["getReportingSchedules"];
+        put?: never;
+        /** Saves a schedule (source, relative period, cron and time zone, format, recipients) and the platform entry that fires it. */
+        post: operations["postReportingSchedules"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/schedules/{scheduleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReportingSchedulesByScheduleId"];
+        put: operations["putReportingSchedulesByScheduleId"];
+        post?: never;
+        delete: operations["deleteReportingSchedulesByScheduleId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/schedules/{scheduleId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs the schedule now through the worker; the run is recorded like a scheduled one, marked manual. */
+        post: operations["postReportingSchedulesByScheduleIdRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/schedules/{scheduleId}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The last hundred runs of the schedule, newest first: when, as whom, the window, the row count, the file, the recipients, or the error. */
+        get: operations["getReportingSchedulesByScheduleIdRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/schedules/runs/{runId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The file a run produced. */
+        get: operations["getReportingSchedulesRunsByRunIdFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -14397,6 +14533,65 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             defaultValue?: unknown;
+        };
+        DashboardResult: {
+            /** Format: uuid */
+            dashboardId: string;
+            /** Format: uuid */
+            companyId: string;
+            period: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            widgets: components["schemas"]["WidgetResult"][];
+            /** Format: int32 */
+            durationMs: number | string;
+        };
+        DashboardSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: null | string;
+            name: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            ownerMembershipId: string;
+            isOwner: boolean;
+            canEdit: boolean;
+            sharing: string;
+            showOnHome: boolean;
+            defaultPeriod: string;
+            /** Format: int32 */
+            refreshSeconds: null | number | string;
+            widgets: components["schemas"]["DashboardWidgetSummary"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DashboardWidgetSummary: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            source: string;
+            viz: string;
+            title: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            reportId: null | string;
+            /** Format: uuid */
+            layoutId: null | string;
+            layoutCode: null | string;
+            period: string;
+            /** Format: int32 */
+            width: number | string;
+            options: components["schemas"]["WidgetOptions"];
         };
         DeferralLineSummary: {
             /** Format: int32 */
@@ -20185,6 +20380,71 @@ export interface components {
             canDrill: boolean;
             fields: components["schemas"]["ReportCatalogueField"][];
         };
+        ReportRunSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            scheduleId: string;
+            trigger: string;
+            status: string;
+            /** Format: uuid */
+            runAsMembershipId: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            finishedAt: null | string;
+            /** Format: date */
+            periodFrom: null | string;
+            /** Format: date */
+            periodTo: null | string;
+            /** Format: int32 */
+            rowCount: null | number | string;
+            fileName: null | string;
+            contentType: null | string;
+            /** Format: int64 */
+            sizeBytes: null | number | string;
+            recipients: string[];
+            error: null | string;
+            hasFile: boolean;
+        };
+        ReportScheduleSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            ownerMembershipId: string;
+            isOwner: boolean;
+            source: string;
+            /** Format: uuid */
+            reportId: null | string;
+            /** Format: uuid */
+            layoutId: null | string;
+            layoutCode: null | string;
+            sourceName: null | {
+                [key: string]: string;
+            };
+            period: string;
+            cron: string;
+            timeZone: string;
+            format: string;
+            recipients: components["schemas"]["ScheduleRecipient"][];
+            onlyIfRows: boolean;
+            includeClosing: null | boolean;
+            enabled: boolean;
+            /** Format: date-time */
+            nextRunAt: null | string;
+            /** Format: date-time */
+            lastRunAt: null | string;
+            lastStatus: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         ReportSummary: {
             /** Format: uuid */
             id: string;
@@ -20885,6 +21145,16 @@ export interface components {
             };
             condition: string;
             steps: components["schemas"]["StepSummary"][];
+        };
+        /** @description Runs a dashboard for a company over a period: the dashboard's default period, another named one, or fixed dates (`custom`). */
+        RunDashboardRequest: {
+            /** Format: uuid */
+            companyId: string;
+            period?: null | string;
+            /** Format: date */
+            from?: null | string;
+            /** Format: date */
+            to?: null | string;
         };
         /** @description Overrides when running a saved report: another company, another range; everything else is the saved definition. */
         RunReportRequest: {
@@ -21972,6 +22242,25 @@ export interface components {
                 [key: string]: string;
             };
             defaultValue?: unknown;
+        };
+        SaveDashboardRequest: {
+            name: {
+                [key: string]: string;
+            };
+            widgets: components["schemas"]["WidgetDefinition"][];
+            description?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId?: null | string;
+            /** @default private */
+            sharing: string;
+            /** @default false */
+            showOnHome: boolean;
+            /** @default this_month */
+            defaultPeriod: string;
+            /** Format: int32 */
+            refreshSeconds?: null | number | string;
         };
         SaveDeferralRequest: {
             kind: string;
@@ -23313,6 +23602,30 @@ export interface components {
             companyId?: null | string;
             shares?: null | components["schemas"]["ShareRequest"][];
         };
+        SaveReportScheduleRequest: {
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId: string;
+            source: string;
+            cron: string;
+            format: string;
+            recipients: components["schemas"]["ScheduleRecipient"][];
+            /** Format: uuid */
+            reportId?: null | string;
+            /** Format: uuid */
+            layoutId?: null | string;
+            layoutCode?: null | string;
+            /** @default last_month */
+            period: string;
+            timeZone?: null | string;
+            /** @default false */
+            onlyIfRows: boolean;
+            includeClosing?: null | boolean;
+            /** @default true */
+            enabled: boolean;
+        };
         SaveRequisitionLineRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -24024,6 +24337,12 @@ export interface components {
             /** Format: date */
             deliveryDate?: null | string;
         };
+        /** @description Who a schedule sends to: a member (by membership, at the address on their profile at run time) or an outside address. */
+        ScheduleRecipient: {
+            /** Format: uuid */
+            membershipId?: null | string;
+            email?: null | string;
+        };
         ScheduleRecord: {
             /** Format: uuid */
             id?: string;
@@ -24045,6 +24364,13 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+        };
+        /** @description What a "run now" returns: the job that will run the schedule. */
+        ScheduleRunRequested: {
+            /** Format: uuid */
+            scheduleId: string;
+            /** Format: uuid */
+            jobId: string;
         };
         ScopeInput: {
             scopeType: string;
@@ -26225,6 +26551,72 @@ export interface components {
             isActive: boolean;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description A widget as saved: its source (a saved report by id, or a statement layout by id or shipped code), how it is drawn, its period and width (of four columns). */
+        WidgetDefinition: {
+            source: string;
+            viz: string;
+            title?: null | {
+                [key: string]: string;
+            };
+            code?: null | string;
+            /** Format: uuid */
+            reportId?: null | string;
+            /** Format: uuid */
+            layoutId?: null | string;
+            layoutCode?: null | string;
+            /** @default dashboard */
+            period: string;
+            /**
+             * Format: int32
+             * @default 2
+             */
+            width: number | string;
+            options?: null | components["schemas"]["WidgetOptions"];
+        };
+        /** @description A KPI: one figure, the comparable figure of the prior window when the source carries one, and how to format it. */
+        WidgetKpi: {
+            /** Format: double */
+            value: null | number | string;
+            /** Format: double */
+            prior: null | number | string;
+            type: string;
+            currency: string;
+            label: {
+                [key: string]: string;
+            };
+        };
+        /** @description How a widget reads its source: the chart options of a chart widget, the measure of a KPI over a report, the row and column of a KPI over a statement, the closing-entry choice of a statement. */
+        WidgetOptions: {
+            chart?: null | components["schemas"]["ChartOptions"];
+            measure?: null | string;
+            rowCode?: null | string;
+            columnCode?: null | string;
+            includeClosing?: null | boolean;
+            /** @default false */
+            showComparison: boolean;
+        };
+        WidgetResult: {
+            /** Format: uuid */
+            widgetId: string;
+            code: string;
+            source: string;
+            viz: string;
+            title: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            width: number | string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            query: null | components["schemas"]["QueryResult"];
+            statement: null | components["schemas"]["StatementResult"];
+            kpi: null | components["schemas"]["WidgetKpi"];
+            chart: null | components["schemas"]["ChartOptions"];
+            errorCode: null | string;
+            errorMessage: null | string;
         };
         WorkflowCatalogue: {
             subjects: components["schemas"]["CatalogueEntry"][];
@@ -48243,6 +48635,327 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatementDrill"];
+                };
+            };
+        };
+    };
+    getReportingDashboards: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                home?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"][];
+                };
+            };
+        };
+    };
+    postReportingDashboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+        };
+    };
+    getReportingDashboardsByDashboardId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+        };
+    };
+    putReportingDashboardsByDashboardId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+        };
+    };
+    deleteReportingDashboardsByDashboardId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postReportingDashboardsByDashboardIdRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunDashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardResult"];
+                };
+            };
+        };
+    };
+    getReportingSchedules: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleSummary"][];
+                };
+            };
+        };
+    };
+    postReportingSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReportScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleSummary"];
+                };
+            };
+        };
+    };
+    getReportingSchedulesByScheduleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleSummary"];
+                };
+            };
+        };
+    };
+    putReportingSchedulesByScheduleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveReportScheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportScheduleSummary"];
+                };
+            };
+        };
+    };
+    deleteReportingSchedulesByScheduleId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postReportingSchedulesByScheduleIdRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleRunRequested"];
+                };
+            };
+        };
+    };
+    getReportingSchedulesByScheduleIdRuns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheduleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportRunSummary"][];
+                };
+            };
+        };
+    };
+    getReportingSchedulesRunsByRunIdFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": components["schemas"]["Stream"];
                 };
             };
         };

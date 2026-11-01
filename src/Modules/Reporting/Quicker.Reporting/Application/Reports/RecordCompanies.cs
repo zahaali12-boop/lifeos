@@ -1,6 +1,8 @@
 using Dapper;
 using Quicker.Collaboration.Contracts;
 using Quicker.Persistence;
+using Quicker.Reporting.Application.Dashboards;
+using Quicker.Reporting.Application.Schedules;
 using Quicker.Reporting.Application.Statements;
 
 namespace Quicker.Reporting.Application.Reports;
@@ -12,6 +14,8 @@ internal sealed class ReportingRecordCompanies(IUnitOfWorkAccessor unitOfWork) :
     {
         [ReportService.AuditEntity] = "app.rpt_reports",
         [LayoutService.AuditEntity] = "app.rpt_financial_layouts",
+        [DashboardService.AuditEntity] = "app.rpt_dashboards",
+        [ScheduleService.AuditEntity] = "app.rpt_schedules",
     };
 
     public IReadOnlyCollection<string> EntityTypes => Tables.Keys;

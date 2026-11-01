@@ -34256,6 +34256,464 @@
           }
         }
       }
+    },
+    "/api/v1/reporting/dashboards": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The dashboards the caller owns or that are shared with the workspace, optionally those for one company or only those pinned to the home page.",
+        "operationId": "getReportingDashboards",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "home",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DashboardSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Saves a dashboard and its widgets after checking each widget's source, drawing, period and width.",
+        "operationId": "postReportingDashboards",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/dashboards/{dashboardId}": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "getReportingDashboardsByDashboardId",
+        "parameters": [
+          {
+            "name": "dashboardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "putReportingDashboardsByDashboardId",
+        "parameters": [
+          {
+            "name": "dashboardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "deleteReportingDashboardsByDashboardId",
+        "parameters": [
+          {
+            "name": "dashboardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/dashboards/{dashboardId}/run": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Runs every widget for a company over the period (the dashboard's, a named one, or fixed dates) as the caller; a widget that fails reports its error in place.",
+        "operationId": "postReportingDashboardsByDashboardIdRun",
+        "parameters": [
+          {
+            "name": "dashboardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/schedules": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The caller's schedules (every schedule for a workspace owner), with the next and the last run.",
+        "operationId": "getReportingSchedules",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportScheduleSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Saves a schedule (source, relative period, cron and time zone, format, recipients) and the platform entry that fires it.",
+        "operationId": "postReportingSchedules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReportScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/schedules/{scheduleId}": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "getReportingSchedulesByScheduleId",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "putReportingSchedulesByScheduleId",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveReportScheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "deleteReportingSchedulesByScheduleId",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/schedules/{scheduleId}/run": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Runs the schedule now through the worker; the run is recorded like a scheduled one, marked manual.",
+        "operationId": "postReportingSchedulesByScheduleIdRun",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleRunRequested"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/schedules/{scheduleId}/runs": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The last hundred runs of the schedule, newest first: when, as whom, the window, the row count, the file, the recipients, or the error.",
+        "operationId": "getReportingSchedulesByScheduleIdRuns",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportRunSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/schedules/runs/{runId}/file": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The file a run produced.",
+        "operationId": "getReportingSchedulesRunsByRunIdFile",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stream"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -43816,6 +44274,210 @@
             "format": "date-time"
           },
           "defaultValue": { }
+        }
+      },
+      "DashboardResult": {
+        "required": [
+          "dashboardId",
+          "companyId",
+          "period",
+          "from",
+          "to",
+          "widgets",
+          "durationMs"
+        ],
+        "type": "object",
+        "properties": {
+          "dashboardId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "period": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WidgetResult"
+            }
+          },
+          "durationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "DashboardSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "description",
+          "ownerMembershipId",
+          "isOwner",
+          "canEdit",
+          "sharing",
+          "showOnHome",
+          "defaultPeriod",
+          "refreshSeconds",
+          "widgets",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "ownerMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isOwner": {
+            "type": "boolean"
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "sharing": {
+            "type": "string"
+          },
+          "showOnHome": {
+            "type": "boolean"
+          },
+          "defaultPeriod": {
+            "type": "string"
+          },
+          "refreshSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardWidgetSummary"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DashboardWidgetSummary": {
+        "required": [
+          "id",
+          "code",
+          "source",
+          "viz",
+          "title",
+          "reportId",
+          "layoutId",
+          "layoutCode",
+          "period",
+          "width",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "viz": {
+            "type": "string"
+          },
+          "title": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "reportId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "period": {
+            "type": "string"
+          },
+          "width": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "options": {
+            "$ref": "#/components/schemas/WidgetOptions"
+          }
         }
       },
       "DeferralLineSummary": {
@@ -65792,6 +66454,258 @@
           }
         }
       },
+      "ReportRunSummary": {
+        "required": [
+          "id",
+          "scheduleId",
+          "trigger",
+          "status",
+          "runAsMembershipId",
+          "startedAt",
+          "finishedAt",
+          "periodFrom",
+          "periodTo",
+          "rowCount",
+          "fileName",
+          "contentType",
+          "sizeBytes",
+          "recipients",
+          "error",
+          "hasFile"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trigger": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "runAsMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "periodFrom": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "periodTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "rowCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fileName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sizeBytes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasFile": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ReportScheduleSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "ownerMembershipId",
+          "isOwner",
+          "source",
+          "reportId",
+          "layoutId",
+          "layoutCode",
+          "sourceName",
+          "period",
+          "cron",
+          "timeZone",
+          "format",
+          "recipients",
+          "onlyIfRows",
+          "includeClosing",
+          "enabled",
+          "nextRunAt",
+          "lastRunAt",
+          "lastStatus",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "ownerMembershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isOwner": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "reportId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "period": {
+            "type": "string"
+          },
+          "cron": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRecipient"
+            }
+          },
+          "onlyIfRows": {
+            "type": "boolean"
+          },
+          "includeClosing": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "nextRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ReportSummary": {
         "required": [
           "id",
@@ -68441,6 +69355,39 @@
             }
           }
         }
+      },
+      "RunDashboardRequest": {
+        "required": [
+          "companyId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "period": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Runs a dashboard for a company over a period: the dashboard's default period, another named one, or fixed dates (`custom`)."
       },
       "RunReportRequest": {
         "type": "object",
@@ -72283,6 +73230,64 @@
             }
           },
           "defaultValue": { }
+        }
+      },
+      "SaveDashboardRequest": {
+        "required": [
+          "name",
+          "widgets"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "widgets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WidgetDefinition"
+            }
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "sharing": {
+            "type": "string",
+            "default": "private"
+          },
+          "showOnHome": {
+            "type": "boolean",
+            "default": false
+          },
+          "defaultPeriod": {
+            "type": "string",
+            "default": "this_month"
+          },
+          "refreshSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
         }
       },
       "SaveDeferralRequest": {
@@ -76735,6 +77740,88 @@
           }
         }
       },
+      "SaveReportScheduleRequest": {
+        "required": [
+          "name",
+          "companyId",
+          "source",
+          "cron",
+          "format",
+          "recipients"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string"
+          },
+          "cron": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRecipient"
+            }
+          },
+          "reportId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "period": {
+            "type": "string",
+            "default": "last_month"
+          },
+          "timeZone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "onlyIfRows": {
+            "type": "boolean",
+            "default": false
+          },
+          "includeClosing": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "SaveRequisitionLineRequest": {
         "type": "object",
         "properties": {
@@ -79102,6 +80189,25 @@
           }
         }
       },
+      "ScheduleRecipient": {
+        "type": "object",
+        "properties": {
+          "membershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Who a schedule sends to: a member (by membership, at the address on their profile at run time) or an outside address."
+      },
       "ScheduleRecord": {
         "type": "object",
         "properties": {
@@ -79164,6 +80270,24 @@
             "format": "date-time"
           }
         }
+      },
+      "ScheduleRunRequested": {
+        "required": [
+          "scheduleId",
+          "jobId"
+        ],
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "description": "What a \"run now\" returns: the job that will run the schedule."
       },
       "ScopeInput": {
         "required": [
@@ -87144,6 +88268,275 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "WidgetDefinition": {
+        "required": [
+          "source",
+          "viz"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "viz": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reportId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "period": {
+            "type": "string",
+            "default": "dashboard"
+          },
+          "width": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 2
+          },
+          "options": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetOptions"
+              }
+            ]
+          }
+        },
+        "description": "A widget as saved: its source (a saved report by id, or a statement layout by id or shipped code), how it is drawn, its period and width (of four columns)."
+      },
+      "WidgetKpi": {
+        "required": [
+          "value",
+          "prior",
+          "type",
+          "currency",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "prior": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "type": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A KPI: one figure, the comparable figure of the prior window when the source carries one, and how to format it."
+      },
+      "WidgetOptions": {
+        "type": "object",
+        "properties": {
+          "chart": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChartOptions"
+              }
+            ]
+          },
+          "measure": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rowCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "columnCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "includeClosing": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "showComparison": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "How a widget reads its source: the chart options of a chart widget, the measure of a KPI over a report, the row and column of a KPI over a statement, the closing-entry choice of a statement."
+      },
+      "WidgetResult": {
+        "required": [
+          "widgetId",
+          "code",
+          "source",
+          "viz",
+          "title",
+          "width",
+          "from",
+          "to",
+          "query",
+          "statement",
+          "kpi",
+          "chart",
+          "errorCode",
+          "errorMessage"
+        ],
+        "type": "object",
+        "properties": {
+          "widgetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "viz": {
+            "type": "string"
+          },
+          "title": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "width": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "query": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QueryResult"
+              }
+            ]
+          },
+          "statement": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatementResult"
+              }
+            ]
+          },
+          "kpi": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WidgetKpi"
+              }
+            ]
+          },
+          "chart": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChartOptions"
+              }
+            ]
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

@@ -4,6 +4,7 @@ using Quicker.Identity.Contracts;
 using Quicker.Messaging;
 using Quicker.Persistence.EntityFramework;
 using Quicker.Printing.Application;
+using Quicker.Printing.Contracts;
 using Quicker.Printing.Persistence;
 
 namespace Quicker.Printing;
@@ -20,6 +21,7 @@ public static class PrintingModule
         services.AddSingleton<IPdfRenderer, ChromiumPdfRenderer>();
         services.AddScoped<TemplateService>();
         services.AddScoped<PrintService>();
+        services.AddScoped<IPdfPrinter, PdfPrinter>();
         services.AddScoped<ShareService>();
         services.AddScoped<PrintFailureRecorder>();
         services.AddJobHandler<PrintRenderJob, PrintRenderPayload>();

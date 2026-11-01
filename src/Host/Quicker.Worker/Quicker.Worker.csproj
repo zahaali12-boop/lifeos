@@ -33,6 +33,13 @@
     <ProjectReference Include="../../Modules/Purchasing/Quicker.Purchasing/Quicker.Purchasing.csproj" />
     <ProjectReference Include="../../Modules/Sales/Quicker.Sales/Quicker.Sales.csproj" />
     <ProjectReference Include="../../Modules/Printing/Quicker.Printing/Quicker.Printing.csproj" />
+    <ProjectReference Include="../../Modules/Einvoicing/Quicker.Einvoicing/Quicker.Einvoicing.csproj" />
+    <ProjectReference Include="../../Modules/Pos/Quicker.Pos/Quicker.Pos.csproj" />
+    <ProjectReference Include="../../Modules/Payroll/Quicker.Payroll/Quicker.Payroll.csproj" />
+    <ProjectReference Include="../../Modules/Onboarding/Quicker.Onboarding/Quicker.Onboarding.csproj" />
+    <ProjectReference Include="../../Modules/Expenses/Quicker.Expenses/Quicker.Expenses.csproj" />
+    <ProjectReference Include="../../Modules/FixedAssets/Quicker.FixedAssets/Quicker.FixedAssets.csproj" />
+    <ProjectReference Include="../../Modules/Reporting/Quicker.Reporting/Quicker.Reporting.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Quicker.Storage/Quicker.Storage.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Quicker.Observability/Quicker.Observability.csproj" />
   </ItemGroup>

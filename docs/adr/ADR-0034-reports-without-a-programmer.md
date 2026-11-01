@@ -96,6 +96,25 @@ the ledger inquiry: the profit and loss equals the credit less debit movement of
 trial balance layout equals the inquiry account by account, the balance sheet balances. Budget columns wait for item
 12; the cash flow kind is accepted but no shipped cash flow layout exists yet; PDF of a statement comes with 9d.
 
+## Delivered in slice 9d (2026-11-01)
+
+Dashboards, schedules and runs (`V0071__reporting_dashboards.sql`: `rpt_dashboards`, `rpt_dashboard_widgets`,
+`rpt_schedules`, `rpt_runs`; A-185): `DashboardService` (save after checking every widget's source, drawing, period
+and width; run every widget as the caller, a KPI summed over a report or read from a statement cell with the prior
+figure, a widget's own period or the dashboard's, a failing widget reported in place), `ScheduleService` (save with
+cron, time zone, format and recipients checked; the mirrored `ops.schedules` entry for the job `reporting.run`,
+upserted by code and disabled or deleted with the schedule; run now; the run history; the run's file), the job
+`ReportRunJob` (runs as the schedule's owner through `IMemberPrincipals`, resolves the relative period on the
+company's calendar, writes CSV or XLSX with the shared tabular writer or a PDF through the print pipeline's
+`IPdfPrinter`, stores the file, emails each recipient with the attachment, records the run in a transaction of its own
+so a failure is kept), the print models `report` and `financial_statement` with their shipped templates, and the
+endpoints under `/reporting/dashboards` and `/reporting/schedules`. Two contracts were added for it: Identity's
+`IMemberPrincipals` (a member's principal built without a request) and Printing's `IPdfPrinter` (compose and render
+now). The worker host now registers every module, so the reporting, fixed-asset, payroll, POS, expenses, onboarding and
+e-invoicing jobs run in a standalone worker as they do in the embedded one. Web: `/dashboards` (list), the dashboard
+screen with its designer and period, pinned dashboards on the home page, and `/reports/schedules` with the editor,
+run now and the run history. Deferred: see A-185.
+
 ## Consequences
 
 * Reports, statements, dashboards, exports and the AI share one secure engine; adding a model is a code change with

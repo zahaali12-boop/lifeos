@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans.ttf"); font-weight: 400; }
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans-Bold.ttf"); font-weight: 700; }
+@page { size: {{ paper }} landscape; margin: 12mm 12mm 16mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Sans", sans-serif; font-size: 8pt; color: #666; } }
+{{ css }}
+table.lines td, table.lines th { font-size: 8.5pt; }
+.report-note { color: #666; font-size: 8pt; margin-block-start: 2mm; }
+</style>
+</head>
+<body class="{{ mode }} {{ variant }} report">
+<div class="sheet">
+  <header class="doc-header">
+    <div class="company">
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+    </div>
+    <div class="doc">
+      <p class="title">{{ document.name | html.escape }}</p>
+      <table>
+        <tr><td class="k">{{ L.period }}</td><td class="v">{{ document.period_from }} – {{ document.period_to }}</td></tr>
+        <tr><td class="k">{{ L.currency }}</td><td class="v">{{ currency }}</td></tr>
+        <tr><td class="k">{{ L.date }}</td><td class="v">{{ document_date }}</td></tr>
+      </table>
+    </div>
+  </header>
+
+  {{ if document.filters && document.filters.size > 0 }}
+  <p class="muted">{{ for f in document.filters }}<span>{{ f.label | html.escape }}: {{ f.text | html.escape }}</span>{{ if !for.last }} · {{ end }}{{ end }}</p>
+  {{ end }}
+
+  <table class="lines">
+    <thead>
+      <tr>
+        {{ for c in document.columns }}<th{{ if c.numeric }} class="num"{{ end }}>{{ c.label | html.escape }}</th>{{ end }}
+      </tr>
+    </thead>
+    <tbody>
+      {{ for r in document.rows }}
+      <tr>
+        {{ for v in r.cells }}<td{{ if v.numeric }} class="num"{{ end }}>{{ v.text | html.escape }}</td>{{ end }}
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  <p class="report-note">{{ document.row_count }} {{ document.rows_label | html.escape }}{{ if document.truncated }} ({{ document.truncated_label | html.escape }}){{ end }}</p>
+
+  <footer class="foot">
+    <span>{{ document.source_label | html.escape }}: {{ document.model | html.escape }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

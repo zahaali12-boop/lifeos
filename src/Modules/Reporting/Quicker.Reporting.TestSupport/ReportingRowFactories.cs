@@ -1,4 +1,5 @@
 using Dapper;
+using Npgsql;
 using Quicker.Testing;
 
 namespace Quicker.Reporting.TestSupport;
@@ -86,6 +87,45 @@ public static class ReportingRowFactories
                 """, new { t, report, id, owner = Guid.CreateVersion7() }, tx);
             return new RowRef("app.rpt_report_shares", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.rpt_dashboards", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.rpt_dashboards (tenant_id, id, name_i18n, owner_membership_id) VALUES (@t, @id, '{\"en\": \"Dash\"}', @owner)", new { t, id, owner = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.rpt_dashboards", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.rpt_dashboard_widgets", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            var dashboard = Guid.CreateVersion7();
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_dashboards (tenant_id, id, name_i18n, owner_membership_id) VALUES (@t, @dashboard, '{"en": "Dash"}', @owner);
+                INSERT INTO app.rpt_dashboard_widgets (tenant_id, id, dashboard_id, code, source, layout_code, viz) VALUES (@t, @id, @dashboard, 'W1', 'statement', 'PL', 'table')
+                """, new { t, id, dashboard, owner = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.rpt_dashboard_widgets", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.rpt_schedules", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            var company = await CompanyAsync(c, tx, t);
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_schedules (tenant_id, id, company_id, name_i18n, owner_membership_id, source, layout_code, cron, time_zone, format)
+                VALUES (@t, @id, @company, '{"en": "Monthly"}', @owner, 'statement', 'PL', '0 7 1 * *', 'UTC', 'xlsx')
+                """, new { t, id, company, owner = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.rpt_schedules", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.rpt_runs", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            var schedule = Guid.CreateVersion7();
+            var company = await CompanyAsync(c, tx, t);
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_schedules (tenant_id, id, company_id, name_i18n, owner_membership_id, source, layout_code, cron, time_zone, format)
+                VALUES (@t, @schedule, @company, '{"en": "Monthly"}', @owner, 'statement', 'PL', '0 7 1 * *', 'UTC', 'xlsx');
+                INSERT INTO app.rpt_runs (tenant_id, id, schedule_id, company_id, source, layout_code, run_as_membership_id, started_at, status)
+                VALUES (@t, @id, @schedule, @company, 'statement', 'PL', @owner, now(), 'sent')
+                """, new { t, id, schedule, company, owner = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.rpt_runs", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.rpt_financial_layouts", static async (c, tx, t) =>
         {
             var id = Guid.CreateVersion7();
@@ -118,4 +158,18 @@ public static class ReportingRowFactories
     }
 
     private static string Suffix(Guid id) => "P" + id.ToString("N")[^8..].ToUpperInvariant();
+
+    private static async Task<Guid> CompanyAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var fiscal = Guid.CreateVersion7();
+        var business = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.org_fiscal_calendars (tenant_id, id, code, name_i18n, start_month, periods_per_year) VALUES (@t, @fiscal, @code, '{}', 1, 12)", new { t, fiscal, code = Suffix(fiscal).ToLowerInvariant() }, tx);
+        await c.ExecuteAsync("INSERT INTO app.org_business_calendars (tenant_id, id, code, name_i18n, working_days) VALUES (@t, @business, @code, '{}', ARRAY[0,1,2,3,4])", new { t, business, code = Suffix(business).ToLowerInvariant() }, tx);
+        var id = Guid.CreateVersion7();
+        await c.ExecuteAsync("""
+            INSERT INTO app.org_companies (tenant_id, id, code, legal_name_i18n, country, functional_currency, fiscal_calendar_id, business_calendar_id, time_zone)
+            VALUES (@t, @id, @code, '{"en":"Probe"}', 'IQ', 'IQD', @fiscal, @business, 'Asia/Baghdad')
+            """, new { t, id, code = Suffix(id), fiscal, business }, tx);
+        return id;
+    }
 }

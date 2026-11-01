@@ -4135,6 +4135,16 @@ debits, credits or closing, or a variance between two other columns, in the func
 shipped profit and loss, balance sheet and trial balance are code; a tenant layout is a copy or a design of its own,
 listed on the statements screen when published. Changes are audited as `financial_layout`.
 
+A **dashboard** (`rpt_dashboards`, slice 9d, A-185) is widgets over saved reports and statement layouts: a KPI (a
+measure summed over the result, or a cell of a statement, with the prior window's figure when the source compares),
+a chart, a table or a statement, each one to four columns wide, each following the dashboard's period or naming
+one of its own. It runs as whoever opens it, with their scopes; private to its owner or shared with the workspace;
+pinned to the home page when asked. A **schedule** (`rpt_schedules`) runs a saved report or a statement as its owner
+on a cron, over a relative period resolved on the company's calendar, as CSV, XLSX or PDF (through the print
+pipeline), to members and outside addresses; a tenant entry in `ops.schedules` fires the job `reporting.run`, and
+every **run** (`rpt_runs`) keeps when, as whom, the window, the row count, the file and the recipients, or the error.
+Dashboards are audited as `dashboard`, schedules as `report_schedule`.
+
 ```mermaid
 erDiagram
   rpt_models ||--|{ rpt_fields : "exposes"
@@ -4193,39 +4203,68 @@ erDiagram
   }
   rpt_schedules {
     uuid id PK
+    uuid company_id FK
+    i18n name
+    uuid owner_membership_id "the run acts as this member"
+    text source "report | statement"
     uuid report_id FK
+    uuid layout_id FK
+    text layout_code "a shipped layout"
+    text period "last_month, this_month, yesterday ... resolved at run time"
     text cron
-    jsonb parameters
-    jsonb recipients
-    text format "pdf | xlsx | csv"
+    text time_zone
+    text format "csv | xlsx | pdf"
+    jsonb recipients "members by id, outside addresses"
     bool only_if_rows
+    bool include_closing
     bool enabled
+    uuid platform_schedule_id "the ops.schedules row that fires reporting.run"
   }
   rpt_runs {
     uuid id PK
     uuid schedule_id FK
-    uuid report_id
+    uuid company_id
     uuid run_as_membership_id
+    text trigger "schedule | manual"
+    uuid job_id
     timestamptz started_at
+    timestamptz finished_at
+    text status "running | sent | skipped | failed"
+    date period_from
+    date period_to
     int row_count
-    uuid attachment_id
-    text status
+    text file_name
+    text storage_key "the file in the object store"
+    jsonb recipients "addresses the file went to"
+    text error
   }
   rpt_dashboards {
     uuid id PK
+    uuid company_id "null: every company"
     i18n name
+    i18n description
     uuid owner_membership_id
-    jsonb layout
-    text sharing
+    text sharing "private | tenant"
+    bool show_on_home
     bool is_template
+    text default_period
+    int refresh_seconds
+    jsonb layout
   }
   rpt_dashboard_widgets {
     uuid id PK
     uuid dashboard_id FK
+    int sort_order
+    text code "unique per dashboard"
+    i18n title
+    text source "report | statement"
     uuid report_id FK
-    text viz "kpi | line | bar | pie | table | gauge"
-    jsonb options
-    int refresh_seconds
+    uuid layout_id FK
+    text layout_code
+    text viz "kpi | bar | line | area | table"
+    text period "dashboard, or a period of its own"
+    int width "1 to 4 columns"
+    jsonb options "chart, measure, row and column of a KPI"
   }
   rpt_financial_layouts {
     uuid id PK
