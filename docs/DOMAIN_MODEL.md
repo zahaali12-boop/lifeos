@@ -4127,6 +4127,14 @@ whether they may change it. Whoever runs a saved report runs it as themselves: t
 permissions and scopes, so a share never widens access; the owner alone changes the audience or deletes the report,
 an editor changes the query, a viewer saves a copy. Every change is on the audit trail as `saved_report`.
 
+A **statement layout** (`rpt_financial_layouts`, slice 9c, A-184) is rows by columns over the journal facts: a row is
+a header, an account selection (by type, subtype, category, posting role, code range or codes, with exclusions, so
+every posting account lands in exactly one row of a shipped statement), a formula over other rows' codes, or a blank
+line; a column is a period, the year to date, the prior period or year, fixed dates, the trial balance's opening,
+debits, credits or closing, or a variance between two other columns, in the functional or the reporting currency. The
+shipped profit and loss, balance sheet and trial balance are code; a tenant layout is a copy or a design of its own,
+listed on the statements screen when published. Changes are audited as `financial_layout`.
+
 ```mermaid
 erDiagram
   rpt_models ||--|{ rpt_fields : "exposes"
@@ -4221,30 +4229,39 @@ erDiagram
   }
   rpt_financial_layouts {
     uuid id PK
-    uuid company_id
-    text kind "pl | bs | cashflow | tb | management"
+    uuid company_id "null: every company"
+    text code "unique per tenant"
+    text kind "pl | bs | tb | cashflow | management"
     i18n name
-    bool is_template
+    i18n description
+    text template_code "the shipped layout it was copied from"
+    bool is_published
+    bool is_active
+    int sort_order
   }
   rpt_layout_rows {
     uuid layout_id FK
     int sort_order
-    text row_type "header | accounts | category | formula | total | blank"
+    text code "unique per layout; formulas reference it"
+    text row_type "header | accounts | formula | blank"
     i18n label
-    jsonb account_filter
-    jsonb dimension_filter
+    jsonb account_filter "types subtypes categories roles codeFrom codeTo accountCodes exclude*"
+    jsonb dimension_filter "dimension code to value id"
     text formula
     bool flip_sign
     int indent
     bool bold
+    bool show_accounts
+    bool hide_when_zero
   }
   rpt_layout_columns {
     uuid layout_id FK
     int sort_order
-    text column_type "period | ytd | prior_period | prior_year | budget | variance | variance_pct | custom_range"
+    text code "unique per layout; variances reference it"
+    text column_type "period | ytd | prior_period | prior_year | custom_range | opening | debits | credits | closing | variance | variance_pct"
     i18n label
-    jsonb parameters
-    text currency_mode "functional | reporting | transaction"
+    jsonb parameters "of against from to"
+    text currency_mode "functional | reporting"
   }
   prt_templates {
     uuid id PK

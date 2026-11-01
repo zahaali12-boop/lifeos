@@ -5,6 +5,7 @@ using Quicker.Reporting.Application;
 using Quicker.Reporting.Application.Facts;
 using Quicker.Reporting.Application.Reports;
 using Quicker.Reporting.Application.Semantic;
+using Quicker.Reporting.Application.Statements;
 using Quicker.Web;
 
 namespace Quicker.Reporting.Api;
@@ -65,6 +66,33 @@ public static class ReportingEndpoints
         reports.MapPost("/{reportId:guid}/run", async (Guid reportId, RunReportRequest? request, ReportService service, CancellationToken ct) => ApiProblems.Ok(await service.RunAsync(reportId, request, ct)))
             .RequirePermission(ReportingPermissions.ReportRun)
             .WithSummary("Runs the saved definition as the caller, with the company or the range changed when asked; the caller's own scopes apply.");
+
+        // Financial statements (slice 9c): layouts of rows and columns over the journal facts, the shipped ones and the tenant's.
+        var statements = reporting.MapGroup("/statements");
+        statements.MapGet("/layouts", async (Guid? companyId, LayoutService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("The shipped layouts and the tenant's, optionally those for one company; unpublished ones only for designers.");
+        statements.MapGet("/layouts/options", async (Guid companyId, LayoutService service, CancellationToken ct) => ApiProblems.Ok(await service.OptionsAsync(companyId, ct)))
+            .RequirePermission(ReportingPermissions.StatementManage)
+            .WithSummary("What a designer may pick from for the company's chart: account types, subtypes, categories and posting roles.");
+        statements.MapGet("/layouts/{layoutId:guid}", async (Guid layoutId, LayoutService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(layoutId, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun);
+        statements.MapPost("/layouts", async (SaveLayoutRequest request, LayoutService service, CancellationToken ct) => ApiProblems.Created(await service.SaveAsync(null, request, ct), static l => $"/api/v1/reporting/statements/layouts/{l.Id}"))
+            .RequirePermission(ReportingPermissions.StatementManage)
+            .WithSummary("Saves a layout after checking its rows (codes, types, formulas over the other rows) and columns (types, variances over other columns, ranges).");
+        statements.MapPut("/layouts/{layoutId:guid}", async (Guid layoutId, SaveLayoutRequest request, LayoutService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveAsync(layoutId, request, ct)))
+            .RequirePermission(ReportingPermissions.StatementManage);
+        statements.MapDelete("/layouts/{layoutId:guid}", async (Guid layoutId, LayoutService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(layoutId, ct)))
+            .RequirePermission(ReportingPermissions.StatementManage);
+        statements.MapPost("/run", async (StatementRequest request, StatementService service, CancellationToken ct) => ApiProblems.Ok(await service.RunAsync(request, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("Computes a statement for a company and a period from a layout (a tenant's by id or a shipped one by code) over the journal facts, with the caller's scopes.");
+        statements.MapPost("/preview", async (StatementDesignPreview request, StatementService service, CancellationToken ct) => ApiProblems.Ok(await service.PreviewAsync(request, ct)))
+            .RequirePermission(ReportingPermissions.StatementManage)
+            .WithSummary("Computes a statement from a definition that is not saved yet, checked as a save would check it.");
+        statements.MapPost("/drill", async (StatementDrillRequest request, StatementService service, CancellationToken ct) => ApiProblems.Ok(await service.DrillAsync(request, ct)))
+            .RequirePermission(ReportingPermissions.ReportRun)
+            .WithSummary("The accounts behind one cell of a statement, with the column's window so each opens in the ledger.");
 
         return api;
     }

@@ -80,6 +80,22 @@ minute" to "a source holds rows newer than the fact's watermark" (decision 1 abo
 after a posting must see it. The designer, dashboards, schedules (and PDF export through the print pipeline) and
 ask-your-data follow in slices 9c–9e.
 
+## Delivered in slice 9c (2026-11-01)
+
+Statement layouts (`V0070__reporting_layouts.sql`: `rpt_financial_layouts`, `rpt_layout_rows`, `rpt_layout_columns`;
+A-184), the shipped profit and loss, balance sheet and trial balance as code (`ShippedLayouts`), the statement engine
+(one aggregate over `fact_journal_lines` per distinct dimension filter with a balance, opening, debits and credits per
+account and window; a balance sheet reads balances for every account so the earnings not yet closed sit in equity, the
+other statements read movements for revenue and expense accounts; formulas over row codes; variances over column
+codes; the reader's company and branch scopes), the layout service (list, save after checking codes, types, formulas
+and variances, delete, options for the designer, preview of an unsaved definition) and the endpoints under
+`/reporting/statements`; the **Financial statements** screen (statement, period, closing entries, dimension filters,
+accounts folded under their rows, a figure drilled to its accounts and from there to the ledger, CSV and XLSX) and the
+**statement designer** (rows and columns edited in place, preview, save, publish, delete). The shipped layouts tie to
+the ledger inquiry: the profit and loss equals the credit less debit movement of the revenue and expense accounts, the
+trial balance layout equals the inquiry account by account, the balance sheet balances. Budget columns wait for item
+12; the cash flow kind is accepted but no shipped cash flow layout exists yet; PDF of a statement comes with 9d.
+
 ## Consequences
 
 * Reports, statements, dashboards, exports and the AI share one secure engine; adding a model is a code change with

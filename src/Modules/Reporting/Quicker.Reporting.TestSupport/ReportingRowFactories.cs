@@ -86,6 +86,35 @@ public static class ReportingRowFactories
                 """, new { t, report, id, owner = Guid.CreateVersion7() }, tx);
             return new RowRef("app.rpt_report_shares", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.rpt_financial_layouts", static async (c, tx, t) =>
+        {
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_financial_layouts (tenant_id, id, code, kind, name_i18n)
+                VALUES (@t, @id, @code, 'management', '{"en":"Probe"}'::jsonb)
+                """, new { t, id, code = Suffix(id) }, tx);
+            return new RowRef("app.rpt_financial_layouts", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.rpt_layout_rows", static async (c, tx, t) =>
+        {
+            var layout = Guid.CreateVersion7();
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_financial_layouts (tenant_id, id, code, kind, name_i18n) VALUES (@t, @layout, @code, 'management', '{"en":"Probe"}'::jsonb);
+                INSERT INTO app.rpt_layout_rows (tenant_id, id, layout_id, sort_order, code, row_type, label_i18n) VALUES (@t, @id, @layout, 0, 'R1', 'header', '{"en":"Probe"}'::jsonb)
+                """, new { t, layout, id, code = Suffix(layout) }, tx);
+            return new RowRef("app.rpt_layout_rows", $"id = '{id}'");
+        });
+        IsolationRegistry.Register("app.rpt_layout_columns", static async (c, tx, t) =>
+        {
+            var layout = Guid.CreateVersion7();
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("""
+                INSERT INTO app.rpt_financial_layouts (tenant_id, id, code, kind, name_i18n) VALUES (@t, @layout, @code, 'management', '{"en":"Probe"}'::jsonb);
+                INSERT INTO app.rpt_layout_columns (tenant_id, id, layout_id, sort_order, code, column_type, label_i18n) VALUES (@t, @id, @layout, 0, 'C1', 'period', '{"en":"Probe"}'::jsonb)
+                """, new { t, layout, id, code = Suffix(layout) }, tx);
+            return new RowRef("app.rpt_layout_columns", $"id = '{id}'");
+        });
     }
 
     private static string Suffix(Guid id) => "P" + id.ToString("N")[^8..].ToUpperInvariant();

@@ -33976,6 +33976,286 @@
           }
         }
       }
+    },
+    "/api/v1/reporting/statements/layouts": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The shipped layouts and the tenant's, optionally those for one company; unpublished ones only for designers.",
+        "operationId": "getReportingStatementsLayouts",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LayoutSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Saves a layout after checking its rows (codes, types, formulas over the other rows) and columns (types, variances over other columns, ranges).",
+        "operationId": "postReportingStatementsLayouts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLayoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/statements/layouts/options": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "What a designer may pick from for the company's chart: account types, subtypes, categories and posting roles.",
+        "operationId": "getReportingStatementsLayoutsOptions",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutOptions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/statements/layouts/{layoutId}": {
+      "get": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "getReportingStatementsLayoutsByLayoutId",
+        "parameters": [
+          {
+            "name": "layoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "putReportingStatementsLayoutsByLayoutId",
+        "parameters": [
+          {
+            "name": "layoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLayoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reporting"
+        ],
+        "operationId": "deleteReportingStatementsLayoutsByLayoutId",
+        "parameters": [
+          {
+            "name": "layoutId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/statements/run": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Computes a statement for a company and a period from a layout (a tenant's by id or a shipped one by code) over the journal facts, with the caller's scopes.",
+        "operationId": "postReportingStatementsRun",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/statements/preview": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "Computes a statement from a definition that is not saved yet, checked as a save would check it.",
+        "operationId": "postReportingStatementsPreview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementDesignPreview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reporting/statements/drill": {
+      "post": {
+        "tags": [
+          "Reporting"
+        ],
+        "summary": "The accounts behind one cell of a statement, with the column's window so each opens in the ledger.",
+        "operationId": "postReportingStatementsDrill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementDrillRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementDrill"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -34027,6 +34307,96 @@
             ]
           }
         }
+      },
+      "AccountFilter": {
+        "type": "object",
+        "properties": {
+          "types": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "subtypes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "categories": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "roles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "codeFrom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "codeTo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accountCodes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludeSubtypes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludeCategories": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludeAccountCodes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Which accounts a row adds up: by type, subtype, category, posting role, a code range or named codes; exclusions narrow any of them. Empty means every account."
       },
       "AccountLedger": {
         "required": [
@@ -40339,6 +40709,38 @@
           }
         },
         "description": "For a code being typed on a new or edited record: whether it is already taken in its scope (case-insensitively, the\nrecord itself excepted), and the next free code, continuing the most common pattern of the existing codes\n(CUS-0041 after CUS-0040, WH30 after WH10 and WH20) or, for an account, its siblings under the parent."
+      },
+      "ColumnParameters": {
+        "type": "object",
+        "properties": {
+          "of": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "against": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "What a column needs besides its type: the two columns a variance compares (`Of` minus `Against`), or the fixed dates of a custom range."
       },
       "CommentView": {
         "required": [
@@ -50599,6 +51001,301 @@
             "format": "date-time"
           }
         }
+      },
+      "LayoutCategory": {
+        "required": [
+          "code",
+          "name",
+          "statement"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "statement": {
+            "type": "string"
+          }
+        }
+      },
+      "LayoutColumnDefinition": {
+        "required": [
+          "code",
+          "columnType",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "columnType": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "parameters": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ColumnParameters"
+              }
+            ]
+          },
+          "currencyMode": {
+            "type": "string",
+            "default": "functional"
+          }
+        }
+      },
+      "LayoutDefinition": {
+        "required": [
+          "rows",
+          "columns"
+        ],
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LayoutRowDefinition"
+            }
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LayoutColumnDefinition"
+            }
+          }
+        }
+      },
+      "LayoutOptions": {
+        "required": [
+          "types",
+          "subtypes",
+          "categories",
+          "roles",
+          "rowTypes",
+          "columnTypes",
+          "kinds"
+        ],
+        "type": "object",
+        "properties": {
+          "types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subtypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LayoutCategory"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rowTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columnTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "The choices a designer offers: the chart's account types, subtypes, categories and posting roles."
+      },
+      "LayoutRowDefinition": {
+        "required": [
+          "code",
+          "rowType",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "rowType": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "accounts": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AccountFilter"
+              }
+            ]
+          },
+          "dimensionFilter": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "formula": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "flipSign": {
+            "type": "boolean",
+            "default": false
+          },
+          "indent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "bold": {
+            "type": "boolean",
+            "default": false
+          },
+          "showAccounts": {
+            "type": "boolean",
+            "default": false
+          },
+          "hideWhenZero": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "A row of a layout: a header, an account selection, a formula over other rows' codes, or a blank line."
+      },
+      "LayoutSummary": {
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "name",
+          "description",
+          "companyId",
+          "templateCode",
+          "isSystem",
+          "isPublished",
+          "isActive",
+          "sortOrder",
+          "definition",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "templateCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/LayoutDefinition"
+          },
+          "updatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "A layout as listed: a shipped one has no id and `IsSystem`; a tenant's has an id and may be unpublished."
       },
       "LeadTimeRow": {
         "required": [
@@ -73313,6 +74010,70 @@
           "customFields": { }
         }
       },
+      "SaveLayoutRequest": {
+        "required": [
+          "code",
+          "kind",
+          "name",
+          "definition"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "definition": {
+            "$ref": "#/components/schemas/LayoutDefinition"
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "default": true
+          },
+          "templateCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          }
+        }
+      },
       "SaveLeaveRequest": {
         "required": [
           "employeeId",
@@ -80759,6 +81520,92 @@
           }
         }
       },
+      "StatementAccountLine": {
+        "required": [
+          "accountId",
+          "code",
+          "name",
+          "type",
+          "values"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "type": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": [
+                "null",
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          }
+        }
+      },
+      "StatementColumn": {
+        "required": [
+          "code",
+          "columnType",
+          "label",
+          "from",
+          "to",
+          "currency",
+          "isPercent"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "columnType": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "isPercent": {
+            "type": "boolean"
+          }
+        }
+      },
       "StatementCurrency": {
         "required": [
           "currency",
@@ -80813,6 +81660,68 @@
           }
         },
         "description": "The account in one of the documents' currencies: what was owed before the period, the period's movements and what is owed at its end."
+      },
+      "StatementDesignPreview": {
+        "required": [
+          "request",
+          "kind",
+          "definition"
+        ],
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/StatementRequest"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/LayoutDefinition"
+          }
+        },
+        "description": "A designer's preview: the statement computed from a definition that is not saved yet."
+      },
+      "StatementDrill": {
+        "required": [
+          "column",
+          "row",
+          "accounts"
+        ],
+        "type": "object",
+        "properties": {
+          "column": {
+            "$ref": "#/components/schemas/StatementColumn"
+          },
+          "row": {
+            "$ref": "#/components/schemas/StatementRow"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementAccountLine"
+            }
+          }
+        },
+        "description": "The accounts behind one cell with the column's window, so each can open in the ledger over the same dates."
+      },
+      "StatementDrillRequest": {
+        "required": [
+          "request",
+          "rowCode",
+          "columnCode"
+        ],
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/StatementRequest"
+          },
+          "rowCode": {
+            "type": "string"
+          },
+          "columnCode": {
+            "type": "string"
+          }
+        }
       },
       "StatementLine": {
         "required": [
@@ -81200,6 +82109,209 @@
           }
         },
         "description": "A CSV read with a mapping before it is imported: the first lines as they would be taken, or why they cannot be."
+      },
+      "StatementRequest": {
+        "required": [
+          "companyId"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "layoutId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "filters": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "includeClosing": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "description": "Running a statement: the company, the layout (a tenant's by id or a shipped one by code), the period (its end\ndefaults to today in the company's time zone, its start to the fiscal period that holds the end), dimension\nfilters applied to every row, and whether closing entries count (a balance sheet includes them by default, the\nprofit and loss and the trial balance leave them out, as the ledger inquiry does)."
+      },
+      "StatementResult": {
+        "required": [
+          "layoutId",
+          "layoutCode",
+          "kind",
+          "name",
+          "companyId",
+          "from",
+          "to",
+          "fiscalYearStart",
+          "includeClosing",
+          "currency",
+          "columns",
+          "rows",
+          "projectedUpTo",
+          "durationMs"
+        ],
+        "type": "object",
+        "properties": {
+          "layoutId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "layoutCode": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "fiscalYearStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "includeClosing": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementColumn"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementRow"
+            }
+          },
+          "projectedUpTo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "durationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "StatementRow": {
+        "required": [
+          "code",
+          "rowType",
+          "label",
+          "indent",
+          "bold",
+          "values",
+          "accounts"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "rowType": {
+            "type": "string"
+          },
+          "label": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "indent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "bold": {
+            "type": "boolean"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": [
+                "null",
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
+          },
+          "accounts": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StatementAccountLine"
+            }
+          }
+        }
       },
       "StatutoryAccount": {
         "required": [

@@ -9,6 +9,7 @@ using Quicker.Reporting.Application;
 using Quicker.Reporting.Application.Facts;
 using Quicker.Reporting.Application.Reports;
 using Quicker.Reporting.Application.Semantic;
+using Quicker.Reporting.Application.Statements;
 using Quicker.Reporting.Persistence;
 
 namespace Quicker.Reporting;
@@ -26,6 +27,9 @@ public static class ReportingModule
         services.AddScoped<QueryService>();
         services.AddModuleDbContext<ReportingDbContext>();
         services.AddScoped<ReportService>();
+        services.AddScoped<LayoutService>();
+        services.AddScoped<StatementService>();
+        services.AddSingleton(new RecordReadPermission(LayoutService.AuditEntity, ReportingPermissions.ReportRun));
         services.AddSingleton(new RecordReadPermission(ReportService.AuditEntity, ReportingPermissions.ReportRun));
         services.AddScoped<IRecordCompanies, ReportingRecordCompanies>();
         services.AddJobHandler<ProjectionJob, ProjectionPayload>();

@@ -9,10 +9,13 @@ public static class ReportingPermissions
     public const string ReportManage = "reporting.report.manage";
     public const string ProjectionManage = "reporting.projection.manage";
 
+    public const string StatementManage = "reporting.statement.manage";
+
     public static readonly PermissionDefinition[] All =
     [
         new(ReportRun, "reporting", "Run queries over the semantic models, drill to their lines and see the query; each model also needs the read permission of the module it reads"),
         new(ReportManage, "reporting", "Save, share and schedule reports and dashboards"),
         new(ProjectionManage, "reporting", "Refresh or rebuild the projected facts of the reporting schema"),
+        new(StatementManage, "reporting", "Design financial statement layouts (rows, columns and formulas) and publish them to the statements screen; running one also needs the journal read permission"),
     ];
 }

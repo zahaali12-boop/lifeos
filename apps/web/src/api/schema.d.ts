@@ -11745,6 +11745,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/statements/layouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The shipped layouts and the tenant's, optionally those for one company; unpublished ones only for designers. */
+        get: operations["getReportingStatementsLayouts"];
+        put?: never;
+        /** Saves a layout after checking its rows (codes, types, formulas over the other rows) and columns (types, variances over other columns, ranges). */
+        post: operations["postReportingStatementsLayouts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/statements/layouts/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a designer may pick from for the company's chart: account types, subtypes, categories and posting roles. */
+        get: operations["getReportingStatementsLayoutsOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/statements/layouts/{layoutId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReportingStatementsLayoutsByLayoutId"];
+        put: operations["putReportingStatementsLayoutsByLayoutId"];
+        post?: never;
+        delete: operations["deleteReportingStatementsLayoutsByLayoutId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/statements/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Computes a statement for a company and a period from a layout (a tenant's by id or a shipped one by code) over the journal facts, with the caller's scopes. */
+        post: operations["postReportingStatementsRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/statements/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Computes a statement from a definition that is not saved yet, checked as a save would check it. */
+        post: operations["postReportingStatementsPreview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/statements/drill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The accounts behind one cell of a statement, with the column's window so each opens in the ledger. */
+        post: operations["postReportingStatementsDrill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -11760,6 +11862,19 @@ export interface components {
             /** Format: uuid */
             supplierId?: null | string;
             note?: null | string;
+        };
+        /** @description Which accounts a row adds up: by type, subtype, category, posting role, a code range or named codes; exclusions narrow any of them. Empty means every account. */
+        AccountFilter: {
+            types?: null | string[];
+            subtypes?: null | string[];
+            categories?: null | string[];
+            roles?: null | string[];
+            codeFrom?: null | string;
+            codeTo?: null | string;
+            accountCodes?: null | string[];
+            excludeSubtypes?: null | string[];
+            excludeCategories?: null | string[];
+            excludeAccountCodes?: null | string[];
         };
         AccountLedger: {
             /** Format: uuid */
@@ -13443,6 +13558,15 @@ export interface components {
             taken: boolean;
             next: string;
             autoFill: boolean;
+        };
+        /** @description What a column needs besides its type: the two columns a variance compares (`Of` minus `Against`), or the fixed dates of a custom range. */
+        ColumnParameters: {
+            of?: null | string;
+            against?: null | string;
+            /** Format: date */
+            from?: null | string;
+            /** Format: date */
+            to?: null | string;
         };
         CommentView: {
             /** Format: uuid */
@@ -16171,6 +16295,87 @@ export interface components {
             postedAt: null | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        LayoutCategory: {
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            statement: string;
+        };
+        LayoutColumnDefinition: {
+            code: string;
+            columnType: string;
+            label: {
+                [key: string]: string;
+            };
+            parameters?: null | components["schemas"]["ColumnParameters"];
+            /** @default functional */
+            currencyMode: string;
+        };
+        LayoutDefinition: {
+            rows: components["schemas"]["LayoutRowDefinition"][];
+            columns: components["schemas"]["LayoutColumnDefinition"][];
+        };
+        /** @description The choices a designer offers: the chart's account types, subtypes, categories and posting roles. */
+        LayoutOptions: {
+            types: string[];
+            subtypes: string[];
+            categories: components["schemas"]["LayoutCategory"][];
+            roles: string[];
+            rowTypes: string[];
+            columnTypes: string[];
+            kinds: string[];
+        };
+        /** @description A row of a layout: a header, an account selection, a formula over other rows' codes, or a blank line. */
+        LayoutRowDefinition: {
+            code: string;
+            rowType: string;
+            label: {
+                [key: string]: string;
+            };
+            accounts?: null | components["schemas"]["AccountFilter"];
+            dimensionFilter?: null | {
+                [key: string]: string;
+            };
+            formula?: null | string;
+            /** @default false */
+            flipSign: boolean;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            indent: number | string;
+            /** @default false */
+            bold: boolean;
+            /** @default false */
+            showAccounts: boolean;
+            /** @default false */
+            hideWhenZero: boolean;
+        };
+        /** @description A layout as listed: a shipped one has no id and `IsSystem`; a tenant's has an id and may be unpublished. */
+        LayoutSummary: {
+            /** Format: uuid */
+            id: null | string;
+            code: string;
+            kind: string;
+            name: {
+                [key: string]: string;
+            };
+            description: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId: null | string;
+            templateCode: null | string;
+            isSystem: boolean;
+            isPublished: boolean;
+            isActive: boolean;
+            /** Format: int32 */
+            sortOrder: number | string;
+            definition: components["schemas"]["LayoutDefinition"];
+            /** Format: date-time */
+            updatedAt: null | string;
         };
         LeadTimeRow: {
             /** Format: uuid */
@@ -22290,6 +22495,27 @@ export interface components {
             notes?: null | string;
             customFields?: unknown;
         };
+        SaveLayoutRequest: {
+            code: null | string;
+            kind: string;
+            name: {
+                [key: string]: string;
+            };
+            definition: components["schemas"]["LayoutDefinition"];
+            description?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId?: null | string;
+            /** @default true */
+            isPublished: boolean;
+            templateCode?: null | string;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            sortOrder: number | string;
+        };
         SaveLeaveRequest: {
             /** Format: uuid */
             employeeId: string;
@@ -24449,6 +24675,29 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        StatementAccountLine: {
+            /** Format: uuid */
+            accountId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            type: string;
+            values: (null | number | string)[];
+        };
+        StatementColumn: {
+            code: string;
+            columnType: string;
+            label: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            from: null | string;
+            /** Format: date */
+            to: null | string;
+            currency: string;
+            isPercent: boolean;
+        };
         /** @description The account in one of the documents' currencies: what was owed before the period, the period's movements and what is owed at its end. */
         StatementCurrency: {
             currency: string;
@@ -24461,6 +24710,23 @@ export interface components {
             /** Format: double */
             closing: number | string;
             lines: components["schemas"]["StatementLine"][];
+        };
+        /** @description A designer's preview: the statement computed from a definition that is not saved yet. */
+        StatementDesignPreview: {
+            request: components["schemas"]["StatementRequest"];
+            kind: string;
+            definition: components["schemas"]["LayoutDefinition"];
+        };
+        /** @description The accounts behind one cell with the column's window, so each can open in the ledger over the same dates. */
+        StatementDrill: {
+            column: components["schemas"]["StatementColumn"];
+            row: components["schemas"]["StatementRow"];
+            accounts: components["schemas"]["StatementAccountLine"][];
+        };
+        StatementDrillRequest: {
+            request: components["schemas"]["StatementRequest"];
+            rowCode: string;
+            columnCode: string;
         };
         /** @description One movement on a supplier's account: a document booked (what we owe goes up for an invoice, down for a debit note or a payment) or its reversal. */
         StatementLine: {
@@ -24561,6 +24827,64 @@ export interface components {
             content: string;
             settings?: null | components["schemas"]["StatementMappingSettings"];
             format?: null | string;
+        };
+        /**
+         * @description Running a statement: the company, the layout (a tenant's by id or a shipped one by code), the period (its end
+         *     defaults to today in the company's time zone, its start to the fiscal period that holds the end), dimension
+         *     filters applied to every row, and whether closing entries count (a balance sheet includes them by default, the
+         *     profit and loss and the trial balance leave them out, as the ledger inquiry does).
+         */
+        StatementRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            layoutId?: null | string;
+            layoutCode?: null | string;
+            /** Format: date */
+            from?: null | string;
+            /** Format: date */
+            to?: null | string;
+            filters?: null | {
+                [key: string]: string;
+            };
+            includeClosing?: null | boolean;
+        };
+        StatementResult: {
+            /** Format: uuid */
+            layoutId: null | string;
+            layoutCode: string;
+            kind: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            companyId: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: date */
+            fiscalYearStart: string;
+            includeClosing: boolean;
+            currency: string;
+            columns: components["schemas"]["StatementColumn"][];
+            rows: components["schemas"]["StatementRow"][];
+            /** Format: date-time */
+            projectedUpTo: null | string;
+            /** Format: int32 */
+            durationMs: number | string;
+        };
+        StatementRow: {
+            code: string;
+            rowType: string;
+            label: {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            indent: number | string;
+            bold: boolean;
+            values: (null | number | string)[];
+            accounts: null | components["schemas"]["StatementAccountLine"][];
         };
         StatutoryAccount: {
             code: string;
@@ -47711,6 +48035,214 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueryResult"];
+                };
+            };
+        };
+    };
+    getReportingStatementsLayouts: {
+        parameters: {
+            query?: {
+                companyId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LayoutSummary"][];
+                };
+            };
+        };
+    };
+    postReportingStatementsLayouts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LayoutSummary"];
+                };
+            };
+        };
+    };
+    getReportingStatementsLayoutsOptions: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LayoutOptions"];
+                };
+            };
+        };
+    };
+    getReportingStatementsLayoutsByLayoutId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                layoutId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LayoutSummary"];
+                };
+            };
+        };
+    };
+    putReportingStatementsLayoutsByLayoutId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                layoutId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LayoutSummary"];
+                };
+            };
+        };
+    };
+    deleteReportingStatementsLayoutsByLayoutId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                layoutId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    postReportingStatementsRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementResult"];
+                };
+            };
+        };
+    };
+    postReportingStatementsPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementDesignPreview"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementResult"];
+                };
+            };
+        };
+    };
+    postReportingStatementsDrill: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatementDrillRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatementDrill"];
                 };
             };
         };

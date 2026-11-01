@@ -259,10 +259,7 @@ public sealed class QueryService(IUnitOfWorkAccessor unitOfWork, ICurrentPrincip
             return Error.NotFound("company", query.CompanyId);
         }
 
-        var scopes = allowed.Select(p => who.ScopesFor(p) ?? RecordScopes.All).ToList();
-        var merged = scopes.Any(static s => s.CompanyIds.Count == 0 && s.BranchIds.Count == 0 && s.WarehouseIds.Count == 0)
-            ? RecordScopes.All
-            : new RecordScopes(scopes.SelectMany(static s => s.CompanyIds).ToHashSet(), scopes.SelectMany(static s => s.BranchIds).ToHashSet(), scopes.SelectMany(static s => s.WarehouseIds).ToHashSet());
+        var merged = MergedScopes(who, allowed);
         if (!merged.AllowsCompany(query.CompanyId))
         {
             return Error.Forbidden("report.company_not_in_scope", "The company is outside the reader's scope for this model.").WithWhy(("company", query.CompanyId));
@@ -286,6 +283,17 @@ public sealed class QueryService(IUnitOfWorkAccessor unitOfWork, ICurrentPrincip
         var scope = new ScopeFilter(query.CompanyId, merged.CompanyIds.ToList(), merged.BranchIds.ToList(), merged.WarehouseIds.ToList(), sides, from, to);
         var visible = new QueryScope(scope.Companies, scope.Branches, scope.Warehouses, sides);
         return (Resolve(spec, dims), scope, visible, company);
+    }
+
+    /// <summary>The union of the scopes the reader holds the permissions under; everything when any of them is unscoped.</summary>
+    public static RecordScopes MergedScopes(Principal who, IReadOnlyList<string> permissions)
+    {
+        ArgumentNullException.ThrowIfNull(who);
+        ArgumentNullException.ThrowIfNull(permissions);
+        var scopes = permissions.Select(p => who.ScopesFor(p) ?? RecordScopes.All).ToList();
+        return scopes.Any(static s => s.CompanyIds.Count == 0 && s.BranchIds.Count == 0 && s.WarehouseIds.Count == 0)
+            ? RecordScopes.All
+            : new RecordScopes(scopes.SelectMany(static s => s.CompanyIds).ToHashSet(), scopes.SelectMany(static s => s.BranchIds).ToHashSet(), scopes.SelectMany(static s => s.WarehouseIds).ToHashSet());
     }
 
     private async Task<IReadOnlyList<(FieldSpec Field, JoinSpec Join)>> DimensionFieldsAsync(CancellationToken cancellationToken) =>
