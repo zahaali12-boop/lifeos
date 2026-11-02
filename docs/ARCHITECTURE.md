@@ -145,7 +145,7 @@ flowchart TB
     Reporting[Reporting: semantic layer, report builder, financial designer, dashboards, print, schedules]
     Onboarding[Onboarding: setup wizard, industry templates, migration toolkit]
     Intelligence[Intelligence: AI layer]
-    Trader[Trader: the trader edition's screens over the other modules' contracts (ADR-0035): pricing board, later project health]
+    Trader[Trader: the trader edition screens over the other modules, ADR-0035 - pricing board, later project health]
   end
   flows --> core
   core --> platform
