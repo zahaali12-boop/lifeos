@@ -60,6 +60,9 @@ public static class PurchasingRowFactories
         IsolationRegistry.Register("app.pur_landed_cost_docs", static async (c, tx, t) => new RowRef("app.pur_landed_cost_docs", $"id = '{(await LandedCostAsync(c, tx, t)).Doc}'"));
         IsolationRegistry.Register("app.pur_landed_cost_charges", static async (c, tx, t) => new RowRef("app.pur_landed_cost_charges", $"id = '{(await LandedCostAsync(c, tx, t)).Charge}'"));
         IsolationRegistry.Register("app.pur_landed_cost_allocations", static async (c, tx, t) => new RowRef("app.pur_landed_cost_allocations", $"id = '{(await LandedCostAsync(c, tx, t)).Allocation}'"));
+        IsolationRegistry.Register("app.pur_shipments", static async (c, tx, t) => new RowRef("app.pur_shipments", $"id = '{(await ShipmentAsync(c, tx, t)).Shipment}'"));
+        IsolationRegistry.Register("app.pur_shipment_events", static async (c, tx, t) => new RowRef("app.pur_shipment_events", $"id = '{(await ShipmentAsync(c, tx, t)).Event}'"));
+        IsolationRegistry.Register("app.pur_shipment_costs", static async (c, tx, t) => new RowRef("app.pur_shipment_costs", $"id = '{(await ShipmentAsync(c, tx, t)).Cost}'"));
         IsolationRegistry.Register("app.pur_commitments", static async (c, tx, t) =>
         {
             var (order, line, company) = await OrderAsync(c, tx, t);
@@ -176,6 +179,19 @@ public static class PurchasingRowFactories
         await c.ExecuteAsync("INSERT INTO app.pur_landed_cost_charges (tenant_id, id, landed_cost_id, line_no, charge_type_id, amount, allocation_basis) VALUES (@t, @charge, @id, 1, @type, 10, 'value')", new { t, charge, id, type }, tx);
         await c.ExecuteAsync("INSERT INTO app.pur_landed_cost_allocations (tenant_id, id, landed_cost_id, charge_id, receipt_line_id, basis_value, allocated_amount_fc) VALUES (@t, @allocation, @id, @charge, @receiptLine, 1, 10)", new { t, allocation, id, charge, receiptLine }, tx);
         return (id, charge, allocation);
+    }
+
+    private static async Task<(Guid Shipment, Guid Event, Guid Cost)> ShipmentAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
+    {
+        var (order, _, company) = await OrderAsync(c, tx, t);
+        var type = await ChargeTypeAsync(c, tx, t);
+        var id = Guid.CreateVersion7();
+        var evt = Guid.CreateVersion7();
+        var cost = Guid.CreateVersion7();
+        await c.ExecuteAsync("INSERT INTO app.pur_shipments (tenant_id, id, company_id, order_id) VALUES (@t, @id, @company, @order)", new { t, id, company, order }, tx);
+        await c.ExecuteAsync("INSERT INTO app.pur_shipment_events (tenant_id, id, shipment_id, status, occurred_on) VALUES (@t, @evt, @id, 'ordered', '2026-09-22')", new { t, evt, id }, tx);
+        await c.ExecuteAsync("INSERT INTO app.pur_shipment_costs (tenant_id, id, shipment_id, line_no, charge_type_id, amount, currency, exchange_rate, amount_rc) VALUES (@t, @cost, @id, 1, @type, 10, 'IQD', 1, 10)", new { t, cost, id, type }, tx);
+        return (id, evt, cost);
     }
 
     private static async Task<Guid> PartnerAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)
