@@ -19,6 +19,7 @@ public static class PricingModule
         services.AddScoped<PricingService>();
         services.AddScoped<IPricing>(static sp => sp.GetRequiredService<PricingService>());
         services.AddScoped<PriceListService>();
+        services.AddScoped<IPriceLists>(static sp => sp.GetRequiredService<PriceListService>());
         services.AddScoped<PricingRulesService>();
         return services;
     }

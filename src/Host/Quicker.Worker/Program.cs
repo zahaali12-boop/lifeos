@@ -32,6 +32,7 @@ using Quicker.Sales;
 using Quicker.Storage;
 using Quicker.Tax;
 using Quicker.Tenancy;
+using Quicker.Trader;
 using Quicker.Web;
 using Quicker.Workflow;
 
@@ -80,6 +81,7 @@ builder.Services.AddOnboardingModule();
 builder.Services.AddExpensesModule();
 builder.Services.AddFixedAssetsModule();
 builder.Services.AddReportingModule();
+builder.Services.AddTraderModule();
 
 var app = builder.Build();
 

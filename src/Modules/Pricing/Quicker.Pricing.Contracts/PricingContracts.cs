@@ -1,4 +1,5 @@
 using Quicker.Kernel.Results;
+using Quicker.Kernel.Text;
 
 namespace Quicker.Pricing.Contracts;
 
@@ -235,4 +236,21 @@ public interface IPricing
 
     /// <summary>Gives back the promotions a document used (cancelled or reversed).</summary>
     Task<Result> ReleasePromotionUsageAsync(string documentType, Guid documentId, CancellationToken cancellationToken = default);
+}
+
+// ------------------------------------------------------------------ price lists read and written by other modules (trader edition, ADR-0035)
+
+public sealed record PriceListInfo(Guid Id, Guid CompanyId, string Code, LocalizedText Name, string Currency, bool IsDefault, bool IsActive);
+
+/// <summary>An item's plain price in a list: no variant, no quantity break above one, valid on the date asked.</summary>
+public sealed record ListedPrice(Guid ItemId, decimal Price, Guid UomId, DateOnly? ValidFrom);
+
+public interface IPriceLists
+{
+    Task<IReadOnlyList<PriceListInfo>> ListAsync(Guid companyId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ListedPrice>> PricesAsync(Guid priceListId, DateOnly asOf, CancellationToken cancellationToken = default);
+
+    /// <summary>Sets an item's plain price from a date: the open entry for no variant and the item's sales unit is updated, or one is created. The caller needs the list's manage permission.</summary>
+    Task<Result> SetPriceAsync(Guid priceListId, Guid itemId, decimal price, DateOnly validFrom, CancellationToken cancellationToken = default);
 }

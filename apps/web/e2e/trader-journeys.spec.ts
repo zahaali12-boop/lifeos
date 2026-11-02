@@ -162,10 +162,36 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("flat-nav").getByRole("link", { name: "Offers" }).click();
   await expect(page.getByRole("grid")).toContainText("Ordered");
 
+  // Prices: the landed cost per unit from the shipment, a 25 % target rounded up to 250, the suggestion written to a new sales list.
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Prices" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Selling prices");
+  await page.getByTestId("create-price-list").click();
+  await expect(page.getByTestId("no-price-list")).toHaveCount(0);
+  await page.getByTestId("edit-pricing-settings").click();
+  await page.getByTestId("target-margin").fill("25");
+  await page.getByTestId("round-to").fill("250");
+  await page.getByTestId("save-pricing-settings").click();
+  await expect(page.getByTestId("target-margin-value")).toContainText("25");
+  const padsRow = page.getByTestId("price-row").filter({ hasText: "PADS" });
+  await expect(padsRow.getByTestId("landed-cost")).toContainText("16,708");
+  await expect(padsRow.locator("[data-testid^='suggested-']")).toHaveValue("21,000");
+  await expect(padsRow.getByTestId("alert-no_price")).toBeVisible();
+  await expect(page.getByTestId("unpriced-count")).toContainText("2");
+  await page.getByTestId("apply-prices").click();
+  await expect(page.getByTestId("pricing-notice")).toContainText("written");
+  await expect(padsRow.getByTestId("current-price")).toContainText("21,000");
+  await expect(padsRow.getByTestId("alert-no_price")).toHaveCount(0);
+  await expect(page.getByTestId("unpriced-count")).toHaveCount(0);
+  await expectAccessible(page);
+
   // Arabic, right-to-left: the flat bar, the list and the record in Arabic.
   await page.getByTestId("language-menu").click();
   await page.getByTestId("language-ar").click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("أسعار البيع");
+  await expect(page.getByTestId("price-row").filter({ hasText: "PADS" }).getByTestId("current-price")).toContainText("21,000");
+  await expectAccessible(page);
+  await page.getByTestId("flat-nav").getByRole("link", { name: "العروض" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("عروض الشراء");
   await expect(page.getByTestId("flat-nav").getByRole("link", { name: "العروض" })).toBeVisible();
   await expect(page.getByRole("grid")).toContainText("تم الطلب");

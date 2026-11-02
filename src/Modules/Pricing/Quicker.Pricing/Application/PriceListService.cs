@@ -17,7 +17,7 @@ namespace Quicker.Pricing.Application;
 /// Price lists as configuration: a company's prices in one currency (own entries with quantity breaks and validity, or
 /// derived from a parent list by a percentage and a rounding rule), who they are for, and a yearly increase in one go.
 /// </summary>
-public sealed class PriceListService(PricingDbContext db, ICompanyDirectory companies, IItemDirectory items, IPartnerDirectory partners, PricingRefs refs, PricingAccess access, IClock clock)
+public sealed class PriceListService(PricingDbContext db, ICompanyDirectory companies, IItemDirectory items, IPartnerDirectory partners, PricingRefs refs, PricingAccess access, IClock clock) : IPriceLists
 {
     private const int MaxDerivationDepth = 5;
 
@@ -230,6 +230,41 @@ public sealed class PriceListService(PricingDbContext db, ICompanyDirectory comp
     }
 
     // ------------------------------------------------------------------ entries
+
+    // ---- IPriceLists: what other modules (the trader edition's pricing) read and write.
+
+    async Task<IReadOnlyList<PriceListInfo>> IPriceLists.ListAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var lists = await db.PriceLists.AsNoTracking().Where(l => l.CompanyId == companyId).OrderByDescending(static l => l.IsDefault).ThenBy(static l => l.Priority).ThenBy(static l => l.Code).ToListAsync(cancellationToken);
+        return lists.Select(static l => new PriceListInfo(l.Id, l.CompanyId, l.Code, l.Name, l.Currency, l.IsDefault, l.IsActive)).ToList();
+    }
+
+    async Task<IReadOnlyList<ListedPrice>> IPriceLists.PricesAsync(Guid priceListId, DateOnly asOf, CancellationToken cancellationToken)
+    {
+        var entries = await db.PriceListItems.AsNoTracking()
+            .Where(e => e.PriceListId == priceListId && e.VariantId == null && e.MinQuantity <= 1m && (e.ValidFrom == null || e.ValidFrom <= asOf) && (e.ValidTo == null || e.ValidTo >= asOf))
+            .ToListAsync(cancellationToken);
+        return entries.GroupBy(static e => e.ItemId)
+            .Select(static g => g.OrderByDescending(static e => e.MinQuantity).ThenByDescending(static e => e.ValidFrom ?? DateOnly.MinValue).First())
+            .Select(static e => new ListedPrice(e.ItemId, e.Price, e.UomId, e.ValidFrom))
+            .ToList();
+    }
+
+    async Task<Result> IPriceLists.SetPriceAsync(Guid priceListId, Guid itemId, decimal price, DateOnly validFrom, CancellationToken cancellationToken)
+    {
+        var item = await items.FindAsync(itemId, cancellationToken);
+        if (item is null)
+        {
+            return Error.Validation("price_list_item.item_unknown", "The item does not exist.").WithWhy(("itemId", itemId));
+        }
+
+        var uomId = item.SalesUomId ?? item.BaseUomId;
+        var existing = await db.PriceListItems.AsNoTracking()
+            .Where(e => e.PriceListId == priceListId && e.ItemId == itemId && e.VariantId == null && e.UomId == uomId && e.MinQuantity <= 1m && e.ValidTo == null)
+            .OrderByDescending(static e => e.ValidFrom).FirstOrDefaultAsync(cancellationToken);
+        var saved = await SaveItemAsync(priceListId, existing?.Id, new SavePriceListItemRequest(itemId, null, uomId, existing?.MinQuantity ?? 1m, price, validFrom), cancellationToken);
+        return saved.IsFailure ? saved.Error! : Result.Success();
+    }
 
     public async Task<Result<IReadOnlyList<PriceListItemSummary>>> ListItemsAsync(Guid listId, string? q, CancellationToken cancellationToken)
     {

@@ -57,7 +57,15 @@ would also throw away the tests and the invariants that make the books right.
    and the supplier's invoice is created at the ordered prices, matched and posted into the payable by the invoice
    service. The shipment never posts anything itself (A-187).
 
-5. **Nothing deferred to a second product.** The trader's later needs (shipments as a status timeline over the
+5. **Pricing: a Trader module that composes, never stores.** The trader's own screens that need several modules at
+   once live in `Quicker.Trader`, an experience-tier module that depends on the others' contracts only and keeps no
+   tables: the pricing board reads landed unit costs from Purchasing (`IPurchaseLandedCosts`), stock costs from
+   Inventory, today's spot rate from Organization and the sales price list from Pricing (`IPriceLists`), and writes
+   prices back through Pricing under its permissions. Its settings (target margin, rounding increment, the list) are
+   ordinary organization settings under `trader.pricing.*`, so an admin sees them under Settings and the trader edits
+   them in place (A-188). Later trader screens that compose modules (project health) follow the same pattern.
+
+6. **Nothing deferred to a second product.** The trader's later needs (shipments as a status timeline over the
    purchase order with landed costs and the exchange rate paid; pricing by purchase rate against a market rate with
    margins and loss alerts; plain-language sales, payments and aging with recommendations and charts; a project health
    page with break-even and a trader income statement; stock counting on the phone) are each a slice over the
@@ -76,4 +84,5 @@ would also throw away the tests and the invariants that make the books right.
   "order from this supplier" step orders every line from one supplier, a split order is a suggestion the trader
   carries out by hand; offers in a foreign currency need a spot rate of the day entered under Rates, else the
   comparison says so; costs that arrive after the goods were received (a landed-cost document by hand); partial
-  arrivals (one receipt per shipment); paying the supplier from the shipment screen; the phone version.
+  arrivals (one receipt per shipment); paying the supplier from the shipment screen; prices per customer group or
+  quantity break and margins per item or category on the pricing board; the phone version.

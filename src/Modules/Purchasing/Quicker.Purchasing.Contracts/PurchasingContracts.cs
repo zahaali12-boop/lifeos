@@ -88,3 +88,16 @@ public interface IPurchaseReceiptDirectory
 
     Task<Result<PurchaseReceiptLineInfo>> FindLineAsync(Guid receiptLineId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// The latest landed unit cost of an item from a tracked shipment (trader edition, ADR-0035 §4): what one unit cost in
+/// the company's currency after the goods paid and the costs along the way, the supplier's unit price in its currency
+/// and the rate paid, so pricing can re-value the goods part at today's rate.
+/// </summary>
+public sealed record LandedUnitCostInfo(Guid ItemId, Guid ShipmentId, string OrderNumber, string ShipmentStatus, DateOnly AsOf, string Currency, decimal UnitPriceFc, decimal RatePaid, decimal GoodsUnitRc, decimal CostsUnitRc, decimal LandedUnitCostRc, decimal Quantity);
+
+/// <summary>What pricing reads from shipments: one entry per item, the most recently tracked shipment that carries it.</summary>
+public interface IPurchaseLandedCosts
+{
+    Task<IReadOnlyList<LandedUnitCostInfo>> LatestByItemAsync(Guid companyId, CancellationToken cancellationToken = default);
+}

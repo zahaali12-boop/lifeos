@@ -178,7 +178,8 @@
       "home": "Home",
       "offers": "Offers",
       "orders": "Orders",
-      "shipments": "Shipments"
+      "shipments": "Shipments",
+      "pricing": "Prices"
     }
   },
   "shell": {
@@ -6287,6 +6288,53 @@
       "cancel": "Cancel this shipment",
       "openOrder": "Open the order",
       "attention": "Needs a look"
+    },
+    "pricing": {
+      "title": "Selling prices",
+      "description": "What each item cost you landed, what it would cost to buy again at today's rate, what you sell it at and the margin that leaves. The suggested price keeps your target margin; apply it to the sales price list in one click.",
+      "settings": "How you price",
+      "targetMargin": "Target margin (%)",
+      "roundTo": "Round prices up to",
+      "roundToHint": "0 for no rounding; 250 rounds 20,040 up to 20,250.",
+      "priceList": "Sales price list",
+      "defaultList": "The company's default list",
+      "saveSettings": "Save",
+      "settingsSaved": "Saved.",
+      "noList": "There is no sales price list in {currency} yet.",
+      "createList": "Create the sales price list",
+      "createdListName": "Sales prices",
+      "marketRates": "Rates today",
+      "marketRate": "{currency}: {rate} (from {date})",
+      "noMarketRate": "No rate for {currency} today: enter it under Exchange rates.",
+      "ratesLink": "Exchange rates",
+      "losing": "{count} selling at a loss",
+      "unpriced": "{count} without a price",
+      "item": "Item",
+      "onHand": "In stock",
+      "boughtAt": "Bought at",
+      "boughtAtValue": "{price} × {rate}",
+      "landed": "Landed per unit",
+      "costToday": "Cost to buy again",
+      "marketMove": "Rate today",
+      "currentPrice": "Selling at",
+      "margin": "Margin",
+      "suggested": "Suggested price",
+      "apply": "Apply",
+      "alerts": "Alerts",
+      "alertNames": {
+        "no_price": "No selling price",
+        "no_cost": "No cost known",
+        "no_market_rate": "No rate today",
+        "loss_at_cost": "Selling below cost",
+        "loss_at_replacement": "Below today's cost",
+        "margin_below_target": "Margin below target",
+        "rate_up": "Rate up {pct}%",
+        "rate_down": "Rate down {pct}%"
+      },
+      "applyPrices": "Apply the ticked prices",
+      "applied": "The prices were written to the sales list.",
+      "empty": "Nothing to price yet.",
+      "emptyDescription": "Track a shipment, or add items to the sales price list, and they appear here with their cost and margin."
     }
   }
 }

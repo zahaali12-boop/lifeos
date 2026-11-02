@@ -34,7 +34,7 @@ public sealed class ShipmentService(
     PurchaseOrderService orders,
     ReceiptService receipts,
     LandedCostService landedCosts,
-    InvoiceService invoices)
+    InvoiceService invoices) : IPurchaseLandedCosts
 {
     public const string DocumentType = PurchaseDocumentTypes.Shipment;
 
@@ -468,6 +468,34 @@ public sealed class ShipmentService(
         var order = await OrderOfAsync(shipment, cancellationToken);
         await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.StateChanged, After: new { status = shipment.Status }, CompanyId: shipment.CompanyId), cancellationToken);
         return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    /// <summary>For pricing: each item's landed unit cost from the most recently tracked shipment that carries it (cancelled shipments aside).</summary>
+    public async Task<IReadOnlyList<LandedUnitCostInfo>> LatestByItemAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var shipments = await db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).AsSplitQuery().AsNoTracking()
+            .Where(s => s.CompanyId == companyId && s.Status != "cancelled").OrderByDescending(static s => s.CreatedAt).ToListAsync(cancellationToken);
+        var seen = new HashSet<Guid>();
+        var result = new List<LandedUnitCostInfo>();
+        foreach (var shipment in shipments)
+        {
+            var order = await db.Orders.Include(static o => o.Lines).AsNoTracking().SingleAsync(o => o.Id == shipment.OrderId, cancellationToken);
+            var summary = await MapAsync(shipment, order, cancellationToken);
+            var asOf = summary.Events.Count > 0 ? summary.Events[^1].OccurredOn : summary.OrderedOn;
+            var ratePaid = summary.EffectiveRate ?? summary.OrderExchangeRate;
+            foreach (var line in summary.Lines)
+            {
+                if (line.Quantity <= 0m || !seen.Add(line.ItemId))
+                {
+                    continue;
+                }
+
+                result.Add(new LandedUnitCostInfo(line.ItemId, shipment.Id, summary.OrderNumber, summary.Status, asOf, summary.Currency, line.UnitPrice, ratePaid,
+                    line.Quantity > 0m ? line.GoodsRc / line.Quantity : 0m, line.Quantity > 0m ? line.CostsRc / line.Quantity : 0m, line.LandedUnitCostRc, line.Quantity));
+            }
+        }
+
+        return result;
     }
 
     private async Task<Shipment?> LoadAsync(Guid id, bool readOnly, CancellationToken cancellationToken)

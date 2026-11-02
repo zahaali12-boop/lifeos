@@ -35194,6 +35194,77 @@
           }
         }
       }
+    },
+    "/api/v1/trader/pricing/board": {
+      "get": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "Every item with a landed cost or a sales price: cost landed at the rate paid, cost to buy again at today's rate, current price and margin, suggested price at the target margin, alerts",
+        "operationId": "getTraderPricingBoard",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "priceListId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderPricingBoard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trader/pricing/apply": {
+      "post": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "Writes the given prices into the sales price list from today and returns the board",
+        "operationId": "postTraderPricingApply",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraderApplyPricesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderPricingBoard"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -87953,6 +88024,355 @@
           }
         }
       },
+      "TraderApplyPricesRequest": {
+        "required": [
+          "companyId",
+          "prices"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderPriceChange"
+            }
+          },
+          "priceListId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "Writes prices into the sales price list (the board's list, or the one named) from today."
+      },
+      "TraderMarketRate": {
+        "required": [
+          "currency",
+          "rate",
+          "asOf"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "rate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "asOf": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "Today's spot rate from a purchase currency to the company's, or null when none is entered under Rates."
+      },
+      "TraderPriceChange": {
+        "required": [
+          "itemId",
+          "price"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "price": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "TraderPricingBoard": {
+        "required": [
+          "companyId",
+          "currency",
+          "asOf",
+          "priceListId",
+          "priceListName",
+          "targetMarginPct",
+          "roundTo",
+          "marketRates",
+          "rows",
+          "losingItems",
+          "unpricedItems",
+          "hints"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "priceListId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "priceListName": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "targetMarginPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "roundTo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "marketRates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderMarketRate"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderPricingRow"
+            }
+          },
+          "losingItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unpricedItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "The board: the list priced, the settings in force, today's market rates and every item with a cost or a price. Hints: no_price_list."
+      },
+      "TraderPricingRow": {
+        "required": [
+          "itemId",
+          "itemCode",
+          "itemName",
+          "onHand",
+          "purchaseCurrency",
+          "unitPriceFc",
+          "ratePaid",
+          "marketRate",
+          "rateMovePct",
+          "landedUnitCostRc",
+          "stockUnitCostRc",
+          "costBasisRc",
+          "replacementUnitCostRc",
+          "currentPrice",
+          "currentMarginPct",
+          "suggestedPrice",
+          "suggestedMarginPct",
+          "alerts",
+          "orderNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "onHand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "purchaseCurrency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unitPriceFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "ratePaid": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "marketRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "rateMovePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "landedUnitCostRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "stockUnitCostRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costBasisRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "replacementUnitCostRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currentPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currentMarginPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "suggestedPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "suggestedMarginPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "orderNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One item on the pricing board: what it cost landed (from its latest shipment), what it would cost to buy again at\ntoday's rate, the price it sells at now and the margin that leaves, the suggested price at the target margin, and\nthe alerts (no_price, no_cost, no_market_rate, loss_at_cost, loss_at_replacement, margin_below_target, rate_up, rate_down)."
+      },
       "TransferLineSummary": {
         "required": [
           "id",
@@ -90236,6 +90656,9 @@
     },
     {
       "name": "Reporting"
+    },
+    {
+      "name": "Trader"
     }
   ]
 }

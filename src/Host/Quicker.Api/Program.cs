@@ -61,6 +61,8 @@ using Quicker.Tax;
 using Quicker.Tax.Api;
 using Quicker.Tenancy;
 using Quicker.Tenancy.Contracts;
+using Quicker.Trader;
+using Quicker.Trader.Api;
 using Quicker.Web;
 using Quicker.Workflow;
 using Quicker.Workflow.Api;
@@ -154,6 +156,7 @@ builder.Services.AddOnboardingModule();
 builder.Services.AddExpensesModule();
 builder.Services.AddFixedAssetsModule();
 builder.Services.AddReportingModule();
+builder.Services.AddTraderModule();
 
 var app = builder.Build();
 
@@ -207,6 +210,7 @@ api.MapOnboardingEndpoints();
 api.MapExpensesEndpoints();
 api.MapFixedAssetsEndpoints();
 api.MapReportingEndpoints();
+api.MapTraderEndpoints();
 
 app.Run();
 
