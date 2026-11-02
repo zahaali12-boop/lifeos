@@ -9,6 +9,7 @@ import { formatDate, formatMoney, formatNumber, localized } from "../../lib/form
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { DecimalField, Field, FormError, PageHeader, SelectField } from "../common";
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
+import { traderWarningText, warningTones } from "./warnings";
 
 type Health = components["schemas"]["TraderHealth"];
 type Income = components["schemas"]["TraderIncome"];
@@ -19,20 +20,7 @@ type PeriodKey = (typeof periodKeys)[number];
 
 const fixedCostsKey = "trader.health.fixed_costs_monthly";
 
-const warningTones: Record<string, "danger" | "warning" | "info"> = {
-  loss: "danger",
-  cash_runway_short: "danger",
-  break_even_not_covered: "warning",
-  margin_below_target: "warning",
-  overdue_receivables: "warning",
-  overdue_payables: "warning",
-  shipments_attention: "warning",
-  no_recent_sales: "warning",
-  reorder_needed: "info",
-  fixed_costs_unknown: "info",
-};
-
-const n = (value: number | string | null | undefined): number => (value === null || value === undefined ? 0 : Number(value));
+const n =(value: number | string | null | undefined): number => (value === null || value === undefined ? 0 : Number(value));
 
 /** The dates a period key stands for, in UTC calendar days; "this month so far" is the API's own default. */
 function periodRange(key: PeriodKey): { from?: string; to?: string } {
@@ -121,27 +109,7 @@ export function HealthPage() {
     }
     return n(income.netSales) === 0 && n(income.expenses) === 0 ? t("trader.health.verdict.nothing", { period: label }) : t("trader.health.verdict.even", { period: label });
   };
-  const warningText = (w: Warning): string => {
-    const value = w.value === null ? null : Number(w.value);
-    switch (w.code) {
-      case "loss":
-      case "overdue_receivables":
-      case "overdue_payables":
-        return t(`trader.health.warnings.${w.code}`, { amount: money(value) });
-      case "cash_runway_short":
-        return t("trader.health.warnings.cash_runway_short", { months: formatNumber(value ?? 0, { maximumFractionDigits: 1 }) });
-      case "break_even_not_covered":
-      case "margin_below_target":
-        return t(`trader.health.warnings.${w.code}`, { pct: formatNumber(value ?? 0, { maximumFractionDigits: 1 }) });
-      case "no_recent_sales":
-        return value === null ? t("trader.health.warnings.no_sales_in_cover", { days: formatNumber(h?.coverDays ?? 90) }) : t("trader.health.warnings.no_recent_sales", { days: formatNumber(value) });
-      case "shipments_attention":
-      case "reorder_needed":
-        return t(`trader.health.warnings.${w.code}`, { count: formatNumber(value ?? 0) });
-      default:
-        return t(`trader.health.warnings.${w.code}`, { defaultValue: w.code });
-    }
-  };
+  const warningText = (w: Warning): string => traderWarningText(t, w, Number(h?.coverDays ?? 90), currency);
   const submitFixedCosts = (event: FormEvent): void => {
     event.preventDefault();
     if (fixedCosts !== null) {

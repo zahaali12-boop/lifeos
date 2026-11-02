@@ -113,6 +113,13 @@ would also throw away the tests and the invariants that make the books right.
    program over the local network: `QUICKER_LAN_HOST` in `.env` makes the web app call the API by the machine's
    address and lets the API accept that origin; the installable scanner (`/m`) then opens from the phone's home
    screen. A phone shell of its own (an iPhone build) stays deferred: the scanner is a web app the phone installs.
+10. **The trader's home is the day in plain words, computed nowhere.** When the edition is `trader`, `/` shows the
+   trader's home instead of the full dashboard: what was sold today (the home read model), whether the month pays,
+    the cash and how long it lasts, what is owed each way, the shipments on the way (all from `GET /trader/health`),
+    "what to do today" (the health warnings, each worded as on Health and linking to the screen that acts on it),
+    the four things a trader does most (sell, compare offers, count the store, set the prices) and sales by month.
+    The page owns no figure of its own, so it never disagrees with Health or Money; a workspace switched back to the
+    full edition gets the full home again.
 
 ## Consequences
 
@@ -122,7 +129,7 @@ would also throw away the tests and the invariants that make the books right.
   presentation, so a fix in a module fixes both editions.
 * The edition reaches a browser at the switch (the session's tenant is updated) and other members at their next
   sign-in or token refresh; a stale token shows the old menus for at most the access-token lifetime.
-* Deferred (named in `docs/PROGRESS.md`): a home page of the trader's own (the full home shows for now); the
+* Deferred (named in `docs/PROGRESS.md`): the
   "order from this supplier" step orders every line from one supplier, a split order is a suggestion the trader
   carries out by hand; offers in a foreign currency need a spot rate of the day entered under Rates, else the
   comparison says so; costs that arrive after the goods were received (a landed-cost document by hand); partial

@@ -254,10 +254,26 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("start-count")).toBeVisible();
   await expectAccessible(page);
 
+  // Home: the trader's day in plain words: today's sale, the month's profit, the cash, what to do, and the shortcuts.
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Home" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Hello");
+  await expect(page.getByTestId("home-sold-today-value")).toContainText("210,000", { timeout: 20_000 });
+  await expect(page.getByTestId("home-month-value")).toContainText("A profit of");
+  await expect(page.getByTestId("home-cash-value")).toContainText("100,000");
+  await expect(page.getByTestId("home-owed-value")).toContainText("110,000");
+  await expect(page.getByTestId("todo-row").filter({ hasText: "covers only" })).toBeVisible();
+  await expect(page.getByTestId("home-actions").getByRole("link", { name: "Sell" })).toBeVisible();
+  await expect(page.getByTestId("home-month-row")).toHaveCount(6);
+  await expectAccessible(page);
+
   // Arabic, right-to-left: the flat bar, the list and the record in Arabic.
   await page.getByTestId("language-menu").click();
   await page.getByTestId("language-ar").click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("مرحباً");
+  await expect(page.getByTestId("home-month-value")).toContainText("ربح قدره");
+  await expectAccessible(page);
+  await page.getByTestId("flat-nav").getByRole("link", { name: "المخزون" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("المخزون");
   await expect(page.getByTestId("stock-row").filter({ hasText: "PADS" }).getByTestId("stock-on-hand")).toContainText("88");
   await expectAccessible(page);

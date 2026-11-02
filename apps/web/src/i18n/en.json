@@ -6609,6 +6609,35 @@
         "counted": "Counted",
         "save": "Save counts"
       }
+    },
+    "home": {
+      "title": "Hello, {name}",
+      "description": "{company} · {date}. Your day in plain words.",
+      "soldToday": "Sold today",
+      "monthSales": "{amount} this month",
+      "thisMonth": "This month so far",
+      "profit": "A profit of {amount}",
+      "loss": "A loss of {amount}",
+      "even": "Neither profit nor loss",
+      "nothingYet": "Nothing in the books yet",
+      "monthHint": "Sales {sales} · profit on the goods {gross} · expenses {expenses}",
+      "cash": "Cash in the boxes and banks",
+      "runway": "Covers {months} months of fixed costs",
+      "owedToYou": "Owed to you",
+      "youOwe": "You owe",
+      "overdue": "{amount} overdue",
+      "onTheWay": "Shipments on the way",
+      "onTheWayHint": "Goods of {goods}; {unpaid} still to pay",
+      "nothingOnTheWay": "Nothing on the way",
+      "todo": "What to do today",
+      "nothingToDo": "Nothing is waiting for you. Sell something.",
+      "actions": "Do now",
+      "sell": "Sell",
+      "compareOffers": "Compare offers",
+      "countStore": "Count the store",
+      "setPrices": "Set the prices",
+      "salesByMonth": "Sales by month",
+      "healthLink": "The whole picture: Health"
     }
   }
 }

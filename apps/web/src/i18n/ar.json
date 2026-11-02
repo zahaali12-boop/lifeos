@@ -6609,6 +6609,35 @@
         "counted": "المجرود",
         "save": "حفظ الجرد"
       }
+    },
+    "home": {
+      "title": "مرحباً {name}",
+      "description": "{company} · {date}. يومك بكلمات بسيطة.",
+      "soldToday": "مبيعات اليوم",
+      "monthSales": "{amount} هذا الشهر",
+      "thisMonth": "هذا الشهر حتى اليوم",
+      "profit": "ربح قدره {amount}",
+      "loss": "خسارة قدرها {amount}",
+      "even": "لا ربح ولا خسارة",
+      "nothingYet": "لا شيء في الدفاتر بعد",
+      "monthHint": "المبيعات {sales} · الربح على البضاعة {gross} · المصاريف {expenses}",
+      "cash": "النقد في الصناديق والبنوك",
+      "runway": "يغطي {months} شهراً من التكاليف الثابتة",
+      "owedToYou": "لك عند العملاء",
+      "youOwe": "عليك للموردين",
+      "overdue": "{amount} متأخرة",
+      "onTheWay": "شحنات في الطريق",
+      "onTheWayHint": "بضاعة بقيمة {goods}؛ يبقى دفع {unpaid}",
+      "nothingOnTheWay": "لا شيء في الطريق",
+      "todo": "ما تفعله اليوم",
+      "nothingToDo": "لا شيء ينتظرك. بِع شيئاً.",
+      "actions": "افعل الآن",
+      "sell": "بِع",
+      "compareOffers": "قارن العروض",
+      "countStore": "اجرد المحل",
+      "setPrices": "حدّد الأسعار",
+      "salesByMonth": "المبيعات حسب الشهر",
+      "healthLink": "الصورة كاملة: صحة المشروع"
     }
   }
 }

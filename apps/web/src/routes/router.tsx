@@ -4,7 +4,7 @@ import { AppShell } from "../shell/AppShell";
 import { AuditPage } from "./AuditPage";
 import { CompaniesPage } from "./CompaniesPage";
 import { CustomFieldsPage } from "./CustomFieldsPage";
-import { DashboardPage } from "./DashboardPage";
+import { HomeRoute } from "./HomeRoute";
 import { JobsPage } from "./JobsPage";
 import { LoginPage } from "./LoginPage";
 import { MembersPage } from "./MembersPage";
@@ -144,7 +144,7 @@ const shellRoute = createRoute({
 const searchRecord = (search: Record<string, unknown>): Record<string, string> =>
   Object.fromEntries(Object.entries(search).filter(([, value]) => typeof value === "string").map(([key, value]) => [key, value as string]));
 
-const dashboardRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: DashboardPage });
+const dashboardRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: HomeRoute });
 const setupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/setup", component: SetupPage });
 const companiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/companies", component: CompaniesPage, validateSearch: searchRecord });
 const ratesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/rates", component: RatesPage });
