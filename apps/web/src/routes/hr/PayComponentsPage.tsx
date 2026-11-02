@@ -8,7 +8,7 @@ import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
 import { formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
 import { num } from "../purchasing/shared";
 import { componentCalculations, componentKinds, usePayComponents, type PayComponent } from "./shared";
@@ -138,12 +138,12 @@ export function PayComponentsPage() {
                 </Field>
                 {usesRate ? (
                   <Field label={t("hr.defaultRate")} description={t("hr.defaultRateHelp")}>
-                    <TextField inputMode="decimal" value={form.defaultRatePct} onChange={(e) => { setForm({ ...form, defaultRatePct: e.target.value }); }} dir="ltr" data-testid="component-rate" />
+                    <DecimalField value={form.defaultRatePct} onChange={(e) => { setForm({ ...form, defaultRatePct: e.target.value }); }} dir="ltr" data-testid="component-rate" />
                   </Field>
                 ) : null}
                 {form.calculation === "fixed" ? (
                   <Field label={t("hr.defaultAmount")} description={t("hr.defaultAmountHelp")}>
-                    <TextField inputMode="decimal" value={form.defaultAmount} onChange={(e) => { setForm({ ...form, defaultAmount: e.target.value }); }} dir="ltr" data-testid="component-amount" />
+                    <DecimalField value={form.defaultAmount} onChange={(e) => { setForm({ ...form, defaultAmount: e.target.value }); }} dir="ltr" data-testid="component-amount" />
                   </Field>
                 ) : null}
                 {needsExpense ? (

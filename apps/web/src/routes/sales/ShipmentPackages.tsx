@@ -7,7 +7,7 @@ import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { formatNumber } from "../../lib/format";
 import { toFormProblem } from "../../lib/problem";
-import { Field, FormError, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, SelectField, TextField } from "../common";
 import { num, optionalNum, type Shipment } from "./shared";
 
 type Package = components["schemas"]["ShipmentPackageSummary"];
@@ -140,16 +140,16 @@ export function PackagesEditor({ shipment, onSaved, onCancel }: { shipment: Ship
               </SelectField>
             </Field>
             <Field label={t("packing.weightKg")}>
-              <TextField inputMode="decimal" value={f.weightKg} onChange={(e) => { update(f.key, { weightKg: e.target.value }); }} dir="ltr" data-testid="package-weight" />
+              <DecimalField value={f.weightKg} onChange={(e) => { update(f.key, { weightKg: e.target.value }); }} dir="ltr" data-testid="package-weight" />
             </Field>
             <Field label={t("packing.lengthCm")}>
-              <TextField inputMode="decimal" value={f.lengthCm} onChange={(e) => { update(f.key, { lengthCm: e.target.value }); }} dir="ltr" />
+              <DecimalField value={f.lengthCm} onChange={(e) => { update(f.key, { lengthCm: e.target.value }); }} dir="ltr" />
             </Field>
             <Field label={t("packing.widthCm")}>
-              <TextField inputMode="decimal" value={f.widthCm} onChange={(e) => { update(f.key, { widthCm: e.target.value }); }} dir="ltr" />
+              <DecimalField value={f.widthCm} onChange={(e) => { update(f.key, { widthCm: e.target.value }); }} dir="ltr" />
             </Field>
             <Field label={t("packing.heightCm")}>
-              <TextField inputMode="decimal" value={f.heightCm} onChange={(e) => { update(f.key, { heightCm: e.target.value }); }} dir="ltr" />
+              <DecimalField value={f.heightCm} onChange={(e) => { update(f.key, { heightCm: e.target.value }); }} dir="ltr" />
             </Field>
             <Field label={t("sales.trackingNumber")}>
               <TextField value={f.trackingNumber} onChange={(e) => { update(f.key, { trackingNumber: e.target.value }); }} dir="ltr" data-testid="package-tracking" />
@@ -169,7 +169,7 @@ export function PackagesEditor({ shipment, onSaved, onCancel }: { shipment: Ship
                   <TableCell dir="ltr">{l.itemCode}</TableCell>
                   <TableCell className="tabular" dir="ltr">{q(l.quantity)} {l.uomCode}</TableCell>
                   <TableCell>
-                    <TextField aria-label={t("packing.inThisPackage")} inputMode="decimal" className="w-24" value={f.contents[l.orderLineId] ?? ""} onChange={(e) => { update(f.key, { contents: { ...f.contents, [l.orderLineId]: e.target.value } }); }} dir="ltr" data-testid={`package-qty-${l.itemCode}`} />
+                    <DecimalField aria-label={t("packing.inThisPackage")} className="w-24" value={f.contents[l.orderLineId] ?? ""} onChange={(e) => { update(f.key, { contents: { ...f.contents, [l.orderLineId]: e.target.value } }); }} dir="ltr" data-testid={`package-qty-${l.itemCode}`} />
                   </TableCell>
                 </TableRow>
               ))}

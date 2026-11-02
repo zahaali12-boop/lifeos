@@ -12,7 +12,7 @@ import { formatDate, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { ItemCodeField } from "../inventory/ItemCodeField";
 import { useTaxRegime, useTaxRegistrations } from "../tax/shared";
@@ -230,8 +230,8 @@ export function RecurringInvoicesPage() {
                         {line.kind === "item" ? <ItemCodeField aria-label={t("sales.itemCode")} value={line.itemCode} onChange={(code) => { patchLine(index, { itemCode: code }); }} className="w-32" data-testid={`recurring-item-${String(index)}`} />
                           : <TextField aria-label={t("sales.invoicing.lineDescription")} value={line.description} onChange={(e) => { patchLine(index, { description: e.target.value }); }} className="w-56" data-testid={`recurring-description-${String(index)}`} />}
                       </TableCell>
-                      <TableCell><TextField aria-label={t("sales.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`recurring-qty-${String(index)}`} /></TableCell>
-                      <TableCell><TextField aria-label={t("sales.unitPrice")} inputMode="decimal" value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" placeholder={line.kind === "item" ? t("sales.autoPrice") : ""} data-testid={`recurring-price-${String(index)}`} /></TableCell>
+                      <TableCell><DecimalField aria-label={t("sales.quantity")} value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`recurring-qty-${String(index)}`} /></TableCell>
+                      <TableCell><DecimalField aria-label={t("sales.unitPrice")} value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" placeholder={line.kind === "item" ? t("sales.autoPrice") : ""} data-testid={`recurring-price-${String(index)}`} /></TableCell>
                       <TableCell>
                         <SelectField aria-label={t("tax.code")} value={line.taxCodeId} onChange={(e) => { patchLine(index, { taxCodeId: e.target.value }); }} data-testid={`recurring-tax-${String(index)}`}>
                           <option value="">{line.kind === "item" ? t("sales.invoicing.taxByItem") : "—"}</option>

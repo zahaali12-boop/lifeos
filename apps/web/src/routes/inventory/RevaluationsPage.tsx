@@ -11,7 +11,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
 import { RecordActivity } from "../RecordDiscussion";
@@ -287,7 +287,7 @@ export function RevaluationsPage() {
                         <WarehouseSelect warehouses={warehouses.data ?? []} value={line.warehouseId} onChange={(id) => { updateLine(index, { warehouseId: id }); }} allowAll label={t("inventory.warehouse")} testId={`reval-warehouse-${String(index)}`} />
                       </TableCell>
                       <TableCell>
-                        <TextField inputMode="decimal" value={line.newUnitCost} onChange={(e) => { updateLine(index, { newUnitCost: e.target.value }); }} dir="ltr" aria-label={t("inventory.revaluations.newUnitCost")} data-testid={`reval-cost-${String(index)}`} />
+                        <DecimalField value={line.newUnitCost} onChange={(e) => { updateLine(index, { newUnitCost: e.target.value }); }} dir="ltr" aria-label={t("inventory.revaluations.newUnitCost")} data-testid={`reval-cost-${String(index)}`} />
                       </TableCell>
                       <TableCell>
                         <TextField value={line.note} onChange={(e) => { updateLine(index, { note: e.target.value }); }} aria-label={t("inventory.revaluations.note")} />

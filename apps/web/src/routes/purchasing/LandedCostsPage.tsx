@@ -11,7 +11,7 @@ import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useChargeTypes, useSuppliers } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
@@ -282,7 +282,7 @@ export function LandedCostsPage() {
                           ))}
                         </SelectField>
                       </TableCell>
-                      <TableCell><TextField aria-label={t("purchasing.amount")} inputMode="decimal" value={c.amount} onChange={(e) => { patchCharge(index, { amount: e.target.value }); }} dir="ltr" className="w-28" data-testid={`charge-amount-${String(index)}`} /></TableCell>
+                      <TableCell><DecimalField aria-label={t("purchasing.amount")} value={c.amount} onChange={(e) => { patchCharge(index, { amount: e.target.value }); }} dir="ltr" className="w-28" data-testid={`charge-amount-${String(index)}`} /></TableCell>
                       <TableCell>
                         <SelectField aria-label={t("purchasing.basis")} value={c.allocationBasis} onChange={(e) => { patchCharge(index, { allocationBasis: e.target.value }); }} data-testid={`charge-basis-${String(index)}`}>
                           <option value="">{t("purchasing.typeDefault")}</option>

@@ -10,7 +10,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, num, PurchaseStatus, useSuppliers, type LineForm, type Rfq } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
@@ -279,11 +279,11 @@ export function RfqsPage() {
                       <TextField type="number" min={0} value={quote.leadTimeDays} onChange={(e) => { setQuote({ ...quote, leadTimeDays: e.target.value }); }} dir="ltr" data-testid="quote-lead-time" />
                     </Field>
                     <Field label={t("purchasing.freight")}>
-                      <TextField inputMode="decimal" value={quote.freightAmount} onChange={(e) => { setQuote({ ...quote, freightAmount: e.target.value }); }} dir="ltr" data-testid="quote-freight" />
+                      <DecimalField value={quote.freightAmount} onChange={(e) => { setQuote({ ...quote, freightAmount: e.target.value }); }} dir="ltr" data-testid="quote-freight" />
                     </Field>
                     {r.lines.map((l, index) => (
                       <Field key={l.id} label={`${String(l.lineNo)}. ${l.itemCode ?? l.description ?? ""} × ${formatNumber(l.quantity, { maximumFractionDigits: 3 })} ${l.uomCode}`}>
-                        <TextField inputMode="decimal" value={quote.prices[l.id] ?? ""} onChange={(e) => { setQuote({ ...quote, prices: { ...quote.prices, [l.id]: e.target.value } }); }} dir="ltr" data-testid={`quote-price-${String(index)}`} />
+                        <DecimalField value={quote.prices[l.id] ?? ""} onChange={(e) => { setQuote({ ...quote, prices: { ...quote.prices, [l.id]: e.target.value } }); }} dir="ltr" data-testid={`quote-price-${String(index)}`} />
                       </Field>
                     ))}
                   </div>

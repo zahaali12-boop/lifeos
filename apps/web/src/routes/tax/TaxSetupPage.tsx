@@ -7,7 +7,7 @@ import { api, unwrap } from "../../api";
 import { formatDate, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, Tabs, useCompanyContext } from "../inventory/shared";
 import { useCompanyCustomers } from "../sales/pricing/shared";
 import { CodeField } from "../CodeField";
@@ -564,7 +564,7 @@ function RegimesTab() {
                 {codeForm.rates.map((rate, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <TextField type="date" value={rate.validFrom} onChange={(e) => { const rates = [...codeForm.rates]; rates[index] = { ...rate, validFrom: e.target.value }; setCodeForm({ ...codeForm, rates }); }} dir="ltr" data-testid="rate-from" />
-                    <TextField type="number" min={0} max={100} step="any" value={rate.ratePct} onChange={(e) => { const rates = [...codeForm.rates]; rates[index] = { ...rate, ratePct: e.target.value }; setCodeForm({ ...codeForm, rates }); }} dir="ltr" className="w-24" data-testid="rate-pct" />
+                    <DecimalField max={100} value={rate.ratePct} onChange={(e) => { const rates = [...codeForm.rates]; rates[index] = { ...rate, ratePct: e.target.value }; setCodeForm({ ...codeForm, rates }); }} dir="ltr" className="w-24" data-testid="rate-pct" />
                     <span className="text-sm text-fg-muted">%</span>
                     <Button type="button" variant="ghost" size="sm" onClick={() => { setCodeForm({ ...codeForm, rates: codeForm.rates.filter((_, i) => i !== index) }); }} aria-label={t("common.delete")}>
                       <Trash2 aria-hidden="true" />

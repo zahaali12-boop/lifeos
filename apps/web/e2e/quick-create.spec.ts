@@ -85,7 +85,7 @@ test("English: a quotation started from the New menu, with its customer and its 
   });
   await expect(page.getByTestId("line-item-1")).toHaveValue("KETTLE");
   await expect(page.getByTestId("line-qty-1")).toHaveValue("3");
-  await expect(page.getByTestId("line-price-1")).toHaveValue("20000");
+  await expect(page.getByTestId("line-price-1")).toHaveValue("20,000");
   await page.getByTestId("save-quotation").click();
   await expect(page.getByTestId("quotation-detail")).toBeVisible();
   await expect(page.getByTestId("quotation-detail").getByTestId("doc-status").first()).toContainText("Draft");

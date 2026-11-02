@@ -90,12 +90,13 @@ export function DocStatus({ status }: { status: string }) {
 /** A definition list for explanations and small records: key on the left, value on the right, no table semantics needed. */
 export function KeyValues({ entries }: { entries: [string, ReactNode][] }) {
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
       {entries.map(([key, value]) => (
         <div key={key} className="contents">
           <dt className="text-fg-muted">{key}</dt>
-          <dd className="tabular" dir="auto">
-            {value}
+          {/* The value starts right after its label in either direction; bdi keeps Latin codes and numbers readable inside Arabic. */}
+          <dd className="tabular text-start">
+            <bdi>{value}</bdi>
           </dd>
         </div>
       ))}

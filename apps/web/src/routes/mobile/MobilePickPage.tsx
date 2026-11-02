@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { formatDate, formatNumber } from "../../lib/format";
 import { toFormProblem } from "../../lib/problem";
-import { FormError, TextField } from "../common";
+import { DecimalField, FormError, TextField } from "../common";
 import { PickProgress, PickStatus, type PickList, type PickListLine } from "../inventory/picking";
 import { useOnline, useScanContext } from "./context";
 import { resolveItem } from "./items";
@@ -346,7 +346,7 @@ function PickLineCard({ list, line, bins, onPicked }: { list: PickList; line: Pi
         <>
           {!serialTracked ? (
             <Field label={t("picking.scanner.quantityPicked")}>
-              <TextField className="h-12 text-lg" inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => { setQuantity(e.target.value); }} data-testid="pick-quantity" dir="ltr" />
+              <DecimalField className="h-12 text-lg" autoComplete="off" value={quantity} onChange={(e) => { setQuantity(e.target.value); }} data-testid="pick-quantity" dir="ltr" />
             </Field>
           ) : null}
           {lotTracked ? (

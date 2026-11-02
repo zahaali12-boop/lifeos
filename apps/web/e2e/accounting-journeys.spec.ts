@@ -86,7 +86,7 @@ test("English: chart from a template, a journal posted, the trial balance drills
   await expect(page.getByTestId("journal-balance")).toContainText("Out of balance by");
   // A new line starts with the amount that balances the journal; left without an account it is not silently dropped.
   await page.getByTestId("add-line").click();
-  await expect(page.getByTestId("line-credit-2")).toHaveValue("500000");
+  await expect(page.getByTestId("line-credit-2")).toHaveValue("500,000");
   await expect(page.getByTestId("journal-balance")).toHaveAttribute("data-state", "balanced");
   await page.getByTestId("save-journal").click();
   await expect(page.getByRole("alert").filter({ hasText: "Line 3 has an amount or details but no account" })).toBeVisible();

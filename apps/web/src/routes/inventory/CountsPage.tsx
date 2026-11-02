@@ -11,7 +11,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useReasonCodes, useWarehouses } from "./shared";
 import { RecordActivity } from "../RecordDiscussion";
 
@@ -217,7 +217,7 @@ export function CountsPage() {
                       <TableNumberCell>{count.blind && counting ? "•••" : <Qty value={line.expectedQty} uom={line.baseUom} />}</TableNumberCell>
                       <TableNumberCell>
                         {counting ? (
-                          <TextField aria-label={t("inventory.counts.counted")} inputMode="decimal" value={entries[line.id] ?? (line.countedQty === null ? "" : String(line.countedQty))} onChange={(e) => { setEntries({ ...entries, [line.id]: e.target.value }); }} dir="ltr" className="w-24 text-end" data-testid={`counted-${line.lineNo}`} />
+                          <DecimalField aria-label={t("inventory.counts.counted")} value={entries[line.id] ?? (line.countedQty === null ? "" : String(line.countedQty))} onChange={(e) => { setEntries({ ...entries, [line.id]: e.target.value }); }} dir="ltr" className="w-24 text-end" data-testid={`counted-${line.lineNo}`} />
                         ) : (
                           <Qty value={line.countedQty} />
                         )}

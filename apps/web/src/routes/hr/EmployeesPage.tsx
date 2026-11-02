@@ -10,7 +10,7 @@ import { useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { MoreFields } from "../MoreFields";
 import { num } from "../purchasing/shared";
@@ -177,7 +177,7 @@ export function EmployeesPage() {
                   <TextField type="date" value={form.hireDate} onChange={(ev) => { setForm({ ...form, hireDate: ev.target.value }); }} dir="ltr" required data-testid="employee-hire-date" />
                 </Field>
                 <Field label={t("hr.basicSalary")} description={currency} required>
-                  <TextField inputMode="decimal" value={form.basicSalary} onChange={(ev) => { setForm({ ...form, basicSalary: ev.target.value }); }} dir="ltr" required data-testid="employee-basic" />
+                  <DecimalField value={form.basicSalary} onChange={(ev) => { setForm({ ...form, basicSalary: ev.target.value }); }} dir="ltr" required data-testid="employee-basic" />
                 </Field>
                 <Field label={t("hr.jobTitleEn")}>
                   <TextField value={form.jobTitleEn} onChange={(ev) => { setForm({ ...form, jobTitleEn: ev.target.value }); }} dir="ltr" data-testid="employee-job-en" />
@@ -260,8 +260,8 @@ export function EmployeesPage() {
                                 ))}
                               </SelectField>
                             </TableCell>
-                            <TableCell><TextField aria-label={t("hr.ownAmount")} inputMode="decimal" value={line.amount} onChange={(ev) => { patchComponent(index, { amount: ev.target.value }); }} dir="ltr" className="w-32" disabled={rated} data-testid={`component-amount-${String(index)}`} /></TableCell>
-                            <TableCell><TextField aria-label={t("hr.ownRate")} inputMode="decimal" value={line.ratePct} onChange={(ev) => { patchComponent(index, { ratePct: ev.target.value }); }} dir="ltr" className="w-24" disabled={!rated} data-testid={`component-rate-${String(index)}`} /></TableCell>
+                            <TableCell><DecimalField aria-label={t("hr.ownAmount")} value={line.amount} onChange={(ev) => { patchComponent(index, { amount: ev.target.value }); }} dir="ltr" className="w-32" disabled={rated} data-testid={`component-amount-${String(index)}`} /></TableCell>
+                            <TableCell><DecimalField aria-label={t("hr.ownRate")} value={line.ratePct} onChange={(ev) => { patchComponent(index, { ratePct: ev.target.value }); }} dir="ltr" className="w-24" disabled={!rated} data-testid={`component-rate-${String(index)}`} /></TableCell>
                             <TableCell>
                               <Button type="button" variant="ghost" size="sm" aria-label={t("expenses.removeLine")} onClick={() => { setForm({ ...form, components: form.components.filter((_, i) => i !== index) }); }} data-testid={`remove-component-${String(index)}`}><Trash2 aria-hidden="true" /></Button>
                             </TableCell>

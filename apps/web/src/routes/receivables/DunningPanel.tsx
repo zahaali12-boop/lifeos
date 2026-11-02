@@ -9,7 +9,7 @@ import { formatDate, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, TextareaField, TextField } from "../common";
 import { KeyValues } from "../inventory/shared";
 import { money, num } from "../sales/shared";
 
@@ -217,7 +217,7 @@ export function DunningPanel({ companyId, partnerId, customers }: { companyId: s
                   <TextareaField value={form.textAr} onChange={(e) => { setForm({ ...form, textAr: e.target.value }); }} rows={3} dir="rtl" data-testid="level-text-ar" />
                 </Field>
                 <Field label={t("receivables.dunning.fee")} description={fc}>
-                  <TextField inputMode="decimal" value={form.feeAmount} onChange={(e) => { setForm({ ...form, feeAmount: e.target.value }); }} dir="ltr" data-testid="level-fee" />
+                  <DecimalField value={form.feeAmount} onChange={(e) => { setForm({ ...form, feeAmount: e.target.value }); }} dir="ltr" data-testid="level-fee" />
                 </Field>
                 <div className="flex flex-col gap-2 self-end text-sm">
                   <label className="flex items-center gap-2"><input type="checkbox" checked={form.blockCustomer} onChange={(e) => { setForm({ ...form, blockCustomer: e.target.checked }); }} data-testid="level-block" />{t("receivables.dunning.blockCustomer")}</label>

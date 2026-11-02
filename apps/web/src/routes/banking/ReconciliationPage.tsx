@@ -12,7 +12,7 @@ import { formatDate, formatDateTime, formatMoney, localized } from "../../lib/fo
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
 import { num } from "../purchasing/shared";
@@ -366,7 +366,7 @@ export function ReconciliationPage() {
               <TextField type="date" value={asOf} onChange={(e) => { setAsOf(e.target.value); }} dir="ltr" data-testid="reconcile-as-of" />
             </Field>
             <Field label={t("banking.reconciliation.reconcile.statementBalance")} description={t("banking.reconciliation.reconcile.statementBalanceHelp")}>
-              <TextField inputMode="decimal" value={statementBalance} onChange={(e) => { setStatementBalance(e.target.value); }} dir="ltr" data-testid="reconcile-statement-balance" />
+              <DecimalField value={statementBalance} onChange={(e) => { setStatementBalance(e.target.value); }} dir="ltr" data-testid="reconcile-statement-balance" />
             </Field>
           </>
         ) : null}
@@ -661,10 +661,10 @@ export function ReconciliationPage() {
                   <TextField value={rule.referencePattern} onChange={(e) => { setRule({ ...rule, referencePattern: e.target.value }); }} dir="ltr" data-testid="rule-pattern" />
                 </Field>
                 <Field label={t("banking.reconciliation.rules.amountMin")}>
-                  <TextField inputMode="decimal" value={rule.amountMin} onChange={(e) => { setRule({ ...rule, amountMin: e.target.value }); }} dir="ltr" data-testid="rule-amount-min" />
+                  <DecimalField value={rule.amountMin} onChange={(e) => { setRule({ ...rule, amountMin: e.target.value }); }} dir="ltr" data-testid="rule-amount-min" />
                 </Field>
                 <Field label={t("banking.reconciliation.rules.amountMax")}>
-                  <TextField inputMode="decimal" value={rule.amountMax} onChange={(e) => { setRule({ ...rule, amountMax: e.target.value }); }} dir="ltr" data-testid="rule-amount-max" />
+                  <DecimalField value={rule.amountMax} onChange={(e) => { setRule({ ...rule, amountMax: e.target.value }); }} dir="ltr" data-testid="rule-amount-max" />
                 </Field>
                 <Field label={t("banking.reconciliation.rules.priority")} description={t("banking.reconciliation.rules.priorityHelp")}>
                   <TextField inputMode="numeric" value={rule.priority} onChange={(e) => { setRule({ ...rule, priority: e.target.value }); }} dir="ltr" data-testid="rule-priority" />

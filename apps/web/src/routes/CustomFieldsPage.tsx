@@ -9,7 +9,7 @@ import type { components } from "../api/schema";
 import { DataGrid } from "../grid/DataGrid";
 import { localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
-import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { DecimalField, FormError, PageHeader, SelectField, TextField } from "./common";
 import { CustomFieldControl } from "./CustomFieldsFieldset";
 
 type CustomField = components["schemas"]["CustomFieldView"];
@@ -212,10 +212,10 @@ export function CustomFieldsPage() {
                 {form.type === "number" ? (
                   <>
                     <Field label={t("customFields.min")} error={problem?.fields.rules}>
-                      <TextField inputMode="decimal" value={form.min} onChange={(e) => { setForm({ min: e.target.value }); }} dir="ltr" />
+                      <DecimalField value={form.min} onChange={(e) => { setForm({ min: e.target.value }); }} dir="ltr" />
                     </Field>
                     <Field label={t("customFields.max")}>
-                      <TextField inputMode="decimal" value={form.max} onChange={(e) => { setForm({ max: e.target.value }); }} dir="ltr" />
+                      <DecimalField value={form.max} onChange={(e) => { setForm({ max: e.target.value }); }} dir="ltr" />
                     </Field>
                   </>
                 ) : null}

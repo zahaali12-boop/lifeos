@@ -19,7 +19,7 @@ import { api, unwrap } from "../../api";
 import { formatDate } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
-import { Field, FormError, TextField } from "../common";
+import { DecimalField, Field, FormError, TextField } from "../common";
 import { KeyValues, Qty } from "./shared";
 
 export interface ItemCostTarget {
@@ -207,8 +207,7 @@ export function ItemCostPanel({
             />
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label={t("itemCost.standardCost")} required error={problem?.fields.standardCost}>
-                <TextField
-                  inputMode="decimal"
+                <DecimalField
                   value={form.standardCost}
                   onChange={(e) => {
                     setForm({ ...form, standardCost: e.target.value });

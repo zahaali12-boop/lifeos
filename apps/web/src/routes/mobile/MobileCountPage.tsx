@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
-import { FormError, SelectField, TextField } from "../common";
+import { DecimalField, FormError, SelectField, TextField } from "../common";
 import { useOnline, useScanContext } from "./context";
 import { cachedItem, resolveItem, type ResolvedItem } from "./items";
 import { enqueue, syncQueue, useQueue } from "./queue";
@@ -208,7 +208,7 @@ export function MobileCountPage() {
                 </div>
               </div>
               <Field label={t("mobile.count.quantity")}>
-                <TextField className="h-12 text-lg" inputMode="decimal" autoComplete="off" data-testid="count-quantity" value={quantity} onChange={(event) => { setQuantity(event.target.value); }} autoFocus />
+                <DecimalField className="h-12 text-lg" autoComplete="off" data-testid="count-quantity" value={quantity} onChange={(event) => { setQuantity(event.target.value); }} autoFocus />
               </Field>
               {wantsLot ? (
                 <Field label={t("mobile.count.lot")}>

@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { formatNumber } from "../../lib/format";
-import { TextField } from "../common";
+import { DecimalField, TextField } from "../common";
 import { CostCentreSelect, costCentreText, type LineDimensionReference } from "../accounting/JournalLineDetails";
 import { ItemCodeField } from "../inventory/ItemCodeField";
 import { lineKeys, pastedCode, pastedNumber } from "../lineKeys";
@@ -211,10 +211,10 @@ export function SalesLinesEditor({ lines, onChange, showDropShip = false, costCe
             {lines.map((line, index) => (
               <TableRow key={index}>
                 <TableCell><ItemCodeField aria-label={t("sales.itemCode")} value={line.itemCode} onChange={(code) => { patch(index, { itemCode: code }); }} className="w-28" data-testid={`line-item-${String(index)}`} {...keys.cell(index, "itemCode")} /></TableCell>
-                <TableCell><TextField aria-label={t("sales.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patch(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" {...keys.cell(index, "quantity")} data-testid={`line-qty-${String(index)}`} /></TableCell>
+                <TableCell><DecimalField aria-label={t("sales.quantity")} value={line.quantity} onChange={(e) => { patch(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" {...keys.cell(index, "quantity")} data-testid={`line-qty-${String(index)}`} /></TableCell>
                 <TableCell><TextField aria-label={t("sales.uom")} value={line.uom} onChange={(e) => { patch(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" {...keys.cell(index, "uom")} placeholder={t("sales.baseUom")} data-testid={`line-uom-${String(index)}`} /></TableCell>
-                <TableCell><TextField aria-label={t("sales.unitPrice")} inputMode="decimal" value={line.price} onChange={(e) => { patch(index, { price: e.target.value }); }} dir="ltr" className="w-24" {...keys.cell(index, "price")} placeholder={t("sales.autoPrice")} data-testid={`line-price-${String(index)}`} /></TableCell>
-                <TableCell><TextField aria-label={t("sales.discountPct")} inputMode="decimal" value={line.discountPct} onChange={(e) => { patch(index, { discountPct: e.target.value }); }} dir="ltr" className="w-20" {...keys.cell(index, "discountPct")} data-testid={`line-discount-${String(index)}`} /></TableCell>
+                <TableCell><DecimalField aria-label={t("sales.unitPrice")} value={line.price} onChange={(e) => { patch(index, { price: e.target.value }); }} dir="ltr" className="w-24" {...keys.cell(index, "price")} placeholder={t("sales.autoPrice")} data-testid={`line-price-${String(index)}`} /></TableCell>
+                <TableCell><DecimalField aria-label={t("sales.discountPct")} value={line.discountPct} onChange={(e) => { patch(index, { discountPct: e.target.value }); }} dir="ltr" className="w-20" {...keys.cell(index, "discountPct")} data-testid={`line-discount-${String(index)}`} /></TableCell>
                 {showCostCentre && costCentres ? (
                   <TableCell>
                     <CostCentreSelect label={t("accounting.costCentreOfLine", { line: index + 1 })} values={line.dimensions} reference={costCentres} emptyLabel="—" onChange={(dimensions) => { patch(index, { dimensions }); }} testId={`line-cost-centre-${String(index)}`} />

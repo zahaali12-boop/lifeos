@@ -11,7 +11,7 @@ import { useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { ItemStatus, useBankAccounts, useOpenItems } from "../payables/shared";
 import { useChequeBooks } from "./chequeShared";
@@ -240,17 +240,17 @@ export function PaymentsPage() {
                   </Field>
                 ) : null}
                 <Field label={t("banking.exchangeRate")} description={t("banking.exchangeRateHelp")}>
-                  <TextField inputMode="decimal" value={form.exchangeRate} onChange={(e) => { setForm({ ...form, exchangeRate: e.target.value }); }} dir="ltr" data-testid="payment-rate" />
+                  <DecimalField value={form.exchangeRate} onChange={(e) => { setForm({ ...form, exchangeRate: e.target.value }); }} dir="ltr" data-testid="payment-rate" />
                 </Field>
                 <Field label={form.kind === "supplier_advance" ? t("banking.advanceAmount") : t("banking.onAccount")} required={form.kind === "supplier_advance"}>
-                  <TextField inputMode="decimal" value={form.onAccount} onChange={(e) => { setForm({ ...form, onAccount: e.target.value }); }} dir="ltr" data-testid="payment-on-account" />
+                  <DecimalField value={form.onAccount} onChange={(e) => { setForm({ ...form, onAccount: e.target.value }); }} dir="ltr" data-testid="payment-on-account" />
                 </Field>
                 <Field label={t("banking.charges")} description={bank ? bank.currency : undefined}>
-                  <TextField inputMode="decimal" value={form.charges} onChange={(e) => { setForm({ ...form, charges: e.target.value }); }} dir="ltr" data-testid="payment-charges" />
+                  <DecimalField value={form.charges} onChange={(e) => { setForm({ ...form, charges: e.target.value }); }} dir="ltr" data-testid="payment-charges" />
                 </Field>
                 {needsBankAmount ? (
                   <Field label={t("banking.bankAmount")} description={t("banking.bankAmountHelp", { currency: bank.currency })} required>
-                    <TextField inputMode="decimal" value={form.bankAmount} onChange={(e) => { setForm({ ...form, bankAmount: e.target.value }); }} dir="ltr" required data-testid="payment-bank-amount" />
+                    <DecimalField value={form.bankAmount} onChange={(e) => { setForm({ ...form, bankAmount: e.target.value }); }} dir="ltr" required data-testid="payment-bank-amount" />
                   </Field>
                 ) : null}
               </div>
@@ -285,7 +285,7 @@ export function PaymentsPage() {
                       <TableRow key={line.openItemId} data-testid="payment-line">
                         <TableCell dir="ltr">{line.label}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatNumber(line.remaining)}</TableCell>
-                        <TableCell><TextField aria-label={t("banking.payNow")} inputMode="decimal" value={line.amount} onChange={(e) => { patchLine(index, e.target.value); }} dir="ltr" className="w-32" data-testid={`pay-amount-${String(index)}`} /></TableCell>
+                        <TableCell><DecimalField aria-label={t("banking.payNow")} value={line.amount} onChange={(e) => { patchLine(index, e.target.value); }} dir="ltr" className="w-32" data-testid={`pay-amount-${String(index)}`} /></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

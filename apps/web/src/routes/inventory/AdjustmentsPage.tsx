@@ -11,7 +11,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useReasonCodes, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
 import { RecordActivity } from "../RecordDiscussion";
@@ -368,13 +368,13 @@ export function AdjustmentsPage() {
                         </TableCell>
                       ) : null}
                       <TableNumberCell>
-                        <TextField aria-label={t("inventory.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} {...adjustmentKeys?.cell(index, "quantity")} />
+                        <DecimalField aria-label={t("inventory.quantity")} value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} {...adjustmentKeys?.cell(index, "quantity")} />
                       </TableNumberCell>
                       <TableCell>
                         <TextField aria-label={t("inventory.uom")} value={line.uom} onChange={(e) => { updateLine(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" {...adjustmentKeys?.cell(index, "uom")} />
                       </TableCell>
                       <TableNumberCell>
-                        <TextField aria-label={t("inventory.unitCost")} inputMode="decimal" value={line.unitCost} onChange={(e) => { updateLine(index, { unitCost: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-cost-${index}`} {...adjustmentKeys?.cell(index, "unitCost")} />
+                        <DecimalField aria-label={t("inventory.unitCost")} value={line.unitCost} onChange={(e) => { updateLine(index, { unitCost: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-cost-${index}`} {...adjustmentKeys?.cell(index, "unitCost")} />
                       </TableNumberCell>
                       <TableCell>
                         <SelectField aria-label={t("inventory.reason")} value={line.reasonCode} onChange={(e) => { updateLine(index, { reasonCode: e.target.value }); }} data-testid={`line-reason-${index}`}>

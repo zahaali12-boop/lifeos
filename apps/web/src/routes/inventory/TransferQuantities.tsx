@@ -7,7 +7,7 @@ import type { components } from "../../api/schema";
 import { add, compare, isDecimal, subtract } from "../../lib/decimal";
 import { localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { FormError, SelectField, TextField } from "../common";
+import { DecimalField, FormError, SelectField, TextField } from "../common";
 import { Qty, useReasonCodes } from "./shared";
 
 type Transfer = components["schemas"]["TransferSummary"];
@@ -185,12 +185,12 @@ export function TransferQuantities({ transfer, mode, date, toWarehouseBins, onDo
                 ) : (
                   <>
                     <TableCell className="align-top">
-                      <TextField inputMode="decimal" value={entry.quantity} onChange={(e) => { set(line.id, { quantity: e.target.value }); }} aria-label={`${mode === "ship" ? t("inventory.transfers.shipNow") : t("inventory.transfers.receiveNow")} ${line.itemCode}`} className="w-28" dir="ltr" data-testid={`${mode}-qty-${line.itemCode}`} />
+                      <DecimalField value={entry.quantity} onChange={(e) => { set(line.id, { quantity: e.target.value }); }} aria-label={`${mode === "ship" ? t("inventory.transfers.shipNow") : t("inventory.transfers.receiveNow")} ${line.itemCode}`} className="w-28" dir="ltr" data-testid={`${mode}-qty-${line.itemCode}`} />
                     </TableCell>
                     {mode === "receive" ? (
                       <TableCell className="align-top">
                         <div className="flex flex-col gap-2">
-                          <TextField inputMode="decimal" value={entry.shortage} onChange={(e) => { set(line.id, { shortage: e.target.value }); }} aria-label={`${t("inventory.transfers.shortage")} ${line.itemCode}`} className="w-28" dir="ltr" data-testid={`short-qty-${line.itemCode}`} />
+                          <DecimalField value={entry.shortage} onChange={(e) => { set(line.id, { shortage: e.target.value }); }} aria-label={`${t("inventory.transfers.shortage")} ${line.itemCode}`} className="w-28" dir="ltr" data-testid={`short-qty-${line.itemCode}`} />
                           {short ? <ShortageReason entry={entry} reasons={activeReasons} onChange={(patch) => { set(line.id, patch); }} /> : null}
                         </div>
                       </TableCell>

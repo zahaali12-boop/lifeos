@@ -12,7 +12,7 @@ import { formatDate, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { useCompanyCustomers } from "../sales/pricing/shared";
 import { money, num, SalesStatus } from "../sales/shared";
@@ -325,14 +325,14 @@ export function ReceivablesPage() {
                     </SelectField>
                   </Field>
                   <Field label={t("purchasing.creditAmount")} required>
-                    <TextField inputMode="decimal" value={apply.amount} onChange={(e) => { setApply({ ...apply, amount: e.target.value }); }} dir="ltr" data-testid="apply-amount" />
+                    <DecimalField value={apply.amount} onChange={(e) => { setApply({ ...apply, amount: e.target.value }); }} dir="ltr" data-testid="apply-amount" />
                   </Field>
                 </div>
               ) : null}
               {writeOff ? (
                 <div className="grid gap-3 sm:grid-cols-3" data-testid="write-off-form">
                   <Field label={t("sales.amount")} required>
-                    <TextField inputMode="decimal" value={writeOff.amount} onChange={(e) => { setWriteOff({ ...writeOff, amount: e.target.value }); }} dir="ltr" data-testid="write-off-amount" />
+                    <DecimalField value={writeOff.amount} onChange={(e) => { setWriteOff({ ...writeOff, amount: e.target.value }); }} dir="ltr" data-testid="write-off-amount" />
                   </Field>
                   <Field label={t("sales.invoicing.kind")}>
                     <SelectField value={writeOff.kind} onChange={(e) => { setWriteOff({ ...writeOff, kind: e.target.value }); }} data-testid="write-off-kind">
@@ -366,7 +366,7 @@ export function ReceivablesPage() {
                     </SelectField>
                   </Field>
                   <Field label={t("sales.amount")} required>
-                    <TextField inputMode="decimal" value={netting.amount} onChange={(e) => { setNetting({ ...netting, amount: e.target.value }); }} dir="ltr" data-testid="netting-amount" />
+                    <DecimalField value={netting.amount} onChange={(e) => { setNetting({ ...netting, amount: e.target.value }); }} dir="ltr" data-testid="netting-amount" />
                   </Field>
                 </div>
               ) : null}

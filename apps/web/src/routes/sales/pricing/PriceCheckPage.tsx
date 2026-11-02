@@ -8,7 +8,7 @@ import { todayIn } from "../../../lib/dates";
 import { formatDate, formatNumber, localized } from "../../../lib/format";
 import { useCan } from "../../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../../common";
 import { ItemCodeField } from "../../inventory/ItemCodeField";
 import { CompanyFilter, findItemByCode, useCompanyContext, type Item } from "../../inventory/shared";
 import { Money, money } from "../shared";
@@ -133,7 +133,7 @@ export function PriceCheckPage() {
           </Field>
           {mayOverride ? (
             <Field label={t("pricing.documentDiscountPct")}>
-              <TextField type="number" min={0} max={100} step="any" value={documentDiscount} onChange={(e) => { setDocumentDiscount(e.target.value); }} dir="ltr" />
+              <DecimalField max={100} value={documentDiscount} onChange={(e) => { setDocumentDiscount(e.target.value); }} dir="ltr" />
             </Field>
           ) : null}
         </div>
@@ -168,16 +168,16 @@ export function PriceCheckPage() {
                   </SelectField>
                 </TableCell>
                 <TableCell>
-                  <TextField aria-label={t("pricing.quantity")} type="number" min={0} step="any" value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} className="text-end" dir="ltr" data-testid={`basket-qty-${String(index)}`} />
+                  <DecimalField aria-label={t("pricing.quantity")} value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} className="text-end" dir="ltr" data-testid={`basket-qty-${String(index)}`} />
                 </TableCell>
                 {mayOverride ? (
                   <TableCell>
-                    <TextField aria-label={t("pricing.typedPrice")} type="number" min={0} step="any" value={line.manualUnitPrice} onChange={(e) => { updateLine(index, { manualUnitPrice: e.target.value }); }} className="text-end" dir="ltr" />
+                    <DecimalField aria-label={t("pricing.typedPrice")} value={line.manualUnitPrice} onChange={(e) => { updateLine(index, { manualUnitPrice: e.target.value }); }} className="text-end" dir="ltr" />
                   </TableCell>
                 ) : null}
                 {mayOverride ? (
                   <TableCell>
-                    <TextField aria-label={t("pricing.typedDiscount")} type="number" min={0} max={100} step="any" value={line.manualDiscountPct} onChange={(e) => { updateLine(index, { manualDiscountPct: e.target.value }); }} className="text-end" dir="ltr" data-testid={`basket-discount-${String(index)}`} />
+                    <DecimalField aria-label={t("pricing.typedDiscount")} max={100} value={line.manualDiscountPct} onChange={(e) => { updateLine(index, { manualDiscountPct: e.target.value }); }} className="text-end" dir="ltr" data-testid={`basket-discount-${String(index)}`} />
                   </TableCell>
                 ) : null}
                 <TableCell>

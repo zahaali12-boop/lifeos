@@ -12,7 +12,7 @@ import { formatDate, formatMoney, formatNumber, localized } from "../../lib/form
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { describeDimensions, DimensionSelects, useLineDimensions } from "../accounting/JournalLineDetails";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus, useSuppliers } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
@@ -330,8 +330,8 @@ export function InvoicesPage() {
                         <TableRow data-testid="invoice-line">
                           <TableCell>{t(`purchasing.lineKinds.${line.kind}`)}</TableCell>
                           <TableCell dir="auto">{line.kind === "expense" ? <TextField aria-label={t("purchasing.description")} value={line.description} onChange={(e) => { patchLine(index, { description: e.target.value }); }} className="w-56" data-testid={`invoice-description-${String(index)}`} /> : line.label}</TableCell>
-                          <TableCell><TextField aria-label={t("purchasing.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} /></TableCell>
-                          <TableCell><TextField aria-label={t("purchasing.unitPrice")} inputMode="decimal" value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" data-testid={`invoice-price-${String(index)}`} /></TableCell>
+                          <TableCell><DecimalField aria-label={t("purchasing.quantity")} value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} /></TableCell>
+                          <TableCell><DecimalField aria-label={t("purchasing.unitPrice")} value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" data-testid={`invoice-price-${String(index)}`} /></TableCell>
                           <TableCell><Button type="button" variant="ghost" size="sm" onClick={() => { setForm({ ...form, lines: form.lines.filter((_, x) => x !== index) }); }}>{t("workflow.remove")}</Button></TableCell>
                         </TableRow>
                         {takesDimensions(line.kind) && lineDimensions.dimensions.length > 0 ? (
@@ -487,7 +487,7 @@ export function InvoicesPage() {
                         </SelectField>
                       </Field>
                       <Field label={t("purchasing.creditAmount")} required>
-                        <TextField inputMode="decimal" value={credit.amount} onChange={(e) => { setCredit({ ...credit, amount: e.target.value }); }} dir="ltr" data-testid="credit-amount" />
+                        <DecimalField value={credit.amount} onChange={(e) => { setCredit({ ...credit, amount: e.target.value }); }} dir="ltr" data-testid="credit-amount" />
                       </Field>
                       <div className="flex items-end gap-2">
                         <Button type="button" variant="secondary" onClick={() => { setCredit(null); }}>{t("common.cancel")}</Button>

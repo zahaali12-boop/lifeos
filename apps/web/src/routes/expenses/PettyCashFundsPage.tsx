@@ -10,7 +10,7 @@ import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
 import { num } from "../purchasing/shared";
@@ -146,7 +146,7 @@ export function PettyCashFundsPage() {
                   <TextField value={form.nameAr} onChange={(e) => { setForm({ ...form, nameAr: e.target.value }); }} dir="rtl" required data-testid="fund-name-ar" />
                 </Field>
                 <Field label={t("expenses.floatAmount")} description={t("expenses.floatHelp")} required>
-                  <TextField inputMode="decimal" value={form.floatAmount} onChange={(e) => { setForm({ ...form, floatAmount: e.target.value }); }} dir="ltr" required data-testid="fund-float" />
+                  <DecimalField value={form.floatAmount} onChange={(e) => { setForm({ ...form, floatAmount: e.target.value }); }} dir="ltr" required data-testid="fund-float" />
                 </Field>
                 <label className="flex items-center gap-2 self-end text-sm">
                   <input type="checkbox" checked={form.isActive} onChange={(e) => { setForm({ ...form, isActive: e.target.checked }); }} data-testid="fund-active" />
@@ -187,7 +187,7 @@ export function PettyCashFundsPage() {
                     </SelectField>
                   </Field>
                   <Field label={t("purchasing.amount")} required>
-                    <TextField inputMode="decimal" value={replenish.amount} onChange={(e) => { setReplenish({ ...replenish, amount: e.target.value }); }} dir="ltr" required data-testid="replenish-amount" />
+                    <DecimalField value={replenish.amount} onChange={(e) => { setReplenish({ ...replenish, amount: e.target.value }); }} dir="ltr" required data-testid="replenish-amount" />
                   </Field>
                   <Field label={t("expenses.replenishedOn")}>
                     <TextField type="date" value={replenish.replenishedOn} onChange={(e) => { setReplenish({ ...replenish, replenishedOn: e.target.value }); }} dir="ltr" data-testid="replenish-date" />

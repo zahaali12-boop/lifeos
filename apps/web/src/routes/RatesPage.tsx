@@ -10,7 +10,7 @@ import { DataGrid } from "../grid/DataGrid";
 import { todayIn } from "../lib/dates";
 import { formatDate, formatNumber } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
-import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { DecimalField, FormError, PageHeader, SelectField, TextField } from "./common";
 
 type Rate = components["schemas"]["RateSummary"];
 
@@ -124,7 +124,7 @@ export function RatesPage() {
                 </SelectField>
               </Field>
               <Field label={t("rates.rate")} required error={problem?.fields.rate}>
-                <TextField inputMode="decimal" value={form.rate} onChange={(e) => { setForm({ ...form, rate: e.target.value }); }} required dir="ltr" />
+                <DecimalField value={form.rate} onChange={(e) => { setForm({ ...form, rate: e.target.value }); }} required dir="ltr" />
               </Field>
               <Field label={t("common.reason")}>
                 <TextField value={form.reason} onChange={(e) => { setForm({ ...form, reason: e.target.value }); }} />

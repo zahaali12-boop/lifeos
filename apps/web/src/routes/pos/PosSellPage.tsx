@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { add, compare, isDecimal, subtract } from "../../lib/decimal";
 import { formatNumber, localized } from "../../lib/format";
-import { SelectField, TextField } from "../common";
+import { DecimalField, SelectField, TextField } from "../common";
 import { useOnline } from "../mobile/context";
 import { Receipt } from "./Receipt";
 import { addOrder, changeFor, computeTotals, lineAmount, lineOf, useTill, type CatalogueItem, type LocalOrder, type PaymentMethod, type TillLine, type TillPayment } from "./store";
@@ -254,10 +254,10 @@ export function PosSellPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="secondary" size="icon" aria-label={t("pos.till.less")} onClick={() => { bump(index, "-1"); }}><Minus aria-hidden="true" /></Button>
-                    <TextField inputMode="decimal" dir="ltr" className="w-20 text-center" aria-label={t("pos.till.quantity")} value={line.quantity} data-testid="till-line-quantity" onChange={(event) => { setQuantity(index, event.target.value); }} />
+                    <DecimalField dir="ltr" className="w-20 text-center" aria-label={t("pos.till.quantity")} value={line.quantity} data-testid="till-line-quantity" onChange={(event) => { setQuantity(index, event.target.value); }} />
                     <Button variant="secondary" size="icon" aria-label={t("pos.till.more")} disabled={Boolean(refundOf)} onClick={() => { bump(index, "1"); }}><Plus aria-hidden="true" /></Button>
                     <span className="text-xs text-fg-muted" dir="ltr">× {catalogue.allowPriceOverride && !refundOf ? null : money(line.unitPrice)}</span>
-                    {catalogue.allowPriceOverride && !refundOf ? <TextField inputMode="decimal" dir="ltr" className="w-24" aria-label={t("pos.till.unitPrice")} value={line.unitPrice} data-testid="till-line-price" onChange={(event) => { setPrice(index, event.target.value); }} /> : null}
+                    {catalogue.allowPriceOverride && !refundOf ? <DecimalField dir="ltr" className="w-24" aria-label={t("pos.till.unitPrice")} value={line.unitPrice} data-testid="till-line-price" onChange={(event) => { setPrice(index, event.target.value); }} /> : null}
                     <Button variant="ghost" size="icon" className="ms-auto" aria-label={t("pos.till.remove")} onClick={() => { setLines((current) => current.filter((_, i) => i !== index)); }}><Trash2 aria-hidden="true" /></Button>
                   </div>
                 </li>
@@ -286,7 +286,7 @@ export function PosSellPage() {
             </div>
             {method === "cash" && !refundOf ? (
               <Field label={t("pos.till.tendered")}>
-                <TextField inputMode="decimal" dir="ltr" placeholder={totals ? money(totals.due) : ""} value={tendered} data-testid="till-tendered" onChange={(event) => { setTendered(event.target.value); }} />
+                <DecimalField dir="ltr" placeholder={totals ? money(totals.due) : ""} value={tendered} data-testid="till-tendered" onChange={(event) => { setTendered(event.target.value); }} />
               </Field>
             ) : null}
             {method === "card" ? (

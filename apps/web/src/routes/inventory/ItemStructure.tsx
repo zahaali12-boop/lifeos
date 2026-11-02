@@ -7,7 +7,7 @@ import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, SelectField, TextField } from "../common";
 import { ItemCodeField } from "./ItemCodeField";
 import { useItemRefresh } from "./ItemEditors";
 import { Qty, type Item } from "./shared";
@@ -165,7 +165,7 @@ export function ItemBomEditor({ item }: { item: Item }) {
               </Table>
               <div className="flex flex-wrap items-end gap-3">
                 <Field label={t("itemStructure.explodeFor", { uom: item.baseUom })}>
-                  <TextField inputMode="decimal" value={explodeQty} onChange={(e) => { setExplodeQty(e.target.value); }} className="w-28" dir="ltr" data-testid="explode-qty" />
+                  <DecimalField value={explodeQty} onChange={(e) => { setExplodeQty(e.target.value); }} className="w-28" dir="ltr" data-testid="explode-qty" />
                 </Field>
               </div>
               {explosion.data ? (
@@ -203,7 +203,7 @@ export function ItemBomEditor({ item }: { item: Item }) {
           <FormError message={problem?.message ?? null} />
           <div className="flex flex-wrap items-end gap-4">
             <Field label={t("itemStructure.outputQtyIn", { uom: item.baseUom })} required>
-              <TextField inputMode="decimal" value={draft.outputQty} onChange={(e) => { setDraft({ ...draft, outputQty: e.target.value }); }} required className="w-28" dir="ltr" data-testid="bom-output" />
+              <DecimalField value={draft.outputQty} onChange={(e) => { setDraft({ ...draft, outputQty: e.target.value }); }} required className="w-28" dir="ltr" data-testid="bom-output" />
             </Field>
             <label className="flex items-center gap-2 pb-2 text-sm">
               <input type="checkbox" checked={draft.activate} onChange={(e) => { setDraft({ ...draft, activate: e.target.checked }); }} />
@@ -216,13 +216,13 @@ export function ItemBomEditor({ item }: { item: Item }) {
                 <ItemCodeField value={line.itemCode} onChange={(code) => { setDraft({ ...draft, lines: draft.lines.map((l, i) => (i === index ? { ...l, itemCode: code } : l)) }); }} data-testid={`bom-line-item-${String(index)}`} />
               </Field>
               <Field label={t("itemStructure.quantity")}>
-                <TextField inputMode="decimal" value={line.quantity} onChange={(e) => { setDraft({ ...draft, lines: draft.lines.map((l, i) => (i === index ? { ...l, quantity: e.target.value } : l)) }); }} dir="ltr" data-testid={`bom-line-qty-${String(index)}`} />
+                <DecimalField value={line.quantity} onChange={(e) => { setDraft({ ...draft, lines: draft.lines.map((l, i) => (i === index ? { ...l, quantity: e.target.value } : l)) }); }} dir="ltr" data-testid={`bom-line-qty-${String(index)}`} />
               </Field>
               <Field label={t("itemStructure.unit")} description={index === 0 ? t("itemStructure.unitHint") : undefined}>
                 <TextField value={line.uom} onChange={(e) => { setDraft({ ...draft, lines: draft.lines.map((l, i) => (i === index ? { ...l, uom: e.target.value.toUpperCase() } : l)) }); }} dir="ltr" />
               </Field>
               <Field label={t("itemStructure.scrapPct")}>
-                <TextField inputMode="decimal" value={line.scrapPct} onChange={(e) => { setDraft({ ...draft, lines: draft.lines.map((l, i) => (i === index ? { ...l, scrapPct: e.target.value } : l)) }); }} dir="ltr" data-testid={`bom-line-scrap-${String(index)}`} />
+                <DecimalField value={line.scrapPct} onChange={(e) => { setDraft({ ...draft, lines: draft.lines.map((l, i) => (i === index ? { ...l, scrapPct: e.target.value } : l)) }); }} dir="ltr" data-testid={`bom-line-scrap-${String(index)}`} />
               </Field>
               <Button type="button" variant="ghost" size="icon" aria-label={t("itemStructure.removeLine")} onClick={() => { setDraft({ ...draft, lines: draft.lines.filter((_, i) => i !== index) }); }}>
                 <Trash2 aria-hidden="true" />

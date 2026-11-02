@@ -10,7 +10,7 @@ import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num } from "../purchasing/shared";
 import { leaveKinds, useEmployees, type Leave } from "./shared";
@@ -127,7 +127,7 @@ export function LeavePage() {
                   <TextField type="date" value={form.toDate} onChange={(ev) => { setForm({ ...form, toDate: ev.target.value }); }} dir="ltr" required data-testid="leave-to" />
                 </Field>
                 <Field label={t("hr.days")} description={t("hr.daysHelp")}>
-                  <TextField inputMode="decimal" value={form.days} onChange={(ev) => { setForm({ ...form, days: ev.target.value }); }} dir="ltr" data-testid="leave-days" />
+                  <DecimalField value={form.days} onChange={(ev) => { setForm({ ...form, days: ev.target.value }); }} dir="ltr" data-testid="leave-days" />
                 </Field>
                 <Field label={t("hr.notes")}>
                   <TextareaField rows={1} value={form.notes} onChange={(ev) => { setForm({ ...form, notes: ev.target.value }); }} data-testid="leave-notes" />

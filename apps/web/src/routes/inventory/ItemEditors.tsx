@@ -8,7 +8,7 @@ import type { components } from "../../api/schema";
 import { localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today, useCompanies } from "../accounting/shared";
-import { Field, FormError, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, SelectField, TextField } from "../common";
 import { ItemCostPanel } from "./ItemCostDialog";
 import { Qty, type Item } from "./shared";
 import { CurrencyField } from "../CurrencyField";
@@ -165,13 +165,13 @@ export function ItemUnitsEditor({ item }: { item: Item }) {
               </SelectField>
             </Field>
             <Field label={t("itemEditor.numerator")} required error={problem?.fields.numerator}>
-              <TextField inputMode="decimal" value={unit.numerator} onChange={(e) => { setUnit({ ...unit, numerator: e.target.value }); }} required dir="ltr" data-testid="unit-numerator" />
+              <DecimalField value={unit.numerator} onChange={(e) => { setUnit({ ...unit, numerator: e.target.value }); }} required dir="ltr" data-testid="unit-numerator" />
             </Field>
             <Field label={t("itemEditor.denominator")} error={problem?.fields.denominator}>
-              <TextField inputMode="decimal" value={unit.denominator} onChange={(e) => { setUnit({ ...unit, denominator: e.target.value }); }} dir="ltr" />
+              <DecimalField value={unit.denominator} onChange={(e) => { setUnit({ ...unit, denominator: e.target.value }); }} dir="ltr" />
             </Field>
             <Field label={t("itemEditor.weightKg")}>
-              <TextField inputMode="decimal" value={unit.weightKg} onChange={(e) => { setUnit({ ...unit, weightKg: e.target.value }); }} dir="ltr" />
+              <DecimalField value={unit.weightKg} onChange={(e) => { setUnit({ ...unit, weightKg: e.target.value }); }} dir="ltr" />
             </Field>
           </div>
           <div className="flex flex-wrap gap-4 text-sm">
@@ -350,7 +350,7 @@ export function ItemSuppliersEditor({ item }: { item: Item }) {
               <TextField inputMode="numeric" value={form.leadTimeDays} onChange={(e) => { setForm({ ...form, leadTimeDays: e.target.value }); }} dir="ltr" data-testid="supplier-lead-time" />
             </Field>
             <Field label={t("itemEditor.lastPrice")} error={problem?.fields.lastPrice}>
-              <TextField inputMode="decimal" value={form.lastPrice} onChange={(e) => { setForm({ ...form, lastPrice: e.target.value }); }} dir="ltr" data-testid="supplier-price" />
+              <DecimalField value={form.lastPrice} onChange={(e) => { setForm({ ...form, lastPrice: e.target.value }); }} dir="ltr" data-testid="supplier-price" />
             </Field>
             <Field label={t("itemEditor.currency")} error={problem?.fields.lastPriceCurrency}>
               <CurrencyField value={form.lastPriceCurrency} onChange={(code) => { setForm({ ...form, lastPriceCurrency: code }); }} allowEmpty />
@@ -494,16 +494,16 @@ export function ItemPlanningEditor({ item }: { item: Item }) {
               </SelectField>
             </Field>
             <Field label={t("itemEditor.reorderPoint")} error={problem?.fields.reorderPoint}>
-              <TextField inputMode="decimal" value={form.reorderPoint} onChange={(e) => { setForm({ ...form, reorderPoint: e.target.value }); }} dir="ltr" data-testid="planning-reorder" />
+              <DecimalField value={form.reorderPoint} onChange={(e) => { setForm({ ...form, reorderPoint: e.target.value }); }} dir="ltr" data-testid="planning-reorder" />
             </Field>
             <Field label={t("itemEditor.minQty")} error={problem?.fields.minQty}>
-              <TextField inputMode="decimal" value={form.minQty} onChange={(e) => { setForm({ ...form, minQty: e.target.value }); }} dir="ltr" />
+              <DecimalField value={form.minQty} onChange={(e) => { setForm({ ...form, minQty: e.target.value }); }} dir="ltr" />
             </Field>
             <Field label={t("itemEditor.maxQty")} error={problem?.fields.maxQty}>
-              <TextField inputMode="decimal" value={form.maxQty} onChange={(e) => { setForm({ ...form, maxQty: e.target.value }); }} dir="ltr" data-testid="planning-max" />
+              <DecimalField value={form.maxQty} onChange={(e) => { setForm({ ...form, maxQty: e.target.value }); }} dir="ltr" data-testid="planning-max" />
             </Field>
             <Field label={t("itemEditor.safetyStock")} error={problem?.fields.safetyStock}>
-              <TextField inputMode="decimal" value={form.safetyStock} onChange={(e) => { setForm({ ...form, safetyStock: e.target.value }); }} dir="ltr" />
+              <DecimalField value={form.safetyStock} onChange={(e) => { setForm({ ...form, safetyStock: e.target.value }); }} dir="ltr" />
             </Field>
             <Field label={t("itemEditor.leadTimeDays")} error={problem?.fields.leadTimeDays}>
               <TextField inputMode="numeric" value={form.leadTimeDays} onChange={(e) => { setForm({ ...form, leadTimeDays: e.target.value }); }} dir="ltr" />

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { toFormProblem } from "../../lib/problem";
-import { FormError, SelectField, TextField } from "../common";
+import { DecimalField, FormError, SelectField, TextField } from "../common";
 import { useOnline, useScanContext } from "./context";
 import { ScanBox } from "./ScanBox";
 import { localized, parseQuantity } from "./text";
@@ -120,7 +120,7 @@ export function MobileReceivePage() {
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <Field label={t("purchasing.receiveNow")}>
-                      <TextField className="h-12 text-base" inputMode="decimal" value={e.quantity} onChange={(ev) => { patch(line, { quantity: ev.target.value }); }} dir="ltr" data-testid={`mobile-receive-qty-${String(index)}`} />
+                      <DecimalField className="h-12 text-base" value={e.quantity} onChange={(ev) => { patch(line, { quantity: ev.target.value }); }} dir="ltr" data-testid={`mobile-receive-qty-${String(index)}`} />
                     </Field>
                     {lotTracked ? (
                       <Field label={t("purchasing.lot")}>

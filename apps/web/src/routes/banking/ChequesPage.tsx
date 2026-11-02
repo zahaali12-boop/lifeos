@@ -11,7 +11,7 @@ import { formatDate, formatDateTime, formatMoney, localized } from "../../lib/fo
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
 import { num } from "../purchasing/shared";
@@ -258,12 +258,12 @@ export function ChequesPage() {
                     </Field>
                     {needsCharge ? (
                       <Field label={t("banking.cheques.fields.bankCharge")}>
-                        <TextField inputMode="decimal" value={action.bankCharge} onChange={(e) => { setAction({ ...action, bankCharge: e.target.value }); }} dir="ltr" data-testid="action-bank-charge" />
+                        <DecimalField value={action.bankCharge} onChange={(e) => { setAction({ ...action, bankCharge: e.target.value }); }} dir="ltr" data-testid="action-bank-charge" />
                       </Field>
                     ) : null}
                     {action.kind === "bounce" && c.direction === "received" ? (
                       <Field label={t("banking.cheques.fields.customerFee")} description={t("banking.cheques.fields.customerFeeHelp")}>
-                        <TextField inputMode="decimal" value={action.customerFee} onChange={(e) => { setAction({ ...action, customerFee: e.target.value }); }} dir="ltr" data-testid="action-customer-fee" />
+                        <DecimalField value={action.customerFee} onChange={(e) => { setAction({ ...action, customerFee: e.target.value }); }} dir="ltr" data-testid="action-customer-fee" />
                       </Field>
                     ) : null}
                     {action.kind === "replace" ? (
@@ -422,7 +422,7 @@ export function ChequesPage() {
                     <TextField type="date" value={clearing.date} onChange={(e) => { setClearing({ ...clearing, date: e.target.value }); }} dir="ltr" data-testid="clear-date" />
                   </Field>
                   <Field label={t("banking.cheques.fields.bankCharge")}>
-                    <TextField inputMode="decimal" value={clearing.bankCharge} onChange={(e) => { setClearing({ ...clearing, bankCharge: e.target.value }); }} dir="ltr" data-testid="clear-bank-charge" />
+                    <DecimalField value={clearing.bankCharge} onChange={(e) => { setClearing({ ...clearing, bankCharge: e.target.value }); }} dir="ltr" data-testid="clear-bank-charge" />
                   </Field>
                   <Button onClick={() => { clearDeposit.mutate({ id: d.id, ...clearing }); }} loading={clearDeposit.isPending} data-testid="confirm-clear-deposit">{t("banking.cheques.actions.confirm")}</Button>
                   <Button variant="secondary" onClick={() => { setClearing(null); }}>{t("common.cancel")}</Button>

@@ -8,7 +8,7 @@ import { api, unwrap } from "../../../api";
 import { formatNumber, localized } from "../../../lib/format";
 import { useCan } from "../../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../../common";
 import { ItemCodeField } from "../../inventory/ItemCodeField";
 import { KeyValues, findItemByCode, type Item } from "../../inventory/shared";
 import { PriceListDialog } from "./PriceListsPage";
@@ -244,10 +244,10 @@ export function PriceListPage() {
                   </Field>
                 ) : null}
                 <Field label={t("pricing.fromQuantity")} description={t("pricing.fromQuantityHint")}>
-                  <TextField type="number" min={0} step="any" value={entry.minQuantity} onChange={(e) => { setEntry({ ...entry, minQuantity: e.target.value }); }} dir="ltr" data-testid="price-min" />
+                  <DecimalField value={entry.minQuantity} onChange={(e) => { setEntry({ ...entry, minQuantity: e.target.value }); }} dir="ltr" data-testid="price-min" />
                 </Field>
                 <Field label={t("pricing.priceIn", { currency: l.currency })} required>
-                  <TextField type="number" min={0} step="any" value={entry.price} onChange={(e) => { setEntry({ ...entry, price: e.target.value }); }} required dir="ltr" data-testid="price-value" />
+                  <DecimalField value={entry.price} onChange={(e) => { setEntry({ ...entry, price: e.target.value }); }} required dir="ltr" data-testid="price-value" />
                 </Field>
                 <Field label={t("pricing.validFrom")}>
                   <TextField type="date" value={entry.validFrom} onChange={(e) => { setEntry({ ...entry, validFrom: e.target.value }); }} dir="ltr" />
@@ -280,10 +280,10 @@ export function PriceListPage() {
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-3 sm:grid-cols-3">
                 <Field label={t("pricing.adjustmentPct")} required>
-                  <TextField type="number" step="any" value={adjusting.pct} onChange={(e) => { setAdjusting({ ...adjusting, pct: e.target.value }); }} required dir="ltr" data-testid="adjust-pct" />
+                  <DecimalField value={adjusting.pct} onChange={(e) => { setAdjusting({ ...adjusting, pct: e.target.value }); }} required dir="ltr" data-testid="adjust-pct" />
                 </Field>
                 <Field label={t("pricing.roundingIncrement")}>
-                  <TextField type="number" min={0} step="any" value={adjusting.increment} onChange={(e) => { setAdjusting({ ...adjusting, increment: e.target.value }); }} dir="ltr" data-testid="adjust-increment" />
+                  <DecimalField value={adjusting.increment} onChange={(e) => { setAdjusting({ ...adjusting, increment: e.target.value }); }} dir="ltr" data-testid="adjust-increment" />
                 </Field>
                 <Field label={t("pricing.roundingMode")}>
                   <SelectField value={adjusting.mode} onChange={(e) => { setAdjusting({ ...adjusting, mode: e.target.value }); }}>

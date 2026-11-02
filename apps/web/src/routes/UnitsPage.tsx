@@ -9,7 +9,7 @@ import type { components } from "../api/schema";
 import { DataGrid } from "../grid/DataGrid";
 import { formatNumber, localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
-import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { DecimalField, FormError, PageHeader, SelectField, TextField } from "./common";
 import { DocStatus } from "./inventory/shared";
 import { CodeField } from "./CodeField";
 
@@ -138,7 +138,7 @@ export function UnitsPage() {
           <h2 className="text-base font-semibold">{t("units.converter")}</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             <Field label={t("units.quantity")}>
-              <TextField inputMode="decimal" value={convert.value} onChange={(e) => { setConvert({ ...convert, value: e.target.value }); }} dir="ltr" data-testid="convert-value" />
+              <DecimalField value={convert.value} onChange={(e) => { setConvert({ ...convert, value: e.target.value }); }} dir="ltr" data-testid="convert-value" />
             </Field>
             <Field label={t("units.from")}>
               <SelectField value={convert.from} onChange={(e) => { setConvert({ ...convert, from: e.target.value }); }} data-testid="convert-from">
@@ -247,10 +247,10 @@ export function UnitsPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("itemEditor.numerator")} required>
-                  <TextField inputMode="decimal" value={conversion.numerator} onChange={(e) => { setConversion({ ...conversion, numerator: e.target.value }); }} required dir="ltr" data-testid="conversion-numerator" />
+                  <DecimalField value={conversion.numerator} onChange={(e) => { setConversion({ ...conversion, numerator: e.target.value }); }} required dir="ltr" data-testid="conversion-numerator" />
                 </Field>
                 <Field label={t("itemEditor.denominator")}>
-                  <TextField inputMode="decimal" value={conversion.denominator} onChange={(e) => { setConversion({ ...conversion, denominator: e.target.value }); }} dir="ltr" />
+                  <DecimalField value={conversion.denominator} onChange={(e) => { setConversion({ ...conversion, denominator: e.target.value }); }} dir="ltr" />
                 </Field>
               </div>
               <DialogFooter>

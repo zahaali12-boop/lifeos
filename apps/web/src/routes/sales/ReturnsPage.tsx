@@ -13,7 +13,7 @@ import { formatDate, formatDateTime, formatMoney, formatNumber, localized } from
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, DocStatus, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { useCompanyCustomers } from "./pricing/shared";
@@ -328,7 +328,7 @@ export function ReturnsPage() {
                               <TableCell dir="ltr">{i?.shipmentNumber ?? ""}</TableCell>
                               <TableCell dir="auto">{i ? `${i.itemCode} · ${localized(i.itemName)}` : ""}</TableCell>
                               <TableCell className="tabular" dir="ltr">{i ? `${formatNumber(i.quantity, { maximumFractionDigits: 3 })} ${i.uomCode}` : ""}{i && Number(i.qtyReturned) > 0 ? <span className="text-fg-muted"> ({t("sales.returns.returnedSoFar", { quantity: formatNumber(i.qtyReturned, { maximumFractionDigits: 3 }) })})</span> : null}</TableCell>
-                              <TableCell><TextField aria-label={t("sales.returns.returnNow")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`return-qty-${String(index)}`} /></TableCell>
+                              <TableCell><DecimalField aria-label={t("sales.returns.returnNow")} value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`return-qty-${String(index)}`} /></TableCell>
                               <TableCell>{serialTracked(i?.tracking) ? <TextField aria-label={t("sales.serials")} value={line.serialNumbers} onChange={(e) => { patchLine(index, { serialNumbers: e.target.value }); }} dir="ltr" className="w-36" placeholder={i?.serialNumbers.join(" ")} data-testid={`return-serials-${String(index)}`} /> : <span className="text-fg-muted">{i?.lotNumber ?? "—"}</span>}</TableCell>
                               <TableCell>
                                 <SelectField aria-label={t("sales.returns.reasonCode")} value={line.reasonCode} onChange={(e) => { patchLine(index, { reasonCode: e.target.value }); }} className="w-32" data-testid={`return-reason-code-${String(index)}`}>
@@ -347,7 +347,7 @@ export function ReturnsPage() {
                                   ))}
                                 </SelectField>
                               </TableCell>
-                              {form.costPolicy === "specified" ? <TableCell><TextField aria-label={t("sales.returns.unitCost")} inputMode="decimal" value={line.unitCost} onChange={(e) => { patchLine(index, { unitCost: e.target.value }); }} dir="ltr" className="w-24" data-testid={`return-unit-cost-${String(index)}`} /></TableCell> : null}
+                              {form.costPolicy === "specified" ? <TableCell><DecimalField aria-label={t("sales.returns.unitCost")} value={line.unitCost} onChange={(e) => { patchLine(index, { unitCost: e.target.value }); }} dir="ltr" className="w-24" data-testid={`return-unit-cost-${String(index)}`} /></TableCell> : null}
                               <TableCell><Button type="button" variant="ghost" size="sm" onClick={() => { setForm({ ...form, lines: form.lines.filter((_, x) => x !== index) }); }} aria-label={t("common.delete")}>×</Button></TableCell>
                             </TableRow>
                           );

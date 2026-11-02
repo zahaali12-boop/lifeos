@@ -13,7 +13,7 @@ import { formatDate, formatMoney, formatNumber, localized } from "../../lib/form
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
@@ -252,7 +252,7 @@ export function ReceiptsPage() {
                           <TableCell className="tabular" dir="ltr">{info ? `${formatNumber(info.ordered, { maximumFractionDigits: 3 })} ${info.uomCode}` : ""}</TableCell>
                           <TableCell className="tabular" dir="ltr">{info ? formatNumber(info.received, { maximumFractionDigits: 3 }) : ""}</TableCell>
                           <TableCell className="tabular" dir="ltr">{info ? formatNumber(info.maxReceivable, { maximumFractionDigits: 3 }) : ""}</TableCell>
-                          <TableCell><TextField aria-label={t("purchasing.receiveNow")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-24" data-testid={`receive-qty-${String(index)}`} /></TableCell>
+                          <TableCell><DecimalField aria-label={t("purchasing.receiveNow")} value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-24" data-testid={`receive-qty-${String(index)}`} /></TableCell>
                           <TableCell>{lotTracked ? <TextField aria-label={t("purchasing.lot")} value={line.lotNumber} onChange={(e) => { patchLine(index, { lotNumber: e.target.value }); }} dir="ltr" className="w-28" data-testid={`receive-lot-${String(index)}`} /> : null}</TableCell>
                           <TableCell>{lotTracked ? <TextField aria-label={t("purchasing.expiresOn")} type="date" value={line.expiresOn} onChange={(e) => { patchLine(index, { expiresOn: e.target.value }); }} dir="ltr" data-testid={`receive-expiry-${String(index)}`} /> : null}</TableCell>
                           <TableCell>{serialTracked ? <TextField aria-label={t("purchasing.serials")} value={line.serialNumbers} onChange={(e) => { patchLine(index, { serialNumbers: e.target.value }); }} dir="ltr" className="w-40" placeholder={t("purchasing.serialsHelp")} data-testid={`receive-serials-${String(index)}`} /> : null}</TableCell>

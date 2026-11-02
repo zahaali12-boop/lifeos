@@ -8,7 +8,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, formatMoney, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, useSuppliers } from "../purchasing/shared";
 import { ItemStatus, kindLabel, useOpenItems, type OpenItemRow } from "./shared";
@@ -234,7 +234,7 @@ export function OpenItemsPage() {
                     </SelectField>
                   </Field>
                   <Field label={t("purchasing.creditAmount")} required>
-                    <TextField inputMode="decimal" value={apply.amount} onChange={(e) => { setApply({ ...apply, amount: e.target.value }); }} dir="ltr" data-testid="apply-amount" />
+                    <DecimalField value={apply.amount} onChange={(e) => { setApply({ ...apply, amount: e.target.value }); }} dir="ltr" data-testid="apply-amount" />
                   </Field>
                 </div>
               ) : null}

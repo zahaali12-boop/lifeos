@@ -8,7 +8,7 @@ import { localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { useCompanies } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs } from "../inventory/shared";
 import { useDeliveryTerms, usePaymentTerms } from "../purchasing/shared";
 import { Money, useCommissionPlans, useCustomerGroups, useCustomerPostingGroups, usePipelineStages, useSalesReps, type CommissionPlan, type CustomerGroup, type PipelineStage, type SalesRep } from "./shared";
@@ -484,10 +484,10 @@ function PlansTab() {
                         </SelectField>
                       </TableCell>
                       <TableCell>
-                        <TextField aria-label={t("sales.fromAmount")} inputMode="decimal" value={r.fromAmount} onChange={(e) => { rule(index, { fromAmount: e.target.value }); }} dir="ltr" data-testid={`rule-from-${String(index)}`} />
+                        <DecimalField aria-label={t("sales.fromAmount")} value={r.fromAmount} onChange={(e) => { rule(index, { fromAmount: e.target.value }); }} dir="ltr" data-testid={`rule-from-${String(index)}`} />
                       </TableCell>
                       <TableCell>
-                        <TextField aria-label={t("sales.rate")} inputMode="decimal" value={r.ratePct} onChange={(e) => { rule(index, { ratePct: e.target.value }); }} dir="ltr" data-testid={`rule-rate-${String(index)}`} />
+                        <DecimalField aria-label={t("sales.rate")} value={r.ratePct} onChange={(e) => { rule(index, { ratePct: e.target.value }); }} dir="ltr" data-testid={`rule-rate-${String(index)}`} />
                       </TableCell>
                       <TableCell>
                         <Button type="button" size="sm" variant="ghost" aria-label={t("common.delete")} onClick={() => { setEditing({ ...editing, rules: editing.rules.filter((_, i) => i !== index) }); }}>
@@ -518,10 +518,10 @@ function PlansTab() {
               </DialogHeader>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("sales.saleAmount", { currency: trying.plan.currency })} required>
-                  <TextField inputMode="decimal" value={trying.amount} onChange={(e) => { setTrying({ ...trying, amount: e.target.value }); }} dir="ltr" required data-testid="quote-amount" />
+                  <DecimalField value={trying.amount} onChange={(e) => { setTrying({ ...trying, amount: e.target.value }); }} dir="ltr" required data-testid="quote-amount" />
                 </Field>
                 <Field label={t("sales.periodToDate")} description={t("sales.periodToDateHint")}>
-                  <TextField inputMode="decimal" value={trying.periodToDate} onChange={(e) => { setTrying({ ...trying, periodToDate: e.target.value }); }} dir="ltr" data-testid="quote-period" />
+                  <DecimalField value={trying.periodToDate} onChange={(e) => { setTrying({ ...trying, periodToDate: e.target.value }); }} dir="ltr" data-testid="quote-period" />
                 </Field>
                 <Field label={t("sales.itemCategory")}>
                   <SelectField value={trying.itemCategoryId} onChange={(e) => { setTrying({ ...trying, itemCategoryId: e.target.value }); }}>

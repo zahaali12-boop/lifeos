@@ -13,7 +13,7 @@ import { formatDate, formatDateTime, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { useSuppliers } from "../purchasing/shared";
 import { CompanyFilter, DocStatus, KeyValues, Qty, WarehouseSelect, plain, useCompanyContext, useWarehouses } from "./shared";
 
@@ -219,7 +219,7 @@ export function ReplenishmentPage() {
               {detail.status === "open" ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label={t("inventory.replenishment.acceptedQty")}>
-                    <TextField inputMode="decimal" value={quantity} onChange={(e) => { setQuantity(e.target.value); }} dir="ltr" placeholder={String(detail.suggestedQty)} />
+                    <DecimalField value={quantity} onChange={(e) => { setQuantity(e.target.value); }} dir="ltr" placeholder={String(detail.suggestedQty)} />
                   </Field>
                   <Field label={t("inventory.replenishment.note")}>
                     <TextField value={note} onChange={(e) => { setNote(e.target.value); }} data-testid="decision-note" />

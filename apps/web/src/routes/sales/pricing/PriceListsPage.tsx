@@ -10,7 +10,7 @@ import { DataGrid } from "../../../grid/DataGrid";
 import { localized } from "../../../lib/format";
 import { useCan } from "../../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField, TextareaField } from "../../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../../common";
 import { CompanyFilter, useCompanyContext } from "../../inventory/shared";
 import { useCustomerGroups } from "../shared";
 import { Validity, refLabel, useCompanyCustomers, usePriceLists, type PriceList } from "./shared";
@@ -169,10 +169,10 @@ export function PriceListDialog({ list, companyId, currency, onClose, onSaved }:
                 </SelectField>
               </Field>
               <Field label={t("pricing.adjustmentPct")} description={t("pricing.adjustmentHint")}>
-                <TextField type="number" step="any" value={form.parentAdjustmentPct} onChange={(e) => { patch({ parentAdjustmentPct: e.target.value }); }} disabled={!derived} required={derived} dir="ltr" data-testid="list-adjustment" />
+                <DecimalField value={form.parentAdjustmentPct} onChange={(e) => { patch({ parentAdjustmentPct: e.target.value }); }} disabled={!derived} required={derived} dir="ltr" data-testid="list-adjustment" />
               </Field>
               <Field label={t("pricing.roundingIncrement")}>
-                <TextField type="number" min={0} step="any" value={form.roundingIncrement} onChange={(e) => { patch({ roundingIncrement: e.target.value }); }} disabled={!derived} dir="ltr" data-testid="list-rounding" />
+                <DecimalField value={form.roundingIncrement} onChange={(e) => { patch({ roundingIncrement: e.target.value }); }} disabled={!derived} dir="ltr" data-testid="list-rounding" />
               </Field>
               <Field label={t("pricing.roundingMode")}>
                 <SelectField value={form.roundingMode} onChange={(e) => { patch({ roundingMode: e.target.value }); }} disabled={!derived}>
@@ -184,7 +184,7 @@ export function PriceListDialog({ list, companyId, currency, onClose, onSaved }:
                 </SelectField>
               </Field>
               <Field label={t("pricing.surcharge")} description={t("pricing.surchargeHint")}>
-                <TextField type="number" step="any" value={form.priceSurcharge} onChange={(e) => { patch({ priceSurcharge: e.target.value }); }} disabled={!derived} dir="ltr" />
+                <DecimalField value={form.priceSurcharge} onChange={(e) => { patch({ priceSurcharge: e.target.value }); }} disabled={!derived} dir="ltr" />
               </Field>
             </div>
           </fieldset>

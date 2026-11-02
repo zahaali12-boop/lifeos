@@ -11,7 +11,7 @@ import { formatDate, formatMoney, formatNumber, localized } from "../../lib/form
 import { usePref } from "../../lib/prefs";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { CurrencyField } from "../CurrencyField";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
@@ -302,7 +302,7 @@ export function ExpensesPage() {
                           </SelectField>
                         </TableCell>
                         <TableCell><TextField aria-label={t("expenses.descriptionLabel")} value={line.description} onChange={(ev) => { patchLine(index, { description: ev.target.value }); }} {...keys.cell(index, "description")} data-testid={`line-description-${String(index)}`} /></TableCell>
-                        <TableCell><TextField aria-label={t("purchasing.amount")} inputMode="decimal" value={line.amount} onChange={(ev) => { patchLine(index, { amount: ev.target.value }); }} dir="ltr" className="w-32" {...keys.cell(index, "amount")} data-testid={`line-amount-${String(index)}`} /></TableCell>
+                        <TableCell><DecimalField aria-label={t("purchasing.amount")} value={line.amount} onChange={(ev) => { patchLine(index, { amount: ev.target.value }); }} dir="ltr" className="w-32" {...keys.cell(index, "amount")} data-testid={`line-amount-${String(index)}`} /></TableCell>
                         <TableCell>
                           <SelectField aria-label={t("expenses.taxCode")} value={line.taxCodeId} onChange={(ev) => { patchLine(index, { taxCodeId: ev.target.value }); }} data-testid={`line-tax-${String(index)}`}>
                             <option value="">{t("expenses.taxOfCategory")}</option>
@@ -399,7 +399,7 @@ export function ExpensesPage() {
                     <TextField type="date" value={pay.paymentDate} onChange={(ev) => { setPay({ ...pay, paymentDate: ev.target.value }); }} dir="ltr" required data-testid="pay-date" />
                   </Field>
                   <Field label={t("expenses.amountToPay")} description={formatMoney(e.remainingTc, e.currency)}>
-                    <TextField inputMode="decimal" value={pay.amount} onChange={(ev) => { setPay({ ...pay, amount: ev.target.value }); }} dir="ltr" data-testid="pay-amount" />
+                    <DecimalField value={pay.amount} onChange={(ev) => { setPay({ ...pay, amount: ev.target.value }); }} dir="ltr" data-testid="pay-amount" />
                   </Field>
                   <Field label={t("banking.method")}>
                     <SelectField value={pay.method} onChange={(ev) => { setPay({ ...pay, method: ev.target.value }); }} data-testid="pay-method">

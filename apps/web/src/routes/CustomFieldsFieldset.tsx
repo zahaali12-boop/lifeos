@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
 import type { components } from "../api/schema";
 import { formatDate, formatNumber, localized } from "../lib/format";
-import { SelectField, TextField } from "./common";
+import { DecimalField, SelectField, TextField } from "./common";
 
 export type CustomFieldDefinition = components["schemas"]["CustomFieldView"];
 export type CustomFieldValues = Record<string, unknown>;
@@ -71,7 +71,7 @@ export function CustomFieldControl({ definition, value, onChange, disabled }: { 
       );
     }
     case "number":
-      return <TextField type="number" inputMode="decimal" value={typeof value === "number" || typeof value === "string" ? String(value) : ""} onChange={(e) => { onChange(e.target.value === "" ? undefined : Number(e.target.value)); }} {...control} dir="ltr" />;
+      return <DecimalField value={typeof value === "number" || typeof value === "string" ? String(value) : ""} onChange={(e) => { onChange(e.target.value === "" ? undefined : Number(e.target.value)); }} {...control} dir="ltr" />;
     case "date":
       return <TextField type="date" value={typeof value === "string" ? value : ""} onChange={(e) => { onChange(e.target.value || undefined); }} {...control} dir="ltr" />;
     case "reference":

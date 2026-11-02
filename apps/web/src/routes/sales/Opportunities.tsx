@@ -9,7 +9,7 @@ import { formatDate, formatDateTime, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { useCompanies } from "../accounting/shared";
-import { Field, FormError, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, SelectField, TextareaField, TextField } from "../common";
 import { CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { Tabs } from "../inventory/shared";
 import { RecordDiscussion } from "../RecordDiscussion";
@@ -123,7 +123,7 @@ export function NewOpportunityDialog({ open, onClose, companyId: initialCompany,
               <TextField value={form.title} onChange={(e) => { setForm({ ...form, title: e.target.value }); }} required maxLength={200} lang={i18n.language} data-testid="opportunity-title" />
             </Field>
             <Field label={t("sales.expectedAmount")}>
-              <TextField inputMode="decimal" value={form.amount} onChange={(e) => { setForm({ ...form, amount: e.target.value }); }} dir="ltr" data-testid="opportunity-amount" />
+              <DecimalField value={form.amount} onChange={(e) => { setForm({ ...form, amount: e.target.value }); }} dir="ltr" data-testid="opportunity-amount" />
             </Field>
             <Field label={t("partners.currency")} description={t("sales.currencyDefault", { currency: company?.functionalCurrency ?? "" })}>
               <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty data-testid="opportunity-currency" />
@@ -327,7 +327,7 @@ export function OpportunityDialog({ opportunityId, onClose }: { opportunityId: s
                     <TextField value={form.title} onChange={(e) => { patch({ title: e.target.value }); }} required maxLength={200} lang={i18n.language} data-testid="edit-title" />
                   </Field>
                   <Field label={t("sales.expectedAmount")}>
-                    <TextField inputMode="decimal" value={form.amount} onChange={(e) => { patch({ amount: e.target.value }); }} dir="ltr" data-testid="edit-amount" />
+                    <DecimalField value={form.amount} onChange={(e) => { patch({ amount: e.target.value }); }} dir="ltr" data-testid="edit-amount" />
                   </Field>
                   <Field label={t("partners.currency")}>
                     <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />

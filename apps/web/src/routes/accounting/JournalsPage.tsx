@@ -16,7 +16,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { AttachmentsPanel } from "../AttachmentsPanel";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs } from "../inventory/shared";
 import { JournalImportDialog } from "./JournalImport";
 import { AccountCodeField, costCentre, CostCentreSelect, costCentreText, emptyDetails, LineDetailsEditor, LineDetailsSummary, useJournalReference, type LineDetails } from "./JournalLineDetails";
@@ -613,10 +613,10 @@ export function JournalsPage() {
                         </TableCell>
                       ) : null}
                       <TableNumberCell>
-                        <TextField aria-label={t("accounting.debit")} inputMode="decimal" value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value, credit: e.target.value ? "" : line.credit }); }} dir="ltr" className="text-end" {...journalKeys?.cell(index, "debit")} data-testid={`line-debit-${index}`} />
+                        <DecimalField aria-label={t("accounting.debit")} value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value, credit: e.target.value ? "" : line.credit }); }} dir="ltr" className="text-end" {...journalKeys?.cell(index, "debit")} data-testid={`line-debit-${index}`} />
                       </TableNumberCell>
                       <TableNumberCell>
-                        <TextField aria-label={t("accounting.credit")} inputMode="decimal" value={line.credit} onChange={(e) => { updateLine(index, { credit: e.target.value, debit: e.target.value ? "" : line.debit }); }} dir="ltr" {...journalKeys?.cell(index, "credit")} className="text-end" data-testid={`line-credit-${index}`} />
+                        <DecimalField aria-label={t("accounting.credit")} value={line.credit} onChange={(e) => { updateLine(index, { credit: e.target.value, debit: e.target.value ? "" : line.debit }); }} dir="ltr" {...journalKeys?.cell(index, "credit")} className="text-end" data-testid={`line-credit-${index}`} />
                       </TableNumberCell>
                       <TableCell>
                         <div className="flex items-center">

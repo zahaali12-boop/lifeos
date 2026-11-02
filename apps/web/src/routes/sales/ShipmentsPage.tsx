@@ -11,7 +11,7 @@ import { followOn, useFollowOnSource, useOpenRecord } from "../../lib/documents"
 import { formatDate, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { Allocations, PickProgress, PickStatus } from "../inventory/picking";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, SalesStatus, type Shipment, type SalesOrderLine } from "./shared";
@@ -228,7 +228,7 @@ export function ShipmentsPage() {
                             <TableCell dir="auto">{l.itemCode}</TableCell>
                             <TableCell className="tabular" dir="ltr">{formatNumber(l.qtyReserved, { maximumFractionDigits: 3 })} {l.uomCode}</TableCell>
                             <TableCell>
-                              <TextField aria-label={t("sales.toShip")} inputMode="decimal" value={lineQuantities[l.id] ?? ""} onChange={(e) => { setLineQuantities({ ...lineQuantities, [l.id]: e.target.value }); }} dir="ltr" className="w-24" data-testid={`shipment-line-qty-${l.itemCode}`} />
+                              <DecimalField aria-label={t("sales.toShip")} value={lineQuantities[l.id] ?? ""} onChange={(e) => { setLineQuantities({ ...lineQuantities, [l.id]: e.target.value }); }} dir="ltr" className="w-24" data-testid={`shipment-line-qty-${l.itemCode}`} />
                             </TableCell>
                           </TableRow>
                         ))}

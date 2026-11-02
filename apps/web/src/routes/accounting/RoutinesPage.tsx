@@ -9,7 +9,7 @@ import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, FormError, PageHeader, SelectField, TextField } from "../common";
 import { DocStatus, KeyValues, Tabs } from "../inventory/shared";
 import { AccountPicker } from "./JournalLineDetails";
 import { RoutineRuns } from "./RoutineRuns";
@@ -282,7 +282,7 @@ export function RoutinesPage() {
                 </Field>
                 {template.amountMode === "fixed" ? null : (
                   <Field label={template.amountMode === "percentage" ? t("routines.baseAmount") : t("routines.amount")}>
-                    <TextField inputMode="decimal" value={baseAmount} onChange={(e) => { setBaseAmount(e.target.value); }} dir="ltr" />
+                    <DecimalField value={baseAmount} onChange={(e) => { setBaseAmount(e.target.value); }} dir="ltr" />
                   </Field>
                 )}
               </div>
@@ -337,7 +337,7 @@ export function RoutinesPage() {
                 </Field>
                 {editing.form.amountMode === "percentage" ? (
                   <Field label={t("routines.baseAmount")}>
-                    <TextField inputMode="decimal" value={editing.form.baseAmount} onChange={(e) => { setForm({ baseAmount: e.target.value }); }} dir="ltr" />
+                    <DecimalField value={editing.form.baseAmount} onChange={(e) => { setForm({ baseAmount: e.target.value }); }} dir="ltr" />
                   </Field>
                 ) : null}
               </div>
@@ -372,10 +372,10 @@ export function RoutinesPage() {
                         <AccountPicker chartId={company?.chartId} value={line.accountCode} onChange={(code) => { updateLine(index, { accountCode: code }); }} aria-label={t("routines.account")} data-testid={`template-account-${String(index)}`} />
                       </TableCell>
                       <TableCell>
-                        <TextField inputMode="decimal" value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value }); }} dir="ltr" aria-label={t("routines.debit")} data-testid={`template-debit-${String(index)}`} />
+                        <DecimalField value={line.debit} onChange={(e) => { updateLine(index, { debit: e.target.value }); }} dir="ltr" aria-label={t("routines.debit")} data-testid={`template-debit-${String(index)}`} />
                       </TableCell>
                       <TableCell>
-                        <TextField inputMode="decimal" value={line.credit} onChange={(e) => { updateLine(index, { credit: e.target.value }); }} dir="ltr" aria-label={t("routines.credit")} data-testid={`template-credit-${String(index)}`} />
+                        <DecimalField value={line.credit} onChange={(e) => { updateLine(index, { credit: e.target.value }); }} dir="ltr" aria-label={t("routines.credit")} data-testid={`template-credit-${String(index)}`} />
                       </TableCell>
                       <TableCell>
                         <Button type="button" variant="ghost" size="icon" aria-label={t("accounting.removeLine")} onClick={() => { setForm({ lines: editing.form.lines.filter((_, i) => i !== index) }); }}>
@@ -487,7 +487,7 @@ export function RoutinesPage() {
                   <TextField inputMode="numeric" value={String(deferral.periods)} onChange={(e) => { setDeferral({ ...deferral, periods: Number(e.target.value) || 0 }); }} required dir="ltr" data-testid="deferral-periods" />
                 </Field>
                 <Field label={t("routines.total")} required error={problem?.fields.totalAmount}>
-                  <TextField inputMode="decimal" value={String(deferral.totalAmount)} onChange={(e) => { setDeferral({ ...deferral, totalAmount: e.target.value }); }} required dir="ltr" data-testid="deferral-total" />
+                  <DecimalField value={String(deferral.totalAmount)} onChange={(e) => { setDeferral({ ...deferral, totalAmount: e.target.value }); }} required dir="ltr" data-testid="deferral-total" />
                 </Field>
                 <Field label={t("routines.method")}>
                   <SelectField value={deferral.method} onChange={(e) => { setDeferral({ ...deferral, method: e.target.value }); }}>

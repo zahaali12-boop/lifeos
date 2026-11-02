@@ -8,7 +8,7 @@ import { useCan } from "../lib/permissions";
 import { localized } from "../lib/format";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { CodeField } from "./CodeField";
-import { Field, FormError, SelectField, TextField } from "./common";
+import { DecimalField, Field, FormError, SelectField, TextField } from "./common";
 import { useCompanyContext } from "./inventory/shared";
 
 export type QuickKind = "customer" | "supplier" | "item";
@@ -126,7 +126,7 @@ export function QuickCreateDialog({ kind, companyId, currency, initial, onClose,
                 </SelectField>
               </Field>
               <Field label={t("inventory.items.listPrice")} description={money || undefined}>
-                <TextField inputMode="decimal" value={item.listPrice} onChange={(e) => { setItem({ ...item, listPrice: e.target.value }); }} dir="ltr" data-testid="quick-price" />
+                <DecimalField value={item.listPrice} onChange={(e) => { setItem({ ...item, listPrice: e.target.value }); }} dir="ltr" data-testid="quick-price" />
               </Field>
             </div>
           ) : (

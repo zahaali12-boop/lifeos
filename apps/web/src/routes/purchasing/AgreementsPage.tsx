@@ -10,7 +10,7 @@ import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, num, PurchaseStatus, useAgreements, useSuppliers, type Agreement, type LineForm } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
@@ -136,7 +136,7 @@ export function AgreementsPage() {
                   <CurrencyField value={form.currency} onChange={(code) => { setForm({ ...form, currency: code }); }} allowEmpty />
                 </Field>
                 <Field label={t("purchasing.committedAmount")} description={t("purchasing.committedAmountHelp")}>
-                  <TextField inputMode="decimal" value={form.committedAmount} onChange={(e) => { setForm({ ...form, committedAmount: e.target.value }); }} dir="ltr" />
+                  <DecimalField value={form.committedAmount} onChange={(e) => { setForm({ ...form, committedAmount: e.target.value }); }} dir="ltr" />
                 </Field>
               </div>
               <LinesEditor lines={form.lines} onChange={(lines) => { setForm({ ...form, lines }); }} priceLabel={t("purchasing.agreedPrice")} />

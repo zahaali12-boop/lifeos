@@ -11,7 +11,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Amount, today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
 import { RecordActivity } from "../RecordDiscussion";
@@ -228,7 +228,7 @@ export function AssembliesPage() {
                   <ItemCodeField value={editing.outputItemCode} onChange={(code) => { setForm({ outputItemCode: code }); }} required data-testid="assembly-output" />
                 </Field>
                 <Field label={t("inventory.quantity")} required>
-                  <TextField inputMode="decimal" value={editing.outputQuantity} onChange={(e) => { setForm({ outputQuantity: e.target.value }); }} required dir="ltr" data-testid="assembly-qty" />
+                  <DecimalField value={editing.outputQuantity} onChange={(e) => { setForm({ outputQuantity: e.target.value }); }} required dir="ltr" data-testid="assembly-qty" />
                 </Field>
                 <Field label={t("accounting.postingDate")}>
                   <TextField type="date" value={editing.postingDate} onChange={(e) => { setForm({ postingDate: e.target.value }); }} dir="ltr" />
@@ -254,7 +254,7 @@ export function AssembliesPage() {
                         <ItemCodeField aria-label={t("inventory.assemblies.component")} value={line.itemCode} onChange={(code) => { setForm({ lines: editing.lines.map((l, i) => (i === index ? { ...l, itemCode: code } : l)) }); }} data-testid={`line-item-${index}`} />
                       </TableCell>
                       <TableNumberCell>
-                        <TextField aria-label={t("inventory.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { setForm({ lines: editing.lines.map((l, i) => (i === index ? { ...l, quantity: e.target.value } : l)) }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} />
+                        <DecimalField aria-label={t("inventory.quantity")} value={line.quantity} onChange={(e) => { setForm({ lines: editing.lines.map((l, i) => (i === index ? { ...l, quantity: e.target.value } : l)) }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} />
                       </TableNumberCell>
                       <TableCell>
                         <TextField aria-label={t("inventory.uom")} value={line.uom} onChange={(e) => { setForm({ lines: editing.lines.map((l, i) => (i === index ? { ...l, uom: e.target.value.toUpperCase() } : l)) }); }} dir="ltr" className="w-20" />

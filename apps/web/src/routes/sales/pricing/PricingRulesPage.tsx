@@ -8,7 +8,7 @@ import { api, unwrap } from "../../../api";
 import { formatNumber, localized } from "../../../lib/format";
 import { useCan } from "../../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../../common";
 import { ItemCodeField } from "../../inventory/ItemCodeField";
 import { CompanyFilter, Tabs, findItemByCode, useCompanyContext } from "../../inventory/shared";
 import { usePaymentTerms } from "../../purchasing/shared";
@@ -363,7 +363,7 @@ function AgreementsTab({ companyId, currency }: { companyId: string; currency: s
                   </SelectField>
                 </Field>
                 <Field label={t("pricing.price")} required>
-                  <TextField type="number" min={0} step="any" value={form.price} onChange={(e) => { patch({ price: e.target.value }); }} required dir="ltr" data-testid="agreement-price" />
+                  <DecimalField value={form.price} onChange={(e) => { patch({ price: e.target.value }); }} required dir="ltr" data-testid="agreement-price" />
                 </Field>
                 <Field label={t("pricing.currency")}>
                   <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
@@ -371,11 +371,11 @@ function AgreementsTab({ companyId, currency }: { companyId: string; currency: s
               </>
             ) : (
               <Field label={t("pricing.discountPct")} required>
-                <TextField type="number" min={0} max={100} step="any" value={form.discountPct} onChange={(e) => { patch({ discountPct: e.target.value }); }} required dir="ltr" data-testid="agreement-discount" />
+                <DecimalField max={100} value={form.discountPct} onChange={(e) => { patch({ discountPct: e.target.value }); }} required dir="ltr" data-testid="agreement-discount" />
               </Field>
             )}
             <Field label={t("pricing.fromQuantity")}>
-              <TextField type="number" min={0} step="any" value={form.minQuantity} onChange={(e) => { patch({ minQuantity: e.target.value }); }} dir="ltr" data-testid="agreement-min" />
+              <DecimalField value={form.minQuantity} onChange={(e) => { patch({ minQuantity: e.target.value }); }} dir="ltr" data-testid="agreement-min" />
             </Field>
             <Field label={t("pricing.validFrom")}>
               <TextField type="date" value={form.validFrom} onChange={(e) => { patch({ validFrom: e.target.value }); }} dir="ltr" />
@@ -535,7 +535,7 @@ function RulesTab({ companyId, currency }: { companyId: string; currency: string
               </SelectField>
             </Field>
             <Field label={form.valueType === "percentage" ? t("pricing.discountPct") : t("pricing.amountPerBaseUnit")} required>
-              <TextField type="number" min={0} step="any" value={form.value} onChange={(e) => { patch({ value: e.target.value }); }} required dir="ltr" data-testid="rule-value" />
+              <DecimalField value={form.value} onChange={(e) => { patch({ value: e.target.value }); }} required dir="ltr" data-testid="rule-value" />
             </Field>
             <Field label={t("pricing.combination")} description={t("pricing.combinationHint")}>
               <SelectField value={form.combination} onChange={(e) => { patch({ combination: e.target.value }); }} data-testid="rule-combination">
@@ -572,11 +572,11 @@ function RulesTab({ companyId, currency }: { companyId: string; currency: string
             </Field>
             {form.level === "line" ? (
               <Field label={t("pricing.minQuantity")}>
-                <TextField type="number" min={0} step="any" value={form.minQuantity} onChange={(e) => { patch({ minQuantity: e.target.value }); }} dir="ltr" />
+                <DecimalField value={form.minQuantity} onChange={(e) => { patch({ minQuantity: e.target.value }); }} dir="ltr" />
               </Field>
             ) : null}
             <Field label={t("pricing.minAmount")}>
-              <TextField type="number" min={0} step="any" value={form.minAmount} onChange={(e) => { patch({ minAmount: e.target.value }); }} dir="ltr" data-testid="rule-min-amount" />
+              <DecimalField value={form.minAmount} onChange={(e) => { patch({ minAmount: e.target.value }); }} dir="ltr" data-testid="rule-min-amount" />
             </Field>
             <Field label={t("pricing.validFrom")}>
               <TextField type="date" value={form.validFrom} onChange={(e) => { patch({ validFrom: e.target.value }); }} dir="ltr" />
@@ -783,16 +783,16 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
             {form.kind === "buy_x_get_y" ? (
               <>
                 <Field label={t("pricing.buyQuantity")} required>
-                  <TextField type="number" min={0} step="any" value={form.buyQuantity} onChange={(e) => { patch({ buyQuantity: e.target.value }); }} required dir="ltr" data-testid="promotion-buy" />
+                  <DecimalField value={form.buyQuantity} onChange={(e) => { patch({ buyQuantity: e.target.value }); }} required dir="ltr" data-testid="promotion-buy" />
                 </Field>
                 <Field label={t("pricing.getItem")} description={t("pricing.getItemHint")}>
                   <ItemCodeField value={form.getItemCode} onChange={(code) => { patch({ getItemCode: code }); }} data-testid="promotion-get-item" />
                 </Field>
                 <Field label={t("pricing.getQuantity")} required>
-                  <TextField type="number" min={0} step="any" value={form.getQuantity} onChange={(e) => { patch({ getQuantity: e.target.value }); }} required dir="ltr" data-testid="promotion-get" />
+                  <DecimalField value={form.getQuantity} onChange={(e) => { patch({ getQuantity: e.target.value }); }} required dir="ltr" data-testid="promotion-get" />
                 </Field>
                 <Field label={t("pricing.getDiscountPct")}>
-                  <TextField type="number" min={0} max={100} step="any" value={form.getDiscountPct} onChange={(e) => { patch({ getDiscountPct: e.target.value }); }} dir="ltr" />
+                  <DecimalField max={100} value={form.getDiscountPct} onChange={(e) => { patch({ getDiscountPct: e.target.value }); }} dir="ltr" />
                 </Field>
                 <Field label={t("pricing.maxApplications")}>
                   <TextField type="number" min={1} value={form.maxApplications} onChange={(e) => { patch({ maxApplications: e.target.value }); }} dir="ltr" />
@@ -801,13 +801,13 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
             ) : null}
             {form.kind === "coupon" ? (
               <Field label={t("pricing.discountPct")} required>
-                <TextField type="number" min={0} max={100} step="any" value={form.discountPct} onChange={(e) => { patch({ discountPct: e.target.value }); }} required dir="ltr" data-testid="promotion-discount" />
+                <DecimalField max={100} value={form.discountPct} onChange={(e) => { patch({ discountPct: e.target.value }); }} required dir="ltr" data-testid="promotion-discount" />
               </Field>
             ) : null}
             {form.kind === "bundle" ? (
               <>
                 <Field label={t("pricing.bundlePrice")} required>
-                  <TextField type="number" min={0} step="any" value={form.bundlePrice} onChange={(e) => { patch({ bundlePrice: e.target.value }); }} required dir="ltr" data-testid="promotion-bundle-price" />
+                  <DecimalField value={form.bundlePrice} onChange={(e) => { patch({ bundlePrice: e.target.value }); }} required dir="ltr" data-testid="promotion-bundle-price" />
                 </Field>
                 <Field label={t("pricing.currency")}>
                   <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
@@ -817,7 +817,7 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
                   {form.components.map((c, index) => (
                     <div key={index} className="grid gap-2 sm:grid-cols-[1fr_8rem_auto]">
                       <ItemCodeField aria-label={t("pricing.item")} value={c.itemCode} onChange={(code) => { patch({ components: form.components.map((x, i) => (i === index ? { ...x, itemCode: code } : x)) }); }} data-testid={`component-item-${String(index)}`} />
-                      <TextField aria-label={t("pricing.quantity")} type="number" min={0} step="any" value={c.quantity} onChange={(e) => { patch({ components: form.components.map((x, i) => (i === index ? { ...x, quantity: e.target.value } : x)) }); }} dir="ltr" data-testid={`component-qty-${String(index)}`} />
+                      <DecimalField aria-label={t("pricing.quantity")} value={c.quantity} onChange={(e) => { patch({ components: form.components.map((x, i) => (i === index ? { ...x, quantity: e.target.value } : x)) }); }} dir="ltr" data-testid={`component-qty-${String(index)}`} />
                       <Button type="button" variant="ghost" size="sm" aria-label={t("pricing.removeLine")} onClick={() => { patch({ components: form.components.filter((_, i) => i !== index) }); }}>
                         <Trash2 aria-hidden="true" />
                       </Button>
@@ -835,8 +835,8 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
                 <legend className="mb-1 text-sm font-medium">{t("pricing.tiers")}</legend>
                 {form.tiers.map((tier, index) => (
                   <div key={index} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                    <TextField aria-label={t("pricing.fromQuantity")} type="number" min={0} step="any" value={tier.minQuantity} onChange={(e) => { patch({ tiers: form.tiers.map((x, i) => (i === index ? { ...x, minQuantity: e.target.value } : x)) }); }} dir="ltr" data-testid={`tier-min-${String(index)}`} />
-                    <TextField aria-label={t("pricing.discountPct")} type="number" min={0} max={100} step="any" value={tier.discountPct} onChange={(e) => { patch({ tiers: form.tiers.map((x, i) => (i === index ? { ...x, discountPct: e.target.value } : x)) }); }} dir="ltr" data-testid={`tier-pct-${String(index)}`} />
+                    <DecimalField aria-label={t("pricing.fromQuantity")} value={tier.minQuantity} onChange={(e) => { patch({ tiers: form.tiers.map((x, i) => (i === index ? { ...x, minQuantity: e.target.value } : x)) }); }} dir="ltr" data-testid={`tier-min-${String(index)}`} />
+                    <DecimalField aria-label={t("pricing.discountPct")} max={100} value={tier.discountPct} onChange={(e) => { patch({ tiers: form.tiers.map((x, i) => (i === index ? { ...x, discountPct: e.target.value } : x)) }); }} dir="ltr" data-testid={`tier-pct-${String(index)}`} />
                     <Button type="button" variant="ghost" size="sm" aria-label={t("pricing.removeLine")} onClick={() => { patch({ tiers: form.tiers.filter((_, i) => i !== index) }); }}>
                       <Trash2 aria-hidden="true" />
                     </Button>
@@ -969,13 +969,13 @@ function FloorsTab({ companyId, currency }: { companyId: string; currency: strin
               </SelectField>
             </Field>
             <Field label={t("pricing.minPrice")} description={t("pricing.perBaseUnit")}>
-              <TextField type="number" min={0} step="any" value={form.minPrice} onChange={(e) => { patch({ minPrice: e.target.value }); }} dir="ltr" data-testid="floor-min-price" />
+              <DecimalField value={form.minPrice} onChange={(e) => { patch({ minPrice: e.target.value }); }} dir="ltr" data-testid="floor-min-price" />
             </Field>
             <Field label={t("pricing.currency")}>
               <CurrencyField value={form.currency} onChange={(code) => { patch({ currency: code }); }} allowEmpty />
             </Field>
             <Field label={t("pricing.minMarginPct")} description={t("pricing.marginHint")}>
-              <TextField type="number" step="any" value={form.minMarginPct} onChange={(e) => { patch({ minMarginPct: e.target.value }); }} dir="ltr" data-testid="floor-min-margin" />
+              <DecimalField value={form.minMarginPct} onChange={(e) => { patch({ minMarginPct: e.target.value }); }} dir="ltr" data-testid="floor-min-margin" />
             </Field>
           </div>
         ) : null}

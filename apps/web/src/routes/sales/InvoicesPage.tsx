@@ -14,7 +14,7 @@ import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { CostCentreSelect, costCentreText, useLineDimensions } from "../accounting/JournalLineDetails";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext } from "../inventory/shared";
 import { ItemCodeField } from "../inventory/ItemCodeField";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
@@ -397,9 +397,9 @@ export function InvoicesPage() {
                               : line.kind === "service" ? <TextField aria-label={t("sales.invoicing.lineDescription")} value={line.description} onChange={(e) => { patchLine(index, { description: e.target.value }); }} className="w-56" data-testid={`invoice-description-${String(index)}`} {...invoiceKeys?.cell(index, "description")} />
                                 : line.label}
                           </TableCell>
-                          <TableCell><TextField aria-label={t("sales.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} {...invoiceKeys?.cell(index, "quantity")} /></TableCell>
-                          <TableCell>{pricedHere(line.kind) ? <TextField aria-label={t("sales.unitPrice")} inputMode="decimal" value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" {...invoiceKeys?.cell(index, "unitPrice")} placeholder={line.kind === "item" ? t("sales.autoPrice") : ""} data-testid={`invoice-price-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.unitPrice, { maximumFractionDigits: 4 })}</span>}</TableCell>
-                          <TableCell>{pricedHere(line.kind) ? <TextField aria-label={t("sales.discountPct")} inputMode="decimal" value={line.discountPct} onChange={(e) => { patchLine(index, { discountPct: e.target.value }); }} dir="ltr" className="w-16" {...invoiceKeys?.cell(index, "discountPct")} data-testid={`invoice-discount-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.discountPct, { maximumFractionDigits: 2 })}%</span>}</TableCell>
+                          <TableCell><DecimalField aria-label={t("sales.quantity")} value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" data-testid={`invoice-qty-${String(index)}`} {...invoiceKeys?.cell(index, "quantity")} /></TableCell>
+                          <TableCell>{pricedHere(line.kind) ? <DecimalField aria-label={t("sales.unitPrice")} value={line.unitPrice} onChange={(e) => { patchLine(index, { unitPrice: e.target.value }); }} dir="ltr" className="w-28" {...invoiceKeys?.cell(index, "unitPrice")} placeholder={line.kind === "item" ? t("sales.autoPrice") : ""} data-testid={`invoice-price-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.unitPrice, { maximumFractionDigits: 4 })}</span>}</TableCell>
+                          <TableCell>{pricedHere(line.kind) ? <DecimalField aria-label={t("sales.discountPct")} value={line.discountPct} onChange={(e) => { patchLine(index, { discountPct: e.target.value }); }} dir="ltr" className="w-16" {...invoiceKeys?.cell(index, "discountPct")} data-testid={`invoice-discount-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatNumber(line.discountPct, { maximumFractionDigits: 2 })}%</span>}</TableCell>
                           <TableCell>
                             {pricedHere(line.kind) ? (
                               <SelectField aria-label={t("tax.code")} value={line.taxCodeId} onChange={(e) => { patchLine(index, { taxCodeId: e.target.value }); }} data-testid={`invoice-tax-${String(index)}`}>

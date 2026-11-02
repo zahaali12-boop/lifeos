@@ -12,7 +12,7 @@ import { useOpenRecord } from "../../lib/documents";
 import { formatDateTime, formatMoney, formatNumber, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, Tabs, useCompanyContext, useWarehouses } from "../inventory/shared";
 import { PrintButton } from "../print/PrintDialog";
 import { RecordActivity } from "../RecordDiscussion";
@@ -408,7 +408,7 @@ export function PosPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("pos.cashRounding")} description={t("pos.cashRoundingHelp")}>
-                  <TextField inputMode="decimal" dir="ltr" value={form.cashRoundingIncrement} onChange={(e) => { setForm({ ...form, cashRoundingIncrement: e.target.value }); }} data-testid="register-rounding" />
+                  <DecimalField dir="ltr" value={form.cashRoundingIncrement} onChange={(e) => { setForm({ ...form, cashRoundingIncrement: e.target.value }); }} data-testid="register-rounding" />
                 </Field>
                 <Field label={t("pos.receiptFooterEn")}>
                   <TextField value={form.footerEn} dir="ltr" onChange={(e) => { setForm({ ...form, footerEn: e.target.value }); }} />

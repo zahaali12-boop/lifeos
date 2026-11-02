@@ -4,7 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
-import { FormError, SelectField, TextField } from "../common";
+import { DecimalField, FormError, SelectField } from "../common";
 import { useOnline, useScanContext } from "./context";
 import { cachedItem, resolveItem, type ResolvedItem } from "./items";
 import { enqueue, syncQueue } from "./queue";
@@ -139,7 +139,7 @@ export function MobileTransferPage() {
             <div className="text-sm text-fg-muted">{localized(item.resolved?.name)}</div>
           </div>
           <Field label={t("mobile.transfer.quantity")}>
-            <TextField className="h-12 text-lg" inputMode="decimal" autoComplete="off" data-testid="transfer-quantity" value={quantity} onChange={(event) => { setQuantity(event.target.value); }} autoFocus />
+            <DecimalField className="h-12 text-lg" autoComplete="off" data-testid="transfer-quantity" value={quantity} onChange={(event) => { setQuantity(event.target.value); }} autoFocus />
           </Field>
           <Button size="lg" className="h-12" data-testid="transfer-add-line" onClick={addLine}>
             {t("mobile.transfer.addLine")}

@@ -8,7 +8,7 @@ import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
 import { formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { num } from "../purchasing/shared";
 import { useExpenseCategories, useTaxCodeOptions, type ExpenseCategory } from "./shared";
 
@@ -104,7 +104,7 @@ export function ExpenseCategoriesPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("expenses.maxAmount")} description={t("expenses.maxAmountHelp")}>
-                  <TextField inputMode="decimal" value={form.maxAmount} onChange={(e) => { setForm({ ...form, maxAmount: e.target.value }); }} dir="ltr" data-testid="category-max" />
+                  <DecimalField value={form.maxAmount} onChange={(e) => { setForm({ ...form, maxAmount: e.target.value }); }} dir="ltr" data-testid="category-max" />
                 </Field>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={form.receiptRequired} onChange={(e) => { setForm({ ...form, receiptRequired: e.target.checked }); }} data-testid="category-receipt" />

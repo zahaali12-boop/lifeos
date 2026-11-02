@@ -10,7 +10,7 @@ import { useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { useTaxCodeOptions } from "../expenses/shared";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
@@ -260,7 +260,7 @@ export function AssetsPage() {
                   <TextField type="date" value={form.inServiceDate} onChange={(ev) => { setForm({ ...form, inServiceDate: ev.target.value }); }} dir="ltr" disabled={Boolean(form.id)} data-testid="asset-in-service-date" />
                 </Field>
                 <Field label={`${t("fixedAssets.cost")} (${currency})`} required>
-                  <TextField inputMode="decimal" value={form.cost} onChange={(ev) => { setForm({ ...form, cost: ev.target.value }); }} dir="ltr" required disabled={Boolean(form.id)} data-testid="asset-cost" />
+                  <DecimalField value={form.cost} onChange={(ev) => { setForm({ ...form, cost: ev.target.value }); }} dir="ltr" required disabled={Boolean(form.id)} data-testid="asset-cost" />
                 </Field>
                 <Field label={t("fixedAssets.source")} required>
                   <SelectField value={form.acquisitionSource} onChange={(ev) => { setForm({ ...form, acquisitionSource: ev.target.value }); }} disabled={Boolean(form.id)} data-testid="asset-source">
@@ -308,7 +308,7 @@ export function AssetsPage() {
                 {form.acquisitionSource === "opening" ? (
                   <>
                     <Field label={t("fixedAssets.openingAccumulatedDepreciation")} required>
-                      <TextField inputMode="decimal" value={form.openingAccumulatedDepreciation} onChange={(ev) => { setForm({ ...form, openingAccumulatedDepreciation: ev.target.value }); }} dir="ltr" disabled={Boolean(form.id)} data-testid="asset-opening-depreciation" />
+                      <DecimalField value={form.openingAccumulatedDepreciation} onChange={(ev) => { setForm({ ...form, openingAccumulatedDepreciation: ev.target.value }); }} dir="ltr" disabled={Boolean(form.id)} data-testid="asset-opening-depreciation" />
                     </Field>
                     <Field label={t("fixedAssets.openingThrough")} description={t("fixedAssets.openingThroughHelp")} required>
                       <TextField type="date" value={form.openingDepreciatedThrough} onChange={(ev) => { setForm({ ...form, openingDepreciatedThrough: ev.target.value }); }} dir="ltr" required disabled={Boolean(form.id)} data-testid="asset-opening-through" />
@@ -325,7 +325,7 @@ export function AssetsPage() {
               <MoreFields filled={Boolean(form.method || form.lifeMonths || form.salvageValue || form.quantity !== "1" || form.supplierReference || form.warrantyUntil || form.notes)}>
                 <div className="grid gap-4 sm:grid-cols-4">
                   <Field label={t("fixedAssets.quantity")} description={t("fixedAssets.quantityHelp")}>
-                    <TextField inputMode="decimal" value={form.quantity} onChange={(ev) => { setForm({ ...form, quantity: ev.target.value }); }} dir="ltr" disabled={Boolean(form.id)} data-testid="asset-quantity" />
+                    <DecimalField value={form.quantity} onChange={(ev) => { setForm({ ...form, quantity: ev.target.value }); }} dir="ltr" disabled={Boolean(form.id)} data-testid="asset-quantity" />
                   </Field>
                   <Field label={t("fixedAssets.unit")}>
                     <TextField value={form.unit} onChange={(ev) => { setForm({ ...form, unit: ev.target.value }); }} dir="ltr" data-testid="asset-unit" />
@@ -350,7 +350,7 @@ export function AssetsPage() {
                         <TextField inputMode="numeric" value={form.lifeMonths} onChange={(ev) => { setForm({ ...form, lifeMonths: ev.target.value }); }} dir="ltr" placeholder={t("fixedAssets.categoryDefault")} data-testid="asset-life" />
                       </Field>
                       <Field label={t("fixedAssets.salvageValue")}>
-                        <TextField inputMode="decimal" value={form.salvageValue} onChange={(ev) => { setForm({ ...form, salvageValue: ev.target.value }); }} dir="ltr" placeholder={t("fixedAssets.categoryDefault")} data-testid="asset-salvage" />
+                        <DecimalField value={form.salvageValue} onChange={(ev) => { setForm({ ...form, salvageValue: ev.target.value }); }} dir="ltr" placeholder={t("fixedAssets.categoryDefault")} data-testid="asset-salvage" />
                       </Field>
                       <Field label={t("fixedAssets.convention")}>
                         <SelectField value={form.convention} onChange={(ev) => { setForm({ ...form, convention: ev.target.value }); }} data-testid="asset-convention">
@@ -428,13 +428,13 @@ export function AssetsPage() {
                     </Field>
                     {action.kind === "add" || action.kind === "impair" ? (
                       <Field label={t("purchasing.amount")} required>
-                        <TextField inputMode="decimal" value={action.amount} onChange={(ev) => { setAction({ ...action, amount: ev.target.value }); }} dir="ltr" required data-testid="action-amount" />
+                        <DecimalField value={action.amount} onChange={(ev) => { setAction({ ...action, amount: ev.target.value }); }} dir="ltr" required data-testid="action-amount" />
                       </Field>
                     ) : null}
                     {action.kind === "revalue" ? (
                       <>
                         <Field label={t("fixedAssets.fairValue")} required>
-                          <TextField inputMode="decimal" value={action.amount} onChange={(ev) => { setAction({ ...action, amount: ev.target.value }); }} dir="ltr" required data-testid="action-fair-value" />
+                          <DecimalField value={action.amount} onChange={(ev) => { setAction({ ...action, amount: ev.target.value }); }} dir="ltr" required data-testid="action-fair-value" />
                         </Field>
                         <Field label={t("fixedAssets.newLifeMonths")} description={t("fixedAssets.newLifeHelp")}>
                           <TextField inputMode="numeric" value={action.newLifeMonths} onChange={(ev) => { setAction({ ...action, newLifeMonths: ev.target.value }); }} dir="ltr" data-testid="action-new-life" />
@@ -479,7 +479,7 @@ export function AssetsPage() {
                           </SelectField>
                         </Field>
                         <Field label={t("fixedAssets.proceeds")}>
-                          <TextField inputMode="decimal" value={action.proceeds} onChange={(ev) => { setAction({ ...action, proceeds: ev.target.value }); }} dir="ltr" data-testid="action-proceeds" />
+                          <DecimalField value={action.proceeds} onChange={(ev) => { setAction({ ...action, proceeds: ev.target.value }); }} dir="ltr" data-testid="action-proceeds" />
                         </Field>
                         {num(action.proceeds) > 0 ? (
                           <Field label={t("fixedAssets.proceedsTo")} required>
@@ -501,7 +501,7 @@ export function AssetsPage() {
                         ) : null}
                         {a.quantity !== 1 ? (
                           <Field label={t("fixedAssets.quantityDisposed")} description={t("fixedAssets.quantityDisposedHelp", { quantity: formatNumber(a.quantity) })}>
-                            <TextField inputMode="decimal" value={action.quantity} onChange={(ev) => { setAction({ ...action, quantity: ev.target.value }); }} dir="ltr" data-testid="action-quantity" />
+                            <DecimalField value={action.quantity} onChange={(ev) => { setAction({ ...action, quantity: ev.target.value }); }} dir="ltr" data-testid="action-quantity" />
                           </Field>
                         ) : null}
                       </>

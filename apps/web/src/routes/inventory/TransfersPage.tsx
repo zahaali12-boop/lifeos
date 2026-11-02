@@ -11,7 +11,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, DocStatus, Qty, WarehouseSelect, useCompanyContext, useWarehouses } from "./shared";
 import { ItemCodeField } from "./ItemCodeField";
 import { TransferQuantities } from "./TransferQuantities";
@@ -328,7 +328,7 @@ export function TransfersPage() {
                         <ItemCodeField aria-label={t("inventory.itemCode")} value={line.itemCode} onChange={(code) => { updateLine(index, { itemCode: code }); }} data-testid={`line-item-${index}`} />
                       </TableCell>
                       <TableNumberCell>
-                        <TextField aria-label={t("inventory.quantity")} inputMode="decimal" value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} />
+                        <DecimalField aria-label={t("inventory.quantity")} value={line.quantity} onChange={(e) => { updateLine(index, { quantity: e.target.value }); }} dir="ltr" className="text-end" data-testid={`line-qty-${index}`} />
                       </TableNumberCell>
                       <TableCell>
                         <TextField aria-label={t("inventory.uom")} value={line.uom} onChange={(e) => { updateLine(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" />

@@ -11,7 +11,7 @@ import { formatDate, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { rememberRecent } from "../../shell/CommandPalette";
 import { Amount } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { ItemCostingEditor, ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEditor } from "./ItemEditors";
 import { ItemAttributesEditor, ItemBomEditor, ItemImage, ItemSubstitutesEditor, ItemVariantsEditor } from "./ItemStructure";
 import { DocStatus, Tabs, type Item } from "./shared";
@@ -317,7 +317,7 @@ export function ItemsPage() {
                   <TextField inputMode="numeric" value={form.shelfLifeDays} onChange={(e) => { setForm({ shelfLifeDays: e.target.value }); }} dir="ltr" />
                 </Field>
                 <Field label={t("inventory.items.listPrice")} error={problem?.fields.listPrice}>
-                  <TextField inputMode="decimal" value={form.listPrice} onChange={(e) => { setForm({ listPrice: e.target.value }); }} dir="ltr" />
+                  <DecimalField value={form.listPrice} onChange={(e) => { setForm({ listPrice: e.target.value }); }} dir="ltr" />
                 </Field>
                 <Field label={t("inventory.items.listPriceCurrency")}>
                   <CurrencyField value={form.listPriceCurrency} onChange={(code) => { setForm({ listPriceCurrency: code }); }} allowEmpty />

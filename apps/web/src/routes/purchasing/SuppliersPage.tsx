@@ -10,7 +10,7 @@ import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, formatDateTime, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, Tabs, useCompanyContext } from "../inventory/shared";
 import { HoldBadge, num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, useSupplierPostingGroups, useWhtCodes } from "./shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
@@ -310,10 +310,10 @@ function AccountFields({ form, onChange }: { form: AccountForm; onChange: (patch
         <TextField type="number" min={0} value={form.leadTimeDays} onChange={(e) => { onChange({ leadTimeDays: e.target.value }); }} dir="ltr" data-testid="account-lead-time" />
       </Field>
       <Field label={t("partners.priceTolerancePct")}>
-        <TextField inputMode="decimal" value={form.priceTolerancePct} onChange={(e) => { onChange({ priceTolerancePct: e.target.value }); }} dir="ltr" />
+        <DecimalField value={form.priceTolerancePct} onChange={(e) => { onChange({ priceTolerancePct: e.target.value }); }} dir="ltr" />
       </Field>
       <Field label={t("partners.qtyTolerancePct")}>
-        <TextField inputMode="decimal" value={form.qtyTolerancePct} onChange={(e) => { onChange({ qtyTolerancePct: e.target.value }); }} dir="ltr" />
+        <DecimalField value={form.qtyTolerancePct} onChange={(e) => { onChange({ qtyTolerancePct: e.target.value }); }} dir="ltr" />
       </Field>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={form.requiresPo} onChange={(e) => { onChange({ requiresPo: e.target.checked }); }} />

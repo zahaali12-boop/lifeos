@@ -10,7 +10,7 @@ import { DataGrid } from "../../grid/DataGrid";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { Tabs, useCompanyContext } from "../inventory/shared";
 import { num, useDeliveryTerms, usePaymentTerms, useSupplierGroups, useSupplierPostingGroups, useWhtCodes } from "./shared";
 import { CurrencyField } from "../CurrencyField";
@@ -254,7 +254,7 @@ export function PurchasingSettingsPage() {
                   {t("partners.businessDaysOnly")}
                 </label>
                 <Field label={t("partners.earlyDiscountPct")}>
-                  <TextField inputMode="decimal" value={terms.earlyDiscountPct} onChange={(e) => { setTermsForm({ earlyDiscountPct: e.target.value }); }} dir="ltr" />
+                  <DecimalField value={terms.earlyDiscountPct} onChange={(e) => { setTermsForm({ earlyDiscountPct: e.target.value }); }} dir="ltr" />
                 </Field>
                 <Field label={t("partners.earlyDiscountDays")}>
                   <TextField type="number" min={0} value={terms.earlyDiscountDays} onChange={(e) => { setTermsForm({ earlyDiscountDays: e.target.value }); }} dir="ltr" />
@@ -286,7 +286,7 @@ export function PurchasingSettingsPage() {
                       {terms.lines.map((line, index) => (
                         <TableRow key={index}>
                           <TableCell><TextField aria-label={t("partners.sequence")} type="number" min={1} value={line.sequence} onChange={(e) => { setTermsForm({ lines: terms.lines.map((l, i) => (i === index ? { ...l, sequence: e.target.value } : l)) }); }} dir="ltr" className="w-20" /></TableCell>
-                          <TableCell><TextField aria-label={t("partners.percentage")} inputMode="decimal" value={line.percentage} onChange={(e) => { setTermsForm({ lines: terms.lines.map((l, i) => (i === index ? { ...l, percentage: e.target.value } : l)) }); }} dir="ltr" className="w-24" data-testid={`instalment-pct-${String(index)}`} /></TableCell>
+                          <TableCell><DecimalField aria-label={t("partners.percentage")} value={line.percentage} onChange={(e) => { setTermsForm({ lines: terms.lines.map((l, i) => (i === index ? { ...l, percentage: e.target.value } : l)) }); }} dir="ltr" className="w-24" data-testid={`instalment-pct-${String(index)}`} /></TableCell>
                           <TableCell><TextField aria-label={t("partners.days")} type="number" min={0} value={line.days} onChange={(e) => { setTermsForm({ lines: terms.lines.map((l, i) => (i === index ? { ...l, days: e.target.value } : l)) }); }} dir="ltr" className="w-24" data-testid={`instalment-days-${String(index)}`} /></TableCell>
                           <TableCell>
                             <Button type="button" variant="ghost" size="sm" onClick={() => { setTermsForm({ lines: terms.lines.filter((_, i) => i !== index) }); }}>
@@ -308,7 +308,7 @@ export function PurchasingSettingsPage() {
                       <TextField type="date" value={preview.invoiceDate} onChange={(e) => { setPreview({ ...preview, invoiceDate: e.target.value }); }} dir="ltr" data-testid="preview-date" />
                     </Field>
                     <Field label={t("partners.amount")}>
-                      <TextField inputMode="decimal" value={preview.amount} onChange={(e) => { setPreview({ ...preview, amount: e.target.value }); }} dir="ltr" data-testid="preview-amount" />
+                      <DecimalField value={preview.amount} onChange={(e) => { setPreview({ ...preview, amount: e.target.value }); }} dir="ltr" data-testid="preview-amount" />
                     </Field>
                     <Field label={t("partners.currency")}>
                       <CurrencyField value={preview.currency} onChange={(code) => { setPreview({ ...preview, currency: code }); }} allowEmpty />
@@ -400,7 +400,7 @@ export function PurchasingSettingsPage() {
                 {simple.kind === "wht" ? (
                   <>
                     <Field label={t("partners.ratePct")} required>
-                      <TextField inputMode="decimal" value={simple.form.ratePct} onChange={(e) => { setSimpleForm({ ratePct: e.target.value }); }} dir="ltr" required data-testid="wht-rate" />
+                      <DecimalField value={simple.form.ratePct} onChange={(e) => { setSimpleForm({ ratePct: e.target.value }); }} dir="ltr" required data-testid="wht-rate" />
                     </Field>
                     <Field label={t("partners.withholdAt")}>
                       <SelectField value={simple.form.withholdAt} onChange={(e) => { setSimpleForm({ withholdAt: e.target.value }); }}>
@@ -412,7 +412,7 @@ export function PurchasingSettingsPage() {
                       </SelectField>
                     </Field>
                     <Field label={t("partners.threshold")}>
-                      <TextField inputMode="decimal" value={simple.form.thresholdAmount} onChange={(e) => { setSimpleForm({ thresholdAmount: e.target.value }); }} dir="ltr" />
+                      <DecimalField value={simple.form.thresholdAmount} onChange={(e) => { setSimpleForm({ thresholdAmount: e.target.value }); }} dir="ltr" />
                     </Field>
                     <Field label={t("partners.thresholdCurrency")}>
                       <CurrencyField value={simple.form.thresholdCurrency} onChange={(code) => { setSimpleForm({ thresholdCurrency: code }); }} allowEmpty />

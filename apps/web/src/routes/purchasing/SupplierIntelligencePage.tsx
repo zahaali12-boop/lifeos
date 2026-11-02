@@ -6,7 +6,7 @@ import { api, unwrap } from "../../api";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, Tabs, useCompanyContext } from "../inventory/shared";
 import { num, useSuppliers } from "./shared";
 
@@ -132,10 +132,10 @@ export function SupplierIntelligencePage() {
               <h3 className="text-sm font-semibold">{t("intelligence.settings")}</h3>
               <FormError message={problem?.message ?? null} />
               <div className="grid gap-3 sm:grid-cols-3">
-                <Field label={t("intelligence.onTimeWeight")}><TextField inputMode="decimal" value={form.onTimeWeight} onChange={(e) => { setForm({ ...form, onTimeWeight: e.target.value }); }} dir="ltr" data-testid="weight-on-time" /></Field>
-                <Field label={t("intelligence.quantityWeight")}><TextField inputMode="decimal" value={form.quantityWeight} onChange={(e) => { setForm({ ...form, quantityWeight: e.target.value }); }} dir="ltr" data-testid="weight-quantity" /></Field>
-                <Field label={t("intelligence.priceWeight")}><TextField inputMode="decimal" value={form.priceWeight} onChange={(e) => { setForm({ ...form, priceWeight: e.target.value }); }} dir="ltr" data-testid="weight-price" /></Field>
-                <Field label={t("intelligence.invoiceWeight")}><TextField inputMode="decimal" value={form.invoiceWeight} onChange={(e) => { setForm({ ...form, invoiceWeight: e.target.value }); }} dir="ltr" data-testid="weight-invoice" /></Field>
+                <Field label={t("intelligence.onTimeWeight")}><DecimalField value={form.onTimeWeight} onChange={(e) => { setForm({ ...form, onTimeWeight: e.target.value }); }} dir="ltr" data-testid="weight-on-time" /></Field>
+                <Field label={t("intelligence.quantityWeight")}><DecimalField value={form.quantityWeight} onChange={(e) => { setForm({ ...form, quantityWeight: e.target.value }); }} dir="ltr" data-testid="weight-quantity" /></Field>
+                <Field label={t("intelligence.priceWeight")}><DecimalField value={form.priceWeight} onChange={(e) => { setForm({ ...form, priceWeight: e.target.value }); }} dir="ltr" data-testid="weight-price" /></Field>
+                <Field label={t("intelligence.invoiceWeight")}><DecimalField value={form.invoiceWeight} onChange={(e) => { setForm({ ...form, invoiceWeight: e.target.value }); }} dir="ltr" data-testid="weight-invoice" /></Field>
                 <Field label={t("intelligence.toleranceDays")}><TextField inputMode="numeric" value={form.onTimeToleranceDays} onChange={(e) => { setForm({ ...form, onTimeToleranceDays: e.target.value }); }} dir="ltr" data-testid="tolerance-days" /></Field>
                 <Field label={t("intelligence.lookbackMonths")}><TextField inputMode="numeric" value={form.lookbackMonths} onChange={(e) => { setForm({ ...form, lookbackMonths: e.target.value }); }} dir="ltr" data-testid="lookback-months" /></Field>
               </div>

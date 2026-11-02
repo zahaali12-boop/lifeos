@@ -14,7 +14,7 @@ import { formatDate, formatMoney, formatNumber, localized } from "../../lib/form
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, PurchaseStatus } from "./shared";
 import { DocumentFlowBar } from "./DocumentFlow";
@@ -248,7 +248,7 @@ export function ReturnsPage() {
                           <TableCell dir="auto">{info ? `${info.itemCode} · ${localized(info.itemName)}` : ""}</TableCell>
                           <TableCell className="tabular" dir="ltr">{info ? `${formatNumber(info.received, { maximumFractionDigits: 3 })} ${info.uomCode}` : ""}</TableCell>
                           <TableCell className="tabular" dir="ltr">{info ? formatNumber(info.returned, { maximumFractionDigits: 3 }) : ""}</TableCell>
-                          <TableCell><TextField aria-label={t("purchasing.returnNow")} inputMode="decimal" value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-24" data-testid={`return-qty-${String(index)}`} /></TableCell>
+                          <TableCell><DecimalField aria-label={t("purchasing.returnNow")} value={line.quantity} onChange={(e) => { patchLine(index, { quantity: e.target.value }); }} dir="ltr" className="w-24" data-testid={`return-qty-${String(index)}`} /></TableCell>
                           <TableCell>{lotTracked ? <TextField aria-label={t("purchasing.lot")} value={line.lotNumber} onChange={(e) => { patchLine(index, { lotNumber: e.target.value }); }} dir="ltr" className="w-28" data-testid={`return-lot-${String(index)}`} /> : null}</TableCell>
                           <TableCell>{serialTracked ? <TextField aria-label={t("purchasing.serials")} value={line.serialNumbers} onChange={(e) => { patchLine(index, { serialNumbers: e.target.value }); }} dir="ltr" className="w-40" placeholder={t("purchasing.serialsHelp")} data-testid={`return-serials-${String(index)}`} /> : null}</TableCell>
                           <TableCell><TextField aria-label={t("purchasing.returnReason")} value={line.reason} onChange={(e) => { patchLine(index, { reason: e.target.value }); }} className="w-40" data-testid={`return-line-reason-${String(index)}`} /></TableCell>

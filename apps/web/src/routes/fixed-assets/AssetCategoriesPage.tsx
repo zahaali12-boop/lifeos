@@ -8,7 +8,7 @@ import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
 import { formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { num } from "../purchasing/shared";
 import { depreciationConventions, depreciationMethods, useAssetCategories, type AssetCategory } from "./shared";
 
@@ -128,11 +128,11 @@ export function AssetCategoriesPage() {
                   </SelectField>
                 </Field>
                 <Field label={t("fixedAssets.salvagePct")} description={t("fixedAssets.salvagePctHelp")}>
-                  <TextField inputMode="decimal" value={form.defaultSalvagePct} onChange={(e) => { setForm({ ...form, defaultSalvagePct: e.target.value }); }} dir="ltr" data-testid="category-salvage" />
+                  <DecimalField value={form.defaultSalvagePct} onChange={(e) => { setForm({ ...form, defaultSalvagePct: e.target.value }); }} dir="ltr" data-testid="category-salvage" />
                 </Field>
                 {declining ? (
                   <Field label={t("fixedAssets.ratePct")} description={t("fixedAssets.ratePctHelp")}>
-                    <TextField inputMode="decimal" value={form.defaultRatePct} onChange={(e) => { setForm({ ...form, defaultRatePct: e.target.value }); }} dir="ltr" data-testid="category-rate" />
+                    <DecimalField value={form.defaultRatePct} onChange={(e) => { setForm({ ...form, defaultRatePct: e.target.value }); }} dir="ltr" data-testid="category-rate" />
                   </Field>
                 ) : null}
                 <Field label={t("fixedAssets.costAccount")} description={t("fixedAssets.accountsHelp")}>

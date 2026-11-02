@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { localized } from "../../lib/format";
-import { Field, SelectField, TextField } from "../common";
+import { DecimalField, Field, SelectField, TextField } from "../common";
 import { useWarehouses } from "../inventory/shared";
 import { useDeliveryTerms, usePaymentTerms } from "../purchasing/shared";
 import { useCustomerGroups, useCustomerPostingGroups, useSalesReps, type CustomerAccount } from "./shared";
@@ -160,7 +160,7 @@ export function CustomerAccountFields({ form, onChange, companyId, functionalCur
       <fieldset className="grid gap-4 rounded-md border border-border p-3 sm:grid-cols-3" disabled={!canCredit} data-testid="credit-fields">
         <legend className="px-1 text-sm font-medium">{t("sales.credit")}</legend>
         <Field label={t("sales.creditLimit", { currency: functionalCurrency })} description={t("sales.creditLimitHint")}>
-          <TextField inputMode="decimal" value={form.creditLimit} onChange={(e) => { onChange({ creditLimit: e.target.value }); }} dir="ltr" data-testid="credit-limit" />
+          <DecimalField value={form.creditLimit} onChange={(e) => { onChange({ creditLimit: e.target.value }); }} dir="ltr" data-testid="credit-limit" />
         </Field>
         <Field label={t("sales.exposureBasis")}>
           <SelectField value={form.creditExposureBasis} onChange={(e) => { onChange({ creditExposureBasis: e.target.value }); }}>

@@ -11,7 +11,7 @@ import { followOn, useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, localized } from "../../lib/format";
 import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextareaField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { useCompanyCustomers } from "./pricing/shared";
 import { useLineDimensions } from "../accounting/JournalLineDetails";
@@ -266,7 +266,7 @@ export function OrdersPage() {
                       <span dir="ltr">{String(l.lineNo)} · {l.itemCode}</span>
                       {cancellingLine === l.id ? (
                         <>
-                          <TextField aria-label={t("sales.cancelQuantity")} inputMode="decimal" value={cancelLineQty} onChange={(e) => { setCancelLineQty(e.target.value); }} dir="ltr" className="w-24" data-testid={`cancel-line-qty-${String(l.lineNo)}`} />
+                          <DecimalField aria-label={t("sales.cancelQuantity")} value={cancelLineQty} onChange={(e) => { setCancelLineQty(e.target.value); }} dir="ltr" className="w-24" data-testid={`cancel-line-qty-${String(l.lineNo)}`} />
                           <Button type="button" size="sm" onClick={() => { cancelLine.mutate({ orderId: o.id, lineId: l.id, quantity: Number(cancelLineQty || "0") }); }} loading={cancelLine.isPending} data-testid={`confirm-cancel-line-${String(l.lineNo)}`}>{t("sales.confirmCancel")}</Button>
                         </>
                       ) : (

@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { formatDateTime, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
-import { FormError, SelectField, TextField } from "../common";
+import { DecimalField, FormError, SelectField } from "../common";
 import { useOnline } from "../mobile/context";
 import { KeyValues } from "../inventory/shared";
 import { leaveRegister, pendingOrders, setTill, useTill, type TillCustomer } from "./store";
@@ -152,7 +152,7 @@ export function PosHomePage() {
             {closing ? (
               <form className="flex flex-wrap items-end gap-3 rounded-md border border-border p-3" onSubmit={(event) => { event.preventDefault(); close.mutate(); }}>
                 <Field label={t("pos.countedCash")}>
-                  <TextField inputMode="decimal" dir="ltr" value={countedCash} onChange={(event) => { setCountedCash(event.target.value); }} data-testid="till-counted-cash" required />
+                  <DecimalField dir="ltr" value={countedCash} onChange={(event) => { setCountedCash(event.target.value); }} data-testid="till-counted-cash" required />
                 </Field>
                 <Button type="submit" loading={close.isPending} data-testid="till-confirm-close">{t("pos.till.confirmClose")}</Button>
                 <Button type="button" variant="ghost" onClick={() => { setClosing(false); }}>{t("common.cancel")}</Button>
@@ -171,7 +171,7 @@ export function PosHomePage() {
             ) : null}
             <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => { event.preventDefault(); open.mutate(); }}>
               <Field label={t("pos.openingFloat")}>
-                <TextField inputMode="decimal" dir="ltr" value={openingFloat} onChange={(event) => { setOpeningFloat(event.target.value); }} data-testid="till-opening-float" />
+                <DecimalField dir="ltr" value={openingFloat} onChange={(event) => { setOpeningFloat(event.target.value); }} data-testid="till-opening-float" />
               </Field>
               <Button type="submit" disabled={!online} loading={open.isPending} data-testid="till-open-session">{t("pos.till.openSession")}</Button>
             </form>

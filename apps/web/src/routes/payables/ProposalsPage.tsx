@@ -11,7 +11,7 @@ import { useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { today } from "../accounting/shared";
-import { Field, FormError, PageHeader, SelectField, TextField } from "../common";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { num, useSuppliers } from "../purchasing/shared";
 import { ItemStatus, useBankAccounts } from "./shared";
@@ -201,7 +201,7 @@ export function ProposalsPage() {
                         <TableCell dir="ltr">{l.documentNumber}</TableCell>
                         <TableCell dir="ltr">{formatDate(l.dueDate)}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatMoney(l.remainingTc, p.currency)}</TableCell>
-                        <TableCell>{p.status === "draft" ? <TextField aria-label={t("purchasing.amount")} inputMode="decimal" value={e.amount} onChange={(ev) => { setEdits({ ...edits, [l.id]: { ...e, amount: ev.target.value } }); }} dir="ltr" className="w-32" data-testid={`line-amount-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatMoney(l.amountTc, p.currency)}</span>}</TableCell>
+                        <TableCell>{p.status === "draft" ? <DecimalField aria-label={t("purchasing.amount")} value={e.amount} onChange={(ev) => { setEdits({ ...edits, [l.id]: { ...e, amount: ev.target.value } }); }} dir="ltr" className="w-32" data-testid={`line-amount-${String(index)}`} /> : <span className="tabular" dir="ltr">{formatMoney(l.amountTc, p.currency)}</span>}</TableCell>
                         <TableCell className="tabular" dir="ltr">{formatMoney(l.discountTc, p.currency)}</TableCell>
                       </TableRow>
                     );
