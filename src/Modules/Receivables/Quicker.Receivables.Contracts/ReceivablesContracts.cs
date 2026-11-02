@@ -140,9 +140,15 @@ public sealed record RecordReceivableSettlementRequest(
 /// <summary>Applies a credit note, a receipt on account or a deposit to an invoice open item of the same customer and currency; a rate difference is realised FX, booked by the subledger itself.</summary>
 public sealed record ApplyReceivableRequest(Guid SettlingItemId, Guid SettledItemId, decimal Amount, DateOnly? SettlementDate = null, string? Reason = null);
 
+/// <summary>What customers owe at a date in the company's currency, as the aging shows it: in all (deposits apart) and the part past due, with the customers counted.</summary>
+public sealed record ReceivableTotals(decimal TotalFc, decimal OverdueFc, int Customers, int OverdueCustomers);
+
 /// <summary>The receivables subledger as the documents that feed it see it: invoices open items, credit notes and receipts settle them.</summary>
 public interface IReceivables
 {
+    /// <summary>The company's open receivables at the date, totalled (the trader's health screen, ADR-0035 §8).</summary>
+    Task<ReceivableTotals> OpenTotalsAsync(Guid companyId, DateOnly asOf, CancellationToken cancellationToken = default);
+
     Task<ReceivableInfo> OpenAsync(NewReceivable item, CancellationToken cancellationToken = default);
 
     Task<ReceivableInfo?> FindAsync(Guid itemId, CancellationToken cancellationToken = default);

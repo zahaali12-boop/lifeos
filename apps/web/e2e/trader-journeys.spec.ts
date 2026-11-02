@@ -6,8 +6,9 @@ import { expect, test, type Page } from "@playwright/test";
  * bar of plain-language screens; on Offers a comparison is started for two car parts from two suppliers in China, the
  * offers entered (one cheaper but with a minimum quantity the order does not reach), compared landed in the company's
  * currency, the recommendation names the usable supplier with its reason and the saving a split would bring, and
- * "order from this supplier" makes the purchase order. Then the same screens in Arabic, right-to-left. Every screen
- * passes axe with no serious or critical violation.
+ * "order from this supplier" makes the purchase order; the order is followed as a shipment to arrival, priced, sold
+ * and paid for, and the Money and Health screens say what is owed and whether the project carries itself. Then the
+ * same screens in Arabic, right-to-left. Every screen passes axe with no serious or critical violation.
  */
 const password = "correct-horse-battery-staple";
 const apiUrl = process.env.E2E_API_URL ?? "http://127.0.0.1:8080";
@@ -214,10 +215,37 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("sales-month")).toHaveCount(6);
   await expectAccessible(page);
 
+  // Health: the month made a profit on the ten pads; the fixed costs entered give the break-even and how long the
+  // 100,000 in the cash box lasts; nothing is on the way, the pads sold to Ali, and the stock covers the coming days.
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Health" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Health");
+  await expect(page.getByTestId("verdict")).toContainText("a profit of");
+  await expect(page.getByTestId("warning-row").filter({ hasText: "fixed costs" })).toBeVisible();
+  await expect(page.getByTestId("break-even")).toHaveText("—");
+  await page.getByTestId("edit-fixed-costs").click();
+  await page.getByTestId("fixed-costs").fill("300000");
+  await page.getByTestId("save-fixed-costs").click();
+  await expect(page.getByTestId("fixed-costs-value")).toContainText("300,000", { timeout: 20_000 });
+  await expect(page.getByTestId("break-even")).not.toHaveText("—");
+  await expect(page.getByTestId("cash-total")).toContainText("100,000");
+  await expect(page.getByTestId("cash-runway")).toContainText("0.3");
+  await expect(page.getByTestId("warning-row").filter({ hasText: "covers only" })).toBeVisible();
+  await expect(page.getByTestId("nothing-on-the-way")).toBeVisible();
+  await expect(page.getByTestId("by-item-row")).toContainText("PADS");
+  await expect(page.getByTestId("by-customer-row")).toContainText("ALI");
+  await expect(page.getByTestId("nothing-to-reorder")).toBeVisible();
+  await expect(page.getByTestId("month-row")).toHaveCount(6);
+  await expectAccessible(page);
+
   // Arabic, right-to-left: the flat bar, the list and the record in Arabic.
   await page.getByTestId("language-menu").click();
   await page.getByTestId("language-ar").click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("صحة المشروع");
+  await expect(page.getByTestId("verdict")).toContainText("ربح قدره");
+  await expect(page.getByTestId("cash-runway")).toContainText("0.3");
+  await expectAccessible(page);
+  await page.getByTestId("flat-nav").getByRole("link", { name: "المال" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("المال");
   await expect(page.getByTestId("owed-to-you-total")).toContainText("110,000");
   await expectAccessible(page);

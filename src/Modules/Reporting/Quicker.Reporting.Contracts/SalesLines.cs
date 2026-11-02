@@ -1,3 +1,5 @@
+using Quicker.Kernel.Results;
+
 namespace Quicker.Reporting.Contracts;
 
 /// <summary>
@@ -54,3 +56,9 @@ public sealed record SalesLineRow(
 
 /// <summary>The lines asked for, in posting order; <see cref="Truncated"/> says the cap was hit and a narrower range is needed.</summary>
 public sealed record SalesLinesReport(Guid CompanyId, string FunctionalCurrency, DateOnly From, DateOnly To, IReadOnlyList<SalesLineRow> Rows, bool Truncated);
+
+/// <summary>The posted sales lines of a period for another module's screen (the trader's health, ADR-0035 §8), with the caller's permission to read invoices checked.</summary>
+public interface ISalesLines
+{
+    Task<Result<SalesLinesReport>> PostedAsync(Guid companyId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
+}

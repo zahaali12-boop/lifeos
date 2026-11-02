@@ -14,4 +14,10 @@ public static class TraderSettingKeys
 
     /// <summary>The sales price list pricing reads and writes (string, the list's id); the company's default list when empty.</summary>
     public const string PriceListId = "trader.pricing.price_list_id";
+
+    /// <summary>The fixed costs of a month the trader plans for (rent, salaries, utilities), in the company's currency (number); when empty, the average of the last three months' operating expenses stands in.</summary>
+    public const string FixedCostsMonthly = "trader.health.fixed_costs_monthly";
+
+    /// <summary>How many days of sales to keep in stock or on the way, for what to reorder (number; default 90).</summary>
+    public const string CoverDays = "trader.health.cover_days";
 }

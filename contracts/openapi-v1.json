@@ -35296,6 +35296,54 @@
           }
         }
       }
+    },
+    "/api/v1/trader/health": {
+      "get": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "The health of the project for a period (this month so far by default): the income statement in plain words with the period before and six months of results, fixed costs, break-even and cash runway, the money position, warnings, the shipments on the way with their money, sales by item and by customer, what to reorder",
+        "operationId": "getTraderHealth",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderHealth"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -88255,6 +88303,344 @@
         },
         "description": "Writes prices into the sales price list (the board's list, or the one named) from today."
       },
+      "TraderCashAccount": {
+        "required": [
+          "id",
+          "code",
+          "name",
+          "kind",
+          "currency",
+          "balanceTc",
+          "balanceFc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "balanceTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "balanceFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "A bank account or cash box with its balance today, in its currency and the company's."
+      },
+      "TraderHealth": {
+        "required": [
+          "companyId",
+          "currency",
+          "asOf",
+          "income",
+          "previous",
+          "months",
+          "viability",
+          "warnings",
+          "shipments",
+          "goodsOnTheWayRc",
+          "paidOnTheWayRc",
+          "unpaidOnTheWayRc",
+          "byItem",
+          "byCustomer",
+          "reorder",
+          "coverDays",
+          "lastSaleOn"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "income": {
+            "$ref": "#/components/schemas/TraderIncome"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/TraderIncome"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderMonthResult"
+            }
+          },
+          "viability": {
+            "$ref": "#/components/schemas/TraderViability"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderWarning"
+            }
+          },
+          "shipments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderShipmentUnderway"
+            }
+          },
+          "goodsOnTheWayRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidOnTheWayRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unpaidOnTheWayRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "byItem": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderSalesByItem"
+            }
+          },
+          "byCustomer": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderSalesByCustomer"
+            }
+          },
+          "reorder": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderReorderRow"
+            }
+          },
+          "coverDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastSaleOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "The health of the project (ADR-0035 §8): one read over the modules' contracts, nothing kept."
+      },
+      "TraderIncome": {
+        "required": [
+          "from",
+          "to",
+          "sales",
+          "returnsAndDiscounts",
+          "netSales",
+          "costOfGoods",
+          "grossProfit",
+          "grossMarginPct",
+          "otherIncome",
+          "expenses",
+          "expenseLines",
+          "financeCosts",
+          "incomeTax",
+          "netProfit",
+          "netMarginPct"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "sales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "returnsAndDiscounts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netSales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costOfGoods": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "grossProfit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "grossMarginPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "otherIncome": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expenses": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expenseLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderIncomeLine"
+            }
+          },
+          "financeCosts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "incomeTax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netProfit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netMarginPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "The income statement of a period in a trader's words, tied to the ledger like the shipped profit and loss: what was\nsold, what came back or was discounted, what the goods sold had cost, the profit on them, the other income, the\nexpenses by name, the bank and exchange costs, the income tax, and what is left. Costs and expenses are positive;\na profit is positive and a loss negative."
+      },
+      "TraderIncomeLine": {
+        "required": [
+          "accountId",
+          "code",
+          "name",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One named expense of the period (rent, salaries, utilities): the account's name is the trader's word for it."
+      },
       "TraderMarketRate": {
         "required": [
           "currency",
@@ -88284,6 +88670,55 @@
           }
         },
         "description": "Today's spot rate from a purchase currency to the company's, or null when none is entered under Rates."
+      },
+      "TraderMonthResult": {
+        "required": [
+          "month",
+          "netSales",
+          "grossProfit",
+          "expenses",
+          "netProfit"
+        ],
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "format": "date"
+          },
+          "netSales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "grossProfit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expenses": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netProfit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One month of results for the trend."
       },
       "TraderPriceChange": {
         "required": [
@@ -88576,6 +89011,461 @@
           }
         },
         "description": "One item on the pricing board: what it cost landed (from its latest shipment), what it would cost to buy again at\ntoday's rate, the price it sells at now and the margin that leaves, the suggested price at the target margin, and\nthe alerts (no_price, no_cost, no_market_rate, loss_at_cost, loss_at_replacement, margin_below_target, rate_up, rate_down)."
+      },
+      "TraderReorderRow": {
+        "required": [
+          "itemId",
+          "itemCode",
+          "itemName",
+          "onHand",
+          "soldInCoverDays",
+          "daysOfCover",
+          "onTheWay",
+          "suggestedQuantity"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "onHand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "soldInCoverDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "daysOfCover": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "onTheWay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "suggestedQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "An item the stock and the shipments on the way will not carry through the cover days at the pace of the last cover days' sales, and how many to order."
+      },
+      "TraderSalesByCustomer": {
+        "required": [
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "netSales",
+          "sharePct",
+          "invoices"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "netSales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "sharePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "invoices": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "What one customer bought in the period, net, and the share of the period's sales."
+      },
+      "TraderSalesByItem": {
+        "required": [
+          "itemId",
+          "itemCode",
+          "itemName",
+          "quantity",
+          "netSales",
+          "sharePct",
+          "invoices"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netSales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "sharePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "invoices": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "What one item brought in the period: the quantity sold, the net sales in the company's currency and their share of the period's sales."
+      },
+      "TraderShipmentUnderway": {
+        "required": [
+          "shipmentId",
+          "orderNumber",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "status",
+          "orderedOn",
+          "expectedArrival",
+          "currency",
+          "goodsTotal",
+          "goodsTotalRc",
+          "paidAmountRc",
+          "costsTotalRc",
+          "landedTotalRc",
+          "hints"
+        ],
+        "type": "object",
+        "properties": {
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "orderedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "expectedArrival": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "goodsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "goodsTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidAmountRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costsTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "landedTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A shipment on the way: its stage, dates, the goods in the order's currency and the company's, what was paid for them, the journey's costs so far and the hints of the shipment screen."
+      },
+      "TraderViability": {
+        "required": [
+          "fixedCostsMonthly",
+          "fixedCostsSource",
+          "marginPct",
+          "marginSource",
+          "breakEvenSalesMonthly",
+          "monthToDateSales",
+          "projectedMonthSales",
+          "breakEvenCoveragePct",
+          "cash",
+          "cashAccounts",
+          "owedToYou",
+          "owedToYouOverdue",
+          "youOwe",
+          "youOweOverdue",
+          "netPosition",
+          "cashRunwayMonths"
+        ],
+        "type": "object",
+        "properties": {
+          "fixedCostsMonthly": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "fixedCostsSource": {
+            "type": "string"
+          },
+          "marginPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "marginSource": {
+            "type": "string"
+          },
+          "breakEvenSalesMonthly": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "monthToDateSales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "projectedMonthSales": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "breakEvenCoveragePct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cash": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cashAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderCashAccount"
+            }
+          },
+          "owedToYou": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "owedToYouOverdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "youOwe": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "youOweOverdue": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netPosition": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cashRunwayMonths": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Whether the project carries itself: the fixed costs of a month (the trader's setting, else the average of the last\nthree months' expenses, else unknown), the margin that pays them (this period's gross margin, else the pricing\ntarget), the sales a month needs to break even, this month's sales so far and where they lead at this pace, the\nmoney in the banks and boxes, what is owed to and by the trader, and how many months the cash covers the fixed costs."
+      },
+      "TraderWarning": {
+        "required": [
+          "code",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count)."
       },
       "TransferLineSummary": {
         "required": [

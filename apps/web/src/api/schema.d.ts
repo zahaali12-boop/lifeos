@@ -12200,6 +12200,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/trader/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The health of the project for a period (this month so far by default): the income statement in plain words with the period before and six months of results, fixed costs, break-even and cash runway, the money position, warnings, the shipments on the way with their money, sales by item and by customer, what to reorder */
+        get: operations["getTraderHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -26605,6 +26622,96 @@ export interface components {
             /** Format: uuid */
             priceListId?: null | string;
         };
+        /** @description A bank account or cash box with its balance today, in its currency and the company's. */
+        TraderCashAccount: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            currency: string;
+            /** Format: double */
+            balanceTc: number | string;
+            /** Format: double */
+            balanceFc: number | string;
+        };
+        /** @description The health of the project (ADR-0035 §8): one read over the modules' contracts, nothing kept. */
+        TraderHealth: {
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            /** Format: date */
+            asOf: string;
+            income: components["schemas"]["TraderIncome"];
+            previous: components["schemas"]["TraderIncome"];
+            months: components["schemas"]["TraderMonthResult"][];
+            viability: components["schemas"]["TraderViability"];
+            warnings: components["schemas"]["TraderWarning"][];
+            shipments: components["schemas"]["TraderShipmentUnderway"][];
+            /** Format: double */
+            goodsOnTheWayRc: number | string;
+            /** Format: double */
+            paidOnTheWayRc: number | string;
+            /** Format: double */
+            unpaidOnTheWayRc: number | string;
+            byItem: components["schemas"]["TraderSalesByItem"][];
+            byCustomer: components["schemas"]["TraderSalesByCustomer"][];
+            reorder: components["schemas"]["TraderReorderRow"][];
+            /** Format: int32 */
+            coverDays: number | string;
+            /** Format: date */
+            lastSaleOn: null | string;
+        };
+        /**
+         * @description The income statement of a period in a trader's words, tied to the ledger like the shipped profit and loss: what was
+         *     sold, what came back or was discounted, what the goods sold had cost, the profit on them, the other income, the
+         *     expenses by name, the bank and exchange costs, the income tax, and what is left. Costs and expenses are positive;
+         *     a profit is positive and a loss negative.
+         */
+        TraderIncome: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: double */
+            sales: number | string;
+            /** Format: double */
+            returnsAndDiscounts: number | string;
+            /** Format: double */
+            netSales: number | string;
+            /** Format: double */
+            costOfGoods: number | string;
+            /** Format: double */
+            grossProfit: number | string;
+            /** Format: double */
+            grossMarginPct: null | number | string;
+            /** Format: double */
+            otherIncome: number | string;
+            /** Format: double */
+            expenses: number | string;
+            expenseLines: components["schemas"]["TraderIncomeLine"][];
+            /** Format: double */
+            financeCosts: number | string;
+            /** Format: double */
+            incomeTax: number | string;
+            /** Format: double */
+            netProfit: number | string;
+            /** Format: double */
+            netMarginPct: null | number | string;
+        };
+        /** @description One named expense of the period (rent, salaries, utilities): the account's name is the trader's word for it. */
+        TraderIncomeLine: {
+            /** Format: uuid */
+            accountId: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            amount: number | string;
+        };
         /** @description Today's spot rate from a purchase currency to the company's, or null when none is entered under Rates. */
         TraderMarketRate: {
             currency: string;
@@ -26612,6 +26719,19 @@ export interface components {
             rate: null | number | string;
             /** Format: date */
             asOf: null | string;
+        };
+        /** @description One month of results for the trend. */
+        TraderMonthResult: {
+            /** Format: date */
+            month: string;
+            /** Format: double */
+            netSales: number | string;
+            /** Format: double */
+            grossProfit: number | string;
+            /** Format: double */
+            expenses: number | string;
+            /** Format: double */
+            netProfit: number | string;
         };
         TraderPriceChange: {
             /** Format: uuid */
@@ -26684,6 +26804,129 @@ export interface components {
             suggestedMarginPct: null | number | string;
             alerts: string[];
             orderNumber: null | string;
+        };
+        /** @description An item the stock and the shipments on the way will not carry through the cover days at the pace of the last cover days' sales, and how many to order. */
+        TraderReorderRow: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            onHand: number | string;
+            /** Format: double */
+            soldInCoverDays: number | string;
+            /** Format: double */
+            daysOfCover: null | number | string;
+            /** Format: double */
+            onTheWay: number | string;
+            /** Format: double */
+            suggestedQuantity: number | string;
+        };
+        /** @description What one customer bought in the period, net, and the share of the period's sales. */
+        TraderSalesByCustomer: {
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            netSales: number | string;
+            /** Format: double */
+            sharePct: number | string;
+            /** Format: int32 */
+            invoices: number | string;
+        };
+        /** @description What one item brought in the period: the quantity sold, the net sales in the company's currency and their share of the period's sales. */
+        TraderSalesByItem: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            netSales: number | string;
+            /** Format: double */
+            sharePct: number | string;
+            /** Format: int32 */
+            invoices: number | string;
+        };
+        /** @description A shipment on the way: its stage, dates, the goods in the order's currency and the company's, what was paid for them, the journey's costs so far and the hints of the shipment screen. */
+        TraderShipmentUnderway: {
+            /** Format: uuid */
+            shipmentId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            status: string;
+            /** Format: date */
+            orderedOn: string;
+            /** Format: date */
+            expectedArrival: null | string;
+            currency: string;
+            /** Format: double */
+            goodsTotal: number | string;
+            /** Format: double */
+            goodsTotalRc: number | string;
+            /** Format: double */
+            paidAmountRc: null | number | string;
+            /** Format: double */
+            costsTotalRc: number | string;
+            /** Format: double */
+            landedTotalRc: number | string;
+            hints: string[];
+        };
+        /**
+         * @description Whether the project carries itself: the fixed costs of a month (the trader's setting, else the average of the last
+         *     three months' expenses, else unknown), the margin that pays them (this period's gross margin, else the pricing
+         *     target), the sales a month needs to break even, this month's sales so far and where they lead at this pace, the
+         *     money in the banks and boxes, what is owed to and by the trader, and how many months the cash covers the fixed costs.
+         */
+        TraderViability: {
+            /** Format: double */
+            fixedCostsMonthly: null | number | string;
+            fixedCostsSource: string;
+            /** Format: double */
+            marginPct: null | number | string;
+            marginSource: string;
+            /** Format: double */
+            breakEvenSalesMonthly: null | number | string;
+            /** Format: double */
+            monthToDateSales: number | string;
+            /** Format: double */
+            projectedMonthSales: number | string;
+            /** Format: double */
+            breakEvenCoveragePct: null | number | string;
+            /** Format: double */
+            cash: number | string;
+            cashAccounts: components["schemas"]["TraderCashAccount"][];
+            /** Format: double */
+            owedToYou: number | string;
+            /** Format: double */
+            owedToYouOverdue: number | string;
+            /** Format: double */
+            youOwe: number | string;
+            /** Format: double */
+            youOweOverdue: number | string;
+            /** Format: double */
+            netPosition: number | string;
+            /** Format: double */
+            cashRunwayMonths: null | number | string;
+        };
+        /** @description Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count). */
+        TraderWarning: {
+            code: string;
+            /** Format: double */
+            value: null | number | string;
         };
         TransferLineSummary: {
             /** Format: uuid */
@@ -49922,6 +50165,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TraderPricingBoard"];
+                };
+            };
+        };
+    };
+    getTraderHealth: {
+        parameters: {
+            query: {
+                companyId: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraderHealth"];
                 };
             };
         };

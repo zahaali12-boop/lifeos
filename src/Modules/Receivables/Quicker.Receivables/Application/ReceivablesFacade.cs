@@ -6,6 +6,8 @@ namespace Quicker.Receivables.Application;
 /// <summary>The module's contract: the open-item bookkeeping of <see cref="ReceivablesService"/> and the applications of <see cref="SettlementService"/> behind one interface.</summary>
 internal sealed class ReceivablesFacade(ReceivablesService items, SettlementService settlements) : IReceivables
 {
+    public Task<ReceivableTotals> OpenTotalsAsync(Guid companyId, DateOnly asOf, CancellationToken cancellationToken = default) => items.OpenTotalsAsync(companyId, asOf, cancellationToken);
+
     public Task<ReceivableInfo> OpenAsync(NewReceivable item, CancellationToken cancellationToken = default) => items.OpenAsync(item, cancellationToken);
 
     public Task<ReceivableInfo?> FindAsync(Guid itemId, CancellationToken cancellationToken = default) => items.FindAsync(itemId, cancellationToken);

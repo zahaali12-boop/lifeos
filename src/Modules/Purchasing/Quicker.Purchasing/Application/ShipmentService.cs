@@ -34,7 +34,7 @@ public sealed class ShipmentService(
     PurchaseOrderService orders,
     ReceiptService receipts,
     LandedCostService landedCosts,
-    InvoiceService invoices) : IPurchaseLandedCosts
+    InvoiceService invoices) : IPurchaseLandedCosts, IPurchaseShipments
 {
     public const string DocumentType = PurchaseDocumentTypes.Shipment;
 
@@ -493,6 +493,23 @@ public sealed class ShipmentService(
                 result.Add(new LandedUnitCostInfo(line.ItemId, shipment.Id, summary.OrderNumber, summary.Status, asOf, summary.Currency, line.UnitPrice, ratePaid,
                     line.Quantity > 0m ? line.GoodsRc / line.Quantity : 0m, line.Quantity > 0m ? line.CostsRc / line.Quantity : 0m, line.LandedUnitCostRc, line.Quantity));
             }
+        }
+
+        return result;
+    }
+
+    public async Task<IReadOnlyList<ShipmentUnderwayInfo>> UnderwayAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var result = new List<ShipmentUnderwayInfo>();
+        foreach (var s in await ListAsync(companyId, null, cancellationToken))
+        {
+            if (s.Status is "received" or "cancelled")
+            {
+                continue;
+            }
+
+            result.Add(new ShipmentUnderwayInfo(s.Id, s.OrderNumber, s.PartnerId, s.PartnerCode, s.PartnerName, s.Status, s.OrderedOn, s.ExpectedArrival, s.Currency, s.GoodsTotal, s.GoodsTotalRc,
+                s.PaidAmountRc, s.CostsTotalRc, s.LandedTotalRc, s.Hints.Select(static h => h.Code).ToList(), s.Lines.Select(static l => new ShipmentUnderwayLine(l.ItemId, l.ItemCode, l.Quantity)).ToList()));
         }
 
         return result;

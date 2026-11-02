@@ -35,6 +35,15 @@ public sealed class BankAccountService(BankingDbContext db, ICompanyDirectory co
     async Task<IReadOnlyList<BankAccountInfo>> IBankAccountDirectory.ListAsync(Guid companyId, CancellationToken cancellationToken) =>
         (await db.BankAccounts.AsNoTracking().Where(a => a.CompanyId == companyId).OrderBy(static a => a.Code).ToListAsync(cancellationToken)).Select(Info).ToList();
 
+    public async Task<IReadOnlyList<BankBalanceInfo>> BalancesAsync(Guid companyId, DateOnly asOf, CancellationToken cancellationToken = default)
+    {
+        var accounts = await db.BankAccounts.AsNoTracking().Where(a => a.CompanyId == companyId).OrderBy(static a => a.Code).ToListAsync(cancellationToken);
+        var balances = await db.Transactions.AsNoTracking().Where(t => t.CompanyId == companyId && t.PostingDate <= asOf)
+            .GroupBy(static t => t.BankAccountId).Select(static g => new { Id = g.Key, Tc = g.Sum(static t => t.AmountTc), Fc = g.Sum(static t => t.AmountFc) })
+            .ToDictionaryAsync(static b => b.Id, cancellationToken);
+        return accounts.Select(a => new BankBalanceInfo(a.Id, a.Code, a.Name, a.Kind, a.Currency, a.IsActive, balances.GetValueOrDefault(a.Id)?.Tc ?? 0m, balances.GetValueOrDefault(a.Id)?.Fc ?? 0m)).ToList();
+    }
+
     public async Task<IReadOnlyList<CompanyBankAccountSummary>> ListAsync(Guid? companyId, CancellationToken cancellationToken)
     {
         var query = db.BankAccounts.AsNoTracking().AsQueryable();

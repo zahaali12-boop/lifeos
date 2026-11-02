@@ -181,7 +181,8 @@
       "shipments": "Shipments",
       "pricing": "Prices",
       "sales": "Sales",
-      "money": "Money"
+      "money": "Money",
+      "health": "Health"
     }
   },
   "shell": {
@@ -6421,6 +6422,144 @@
       "monthlySalesHint": "Posted invoices of the last six months.",
       "noSales": "No sales in the last six months.",
       "openInvoices": "Open invoices"
+    },
+    "health": {
+      "title": "Health",
+      "description": "Is the project alive? What it made, what it needs to break even, how long the cash lasts, what is on the way, what sells and what to reorder.",
+      "period": "Period",
+      "periods": {
+        "month": "This month so far",
+        "lastMonth": "Last month",
+        "year": "This year",
+        "days90": "Last 90 days"
+      },
+      "previousPeriod": "{from} – {to}",
+      "verdict": {
+        "profit": "{period}: a profit of {amount}.",
+        "loss": "{period}: a loss of {amount}.",
+        "even": "{period}: neither profit nor loss.",
+        "nothing": "{period}: nothing in the books.",
+        "detail": "Sales {sales} · profit on the goods {gross} ({margin}) · expenses {expenses}."
+      },
+      "warningsTitle": "What needs you",
+      "noWarnings": "Nothing needs your attention.",
+      "warningNames": {
+        "loss": "Loss",
+        "fixed_costs_unknown": "Fixed costs",
+        "cash_runway_short": "Cash",
+        "break_even_not_covered": "Break-even",
+        "margin_below_target": "Margin",
+        "overdue_receivables": "Customers",
+        "overdue_payables": "Suppliers",
+        "shipments_attention": "Shipments",
+        "no_recent_sales": "Sales",
+        "reorder_needed": "Stock"
+      },
+      "warnings": {
+        "loss": "This period lost {amount}: the goods and the expenses cost more than what was sold.",
+        "fixed_costs_unknown": "Tell the program your fixed costs per month (rent, salaries, bills) to see the break-even and how long the cash lasts.",
+        "cash_runway_short": "The cash covers only {months} months of fixed costs.",
+        "break_even_not_covered": "At this month's pace, sales reach {pct}% of what the fixed costs need.",
+        "margin_below_target": "The profit on the goods is {pct}% of sales, under your pricing target.",
+        "overdue_receivables": "{amount} from customers is overdue: see Money.",
+        "overdue_payables": "{amount} owed to suppliers is overdue: see Money.",
+        "shipments_attention": "{count} shipment(s) on the way need attention: see Shipments.",
+        "no_recent_sales": "No sale recorded for {days} days.",
+        "no_sales_in_cover": "No sale recorded in the last {days} days.",
+        "reorder_needed": "{count} item(s) will run out: see what to reorder below."
+      },
+      "income": {
+        "title": "Income statement",
+        "hint": "From the books, the way the accountant's profit and loss reads them, in plain words.",
+        "sales": "Sold",
+        "returns": "Returns and discounts",
+        "netSales": "Net sales",
+        "costOfGoods": "What the goods sold had cost",
+        "grossProfit": "Profit on the goods",
+        "otherIncome": "Other income",
+        "expenses": "Expenses",
+        "financeCosts": "Bank charges and exchange losses",
+        "incomeTax": "Income tax",
+        "netProfit": "What is left"
+      },
+      "viability": {
+        "title": "Does the project carry itself?",
+        "fixedCosts": "Fixed costs per month",
+        "fixedCostsInput": "Fixed costs per month",
+        "fixedCostsHint": "Rent, salaries, bills: what you pay even when nothing sells. Leave 0 to use the average of the last three months' expenses.",
+        "fixedCostsSource": {
+          "setting": "As you set it.",
+          "average": "The average of the last three months' expenses; set your own figure to be exact.",
+          "none": "Unknown: no expenses recorded in the last three months and no figure set."
+        },
+        "margin": "Profit on the goods, of sales",
+        "marginSource": {
+          "period": "This period's own margin.",
+          "target": "No sales in the period: your pricing target is used."
+        },
+        "breakEven": "Sales needed per month to break even",
+        "monthToDate": "Sales this month so far",
+        "pace": "At this pace the month ends at {amount}: {pct} of the break-even.",
+        "cash": "Cash in the boxes and banks",
+        "owedToYou": "Owed to you by customers",
+        "youOwe": "You owe suppliers",
+        "overdue": "{amount} of it overdue.",
+        "netPosition": "Cash plus what is owed to you, less what you owe",
+        "netPositionHint": "What is yours once everybody has paid.",
+        "runway": "The cash covers",
+        "months": "{months} months of fixed costs",
+        "moneyLink": "See who owes and whom you owe"
+      },
+      "months": {
+        "title": "Profit by month",
+        "hint": "What was left each of the last six months."
+      },
+      "shipments": {
+        "title": "On the way",
+        "none": "Nothing on the way.",
+        "summary": "{count} shipment(s): goods of {goods}; {paid} paid out so far (goods and costs); {unpaid} of the goods still to pay.",
+        "order": "Order",
+        "stage": "Stage",
+        "expected": "Expected",
+        "goods": "Goods",
+        "paid": "Paid for the goods",
+        "costs": "Costs so far",
+        "hints": "Attention"
+      },
+      "hintNames": {
+        "arrival_overdue": "Late",
+        "no_costs": "No costs",
+        "payment_missing": "Nothing paid",
+        "rate_above_order": "Rate up",
+        "rate_below_order": "Rate down",
+        "invoice_missing": "No invoice",
+        "stale": "Stale"
+      },
+      "share": "Share",
+      "noSales": "No sales in the period.",
+      "byItem": {
+        "title": "What sold, by item",
+        "item": "Item",
+        "quantity": "Quantity",
+        "sales": "Sales"
+      },
+      "byCustomer": {
+        "title": "Who bought",
+        "customer": "Customer",
+        "invoices": "Invoices",
+        "sales": "Sales"
+      },
+      "reorder": {
+        "title": "What to reorder",
+        "hint": "Items whose stock and goods on the way will not last the next {days} days at the pace of the last {days} days.",
+        "none": "The stock covers the coming days at the current pace.",
+        "onHand": "In stock",
+        "sold": "Sold in {days} days",
+        "daysOfCover": "Days of cover",
+        "onTheWay": "On the way",
+        "suggested": "Order",
+        "offersLink": "Ask the suppliers for offers"
+      }
     }
   }
 }

@@ -1,18 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Trader module (ADR-0035): the trader edition's screens that compose other modules' contracts without posting anything themselves; first the pricing board, which prices each item from its landed cost at today's exchange rate with a target margin, warns of losses and writes the sales price list.</Description>
+    <Description>Trader module (ADR-0035): the trader edition's screens that compose other modules' contracts without posting anything themselves; the pricing board, which prices each item from its landed cost at today's exchange rate with a target margin, warns of losses and writes the sales price list; and the health of the project: the income statement in plain words, fixed costs, break-even and cash runway, warnings, the shipments on the way with their money, sales by item and customer, what to reorder.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="../Quicker.Trader.Contracts/Quicker.Trader.Contracts.csproj" />
+    <ProjectReference Include="../../Accounting/Quicker.Accounting.Contracts/Quicker.Accounting.Contracts.csproj" />
+    <ProjectReference Include="../../Banking/Quicker.Banking.Contracts/Quicker.Banking.Contracts.csproj" />
     <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
     <ProjectReference Include="../../Inventory/Quicker.Inventory.Contracts/Quicker.Inventory.Contracts.csproj" />
     <ProjectReference Include="../../Items/Quicker.Items.Contracts/Quicker.Items.Contracts.csproj" />
     <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Payables/Quicker.Payables.Contracts/Quicker.Payables.Contracts.csproj" />
     <ProjectReference Include="../../Pricing/Quicker.Pricing.Contracts/Quicker.Pricing.Contracts.csproj" />
     <ProjectReference Include="../../Purchasing/Quicker.Purchasing.Contracts/Quicker.Purchasing.Contracts.csproj" />
+    <ProjectReference Include="../../Receivables/Quicker.Receivables.Contracts/Quicker.Receivables.Contracts.csproj" />
+    <ProjectReference Include="../../Reporting/Quicker.Reporting.Contracts/Quicker.Reporting.Contracts.csproj" />
     <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
   </ItemGroup>

@@ -16,8 +16,10 @@ namespace Quicker.Reporting.Application;
 /// Posted documents by default; drafts and cancelled ones on request. Capped, so a year of a busy company is asked
 /// for a quarter at a time.
 /// </summary>
-public sealed class SalesLinesService(IUnitOfWorkAccessor unitOfWork, ICurrentPrincipal principal, ICompanyDirectory companies, IClock clock)
+public sealed class SalesLinesService(IUnitOfWorkAccessor unitOfWork, ICurrentPrincipal principal, ICompanyDirectory companies, IClock clock) : ISalesLines
 {
+    public Task<Result<SalesLinesReport>> PostedAsync(Guid companyId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default) => ReadAsync(companyId, from, to, null, cancellationToken);
+
     public const int MaxRows = 20_000;
 
     private static readonly string[] DefaultStatuses = ["posted"];

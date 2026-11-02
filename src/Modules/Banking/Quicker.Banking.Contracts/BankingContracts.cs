@@ -45,6 +45,9 @@ public static class BankAccountKinds
 
 public sealed record BankAccountInfo(Guid Id, Guid CompanyId, string Code, LocalizedText Name, string Kind, string Currency, Guid GlAccountId, string? BankName, string? IbanMasked, Guid? BranchId, bool IsActive);
 
+/// <summary>A bank account's or cash box's balance at a date from its transactions (its subledger), in its currency and in the company's.</summary>
+public sealed record BankBalanceInfo(Guid Id, string Code, LocalizedText Name, string Kind, string Currency, bool IsActive, decimal BalanceTc, decimal BalanceFc);
+
 public interface IBankAccountDirectory
 {
     Task<BankAccountInfo?> FindAsync(Guid bankAccountId, CancellationToken cancellationToken = default);
@@ -53,6 +56,9 @@ public interface IBankAccountDirectory
     Task<BankAccountInfo?> FindByCodeAsync(Guid companyId, string code, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<BankAccountInfo>> ListAsync(Guid companyId, CancellationToken cancellationToken = default);
+
+    /// <summary>Every account of the company with its balance at the date, for a screen that says what money there is (the trader's health, ADR-0035 §8).</summary>
+    Task<IReadOnlyList<BankBalanceInfo>> BalancesAsync(Guid companyId, DateOnly asOf, CancellationToken cancellationToken = default);
 }
 
 /// <summary>A movement of a bank or cash account another module's document makes (a petty cash voucher, a fund replenishment): signed in the account's currency, the journal line referencing it by <paramref name="Id"/>.</summary>

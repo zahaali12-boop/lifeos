@@ -101,3 +101,35 @@ public interface IPurchaseLandedCosts
 {
     Task<IReadOnlyList<LandedUnitCostInfo>> LatestByItemAsync(Guid companyId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>One item of a shipment still on the way, in the order's unit.</summary>
+public sealed record ShipmentUnderwayLine(Guid ItemId, string ItemCode, decimal Quantity);
+
+/// <summary>
+/// A tracked shipment that has not arrived (trader edition, ADR-0035 §4): its stage and dates, what the goods cost in
+/// the order's currency and the company's, what was paid for them, the journey's costs so far in the company's
+/// currency, the hints the shipment screen shows, and the items on board.
+/// </summary>
+public sealed record ShipmentUnderwayInfo(
+    Guid ShipmentId,
+    string OrderNumber,
+    Guid PartnerId,
+    string PartnerCode,
+    IReadOnlyDictionary<string, string> PartnerName,
+    string Status,
+    DateOnly OrderedOn,
+    DateOnly? ExpectedArrival,
+    string Currency,
+    decimal GoodsTotal,
+    decimal GoodsTotalRc,
+    decimal? PaidAmountRc,
+    decimal CostsTotalRc,
+    decimal LandedTotalRc,
+    IReadOnlyList<string> Hints,
+    IReadOnlyList<ShipmentUnderwayLine> Lines);
+
+/// <summary>What the trader's health screen reads from shipments (ADR-0035 §8): those still on the way, with their money.</summary>
+public interface IPurchaseShipments
+{
+    Task<IReadOnlyList<ShipmentUnderwayInfo>> UnderwayAsync(Guid companyId, CancellationToken cancellationToken = default);
+}

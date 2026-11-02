@@ -13,6 +13,7 @@ using Quicker.Reporting.Application.Reports;
 using Quicker.Reporting.Application.Schedules;
 using Quicker.Reporting.Application.Semantic;
 using Quicker.Reporting.Application.Statements;
+using Quicker.Reporting.Contracts;
 using Quicker.Reporting.Persistence;
 
 namespace Quicker.Reporting;
@@ -26,6 +27,7 @@ public static class ReportingModule
         PermissionCatalog.Register(ReportingPermissions.All);
         services.AddScoped<HomeDashboardService>();
         services.AddScoped<SalesLinesService>();
+        services.AddScoped<ISalesLines>(static sp => sp.GetRequiredService<SalesLinesService>());
         services.AddScoped<ProjectionService>();
         services.AddScoped<QueryService>();
         services.AddModuleDbContext<ReportingDbContext>();

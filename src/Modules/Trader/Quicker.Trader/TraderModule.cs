@@ -9,6 +9,7 @@ public static class TraderModule
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddScoped<PricingBoardService>();
+        services.AddScoped<HealthService>();
         return services;
     }
 }

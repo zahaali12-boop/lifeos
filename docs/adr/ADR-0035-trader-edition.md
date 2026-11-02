@@ -78,6 +78,27 @@ would also throw away the tests and the invariants that make the books right.
    page with break-even and a trader income statement; stock counting on the phone) are each a slice over the
    existing modules and are listed in the ROADMAP "Trader programme"; each adds its screens to the trader shell and,
    where it adds a field or a report, adds it for the full edition too.
+8. **Project health is one read over the contracts, and its income statement is the ledger's.** `GET
+   /api/v1/trader/health?companyId&from&to` (`reporting.report.run`; this month so far by default) is computed by
+   the Trader module's `HealthService` from contracts the slice adds: the ledger's movement by account and month
+   with closing entries left out (`ILedgerReader.MonthlyMovementAsync`), bank and cash balances at a date
+   (`IBankAccountDirectory.BalancesAsync`), the open receivables and payables totalled (`IReceivables` and
+   `IPayables.OpenTotalsAsync`), the shipments still on the way with their money (`IPurchaseShipments.UnderwayAsync`),
+   the posted sales lines of a period (`ISalesLines.PostedAsync`), and the stock on hand per item it already had.
+   The income statement groups the accounts by type and subtype exactly as the shipped profit and loss layout does
+   (sales and contra revenue, cost of sales and variances, finance and exchange, income tax, every other expense
+   account by its own name), so the trader's "what is left" is the accountant's net profit to the dinar, and the
+   expense lines read as the chart names them (rent, salaries) rather than as a category of the program's own.
+   Fixed costs are the trader's own monthly figure (`trader.health.fixed_costs_monthly`), else the average of the
+   months with expenses among the last three complete ones, else unknown and said so; the margin that pays them is
+   the period's gross margin on sales, else the pricing target turned into a margin on price; break-even sales a
+   month, the month's pace (sales so far scaled to the month) against it, the cash runway (cash over fixed costs)
+   and the money position (cash plus owed to you less you owe) follow. What to reorder takes the quantity sold in
+   the last cover days (`trader.health.cover_days`, 90 by default) as what the next cover days need, less the stock
+   and the goods on the way, in the item's unit. Warnings are codes with a value (a loss, fixed costs unknown, a
+   short runway, break-even not covered at this pace, the margin under target, overdue receivables or payables,
+   shipments needing attention, no recent sales, items to reorder); the screen words them, so the server stays
+   language-free and the same codes can drive a notification later.
 
 ## Consequences
 
@@ -93,4 +114,7 @@ would also throw away the tests and the invariants that make the books right.
   comparison says so; costs that arrive after the goods were received (a landed-cost document by hand); partial
   arrivals (one receipt per shipment); paying the supplier from the shipment screen; prices per customer group or
   quantity break and margins per item or category on the pricing board; a trader-worded customer page, discounts
-  and returns from the sales screen, receipts on account; the phone version.
+  and returns from the sales screen, receipts on account; profit by item (needs the cost of each sale from the stock
+  ledger; the health screen shows sales by item and the pricing board the margin per item today); a cash forecast by
+  week from the open items' due dates; a lead time per supplier in the reorder (one cover-days setting for now);
+  recording an expense from the health screen (the Expenses screens stand); the phone version.

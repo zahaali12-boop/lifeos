@@ -210,6 +210,21 @@ public sealed class ReceivablesService(ReceivablesDbContext db, ICompanyDirector
     }
 
     /// <summary>Aging at a date (hard scenario 15): items posted by then and not yet reversed, each at its balance after the settlements dated up to then, bucketed by days past due.</summary>
+    /// <summary>The aging's totals for another module: zero for a company that does not exist.</summary>
+    public async Task<ReceivableTotals> OpenTotalsAsync(Guid companyId, DateOnly asOf, CancellationToken cancellationToken = default)
+    {
+        var aging = await AgingAsync(companyId, asOf, null, cancellationToken);
+        if (aging.IsFailure)
+        {
+            return new ReceivableTotals(0m, 0m, 0, 0);
+        }
+
+        var rows = aging.Value.Rows;
+        var totals = aging.Value.Totals;
+        var overdue = totals.Days1To30 + totals.Days31To60 + totals.Days61To90 + totals.Over90;
+        return new ReceivableTotals(totals.TotalFc, overdue, rows.Count(static r => r.TotalFc != 0m), rows.Count(static r => r.Days1To30 + r.Days31To60 + r.Days61To90 + r.Over90 > 0m));
+    }
+
     public async Task<Result<ArAgingReport>> AgingAsync(Guid companyId, DateOnly? asOfDate, Guid? partnerId, CancellationToken cancellationToken)
     {
         var company = await companies.FindAsync(new CompanyId(companyId), cancellationToken);

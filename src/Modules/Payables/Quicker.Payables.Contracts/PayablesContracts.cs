@@ -133,9 +133,15 @@ public sealed record ProposalLineInfo(Guid Id, Guid OpenItemId, Guid PartnerId, 
 
 public sealed record ProposalInfo(Guid Id, Guid CompanyId, string Number, DateOnly RunDate, DateOnly PayThrough, string Currency, Guid? BankAccountId, Guid? PartnerId, string Status, decimal TotalTc, decimal DiscountTc, IReadOnlyList<ProposalLineInfo> Lines);
 
+/// <summary>What is owed to suppliers at a date in the company's currency, as the aging shows it: in all (advances apart) and the part past due, with the suppliers counted.</summary>
+public sealed record PayableTotals(decimal TotalFc, decimal OverdueFc, int Suppliers, int OverdueSuppliers);
+
 /// <summary>The payables subledger as the documents that feed it see it: invoices open items, payments settle them.</summary>
 public interface IPayables
 {
+    /// <summary>The company's open payables at the date, totalled (the trader's health screen, ADR-0035 §8).</summary>
+    Task<PayableTotals> OpenTotalsAsync(Guid companyId, DateOnly asOf, CancellationToken cancellationToken = default);
+
     Task<OpenItemInfo> OpenAsync(NewOpenItem item, CancellationToken cancellationToken = default);
 
     Task<OpenItemInfo?> FindAsync(Guid itemId, CancellationToken cancellationToken = default);
