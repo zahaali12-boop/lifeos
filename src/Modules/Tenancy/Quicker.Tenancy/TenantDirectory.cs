@@ -140,10 +140,27 @@ public sealed partial class TenantDirectory(IUnitOfWorkAccessor unitOfWork) : IT
         return Result.Success();
     }
 
+    public async Task<Result> UpdateEditionAsync(TenantId id, string edition, CancellationToken cancellationToken = default)
+    {
+        if (!TenantEditions.IsValid(edition))
+        {
+            return Error.Validation("tenant.edition_invalid", "The edition is one of the known editions.").WithWhy(("edition", edition), ("allowed", TenantEditions.All));
+        }
+
+        var uow = unitOfWork.Current;
+        await uow.Connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE control.tenants SET settings = settings || jsonb_build_object('edition', @edition::text) WHERE id = @id",
+            new { id = id.Value, edition }, uow.Transaction, cancellationToken: cancellationToken));
+        return Result.Success();
+    }
+
     private static TenantInfo Map(TenantRow row)
     {
+        // The settings document holds the security policy's fields beside the edition; the policy reader skips what it does not know.
         var policy = JsonSerializer.Deserialize<TenantSecurityPolicy>(row.Settings, JsonOptions) ?? TenantSecurityPolicy.Default;
-        return new TenantInfo(new TenantId(row.Id), row.Slug, row.Name, row.Tier, row.Region, row.Status, row.DefaultLanguage, row.PermissionsEpoch, policy);
+        using var settings = JsonDocument.Parse(row.Settings);
+        var edition = settings.RootElement.TryGetProperty("edition", out var value) && value.ValueKind == JsonValueKind.String && TenantEditions.IsValid(value.GetString()) ? value.GetString()! : TenantEditions.Full;
+        return new TenantInfo(new TenantId(row.Id), row.Slug, row.Name, row.Tier, row.Region, row.Status, row.DefaultLanguage, row.PermissionsEpoch, policy, edition);
     }
 
     private static readonly HashSet<string> ReservedSlugs = new(StringComparer.Ordinal) { "www", "api", "app", "admin", "auth", "login", "static", "docs", "status", "quicker" };

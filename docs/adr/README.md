@@ -38,3 +38,4 @@ One record per decision that is expensive to reverse. Format: Context, Decision,
 | [ADR-0032](ADR-0032-point-of-sale-offline-till.md) | Point of sale: an offline-capable till that posts through the engines on sync | accepted |
 | [ADR-0033](ADR-0033-payroll-simple.md) | Payroll and HR, simple: components as posting keys, a thirty-day month, net pay as a payable | accepted |
 | [ADR-0034](ADR-0034-reports-without-a-programmer.md) | Reports without a programmer: projected facts, a semantic query engine, and the screens on top | accepted |
+| [ADR-0035](ADR-0035-trader-edition.md) | The trader edition: one engine, a second shell in plain language | accepted |

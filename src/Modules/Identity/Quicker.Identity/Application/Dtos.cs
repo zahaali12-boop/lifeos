@@ -26,7 +26,12 @@ public sealed record AcceptInvitationRequest(string Token, string Password, stri
 
 public sealed record SsoExchangeRequest(string Code);
 
-public sealed record TenantSummary(Guid Id, string Slug, string Name, string DefaultLanguage);
+/// <summary>The workspace as the client sees it; <paramref name="Edition"/> picks the shell (full menus or the trader edition, ADR-0035).</summary>
+public sealed record TenantSummary(Guid Id, string Slug, string Name, string DefaultLanguage, string Edition);
+
+public sealed record TenantEditionResponse(string Edition, IReadOnlyList<string> Editions);
+
+public sealed record UpdateEditionRequest(string Edition);
 
 public sealed record UserSummary(Guid Id, string Email, string DisplayName, string Locale, string TimeZone, string DigitStyle, bool HasMfa, bool IsPlatformOperator);
 

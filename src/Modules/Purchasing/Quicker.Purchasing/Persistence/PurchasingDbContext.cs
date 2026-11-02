@@ -120,6 +120,7 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.UnitPrice).HasPrecision(24, 6);
             b.Property(static x => x.Quantity).HasPrecision(24, 9);
+            b.Property(static x => x.Moq).HasPrecision(24, 9);
         });
 
         modelBuilder.Entity<BlanketAgreement>(b =>

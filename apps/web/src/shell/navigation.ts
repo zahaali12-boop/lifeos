@@ -125,3 +125,27 @@ export const navigation: NavigationItem[] = [
   { to: "/jobs", label: "nav.jobs", icon: ListChecks, shortcut: "g j", permission: "platform.job.read", group: "administration", section: "automation" },
   { to: "/webhooks", label: "nav.webhooks", icon: Webhook, shortcut: "g w", permission: "integration.webhook.read", group: "administration", section: "automation" },
 ];
+
+/**
+ * The trader edition's menu (ADR-0035): one flat row of the screens a small import business uses every day, in plain
+ * words, over the same modules. No groups, so the top bar shows the links themselves and the drawer one list. The
+ * shortcuts are those of the same screens in the full edition.
+ */
+export const traderNavigation: NavigationItem[] = [
+  { to: "/", label: "nav.trader.home", icon: LayoutDashboard, shortcut: "g d" },
+  { to: "/trader/offers", label: "nav.trader.offers", icon: GitCompareArrows, shortcut: "g o", permission: "purchasing.rfq.read" },
+  { to: "/purchasing/orders", label: "nav.trader.orders", icon: FileText, shortcut: "g 7", permission: "purchasing.order.read" },
+  { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
+  { to: "/sales/customers", label: "nav.customers", icon: Contact, shortcut: "s c", permission: "partners.customer.read" },
+  { to: "/sales/invoices", label: "nav.salesInvoices", icon: ReceiptText, shortcut: "s i", permission: "sales.invoice.read" },
+  { to: "/banking/receipts", label: "nav.customerReceipts", icon: CircleDollarSign, shortcut: "r c", permission: "banking.receipt.read" },
+  { to: "/inventory/items", label: "nav.items", icon: Package, shortcut: "g i", permission: "inventory.item.read" },
+  { to: "/inventory/stock", label: "nav.stock", icon: Boxes, shortcut: "g k", permission: "inventory.stock.read" },
+  { to: "/rates", label: "nav.rates", icon: Coins, shortcut: "g r", permission: "organization.company.read" },
+  { to: "/settings", label: "nav.settings", icon: Settings, shortcut: "g ^", permission: "organization.settings.manage" },
+];
+
+/** The menu of the workspace's edition: the trader row, or every module. */
+export function navigationFor(edition: string | undefined): NavigationItem[] {
+  return edition === "trader" ? traderNavigation : navigation;
+}

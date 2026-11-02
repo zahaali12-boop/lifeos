@@ -384,6 +384,58 @@ public sealed class PurchasingTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task Offers_are_compared_with_minimum_order_quantities_and_the_best_one_is_recommended_and_ordered_from_a_draft()
+    {
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+
+        // 100 tea and 50 coffee wanted; the offers arrive by message, so the request is never sent out.
+        var rfq = await owner.PostAsync("/api/v1/purchasing/rfqs", new { companyId = s.CompanyId, title = "Autumn stock", lines = new object[] { new { itemId = s.Tea, quantity = 100m, uom = "PCS" }, new { itemId = s.Coffee, quantity = 50m, uom = "PCS" } }, partnerIds = new[] { s.SupplierA, s.SupplierB } });
+        var rfqId = rfq.GetProperty("id").GetGuid();
+        var lines = rfq.GetProperty("lines").EnumerateArray().ToList();
+        var teaLine = lines[0].GetProperty("id").GetGuid();
+        var coffeeLine = lines[1].GetProperty("id").GetGuid();
+        var quotes = $"/api/v1/purchasing/rfqs/{rfqId}/quotes";
+
+        // Alpha: tea at 1,400 but only from 500 pieces, coffee at 900 with a note. Beta: tea 1,500 and coffee 950, slower.
+        await owner.PostAsync(quotes, new { partnerId = s.SupplierA, currency = "IQD", leadTimeDays = 5, lines = new object[] { new { rfqLineId = teaLine, unitPrice = 1400m, moq = 500m }, new { rfqLineId = coffeeLine, unitPrice = 900m, notes = "Arabica, 250 g bags" } } }, HttpStatusCode.OK);
+        var quoted = await owner.PostAsync(quotes, new { partnerId = s.SupplierB, currency = "IQD", leadTimeDays = 12, lines = new object[] { new { rfqLineId = teaLine, unitPrice = 1500m }, new { rfqLineId = coffeeLine, unitPrice = 950m } } }, HttpStatusCode.OK);
+        (await owner.PostErrorAsync(quotes, new { partnerId = s.SupplierA, currency = "IQD", lines = new[] { new { rfqLineId = teaLine, unitPrice = 1400m, moq = 0m } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("quote.line_invalid");
+        var alpha = quoted.GetProperty("quotes").EnumerateArray().Single(q => q.GetProperty("partnerId").GetGuid() == s.SupplierA);
+        alpha.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("rfqLineId").GetGuid() == teaLine).GetProperty("moq").GetDecimal().ShouldBe(500m);
+        alpha.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("rfqLineId").GetGuid() == coffeeLine).GetProperty("notes").GetString().ShouldBe("Arabica, 250 g bags");
+        var beta = quoted.GetProperty("quotes").EnumerateArray().Single(q => q.GetProperty("partnerId").GetGuid() == s.SupplierB);
+
+        // Alpha lands cheaper (185,000 against 197,500) but its tea minimum is not reached, so Beta leads and is recommended for that reason alone.
+        var comparison = await owner.PostAsync($"/api/v1/purchasing/rfqs/{rfqId}/compare", new { }, HttpStatusCode.OK);
+        var rankings = comparison.GetProperty("rankings").EnumerateArray().ToList();
+        rankings.Select(static r => r.GetProperty("partnerCode").GetString()).ShouldBe(["SUP-B", "SUP-A"]);
+        rankings[0].GetProperty("landedTotalRc").GetDecimal().ShouldBe(197500m);
+        rankings[0].GetProperty("meetsMoq").GetBoolean().ShouldBeTrue();
+        rankings[0].GetProperty("premiumPct").ValueKind.ShouldBe(JsonValueKind.Null);
+        rankings[1].GetProperty("landedTotalRc").GetDecimal().ShouldBe(185000m);
+        rankings[1].GetProperty("meetsMoq").GetBoolean().ShouldBeFalse();
+        rankings[1].GetProperty("moqShortfallLines").EnumerateArray().Select(static l => l.GetInt32()).ShouldBe([1]);
+        rankings[1].GetProperty("premiumPct").GetDecimal().ShouldBe(-6.3m);
+        var recommendation = comparison.GetProperty("recommendation");
+        recommendation.GetProperty("quoteId").GetGuid().ShouldBe(beta.GetProperty("id").GetGuid());
+        recommendation.GetProperty("partnerCode").GetString().ShouldBe("SUP-B");
+        recommendation.GetProperty("reasons").EnumerateArray().Select(static r => r.GetString()).ShouldBe(["meets_moq"]);
+        recommendation.GetProperty("savingVsNextRc").ValueKind.ShouldBe(JsonValueKind.Null);
+        // Line by line: tea only from Beta (Alpha's minimum rules it out), coffee cheaper from Alpha; splitting would save 50 × 50.
+        var best = comparison.GetProperty("bestPerLine").EnumerateArray().ToList();
+        best.Select(static b => (b.GetProperty("lineNo").GetInt32(), b.GetProperty("partnerCode").GetString(), b.GetProperty("landedUnitPriceRc").GetDecimal())).ShouldBe([(1, "SUP-B", 1500m), (2, "SUP-A", 900m)]);
+        recommendation.GetProperty("splitSavingRc").GetDecimal().ShouldBe(2500m);
+
+        // Ordering from the recommended offer works on the draft: the order is priced as offered and the request is awarded.
+        var order = await owner.PostAsync($"/api/v1/purchasing/rfqs/{rfqId}/award", new { quoteId = beta.GetProperty("id").GetGuid(), warehouseId = s.WarehouseId }, HttpStatusCode.OK);
+        order.GetProperty("status").GetString().ShouldBe("draft");
+        order.GetProperty("lines").EnumerateArray().Select(static l => l.GetProperty("unitPrice").GetDecimal()).ShouldBe([1500m, 950m]);
+        (await owner.GetOkAsync($"/api/v1/purchasing/rfqs/{rfqId}")).GetProperty("status").GetString().ShouldBe("awarded");
+        await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
     public async Task An_rfq_is_sent_to_invited_suppliers_and_quotes_rank_by_landed_price_in_the_company_currency_then_lead_time()
     {
         var s = await SetUpAsync();

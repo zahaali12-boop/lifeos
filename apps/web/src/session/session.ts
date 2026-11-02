@@ -60,6 +60,20 @@ export function updateSessionUser(user: Partial<Session["user"]>): void {
   emit();
 }
 
+/** Keeps the stored workspace in step after an admin switches its edition, so the shell changes without a new sign-in. */
+export function updateSessionTenant(tenant: Partial<Session["tenant"]>): void {
+  if (!current) {
+    return;
+  }
+  current = { ...current, tenant: { ...current.tenant, ...tenant } };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  } catch {
+    // ignore
+  }
+  emit();
+}
+
 export function clearSession(): void {
   current = null;
   try {

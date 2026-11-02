@@ -18,6 +18,21 @@ public sealed record TenantSecurityPolicy(
     public static readonly TenantSecurityPolicy Default = new();
 }
 
+/// <summary>
+/// The editions a workspace runs as (ADR-0035): the full ERP with every module and menu, or the trader edition, the
+/// same engine behind a flat menu of plain-language screens for a small import business. The edition changes what the
+/// client shows, never what the server records; it is kept in control.tenants.settings under "edition".
+/// </summary>
+public static class TenantEditions
+{
+    public const string Full = "full";
+    public const string Trader = "trader";
+
+    public static readonly IReadOnlyList<string> All = [Full, Trader];
+
+    public static bool IsValid(string? edition) => edition is Full or Trader;
+}
+
 public sealed record TenantInfo(
     TenantId Id,
     string Slug,
@@ -27,7 +42,8 @@ public sealed record TenantInfo(
     string Status,
     string DefaultLanguage,
     long PermissionsEpoch,
-    TenantSecurityPolicy Policy);
+    TenantSecurityPolicy Policy,
+    string Edition = TenantEditions.Full);
 
 public interface ITenantDirectory
 {
@@ -62,6 +78,9 @@ public interface ITenantProvisioner
     Task ActivateAsync(TenantId id, CancellationToken cancellationToken = default);
 
     Task<Result> UpdatePolicyAsync(TenantId id, TenantSecurityPolicy policy, CancellationToken cancellationToken = default);
+
+    /// <summary>Switches the workspace between the editions of <see cref="TenantEditions"/>; takes effect on the next sign-in or token refresh.</summary>
+    Task<Result> UpdateEditionAsync(TenantId id, string edition, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

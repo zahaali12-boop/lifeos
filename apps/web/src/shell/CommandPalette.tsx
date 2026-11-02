@@ -9,7 +9,7 @@ import { api, unwrap } from "../api";
 import { recordRoute } from "../lib/documents";
 import { formatDate, localized } from "../lib/format";
 import { auditEntityLabel } from "../routes/auditLabels";
-import { navigation } from "./navigation";
+import type { NavigationItem } from "./navigation";
 import { describeKeys } from "./useShortcuts";
 import { covers } from "../lib/permissions";
 
@@ -17,6 +17,8 @@ export interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   permissions: ReadonlySet<string>;
+  /** The screens of the workspace's edition. */
+  screens: NavigationItem[];
 }
 
 const RECENT_KEY = "quicker.recent";
@@ -53,7 +55,7 @@ function allowed(permissions: ReadonlySet<string>, permission?: string): boolean
  * Ctrl/⌘+K: navigation, actions, recent records and a global search over documents by number (every numbered type the
  * member may read: "PO-2026-00027", "00027" or "PO-27"), companies, items and suppliers.
  */
-export function CommandPalette({ open, onOpenChange, permissions }: CommandPaletteProps) {
+export function CommandPalette({ open, onOpenChange, permissions, screens }: CommandPaletteProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -183,7 +185,7 @@ export function CommandPalette({ open, onOpenChange, permissions }: CommandPalet
               </Command.Group>
             ) : null}
             <Command.Group heading={t("palette.groups.navigation")} className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-fg-muted">
-              {navigation.filter((item) => allowed(permissions, item.permission)).map((item) => (
+              {screens.filter((item) => allowed(permissions, item.permission)).map((item) => (
                 <Command.Item key={item.to} value={`${t(item.label)} ${item.to}`} onSelect={() => { go(item.to); }} className="flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm data-[selected=true]:bg-surface-sunken">
                   <item.icon className="size-4 text-fg-subtle" aria-hidden="true" />
                   <span>{t(item.label)}</span>

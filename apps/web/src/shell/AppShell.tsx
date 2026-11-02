@@ -9,12 +9,12 @@ import { currentLanguage, setLanguage, type Language } from "../i18n";
 import { formatNumber, setDigitStyle, useDigitStyle } from "../lib/format";
 import { clearSession, useSession } from "../session/session";
 import { CommandPalette } from "./CommandPalette";
-import { navigation } from "./navigation";
+import { navigationFor } from "./navigation";
 import { NewMenu } from "./NewMenu";
 import { ShortcutsOverlay } from "./ShortcutsOverlay";
 import { SidebarNav } from "./SidebarNav";
 import { StepUpDialog } from "./StepUpDialog";
-import { TopNav } from "./TopNav";
+import { FlatNav, TopNav } from "./TopNav";
 import { installShortcutListener, registerShortcut } from "./useShortcuts";
 import { covers } from "../lib/permissions";
 
@@ -47,6 +47,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const session = useSession();
+  const items = navigationFor(session?.tenant.edition);
   const location = useRouterState({ select: (s) => s.location.pathname });
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -76,14 +77,14 @@ export function AppShell() {
     const unregister = [
       registerShortcut({ keys: "mod+k", description: "shortcuts.palette", group: "shortcuts.groups.global", handler: () => { setPaletteOpen(true); } }),
       registerShortcut({ keys: "?", description: "shortcuts.overlay", group: "shortcuts.groups.global", handler: () => { setShortcutsOpen(true); } }),
-      ...navigation.map((item) => registerShortcut({ keys: item.shortcut, description: item.label, group: item.group ? `nav.groups.${item.group}` : "shortcuts.groups.navigation", handler: () => { void navigate({ to: item.to }); } })),
+      ...items.map((item) => registerShortcut({ keys: item.shortcut, description: item.label, group: item.group ? `nav.groups.${item.group}` : "shortcuts.groups.navigation", handler: () => { void navigate({ to: item.to }); } })),
     ];
     return () => {
       unregister.forEach((fn) => {
         fn();
       });
     };
-  }, [navigate]);
+  }, [items, navigate]);
 
   const switchLanguage = useCallback(
     async (next: Language) => {
@@ -103,7 +104,9 @@ export function AppShell() {
     }
   }, [navigate, queryClient]);
 
-  const visibleNavigation = navigation.filter((item) => !item.permission || covers(permissions, item.permission));
+  const visibleNavigation = items.filter((item) => !item.permission || covers(permissions, item.permission));
+  // The trader edition has no modules: its links sit in the bar themselves.
+  const flat = items.every((item) => !item.group);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -136,7 +139,7 @@ export function AppShell() {
             <span className="hidden max-w-32 truncate text-xs text-fg-muted 2xl:inline">{session?.tenant.name}</span>
           </Link>
           <div className="hidden min-w-0 lg:flex">
-            <TopNav items={visibleNavigation} location={location} />
+            {flat ? <FlatNav items={visibleNavigation} location={location} /> : <TopNav items={visibleNavigation} location={location} />}
           </div>
           <div className="ms-auto flex items-center gap-0.5">
             <NewMenu permissions={permissions} />
@@ -223,7 +226,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} permissions={permissions} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} permissions={permissions} screens={items} />
       <ShortcutsOverlay open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <StepUpDialog />
     </TooltipProvider>

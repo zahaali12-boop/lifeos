@@ -7,7 +7,9 @@ import { api, unwrap } from "../api";
 import type { components } from "../api/schema";
 import { defaultFavouriteCurrencies, favouriteCurrenciesSetting, parseFavourites, useCurrencies } from "../lib/currencies";
 import { formatDateTime, localized } from "../lib/format";
+import { useCan } from "../lib/permissions";
 import { toFormProblem, type FormProblem } from "../lib/problem";
+import { updateSessionTenant, useSession } from "../session/session";
 import { CompanySelect, useCompanies, useCompanySelection } from "./accounting/shared";
 import { FormError, PageHeader, SelectField, TextField } from "./common";
 import { CurrencyField } from "./CurrencyField";
@@ -45,6 +47,59 @@ function parse(value: string, valueType: string): unknown {
 }
 
 /** The currencies every currency picker shows first, in this order (A-155). */
+const editions = ["full", "trader"] as const;
+
+/**
+ * The workspace's edition (ADR-0035): the full ERP with its module menus, or the trader edition, a flat menu of
+ * plain-language screens over the same engine. Switching changes the shell at once for this browser and for every
+ * member at their next sign-in or token refresh; nothing recorded changes.
+ */
+function EditionCard() {
+  const { t } = useTranslation();
+  const can = useCan();
+  const session = useSession();
+  const queryClient = useQueryClient();
+  const [problem, setProblem] = useState<string | null>(null);
+  // The choice shows at once while the server saves it; a refusal puts the saved edition back.
+  const [choice, setChoice] = useState<string | null>(null);
+  const allowed = can("identity.tenant.manage");
+  const edition = useQuery({ queryKey: ["tenant-edition"], enabled: allowed, queryFn: async () => unwrap(await api.GET("/api/v1/tenant/edition")) });
+  const save = useMutation({
+    mutationFn: async (next: string) => unwrap(await api.PUT("/api/v1/tenant/edition", { body: { edition: next } })),
+    onSuccess: async (result) => {
+      setProblem(null);
+      updateSessionTenant({ edition: result.edition });
+      await queryClient.invalidateQueries({ queryKey: ["tenant-edition"] });
+      setChoice(null);
+    },
+    onError: (error) => { setChoice(null); setProblem(toFormProblem(error, t("common.saveFailed")).message); },
+  });
+  if (!allowed) {
+    return null;
+  }
+  const current = choice ?? edition.data?.edition ?? session?.tenant.edition ?? "full";
+  return (
+    <section className="mb-6 flex flex-col gap-3 rounded-md border border-border p-4" data-testid="edition-card">
+      <div>
+        <h2 className="text-base font-semibold">{t("settings.edition")}</h2>
+        <p className="text-sm text-fg-muted">{t("settings.editionHint")}</p>
+      </div>
+      <div role="radiogroup" aria-label={t("settings.edition")} className="grid gap-3 sm:grid-cols-2">
+        {editions.map((value) => (
+          <label key={value} className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 ${current === value ? "border-accent bg-accent-soft/40" : "border-border"}`}>
+            <input type="radio" name="edition" value={value} checked={current === value} disabled={save.isPending} onChange={() => { setChoice(value); save.mutate(value); }} className="mt-1" data-testid={`edition-${value}`} />
+            <span className="flex flex-col gap-0.5 text-sm">
+              <span className="font-medium">{t(`settings.editions.${value}.name`)}</span>
+              <span className="text-fg-muted">{t(`settings.editions.${value}.hint`)}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <FormError message={problem} />
+    </section>
+  );
+}
+
 function FavouriteCurrencies({ value, onSave }: { value: string[]; onSave: (codes: string[]) => void }) {
   const { t } = useTranslation();
   const currencies = useCurrencies();
@@ -146,6 +201,7 @@ export function SettingsPage() {
           </Button>
         }
       />
+      <EditionCard />
       <Tabs
         value={tab}
         onChange={(next) => { setTab(next); setProblem(null); }}

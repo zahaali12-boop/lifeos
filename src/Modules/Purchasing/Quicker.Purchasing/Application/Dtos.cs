@@ -27,7 +27,7 @@ public sealed record InviteSuppliersRequest(IReadOnlyList<Guid> PartnerIds);
 
 public sealed record SendRfqRequest(IReadOnlyDictionary<Guid, string>? Emails = null);
 
-public sealed record SaveQuoteLineRequest(Guid RfqLineId, decimal UnitPrice, decimal? Quantity = null, int? LeadTimeDays = null);
+public sealed record SaveQuoteLineRequest(Guid RfqLineId, decimal UnitPrice, decimal? Quantity = null, int? LeadTimeDays = null, decimal? Moq = null, string? Notes = null);
 
 public sealed record SaveQuoteRequest(Guid PartnerId, string Currency, IReadOnlyList<SaveQuoteLineRequest> Lines, string? SupplierReference = null, DateOnly? ValidUntil = null, Guid? PaymentTermsId = null, int LeadTimeDays = 0, decimal FreightAmount = 0m, decimal OtherCharges = 0m, string? Notes = null);
 
@@ -37,14 +37,30 @@ public sealed record RfqLineSummary(Guid Id, int LineNo, Guid? ItemId, string? I
 
 public sealed record RfqSupplierSummary(Guid Id, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, string? ContactEmail, DateTimeOffset? SentAt, string Status, Guid? QuoteId);
 
-public sealed record QuoteLineSummary(Guid Id, Guid RfqLineId, int RfqLineNo, decimal UnitPrice, decimal Quantity, Guid UomId, string UomCode, int? LeadTimeDays, decimal LineTotal);
+public sealed record QuoteLineSummary(Guid Id, Guid RfqLineId, int RfqLineNo, decimal UnitPrice, decimal Quantity, Guid UomId, string UomCode, int? LeadTimeDays, decimal LineTotal, decimal? Moq, string? Notes);
 
 public sealed record SupplierQuoteSummary(Guid Id, Guid RfqSupplierId, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, string? SupplierReference, string Currency, DateOnly? ValidUntil, Guid? PaymentTermsId, int LeadTimeDays, decimal FreightAmount, decimal OtherCharges, decimal GoodsTotal, decimal LandedTotal, string? Notes, JsonElement? Comparison, DateTimeOffset ReceivedAt, IReadOnlyList<QuoteLineSummary> Lines);
 
-/// <summary>One quote in the comparison: the landed total in the company's currency, the rate used, the rank and why.</summary>
-public sealed record QuoteRanking(Guid QuoteId, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, string Currency, decimal GoodsTotal, decimal LandedTotal, decimal ExchangeRate, decimal LandedTotalRc, decimal LandedUnitAverageRc, int LeadTimeDays, bool Complete, int Rank, IReadOnlyDictionary<string, decimal> LandedUnitPricesRc);
+/// <summary>
+/// One quote in the comparison: the landed total in the company's currency, the rate used, the rank and why.
+/// <paramref name="MeetsMoq"/> is false when a line is offered only from a minimum the request does not reach
+/// (<paramref name="MoqShortfallLines"/> names them); <paramref name="PremiumPct"/> is how much dearer than the first-ranked
+/// quote this one lands, in percent, for the quotes that price every line.
+/// </summary>
+public sealed record QuoteRanking(Guid QuoteId, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, string Currency, decimal GoodsTotal, decimal LandedTotal, decimal ExchangeRate, decimal LandedTotalRc, decimal LandedUnitAverageRc, int LeadTimeDays, bool Complete, int Rank, IReadOnlyDictionary<string, decimal> LandedUnitPricesRc, bool MeetsMoq, IReadOnlyList<int> MoqShortfallLines, decimal? PremiumPct);
 
-public sealed record QuoteComparison(Guid RfqId, string Currency, IReadOnlyList<QuoteRanking> Rankings, DateOnly RateDate);
+/// <summary>The cheapest landed unit price offered for one request line, among the offers whose minimum the line reaches.</summary>
+public sealed record LineBestOffer(int LineNo, Guid QuoteId, string PartnerCode, decimal LandedUnitPriceRc);
+
+/// <summary>
+/// The quote to order from and why, in reason codes the client words: cheapest_landed, complete, meets_moq, fastest,
+/// only_offer. <paramref name="SavingVsNextRc"/> is what it saves against the next complete, feasible quote;
+/// <paramref name="SplitSavingRc"/> what buying each line from its cheapest feasible offer would save against ordering
+/// everything from the recommended one (null when nothing).
+/// </summary>
+public sealed record QuoteRecommendation(Guid QuoteId, string PartnerCode, IReadOnlyList<string> Reasons, decimal? SavingVsNextRc, decimal? SplitSavingRc);
+
+public sealed record QuoteComparison(Guid RfqId, string Currency, IReadOnlyList<QuoteRanking> Rankings, DateOnly RateDate, QuoteRecommendation? Recommendation, IReadOnlyList<LineBestOffer> BestPerLine);
 
 public sealed record RfqSummary(Guid Id, Guid CompanyId, string Number, string? Title, DateOnly? DueOn, string Status, Guid? AwardedQuoteId, string? Notes, IReadOnlyList<RfqLineSummary> Lines, IReadOnlyList<RfqSupplierSummary> Suppliers, IReadOnlyList<SupplierQuoteSummary> Quotes, DateTimeOffset UpdatedAt);
 

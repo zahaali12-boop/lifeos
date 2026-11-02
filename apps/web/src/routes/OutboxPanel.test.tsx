@@ -9,7 +9,7 @@ const tokens: TokenResponse = {
   accessToken: "operator-token",
   refreshToken: "refresh-token",
   expiresInSeconds: 600,
-  tenant: { id: "00000000-0000-7000-8000-000000000001", slug: "acme", name: "Acme", defaultLanguage: "en" },
+  tenant: { id: "00000000-0000-7000-8000-000000000001", slug: "acme", name: "Acme", defaultLanguage: "en", edition: "full" },
   user: { id: "00000000-0000-7000-8000-000000000002", email: "ops@acme.test", displayName: "Operator", locale: "en", timeZone: "Asia/Baghdad", digitStyle: "latin", hasMfa: false, isPlatformOperator: true },
   membershipId: "00000000-0000-7000-8000-000000000003",
 };

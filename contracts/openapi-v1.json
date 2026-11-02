@@ -1676,6 +1676,54 @@
         }
       }
     },
+    "/api/v1/tenant/edition": {
+      "get": {
+        "tags": [
+          "Tenant"
+        ],
+        "operationId": "getTenantEdition",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantEditionResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tenant"
+        ],
+        "operationId": "putTenantEdition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEditionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantEditionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/meta/permissions": {
       "get": {
         "tags": [
@@ -52320,6 +52368,41 @@
           }
         }
       },
+      "LineBestOffer": {
+        "required": [
+          "lineNo",
+          "quoteId",
+          "partnerCode",
+          "landedUnitPriceRc"
+        ],
+        "type": "object",
+        "properties": {
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "quoteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "landedUnitPriceRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "The cheapest landed unit price offered for one request line, among the offers whose minimum the line reaches."
+      },
       "LinkPurchaseOrderLineRequest": {
         "required": [
           "purchaseOrderLineId"
@@ -63763,7 +63846,9 @@
           "rfqId",
           "currency",
           "rankings",
-          "rateDate"
+          "rateDate",
+          "recommendation",
+          "bestPerLine"
         ],
         "type": "object",
         "properties": {
@@ -63783,6 +63868,22 @@
           "rateDate": {
             "type": "string",
             "format": "date"
+          },
+          "recommendation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuoteRecommendation"
+              }
+            ]
+          },
+          "bestPerLine": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineBestOffer"
+            }
           }
         }
       },
@@ -63796,7 +63897,9 @@
           "uomId",
           "uomCode",
           "leadTimeDays",
-          "lineTotal"
+          "lineTotal",
+          "moq",
+          "notes"
         ],
         "type": "object",
         "properties": {
@@ -63855,6 +63958,21 @@
               "string"
             ],
             "format": "double"
+          },
+          "moq": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -63873,7 +63991,10 @@
           "leadTimeDays",
           "complete",
           "rank",
-          "landedUnitPricesRc"
+          "landedUnitPricesRc",
+          "meetsMoq",
+          "moqShortfallLines",
+          "premiumPct"
         ],
         "type": "object",
         "properties": {
@@ -63966,9 +64087,76 @@
               ],
               "format": "double"
             }
+          },
+          "meetsMoq": {
+            "type": "boolean"
+          },
+          "moqShortfallLines": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "premiumPct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         },
-        "description": "One quote in the comparison: the landed total in the company's currency, the rate used, the rank and why."
+        "description": "One quote in the comparison: the landed total in the company's currency, the rate used, the rank and why.\nMeetsMoq is false when a line is offered only from a minimum the request does not reach\n(MoqShortfallLines names them); PremiumPct is how much dearer than the first-ranked\nquote this one lands, in percent, for the quotes that price every line."
+      },
+      "QuoteRecommendation": {
+        "required": [
+          "quoteId",
+          "partnerCode",
+          "reasons",
+          "savingVsNextRc",
+          "splitSavingRc"
+        ],
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "savingVsNextRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "splitSavingRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "The quote to order from and why, in reason codes the client words: cheapest_landed, complete, meets_moq, fastest,\nonly_offer. SavingVsNextRc is what it saves against the next complete, feasible quote;\nSplitSavingRc what buying each line from its cheapest feasible offer would save against ordering\neverything from the recommended one (null when nothing)."
       },
       "RateResolution": {
         "required": [
@@ -77070,6 +77258,21 @@
               "string"
             ],
             "format": "int32"
+          },
+          "moq": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -86408,6 +86611,24 @@
           }
         }
       },
+      "TenantEditionResponse": {
+        "required": [
+          "edition",
+          "editions"
+        ],
+        "type": "object",
+        "properties": {
+          "edition": {
+            "type": "string"
+          },
+          "editions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "TenantSecurityPolicy": {
         "type": "object",
         "properties": {
@@ -86490,7 +86711,8 @@
           "id",
           "slug",
           "name",
-          "defaultLanguage"
+          "defaultLanguage",
+          "edition"
         ],
         "type": "object",
         "properties": {
@@ -86506,8 +86728,12 @@
           },
           "defaultLanguage": {
             "type": "string"
+          },
+          "edition": {
+            "type": "string"
           }
-        }
+        },
+        "description": "The workspace as the client sees it; Edition picks the shell (full menus or the trader edition, ADR-0035)."
       },
       "TokenResponse": {
         "required": [
@@ -87471,6 +87697,17 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        }
+      },
+      "UpdateEditionRequest": {
+        "required": [
+          "edition"
+        ],
+        "type": "object",
+        "properties": {
+          "edition": {
+            "type": "string"
           }
         }
       },

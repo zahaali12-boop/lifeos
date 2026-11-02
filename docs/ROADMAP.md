@@ -34,6 +34,24 @@ The founder reviewed the product after the M5 returns slice and set the order of
 | 12 | Budgets, closing and financial statements. | 6.7, 6.9, 6.10 |
 | 13 | Light manufacturing: work orders over bills of material. | new |
 
+
+## Trader programme (2026-11-02)
+
+The founder's second product line (ADR-0035, A-186): the same engine with a trader edition for a small business that
+imports car spare parts from China, run by a non-accountant who replaces Excel and paper. Each slice is a thin screen in
+plain words over existing modules, adding to the modules whatever field or report the trader needs so the full edition
+gains it too. Acceptance for every slice: the trader does the task on his own screen without an accounting term; the
+postings and invariants are those of the full edition; the journey runs in English and Arabic.
+
+| # | Work | Covers |
+|---|------|--------|
+| T1 | **Trader shell and purchase offers.** Done 2026-11-02: the `edition` workspace setting with its endpoints and the switch under Settings; the flat trader menu in the top bar, the drawer, the shortcuts and the palette; the Offers screen (what to buy, the suppliers, the offers with price, minimum quantity, notes, delivery and shipping, compared landed in the company's currency with the exchange rate of the day, the recommendation with its reasons and savings, the cheapest offer per item, "order from this supplier" into a purchase order); minimum order quantities and notes on quote lines, the recommendation and best-per-line in the comparison, awarding from a draft. | 4.2 (RFQ), new |
+| T2 | **Shipments**: the purchase order as a shipment with a status timeline (ordered, in production, shipped, at port, customs, received), the costs along the way as landed costs, the exchange rate paid recorded, the supplier invoice and the payable in plain words with suggestions. | 4.3–4.5 |
+| T3 | **Pricing by exchange rate**: landed cost per unit at the rate paid, a market rate entered by hand, the target margin, the suggested selling price, loss alerts when the market rate or a sale price would lose money, repricing into the sales price list. | 5.2 |
+| T4 | **Sales, customers and money**: the customer page, invoices, partial and full payments easy to follow, receivables and payables aging, sales reports and charts, recommendations (who to chase, what sells, what to reorder). | 5.1, 5.6, 5.7, 6.1 |
+| T5 | **Project health and the trader income statement**: fixed costs, break-even, cash runway, warnings; revenue, expenses and net profit in a layout for non-accountants; the shipments on the way with their money. | 6.10, 7.x |
+| T6 | **Stock and counting on the phone**: warehouses, stock on hand, a count with the camera and barcodes; later the phone shell. | 3.x, 3.8 |
+
 ## Launch gate
 
 A tenant can go live when **M1–M7 are complete and M8 slices 8.1–8.6 are complete** (workflow UI, custom-field admin, migration toolkit, webhooks/API portal, onboarding wizard with industry templates, e-invoicing where the country requires it). M9 and M10 follow; M10's performance and security work is required before scaling beyond pilot customers.

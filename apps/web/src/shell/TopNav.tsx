@@ -22,6 +22,34 @@ function sectionsOf(items: NavigationItem[], group: NavigationGroup): { section:
   return loose.length > 0 ? [...result, { section: null, items: loose }] : result;
 }
 
+/** The trader edition's bar: the screens themselves as links, the current one marked, scrolling sideways when the window is narrow. */
+export function FlatNav({ items, location, onNavigate }: { items: NavigationItem[]; location: string; onNavigate?: () => void }) {
+  const { t } = useTranslation();
+  const current = activeItem(items, location);
+  return (
+    <nav aria-label={t("shell.primaryNavigation")} data-main-nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto" data-testid="flat-nav">
+      {items.map((item) => {
+        const active = current?.to === item.to;
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+              active ? "bg-accent-soft font-medium text-accent" : "text-fg-muted hover:bg-surface-sunken hover:text-fg",
+            )}
+          >
+            <item.icon className="size-4" aria-hidden="true" />
+            {t(item.label)}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 const OPEN_DELAY = 120;
 const CLOSE_DELAY = 220;
 

@@ -110,6 +110,7 @@ import { PayComponentsPage } from "./hr/PayComponentsPage";
 import { PayrollRunsPage } from "./hr/PayrollRunsPage";
 import { DashboardsPage } from "./dashboards/DashboardsPage";
 import { DashboardViewPage } from "./dashboards/DashboardViewPage";
+import { OffersPage } from "./trader/OffersPage";
 import { ReportBuilderPage } from "./reports/ReportBuilderPage";
 import { ReportsPage } from "./reports/ReportsPage";
 import { SchedulesPage } from "./schedules/SchedulesPage";
@@ -270,6 +271,7 @@ const reportBuilderRoute = createRoute({ getParentRoute: () => shellRoute, path:
 const statementsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/statements", component: StatementsPage, validateSearch: searchRecord });
 const statementDesignerRoute = createRoute({ getParentRoute: () => shellRoute, path: "/statements/designer", component: StatementDesignerPage, validateSearch: searchRecord });
 const dashboardsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dashboards", component: DashboardsPage });
+const traderOffersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/offers", component: OffersPage, validateSearch: searchRecord });
 const dashboardViewRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dashboards/view", component: DashboardViewPage, validateSearch: searchRecord });
 const schedulesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/reports/schedules", component: SchedulesPage });
 
@@ -280,7 +282,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute, payComponentsRoute, employeesRoute, leaveRoute, payrollRunsRoute, reportsRoute, reportBuilderRoute, statementsRoute, statementDesignerRoute, dashboardsRoute, dashboardViewRoute, schedulesRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute, payComponentsRoute, employeesRoute, leaveRoute, payrollRunsRoute, reportsRoute, reportBuilderRoute, statementsRoute, statementDesignerRoute, dashboardsRoute, dashboardViewRoute, schedulesRoute, traderOffersRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
   posRoute.addChildren([posHomeRoute, posSellRoute, posOrdersRoute]),

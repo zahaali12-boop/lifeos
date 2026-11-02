@@ -199,6 +199,28 @@ public sealed class AuthenticationTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task Workspace_edition_is_full_by_default_and_the_trader_edition_reaches_the_next_sign_in()
+    {
+        var ws = await Api.SignupAsync();
+        using var client = Api.ClientFor(ws.AccessToken);
+        (await (await client.GetAsync("/api/v1/me")).ReadJsonAsync()).GetProperty("tenant").GetProperty("edition").GetString().ShouldBe("full");
+        var edition = await (await client.GetAsync("/api/v1/tenant/edition")).ReadJsonAsync();
+        edition.GetProperty("edition").GetString().ShouldBe("full");
+        edition.GetProperty("editions").EnumerateArray().Select(static e => e.GetString()).ShouldBe(["full", "trader"]);
+
+        var unknown = await client.PutAsJsonAsync("/api/v1/tenant/edition", new { edition = "retail" }, Json);
+        unknown.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await unknown.ErrorCodeAsync()).ShouldBe("tenant.edition_invalid");
+        (await client.PutAsJsonAsync("/api/v1/tenant/edition", new { edition = "trader" }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await (await client.GetAsync("/api/v1/tenant/edition")).ReadJsonAsync()).GetProperty("edition").GetString().ShouldBe("trader");
+
+        // The security policy beside it is untouched, and the next sign-in carries the edition to the client.
+        (await (await client.GetAsync("/api/v1/tenant/policy")).ReadJsonAsync()).GetProperty("passwordMinLength").GetInt32().ShouldBe(12);
+        var login = await (await Api.Client.PostAsJsonAsync("/api/v1/auth/login", new { email = ws.OwnerEmail, password = ws.OwnerPassword }, Json)).ReadJsonAsync();
+        login.GetProperty("tokens").GetProperty("tenant").GetProperty("edition").GetString().ShouldBe("trader");
+    }
+
+    [Fact]
     public async Task Tenant_policy_can_require_mfa_before_the_first_session()
     {
         var ws = await Api.SignupAsync();

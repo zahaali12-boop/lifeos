@@ -271,6 +271,12 @@ public static class IdentityEndpoints
             var result = await provisioner.UpdatePolicyAsync(current.Required.TenantId, policy, ct);
             return ApiProblems.From(result, () => Results.Ok(policy));
         }).Produces<TenantSecurityPolicy>().RequirePermission(IdentityPermissions.TenantSettingsManage).RequireRecentAuth();
+        tenant.MapGet("/edition", async (CurrentPrincipal current, ITenantDirectory tenants, CancellationToken ct) =>
+            Results.Ok(new TenantEditionResponse((await tenants.FindByIdAsync(current.Required.TenantId, ct))!.Edition, TenantEditions.All)))
+            .Produces<TenantEditionResponse>().RequirePermission(IdentityPermissions.TenantSettingsManage);
+        tenant.MapPut("/edition", async (UpdateEditionRequest request, CurrentPrincipal current, ITenantProvisioner provisioner, CancellationToken ct) =>
+            ApiProblems.From(await provisioner.UpdateEditionAsync(current.Required.TenantId, request.Edition, ct), () => Results.Ok(new TenantEditionResponse(request.Edition, TenantEditions.All))))
+            .Produces<TenantEditionResponse>().RequirePermission(IdentityPermissions.TenantSettingsManage);
 
         var meta = api.MapGroup("/meta").WithTags("Metadata").RequireAuthorization();
         meta.MapGet("/permissions", static () => Results.Ok(PermissionCatalog.All)).Produces<IReadOnlyCollection<PermissionDefinition>>();

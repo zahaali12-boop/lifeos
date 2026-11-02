@@ -173,7 +173,12 @@
     "reports": "Reports",
     "statements": "Financial statements",
     "dashboards": "Dashboards",
-    "schedules": "Scheduled reports"
+    "schedules": "Scheduled reports",
+    "trader": {
+      "home": "Home",
+      "offers": "Offers",
+      "orders": "Orders"
+    }
   },
   "shell": {
     "filterMenu": "Filter the menu",
@@ -1042,7 +1047,19 @@
     "favouriteCurrenciesHint": "Shown first, in this order, in every currency list; any other currency is found by searching.",
     "removeFavourite": "Remove {code} from favourites",
     "addFavourite": "Add a currency",
-    "resetFavourites": "Restore the defaults ({codes})"
+    "resetFavourites": "Restore the defaults ({codes})",
+    "edition": "Edition",
+    "editionHint": "How this workspace looks for everyone in it. The books, the records and the rules are the same in both; only the menus and the words change.",
+    "editions": {
+      "full": {
+        "name": "Full ERP",
+        "hint": "Every module, with the menus by module."
+      },
+      "trader": {
+        "name": "Trader",
+        "hint": "A short menu in plain words for a small import business: offers, orders, stock, sales and money."
+      }
+    }
   },
   "security": {
     "grantException": "Grant exception",
@@ -6103,5 +6120,79 @@
     "empty": "No schedules yet.",
     "saveFailed": "The schedule could not be saved.",
     "confirmDelete": "Delete this schedule and its run history?"
+  },
+  "trader": {
+    "offers": {
+      "title": "Purchase offers",
+      "description": "Write down what you want to buy and the offers each supplier gave you. The program compares them with shipping, in your currency, and tells you whom to order from and why.",
+      "newSet": "New comparison",
+      "what": "What to buy",
+      "whatHint": "A short name for this purchase, for example \"Brake pads, autumn\".",
+      "suppliers": "Suppliers",
+      "noSuppliers": "No suppliers yet: add them under Suppliers first.",
+      "items": "Items",
+      "offers": "Offers",
+      "supplier": "Supplier",
+      "offerStatus": {
+        "received": "Offer received",
+        "waiting": "No offer yet"
+      },
+      "recommended": "Recommended",
+      "landedTotal": "Total with shipping",
+      "inYourCurrency": "In your currency",
+      "perUnit": "Average per unit",
+      "leadTime": "Delivery (days)",
+      "moq": "Minimum quantity",
+      "moqOk": "Quantity OK",
+      "moqShort": "Below minimum",
+      "rank": "Rank",
+      "notes": "Notes",
+      "enterOffer": "Enter offer",
+      "changeOffer": "Change offer",
+      "offerFrom": "Offer from {supplier}",
+      "currency": "Currency",
+      "shipping": "Shipping cost",
+      "otherCharges": "Other charges",
+      "price": "Price per unit",
+      "saveOffer": "Save offer",
+      "compare": "Compare offers",
+      "comparedNote": "Compared with shipping and charges, in {currency} at the exchange rate of {date}.",
+      "noOffersYet": "Enter at least one offer to compare.",
+      "orderFrom": "Order from this supplier",
+      "ordered": "Ordered: purchase order {number}.",
+      "openOrder": "Open the order",
+      "recommendTitle": "Order from {supplier}",
+      "reasonsLead": "Why: {reasons}.",
+      "reasonJoin": "; ",
+      "reasons": {
+        "cheapest_landed": "the cheapest once shipping is counted",
+        "complete": "the only offer that covers every item",
+        "meets_moq": "the only offer whose minimum quantities you reach",
+        "fastest": "the fastest delivery",
+        "only_offer": "the only offer so far"
+      },
+      "savingVsNext": "It saves {amount} against the next usable offer.",
+      "splitSaving": "Buying each item from its cheapest supplier would save {amount} more, if you can split the order.",
+      "whyNot": {
+        "incomplete": "does not cover every item",
+        "moq": "your quantity is below its minimum on item {lines}",
+        "premium": "{pct}% dearer than the best",
+        "cheaperButBlocked": "{pct}% cheaper, but cannot be taken as offered"
+      },
+      "bestPerLine": "Cheapest per item",
+      "line": "Item",
+      "bestSupplier": "Cheapest from",
+      "unitPrice": "Per unit with shipping",
+      "statuses": {
+        "draft": "Collecting offers",
+        "sent": "Collecting offers",
+        "awarded": "Ordered",
+        "closed": "Closed",
+        "cancelled": "Cancelled"
+      },
+      "empty": "No comparisons yet.",
+      "emptyDescription": "Start one: name what you want to buy, tick the suppliers and list the items with quantities.",
+      "cancel": "Cancel this comparison"
+    }
   }
 }

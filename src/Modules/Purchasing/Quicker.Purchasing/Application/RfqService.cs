@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Quicker.Audit.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Items.Contracts;
+using Quicker.Kernel.Amounts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
@@ -335,9 +336,9 @@ public sealed class RfqService(
                 return Error.Validation("quote.line_unknown", "The quoted line is not on the request.").WithWhy(("rfqLineId", line.RfqLineId));
             }
 
-            if (line.UnitPrice < 0m || (line.Quantity is { } q && q <= 0m))
+            if (line.UnitPrice < 0m || (line.Quantity is { } q && q <= 0m) || (line.Moq is { } moq && moq <= 0m))
             {
-                return Error.Validation("quote.line_invalid", "Unit prices are zero or more and quantities positive.").WithWhy(("rfqLineNo", rfqLine.LineNo));
+                return Error.Validation("quote.line_invalid", "Unit prices are zero or more; quantities and minimum order quantities are positive.").WithWhy(("rfqLineNo", rfqLine.LineNo));
             }
 
             if (lines.Any(l => l.RfqLineId == rfqLine.Id))
@@ -345,7 +346,7 @@ public sealed class RfqService(
                 return Error.Validation("quote.line_duplicate", "A request line is quoted once.").WithWhy(("rfqLineNo", rfqLine.LineNo));
             }
 
-            lines.Add(new SupplierQuoteLine { Id = Guid.CreateVersion7(), RfqLineId = rfqLine.Id, UnitPrice = Shared.Round(line.UnitPrice, currency.Value), Quantity = line.Quantity ?? rfqLine.Quantity, UomId = rfqLine.UomId, LeadTimeDays = line.LeadTimeDays });
+            lines.Add(new SupplierQuoteLine { Id = Guid.CreateVersion7(), RfqLineId = rfqLine.Id, UnitPrice = Shared.Round(line.UnitPrice, currency.Value), Quantity = line.Quantity ?? rfqLine.Quantity, UomId = rfqLine.UomId, LeadTimeDays = line.LeadTimeDays, Moq = line.Moq, Notes = Shared.Trim(line.Notes) });
         }
 
         var quote = await db.Quotes.Include(static q => q.Lines).SingleOrDefaultAsync(q => q.RfqSupplierId == supplier.Id, cancellationToken);
@@ -402,9 +403,11 @@ public sealed class RfqService(
     }
 
     /// <summary>
-    /// Ranks the quotes: complete quotes (every line priced) first, then by the landed total in the company's currency
-    /// (goods plus freight and charges, converted at the spot rate of the day), then by lead time. The ranking is
-    /// stored on each quote so the award screen and the audit trail show why.
+    /// Ranks the quotes: the quotes that price every line and whose minimum order quantities the request reaches first,
+    /// then the complete ones, then by the landed total in the company's currency (goods plus freight and charges,
+    /// converted at the spot rate of the day), then by lead time. The ranking is stored on each quote so the award
+    /// screen and the audit trail show why. The comparison also names the cheapest feasible offer per line and
+    /// recommends the first-ranked quote with the reasons it leads (trader edition, ADR-0035).
     /// </summary>
     public async Task<Result<QuoteComparison>> CompareAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -449,19 +452,114 @@ public sealed class RfqService(
                 perLine[rfqLine.LineNo.ToString(System.Globalization.CultureInfo.InvariantCulture)] = Shared.Round(line.UnitPrice * (1m + charges) * rate, company.FunctionalCurrency);
             }
 
+            // A line offered only from a minimum above what is asked cannot be taken as quoted.
+            var shortfalls = quote.Lines.Where(static l => l.Moq is { } moq && l.Quantity < moq).Select(l => rfq.Lines.Single(x => x.Id == l.RfqLineId).LineNo).Order().ToList();
             rankings.Add(new QuoteRanking(quote.Id, supplier.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), quote.Currency, goods, landed, rate, landedRc,
-                quotedBase == 0m ? 0m : Shared.Round(landedRc / quotedBase, company.FunctionalCurrency), quote.LeadTimeDays, complete, 0, perLine));
+                quotedBase == 0m ? 0m : Shared.Round(landedRc / quotedBase, company.FunctionalCurrency), quote.LeadTimeDays, complete, 0, perLine, shortfalls.Count == 0, shortfalls, null));
         }
 
-        var ordered = rankings.OrderByDescending(static r => r.Complete).ThenBy(static r => r.LandedTotalRc).ThenBy(static r => r.LeadTimeDays).ThenBy(static r => r.PartnerCode, StringComparer.Ordinal).Select((r, i) => r with { Rank = i + 1 }).ToList();
+        var ordered = rankings.OrderByDescending(static r => r.Complete && r.MeetsMoq).ThenByDescending(static r => r.Complete).ThenBy(static r => r.LandedTotalRc).ThenBy(static r => r.LeadTimeDays).ThenBy(static r => r.PartnerCode, StringComparer.Ordinal).Select((r, i) => r with { Rank = i + 1 }).ToList();
+        var first = ordered.Count == 0 ? null : ordered[0];
+        if (first is { Complete: true, LandedTotalRc: > 0m })
+        {
+            ordered = ordered.Select(r => r.Rank == 1 || !r.Complete ? r : r with { PremiumPct = RoundingPolicy.Default.Round((r.LandedTotalRc - first.LandedTotalRc) * 100m / first.LandedTotalRc, 1) }).ToList();
+        }
+
         foreach (var ranking in ordered)
         {
             var quote = quotes.Single(q => q.Id == ranking.QuoteId);
-            quote.ComparisonScore = JsonSerializer.Serialize(new { ranking.Rank, ranking.LandedTotalRc, ranking.LandedUnitAverageRc, ranking.LeadTimeDays, ranking.Complete, ranking.ExchangeRate, currency = company.FunctionalCurrency.Code, rateDate = today }, Shared.Json);
+            quote.ComparisonScore = JsonSerializer.Serialize(new { ranking.Rank, ranking.LandedTotalRc, ranking.LandedUnitAverageRc, ranking.LeadTimeDays, ranking.Complete, ranking.MeetsMoq, ranking.ExchangeRate, currency = company.FunctionalCurrency.Code, rateDate = today }, Shared.Json);
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        return new QuoteComparison(rfq.Id, company.FunctionalCurrency.Code, ordered, today);
+        var bestPerLine = BestPerLine(rfq, ordered);
+        return new QuoteComparison(rfq.Id, company.FunctionalCurrency.Code, ordered, today, Recommend(rfq, ordered, bestPerLine, company.FunctionalCurrency), bestPerLine);
+    }
+
+    /// <summary>For each request line, the cheapest landed unit price among the quotes that price it from a minimum the line reaches.</summary>
+    private static List<LineBestOffer> BestPerLine(Rfq rfq, IReadOnlyList<QuoteRanking> rankings)
+    {
+        var best = new List<LineBestOffer>();
+        foreach (var line in rfq.Lines.OrderBy(static l => l.LineNo))
+        {
+            var key = line.LineNo.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var offer = rankings
+                .Where(r => r.LandedUnitPricesRc.ContainsKey(key) && !r.MoqShortfallLines.Contains(line.LineNo))
+                .OrderBy(r => r.LandedUnitPricesRc[key]).ThenBy(static r => r.Rank)
+                .FirstOrDefault();
+            if (offer is not null)
+            {
+                best.Add(new LineBestOffer(line.LineNo, offer.QuoteId, offer.PartnerCode, offer.LandedUnitPricesRc[key]));
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// The first-ranked quote with the reasons it leads: cheapest landed total, the only one (or one of the few) that
+    /// prices every line, the only one whose minimums are met, the fastest, or simply the only offer. The saving against
+    /// the next complete, feasible quote and the saving of splitting the order line by line are given in the company's
+    /// currency so a non-accountant sees the money, not the method.
+    /// </summary>
+    private static QuoteRecommendation? Recommend(Rfq rfq, IReadOnlyList<QuoteRanking> ordered, IReadOnlyList<LineBestOffer> bestPerLine, Currency currency)
+    {
+        if (ordered.Count == 0)
+        {
+            return null;
+        }
+
+        var first = ordered[0];
+        var reasons = new List<string>();
+        if (ordered.Count == 1)
+        {
+            reasons.Add("only_offer");
+        }
+        else
+        {
+            var completePeers = ordered.Where(static r => r.Complete).ToList();
+            if (first.Complete && completePeers.Count > 1 && first.LandedTotalRc <= completePeers.Min(static r => r.LandedTotalRc))
+            {
+                reasons.Add("cheapest_landed");
+            }
+
+            if (first.Complete && ordered.Any(static r => !r.Complete))
+            {
+                reasons.Add("complete");
+            }
+
+            if (first.MeetsMoq && ordered.Any(static r => !r.MeetsMoq))
+            {
+                reasons.Add("meets_moq");
+            }
+
+            if (ordered.Count(r => r.LeadTimeDays == first.LeadTimeDays) == 1 && first.LeadTimeDays <= ordered.Min(static r => r.LeadTimeDays))
+            {
+                reasons.Add("fastest");
+            }
+        }
+
+        var next = ordered.Skip(1).FirstOrDefault(static r => r.Complete && r.MeetsMoq);
+        var savingVsNext = next is null || next.LandedTotalRc <= first.LandedTotalRc ? (decimal?)null : next.LandedTotalRc - first.LandedTotalRc;
+
+        // Splitting: every line from its cheapest feasible offer, against every line from the recommended quote, both at the quantities asked.
+        decimal? splitSaving = null;
+        if (first.Complete && bestPerLine.Count == rfq.Lines.Count)
+        {
+            var allFromFirst = 0m;
+            var split = 0m;
+            foreach (var line in rfq.Lines)
+            {
+                var key = line.LineNo.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                allFromFirst += first.LandedUnitPricesRc[key] * line.Quantity;
+                split += bestPerLine.Single(b => b.LineNo == line.LineNo).LandedUnitPriceRc * line.Quantity;
+            }
+
+            var saving = RoundingPolicy.Default.Round(allFromFirst - split, currency.MinorUnits);
+            splitSaving = saving > 0m ? saving : null;
+        }
+
+        return new QuoteRecommendation(first.QuoteId, first.PartnerCode, reasons, savingVsNext, splitSaving);
     }
 
     /// <summary>Awards a quote: the request is closed as awarded and a purchase order draft is created from the quote, priced as quoted.</summary>
@@ -474,9 +572,10 @@ public sealed class RfqService(
             return Error.NotFound("purchase_rfq", id);
         }
 
-        if (rfq.Status is not ("sent" or "closed"))
+        // A draft with quotes recorded is awardable too: a trader records the offers that reached him without sending a request out.
+        if (rfq.Status is not ("draft" or "sent" or "closed"))
         {
-            return Error.Conflict("rfq.not_awardable", "Send the request first; an awarded or cancelled one is done.").WithWhy(("status", rfq.Status));
+            return Error.Conflict("rfq.not_awardable", "An awarded or cancelled request is done.").WithWhy(("status", rfq.Status));
         }
 
         var quote = await db.Quotes.Include(static q => q.Lines).SingleOrDefaultAsync(q => q.Id == request.QuoteId, cancellationToken);
@@ -581,7 +680,7 @@ public sealed class RfqService(
                 var goods = quote.Lines.Sum(static l => l.UnitPrice * l.Quantity);
                 quoteSummaries.Add(new SupplierQuoteSummary(quote.Id, s.Id, s.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), quote.SupplierReference, quote.Currency, quote.ValidUntil, quote.PaymentTermsId, quote.LeadTimeDays, quote.FreightAmount, quote.OtherCharges, goods, goods + quote.FreightAmount + quote.OtherCharges, quote.Notes,
                     quote.ComparisonScore is null ? null : Shared.Parse(quote.ComparisonScore), quote.ReceivedAt,
-                    quote.Lines.Select(l => new QuoteLineSummary(l.Id, l.RfqLineId, r.Lines.Single(x => x.Id == l.RfqLineId).LineNo, l.UnitPrice, l.Quantity, l.UomId, uomCodes.GetValueOrDefault(l.RfqLineId, string.Empty), l.LeadTimeDays, l.UnitPrice * l.Quantity)).OrderBy(static l => l.RfqLineNo).ToList()));
+                    quote.Lines.Select(l => new QuoteLineSummary(l.Id, l.RfqLineId, r.Lines.Single(x => x.Id == l.RfqLineId).LineNo, l.UnitPrice, l.Quantity, l.UomId, uomCodes.GetValueOrDefault(l.RfqLineId, string.Empty), l.LeadTimeDays, l.UnitPrice * l.Quantity, l.Moq, l.Notes)).OrderBy(static l => l.RfqLineNo).ToList()));
             }
         }
 

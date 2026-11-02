@@ -821,6 +821,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenant/edition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getTenantEdition"];
+        put: operations["putTenantEdition"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meta/permissions": {
         parameters: {
             query?: never;
@@ -16678,6 +16694,16 @@ export interface components {
             isReversal: boolean;
             isRounding: boolean;
         };
+        /** @description The cheapest landed unit price offered for one request line, among the offers whose minimum the line reaches. */
+        LineBestOffer: {
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            quoteId: string;
+            partnerCode: string;
+            /** Format: double */
+            landedUnitPriceRc: number | string;
+        };
         LinkPurchaseOrderLineRequest: {
             /** Format: uuid */
             purchaseOrderLineId: string;
@@ -19649,6 +19675,8 @@ export interface components {
             rankings: components["schemas"]["QuoteRanking"][];
             /** Format: date */
             rateDate: string;
+            recommendation: null | components["schemas"]["QuoteRecommendation"];
+            bestPerLine: components["schemas"]["LineBestOffer"][];
         };
         QuoteLineSummary: {
             /** Format: uuid */
@@ -19668,8 +19696,16 @@ export interface components {
             leadTimeDays: null | number | string;
             /** Format: double */
             lineTotal: number | string;
+            /** Format: double */
+            moq: null | number | string;
+            notes: null | string;
         };
-        /** @description One quote in the comparison: the landed total in the company's currency, the rate used, the rank and why. */
+        /**
+         * @description One quote in the comparison: the landed total in the company's currency, the rate used, the rank and why.
+         *     MeetsMoq is false when a line is offered only from a minimum the request does not reach
+         *     (MoqShortfallLines names them); PremiumPct is how much dearer than the first-ranked
+         *     quote this one lands, in percent, for the quotes that price every line.
+         */
         QuoteRanking: {
             /** Format: uuid */
             quoteId: string;
@@ -19698,6 +19734,26 @@ export interface components {
             landedUnitPricesRc: {
                 [key: string]: number | string;
             };
+            meetsMoq: boolean;
+            moqShortfallLines: (number | string)[];
+            /** Format: double */
+            premiumPct: null | number | string;
+        };
+        /**
+         * @description The quote to order from and why, in reason codes the client words: cheapest_landed, complete, meets_moq, fastest,
+         *     only_offer. SavingVsNextRc is what it saves against the next complete, feasible quote;
+         *     SplitSavingRc what buying each line from its cheapest feasible offer would save against ordering
+         *     everything from the recommended one (null when nothing).
+         */
+        QuoteRecommendation: {
+            /** Format: uuid */
+            quoteId: string;
+            partnerCode: string;
+            reasons: string[];
+            /** Format: double */
+            savingVsNextRc: null | number | string;
+            /** Format: double */
+            splitSavingRc: null | number | string;
         };
         RateResolution: {
             fromCurrency: string;
@@ -23396,6 +23452,9 @@ export interface components {
             quantity?: null | number | string;
             /** Format: int32 */
             leadTimeDays?: null | number | string;
+            /** Format: double */
+            moq?: null | number | string;
+            notes?: null | string;
         };
         SaveQuoteRequest: {
             /** Format: uuid */
@@ -26033,6 +26092,10 @@ export interface components {
             roles: string[];
             statutoryChartCode: null | string;
         };
+        TenantEditionResponse: {
+            edition: string;
+            editions: string[];
+        };
         /** @description Security policy a tenant admin controls (stored in control.tenants.settings). */
         TenantSecurityPolicy: {
             /** @default false */
@@ -26071,12 +26134,14 @@ export interface components {
             /** @default true */
             allowPasswordLogin: boolean;
         };
+        /** @description The workspace as the client sees it; Edition picks the shell (full menus or the trader edition, ADR-0035). */
         TenantSummary: {
             /** Format: uuid */
             id: string;
             slug: string;
             name: string;
             defaultLanguage: string;
+            edition: string;
         };
         TokenResponse: {
             accessToken: string;
@@ -26330,6 +26395,9 @@ export interface components {
             precision: number | string;
             isSystem: boolean;
             isActive: boolean;
+        };
+        UpdateEditionRequest: {
+            edition: string;
         };
         UpdateOpportunityRequest: {
             title: string;
@@ -28040,6 +28108,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantSecurityPolicy"];
+                };
+            };
+        };
+    };
+    getTenantEdition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantEditionResponse"];
+                };
+            };
+        };
+    };
+    putTenantEdition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEditionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantEditionResponse"];
                 };
             };
         };

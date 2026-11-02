@@ -206,6 +206,12 @@ public sealed class SupplierQuoteLine : ITenantEntity
     public Guid UomId { get; set; }
 
     public int? LeadTimeDays { get; set; }
+
+    /// <summary>The supplier's minimum order quantity for the line, in the line's unit; null when none was given.</summary>
+    public decimal? Moq { get; set; }
+
+    /// <summary>What was offered, in the supplier's words (specification, brand, packing).</summary>
+    public string? Notes { get; set; }
 }
 
 public sealed class BlanketAgreement : ITenantEntity

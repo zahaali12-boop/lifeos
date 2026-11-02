@@ -141,7 +141,7 @@ public sealed class AuthService(
                 var t = await tenants.FindByIdAsync(new TenantId(m.TenantId), cancellationToken);
                 if (t is { Status: "active" })
                 {
-                    summaries.Add(new TenantSummary(t.Id.Value, t.Slug, t.Name, t.DefaultLanguage));
+                    summaries.Add(Summary(t));
                 }
             }
 
@@ -474,7 +474,7 @@ public sealed class AuthService(
     public Task<User?> LoadUserAsync(Guid userId, CancellationToken cancellationToken) =>
         db.Users.Include(static u => u.MfaMethods).Include(static u => u.Memberships).SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-    public static TenantSummary Summary(TenantInfo tenant) => new(tenant.Id.Value, tenant.Slug, tenant.Name, tenant.DefaultLanguage);
+    public static TenantSummary Summary(TenantInfo tenant) => new(tenant.Id.Value, tenant.Slug, tenant.Name, tenant.DefaultLanguage, tenant.Edition);
 
     public static UserSummary Summary(User user) => new(user.Id, user.Email, user.DisplayName, user.Locale, user.TimeZone, user.DigitStyle, user.HasMfa, user.IsPlatformOperator);
 
