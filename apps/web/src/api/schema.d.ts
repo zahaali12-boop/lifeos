@@ -4988,6 +4988,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/counts/{countId}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finishes a count in one step: the lines nobody counted taken as unchanged when asked, every difference given its reason code (COUNT by default, created on first use), the count reviewed, approved and posted */
+        post: operations["postInventoryCountsByCountIdFinish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inventory/counts/{countId}/cancel": {
         parameters: {
             query?: never;
@@ -15706,6 +15723,13 @@ export interface components {
             /** Format: date */
             periodEnd: string;
             reference?: null | string;
+        };
+        /** @description Finishing a count in one step (trader edition, ADR-0035 §9): the reason every difference takes when its line has none (the shipped COUNT reason by default), a note for it, and whether the lines nobody counted are taken as unchanged. */
+        FinishCountRequest: {
+            reasonCode?: null | string;
+            note?: null | string;
+            /** @default false */
+            uncountedAsUnchanged: boolean;
         };
         FiscalCalendarSummary: {
             /** Format: uuid */
@@ -36759,6 +36783,32 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountSummary"];
+                };
+            };
+        };
+    };
+    postInventoryCountsByCountIdFinish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["FinishCountRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

@@ -99,6 +99,20 @@ would also throw away the tests and the invariants that make the books right.
    short runway, break-even not covered at this pace, the margin under target, overdue receivables or payables,
    shipments needing attention, no recent sales, items to reorder); the screen words them, so the server stays
    language-free and the same codes can drive a notification later.
+9. **Stock and counting on the phone reuse the scanner and the count, with one step added for a shop.** The Stock
+   screen (`/trader/stock`) words the inventory module's own reads: what the store holds (`/inventory/stock`), what
+   it is worth at cost (`/inventory/costing/valuation`), and the store's count. A count is three plain steps: start
+   (a full count of the store created and frozen), count (on the phone with the camera through the existing scanner
+   at `/m/count`, which already resolves barcodes, queues offline captures and syncs them; or typed on the screen
+   against the frozen sheet), finish. Finishing is one new Inventory step, `POST /inventory/counts/{id}/finish`
+   (`CountService.FinishAsync`, for the full edition too): the lines nobody counted are taken as unchanged when
+   asked (counted = the snapshot plus what moved since the freeze, so they post nothing) and refused otherwise, as
+   the review refuses them; every difference without a reason takes the reason given or the shipped `COUNT` reason
+   ("Count difference", made on first use, applying to counts); then the ordinary review, approval and posting run,
+   under their own permissions, so a shop's count lands in the books exactly as a warehouse's. The phone reaches the
+   program over the local network: `QUICKER_LAN_HOST` in `.env` makes the web app call the API by the machine's
+   address and lets the API accept that origin; the installable scanner (`/m`) then opens from the phone's home
+   screen. A phone shell of its own (an iPhone build) stays deferred: the scanner is a web app the phone installs.
 
 ## Consequences
 
@@ -117,4 +131,7 @@ would also throw away the tests and the invariants that make the books right.
   and returns from the sales screen, receipts on account; profit by item (needs the cost of each sale from the stock
   ledger; the health screen shows sales by item and the pricing board the margin per item today); a cash forecast by
   week from the open items' due dates; a lead time per supplier in the reorder (one cover-days setting for now);
-  recording an expense from the health screen (the Expenses screens stand); the phone version.
+  recording an expense from the health screen (the Expenses screens stand); a phone shell of its own (the scanner is
+  the installed web app; a store-listed iPhone build is a later programme); printing barcode labels for items that
+  carry none (the item code is typed on the phone meanwhile); a trader-worded mobile home (the scanner's own words
+  stand: Count, Transfer, Receive, Pick, Queue).

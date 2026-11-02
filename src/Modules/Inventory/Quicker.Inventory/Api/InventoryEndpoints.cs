@@ -258,6 +258,9 @@ public static class InventoryEndpoints
         counts.MapPost("/{countId:guid}/post", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.PostAsync(countId, ct)))
             .RequirePermission(InventoryPermissions.CountPost)
             .WithSummary("Posts the variances as count_variance movements with their reason codes; movements since the freeze are re-read at posting");
+        counts.MapPost("/{countId:guid}/finish", async (Guid countId, FinishCountRequest? request, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.FinishAsync(countId, request ?? new FinishCountRequest(), ct)))
+            .RequirePermission(InventoryPermissions.CountManage).RequirePermission(InventoryPermissions.CountApprove).RequirePermission(InventoryPermissions.CountPost)
+            .WithSummary("Finishes a count in one step: the lines nobody counted taken as unchanged when asked, every difference given its reason code (COUNT by default, created on first use), the count reviewed, approved and posted");
         counts.MapPost("/{countId:guid}/cancel", async (Guid countId, CountService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(countId, ct)))
             .RequirePermission(InventoryPermissions.CountManage);
 

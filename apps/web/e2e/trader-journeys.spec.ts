@@ -237,10 +237,31 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("month-row")).toHaveCount(6);
   await expectAccessible(page);
 
+  // Stock: ninety pads in the store; a count is started, 88 typed (two missing), finished: the stock is set to 88.
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Stock" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Stock");
+  await expect(page.getByTestId("stock-row").filter({ hasText: "PADS" }).getByTestId("stock-on-hand")).toContainText("90");
+  await page.getByTestId("start-count").click();
+  await expect(page.getByTestId("stock-notice")).toContainText("started", { timeout: 20_000 });
+  await expect(page.getByTestId("count-status")).toHaveText("Ready to count");
+  await page.getByTestId("counted-PADS").fill("88");
+  await page.getByTestId("save-counts").click();
+  await expect(page.getByTestId("stock-notice")).toContainText("Counts saved", { timeout: 20_000 });
+  await expect(page.getByTestId("count-progress")).toContainText("1 of 2");
+  await page.getByTestId("finish-count").click();
+  await expect(page.getByTestId("stock-notice")).toContainText("finished", { timeout: 20_000 });
+  await expect(page.getByTestId("stock-row").filter({ hasText: "PADS" }).getByTestId("stock-on-hand")).toContainText("88");
+  await expect(page.getByTestId("start-count")).toBeVisible();
+  await expectAccessible(page);
+
   // Arabic, right-to-left: the flat bar, the list and the record in Arabic.
   await page.getByTestId("language-menu").click();
   await page.getByTestId("language-ar").click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("المخزون");
+  await expect(page.getByTestId("stock-row").filter({ hasText: "PADS" }).getByTestId("stock-on-hand")).toContainText("88");
+  await expectAccessible(page);
+  await page.getByTestId("flat-nav").getByRole("link", { name: "صحة المشروع" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("صحة المشروع");
   await expect(page.getByTestId("verdict")).toContainText("ربح قدره");
   await expect(page.getByTestId("cash-runway")).toContainText("0.3");

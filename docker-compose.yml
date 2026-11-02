@@ -66,6 +66,9 @@ services:
       Quicker__Email__SmtpPort: "1025"
       Quicker__Audit__Anchoring__Store: file
       Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+      # QUICKER_LAN_HOST (in .env) is this machine's address on the local network (ipconfig / ip addr), so a phone on
+      # the same Wi-Fi can open the app and count stock (ADR-0035 §9); the browser on this machine keeps working too.
+      Quicker__Api__AllowedOrigins: http://localhost:5173,http://127.0.0.1:5173,http://${QUICKER_LAN_HOST:-localhost}:5173
     ports:
       # QUICKER_API_PORT (in .env) when another program already answers on 8080 on your machine.
       - "${QUICKER_API_PORT:-8080}:8080"
@@ -111,7 +114,8 @@ services:
       dockerfile: deploy/docker/web.Dockerfile
       target: dev
     environment:
-      VITE_API_BASE_URL: http://localhost:${QUICKER_API_PORT:-8080}
+      # With QUICKER_LAN_HOST set, the app calls the API by that address, so it works from a phone on the same network.
+      VITE_API_BASE_URL: http://${QUICKER_LAN_HOST:-localhost}:${QUICKER_API_PORT:-8080}
     ports:
       - "5173:5173"
     volumes:

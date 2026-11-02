@@ -182,7 +182,8 @@
       "pricing": "Prices",
       "sales": "Sales",
       "money": "Money",
-      "health": "Health"
+      "health": "Health",
+      "stock": "Stock"
     }
   },
   "shell": {
@@ -6559,6 +6560,54 @@
         "onTheWay": "On the way",
         "suggested": "Order",
         "offersLink": "Ask the suppliers for offers"
+      }
+    },
+    "stock": {
+      "title": "Stock",
+      "description": "What the store holds and what it is worth at cost; count it with the phone's camera or type the counts here, and the stock is set right.",
+      "store": "Store",
+      "search": "Find an item",
+      "searchPlaceholder": "Code or name",
+      "items": "Items in stock",
+      "units": "Units in stock",
+      "value": "Worth at cost",
+      "valueHint": "What the goods on the shelves cost you, landed.",
+      "item": "Item",
+      "onHand": "In stock",
+      "unitCost": "Cost each",
+      "worth": "Worth",
+      "lastMoved": "Last moved",
+      "empty": "Nothing in this store yet.",
+      "emptyDescription": "Stock arrives when a shipment is received or an opening stock is entered.",
+      "fullStock": "Every detail of the stock",
+      "itemsLink": "Items and barcodes",
+      "noStore": "No store yet.",
+      "createStore": "Create a store",
+      "started": "Count {number} started: {lines} items on the sheet. Count on the phone or type the counts below, then finish.",
+      "saved": "Counts saved: {counted} of {lines} items counted.",
+      "finished": "Count {number} finished: {differences} differences, {value} in all. The stock is set right.",
+      "cancelled": "The count was cancelled; the stock is unchanged.",
+      "count": {
+        "title": "Count the store",
+        "hint": "Start a count: the sheet is frozen as the stock stands now, you count on the phone with the camera (or type here), and finishing sets the stock right with the differences recorded.",
+        "start": "Start a count",
+        "statuses": {
+          "frozen": "Ready to count",
+          "counting": "Counting",
+          "review": "Reviewing",
+          "approved": "Approved"
+        },
+        "progress": "Count {number} of {date}: {counted} of {lines} items counted.",
+        "onPhone": "Count on the phone",
+        "finish": "Finish: set the stock right",
+        "cancel": "Cancel the count",
+        "uncountedHint": "{count} items not counted yet: when you finish, they stay as they are.",
+        "allCountedHint": "Everything is counted: finish to record the differences.",
+        "phoneHint": "On the phone, open this address, sign in, choose the store and press Count:",
+        "typeHere": "Or type the counts here",
+        "expected": "Expected",
+        "counted": "Counted",
+        "save": "Save counts"
       }
     }
   }

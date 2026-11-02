@@ -9,6 +9,7 @@ using Quicker.Inventory.Persistence;
 using Quicker.Items.Contracts;
 using Quicker.Kernel.Ids;
 using Quicker.Kernel.Results;
+using Quicker.Kernel.Text;
 using Quicker.Kernel.Time;
 using Quicker.Numbering.Contracts;
 using Quicker.Organization.Contracts;
@@ -42,6 +43,9 @@ public sealed record CountEntryRequest(
 public sealed record CountEntriesRequest(IReadOnlyList<CountEntryRequest> Entries);
 
 public sealed record CountLineReasonRequest(Guid? ReasonCodeId = null, string? ReasonCode = null, string? Note = null);
+
+/// <summary>Finishing a count in one step (trader edition, ADR-0035 §9): the reason every difference takes when its line has none (the shipped COUNT reason by default), a note for it, and whether the lines nobody counted are taken as unchanged.</summary>
+public sealed record FinishCountRequest(string? ReasonCode = null, string? Note = null, bool UncountedAsUnchanged = false);
 
 public sealed record CountSummary(
     Guid Id,
@@ -644,6 +648,121 @@ public sealed class CountService(
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry(DocumentType, count.Id, count.Number ?? DraftIdentifiers.For(count.Id), AuditActions.Posted, After: new { postingDate = count.PostingDate, stockPostingId = count.StockPostingId, journalEntryId = count.JournalEntryId, variances = lines.Select(static l => new { l.ItemId, l.Quantity, l.BinId, l.LotId, l.SerialId }) }, CompanyId: count.CompanyId), cancellationToken);
         return await MapAsync(count, cancellationToken);
+    }
+
+    /// <summary>
+    /// Review, reasons, approval and posting in one step, for a count made by someone who is not a stock clerk (the
+    /// trader's shop, ADR-0035 §9): the lines nobody counted are taken as unchanged when asked (else refused as the
+    /// review refuses them), every difference without a reason takes the one given or the shipped COUNT reason
+    /// (created on first use), then the count is reviewed, approved and posted through the same steps as always.
+    /// </summary>
+    public async Task<Result<CountSummary>> FinishAsync(Guid countId, FinishCountRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var count = await db.Counts.Include(static c => c.Lines).SingleOrDefaultAsync(c => c.Id == countId, cancellationToken);
+        if (count is null)
+        {
+            return Error.NotFound("count", countId);
+        }
+
+        if (count.Status is not ("frozen" or "counting" or "review" or "approved"))
+        {
+            return Error.Conflict("count.not_counting", "Only an open count is finished.").WithWhy(("status", count.Status));
+        }
+
+        var scope = Validation.Scope(principal, InventoryPermissions.CountManage, count.CompanyId, count.WarehouseId);
+        if (scope.IsFailure)
+        {
+            return scope.Error!;
+        }
+
+        if (count.Status is "frozen" or "counting")
+        {
+            var uncounted = count.Lines.Where(static l => l.CountedQty is null || l.RecountRequested).ToList();
+            if (uncounted.Count > 0)
+            {
+                if (!request.UncountedAsUnchanged)
+                {
+                    return Error.Conflict("count.lines_uncounted", "Every line is counted before the count is finished, unless the uncounted lines are taken as unchanged.").WithWhy(("lineNos", uncounted.Select(static l => l.LineNo).ToList()));
+                }
+
+                // Unchanged means "what the books expect now": the snapshot plus what moved since the freeze.
+                await ComputeVariancesAsync(count, cancellationToken);
+                var actor = principal.Principal?.UserId.Value;
+                foreach (var line in uncounted)
+                {
+                    line.CountedQty = line.ExpectedQty + line.MovementSinceFreeze;
+                    line.CountedBy = actor;
+                    line.CountedAt = clock.UtcNow;
+                    line.RecountRequested = false;
+                    line.Status = "counted";
+                }
+
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
+            var reviewed = await ReviewAsync(countId, cancellationToken);
+            if (reviewed.IsFailure)
+            {
+                return reviewed.Error!;
+            }
+        }
+
+        if (count.Status == "review")
+        {
+            await ComputeVariancesAsync(count, cancellationToken);
+            var reason = await VarianceReasonAsync(request, cancellationToken);
+            if (reason.IsFailure)
+            {
+                return reason.Error!;
+            }
+
+            foreach (var line in count.Lines.Where(static l => l.VarianceQty != 0m && l.ReasonCodeId is null))
+            {
+                line.ReasonCodeId = reason.Value.Id;
+                if (!string.IsNullOrWhiteSpace(request.Note))
+                {
+                    line.Note = request.Note.Trim();
+                }
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+            var approved = await ApproveAsync(countId, cancellationToken);
+            if (approved.IsFailure)
+            {
+                return approved.Error!;
+            }
+        }
+
+        return await PostAsync(countId, cancellationToken);
+    }
+
+    public const string DefaultVarianceReason = "COUNT";
+
+    /// <summary>The reason the differences of a finished count carry: the code given, or the shipped COUNT reason made on first use; active and applying to counts.</summary>
+    private async Task<Result<ReasonCode>> VarianceReasonAsync(FinishCountRequest request, CancellationToken cancellationToken)
+    {
+        var code = string.IsNullOrWhiteSpace(request.ReasonCode) ? DefaultVarianceReason : request.ReasonCode.Trim().ToUpperInvariant();
+        var reason = await db.ReasonCodes.SingleOrDefaultAsync(r => r.Code == code, cancellationToken);
+        if (reason is null && code == DefaultVarianceReason)
+        {
+            // Written before the lines name it: the line's reason is a plain column, so the context does not order the two.
+            reason = new ReasonCode { Id = Guid.CreateVersion7(), Code = DefaultVarianceReason, Name = LocalizedText.Bilingual("Count difference", "فرق الجرد"), AppliesTo = "count", CreatedAt = clock.UtcNow, UpdatedAt = clock.UtcNow };
+            db.ReasonCodes.Add(reason);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        if (reason is null || !reason.IsActive || reason.AppliesTo != "count")
+        {
+            return Error.Validation("count.reason_not_applicable", "A count variance takes an active reason code that applies to counts.").WithWhy(("reasonCode", code));
+        }
+
+        if (reason.RequiresNote && string.IsNullOrWhiteSpace(request.Note))
+        {
+            return Error.Validation("count.note_required", "This reason code requires a note.").WithWhy(("reasonCode", reason.Code));
+        }
+
+        return reason;
     }
 
     public async Task<Result<CountSummary>> CancelAsync(Guid countId, CancellationToken cancellationToken)

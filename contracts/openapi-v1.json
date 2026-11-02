@@ -14278,6 +14278,54 @@
         }
       }
     },
+    "/api/v1/inventory/counts/{countId}/finish": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Finishes a count in one step: the lines nobody counted taken as unchanged when asked, every difference given its reason code (COUNT by default, created on first use), the count reviewed, approved and posted",
+        "operationId": "postInventoryCountsByCountIdFinish",
+        "parameters": [
+          {
+            "name": "countId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/FinishCountRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/inventory/counts/{countId}/cancel": {
       "post": {
         "tags": [
@@ -48332,6 +48380,28 @@
             ]
           }
         }
+      },
+      "FinishCountRequest": {
+        "type": "object",
+        "properties": {
+          "reasonCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uncountedAsUnchanged": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "Finishing a count in one step (trader edition, ADR-0035 §9): the reason every difference takes when its line has none (the shipped COUNT reason by default), a note for it, and whether the lines nobody counted are taken as unchanged."
       },
       "FiscalCalendarSummary": {
         "required": [

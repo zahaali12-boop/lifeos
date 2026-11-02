@@ -142,7 +142,7 @@ export const traderNavigation: NavigationItem[] = [
   { to: "/sales/customers", label: "nav.customers", icon: Contact, shortcut: "s c", permission: "partners.customer.read" },
   { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
   { to: "/inventory/items", label: "nav.items", icon: Package, shortcut: "g i", permission: "inventory.item.read" },
-  { to: "/inventory/stock", label: "nav.stock", icon: Boxes, shortcut: "g k", permission: "inventory.stock.read" },
+  { to: "/trader/stock", label: "nav.trader.stock", icon: Boxes, shortcut: "g k", permission: "inventory.stock.read" },
   { to: "/settings", label: "nav.settings", icon: Settings, shortcut: "g ^", permission: "organization.settings.manage" },
 ];
 
