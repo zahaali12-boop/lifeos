@@ -220,6 +220,38 @@ public static class PurchasingEndpoints
         chargeTypes.MapPut("/{chargeTypeId:guid}", async (Guid chargeTypeId, SaveChargeTypeRequest request, LandedCostService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveChargeTypeAsync(chargeTypeId, request, ct)))
             .RequirePermission(PurchasingPermissions.LandedCostManage);
 
+        // Shipments (trader edition, ADR-0035 §4): an order's journey with its costs and what was paid; arrival posts the
+        // receipt and the landed costs through their own services, so the posting permissions of those documents apply.
+        var shipments = purchasing.MapGroup("/shipments");
+        shipments.MapGet("/", async (Guid? companyId, string? status, ShipmentService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
+            .RequirePermission(PurchasingPermissions.OrderRead);
+        shipments.MapPost("/", async (CreatePurchaseShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static s => $"/api/v1/purchasing/shipments/{s.Id}"))
+            .RequirePermission(PurchasingPermissions.OrderManage)
+            .WithSummary("Starts tracking a purchase order as a shipment; a draft order is submitted first");
+        shipments.MapGet("/{shipmentId:guid}", async (Guid shipmentId, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(shipmentId, ct)))
+            .RequirePermission(PurchasingPermissions.OrderRead);
+        shipments.MapPut("/{shipmentId:guid}", async (Guid shipmentId, UpdatePurchaseShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(shipmentId, request, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage);
+        shipments.MapPost("/{shipmentId:guid}/advance", async (Guid shipmentId, AdvancePurchaseShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.AdvanceAsync(shipmentId, request, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage)
+            .WithSummary("Moves the shipment to a later stage (in_production, shipped, at_port, customs) on a date with a note");
+        shipments.MapPost("/{shipmentId:guid}/costs", async (Guid shipmentId, SavePurchaseShipmentCostRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.AddCostAsync(shipmentId, request, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage)
+            .WithSummary("A cost of the journey in its currency at the rate paid (or the day's spot rate); landed on the stock when the goods are received");
+        shipments.MapDelete("/{shipmentId:guid}/costs/{costId:guid}", async (Guid shipmentId, Guid costId, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.RemoveCostAsync(shipmentId, costId, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage);
+        shipments.MapPut("/{shipmentId:guid}/payment", async (Guid shipmentId, SetPurchaseShipmentPaymentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.SetPaymentAsync(shipmentId, request, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage)
+            .WithSummary("What was paid for the goods in the company's currency; the effective exchange rate follows");
+        shipments.MapPost("/{shipmentId:guid}/receive", async (Guid shipmentId, ReceivePurchaseShipmentRequest? request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.ReceiveAsync(shipmentId, request ?? new ReceivePurchaseShipmentRequest(), ct)))
+            .RequirePermission(PurchasingPermissions.ReceiptPost).RequirePermission(PurchasingPermissions.LandedCostPost)
+            .WithSummary("The goods arrived: a receipt for everything open on the order is posted into the warehouse and the costs become a posted landed-cost document");
+        shipments.MapPost("/{shipmentId:guid}/invoice", async (Guid shipmentId, RecordPurchaseShipmentInvoiceRequest? request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.RecordInvoiceAsync(shipmentId, request ?? new RecordPurchaseShipmentInvoiceRequest(), ct)))
+            .RequirePermission(PurchasingPermissions.InvoicePost)
+            .WithSummary("The supplier's invoice for the received goods at the ordered prices: created, matched and posted into the payable");
+        shipments.MapPost("/{shipmentId:guid}/cancel", async (Guid shipmentId, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(shipmentId, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage);
+
         var landedCosts = purchasing.MapGroup("/landed-costs");
         landedCosts.MapGet("/", async (Guid? companyId, string? status, LandedCostService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
             .RequirePermission(PurchasingPermissions.LandedCostRead)

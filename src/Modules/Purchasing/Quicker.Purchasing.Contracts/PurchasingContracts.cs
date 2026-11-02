@@ -16,6 +16,9 @@ public static class PurchaseDocumentTypes
     public const string LandedCost = "landed_cost_document";
 
     public const string Return = "purchase_return";
+
+    /// <summary>A purchase order's journey from order to arrival (trader edition): stages, costs, what was paid.</summary>
+    public const string Shipment = "purchase_shipment";
 }
 
 /// <summary>An open purchase order line as receipts (4.3) and invoices (4.4) see it: quantities in the entered unit and in the base unit, the price in the order's currency.</summary>

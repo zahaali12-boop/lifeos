@@ -17,6 +17,7 @@ internal sealed class PurchasingRecordCompanies(IUnitOfWorkAccessor unitOfWork) 
         [PurchaseDocumentTypes.Invoice] = "app.pur_invoices",
         [PurchaseDocumentTypes.LandedCost] = "app.pur_landed_cost_docs",
         [PurchaseDocumentTypes.Return] = "app.pur_returns",
+        [PurchaseDocumentTypes.Shipment] = "app.pur_shipments",
     };
 
     public IReadOnlyCollection<string> EntityTypes => Tables.Keys;

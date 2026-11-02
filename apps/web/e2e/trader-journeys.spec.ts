@@ -123,7 +123,43 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("order-from-GUANG").click();
   await expect(page.getByTestId("ordered-note")).toContainText("PO-");
   await expect(page.getByTestId("offers-detail").getByTestId("offer-status")).toHaveText("Ordered");
+
+  // The shipment: ordered at once; shipped with a date; sea freight added; what was paid recorded; received into the
+  // store, which posts the receipt and lands the freight on the stock; the supplier's invoice recorded into the payable.
+  await page.getByTestId("ordered-note").getByRole("link", { name: "Follow the shipment" }).click();
+  await expect(page.getByTestId("shipment-detail")).toBeVisible();
+  await expect(page.getByTestId("shipment-stage")).toHaveText("Ordered");
+  await expect(page.getByTestId("stage-ordered")).toContainText("Ordered");
+  await page.getByTestId("next-stage").selectOption("shipped");
+  await page.getByTestId("next-stage-note").fill("MSC Gulsun, container MSCU1234567");
+  await page.getByTestId("advance-shipment").click();
+  await expect(page.getByTestId("shipment-stage")).toHaveText("Shipped");
+  await expect(page.getByTestId("shipment-hint")).toHaveCount(2);
+  await page.getByTestId("add-cost").click();
+  await page.getByTestId("cost-type").selectOption({ label: "FREIGHT · Freight" });
+  await page.getByTestId("cost-amount").fill("200000");
+  await page.getByTestId("save-cost").click();
+  await expect(page.getByTestId("cost-row")).toHaveCount(1);
+  await expect(page.getByTestId("cost-row")).toContainText("200,000");
+  await page.getByTestId("record-payment").click();
+  await page.getByTestId("paid-amount").fill("2000000");
+  await page.getByTestId("save-payment").click();
+  await expect(page.getByTestId("landed-total")).toContainText("2,200,000");
+  await expect(page.getByTestId("shipment-hints")).toContainText("above the order's");
+  await expect(page.getByTestId("shipment-line").first().getByTestId("landed-unit")).toContainText("16,708");
+  await expectAccessible(page);
+  await page.getByTestId("receive-warehouse").selectOption({ label: "MAIN · Main store" });
+  await page.getByTestId("receive-shipment").click();
+  await expect(page.getByTestId("shipment-stage")).toHaveText("Received", { timeout: 20_000 });
+  await expect(page.getByTestId("received-note")).toContainText("GRN-");
+  await expect(page.getByTestId("received-note")).toContainText("landed on the stock");
+  await page.getByTestId("invoice-number").fill("GZ-2026-18");
+  await page.getByTestId("record-invoice").click();
+  await expect(page.getByTestId("invoice-note")).toContainText("recorded in what you owe", { timeout: 20_000 });
+  await expect(page.getByTestId("shipment-hints")).toHaveCount(0);
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("grid")).toContainText("Received");
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Offers" }).click();
   await expect(page.getByRole("grid")).toContainText("Ordered");
 
   // Arabic, right-to-left: the flat bar, the list and the record in Arabic.
@@ -136,5 +172,13 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByRole("grid").getByText("Brake pads and filters, autumn", { exact: true }).dblclick();
   await expect(page.getByTestId("offers-detail")).toBeVisible();
   await expect(page.getByTestId("offer-row").filter({ hasText: "GUANG" })).toContainText("تم الطلب");
+  await expectAccessible(page);
+  await page.keyboard.press("Escape");
+  await page.getByTestId("flat-nav").getByRole("link", { name: "الشحنات" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("الشحنات");
+  await expect(page.getByRole("grid")).toContainText("وصلت");
+  await page.getByRole("grid").getByText("GUANG", { exact: false }).first().dblclick();
+  await expect(page.getByTestId("shipment-detail")).toBeVisible();
+  await expect(page.getByTestId("shipment-stage")).toHaveText("وصلت");
   await expectAccessible(page);
 });

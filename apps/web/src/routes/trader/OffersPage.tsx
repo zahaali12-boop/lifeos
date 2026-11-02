@@ -89,7 +89,7 @@ export function OffersPage() {
   const [openId, setOpenId] = useOpenRecord("/trader/offers");
   const [offer, setOffer] = useState<OfferForm | null>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
-  const [ordered, setOrdered] = useState<{ id: string; number: string } | null>(null);
+  const [ordered, setOrdered] = useState<{ id: string; number: string; shipmentId: string } | null>(null);
   const suppliers = useSuppliers(companyId);
 
   const list = useQuery({
@@ -122,11 +122,17 @@ export function OffersPage() {
     onError: fail,
   });
   const award = useMutation({
-    mutationFn: async (input: { id: string; quoteId: string }) => unwrap(await api.POST("/api/v1/purchasing/rfqs/{rfqId}/award", { params: { path: { rfqId: input.id } }, body: { quoteId: input.quoteId } })),
+    // The order is tracked as a shipment at once, so the trader follows it from the next screen.
+    mutationFn: async (input: { id: string; quoteId: string }) => {
+      const order = unwrap(await api.POST("/api/v1/purchasing/rfqs/{rfqId}/award", { params: { path: { rfqId: input.id } }, body: { quoteId: input.quoteId } }));
+      const shipment = unwrap(await api.POST("/api/v1/purchasing/shipments", { body: { orderId: order.id } }));
+      return { id: order.id, number: order.number, shipmentId: shipment.id };
+    },
     onSuccess: async (order) => {
       setProblem(null);
-      setOrdered({ id: order.id, number: order.number });
+      setOrdered(order);
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["shipments"] });
       await refresh();
     },
     onError: fail,
@@ -285,6 +291,7 @@ export function OffersPage() {
               {ordered ? (
                 <p className="rounded-md border border-success/40 bg-success-soft p-3 text-sm" data-testid="ordered-note">
                   {t("trader.offers.ordered", { number: ordered.number })}{" "}
+                  <Link to="/trader/shipments" search={{ open: ordered.shipmentId }} className="font-medium text-accent underline">{t("trader.offers.followShipment")}</Link>{" · "}
                   <Link to="/purchasing/orders" search={{ open: ordered.id }} className="font-medium text-accent underline">{t("trader.offers.openOrder")}</Link>
                 </p>
               ) : null}

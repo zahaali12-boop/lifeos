@@ -134,6 +134,7 @@ export const navigation: NavigationItem[] = [
 export const traderNavigation: NavigationItem[] = [
   { to: "/", label: "nav.trader.home", icon: LayoutDashboard, shortcut: "g d" },
   { to: "/trader/offers", label: "nav.trader.offers", icon: GitCompareArrows, shortcut: "g o", permission: "purchasing.rfq.read" },
+  { to: "/trader/shipments", label: "nav.trader.shipments", icon: Ship, shortcut: "g 2", permission: "purchasing.order.read" },
   { to: "/purchasing/orders", label: "nav.trader.orders", icon: FileText, shortcut: "g 7", permission: "purchasing.order.read" },
   { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
   { to: "/sales/customers", label: "nav.customers", icon: Contact, shortcut: "s c", permission: "partners.customer.read" },

@@ -1001,3 +1001,95 @@ public sealed class SupplierReturnLine : ITenantEntity
     public DateTimeOffset CreatedAt { get; set; }
 }
 
+/// <summary>
+/// A purchase order's journey (trader edition, ADR-0035 §4): the stage it is at, the events that got it there, the
+/// costs paid along the way, what was paid for the goods in the company's currency, and the documents the arrival made.
+/// </summary>
+public sealed class Shipment : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public Guid OrderId { get; set; }
+
+    public string Status { get; set; } = "ordered";
+
+    public DateOnly? ExpectedArrival { get; set; }
+
+    public string? TrackingReference { get; set; }
+
+    public string? Notes { get; set; }
+
+    /// <summary>What was actually paid for the goods, in the company's currency; null until recorded.</summary>
+    public decimal? PaidAmountRc { get; set; }
+
+    public DateOnly? PaidOn { get; set; }
+
+    public Guid? ReceiptId { get; set; }
+
+    public Guid? LandedCostId { get; set; }
+
+    public Guid? InvoiceId { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public List<ShipmentEvent> Events { get; } = [];
+
+    public List<ShipmentCost> Costs { get; } = [];
+}
+
+public sealed class ShipmentEvent : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ShipmentId { get; set; }
+
+    public string Status { get; set; } = string.Empty;
+
+    public DateOnly OccurredOn { get; set; }
+
+    public string? Note { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A cost of the journey (freight, duty, port, transport) in its own currency at the rate actually paid, kept in the company's currency too.</summary>
+public sealed class ShipmentCost : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ShipmentId { get; set; }
+
+    public int LineNo { get; set; }
+
+    public Guid ChargeTypeId { get; set; }
+
+    public string? Description { get; set; }
+
+    public decimal Amount { get; set; }
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal ExchangeRate { get; set; } = 1m;
+
+    public decimal AmountRc { get; set; }
+
+    public DateOnly? PaidOn { get; set; }
+
+    public Guid? PartnerId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}

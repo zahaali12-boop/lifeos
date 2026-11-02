@@ -9846,6 +9846,156 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingShipments"];
+        put?: never;
+        /** Starts tracking a purchase order as a shipment; a draft order is submitted first */
+        post: operations["postPurchasingShipments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPurchasingShipmentsByShipmentId"];
+        put: operations["putPurchasingShipmentsByShipmentId"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/advance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Moves the shipment to a later stage (in_production, shipped, at_port, customs) on a date with a note */
+        post: operations["postPurchasingShipmentsByShipmentIdAdvance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A cost of the journey in its currency at the rate paid (or the day's spot rate); landed on the stock when the goods are received */
+        post: operations["postPurchasingShipmentsByShipmentIdCosts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/costs/{costId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deletePurchasingShipmentsByShipmentIdCostsByCostId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** What was paid for the goods in the company's currency; the effective exchange rate follows */
+        put: operations["putPurchasingShipmentsByShipmentIdPayment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The goods arrived: a receipt for everything open on the order is posted into the warehouse and the costs become a posted landed-cost document */
+        post: operations["postPurchasingShipmentsByShipmentIdReceive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The supplier's invoice for the received goods at the ordered prices: created, matched and posted into the payable */
+        post: operations["postPurchasingShipmentsByShipmentIdInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postPurchasingShipmentsByShipmentIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/landed-costs": {
         parameters: {
             query?: never;
@@ -12232,6 +12382,13 @@ export interface components {
             /** Format: int32 */
             changed: number | string;
         };
+        /** @description Moves the shipment forward to in_production, shipped, at_port or customs on a date, with a note (container, vessel, broker). */
+        AdvancePurchaseShipmentRequest: {
+            status: string;
+            /** Format: date */
+            occurredOn?: null | string;
+            note?: null | string;
+        };
         AgingReport: {
             /** Format: uuid */
             companyId: string;
@@ -14317,6 +14474,14 @@ export interface components {
             partnerId?: null | string;
             /** Format: uuid */
             warehouseId?: null | string;
+        };
+        CreatePurchaseShipmentRequest: {
+            /** Format: uuid */
+            orderId: string;
+            /** Format: date */
+            expectedArrival?: null | string;
+            trackingReference?: null | string;
+            notes?: null | string;
         };
         CreateReconciliationRequest: {
             /** Format: uuid */
@@ -19488,6 +19653,128 @@ export interface components {
             /** @default line */
             taxRoundingLevel: string;
         };
+        PurchaseShipmentCostSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            chargeTypeId: string;
+            chargeTypeCode: string;
+            chargeTypeName: {
+                [key: string]: string;
+            };
+            description: null | string;
+            /** Format: double */
+            amount: number | string;
+            currency: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            /** Format: double */
+            amountRc: number | string;
+            /** Format: date */
+            paidOn: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+        };
+        PurchaseShipmentEventSummary: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+            /** Format: date */
+            occurredOn: string;
+            note: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @description Something the trader should look at, as a code the client words: arrival_overdue (days), no_costs, payment_missing, rate_above_order (percent), rate_below_order (percent), invoice_missing, stale (days). */
+        PurchaseShipmentHint: {
+            code: string;
+            /** Format: double */
+            value: null | number | string;
+        };
+        /** @description One ordered item with its share of the goods paid and of the costs, in the company's currency, and the landed cost of one unit. */
+        PurchaseShipmentLineSummary: {
+            /** Format: uuid */
+            orderLineId: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            quantity: number | string;
+            uomCode: string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            goodsRc: number | string;
+            /** Format: double */
+            costsRc: number | string;
+            /** Format: double */
+            landedRc: number | string;
+            /** Format: double */
+            landedUnitCostRc: number | string;
+        };
+        PurchaseShipmentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            orderId: string;
+            orderNumber: string;
+            orderStatus: string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            currency: string;
+            /** Format: double */
+            orderExchangeRate: number | string;
+            /** Format: double */
+            goodsTotal: number | string;
+            /** Format: double */
+            goodsTotalRc: number | string;
+            functionalCurrency: string;
+            status: string;
+            /** Format: date */
+            orderedOn: string;
+            /** Format: date */
+            expectedArrival: null | string;
+            trackingReference: null | string;
+            notes: null | string;
+            /** Format: double */
+            paidAmountRc: null | number | string;
+            /** Format: date */
+            paidOn: null | string;
+            /** Format: double */
+            effectiveRate: null | number | string;
+            /** Format: double */
+            costsTotalRc: number | string;
+            /** Format: double */
+            landedTotalRc: number | string;
+            /** Format: uuid */
+            receiptId: null | string;
+            receiptNumber: null | string;
+            /** Format: uuid */
+            landedCostId: null | string;
+            /** Format: uuid */
+            invoiceId: null | string;
+            invoiceNumber: null | string;
+            invoiceStatus: null | string;
+            events: components["schemas"]["PurchaseShipmentEventSummary"][];
+            costs: components["schemas"]["PurchaseShipmentCostSummary"][];
+            lines: components["schemas"]["PurchaseShipmentLineSummary"][];
+            hints: components["schemas"]["PurchaseShipmentHint"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
         QuantityConversion: {
             /** Format: double */
             value: number | string;
@@ -20049,6 +20336,12 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        ReceivePurchaseShipmentRequest: {
+            /** Format: uuid */
+            warehouseId?: null | string;
+            /** Format: date */
+            postingDate?: null | string;
+        };
         ReceiveSalesReturnRequest: {
             /** Format: date */
             postingDate?: null | string;
@@ -20112,6 +20405,13 @@ export interface components {
             bankAccountId: null | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        RecordPurchaseShipmentInvoiceRequest: {
+            supplierInvoiceNumber?: null | string;
+            /** Format: date */
+            documentDate?: null | string;
+            /** Format: date */
+            postingDate?: null | string;
         };
         /** @description A record another module owns, as a pricing screen shows it. */
         RecordRef: {
@@ -23393,6 +23693,21 @@ export interface components {
             notes?: null | string;
             customFields?: unknown;
         };
+        /** @description A cost of the journey: its charge type, amount and currency; the rate actually paid, or the spot rate of the day when none is given. */
+        SavePurchaseShipmentCostRequest: {
+            /** Format: uuid */
+            chargeTypeId: string;
+            /** Format: double */
+            amount: number | string;
+            currency?: null | string;
+            /** Format: double */
+            exchangeRate?: null | number | string;
+            description?: null | string;
+            /** Format: date */
+            paidOn?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+        };
         SaveQuotationLineRequest: {
             /** Format: uuid */
             itemId?: null | string;
@@ -24636,6 +24951,13 @@ export interface components {
             modules: string[];
             state: string;
             reason?: null | string;
+        };
+        /** @description What was paid for the goods in the company's currency (null clears it); the effective rate follows from it. */
+        SetPurchaseShipmentPaymentRequest: {
+            /** Format: double */
+            paidAmountRc: null | number | string;
+            /** Format: date */
+            paidOn?: null | string;
         };
         SetStandardCostRequest: {
             /** Format: uuid */
@@ -26424,6 +26746,12 @@ export interface components {
         };
         UpdateProposalLinesRequest: {
             lines: components["schemas"]["ProposalLineChange"][];
+        };
+        UpdatePurchaseShipmentRequest: {
+            /** Format: date */
+            expectedArrival?: null | string;
+            trackingReference?: null | string;
+            notes?: null | string;
         };
         UsageRequest: {
             /** Format: uuid */
@@ -45051,6 +45379,276 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChargeTypeSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingShipments: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"][];
+                };
+            };
+        };
+    };
+    postPurchasingShipments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePurchaseShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    getPurchasingShipmentsByShipmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingShipmentsByShipmentId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePurchaseShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingShipmentsByShipmentIdAdvance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdvancePurchaseShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingShipmentsByShipmentIdCosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePurchaseShipmentCostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    deletePurchasingShipmentsByShipmentIdCostsByCostId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+                costId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    putPurchasingShipmentsByShipmentIdPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPurchaseShipmentPaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingShipmentsByShipmentIdReceive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["ReceivePurchaseShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingShipmentsByShipmentIdInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["RecordPurchaseShipmentInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingShipmentsByShipmentIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
                 };
             };
         };

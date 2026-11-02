@@ -1,0 +1,580 @@
+using Microsoft.EntityFrameworkCore;
+using Quicker.Audit.Contracts;
+using Quicker.Identity.Contracts;
+using Quicker.Items.Contracts;
+using Quicker.Kernel.Amounts;
+using Quicker.Kernel.Ids;
+using Quicker.Kernel.Results;
+using Quicker.Kernel.Time;
+using Quicker.Organization.Contracts;
+using Quicker.Partners.Contracts;
+using Quicker.Purchasing.Contracts;
+using Quicker.Purchasing.Domain;
+using Quicker.Purchasing.Persistence;
+
+namespace Quicker.Purchasing.Application;
+
+/// <summary>
+/// A shipment is a purchase order's journey (trader edition, ADR-0035 §4): ordered, in production, shipped, at port,
+/// customs, received, as events with dates and notes; the costs along the way (freight, duty, port, transport), each
+/// in its own currency at the rate actually paid; what was paid for the goods in the company's currency; and, on
+/// arrival, the goods receipt and the landed-cost document posted through the purchasing services, then the
+/// supplier's invoice. Nothing is posted outside those services: the shipment adds the timeline, the money paid, the
+/// landed cost per unit and the hints a trader should act on.
+/// </summary>
+public sealed class ShipmentService(
+    PurchasingDbContext db,
+    ICompanyDirectory companies,
+    IExchangeRateResolver rates,
+    IItemDirectory items,
+    IPartnerDirectory partners,
+    ICurrentPrincipal principal,
+    IAuditSink audit,
+    IClock clock,
+    PurchaseOrderService orders,
+    ReceiptService receipts,
+    LandedCostService landedCosts,
+    InvoiceService invoices)
+{
+    public const string DocumentType = PurchaseDocumentTypes.Shipment;
+
+    /// <summary>The stages in order; a shipment moves forward only, and reaches received through <see cref="ReceiveAsync"/>.</summary>
+    public static readonly string[] Stages = ["ordered", "in_production", "shipped", "at_port", "customs", "received"];
+
+    private static readonly string[] ClosedOrderStatuses = ["cancelled", "closed", "rejected"];
+
+    public async Task<IReadOnlyList<PurchaseShipmentSummary>> ListAsync(Guid? companyId, string? status, CancellationToken cancellationToken)
+    {
+        var query = db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).AsSplitQuery().AsNoTracking().AsQueryable();
+        if (companyId is { } c)
+        {
+            query = query.Where(s => s.CompanyId == c);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(s => s.Status == status);
+        }
+
+        var shipments = await query.OrderByDescending(static s => s.UpdatedAt).ToListAsync(cancellationToken);
+        var result = new List<PurchaseShipmentSummary>(shipments.Count);
+        foreach (var shipment in shipments)
+        {
+            var order = await db.Orders.Include(static o => o.Lines).AsNoTracking().SingleAsync(o => o.Id == shipment.OrderId, cancellationToken);
+            result.Add(await MapAsync(shipment, order, cancellationToken));
+        }
+
+        return result;
+    }
+
+    public async Task<Result<PurchaseShipmentSummary>> GetAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var shipment = await LoadAsync(id, true, cancellationToken);
+        return shipment is null ? Error.NotFound(DocumentType, id) : await MapAsync(shipment, await OrderOfAsync(shipment, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>Starts tracking an order. A draft order is submitted first, so "ordered" is true; one shipment per order.</summary>
+    public async Task<Result<PurchaseShipmentSummary>> CreateAsync(CreatePurchaseShipmentRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var order = await db.Orders.Include(static o => o.Lines).AsNoTracking().SingleOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
+        if (order is null)
+        {
+            return Error.NotFound(PurchaseDocumentTypes.Order, request.OrderId);
+        }
+
+        if (ClosedOrderStatuses.Contains(order.Status, StringComparer.Ordinal))
+        {
+            return Error.Conflict("shipment.order_closed", "A cancelled or closed order is not shipped.").WithWhy(("order", order.Number), ("status", order.Status));
+        }
+
+        if (await db.Shipments.AnyAsync(s => s.OrderId == order.Id, cancellationToken))
+        {
+            return Error.Conflict("shipment.exists", "The order is already tracked as a shipment.").WithWhy(("order", order.Number));
+        }
+
+        if (order.Status is "draft" or "rejected")
+        {
+            var submitted = await orders.SubmitAsync(order.Id, cancellationToken);
+            if (submitted.IsFailure)
+            {
+                return submitted.Error!;
+            }
+        }
+
+        var now = clock.UtcNow;
+        var shipment = new Shipment
+        {
+            Id = Guid.CreateVersion7(),
+            CompanyId = order.CompanyId,
+            OrderId = order.Id,
+            Status = "ordered",
+            ExpectedArrival = request.ExpectedArrival ?? order.ExpectedDate,
+            TrackingReference = Shared.Trim(request.TrackingReference),
+            Notes = Shared.Trim(request.Notes),
+            CreatedBy = principal.Principal?.MembershipId.Value,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        shipment.Events.Add(new ShipmentEvent { Id = Guid.CreateVersion7(), ShipmentId = shipment.Id, Status = "ordered", OccurredOn = order.OrderDate, CreatedBy = shipment.CreatedBy, CreatedAt = now });
+        db.Shipments.Add(shipment);
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.Created, After: new { order = order.Number, shipment.ExpectedArrival, shipment.TrackingReference }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, await OrderOfAsync(shipment, cancellationToken), cancellationToken);
+    }
+
+    public async Task<Result<PurchaseShipmentSummary>> UpdateAsync(Guid id, UpdatePurchaseShipmentRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        shipment.ExpectedArrival = request.ExpectedArrival;
+        shipment.TrackingReference = Shared.Trim(request.TrackingReference);
+        shipment.Notes = Shared.Trim(request.Notes);
+        shipment.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return await MapAsync(shipment, await OrderOfAsync(shipment, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>Moves the shipment to a later stage (never back, never to received: arrival goes through <see cref="ReceiveAsync"/>).</summary>
+    public async Task<Result<PurchaseShipmentSummary>> AdvanceAsync(Guid id, AdvancePurchaseShipmentRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        var target = Array.IndexOf(Stages, request.Status);
+        if (target < 1 || request.Status == "received")
+        {
+            return Error.Validation("shipment.status_invalid", "The next stage is in_production, shipped, at_port or customs; arrival is recorded by receiving the goods.").WithWhy(("status", request.Status), ("allowed", Stages[1..^1]));
+        }
+
+        if (shipment.Status is "received" or "cancelled")
+        {
+            return Error.Conflict("shipment.closed", "A received or cancelled shipment does not move.").WithWhy(("status", shipment.Status));
+        }
+
+        if (target <= Array.IndexOf(Stages, shipment.Status))
+        {
+            return Error.Validation("shipment.status_backwards", "A shipment moves forward only.").WithWhy(("from", shipment.Status), ("to", request.Status));
+        }
+
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        var now = clock.UtcNow;
+        shipment.Events.Add(new ShipmentEvent { Id = Guid.CreateVersion7(), ShipmentId = shipment.Id, Status = request.Status, OccurredOn = request.OccurredOn ?? clock.TodayIn(company.TimeZone), Note = Shared.Trim(request.Note), CreatedBy = principal.Principal?.MembershipId.Value, CreatedAt = now });
+        var before = shipment.Status;
+        shipment.Status = request.Status;
+        shipment.UpdatedAt = now;
+        await db.SaveChangesAsync(cancellationToken);
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.StateChanged, Before: new { status = before }, After: new { status = shipment.Status, request.OccurredOn, request.Note }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    /// <summary>Adds a cost of the journey; in a foreign currency the rate actually paid is given, or the spot rate of the day stands in.</summary>
+    public async Task<Result<PurchaseShipmentSummary>> AddCostAsync(Guid id, SavePurchaseShipmentCostRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (shipment.Status is "received" or "cancelled")
+        {
+            return Error.Conflict("shipment.costs_locked", "The costs of a received shipment were landed on its stock; add a later cost as a landed-cost document.").WithWhy(("status", shipment.Status));
+        }
+
+        if (request.Amount <= 0m)
+        {
+            return Error.Validation("shipment.amount_invalid", "A cost is a positive amount.");
+        }
+
+        var chargeType = await db.ChargeTypes.AsNoTracking().SingleOrDefaultAsync(c => c.Id == request.ChargeTypeId && c.IsActive, cancellationToken);
+        if (chargeType is null)
+        {
+            return Error.Validation("shipment.charge_type_invalid", "The cost type does not exist or is inactive.").WithWhy(("chargeTypeId", request.ChargeTypeId));
+        }
+
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        var currency = await Shared.CurrencyAsync(companies, request.Currency, company.FunctionalCurrency.Code, "shipment", cancellationToken);
+        if (currency.IsFailure)
+        {
+            return currency.Error!;
+        }
+
+        if (request.ExchangeRate is { } given && given <= 0m)
+        {
+            return Error.Validation("shipment.rate_invalid", "An exchange rate is positive.");
+        }
+
+        var paidOn = request.PaidOn ?? clock.TodayIn(company.TimeZone);
+        var rate = 1m;
+        if (!string.Equals(currency.Value.Code, company.FunctionalCurrency.Code, StringComparison.Ordinal))
+        {
+            if (request.ExchangeRate is { } paidRate)
+            {
+                rate = paidRate;
+            }
+            else
+            {
+                var resolved = await rates.ResolveAsync(company.Id, currency.Value.Code, company.FunctionalCurrency.Code, paidOn, RateTypes.Spot, cancellationToken);
+                if (resolved.IsFailure)
+                {
+                    return Error.Validation("shipment.rate_missing", "Give the rate you paid, or enter the day's rate under Rates.").WithWhy(("from", currency.Value.Code), ("to", company.FunctionalCurrency.Code), ("date", paidOn));
+                }
+
+                rate = resolved.Value.Rate.Rate;
+            }
+        }
+
+        if (request.PartnerId is { } partnerId && await partners.FindAsync(partnerId, cancellationToken) is null)
+        {
+            return Error.Validation("shipment.partner_unknown", "The cost's supplier does not exist.").WithWhy(("partnerId", partnerId));
+        }
+
+        var now = clock.UtcNow;
+        var cost = new ShipmentCost
+        {
+            Id = Guid.CreateVersion7(),
+            ShipmentId = shipment.Id,
+            LineNo = shipment.Costs.Count == 0 ? 1 : shipment.Costs.Max(static c => c.LineNo) + 1,
+            ChargeTypeId = chargeType.Id,
+            Description = Shared.Trim(request.Description),
+            Amount = Shared.Round(request.Amount, currency.Value),
+            Currency = currency.Value.Code,
+            ExchangeRate = rate,
+            AmountRc = Shared.Round(request.Amount * rate, company.FunctionalCurrency),
+            PaidOn = request.PaidOn,
+            PartnerId = request.PartnerId,
+            CreatedAt = now,
+        };
+        shipment.Costs.Add(cost);
+        shipment.UpdatedAt = now;
+        await db.SaveChangesAsync(cancellationToken);
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.Updated, After: new { cost = chargeType.Code, cost.Amount, cost.Currency, cost.ExchangeRate, cost.AmountRc }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    public async Task<Result<PurchaseShipmentSummary>> RemoveCostAsync(Guid id, Guid costId, CancellationToken cancellationToken)
+    {
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (shipment.Status is "received" or "cancelled")
+        {
+            return Error.Conflict("shipment.costs_locked", "The costs of a received shipment were landed on its stock.").WithWhy(("status", shipment.Status));
+        }
+
+        var cost = shipment.Costs.SingleOrDefault(c => c.Id == costId);
+        if (cost is null)
+        {
+            return Error.NotFound("shipment_cost", costId);
+        }
+
+        shipment.Costs.Remove(cost);
+        db.ShipmentCosts.Remove(cost);
+        shipment.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return await MapAsync(shipment, await OrderOfAsync(shipment, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>Records what was paid for the goods in the company's currency; the effective rate and the landed cost per unit follow it.</summary>
+    public async Task<Result<PurchaseShipmentSummary>> SetPaymentAsync(Guid id, SetPurchaseShipmentPaymentRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (request.PaidAmountRc is { } paid && paid < 0m)
+        {
+            return Error.Validation("shipment.paid_invalid", "The amount paid is zero or more.");
+        }
+
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        shipment.PaidAmountRc = request.PaidAmountRc is { } amount ? Shared.Round(amount, company.FunctionalCurrency) : null;
+        shipment.PaidOn = request.PaidAmountRc is null ? null : request.PaidOn ?? clock.TodayIn(company.TimeZone);
+        shipment.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.Updated, After: new { shipment.PaidAmountRc, shipment.PaidOn }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    /// <summary>
+    /// The goods arrived: a receipt for everything still open on the order is created and posted into the warehouse,
+    /// and the costs recorded so far become a landed-cost document posted onto that receipt, so stock carries the
+    /// true cost. Both go through the receipt and landed-cost services exactly as if entered by hand.
+    /// </summary>
+    public async Task<Result<PurchaseShipmentSummary>> ReceiveAsync(Guid id, ReceivePurchaseShipmentRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (shipment.Status is "received" or "cancelled")
+        {
+            return Error.Conflict("shipment.closed", "The shipment is already received or cancelled.").WithWhy(("status", shipment.Status));
+        }
+
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        var open = order.Lines
+            .Where(static l => l.Status is not ("cancelled" or "closed"))
+            .Select(static l => (Line: l, Open: l.Quantity - l.QtyReceived - l.QtyCancelled))
+            .Where(static x => x.Open > 0m)
+            .ToList();
+        if (open.Count == 0)
+        {
+            return Error.Conflict("shipment.nothing_to_receive", "Every line of the order has been received already.").WithWhy(("order", order.Number));
+        }
+
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        var postingDate = request.PostingDate ?? clock.TodayIn(company.TimeZone);
+        var receipt = await receipts.CreateAsync(new SaveReceiptRequest(order.Id, open.Select(static x => new SaveReceiptLineRequest(x.Line.Id, x.Open)).ToList(), request.WarehouseId, postingDate, Notes: shipment.TrackingReference), cancellationToken);
+        if (receipt.IsFailure)
+        {
+            return receipt.Error!;
+        }
+
+        var posted = await receipts.PostAsync(receipt.Value.Id, cancellationToken);
+        if (posted.IsFailure)
+        {
+            return posted.Error!;
+        }
+
+        shipment.ReceiptId = posted.Value.Id;
+        if (shipment.Costs.Count > 0)
+        {
+            var charges = shipment.Costs.OrderBy(static c => c.LineNo).Select(static c => new SaveLandedCostChargeRequest(c.ChargeTypeId, c.AmountRc, c.PartnerId, c.Description)).ToList();
+            var landed = await landedCosts.CreateAsync(new SaveLandedCostRequest(shipment.CompanyId, charges, posted.Value.Lines.Select(static l => l.Id).ToList(), postingDate, company.FunctionalCurrency.Code, order.Number, shipment.TrackingReference), cancellationToken);
+            if (landed.IsFailure)
+            {
+                return landed.Error!;
+            }
+
+            var landedPosted = await landedCosts.PostAsync(landed.Value.Id, cancellationToken);
+            if (landedPosted.IsFailure)
+            {
+                return landedPosted.Error!;
+            }
+
+            shipment.LandedCostId = landed.Value.Id;
+        }
+
+        var now = clock.UtcNow;
+        shipment.Events.Add(new ShipmentEvent { Id = Guid.CreateVersion7(), ShipmentId = shipment.Id, Status = "received", OccurredOn = postingDate, Note = posted.Value.Number, CreatedBy = principal.Principal?.MembershipId.Value, CreatedAt = now });
+        shipment.Status = "received";
+        shipment.UpdatedAt = now;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.StateChanged, After: new { status = shipment.Status, receipt = posted.Value.Number, landedCost = shipment.LandedCostId }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, await OrderOfAsync(shipment, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>The supplier's invoice for the received goods, at the ordered prices: created, submitted and, when the match passes, posted into the payable.</summary>
+    public async Task<Result<PurchaseShipmentSummary>> RecordInvoiceAsync(Guid id, RecordPurchaseShipmentInvoiceRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (shipment.ReceiptId is null)
+        {
+            return Error.Conflict("shipment.not_received", "Receive the goods first; the invoice is matched against the receipt.").WithWhy(("status", shipment.Status));
+        }
+
+        if (shipment.InvoiceId is not null)
+        {
+            return Error.Conflict("shipment.invoiced", "The shipment's invoice is already recorded.").WithWhy(("invoiceId", shipment.InvoiceId));
+        }
+
+        var receipt = await receipts.GetAsync(shipment.ReceiptId.Value, cancellationToken);
+        if (receipt.IsFailure)
+        {
+            return receipt.Error!;
+        }
+
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        var today = clock.TodayIn(company.TimeZone);
+        var lines = receipt.Value.Lines.Select(static l => new SaveInvoiceLineRequest("receipt", l.QtyInOrderUom, l.UnitPrice, ReceiptLineId: l.Id)).ToList();
+        var invoice = await invoices.CreateAsync(new SaveInvoiceRequest(shipment.CompanyId, order.PartnerId, lines, "invoice", Shared.Trim(request.SupplierInvoiceNumber), request.DocumentDate ?? today, request.PostingDate ?? today, order.Currency), cancellationToken);
+        if (invoice.IsFailure)
+        {
+            return invoice.Error!;
+        }
+
+        var submitted = await invoices.SubmitAsync(invoice.Value.Id, cancellationToken);
+        if (submitted.IsFailure)
+        {
+            return submitted.Error!;
+        }
+
+        if (submitted.Value.Status == "approved")
+        {
+            var posted = await invoices.PostAsync(invoice.Value.Id, cancellationToken);
+            if (posted.IsFailure)
+            {
+                return posted.Error!;
+            }
+        }
+
+        shipment.InvoiceId = invoice.Value.Id;
+        shipment.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.Updated, After: new { invoice = invoice.Value.Number }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    public async Task<Result<PurchaseShipmentSummary>> CancelAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (shipment.Status is "received" or "cancelled")
+        {
+            return Error.Conflict("shipment.closed", "A received or cancelled shipment is not cancelled.").WithWhy(("status", shipment.Status));
+        }
+
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        var now = clock.UtcNow;
+        shipment.Events.Add(new ShipmentEvent { Id = Guid.CreateVersion7(), ShipmentId = shipment.Id, Status = "cancelled", OccurredOn = clock.TodayIn(company.TimeZone), CreatedBy = principal.Principal?.MembershipId.Value, CreatedAt = now });
+        shipment.Status = "cancelled";
+        shipment.UpdatedAt = now;
+        await db.SaveChangesAsync(cancellationToken);
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.StateChanged, After: new { status = shipment.Status }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    private async Task<Shipment?> LoadAsync(Guid id, bool readOnly, CancellationToken cancellationToken)
+    {
+        var query = db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).AsSplitQuery();
+        return readOnly ? await query.AsNoTracking().SingleOrDefaultAsync(s => s.Id == id, cancellationToken) : await query.SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
+    private Task<PurchaseOrder> OrderOfAsync(Shipment shipment, CancellationToken cancellationToken) =>
+        db.Orders.Include(static o => o.Lines).AsNoTracking().SingleAsync(o => o.Id == shipment.OrderId, cancellationToken);
+
+    private async Task<PurchaseShipmentSummary> MapAsync(Shipment s, PurchaseOrder order, CancellationToken cancellationToken)
+    {
+        var company = (await companies.FindAsync(new CompanyId(s.CompanyId), cancellationToken))!;
+        var fc = company.FunctionalCurrency;
+        var today = clock.TodayIn(company.TimeZone);
+        var partner = await partners.FindAsync(order.PartnerId, cancellationToken);
+        var goodsTotal = order.TotalGross;
+        var goodsRc = Shared.Round(goodsTotal * order.ExchangeRate, fc);
+        var effectiveRate = s.PaidAmountRc is { } paid && goodsTotal > 0m ? RoundingPolicy.Default.Round(paid / goodsTotal, 6) : (decimal?)null;
+        var basisRc = s.PaidAmountRc ?? goodsRc;
+        var costsRc = s.Costs.Sum(static c => c.AmountRc);
+        var landedRc = basisRc + costsRc;
+
+        // Each line's share of the goods paid and of the costs, by value, allocated so the shares add up exactly.
+        var live = order.Lines.Where(static l => l.Status != "cancelled").OrderBy(static l => l.LineNo).ToList();
+        var weights = live.Select(static l => l.NetAmount <= 0m ? 0m : l.NetAmount).ToList();
+        var allocatable = weights.Any(static w => w > 0m);
+        var goodsShares = allocatable ? RoundingPolicy.Default.Allocate(new Money(basisRc, fc), weights) : null;
+        var costShares = allocatable && costsRc > 0m ? RoundingPolicy.Default.Allocate(new Money(costsRc, fc), weights) : null;
+        var lines = new List<PurchaseShipmentLineSummary>(live.Count);
+        for (var i = 0; i < live.Count; i++)
+        {
+            var l = live[i];
+            var item = await items.FindAsync(l.ItemId, cancellationToken);
+            var uom = item is null ? null : (await items.UomsAsync(item.Id, cancellationToken)).FirstOrDefault(u => u.UomId == l.UomId);
+            var lineGoods = goodsShares?[i].Amount ?? 0m;
+            var lineCosts = costShares?[i].Amount ?? 0m;
+            var lineLanded = lineGoods + lineCosts;
+            lines.Add(new PurchaseShipmentLineSummary(l.Id, l.LineNo, l.ItemId, item?.Code ?? string.Empty, item?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), l.Quantity, uom?.UomCode ?? string.Empty, l.UnitPrice,
+                lineGoods, lineCosts, lineLanded, l.Quantity > 0m ? Shared.Round(lineLanded / l.Quantity, fc) : 0m));
+        }
+
+        var chargeTypes = await db.ChargeTypes.AsNoTracking().Where(c => s.Costs.Select(static x => x.ChargeTypeId).Contains(c.Id)).ToDictionaryAsync(static c => c.Id, cancellationToken);
+        var costs = s.Costs.OrderBy(static c => c.LineNo).Select(c =>
+        {
+            var type = chargeTypes.GetValueOrDefault(c.ChargeTypeId);
+            return new PurchaseShipmentCostSummary(c.Id, c.LineNo, c.ChargeTypeId, type?.Code ?? string.Empty, type?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), c.Description, c.Amount, c.Currency, c.ExchangeRate, c.AmountRc, c.PaidOn, c.PartnerId);
+        }).ToList();
+        var events = s.Events.OrderBy(static e => e.OccurredOn).ThenBy(static e => e.CreatedAt).Select(static e => new PurchaseShipmentEventSummary(e.Id, e.Status, e.OccurredOn, e.Note, e.CreatedAt)).ToList();
+        var receipt = s.ReceiptId is { } receiptId ? await db.Receipts.AsNoTracking().Where(r => r.Id == receiptId).Select(static r => r.Number).SingleOrDefaultAsync(cancellationToken) : null;
+        var invoice = s.InvoiceId is { } invoiceId ? await db.Invoices.AsNoTracking().Where(x => x.Id == invoiceId).Select(static x => new { x.Number, x.Status }).SingleOrDefaultAsync(cancellationToken) : null;
+        var ordered = events.Count > 0 ? events[0].OccurredOn : order.OrderDate;
+
+        return new PurchaseShipmentSummary(s.Id, s.CompanyId, order.Id, order.Number, order.Status, order.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal),
+            order.Currency, order.ExchangeRate, goodsTotal, goodsRc, fc.Code, s.Status, ordered, s.ExpectedArrival, s.TrackingReference, s.Notes, s.PaidAmountRc, s.PaidOn, effectiveRate, costsRc, landedRc,
+            s.ReceiptId, receipt, s.LandedCostId, s.InvoiceId, invoice?.Number, invoice?.Status, events, costs, lines, Hints(s, order, today, effectiveRate, costsRc), s.UpdatedAt);
+    }
+
+    /// <summary>What a trader should look at, in codes the client words with the value where one helps.</summary>
+    private static List<PurchaseShipmentHint> Hints(Shipment s, PurchaseOrder order, DateOnly today, decimal? effectiveRate, decimal costsRc)
+    {
+        var hints = new List<PurchaseShipmentHint>();
+        if (s.Status == "cancelled")
+        {
+            return hints;
+        }
+
+        var stage = Array.IndexOf(Stages, s.Status);
+        var underway = s.Status != "received";
+        if (underway && s.ExpectedArrival is { } eta && eta < today)
+        {
+            hints.Add(new PurchaseShipmentHint("arrival_overdue", today.DayNumber - eta.DayNumber));
+        }
+
+        if (underway && stage >= 2 && costsRc == 0m)
+        {
+            hints.Add(new PurchaseShipmentHint("no_costs", null));
+        }
+
+        if (stage >= 2 && s.PaidAmountRc is null)
+        {
+            hints.Add(new PurchaseShipmentHint("payment_missing", null));
+        }
+
+        // The rate paid matters while the goods are still to be priced; once received, the landed cost per unit says it.
+        if (underway && effectiveRate is { } rate && order.ExchangeRate > 0m && rate != order.ExchangeRate)
+        {
+            var pct = RoundingPolicy.Default.Round((rate - order.ExchangeRate) * 100m / order.ExchangeRate, 1);
+            hints.Add(new PurchaseShipmentHint(pct > 0m ? "rate_above_order" : "rate_below_order", Math.Abs(pct)));
+        }
+
+        if (s.Status == "received" && s.InvoiceId is null)
+        {
+            hints.Add(new PurchaseShipmentHint("invoice_missing", null));
+        }
+
+        if (underway && s.Events.Count > 0)
+        {
+            var last = s.Events.Max(static e => e.OccurredOn);
+            var idle = today.DayNumber - last.DayNumber;
+            if (idle > 30)
+            {
+                hints.Add(new PurchaseShipmentHint("stale", idle));
+            }
+        }
+
+        return hints;
+    }
+}

@@ -201,3 +201,67 @@ public sealed record ReturnSummary(Guid Id, Guid CompanyId, string Number, strin
 /// <summary>A posted receipt line with something left to return, and what has already gone back.</summary>
 public sealed record ReturnableLine(Guid ReceiptId, string ReceiptNumber, Guid ReceiptLineId, int LineNo, Guid PartnerId, string PartnerCode, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, string Tracking, Guid UomId, string UomCode, decimal Received, decimal Returned, decimal Remaining, string? LotNumber, IReadOnlyList<string> SerialNumbers, DateOnly PostingDate, Guid WarehouseId);
 
+// ------------------------------------------------------------------ shipments (trader edition, ADR-0035 §4)
+
+public sealed record CreatePurchaseShipmentRequest(Guid OrderId, DateOnly? ExpectedArrival = null, string? TrackingReference = null, string? Notes = null);
+
+public sealed record UpdatePurchaseShipmentRequest(DateOnly? ExpectedArrival = null, string? TrackingReference = null, string? Notes = null);
+
+/// <summary>Moves the shipment forward to in_production, shipped, at_port or customs on a date, with a note (container, vessel, broker).</summary>
+public sealed record AdvancePurchaseShipmentRequest(string Status, DateOnly? OccurredOn = null, string? Note = null);
+
+/// <summary>A cost of the journey: its charge type, amount and currency; the rate actually paid, or the spot rate of the day when none is given.</summary>
+public sealed record SavePurchaseShipmentCostRequest(Guid ChargeTypeId, decimal Amount, string? Currency = null, decimal? ExchangeRate = null, string? Description = null, DateOnly? PaidOn = null, Guid? PartnerId = null);
+
+/// <summary>What was paid for the goods in the company's currency (null clears it); the effective rate follows from it.</summary>
+public sealed record SetPurchaseShipmentPaymentRequest(decimal? PaidAmountRc, DateOnly? PaidOn = null);
+
+public sealed record ReceivePurchaseShipmentRequest(Guid? WarehouseId = null, DateOnly? PostingDate = null);
+
+public sealed record RecordPurchaseShipmentInvoiceRequest(string? SupplierInvoiceNumber = null, DateOnly? DocumentDate = null, DateOnly? PostingDate = null);
+
+public sealed record PurchaseShipmentEventSummary(Guid Id, string Status, DateOnly OccurredOn, string? Note, DateTimeOffset CreatedAt);
+
+public sealed record PurchaseShipmentCostSummary(Guid Id, int LineNo, Guid ChargeTypeId, string ChargeTypeCode, IReadOnlyDictionary<string, string> ChargeTypeName, string? Description, decimal Amount, string Currency, decimal ExchangeRate, decimal AmountRc, DateOnly? PaidOn, Guid? PartnerId);
+
+/// <summary>One ordered item with its share of the goods paid and of the costs, in the company's currency, and the landed cost of one unit.</summary>
+public sealed record PurchaseShipmentLineSummary(Guid OrderLineId, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, decimal Quantity, string UomCode, decimal UnitPrice, decimal GoodsRc, decimal CostsRc, decimal LandedRc, decimal LandedUnitCostRc);
+
+/// <summary>Something the trader should look at, as a code the client words: arrival_overdue (days), no_costs, payment_missing, rate_above_order (percent), rate_below_order (percent), invoice_missing, stale (days).</summary>
+public sealed record PurchaseShipmentHint(string Code, decimal? Value);
+
+public sealed record PurchaseShipmentSummary(
+    Guid Id,
+    Guid CompanyId,
+    Guid OrderId,
+    string OrderNumber,
+    string OrderStatus,
+    Guid PartnerId,
+    string PartnerCode,
+    IReadOnlyDictionary<string, string> PartnerName,
+    string Currency,
+    decimal OrderExchangeRate,
+    decimal GoodsTotal,
+    decimal GoodsTotalRc,
+    string FunctionalCurrency,
+    string Status,
+    DateOnly OrderedOn,
+    DateOnly? ExpectedArrival,
+    string? TrackingReference,
+    string? Notes,
+    decimal? PaidAmountRc,
+    DateOnly? PaidOn,
+    decimal? EffectiveRate,
+    decimal CostsTotalRc,
+    decimal LandedTotalRc,
+    Guid? ReceiptId,
+    string? ReceiptNumber,
+    Guid? LandedCostId,
+    Guid? InvoiceId,
+    string? InvoiceNumber,
+    string? InvoiceStatus,
+    IReadOnlyList<PurchaseShipmentEventSummary> Events,
+    IReadOnlyList<PurchaseShipmentCostSummary> Costs,
+    IReadOnlyList<PurchaseShipmentLineSummary> Lines,
+    IReadOnlyList<PurchaseShipmentHint> Hints,
+    DateTimeOffset UpdatedAt);

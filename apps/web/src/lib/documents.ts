@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 /** The list screens that open one record from the URL (?open=id). */
 export type RecordScreen =
   | "/trader/offers"
+  | "/trader/shipments"
   | "/purchasing/requisitions"
   | "/hr/employees"
   | "/hr/leave"

@@ -28530,6 +28530,438 @@
         }
       }
     },
+    "/api/v1/purchasing/shipments": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "getPurchasingShipments",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Starts tracking a purchase order as a shipment; a draft order is submitted first",
+        "operationId": "postPurchasingShipments",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePurchaseShipmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}": {
+      "get": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "getPurchasingShipmentsByShipmentId",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "putPurchasingShipmentsByShipmentId",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePurchaseShipmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/advance": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Moves the shipment to a later stage (in_production, shipped, at_port, customs) on a date with a note",
+        "operationId": "postPurchasingShipmentsByShipmentIdAdvance",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvancePurchaseShipmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/costs": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "A cost of the journey in its currency at the rate paid (or the day's spot rate); landed on the stock when the goods are received",
+        "operationId": "postPurchasingShipmentsByShipmentIdCosts",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePurchaseShipmentCostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/costs/{costId}": {
+      "delete": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "deletePurchasingShipmentsByShipmentIdCostsByCostId",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "costId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/payment": {
+      "put": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "What was paid for the goods in the company's currency; the effective exchange rate follows",
+        "operationId": "putPurchasingShipmentsByShipmentIdPayment",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPurchaseShipmentPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/receive": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "The goods arrived: a receipt for everything open on the order is posted into the warehouse and the costs become a posted landed-cost document",
+        "operationId": "postPurchasingShipmentsByShipmentIdReceive",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ReceivePurchaseShipmentRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/invoice": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "The supplier's invoice for the received goods at the ordered prices: created, matched and posted into the payable",
+        "operationId": "postPurchasingShipmentsByShipmentIdInvoice",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RecordPurchaseShipmentInvoiceRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/cancel": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "operationId": "postPurchasingShipmentsByShipmentIdCancel",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchasing/landed-costs": {
       "get": {
         "tags": [
@@ -35679,6 +36111,31 @@
             "format": "int32"
           }
         }
+      },
+      "AdvancePurchaseShipmentRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "occurredOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Moves the shipment forward to in_production, shipped, at_port or customs on a date, with a note (container, vessel, broker)."
       },
       "AgingReport": {
         "required": [
@@ -43471,6 +43928,37 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "CreatePurchaseShipmentRequest": {
+        "required": [
+          "orderId"
+        ],
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedArrival": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "trackingReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -63143,6 +63631,484 @@
           }
         }
       },
+      "PurchaseShipmentCostSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "chargeTypeId",
+          "chargeTypeCode",
+          "chargeTypeName",
+          "description",
+          "amount",
+          "currency",
+          "exchangeRate",
+          "amountRc",
+          "paidOn",
+          "partnerId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chargeTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chargeTypeCode": {
+            "type": "string"
+          },
+          "chargeTypeName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "PurchaseShipmentEventSummary": {
+        "required": [
+          "id",
+          "status",
+          "occurredOn",
+          "note",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "occurredOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PurchaseShipmentHint": {
+        "required": [
+          "code",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Something the trader should look at, as a code the client words: arrival_overdue (days), no_costs, payment_missing, rate_above_order (percent), rate_below_order (percent), invoice_missing, stale (days)."
+      },
+      "PurchaseShipmentLineSummary": {
+        "required": [
+          "orderLineId",
+          "lineNo",
+          "itemId",
+          "itemCode",
+          "itemName",
+          "quantity",
+          "uomCode",
+          "unitPrice",
+          "goodsRc",
+          "costsRc",
+          "landedRc",
+          "landedUnitCostRc"
+        ],
+        "type": "object",
+        "properties": {
+          "orderLineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uomCode": {
+            "type": "string"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "goodsRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costsRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "landedRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "landedUnitCostRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One ordered item with its share of the goods paid and of the costs, in the company's currency, and the landed cost of one unit."
+      },
+      "PurchaseShipmentSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "orderId",
+          "orderNumber",
+          "orderStatus",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "currency",
+          "orderExchangeRate",
+          "goodsTotal",
+          "goodsTotalRc",
+          "functionalCurrency",
+          "status",
+          "orderedOn",
+          "expectedArrival",
+          "trackingReference",
+          "notes",
+          "paidAmountRc",
+          "paidOn",
+          "effectiveRate",
+          "costsTotalRc",
+          "landedTotalRc",
+          "receiptId",
+          "receiptNumber",
+          "landedCostId",
+          "invoiceId",
+          "invoiceNumber",
+          "invoiceStatus",
+          "events",
+          "costs",
+          "lines",
+          "hints",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "orderStatus": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "currency": {
+            "type": "string"
+          },
+          "orderExchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "goodsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "goodsTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "orderedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "expectedArrival": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "trackingReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paidAmountRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "effectiveRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costsTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "landedTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "receiptId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "receiptNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "landedCostId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "invoiceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "invoiceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "invoiceStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseShipmentEventSummary"
+            }
+          },
+          "costs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseShipmentCostSummary"
+            }
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseShipmentLineSummary"
+            }
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseShipmentHint"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "QuantityConversion": {
         "required": [
           "value",
@@ -65260,6 +66226,25 @@
           }
         }
       },
+      "ReceivePurchaseShipmentRequest": {
+        "type": "object",
+        "properties": {
+          "warehouseId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "ReceiveSalesReturnRequest": {
         "type": "object",
         "properties": {
@@ -65493,6 +66478,31 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "RecordPurchaseShipmentInvoiceRequest": {
+        "type": "object",
+        "properties": {
+          "supplierInvoiceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "documentDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "postingDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
@@ -77055,6 +78065,63 @@
           "customFields": { }
         }
       },
+      "SavePurchaseShipmentCostRequest": {
+        "required": [
+          "chargeTypeId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "chargeTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paidOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "A cost of the journey: its charge type, amount and currency; the rate actually paid, or the spot rate of the day when none is given."
+      },
       "SaveQuotationLineRequest": {
         "type": "object",
         "properties": {
@@ -81305,6 +82372,31 @@
             ]
           }
         }
+      },
+      "SetPurchaseShipmentPaymentRequest": {
+        "required": [
+          "paidAmountRc"
+        ],
+        "type": "object",
+        "properties": {
+          "paidAmountRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        },
+        "description": "What was paid for the goods in the company's currency (null clears it); the effective rate follows from it."
       },
       "SetStandardCostRequest": {
         "required": [
@@ -87818,6 +88910,30 @@
             "items": {
               "$ref": "#/components/schemas/ProposalLineChange"
             }
+          }
+        }
+      },
+      "UpdatePurchaseShipmentRequest": {
+        "type": "object",
+        "properties": {
+          "expectedArrival": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "trackingReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

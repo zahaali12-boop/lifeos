@@ -49,7 +49,15 @@ would also throw away the tests and the invariants that make the books right.
    offer and the saving of splitting the order line by line. A request is awardable from a draft: a trader records the
    offers that reached him on the phone and orders without sending a request out; sending remains for those who do.
 
-4. **Nothing deferred to a second product.** The trader's later needs (shipments as a status timeline over the
+4. **Shipments: the order's journey, posted by the existing services.** A shipment (`pur_shipments`, one per purchase
+   order) carries the stages as dated events, the costs along the way in their own currency at the rate actually paid,
+   and what was paid for the goods in the company's currency; from these it shows the effective exchange rate and the
+   landed cost of each unit before the goods arrive. Arrival creates and posts the goods receipt and a landed-cost
+   document from the recorded costs through the receipt and landed-cost services, under their posting permissions,
+   and the supplier's invoice is created at the ordered prices, matched and posted into the payable by the invoice
+   service. The shipment never posts anything itself (A-187).
+
+5. **Nothing deferred to a second product.** The trader's later needs (shipments as a status timeline over the
    purchase order with landed costs and the exchange rate paid; pricing by purchase rate against a market rate with
    margins and loss alerts; plain-language sales, payments and aging with recommendations and charts; a project health
    page with break-even and a trader income statement; stock counting on the phone) are each a slice over the
@@ -67,4 +75,5 @@ would also throw away the tests and the invariants that make the books right.
 * Deferred (named in `docs/PROGRESS.md`): a home page of the trader's own (the full home shows for now); the
   "order from this supplier" step orders every line from one supplier, a split order is a suggestion the trader
   carries out by hand; offers in a foreign currency need a spot rate of the day entered under Rates, else the
-  comparison says so; the phone version.
+  comparison says so; costs that arrive after the goods were received (a landed-cost document by hand); partial
+  arrivals (one receipt per shipment); paying the supplier from the shipment screen; the phone version.

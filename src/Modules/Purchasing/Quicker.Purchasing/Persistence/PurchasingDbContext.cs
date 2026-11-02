@@ -57,6 +57,12 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
 
     public DbSet<SupplierReturnLine> ReturnLines => Set<SupplierReturnLine>();
 
+    public DbSet<Shipment> Shipments => Set<Shipment>();
+
+    public DbSet<ShipmentEvent> ShipmentEvents => Set<ShipmentEvent>();
+
+    public DbSet<ShipmentCost> ShipmentCosts => Set<ShipmentCost>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Requisition>(b =>
@@ -273,6 +279,30 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.HasKey(static x => new { x.TenantId, x.Id });
             b.Property(static x => x.Name).HasColumnName("name_i18n");
             b.HasAuditTrail("charge_type", static x => x.Code);
+        });
+
+        modelBuilder.Entity<Shipment>(b =>
+        {
+            b.ToTable("pur_shipments", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.PaidAmountRc).HasPrecision(24, 6);
+            b.HasMany(static x => x.Events).WithOne().HasForeignKey(static e => new { e.TenantId, e.ShipmentId });
+            b.HasMany(static x => x.Costs).WithOne().HasForeignKey(static c => new { c.TenantId, c.ShipmentId });
+        });
+
+        modelBuilder.Entity<ShipmentEvent>(b =>
+        {
+            b.ToTable("pur_shipment_events", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+        });
+
+        modelBuilder.Entity<ShipmentCost>(b =>
+        {
+            b.ToTable("pur_shipment_costs", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.Amount).HasPrecision(24, 6);
+            b.Property(static x => x.ExchangeRate).HasPrecision(24, 12);
+            b.Property(static x => x.AmountRc).HasPrecision(24, 6);
         });
 
         modelBuilder.Entity<LandedCostDocument>(b =>
