@@ -173,7 +173,7 @@ function TemplatesTab() {
           <TableHead>{t("tax.version")}</TableHead>
           <TableHead className="text-end">{t("tax.codes")}</TableHead>
           <TableHead className="text-end">{t("tax.rules")}</TableHead>
-          <TableHead>
+          <TableHead className="text-end">
             <span className="sr-only">{t("common.actions")}</span>
           </TableHead>
         </TableRow>
@@ -407,7 +407,7 @@ function RegimesTab() {
                   <TableHead>{t("tax.treatment")}</TableHead>
                   <TableHead className="text-end">{t("tax.currentRate")}</TableHead>
                   <TableHead>{t("tax.boxes")}</TableHead>
-                  <TableHead>
+                  <TableHead className="text-end">
                     <span className="sr-only">{t("common.actions")}</span>
                   </TableHead>
                 </TableRow>
@@ -449,7 +449,7 @@ function RegimesTab() {
                   <TableHead>{t("tax.shipping")}</TableHead>
                   <TableHead>{t("tax.validity")}</TableHead>
                   <TableHead>{t("tax.code")}</TableHead>
-                  <TableHead>
+                  <TableHead className="text-end">
                     <span className="sr-only">{t("common.actions")}</span>
                   </TableHead>
                 </TableRow>
@@ -712,7 +712,7 @@ function GroupsTab() {
           <TableRow>
             <TableHead>{t("tax.code")}</TableHead>
             <TableHead>{t("tax.name")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>
@@ -791,7 +791,7 @@ function RegistrationsTab({ companyId }: { companyId: string }) {
             <TableHead>{t("tax.regime")}</TableHead>
             <TableHead>{t("tax.registrationNumber")}</TableHead>
             <TableHead>{t("tax.registeredFrom")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>
@@ -887,7 +887,7 @@ function ExemptionsTab({ companyId }: { companyId: string }) {
             <TableHead>{t("tax.code")}</TableHead>
             <TableHead>{t("tax.certificateNumber")}</TableHead>
             <TableHead>{t("tax.validity")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>

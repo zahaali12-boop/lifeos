@@ -4093,7 +4093,8 @@
       "inspected": "Inspected",
       "credited": "Credited",
       "closed": "Closed",
-      "paid": "Paid"
+      "paid": "Paid",
+      "invoiced": "Invoiced"
     },
     "createInvoice": "Create invoice",
     "invoicing": {

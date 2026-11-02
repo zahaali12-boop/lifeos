@@ -132,7 +132,7 @@ export function TaxReturnsPage() {
                   <TableHead>{t("tax.box")}</TableHead>
                   <TableHead className="text-end">{t("tax.baseAmount")}</TableHead>
                   <TableHead className="text-end">{t("tax.taxAmount")}</TableHead>
-                  <TableHead>
+                  <TableHead className="text-end">
                     <span className="sr-only">{t("common.actions")}</span>
                   </TableHead>
                 </TableRow>

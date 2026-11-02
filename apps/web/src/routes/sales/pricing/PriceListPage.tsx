@@ -160,7 +160,7 @@ export function PriceListPage() {
             <TableHead className="text-end">{t("pricing.fromQuantity")}</TableHead>
             <TableHead className="text-end">{t("pricing.price")}</TableHead>
             <TableHead>{t("pricing.validity")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>

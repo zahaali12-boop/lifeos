@@ -46,11 +46,16 @@ export function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCel
   return <th scope="col" className={cn("h-10 px-3 text-start align-middle text-xs font-semibold uppercase tracking-wide text-fg-muted", className)} {...props} />;
 }
 
-export function TableCell({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-3 py-2 align-middle", className)} {...props} />;
+/**
+ * A cell keeps the table's direction so its content lines up under its heading in English and in Arabic; a `dir`
+ * given for the content (codes, numbers, dates are left to right) applies to an isolated run inside the cell, never
+ * to the cell itself, which would otherwise push the content to the far edge of the column in a right-to-left table.
+ */
+export function TableCell({ className, dir, children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+  return <td className={cn("px-3 py-2 align-middle", className)} {...props}>{dir ? <bdi dir={dir}>{children}</bdi> : children}</td>;
 }
 
 /** Numbers align to the end and use tabular figures so columns of amounts line up in both directions. */
-export function TableNumberCell({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-3 py-2 text-end align-middle tabular", className)} {...props} />;
+export function TableNumberCell({ className, dir, children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+  return <td className={cn("px-3 py-2 text-end align-middle tabular", className)} {...props}>{dir ? <bdi dir={dir}>{children}</bdi> : children}</td>;
 }

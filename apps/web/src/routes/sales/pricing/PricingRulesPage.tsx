@@ -278,7 +278,7 @@ function AgreementsTab({ companyId, currency }: { companyId: string; currency: s
             <TableHead className="text-end">{t("pricing.fromQuantity")}</TableHead>
             <TableHead className="text-end">{t("pricing.agreed")}</TableHead>
             <TableHead>{t("pricing.validity")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>
@@ -471,7 +471,7 @@ function RulesTab({ companyId, currency }: { companyId: string; currency: string
             <TableHead>{t("pricing.combination")}</TableHead>
             <TableHead className="text-end">{t("pricing.priority")}</TableHead>
             <TableHead>{t("pricing.validity")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>
@@ -709,7 +709,7 @@ function PromotionsTab({ companyId, currency }: { companyId: string; currency: s
             <TableHead>{t("pricing.coupon")}</TableHead>
             <TableHead className="text-end">{t("pricing.used")}</TableHead>
             <TableHead>{t("pricing.validity")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>
@@ -915,7 +915,7 @@ function FloorsTab({ companyId, currency }: { companyId: string; currency: strin
             <TableHead className="text-end">{t("pricing.minPrice")}</TableHead>
             <TableHead className="text-end">{t("pricing.minMarginPct")}</TableHead>
             <TableHead>{t("pricing.onBreach")}</TableHead>
-            <TableHead>
+            <TableHead className="text-end">
               <span className="sr-only">{t("common.actions")}</span>
             </TableHead>
           </TableRow>

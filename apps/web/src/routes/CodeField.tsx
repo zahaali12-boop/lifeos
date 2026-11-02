@@ -1,7 +1,7 @@
 import { Button } from "@quicker/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Wand2 } from "lucide-react";
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
 import { TextField } from "./common";
@@ -64,8 +64,10 @@ export function CodeField({ kind, value, onChange, scope, parent, recordId, "dat
       onChange(data.next);
     }
   }, [data, recordId, locked, value, onChange]);
-  // A code filled in while the person is already in the field is selected, so their first keystroke replaces it.
-  useEffect(() => {
+  // A code filled in while the person is already in the field is selected, so their first keystroke replaces it. This
+  // runs in the same frame as the fill (a layout effect): a keystroke landing between the two would otherwise be
+  // appended to the suggested code ("PL-001" + "STD").
+  useLayoutEffect(() => {
     if (selectFilled.current && value === filled.current) {
       selectFilled.current = false;
       if (input.current && document.activeElement === input.current) {

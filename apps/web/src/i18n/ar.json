@@ -4093,7 +4093,8 @@
       "inspected": "مُفحوص",
       "credited": "مُعتمَد دائنًا",
       "closed": "مُغلَق",
-      "paid": "مدفوعة"
+      "paid": "مدفوعة",
+      "invoiced": "مفوتر"
     },
     "createInvoice": "إنشاء فاتورة",
     "invoicing": {
