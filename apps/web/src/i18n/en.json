@@ -179,7 +179,9 @@
       "offers": "Offers",
       "orders": "Orders",
       "shipments": "Shipments",
-      "pricing": "Prices"
+      "pricing": "Prices",
+      "sales": "Sales",
+      "money": "Money"
     }
   },
   "shell": {
@@ -6335,6 +6337,90 @@
       "applied": "The prices were written to the sales list.",
       "empty": "Nothing to price yet.",
       "emptyDescription": "Track a shipment, or add items to the sales price list, and they appear here with their cost and margin."
+    },
+    "sales": {
+      "title": "Sales",
+      "description": "Sell in one step: the goods leave the store and the invoice is in the books. Then follow what each customer still owes and record what they pay.",
+      "newSale": "New sale",
+      "customer": "Customer",
+      "chooseCustomer": "Choose a customer",
+      "newCustomer": "New customer",
+      "customerName": "Customer name",
+      "customerPhone": "Phone",
+      "saveCustomer": "Add customer",
+      "warehouse": "From store",
+      "date": "Date",
+      "reference": "Reference",
+      "items": "Items",
+      "sell": "Sell",
+      "sold": "Sold: invoice {number} for {amount}.",
+      "invoice": "Invoice",
+      "total": "Total",
+      "paid": "Paid",
+      "remaining": "Still owed",
+      "due": "Due",
+      "status": "Status",
+      "statuses": {
+        "paid": "Paid",
+        "partly": "Partly paid",
+        "unpaid": "Unpaid",
+        "overdue": "Overdue",
+        "draft": "Draft",
+        "cancelled": "Cancelled",
+        "reversed": "Reversed"
+      },
+      "recordPayment": "Record a payment",
+      "paymentFor": "Payment for invoice {number}",
+      "amount": "Amount",
+      "paidInto": "Paid into",
+      "method": "How",
+      "methods": {
+        "cash": "Cash",
+        "transfer": "Bank transfer"
+      },
+      "paymentDate": "Date",
+      "savePayment": "Record payment",
+      "paymentRecorded": "Payment recorded.",
+      "noAccounts": "No cash box or bank account yet.",
+      "createCash": "Create a cash box",
+      "empty": "No sales yet.",
+      "emptyDescription": "Press New sale: pick the customer, the items and the quantities; the price comes from your sales list.",
+      "priceHint": "From your sales list"
+    },
+    "money": {
+      "title": "Money",
+      "description": "Who owes you and whom you owe, how late, and what to do first.",
+      "asOf": "As of {date}",
+      "owedToYou": "Owed to you",
+      "youOwe": "You owe",
+      "overdue": "of it overdue",
+      "notDue": "Not due yet",
+      "days1To30": "1–30 days late",
+      "days31To60": "31–60 days late",
+      "days61To90": "61–90 days late",
+      "over90": "Over 90 days late",
+      "chase": "Chase first",
+      "chaseHint": "Customers with the most money late, oldest first.",
+      "chaseAction": {
+        "call": "Call {name}: {amount} is {days}+ days late.",
+        "remind": "Remind {name}: {amount} just fell due.",
+        "stop": "Stop selling on credit to {name} until {amount} over 90 days late is settled."
+      },
+      "pay": "Pay next",
+      "payHint": "Suppliers whose invoices are due or late.",
+      "payAction": {
+        "now": "Pay {name} {amount}: it is late.",
+        "soon": "Plan {amount} for {name}: due within the month."
+      },
+      "nothingToChase": "Nobody is late. Well done.",
+      "nothingToPay": "Nothing is due to suppliers.",
+      "customer": "Customer",
+      "supplier": "Supplier",
+      "total": "Total",
+      "monthlySales": "Sales by month",
+      "monthlySalesHint": "Posted invoices of the last six months.",
+      "noSales": "No sales in the last six months.",
+      "openInvoices": "Open invoices"
     }
   }
 }

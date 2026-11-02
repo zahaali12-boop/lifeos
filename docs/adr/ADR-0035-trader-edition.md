@@ -65,7 +65,14 @@ would also throw away the tests and the invariants that make the books right.
    ordinary organization settings under `trader.pricing.*`, so an admin sees them under Settings and the trader edits
    them in place (A-188). Later trader screens that compose modules (project health) follow the same pattern.
 
-6. **Nothing deferred to a second product.** The trader's later needs (shipments as a status timeline over the
+6. **Sales and money: the trader's words, the modules' documents.** A sale in one step is a Sales-module service
+   (`QuickSaleService`) that makes the ordinary order, shipment and invoice through their own services and posts
+   them, so stock, cost of sales, revenue, tax and the receivable are exactly what the full edition would record;
+   nothing is kept when any step refuses. Payments are customer receipts applied to the invoice's open item. The
+   Money screen is a reading of the receivables and payables aging with plain-language actions; it stores nothing
+   and computes nothing the modules do not already provide (A-189).
+
+7. **Nothing deferred to a second product.** The trader's later needs (shipments as a status timeline over the
    purchase order with landed costs and the exchange rate paid; pricing by purchase rate against a market rate with
    margins and loss alerts; plain-language sales, payments and aging with recommendations and charts; a project health
    page with break-even and a trader income statement; stock counting on the phone) are each a slice over the
@@ -85,4 +92,5 @@ would also throw away the tests and the invariants that make the books right.
   carries out by hand; offers in a foreign currency need a spot rate of the day entered under Rates, else the
   comparison says so; costs that arrive after the goods were received (a landed-cost document by hand); partial
   arrivals (one receipt per shipment); paying the supplier from the shipment screen; prices per customer group or
-  quantity break and margins per item or category on the pricing board; the phone version.
+  quantity break and margins per item or category on the pricing board; a trader-worded customer page, discounts
+  and returns from the sales screen, receipts on account; the phone version.

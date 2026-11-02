@@ -23,6 +23,7 @@ public static class SalesModule
         services.AddScoped<OrderService>();
         services.AddScoped<ShipmentService>();
         services.AddScoped<InvoiceService>();
+        services.AddScoped<QuickSaleService>();
         services.AddScoped<RecurringInvoiceService>();
         services.AddScoped<ReturnService>();
         services.AddScoped<IPrintModelProvider, SalesInvoicePrintModel>();

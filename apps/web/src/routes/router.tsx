@@ -113,6 +113,8 @@ import { DashboardViewPage } from "./dashboards/DashboardViewPage";
 import { OffersPage } from "./trader/OffersPage";
 import { ShipmentsPage as TraderShipmentsPage } from "./trader/ShipmentsPage";
 import { PricingPage as TraderPricingPage } from "./trader/PricingPage";
+import { SalesPage as TraderSalesPage } from "./trader/SalesPage";
+import { MoneyPage as TraderMoneyPage } from "./trader/MoneyPage";
 import { ReportBuilderPage } from "./reports/ReportBuilderPage";
 import { ReportsPage } from "./reports/ReportsPage";
 import { SchedulesPage } from "./schedules/SchedulesPage";
@@ -276,6 +278,8 @@ const dashboardsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/
 const traderOffersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/offers", component: OffersPage, validateSearch: searchRecord });
 const traderShipmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/shipments", component: TraderShipmentsPage, validateSearch: searchRecord });
 const traderPricingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/pricing", component: TraderPricingPage });
+const traderSalesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/sales", component: TraderSalesPage });
+const traderMoneyRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/money", component: TraderMoneyPage });
 const dashboardViewRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dashboards/view", component: DashboardViewPage, validateSearch: searchRecord });
 const schedulesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/reports/schedules", component: SchedulesPage });
 
@@ -286,7 +290,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
     chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
     itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
-    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute, payComponentsRoute, employeesRoute, leaveRoute, payrollRunsRoute, reportsRoute, reportBuilderRoute, statementsRoute, statementDesignerRoute, dashboardsRoute, dashboardViewRoute, schedulesRoute, traderOffersRoute, traderShipmentsRoute, traderPricingRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute, payComponentsRoute, employeesRoute, leaveRoute, payrollRunsRoute, reportsRoute, reportBuilderRoute, statementsRoute, statementDesignerRoute, dashboardsRoute, dashboardViewRoute, schedulesRoute, traderOffersRoute, traderShipmentsRoute, traderPricingRoute, traderSalesRoute, traderMoneyRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
   posRoute.addChildren([posHomeRoute, posSellRoute, posOrdersRoute]),

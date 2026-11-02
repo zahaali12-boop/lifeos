@@ -136,14 +136,12 @@ export const traderNavigation: NavigationItem[] = [
   { to: "/trader/offers", label: "nav.trader.offers", icon: GitCompareArrows, shortcut: "g o", permission: "purchasing.rfq.read" },
   { to: "/trader/shipments", label: "nav.trader.shipments", icon: Ship, shortcut: "g 2", permission: "purchasing.order.read" },
   { to: "/trader/pricing", label: "nav.trader.pricing", icon: Tags, shortcut: "g p", permission: "pricing.price.read" },
-  { to: "/purchasing/orders", label: "nav.trader.orders", icon: FileText, shortcut: "g 7", permission: "purchasing.order.read" },
-  { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
+  { to: "/trader/sales", label: "nav.trader.sales", icon: ShoppingCart, shortcut: "s i", permission: "sales.invoice.read" },
+  { to: "/trader/money", label: "nav.trader.money", icon: Wallet, shortcut: "r o", permission: "receivables.open_item.read" },
   { to: "/sales/customers", label: "nav.customers", icon: Contact, shortcut: "s c", permission: "partners.customer.read" },
-  { to: "/sales/invoices", label: "nav.salesInvoices", icon: ReceiptText, shortcut: "s i", permission: "sales.invoice.read" },
-  { to: "/banking/receipts", label: "nav.customerReceipts", icon: CircleDollarSign, shortcut: "r c", permission: "banking.receipt.read" },
+  { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },
   { to: "/inventory/items", label: "nav.items", icon: Package, shortcut: "g i", permission: "inventory.item.read" },
   { to: "/inventory/stock", label: "nav.stock", icon: Boxes, shortcut: "g k", permission: "inventory.stock.read" },
-  { to: "/rates", label: "nav.rates", icon: Coins, shortcut: "g r", permission: "organization.company.read" },
   { to: "/settings", label: "nav.settings", icon: Settings, shortcut: "g ^", permission: "organization.settings.manage" },
 ];
 

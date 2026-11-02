@@ -133,6 +133,11 @@ public static class SalesEndpoints
             .RequirePermission(SalesPermissions.InvoicePost)
             .WithSummary("Submits a posted invoice to its regime's e-invoicing scheme and records the scheme's answer (status, submission id, QR); refused when the regime names no scheme or no adapter is registered for it yet");
 
+        // One-step sale (trader edition, ADR-0035 §6): order, confirm, ship and invoice in one request, each by its own service.
+        sales.MapPost("/quick-sales", async (QuickSaleRequest request, QuickSaleService service, CancellationToken ct) => ApiProblems.Created(await service.SellAsync(request, ct), static r => $"/api/v1/sales/invoices/{r.InvoiceId}"))
+            .RequirePermission(SalesPermissions.OrderManage).RequirePermission(SalesPermissions.ShipmentPost).RequirePermission(SalesPermissions.InvoicePost)
+            .WithSummary("Sells in one step: the order is created and confirmed, shipped in full from the warehouse and invoiced from the shipment, the invoice posted; a refusal anywhere keeps nothing");
+
         var recurring = sales.MapGroup("/recurring-invoices");
         recurring.MapGet("/", async (Guid? companyId, Guid? partnerId, bool? active, RecurringInvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, partnerId, active, ct)))
             .RequirePermission(SalesPermissions.InvoiceRead)

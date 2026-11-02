@@ -184,10 +184,44 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("unpriced-count")).toHaveCount(0);
   await expectAccessible(page);
 
+  // Sales and money: a customer and a cash box through the API; ten pads sold in one step at the list price; 100,000
+  // received against the invoice; the Money page shows what is still owed and the supplier invoice to pay.
+  const ali = await call("post", "/api/v1/partners", { code: "ALI", legalName: { en: "Ali Auto Repair", ar: "ورشة علي" }, isCustomer: true });
+  await call("put", `/api/v1/partners/${ali.id}/customer-accounts/${companyId}`, { currency: "IQD" });
+  await call("post", "/api/v1/banking/bank-accounts", { companyId, code: "CASH", name: { en: "Cash box", ar: "الصندوق" }, kind: "cash", currency: "IQD", isActive: true });
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Sales" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Sales");
+  await page.getByTestId("new-sale").click();
+  await page.getByTestId("sale-customer").selectOption({ label: "ALI · Ali Auto Repair" });
+  await page.getByTestId("line-item-0").fill("PADS");
+  await page.getByTestId("line-qty-0").fill("10");
+  await expect(page.getByTestId("line-price-0")).toHaveValue("21,000");
+  await page.getByTestId("sell").click();
+  await expect(page.getByTestId("sales-notice")).toContainText("210,000", { timeout: 20_000 });
+  await expect(page.getByTestId("invoice-state").first()).toHaveText("Unpaid");
+  await page.getByRole("button", { name: "Record a payment" }).first().click();
+  await page.getByTestId("payment-amount").fill("100000");
+  await page.getByTestId("save-payment").click();
+  await expect(page.getByTestId("sales-notice")).toContainText("Payment recorded", { timeout: 20_000 });
+  await expect(page.getByTestId("invoice-state").first()).toHaveText("Partly paid");
+  await expect(page.getByTestId("invoice-remaining").first()).toContainText("110,000");
+  await expectAccessible(page);
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Money" }).click();
+  await expect(page.getByTestId("owed-to-you-total")).toContainText("110,000");
+  await expect(page.getByTestId("you-owe-total")).toContainText("1,975,000");
+  await expect(page.getByTestId("nothing-to-chase")).toBeVisible();
+  await expect(page.getByTestId("pay-row")).toHaveCount(1);
+  await expect(page.getByTestId("sales-month")).toHaveCount(6);
+  await expectAccessible(page);
+
   // Arabic, right-to-left: the flat bar, the list and the record in Arabic.
   await page.getByTestId("language-menu").click();
   await page.getByTestId("language-ar").click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("المال");
+  await expect(page.getByTestId("owed-to-you-total")).toContainText("110,000");
+  await expectAccessible(page);
+  await page.getByTestId("flat-nav").getByRole("link", { name: "الأسعار" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("أسعار البيع");
   await expect(page.getByTestId("price-row").filter({ hasText: "PADS" }).getByTestId("current-price")).toContainText("21,000");
   await expectAccessible(page);

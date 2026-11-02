@@ -30619,6 +30619,37 @@
         }
       }
     },
+    "/api/v1/sales/quick-sales": {
+      "post": {
+        "tags": [
+          "Sales"
+        ],
+        "summary": "Sells in one step: the order is created and confirmed, shipped in full from the warehouse and invoiced from the shipment, the invoice posted; a refusal anywhere keeps nothing",
+        "operationId": "postSalesQuickSales",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickSaleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickSaleResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sales/recurring-invoices": {
       "get": {
         "tags": [
@@ -64537,6 +64568,179 @@
           }
         },
         "description": "A measure to aggregate; the aggregation defaults to the field's own."
+      },
+      "QuickSaleLineRequest": {
+        "required": [
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "uom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "QuickSaleRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "warehouseId",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuickSaleLineRequest"
+            }
+          },
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priceListId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A sale done in one step (trader edition, ADR-0035 §6): the goods leave the warehouse and the invoice is posted at once."
+      },
+      "QuickSaleResult": {
+        "required": [
+          "orderId",
+          "orderNumber",
+          "shipmentId",
+          "shipmentNumber",
+          "invoiceId",
+          "invoiceNumber",
+          "invoiceStatus",
+          "currency",
+          "totalGross",
+          "openItemId",
+          "dueDate"
+        ],
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shipmentNumber": {
+            "type": "string"
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "invoiceStatus": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "totalGross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "openItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
       },
       "QuotationLineSummary": {
         "required": [

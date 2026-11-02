@@ -10565,6 +10565,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sales/quick-sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sells in one step: the order is created and confirmed, shipped in full from the warehouse and invoiced from the shipment, the invoice posted; a refusal anywhere keeps nothing */
+        post: operations["postSalesQuickSales"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sales/recurring-invoices": {
         parameters: {
             query?: never;
@@ -19894,6 +19911,52 @@ export interface components {
         QueryValue: {
             field: string;
             aggregation?: null | string;
+        };
+        QuickSaleLineRequest: {
+            /** Format: double */
+            quantity: number | string;
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            /** Format: double */
+            unitPrice?: null | number | string;
+            uom?: null | string;
+        };
+        /** @description A sale done in one step (trader edition, ADR-0035 §6): the goods leave the warehouse and the invoice is posted at once. */
+        QuickSaleRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            lines: components["schemas"]["QuickSaleLineRequest"][];
+            /** Format: date */
+            date?: null | string;
+            currency?: null | string;
+            /** Format: uuid */
+            priceListId?: null | string;
+            customerReference?: null | string;
+            notes?: null | string;
+        };
+        QuickSaleResult: {
+            /** Format: uuid */
+            orderId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            shipmentId: string;
+            shipmentNumber: string;
+            /** Format: uuid */
+            invoiceId: string;
+            invoiceNumber: string;
+            invoiceStatus: string;
+            currency: string;
+            /** Format: double */
+            totalGross: number | string;
+            /** Format: uuid */
+            openItemId: null | string;
+            /** Format: date */
+            dueDate: null | string;
         };
         QuotationLineSummary: {
             /** Format: uuid */
@@ -46824,6 +46887,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalesInvoiceSummary"];
+                };
+            };
+        };
+    };
+    postSalesQuickSales: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickSaleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickSaleResult"];
                 };
             };
         };
