@@ -25,6 +25,15 @@ docker compose logs --tail=100 api          # why something did not work
 docker compose down                         # stop everything (keeps the data); `down -v` also deletes the database
 ```
 
+**Automatic updates on Windows.** Double-click `deploy\windows\setup-auto-update.bat` once (in a folder from a ZIP
+download or a clone). It installs Git when it is missing, turns the folder into a checkout of the working branch (a
+GitHub sign-in window opens the first time), registers the hidden scheduled task "Quicker auto-update", and updates
+once. From then on the task checks GitHub at sign-in and every 30 minutes; when something new arrived it takes it and
+rebuilds, the migrator upgrading the database before the API starts, while the running version stays up until the
+new one is built. Each update is written to `update.log`; `deploy\windows\update.bat` updates at once;
+`remove-auto-update.bat` turns it off. Your `.env` and your data are kept. Docker Desktop should start when you sign in
+(its default).
+
 To work on the web app with hot reload outside Docker: `pnpm install`, then `set VITE_API_BASE_URL=http://localhost:8080`
 (`export` on macOS and Linux) and `pnpm --filter @quicker/web dev`.
 

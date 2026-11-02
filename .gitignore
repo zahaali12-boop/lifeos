@@ -36,3 +36,6 @@ backups/
 # Playwright output
 apps/web/test-results/
 apps/web/playwright-report/
+
+# Windows auto-update (deploy/windows)
+update.lock
