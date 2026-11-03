@@ -32,7 +32,10 @@ once. From then on the task checks GitHub at sign-in and every 30 minutes; when 
 rebuilds, the migrator upgrading the database before the API starts, while the running version stays up until the
 new one is built. Each update is written to `update.log`; `deploy\windows\update.bat` updates at once;
 `remove-auto-update.bat` turns it off. Your `.env` and your data are kept. Docker Desktop should start when you sign in
-(its default).
+(its default). Every long-running part has the restart policy `unless-stopped`, so Docker starts it again after
+Windows restarts and after a crash (say, memory running out while an update builds); the migrator stays a one-shot.
+If the app ever says its server is not answering for more than a few minutes, open Docker Desktop, Containers, and
+press Start on the `lifeos` row.
 
 To work on the web app with hot reload outside Docker: `pnpm install`, then `set VITE_API_BASE_URL=http://localhost:8080`
 (`export` on macOS and Linux) and `pnpm --filter @quicker/web dev`.

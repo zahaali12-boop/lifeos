@@ -3,6 +3,7 @@ name: quicker
 
 services:
   postgres:
+    restart: unless-stopped
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: quicker_owner
@@ -20,6 +21,7 @@ services:
       retries: 20
 
   minio:
+    restart: unless-stopped
     image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     command: server /data --console-address ":9001"
     environment:
@@ -32,6 +34,7 @@ services:
       - miniodata:/data
 
   mailpit:
+    restart: unless-stopped
     image: axllent/mailpit:latest
     ports:
       - "8025:8025"
@@ -49,6 +52,7 @@ services:
         condition: service_healthy
 
   api:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: deploy/docker/api.Dockerfile
@@ -81,6 +85,7 @@ services:
         condition: service_completed_successfully
 
   worker:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: deploy/docker/worker.Dockerfile
@@ -109,6 +114,7 @@ services:
         condition: service_completed_successfully
 
   web:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: deploy/docker/web.Dockerfile
