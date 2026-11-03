@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using Quicker.Identity.TestSupport;
 
@@ -53,9 +52,12 @@ public sealed class QuickSaleTests(ApiHostFixture host)
         var open = await owner.GetOkAsync($"/api/v1/receivables/open-items?companyId={companyId}");
         open.EnumerateArray().Single(static i => i.GetProperty("item").GetProperty("kind").GetString() == "invoice").GetProperty("item").GetProperty("remainingTc").GetDecimal().ShouldBe(110000m);
 
-        // More than the store holds: refused, and no second invoice exists.
-        var refused = await owner.PostAsJsonAsync("/api/v1/sales/quick-sales", new { companyId, partnerId = customer, warehouseId, lines = new[] { new { itemCode = "PADS", quantity = 1000m, unitPrice = 21000m } } }, Json);
-        refused.IsSuccessStatusCode.ShouldBeFalse();
+        // More than the store holds: refused in plain words (what is there, what was wanted), and no second invoice exists.
+        var refused = await owner.PostErrorAsync("/api/v1/sales/quick-sales", new { companyId, partnerId = customer, warehouseId, lines = new[] { new { itemCode = "PADS", quantity = 1000m, unitPrice = 21000m } } }, HttpStatusCode.Conflict);
+        refused.Code.ShouldBe("quick_sale.not_enough_stock");
+        refused.Problem.GetProperty("why").GetProperty("item").GetString().ShouldBe("PADS");
+        refused.Problem.GetProperty("why").GetProperty("available").GetDecimal().ShouldBe(40m);
+        refused.Problem.GetProperty("why").GetProperty("wanted").GetDecimal().ShouldBe(1000m);
         (await owner.GetOkAsync($"/api/v1/sales/invoices?companyId={companyId}")).GetArrayLength().ShouldBe(1);
         (await owner.PostErrorAsync("/api/v1/sales/quick-sales", new { companyId, partnerId = customer, warehouseId, lines = Array.Empty<object>() }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("quick_sale.lines_required");
         await owner.AssertInvariantsAsync();

@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { formatDate, formatMoney, localized } from "../../lib/format";
+import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
@@ -92,6 +92,13 @@ export function SalesPage() {
     queryFn: async () => unwrap(await api.GET("/api/v1/trader/pricing/board", { params: { query: { companyId } } })),
   });
   const fail = (error: unknown): void => { setNotice(null); setProblem(toFormProblem(error, t("common.saveFailed"))); };
+  // The refusals a trader meets most often, in the trader's own words from the facts the server gave.
+  const wordProblem = (p: FormProblem | null): string | null => {
+    if (p?.code === "quick_sale.not_enough_stock" && p.why) {
+      return t("trader.sales.notEnoughStock", { item: typeof p.why.item === "string" ? p.why.item : "", available: formatNumber(n(p.why.available as number | string | null)), wanted: formatNumber(n(p.why.wanted as number | string | null)) });
+    }
+    return p?.message ?? null;
+  };
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["invoices"] });
     await queryClient.invalidateQueries({ queryKey: ["ar-aging"] });
@@ -173,7 +180,7 @@ export function SalesPage() {
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
       </div>
-      <FormError message={!sale && !payment ? problem?.message ?? null : null} />
+      <FormError message={!sale && !payment ? wordProblem(problem) : null} />
       {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="sales-notice">{notice}</p> : null}
       <DataGrid<Invoice> label="trader.sales.title" columns={columns} data={invoices.data ?? []} rowKey={(row) => row.id} loading={invoices.isPending && Boolean(companyId)} emptyTitle={t("trader.sales.empty")} emptyDescription={t("trader.sales.emptyDescription")} />
 
@@ -184,7 +191,7 @@ export function SalesPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold">{t("trader.sales.newSale")}</DialogTitle>
               </DialogHeader>
-              <FormError message={problem?.message ?? null} />
+              <FormError message={wordProblem(problem)} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label={t("trader.sales.customer")} required>
                   <SelectField value={sale.partnerId} onChange={(e) => { setSale({ ...sale, partnerId: e.target.value }); }} required data-testid="sale-customer">
@@ -218,7 +225,7 @@ export function SalesPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold">{t("trader.sales.paymentFor", { number: payment.invoice.number })}</DialogTitle>
               </DialogHeader>
-              <FormError message={problem?.message ?? null} />
+              <FormError message={wordProblem(problem)} />
               {(accounts.data ?? []).length === 0 ? (
                 <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="no-accounts">
                   <span>{t("trader.sales.noAccounts")}</span>

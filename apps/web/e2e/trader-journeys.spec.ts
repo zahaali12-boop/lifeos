@@ -214,6 +214,12 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("line-item-0").fill("PADS");
   await page.getByTestId("line-qty-0").fill("10");
   await expect(page.getByTestId("line-price-0")).toHaveValue("21,000");
+  // A thousand pads when the store holds a hundred: refused in plain words, nothing sold.
+  await page.getByTestId("line-qty-0").fill("1000");
+  await page.getByTestId("sell").click();
+  await expect(page.getByRole("alert")).toContainText("Not enough PADS", { timeout: 20_000 });
+  await expect(page.getByRole("alert")).toContainText("100");
+  await page.getByTestId("line-qty-0").fill("10");
   await page.getByTestId("sell").click();
   await expect(page.getByTestId("sales-notice")).toContainText("210,000", { timeout: 20_000 });
   await expect(page.getByTestId("invoice-state").first()).toHaveText("Unpaid");

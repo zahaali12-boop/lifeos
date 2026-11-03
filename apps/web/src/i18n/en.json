@@ -6408,7 +6408,8 @@
       "createCash": "Create a cash box",
       "empty": "No sales yet.",
       "emptyDescription": "Press New sale: pick the customer, the items and the quantities; the price comes from your sales list.",
-      "priceHint": "From your sales list"
+      "priceHint": "From your sales list",
+      "notEnoughStock": "Not enough {item} in the store: {available} on hand, {wanted} wanted. Receive stock first, or sell what there is."
     },
     "money": {
       "title": "Money",

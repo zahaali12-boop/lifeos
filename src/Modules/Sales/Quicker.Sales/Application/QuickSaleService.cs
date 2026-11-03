@@ -1,3 +1,4 @@
+using System.Globalization;
 using Quicker.Kernel.Results;
 
 namespace Quicker.Sales.Application;
@@ -48,6 +49,15 @@ public sealed class QuickSaleService(OrderService orders, ShipmentService shipme
         {
             return Error.Conflict("quick_sale.order_held", "The sale is held by credit control; release the order or settle what the customer owes first.")
                 .WithWhy(("order", confirmed.Value.Number), ("status", confirmed.Value.Status), ("reason", confirmed.Value.BlockReason));
+        }
+
+        // A sale in one step leaves the store now: a line the store cannot cover in full is refused in plain words, before
+        // the shipment would refuse it as exceeding the reservation. Nothing is kept (one unit of work).
+        var shortLine = confirmed.Value.Lines.FirstOrDefault(static l => l.Status == "backordered" || l.QtyReserved < l.QuantityBase);
+        if (shortLine is not null)
+        {
+            return Error.Conflict("quick_sale.not_enough_stock", $"Not enough stock of {shortLine.ItemCode}: {shortLine.QtyReserved.ToString(CultureInfo.InvariantCulture)} on hand, {shortLine.QuantityBase.ToString(CultureInfo.InvariantCulture)} wanted. Receive stock first, or sell what there is.")
+                .WithWhy(("item", shortLine.ItemCode), ("available", shortLine.QtyReserved), ("wanted", shortLine.QuantityBase), ("unit", shortLine.UomCode));
         }
 
         var shipment = await shipments.CreateAsync(new SaveShipmentRequest(order.Value.Id, confirmed.Value.Lines.Select(static l => new SaveShipmentLineRequest(l.Id, l.Quantity)).ToList(), request.Date), cancellationToken);

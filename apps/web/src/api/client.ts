@@ -17,7 +17,8 @@ export interface ApiClientOptions {
 export type ApiClient = ReturnType<typeof createClient<paths>>;
 
 /** Same-origin by default: the API is served next to the app unless VITE_API_BASE_URL says otherwise. */
-function defaultBaseUrl(): string {
+/** Where the API lives when nothing says otherwise: the page's own origin (a fixed host in tests). */
+export function defaultBaseUrl(): string {
   return typeof window === "undefined" ? "http://localhost" : window.location.origin;
 }
 

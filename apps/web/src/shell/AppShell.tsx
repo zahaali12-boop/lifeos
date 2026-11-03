@@ -136,7 +136,6 @@ export function AppShell() {
           </Button>
           <Link to="/" className="me-1 flex items-center gap-2 rounded-md px-1.5 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent" aria-label={t("shell.home")} data-testid="home-link">
             <span className="text-base font-bold tracking-tight text-accent">Quicker</span>
-            <span className="hidden max-w-32 truncate text-xs text-fg-muted 2xl:inline">{session?.tenant.name}</span>
           </Link>
           <div className="hidden min-w-0 lg:flex">
             {flat ? <FlatNav items={visibleNavigation} location={location} /> : <TopNav items={visibleNavigation} location={location} />}
