@@ -218,8 +218,8 @@ would also throw away the tests and the invariants that make the books right.
 19. **The trader program on its own, with nothing in it, and on the phone (T11c; A-202).** The founder's trader
     program runs as a second installation of the same product next to the full system on one machine, sharing nothing
     with it: `docker-compose.trader.yml` (Compose project `quicker-trader`) has its own PostgreSQL, file store, mail
-    catcher, API, worker and web app, its own volumes (named by the project) and its own ports (the app on 5174, the
-    API on 8090; the full system keeps 5173 and 8080), reading the same `.env` for the machine's address on the local
+    catcher, API, worker and web app, its own volumes (named by the project) and its own port (the app on 5174, the
+    API behind it and not published; the full system keeps 5173 and 8080), reading the same `.env` for the machine's address on the local
     network. Its migrator runs `prepare`, a new verb that creates the database, applies the migrations and the
     reference data, and never seeds the demo workspace, so the installation starts with no data at all. The web app of
     that stack is built with `VITE_EDITION=trader`: the sign-up screen says so and sends `edition: trader`, and
@@ -237,7 +237,14 @@ would also throw away the tests and the invariants that make the books right.
     local network, which is how the founder's machine serves it, Safari's "Add to Home Screen" opens the app
     full-screen with its own icon and Chrome on Android adds the same shortcut; the browser's install prompt and
     working offline need HTTPS, and a store listing needs a native wrapper (a Mac with Xcode and an Apple developer
-    account): both are deferred, stated as such to the founder.
+    account): both are deferred, stated as such to the founder. The stack's web app is the built app behind nginx
+    (the `static` target of `web.Dockerfile`, `VITE_EDITION` a build argument), not the development server the full
+    system's Compose file still runs: a tenth of the memory on the founder's 8 GB machine, and nginx
+    (`deploy/docker/nginx.conf`) proxies `/api` and `/health` to the api container, so the app calls the API on its
+    own origin, nothing about the API's address is baked in, a phone on the local network reaches app and API through
+    the one port, and no cross-origin rule applies. The manifest is the app's own (`public/manifest.webmanifest`,
+    opening on `/`, linked from `index.html` in every mode); the PWA plugin generates only the service worker, in
+    production builds, as it has since the scanner (3.8), whose generated manifest that opened on `/m` it replaces.
 
 ## Consequences
 

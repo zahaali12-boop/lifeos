@@ -13,13 +13,6 @@ const queryClient = new QueryClient({
 });
 
 setDigitStyle(getDigitStyle());
-
-// The service worker makes the app installable on a phone's home screen; it caches nothing (ADR-0035 §19).
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-  });
-}
 applyTheme((localStorage.getItem("quicker.theme") as "light" | "dark" | null) ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
 
 const root = document.getElementById("root");

@@ -481,14 +481,16 @@ test("a workspace made as the trader program opens on the trader bar, and the ap
   await expect(page.getByTestId("flat-nav").getByRole("link", { name: "Offers" })).toBeVisible();
   await expectAccessible(page);
 
-  // The page says it can live on a phone's home screen: the manifest, its icons and the Apple tags all answer.
+  // The page says it can live on a phone's home screen: the manifest, its icons and the Apple tags all answer
+  // (the service worker belongs to production builds alone, where the plugin adds it).
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.webmanifest");
   await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute("content", "yes");
   const manifest = await page.request.get("/manifest.webmanifest");
   expect(manifest.ok()).toBeTruthy();
-  const declared = (await manifest.json()) as { display: string; icons: { src: string }[] };
+  const declared = (await manifest.json()) as { display: string; start_url: string; icons: { src: string }[] };
   expect(declared.display).toBe("standalone");
-  for (const icon of [...declared.icons.map((i) => i.src), "/icons/apple-touch-icon.png", "/sw.js"]) {
+  expect(declared.start_url).toBe("/");
+  for (const icon of [...declared.icons.map((i) => i.src), "/icons/apple-touch-icon.png"]) {
     expect((await page.request.get(icon)).ok(), icon).toBeTruthy();
   }
 });

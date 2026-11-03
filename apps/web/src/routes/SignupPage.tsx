@@ -61,7 +61,7 @@ export function SignupPage() {
             <TextField name="tenantName" value={values.tenantName} onChange={update("tenantName")} required autoComplete="organization" />
           </Field>
           <Field label={t("auth.slug")} required description={t("auth.slugHint")} error={problem?.fields.slug}>
-            <TextField name="slug" value={values.slug} onChange={update("slug")} required pattern="[a-z0-9-]{3,40}" dir="ltr" />
+            <TextField name="slug" value={values.slug} onChange={update("slug")} required pattern="[a-z0-9\-]{3,40}" dir="ltr" />
           </Field>
           <Field label={t("auth.yourName")} required error={problem?.fields.ownerName}>
             <TextField name="ownerName" value={values.ownerName} onChange={update("ownerName")} required autoComplete="name" />

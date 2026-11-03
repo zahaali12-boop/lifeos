@@ -41,13 +41,15 @@ press Start on the `lifeos` row.
 for the trader program (ADR-0035 §19): `docker compose -f docker-compose.trader.yml up -d --build`, or on Windows
 double-click `deploy\windows\setup-trader.bat` once (it registers "Quicker Trader auto-update"; `update-trader.bat`
 updates at once, `remove-trader-auto-update.bat` turns it off, each update is written to `update-trader.log`). It has
-its own database, files and ports (the app on http://localhost:5174, its API on 8090; `QUICKER_TRADER_WEB_PORT` and
-`QUICKER_TRADER_API_PORT` in `.env` move them), starts with no data at all and never gets the demo workspace: open it,
+its own database, files and ports (the app on http://localhost:5174, which also answers the API under `/api`; the
+API itself is not published; `QUICKER_TRADER_WEB_PORT` in `.env` moves the port), starts with no data at all and never gets the demo workspace: open it,
 press "Create workspace", and the workspace is the trader program from its first screen. Nothing is shared with the
 full system, not a database, a volume or a port; in Docker Desktop it is the `quicker-trader` row.
 
-**On a phone.** Set `QUICKER_LAN_HOST` in `.env` to the machine's address on the local network (say 192.168.1.20) and
-start again; on a phone on the same Wi-Fi open `http://192.168.1.20:5174` (5173 for the full system). Safari's "Add to
+**On a phone.** On a phone on the same Wi-Fi open `http://<the machine's address>:5174` for the trader program (find
+the address with `ipconfig`, say 192.168.1.20; no setting is needed, the app and its API answer on that one port).
+The full system's development server needs `QUICKER_LAN_HOST` in `.env` set to that address and a restart, then
+`http://192.168.1.20:5173`. Safari's "Add to
 Home Screen" (the share button) or Chrome's "Add to Home screen" puts the app on the home screen, and it opens
 full-screen with its own icon. Plain HTTP on the local network is enough for that; the browser's "install" prompt and
 working without the network need HTTPS, and a store listing needs a native wrapper, neither of which is set up yet.

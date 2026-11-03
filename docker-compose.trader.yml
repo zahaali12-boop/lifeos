@@ -2,7 +2,8 @@
 # full system on one machine, with its own database, files and ports, no demo workspace, and workspaces that open in
 # the trader edition from the start. It shares nothing with the full system: not a database, not a volume, not a port.
 #   docker compose -f docker-compose.trader.yml up -d --build     (on Windows: deploy\windows\setup-trader.bat once)
-# Only the app (5174) and its API (8090) are published; the database, the file store and the mail catcher stay inside.
+# Only the app (5174, which also carries the API under /api) is published; the API, the database, the file store and
+# the mail catcher stay inside the stack's own network.
 name: quicker-trader
 
 services:
@@ -68,10 +69,10 @@ services:
       Quicker__Email__SmtpPort: "1025"
       Quicker__Audit__Anchoring__Store: file
       Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
-      # QUICKER_LAN_HOST (in .env) is this machine's address on the local network, so the phone opens the app too.
-      Quicker__Api__AllowedOrigins: http://localhost:${QUICKER_TRADER_WEB_PORT:-5174},http://127.0.0.1:${QUICKER_TRADER_WEB_PORT:-5174},http://${QUICKER_LAN_HOST:-localhost}:${QUICKER_TRADER_WEB_PORT:-5174}
-    ports:
-      - "${QUICKER_TRADER_API_PORT:-8090}:8080"
+      # The app reaches the API through its own origin (nginx in the web container, on the stack's private network),
+      # so the API is not published and the forwarded client address is trusted from the private ranges only.
+      Quicker__Api__AllowedOrigins: http://localhost:${QUICKER_TRADER_WEB_PORT:-5174},http://127.0.0.1:${QUICKER_TRADER_WEB_PORT:-5174}
+      Quicker__Api__TrustedProxies: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     volumes:
       - auditanchors:/app/.data/audit-anchors
     depends_on:
@@ -108,23 +109,21 @@ services:
         condition: service_completed_successfully
 
   web:
+    # The built app behind nginx (no development server): a tenth of the memory, and the API on the same origin
+    # (nginx proxies /api and /health to the api container), so one port serves the machine and the phone alike.
     restart: unless-stopped
     build:
       context: .
       dockerfile: deploy/docker/web.Dockerfile
-      target: dev
-    environment:
-      VITE_API_BASE_URL: http://${QUICKER_LAN_HOST:-localhost}:${QUICKER_TRADER_API_PORT:-8090}
-      # A workspace made here is the trader program from its first screen.
-      VITE_EDITION: trader
+      target: static
+      args:
+        # A workspace made here is the trader program from its first screen.
+        VITE_EDITION: trader
     ports:
-      - "${QUICKER_TRADER_WEB_PORT:-5174}:5173"
-    volumes:
-      - ./apps/web:/workspace/apps/web
-      - ./packages:/workspace/packages
-      - /workspace/node_modules
-      - /workspace/apps/web/node_modules
-      - /workspace/packages/ui/node_modules
+      - "${QUICKER_TRADER_WEB_PORT:-5174}:80"
+    depends_on:
+      api:
+        condition: service_started
 
 volumes:
   pgdata:

@@ -8,24 +8,15 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    // The scanner is installable (roadmap 3.8): a manifest that opens on /m, the app shell precached, fonts cached on first use.
-    // API calls are never cached: the offline queue in the app decides what is kept and replayed.
+    // The app is installable (roadmap 3.8, ADR-0035 §19): the manifest is public/manifest.webmanifest, linked from
+    // index.html in every mode; production builds add the service worker (the app shell precached, fonts cached on
+    // first use, a new version taken at the next open). API calls are never cached: the offline queue in the app
+    // decides what is kept and replayed.
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "script-defer",
-      includeAssets: ["icons/icon.svg"],
-      manifest: {
-        name: "Quicker",
-        short_name: "Quicker",
-        description: "Quicker ERP: stock counts and transfers by barcode, online or offline.",
-        start_url: "/m",
-        scope: "/",
-        display: "standalone",
-        orientation: "portrait",
-        background_color: "#ffffff",
-        theme_color: "#0f766e",
-        icons: [{ src: "icons/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
-      },
+      manifest: false,
+      includeAssets: ["icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg}"],
         navigateFallback: "/index.html",
