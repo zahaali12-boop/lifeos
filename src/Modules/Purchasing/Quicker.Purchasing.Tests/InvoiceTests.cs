@@ -220,6 +220,50 @@ public sealed class InvoiceTests(ApiHostFixture host)
 
     private Task<decimal> GrniAsync(Setup s, Guid receiptId) => BookedAsync(s, "SELECT coalesce(sum(l.credit_fc - l.debit_fc), 0) FROM app.gl_journal_lines l WHERE l.tenant_id = @t AND l.company_id = @c AND l.subledger_type = 'GRNI' AND l.subledger_ref = @r", receiptId);
 
+    /// <summary>
+    /// A supplier's invoice usually travels with the goods, so it is dated before they were received (the founder met
+    /// "the adjustment cannot post before the entry it adjusts"): the invoice posts on its own day and the price settles
+    /// the stock on the receipt's day; the reversal, dated between the two, settles back on the receipt's day as well.
+    /// </summary>
+    [Fact]
+    public async Task An_invoice_dated_before_its_receipt_posts_and_settles_the_stock_on_the_receipts_day()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var s = await SetUpAsync();
+        var owner = s.Owner;
+        await owner.PutAsync($"/api/v1/partners/{s.Supplier}/supplier-accounts/{s.CompanyId}", new { currency = "USD", leadTimeDays = 7, qtyTolerancePct = 10m, priceTolerancePct = 60m });
+        var order = await owner.PostAsync("/api/v1/purchasing/orders", new { companyId = s.CompanyId, partnerId = s.Supplier, warehouseId = s.WarehouseId, lines = new object[] { new { itemId = s.Tea, quantity = 10m, uom = "PCS", unitPrice = 2m } } });
+        var orderId = order.GetProperty("id").GetGuid();
+        await owner.PostAsync($"/api/v1/purchasing/orders/{orderId}/submit", new { }, HttpStatusCode.OK);
+        var receipt = await owner.PostAsync("/api/v1/purchasing/receipts", new { orderId, postingDate = "2026-09-10", lines = new[] { new { orderLineId = order.GetProperty("lines").Only().GetProperty("id").GetGuid(), quantity = 10m } } });
+        var receiptId = receipt.GetProperty("id").GetGuid();
+        var receiptLine = (await owner.PostAsync($"/api/v1/purchasing/receipts/{receiptId}/post", new { }, HttpStatusCode.OK)).GetProperty("lines").Only().GetProperty("id").GetGuid();
+        (await RoleAsync(s, "Inventory")).ShouldBe(26000m);
+
+        // Dated and posted on 5 September, five days before the goods arrived, at 2.50 instead of the ordered 2.00.
+        var invoice = await owner.PostAsync("/api/v1/purchasing/invoices", new { companyId = s.CompanyId, partnerId = s.Supplier, supplierInvoiceNumber = "EARLY-1", documentDate = "2026-09-05", postingDate = "2026-09-05", applyWht = false, lines = new[] { new { kind = "receipt", receiptLineId = receiptLine, quantity = 10m, unitPrice = 2.5m } } });
+        var invoiceId = invoice.GetProperty("id").GetGuid();
+        (await owner.PostAsync($"/api/v1/purchasing/invoices/{invoiceId}/submit", new { }, HttpStatusCode.OK)).GetProperty("status").GetString().ShouldBe("approved");
+        var posted = await owner.PostAsync($"/api/v1/purchasing/invoices/{invoiceId}/post", new { }, HttpStatusCode.OK);
+        posted.GetProperty("status").GetString().ShouldBe("posted");
+        posted.GetProperty("postingDate").GetString().ShouldBe("2026-09-05", "the invoice keeps its own day");
+        (await RoleAsync(s, "Inventory")).ShouldBe(32500m, "10 × 2.50 × 1,300: the stock is what the supplier billed");
+        (await GrniAsync(s, receiptId)).ShouldBe(0m);
+
+        await using var db = new NpgsqlConnection(Api.Db.OwnerConnectionString);
+        await db.OpenAsync(ct);
+        var settlementDays = (await db.QueryAsync<DateOnly>("SELECT DISTINCT posting_date FROM app.inv_stock_value_entries WHERE tenant_id = @t AND company_id = @c AND reason->>'kind' = 'invoice'", new { t = s.Ws.TenantId, c = s.CompanyId })).ToList();
+        settlementDays.ShouldBe([new DateOnly(2026, 9, 10)], "the price settles the stock on the day the stock exists");
+        await owner.AssertInvariantsAsync();
+
+        // Reversed on the 6th, still before the receipt: the stock goes back to the expected cost on the receipt's day.
+        await owner.PostAsync($"/api/v1/purchasing/invoices/{invoiceId}/reverse", new { reason = "Wrong supplier", reversalDate = "2026-09-06" }, HttpStatusCode.OK);
+        (await RoleAsync(s, "Inventory")).ShouldBe(26000m);
+        var afterReversal = (await db.QueryAsync<DateOnly>("SELECT DISTINCT posting_date FROM app.inv_stock_value_entries WHERE tenant_id = @t AND company_id = @c AND reason->>'kind' = 'invoice'", new { t = s.Ws.TenantId, c = s.CompanyId })).ToList();
+        afterReversal.ShouldBe([new DateOnly(2026, 9, 10)]);
+        await owner.AssertInvariantsAsync();
+    }
+
     [Fact]
     public async Task An_invoice_is_matched_blocked_on_price_cleared_by_an_override_posted_with_the_receipt_repriced_and_reversed()
     {

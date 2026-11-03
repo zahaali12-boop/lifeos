@@ -413,9 +413,12 @@ public sealed class InvoiceService(
             var invoiced = (Quantity: quantityBefore + line.Quantity, Value: valueBefore + (((line.Quantity * line.UnitPrice * (1m - line.DiscountPct / 100m)) + NonRecoverableTax(line)) * rate.Value));
             invoicedSoFar[receiptLine.Id] = invoiced;
             var actualUnitCost = BlendedUnitCost(receiptLine, invoiced.Quantity, invoiced.Value);
+            // A supplier's invoice is often dated before the goods arrived (it travels with them): the price settles the
+            // stock on the day the stock exists, the later of the two, while the invoice itself keeps its own date.
+            var settleOn = SettlementDate(invoice.PostingDate, receipts[receiptLine.ReceiptId].PostingDate);
             foreach (var sleId in SleIds(receiptLine))
             {
-                var adjusted = await costing.AdjustInboundCostAsync(new InboundCostAdjustmentRequest(sleId, "invoice", DocumentType, invoice.Id, actualUnitCost, null, invoice.PostingDate, $"Supplier invoice {invoice.Number}", $"purchase_invoice:{invoice.Id}:{line.Id}:{sleId}"), cancellationToken);
+                var adjusted = await costing.AdjustInboundCostAsync(new InboundCostAdjustmentRequest(sleId, "invoice", DocumentType, invoice.Id, actualUnitCost, null, settleOn, $"Supplier invoice {invoice.Number}", $"purchase_invoice:{invoice.Id}:{line.Id}:{sleId}"), cancellationToken);
                 if (adjusted.IsFailure)
                 {
                     return adjusted.Error!.WithWhy(("lineNo", line.LineNo));
@@ -705,15 +708,18 @@ public sealed class InvoiceService(
 
         var receiptLineIds = invoice.Lines.Where(static l => l.ReceiptLineId is not null).Select(static l => l.ReceiptLineId!.Value).ToList();
         var receiptLines = await db.ReceiptLines.Where(l => receiptLineIds.Contains(l.Id)).ToDictionaryAsync(static l => l.Id, cancellationToken);
+        var receiptIds = receiptLines.Values.Select(static l => l.ReceiptId).Distinct().ToList();
+        var receipts = await db.Receipts.Where(r => receiptIds.Contains(r.Id)).ToDictionaryAsync(static r => r.Id, cancellationToken);
         var orderLineIds = invoice.Lines.Where(static l => l.OrderLineId is not null).Select(static l => l.OrderLineId!.Value).Concat(receiptLines.Values.Select(static l => l.OrderLineId)).Distinct().ToList();
         var orderLines = await db.OrderLines.Where(l => orderLineIds.Contains(l.Id)).ToDictionaryAsync(static l => l.Id, cancellationToken);
         foreach (var line in invoice.Lines.Where(static l => l.Kind == "receipt"))
         {
             var receiptLine = receiptLines[line.ReceiptLineId!.Value];
             var unitCostAfter = BlendedUnitCost(receiptLine, receiptLine.QtyInvoiced - line.Quantity, receiptLine.InvoicedCostAmount - line.NetAmountFc);
+            var settleOn = SettlementDate(reversed.Value.PostingDate, receipts[receiptLine.ReceiptId].PostingDate);
             foreach (var sleId in SleIds(receiptLine))
             {
-                var adjusted = await costing.AdjustInboundCostAsync(new InboundCostAdjustmentRequest(sleId, "invoice", DocumentType, invoice.Id, unitCostAfter, null, reversed.Value.PostingDate, $"Supplier invoice {invoice.Number} reversed: {reason}", $"purchase_invoice_reversal:{invoice.Id}:{line.Id}:{sleId}"), cancellationToken);
+                var adjusted = await costing.AdjustInboundCostAsync(new InboundCostAdjustmentRequest(sleId, "invoice", DocumentType, invoice.Id, unitCostAfter, null, settleOn, $"Supplier invoice {invoice.Number} reversed: {reason}", $"purchase_invoice_reversal:{invoice.Id}:{line.Id}:{sleId}"), cancellationToken);
                 if (adjusted.IsFailure)
                 {
                     return adjusted.Error!.WithWhy(("lineNo", line.LineNo));
@@ -1277,6 +1283,9 @@ public sealed class InvoiceService(
             ? []
             : await db.ReceiptLines.AsNoTracking().Where(r => ids.Contains(r.Id)).ToDictionaryAsync(static r => r.Id, static r => (Guid?)r.OrderLineId, cancellationToken);
     }
+
+    /// <summary>The day a price settles the stock it was received as: the invoice's day, or the receipt's when the invoice is dated earlier (the costing engine never adjusts an entry before it exists).</summary>
+    private static DateOnly SettlementDate(DateOnly invoiceDate, DateOnly receiptDate) => invoiceDate < receiptDate ? receiptDate : invoiceDate;
 
     private static decimal BlendedUnitCost(ReceiptLine line, decimal invoicedQuantity, decimal invoicedValue) =>
         line.Quantity == 0m ? line.ExpectedUnitCost : (invoicedValue + (Math.Max(0m, line.Quantity - invoicedQuantity) * line.ExpectedUnitCost)) / line.Quantity;

@@ -97,4 +97,48 @@ public sealed class PricingBoardTests(ApiHostFixture host)
         (await owner.PostErrorAsync("/api/v1/trader/pricing/apply", new { companyId, prices = new[] { new { itemId = pads, price = -1m } } }, HttpStatusCode.UnprocessableEntity)).Code.ShouldBe("trader.price_invalid");
         await owner.AssertInvariantsAsync();
     }
+
+    /// <summary>
+    /// Goods that were in the store before the program, or entered without a shipment (T13): the board lists every
+    /// item the store holds, priced from what the stock cost, so the trader prices what is on the shelf whatever
+    /// brought it; an item the store no longer holds and nobody priced is not listed.
+    /// </summary>
+    [Fact]
+    public async Task The_board_lists_what_the_store_holds_even_without_a_shipment_priced_from_the_stock_cost()
+    {
+        var ws = await Api.SignupAsync();
+        var owner = Api.ClientFor(ws.AccessToken);
+        var companyId = (await owner.PostAsync("/api/v1/organization/companies", new { code = "TRH", legalName = Name("Parts Trading", "تجارة القطع"), country = "IQ", functionalCurrency = "IQD", timeZone = "Asia/Baghdad", costingMethod = "average" })).GetProperty("id").GetGuid();
+        await owner.PostAsync("/api/v1/accounting/charts/from-template", new { templateCode = "IFRS_SME", code = "MAIN", companyId });
+        var warehouseId = (await owner.PostAsync("/api/v1/inventory/warehouses", new { companyId, code = "MAIN", name = Name("Main store", "المخزن الرئيسي") })).GetProperty("id").GetGuid();
+        var pads = (await owner.PostAsync("/api/v1/items", new { code = "PADS", name = Name("Brake pads", "فحمات فرامل"), baseUom = "PCS" })).GetProperty("id").GetGuid();
+        var belts = (await owner.PostAsync("/api/v1/items", new { code = "BELT", name = Name("Timing belt", "سير التوقيت"), baseUom = "PCS" })).GetProperty("id").GetGuid();
+        await owner.PostAsync("/api/v1/inventory/reason-codes", new { code = "OPENING", name = Name("Opening stock", "رصيد افتتاحي"), appliesTo = "adjustment" });
+
+        // Forty pads at 12,000 and ten belts at 5,000 counted in before the program; the belts then all leave again.
+        var opening = await owner.PostAsync("/api/v1/inventory/adjustments", new { companyId, warehouseId, kind = "opening", lines = new object[] { new { itemId = pads, quantity = 40m, unitCost = 12000m, reasonCode = "OPENING" }, new { itemId = belts, quantity = 10m, unitCost = 5000m, reasonCode = "OPENING" } } });
+        await owner.PostAsync($"/api/v1/inventory/adjustments/{opening.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+        await owner.PostAsync("/api/v1/inventory/reason-codes", new { code = "SCRAPPED", name = Name("Scrapped", "تالف"), appliesTo = "scrap" });
+        var scrap = await owner.PostAsync("/api/v1/inventory/adjustments", new { companyId, warehouseId, kind = "scrap", lines = new object[] { new { itemId = belts, quantity = 10m, reasonCode = "SCRAPPED" } } });
+        await owner.PostAsync($"/api/v1/inventory/adjustments/{scrap.GetProperty("id").GetGuid()}/submit", new { }, HttpStatusCode.OK);
+
+        var board = await owner.GetOkAsync($"/api/v1/trader/pricing/board?companyId={companyId}");
+        var row = board.GetProperty("rows").EnumerateArray().Single();
+        row.GetProperty("itemCode").GetString().ShouldBe("PADS");
+        row.GetProperty("onHand").GetDecimal().ShouldBe(40m);
+        row.GetProperty("landedUnitCostRc").ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Null, "no shipment brought them");
+        row.GetProperty("stockUnitCostRc").GetDecimal().ShouldBe(12000m);
+        row.GetProperty("costBasisRc").GetDecimal().ShouldBe(12000m);
+        row.GetProperty("suggestedPrice").GetDecimal().ShouldBe(15600m, "30 % on 12,000");
+        row.GetProperty("alerts").EnumerateArray().Select(static a => a.GetString()).ShouldBe(["no_price"]);
+        board.GetProperty("unpricedItems").GetInt32().ShouldBe(1);
+
+        // Priced, the pads sell at 18,000; the board says so with the margin on the stock cost.
+        await owner.PostAsync("/api/v1/pricing/price-lists", new { companyId, code = "RETAIL", name = Name("Retail", "المفرد"), currency = "IQD", isDefault = true });
+        await owner.PostAsync("/api/v1/trader/pricing/apply", new { companyId, prices = new[] { new { itemId = pads, price = 18000m } } }, HttpStatusCode.OK);
+        row = (await owner.GetOkAsync($"/api/v1/trader/pricing/board?companyId={companyId}")).GetProperty("rows").EnumerateArray().Single();
+        row.GetProperty("currentPrice").GetDecimal().ShouldBe(18000m);
+        row.GetProperty("currentMarginPct").GetDecimal().ShouldBe(50m);
+        await owner.AssertInvariantsAsync();
+    }
 }

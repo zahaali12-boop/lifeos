@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 export type RecordScreen =
   | "/trader/offers"
   | "/trader/shipments"
+  | "/trader/purchases"
   | "/purchasing/requisitions"
   | "/hr/employees"
   | "/hr/leave"

@@ -849,7 +849,8 @@ public sealed class ShipmentService(
     private async Task<IReadOnlyList<OpenItemInfo>> InvoiceItemsAsync(Guid? invoiceId, CancellationToken cancellationToken) =>
         invoiceId is { } id ? (await payables.ItemsOfAsync(PurchaseDocumentTypes.Invoice, id, cancellationToken)).Where(static i => i.Status != "reversed").ToList() : [];
 
-    private async Task<OpenItemInfo?> OpenInvoiceItemAsync(Guid? invoiceId, CancellationToken cancellationToken) =>
+    /// <summary>The first open instalment of the shipment's supplier invoice, for whoever records the purchase and pays it next.</summary>
+    internal async Task<OpenItemInfo?> OpenInvoiceItemAsync(Guid? invoiceId, CancellationToken cancellationToken) =>
         invoiceId is { } id ? (await payables.ItemsOfAsync(PurchaseDocumentTypes.Invoice, id, cancellationToken)).Where(static i => i.RemainingTc > 0m && i.Status != "reversed").OrderBy(static i => i.Instalment).FirstOrDefault() : null;
 
     private async Task<Result<BankAccountInfo>> AccountAsync(Shipment shipment, Guid bankAccountId, CancellationToken cancellationToken)

@@ -26,6 +26,7 @@ public sealed class PricingBoardService(
     IExchangeRateResolver rates,
     IItemDirectory items,
     IInventoryCosting costing,
+    IStockActivity stock,
     IPurchaseLandedCosts landedCosts,
     IPriceLists priceLists,
     IClock clock)
@@ -75,8 +76,11 @@ public sealed class PricingBoardService(
             }
         }
 
+        // Every item a shipment landed, every item the list prices, and every item the store holds (goods entered
+        // directly or there before the program, T13): a trader prices what is on the shelf, whatever brought it.
+        var held = (await stock.OnHandByItemAsync(companyId, cancellationToken)).Select(static x => x.ItemId);
         var rows = new List<TraderPricingRow>();
-        foreach (var itemId in landed.Keys.Union(prices.Keys))
+        foreach (var itemId in landed.Keys.Union(prices.Keys).Union(held))
         {
             var item = await items.FindAsync(itemId, cancellationToken);
             if (item is null)

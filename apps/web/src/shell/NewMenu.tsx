@@ -23,6 +23,7 @@ export const quickNew: { id: string; to: string; permission: string; group: "sal
 export const traderQuickNew: typeof quickNew = [
   { id: "sale", to: "/trader/sales", permission: "sales.invoice.manage", group: "sales" },
   { id: "comparison", to: "/trader/offers", permission: "purchasing.rfq.manage", group: "purchasing" },
+  { id: "goods", to: "/trader/purchases", permission: "purchasing.order.manage", group: "purchasing" },
   { id: "expense", to: "/trader/expenses", permission: "expenses.expense.manage", group: "money" },
   { id: "customer", to: "/sales/customers", permission: "partners.customer.manage", group: "masters" },
   { id: "supplier", to: "/purchasing/suppliers", permission: "partners.supplier.manage", group: "masters" },

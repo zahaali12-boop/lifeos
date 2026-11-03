@@ -268,6 +268,31 @@ would also throw away the tests and the invariants that make the books right.
     payment). On a phone (a viewport of 640 px or less) the trader edition's home opens the phone site; "Open the
     full program" in its header keeps the full program for the session. The scanner's shell (§9) stays what it is.
     Deferred: a purchase recorded from the phone; expenses from the phone; a daily summary notification.
+22. **Supplier invoices, payments under every invoice, goods entered without a shipment (T13; A-207).** The founder
+    asked for a screen of what he owes each supplier where he confirms, pays in full or in part and sees the payments;
+    the same on the sales side; goods already shipped or on the shelf entered without offers and shipments, then
+    priced; and the refusal "the adjustment cannot post before the entry it adjusts" on a supplier invoice. (1) A
+    supplier's invoice is often dated before the goods arrived (it travels with them): the invoice posts on its own
+    day, and the price settles the stock on the later of the invoice's day and the receipt's, the reversal likewise
+    (`InvoiceService`); the costing engine still refuses to adjust an entry before it exists. (2) The trader shell gains
+    Supplier invoices (`/trader/purchases`): the purchasing module's invoices with what each still asks for (its open
+    items) and a word for its state, a payment of one invoice (full or part, from a box or account, in the invoice's
+    currency with what left a dinar account when it differs) through Banking's supplier payment, and every payment
+    listed under its invoice from the payables settlements. Sales opens an invoice the same way: its items, every
+    receipt applied to it from the receivables settlements, what is left, and the payment or the print from there.
+    (3) Goods already in hand are entered in one step. Bought from a supplier: `POST /purchasing/quick-purchases`
+    (`QuickPurchaseService`) makes the order, tracks it as a shipment that arrives at once (the goods receipt, the
+    landed costs and the agents' invoices posted by the shipment's own step), records and posts the supplier's invoice
+    at the ordered prices, and returns the landed unit costs and the open item; nothing is kept when any line refuses,
+    and paying now is the shipment's own pay step, so the shipment stays the record (Shipments shows it received,
+    Money and Health count it, the board prices it). On the shelf before the program: an opening stock adjustment at
+    cost through the inventory module (reason `OPENING`, made on first use), Dr Inventory / Cr opening balance equity
+    as the import toolkit posts it. (4) The pricing board lists every item the store holds, not only what a shipment
+    landed or the list prices: a new Inventory contract read, `IStockActivity.OnHandByItemAsync` (own stock, all
+    warehouses together), joins the board's item set, and such an item is priced from its stock cost (ADR-0035 §15)
+    with the `no_price` alert until a price is written. Deferred: a supplier invoice typed by hand for goods already
+    received through a shipment that has one (the full edition's screen); a payment on account from the trader's
+    screens; the supplier's own document printed.
 
 ## Consequences
 

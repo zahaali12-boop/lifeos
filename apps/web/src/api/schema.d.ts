@@ -9027,6 +9027,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchasing/quick-purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Goods already in hand bought in one step: the order made and tracked as a shipment that arrives at once (receipt, landed costs and the agents' invoices posted), the supplier's invoice recorded and posted into the payable; a refusal anywhere keeps nothing. Paying is the shipment's own step. */
+        post: operations["postPurchasingQuickPurchases"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/purchasing/requisitions": {
         parameters: {
             query?: never;
@@ -20193,6 +20210,88 @@ export interface components {
             outcome: string;
             expense: components["schemas"]["ExpenseSummary"];
             paymentNumber: null | string;
+        };
+        /** @description A cost of bringing the goods in (freight, duty, port, transport) in its currency, owed to its agent when one is named. */
+        QuickPurchaseCostRequest: {
+            /** Format: uuid */
+            chargeTypeId: string;
+            /** Format: double */
+            amount: number | string;
+            currency?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            description?: null | string;
+        };
+        /** @description One item bought: the quantity in the item's unit (or the one named) at the supplier's unit price in the purchase currency. */
+        QuickPurchaseLineRequest: {
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: uuid */
+            itemId?: null | string;
+            itemCode?: null | string;
+            uom?: null | string;
+        };
+        QuickPurchaseLineResult: {
+            /** Format: uuid */
+            itemId: string;
+            itemCode: string;
+            itemName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            quantity: number | string;
+            /** Format: double */
+            unitPrice: number | string;
+            /** Format: double */
+            landedUnitCostRc: number | string;
+        };
+        /**
+         * @description Goods bought and already in hand, recorded in one step (trader edition, ADR-0035 §22): the supplier, the store, the
+         *     day, the items at their prices in the purchase currency, the journey's costs, the supplier's invoice number.
+         */
+        QuickPurchaseRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            warehouseId: string;
+            lines: components["schemas"]["QuickPurchaseLineRequest"][];
+            currency?: null | string;
+            /** Format: date */
+            date?: null | string;
+            supplierInvoiceNumber?: null | string;
+            reference?: null | string;
+            costs?: null | components["schemas"]["QuickPurchaseCostRequest"][];
+            notes?: null | string;
+        };
+        QuickPurchaseResult: {
+            /** Format: uuid */
+            orderId: string;
+            orderNumber: string;
+            /** Format: uuid */
+            shipmentId: string;
+            /** Format: uuid */
+            receiptId: string;
+            receiptNumber: string;
+            /** Format: uuid */
+            invoiceId: string;
+            invoiceNumber: string;
+            invoiceStatus: string;
+            currency: string;
+            /** Format: double */
+            totalGross: number | string;
+            /** Format: double */
+            costsTotalRc: number | string;
+            /** Format: double */
+            landedTotalRc: number | string;
+            /** Format: uuid */
+            openItemId: null | string;
+            /** Format: double */
+            outstandingTc: number | string;
+            lines: components["schemas"]["QuickPurchaseLineResult"][];
         };
         QuickSaleLineRequest: {
             /** Format: double */
@@ -44606,6 +44705,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PurchaseAnalysis"];
+                };
+            };
+        };
+    };
+    postPurchasingQuickPurchases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickPurchaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickPurchaseResult"];
                 };
             };
         };

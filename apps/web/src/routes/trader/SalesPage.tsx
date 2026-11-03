@@ -17,10 +17,12 @@ import { emptyLine, LinesEditor, num, type LineForm } from "../purchasing/shared
 import { useBankAccounts } from "../payables/shared";
 import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
 import { QuickCreateButton } from "../QuickCreate";
+import { n, paymentState, printVariants, remainingOf, stateTones as tones } from "./invoices";
 import { rangeParams } from "./period";
 import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
 type Invoice = components["schemas"]["SalesInvoiceSummary"];
+type Settlement = components["schemas"]["ReceivableSettlementInfo"];
 
 interface SaleForm {
   partnerId: string;
@@ -39,40 +41,14 @@ interface PaymentForm {
   date: string;
 }
 
-const n = (value: number | string | null | undefined): number => (value === null || value === undefined ? 0 : Number(value));
-
-/** What is still owed on an invoice: the remainders of its open items. */
-function remainingOf(invoice: Invoice): number {
-  return invoice.openItems.reduce((sum, item) => sum + n(item.remainingTc), 0);
-}
-
-function paymentState(invoice: Invoice, today: string): string {
-  if (invoice.status !== "posted") {
-    return invoice.status;
-  }
-  const remaining = remainingOf(invoice);
-  if (remaining <= 0) {
-    return "paid";
-  }
-  const due = invoice.openItems.map((i) => i.dueDate).sort()[0];
-  if (due !== undefined && due < today) {
-    return "overdue";
-  }
-  return remaining < n(invoice.totalGross) ? "partly" : "unpaid";
-}
-
-const tones: Record<string, "success" | "warning" | "danger" | "info" | "neutral"> = { paid: "success", partly: "info", unpaid: "warning", overdue: "danger", draft: "neutral", cancelled: "neutral", reversed: "neutral" };
-
 /** What the program offers next after a sale (the payment, the same customer again) or a payment (what is owed, another sale). */
 type NextStep = { kind: "sold"; number: string; partnerId: string; invoiceId: string } | { kind: "paid"; receiptId: string; receiptNumber: string; partnerId: string };
 
-/** The invoice or the receipt printed or sent from here: the company's branded layout first, the plain one beside it (T12b). */
-const printVariants = ["brand", "standard"];
-
 /**
- * Sales (trader edition, ADR-0035 §6, §16): a sale in one step (the order confirmed, the goods shipped from the store,
- * the invoice posted), the invoices with what each customer still owes, payments recorded against them, and the next
- * step offered after each: a customer made elsewhere arrives here with the sale open and the customer chosen.
+ * Sales (trader edition, ADR-0035 §6, §16, §22): a sale in one step (the order confirmed, the goods shipped from the
+ * store, the invoice posted), the invoices with what each customer still owes, payments recorded against them (in
+ * full or in part) and listed under each invoice, and the next step offered after each: a customer made elsewhere
+ * arrives here with the sale open and the customer chosen.
  */
 export function SalesPage() {
   const { t } = useTranslation();
@@ -86,6 +62,7 @@ export function SalesPage() {
   const [payment, setPayment] = useState<PaymentForm | null>(null);
   const [next, setNext] = useState<NextStep | null>(null);
   const [printing, setPrinting] = useState<PrintSubject | null>(null);
+  const [openedId, setOpenedId] = useState<string | null>(null);
   const warehouses = useWarehouses(companyId);
   const accounts = useBankAccounts(companyId);
   const company = companies.find((c) => c.id === companyId);
@@ -108,6 +85,17 @@ export function SalesPage() {
     enabled: Boolean(companyId),
     queryFn: async () => unwrap(await api.GET("/api/v1/trader/pricing/board", { params: { query: { companyId } } })),
   });
+  // The invoice opened from its row: its items and every payment recorded against it (the customer's settlements, those of its open items).
+  const opened = (invoices.data ?? []).find((i) => i.id === openedId) ?? null;
+  const settlements = useQuery({
+    queryKey: ["ar-settlements", companyId, opened?.partnerId ?? ""],
+    enabled: Boolean(companyId) && opened !== null,
+    queryFn: async () => unwrap(await api.GET("/api/v1/receivables/settlements", { params: { query: { companyId, partnerId: opened?.partnerId ?? "" } } })),
+  });
+  const paymentsOf = (invoice: Invoice): Settlement[] => {
+    const items = new Set(invoice.openItems.map((i) => i.id));
+    return (settlements.data ?? []).filter((s) => items.has(s.settledItemId) && s.status !== "reversed").sort((a, b) => b.settlementDate.localeCompare(a.settlementDate));
+  };
   const fail = (error: unknown): void => { setNotice(null); setProblem(toFormProblem(error, t("common.saveFailed"))); };
   // The refusals a trader meets most often, in the trader's own words from the facts the server gave.
   const wordProblem = (p: FormProblem | null): string | null => {
@@ -119,7 +107,9 @@ export function SalesPage() {
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ["invoices"] });
     await queryClient.invalidateQueries({ queryKey: ["ar-aging"] });
+    await queryClient.invalidateQueries({ queryKey: ["ar-settlements"] });
     await queryClient.invalidateQueries({ queryKey: ["stock"] });
+    await queryClient.invalidateQueries({ queryKey: ["stock-balances"] });
     await queryClient.invalidateQueries({ queryKey: ["trader-pricing"] });
   };
 
@@ -176,7 +166,7 @@ export function SalesPage() {
               <Printer aria-hidden="true" />
             </Button>
           ) : null;
-          return <div className="flex items-center gap-1">{print}{row.original.status === "posted" && open ? <Button type="button" variant="ghost" size="sm" onClick={() => { setProblem(null); setPayment({ invoice: row.original, openItemId: open.id, amount: String(n(open.remainingTc)), accountId: accounts.data?.[0]?.id ?? "", method: "cash", date: "" }); }} data-testid={`pay-${row.original.number}`}>{t("trader.sales.recordPayment")}</Button> : null}</div>;
+          return <div className="flex items-center gap-1">{print}{row.original.status === "posted" && open ? <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setProblem(null); setPayment({ invoice: row.original, openItemId: open.id, amount: String(n(open.remainingTc)), accountId: accounts.data?.[0]?.id ?? "", method: "cash", date: "" }); }} data-testid={`pay-${row.original.number}`}>{t("trader.sales.recordPayment")}</Button> : null}</div>;
         },
       },
     ],
@@ -250,7 +240,60 @@ export function SalesPage() {
         </div>
       ) : null}
       {printing ? <PrintDialog subject={printing} onClose={() => { setPrinting(null); }} /> : null}
-      <DataGrid<Invoice> label="trader.sales.title" columns={columns} data={invoices.data ?? []} rowKey={(row) => row.id} loading={invoices.isPending && Boolean(companyId)} emptyTitle={t("trader.sales.empty")} emptyDescription={t("trader.sales.emptyDescription")} />
+      <DataGrid<Invoice> label="trader.sales.title" columns={columns} data={invoices.data ?? []} rowKey={(row) => row.id} loading={invoices.isPending && Boolean(companyId)} emptyTitle={t("trader.sales.empty")} emptyDescription={t("trader.sales.emptyDescription")} onOpen={(row) => { setProblem(null); setOpenedId(row.id); }} />
+
+      <Dialog open={opened !== null} onOpenChange={(isOpen) => { if (!isOpen) { setOpenedId(null); } }}>
+        <DialogContent closeLabel={t("common.close")} className="max-w-3xl">
+          {opened ? (
+            <div className="flex flex-col gap-4" data-testid="invoice-dialog">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-semibold"><span dir="ltr">{t("trader.sales.invoiceDetails", { number: opened.number })}</span></DialogTitle>
+              </DialogHeader>
+              <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                <dt className="text-fg-muted">{t("trader.sales.customer")}</dt><dd dir="auto">{opened.partnerCode} · {localized(opened.partnerName)}</dd>
+                <dt className="text-fg-muted">{t("trader.sales.date")}</dt><dd dir="ltr">{formatDate(opened.documentDate)}</dd>
+                <dt className="text-fg-muted">{t("trader.sales.status")}</dt><dd><Badge tone={tones[paymentState(opened, today)] ?? "neutral"}>{t(`trader.sales.statuses.${paymentState(opened, today)}`, { defaultValue: opened.status })}</Badge></dd>
+              </dl>
+              <div>
+                <h3 className="mb-1 text-sm font-semibold">{t("trader.sales.lines")}</h3>
+                <table className="w-full text-sm">
+                  <thead><tr className="text-fg-muted"><th className="text-start font-medium">{t("trader.sales.item")}</th><th className="text-end font-medium">{t("trader.sales.quantity")}</th><th className="text-end font-medium">{t("trader.sales.unitPrice")}</th><th className="text-end font-medium">{t("trader.sales.net")}</th></tr></thead>
+                  <tbody>
+                    {opened.lines.map((line) => (
+                      <tr key={line.id} className="border-t border-border">
+                        <td dir="auto">{line.itemCode ? `${line.itemCode} · ${localized(line.itemName ?? {})}` : (line.description ?? "")}</td>
+                        <td className="tabular text-end" dir="ltr">{formatNumber(n(line.quantity))} {line.uomCode ?? ""}</td>
+                        <td className="tabular text-end" dir="ltr">{formatMoney(line.unitPrice, opened.currency)}</td>
+                        <td className="tabular text-end" dir="ltr">{formatMoney(line.netAmount, opened.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot><tr className="border-t border-border font-semibold"><td colSpan={3}>{t("trader.sales.total")}</td><td className="tabular text-end" dir="ltr">{formatMoney(opened.totalGross, opened.currency)}</td></tr></tfoot>
+                </table>
+              </div>
+              <div>
+                <h3 className="mb-1 text-sm font-semibold">{t("trader.sales.payments")}</h3>
+                {paymentsOf(opened).length === 0 ? <p className="text-sm text-fg-muted" data-testid="no-payments">{t("trader.sales.noPayments")}</p> : (
+                  <ul className="flex flex-col gap-1 text-sm" data-testid="payments-list">
+                    {paymentsOf(opened).map((s) => (
+                      <li key={s.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1" data-testid="payment-row">
+                        <span dir="ltr">{formatDate(s.settlementDate)} · {s.settlingDocumentNumber}</span>
+                        <span className="tabular" dir="ltr">{formatMoney(s.amountTc, s.currency)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-2 text-sm font-medium" data-testid="dialog-remaining">{t("trader.sales.remaining")}: <span className="tabular" dir="ltr">{formatMoney(remainingOf(opened), opened.currency)}</span></p>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => { setOpenedId(null); }}>{t("common.close")}</Button>
+                {opened.status === "posted" ? <Button type="button" variant="secondary" onClick={() => { setPrinting({ documentType: "sales_invoice", documentId: opened.id, number: opened.number, partnerId: opened.partnerId, variants: printVariants }); }} data-testid="dialog-print">{t("trader.next.invoicePdf")}</Button> : null}
+                {opened.status === "posted" && remainingOf(opened) > 0 ? <Button type="button" onClick={() => { openPaymentFor(opened); }} data-testid="dialog-pay">{t("trader.sales.recordPayment")}</Button> : null}
+              </DialogFooter>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(sale)} onOpenChange={(isOpen) => { if (!isOpen) { setSale(null); } }}>
         <DialogContent closeLabel={t("common.close")} className="max-w-4xl">

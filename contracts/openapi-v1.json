@@ -26037,6 +26037,37 @@
         }
       }
     },
+    "/api/v1/purchasing/quick-purchases": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Goods already in hand bought in one step: the order made and tracked as a shipment that arrives at once (receipt, landed costs and the agents' invoices posted), the supplier's invoice recorded and posted into the payable; a refusal anywhere keeps nothing. Paying is the shipment's own step.",
+        "operationId": "postPurchasingQuickPurchases",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickPurchaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickPurchaseResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/purchasing/requisitions": {
       "get": {
         "tags": [
@@ -65473,6 +65504,310 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "QuickPurchaseCostRequest": {
+        "required": [
+          "chargeTypeId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "chargeTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A cost of bringing the goods in (freight, duty, port, transport) in its currency, owed to its agent when one is named."
+      },
+      "QuickPurchaseLineRequest": {
+        "required": [
+          "quantity",
+          "unitPrice"
+        ],
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "itemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One item bought: the quantity in the item's unit (or the one named) at the supplier's unit price in the purchase currency."
+      },
+      "QuickPurchaseLineResult": {
+        "required": [
+          "itemId",
+          "itemCode",
+          "itemName",
+          "quantity",
+          "unitPrice",
+          "landedUnitCostRc"
+        ],
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "landedUnitCostRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "QuickPurchaseRequest": {
+        "required": [
+          "companyId",
+          "partnerId",
+          "warehouseId",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "warehouseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuickPurchaseLineRequest"
+            }
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "supplierInvoiceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "costs": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/QuickPurchaseCostRequest"
+            }
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Goods bought and already in hand, recorded in one step (trader edition, ADR-0035 §22): the supplier, the store, the\nday, the items at their prices in the purchase currency, the journey's costs, the supplier's invoice number."
+      },
+      "QuickPurchaseResult": {
+        "required": [
+          "orderId",
+          "orderNumber",
+          "shipmentId",
+          "receiptId",
+          "receiptNumber",
+          "invoiceId",
+          "invoiceNumber",
+          "invoiceStatus",
+          "currency",
+          "totalGross",
+          "costsTotalRc",
+          "landedTotalRc",
+          "openItemId",
+          "outstandingTc",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receiptId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "receiptNumber": {
+            "type": "string"
+          },
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "invoiceNumber": {
+            "type": "string"
+          },
+          "invoiceStatus": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "totalGross": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costsTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "landedTotalRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "openItemId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "outstandingTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuickPurchaseLineResult"
+            }
           }
         }
       },

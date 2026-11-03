@@ -266,6 +266,9 @@ public static class PurchasingEndpoints
             .WithSummary("The supplier's invoice for the received goods at the ordered prices: created, matched and posted into the payable");
         shipments.MapPost("/{shipmentId:guid}/cancel", async (Guid shipmentId, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.CancelAsync(shipmentId, ct)))
             .RequirePermission(PurchasingPermissions.OrderManage);
+        purchasing.MapPost("/quick-purchases", async (QuickPurchaseRequest request, QuickPurchaseService service, CancellationToken ct) => ApiProblems.Created(await service.ReceiveAsync(request, ct), static r => $"/api/v1/purchasing/shipments/{r.ShipmentId}"))
+            .RequirePermission(PurchasingPermissions.OrderManage).RequirePermission(PurchasingPermissions.ReceiptPost).RequirePermission(PurchasingPermissions.LandedCostPost).RequirePermission(PurchasingPermissions.InvoicePost)
+            .WithSummary("Goods already in hand bought in one step: the order made and tracked as a shipment that arrives at once (receipt, landed costs and the agents' invoices posted), the supplier's invoice recorded and posted into the payable; a refusal anywhere keeps nothing. Paying is the shipment's own step.");
 
         var landedCosts = purchasing.MapGroup("/landed-costs");
         landedCosts.MapGet("/", async (Guid? companyId, string? status, LandedCostService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))

@@ -28,6 +28,18 @@ public sealed class StockActivity(InventoryDbContext db) : IStockActivity, IComp
             .Select(static e => e.ItemId).Distinct().ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ItemOnHandInfo>> OnHandByItemAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var rows = await db.Entries.AsNoTracking()
+            .Where(e => e.CompanyId == companyId && e.Ownership == "own")
+            .GroupBy(static e => e.ItemId)
+            .Select(static g => new { ItemId = g.Key, OnHand = g.Sum(static e => e.Quantity) })
+            .Where(static x => x.OnHand > 0m)
+            .OrderBy(static x => x.ItemId)
+            .ToListAsync(cancellationToken);
+        return rows.Select(static r => new ItemOnHandInfo(r.ItemId, r.OnHand)).ToList();
+    }
+
     public async Task<Error?> RefusalAsync(CompanyId companyId, CancellationToken cancellationToken = default)
     {
         var entries = await db.Entries.AsNoTracking().CountAsync(e => e.CompanyId == companyId.Value, cancellationToken);
