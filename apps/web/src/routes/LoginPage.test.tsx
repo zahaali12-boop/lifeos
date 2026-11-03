@@ -79,4 +79,39 @@ describe("LoginPage", () => {
     expect(verified[1]).toEqual({ challengeToken: "challenge", code: "123456" });
     vi.unstubAllGlobals();
   });
+
+  it("says the server is not answering, in English and Arabic, when sign-in gets no answer at all", async () => {
+    // The founder's screen: the API restarting during an update, no security key anywhere, and the page blamed one.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await setLanguage("ar");
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: Request) => {
+        calls.push(new URL(input.url).pathname);
+        return Promise.reject(new TypeError("Failed to fetch"));
+      }),
+    );
+    renderLogin();
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "تسجيل الدخول" })).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByLabelText(/البريد/), { target: { value: "owner@quicker.example" } });
+    fireEvent.change(screen.getByLabelText(/كلمة المرور/), { target: { value: "DemoPass2026!" } });
+    fireEvent.click(screen.getByRole("button", { name: "تسجيل الدخول" }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("خادم البرنامج لا يجيب");
+    });
+    expect(screen.getByRole("alert")).not.toHaveTextContent("مفتاح الأمان");
+    // The write was sent once more under its key before giving up.
+    expect(calls).toEqual(["/api/v1/auth/login", "/api/v1/auth/login"]);
+
+    await setLanguage("en");
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("The program's server is not answering");
+    });
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
 });

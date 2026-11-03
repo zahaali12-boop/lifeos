@@ -104,8 +104,19 @@ export async function signWithKey(options: Json): Promise<Json> {
   };
 }
 
-/** A browser refusal (cancelled, timed out, key not registered here) as a key into `account.keyErrors`. */
-export function keyErrorKind(error: unknown): "cancelled" | "unsupported" | "failed" {
+/**
+ * Whether a request never got an answer: fetch rejects with a TypeError when the server is down, restarting or
+ * unreachable from this address (and when the browser blocks the answer), with a message that differs by browser.
+ */
+export function isNetworkFailure(error: unknown): boolean {
+  return error instanceof TypeError;
+}
+
+/** A browser refusal (cancelled, timed out, key not registered here), or a server that did not answer, as a key into `account.keyErrors`. */
+export function keyErrorKind(error: unknown): "cancelled" | "unsupported" | "network" | "failed" {
+  if (isNetworkFailure(error)) {
+    return "network";
+  }
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError" || error.name === "AbortError") {
       return "cancelled";

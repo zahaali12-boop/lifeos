@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { api, isApiProblem, unwrap } from "../api";
 import type { components } from "../api/schema";
 import { toFormProblem } from "../lib/problem";
-import { keyErrorKind, signWithKey, webAuthnAvailable } from "../lib/webauthn";
+import { isNetworkFailure, keyErrorKind, signWithKey, webAuthnAvailable } from "../lib/webauthn";
 import { setSession } from "../session/session";
 import { RecoveryCodes, TotpSetup } from "./account/TwoStep";
 import { FormError, TextField } from "./common";
@@ -68,13 +68,25 @@ export function LoginPage() {
     }
   };
 
-  const run = async (action: () => Promise<void>): Promise<void> => {
+  // What went wrong, in words that match it: the server's own answer, a server that did not answer, a security key
+  // the browser refused (only while one is in use), or a plain failure.
+  const describe = (problem: unknown, withKey: boolean): string => {
+    if (isApiProblem(problem)) {
+      return toFormProblem(problem, t("auth.failed")).message;
+    }
+    if (isNetworkFailure(problem)) {
+      return t("auth.serverUnreachable");
+    }
+    return withKey ? t(`account.keyErrors.${keyErrorKind(problem)}`) : t("auth.failed");
+  };
+
+  const run = async (action: () => Promise<void>, withKey = false): Promise<void> => {
     setBusy(true);
     setError(null);
     try {
       await action();
     } catch (problem) {
-      setError(isApiProblem(problem) ? toFormProblem(problem, t("auth.failed")).message : t(`account.keyErrors.${keyErrorKind(problem)}`));
+      setError(describe(problem, withKey));
     } finally {
       setBusy(false);
     }
@@ -110,7 +122,7 @@ export function LoginPage() {
       const started = unwrap(await api.POST("/api/v1/auth/mfa/webauthn/options", { body: { challengeToken: step.challengeToken } }));
       const response = await signWithKey(started.options as Record<string, unknown>);
       await proceed(unwrap(await api.POST("/api/v1/auth/mfa/verify", { body: { challengeToken: step.challengeToken, webAuthnOptionsId: started.optionsId, webAuthnResponse: response } })));
-    });
+    }, true);
   };
 
   const confirmEnrolment = (totpCode: string): void => {

@@ -40,6 +40,10 @@ describe("webauthn", () => {
   it("names why a key request failed", () => {
     expect(keyErrorKind(new DOMException("cancelled", "NotAllowedError"))).toBe("cancelled");
     expect(keyErrorKind(new DOMException("bad domain", "SecurityError"))).toBe("unsupported");
-    expect(keyErrorKind(new Error("network"))).toBe("failed");
+    expect(keyErrorKind(new Error("something else"))).toBe("failed");
+    // What fetch throws when the server does not answer, in Chrome, Firefox and Safari.
+    expect(keyErrorKind(new TypeError("Failed to fetch"))).toBe("network");
+    expect(keyErrorKind(new TypeError("NetworkError when attempting to fetch resource."))).toBe("network");
+    expect(keyErrorKind(new TypeError("Load failed"))).toBe("network");
   });
 });
