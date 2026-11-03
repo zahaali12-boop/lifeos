@@ -110,6 +110,23 @@ public static class TaxReasons
 
     /// <summary>The company is registered in no regime on the tax date, so it charges and recovers no tax.</summary>
     public const string NotRegistered = "not_registered";
+
+    /// <summary>The item has no tax group, nor has its category, and the company chose to leave such items untaxed (<see cref="TaxSettingKeys.UnclassifiedItems"/>).</summary>
+    public const string Unclassified = "unclassified";
+}
+
+/// <summary>Settings the tax module reads from the organization's settings store (tenant-wide, overridable per company).</summary>
+public static class TaxSettingKeys
+{
+    /// <summary>
+    /// What a line with an item that has no tax group, nor its category, does under a registered regime (string):
+    /// <see cref="Refuse"/> (the default: the document is refused with <c>tax.item_unclassified</c>) or <see cref="Untaxed"/>
+    /// (the line carries no tax, reason <see cref="TaxReasons.Unclassified"/>; the trader edition's choice, ADR-0035 §17).
+    /// </summary>
+    public const string UnclassifiedItems = "tax.unclassified_items";
+
+    public const string Refuse = "refuse";
+    public const string Untaxed = "untaxed";
 }
 
 /// <summary>

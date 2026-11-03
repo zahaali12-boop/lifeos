@@ -57,4 +57,26 @@ describe("the session renewal", () => {
     expect(result.response.status).toBe(401);
     expect(getSession()).toBeNull();
   });
+
+  it("uses the tokens another window stored instead of presenting a refresh token that window already rotated", async () => {
+    const sent = stubFetch(json({ title: "Unauthorized", status: 401 }, 401), json({ id: "me" }));
+    // The other window renewed and stored its tokens; this one still holds the old ones in memory.
+    localStorage.setItem("quicker.session", JSON.stringify({ ...getSession(), accessToken: "other-access", refreshToken: "refresh-other" }));
+    const result = await api.GET("/api/v1/me");
+    expect(result.response.status).toBe(200);
+    expect(sent.map((s) => s.url.replace(/^https?:\/\/[^/]+/, ""))).toEqual(["/api/v1/me", "/api/v1/me"]);
+    expect(sent[1]?.auth).toBe("Bearer other-access");
+    expect(getSession()?.refreshToken).toBe("refresh-other");
+  });
+
+  it("follows a renewal or a sign-out made in another window", () => {
+    const stored = JSON.stringify({ ...getSession(), accessToken: "other-access", refreshToken: "refresh-other" });
+    localStorage.setItem("quicker.session", stored);
+    window.dispatchEvent(new StorageEvent("storage", { key: "quicker.session", newValue: stored }));
+    expect(getSession()?.accessToken).toBe("other-access");
+
+    localStorage.removeItem("quicker.session");
+    window.dispatchEvent(new StorageEvent("storage", { key: "quicker.session", newValue: null }));
+    expect(getSession()).toBeNull();
+  });
 });

@@ -2336,7 +2336,8 @@
         "lot": "Lot",
         "serial": "Serial",
         "lot_and_serial": "Lot and serial"
-      }
+      },
+      "onHand": "On hand"
     },
     "warehouses": {
       "description": "Where stock lives: warehouses of every kind and their bins in pick order.",
@@ -6213,7 +6214,9 @@
       "invite": "Add",
       "delete": "Delete comparison",
       "deleteConfirm": "Delete this comparison and its offers for good?",
-      "deleteYes": "Delete"
+      "deleteYes": "Delete",
+      "partialConfirm": "This supplier priced {priced} of {total} lines. Order those lines only?",
+      "partialYes": "Yes, order them"
     },
     "shipments": {
       "title": "Shipments",
@@ -6394,7 +6397,9 @@
       "removeConfirm": "Take {item} off the price list?",
       "removeYes": "Yes, take it off",
       "removed": "The price was taken off the list; earlier prices stay in the history.",
-      "sellNow": "Sell at these prices"
+      "sellNow": "Sell at these prices",
+      "newPrice": "New price",
+      "savePrice": "Save"
     },
     "sales": {
       "title": "Sales",

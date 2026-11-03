@@ -149,6 +149,16 @@ export function PricingPage() {
   };
   const submitSettings = (event: FormEvent): void => { event.preventDefault(); if (settings) { saveSettings.mutate(settings); } };
   const alertLabel = (row: Row, code: string): string => t(`trader.pricing.alertNames.${code}`, { defaultValue: code, pct: formatNumber(Math.abs(Number(row.rateMovePct ?? 0)), { maximumFractionDigits: 1 }) });
+  // The margin follows what is typed: the price in the box against today's cost (or the cost basis), one decimal.
+  const liveMargin = (row: Row): number | null => {
+    const typed = suggestedOf(row).trim();
+    const basis = row.replacementUnitCostRc ?? row.costBasisRc;
+    if (typed === "" || basis === null || Number(basis) <= 0) {
+      return row.suggestedMarginPct === null ? null : Number(row.suggestedMarginPct);
+    }
+    return Math.round(((num(typed) - Number(basis)) * 1000) / Number(basis)) / 10;
+  };
+  const canSaveRow = (row: Row): boolean => suggestedOf(row).trim() !== "" && Boolean(b?.priceListId) && num(suggestedOf(row)) !== Number(row.currentPrice ?? -1);
   // The floor under the price box: the cost basis rounded up to the increment; a price typed below it says what a unit would lose.
   const floorNote = (row: Row): ReactNode => {
     if (row.floorPrice === null) {
@@ -267,13 +277,15 @@ export function PricingPage() {
                     <TableHead className="text-end">{t("trader.pricing.costToday")}</TableHead>
                     <TableHead className="text-end">{t("trader.pricing.currentPrice")}</TableHead>
                     <TableHead className="text-end">{t("trader.pricing.margin")}</TableHead>
-                    <TableHead>{t("trader.pricing.suggested")}</TableHead>
+                    <TableHead>{t("trader.pricing.newPrice")}</TableHead>
                     <TableHead>{t("trader.pricing.alerts")}</TableHead>
                     <TableHead><span className="sr-only">{t("common.actions")}</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {b.rows.map((row, index) => (
+                  {b.rows.map((row, index) => {
+                    const margin = liveMargin(row);
+                    return (
                     <TableRow key={row.itemId} data-testid="price-row">
                       <TableCell dir="auto">{row.itemCode} · {localized(row.itemName)}</TableCell>
                       <TableCell className="tabular text-end" dir="ltr">{formatNumber(row.onHand, { maximumFractionDigits: 3 })}</TableCell>
@@ -299,8 +311,9 @@ export function PricingPage() {
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             <Checkbox checked={isTicked(row)} onCheckedChange={(checked) => { setTicked({ ...ticked, [row.itemId]: checked === true }); }} aria-label={`${t("trader.pricing.apply")} ${row.itemCode}`} data-testid={`apply-${String(index)}`} />
-                            <DecimalField aria-label={`${t("trader.pricing.suggested")} ${row.itemCode}`} value={suggestedOf(row)} onChange={(e) => { setEdits({ ...edits, [row.itemId]: e.target.value }); setTicked({ ...ticked, [row.itemId]: true }); }} dir="ltr" className="w-32" data-testid={`suggested-${String(index)}`} />
-                            {row.suggestedMarginPct !== null ? <span className="text-xs text-fg-muted" dir="ltr">{pct(row.suggestedMarginPct)}</span> : null}
+                            <DecimalField aria-label={`${t("trader.pricing.newPrice")} ${row.itemCode}`} value={suggestedOf(row)} onChange={(e) => { setEdits({ ...edits, [row.itemId]: e.target.value }); setTicked({ ...ticked, [row.itemId]: true }); }} dir="ltr" className="w-32" data-testid={`suggested-${String(index)}`} />
+                            {margin !== null ? <span className={margin < 0 ? "text-xs text-danger" : "text-xs text-fg-muted"} dir="ltr" data-testid="live-margin">{pct(margin)}</span> : null}
+                            <Button type="button" size="sm" variant="secondary" disabled={!canSaveRow(row)} loading={apply.isPending} onClick={() => { apply.mutate([{ itemId: row.itemId, price: num(suggestedOf(row)) }]); }} data-testid="save-price">{t("trader.pricing.savePrice")}</Button>
                           </div>
                           {floorNote(row)}
                         </div>
@@ -328,7 +341,8 @@ export function PricingPage() {
                         )) : null}
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
               <div className="mt-3 flex justify-end">

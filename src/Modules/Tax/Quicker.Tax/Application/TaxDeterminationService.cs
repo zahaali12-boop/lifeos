@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Quicker.Items.Contracts;
 using Quicker.Kernel.Amounts;
@@ -20,7 +21,7 @@ namespace Quicker.Tax.Application;
 /// an item group counts 8, a partner group 4, where goods ship from 2 and to 1, then the latest start; a line no row
 /// matches is refused with the facts that were looked up, never taxed by guess.
 /// </summary>
-public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory companies, IPartnerDirectory partners, ICustomerDirectory customers, IItemDirectory items) : ITaxDetermination
+public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory companies, ICompanySettings settings, IPartnerDirectory partners, ICustomerDirectory customers, IItemDirectory items) : ITaxDetermination
 {
     private readonly Dictionary<Guid, TaxCode?> _codes = [];
     private readonly Dictionary<Guid, TaxRegime?> _regimes = [];
@@ -79,6 +80,7 @@ public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory c
                 : (await partners.FindSupplierAsync(request.CompanyId, partnerId, cancellationToken))?.TaxGroupId;
         }
 
+        var untaxedWhenUnclassified = await UnclassifiedUntaxedAsync(request.CompanyId, cancellationToken);
         var inputs = new List<TaxLineInput>(lines.Count);
         var determinations = new List<TaxLineDetermination>(lines.Count);
         foreach (var line in lines)
@@ -103,7 +105,7 @@ public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory c
             {
                 var from = line.ShipFromCountry ?? request.ShipFromCountry ?? (request.Direction == TaxDirections.Sales ? scope.Company.Country : null);
                 var to = line.ShipToCountry ?? request.ShipToCountry ?? (request.Direction == TaxDirections.Purchase ? scope.Company.Country : null);
-                determined = await DetermineAsync(scope, itemGroup, partnerGroup, from, to, cancellationToken, unclassified: line.ItemId is not null && itemGroup is null);
+                determined = await DetermineAsync(scope, itemGroup, partnerGroup, from, to, cancellationToken, unclassified: line.ItemId is not null && itemGroup is null, untaxedWhenUnclassified);
             }
 
             if (determined.IsFailure)
@@ -169,7 +171,14 @@ public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory c
         return new Scope(company, regime, direction, taxDate, rules, exemption);
     }
 
-    private async Task<Result<TaxDetermination>> DetermineAsync(Scope scope, Guid? itemGroup, Guid? partnerGroup, string? from, string? to, CancellationToken cancellationToken, bool unclassified = false)
+    /// <summary>Whether the company chose to leave items without a tax group untaxed (the trader edition's choice) rather than refuse the document.</summary>
+    private async Task<bool> UnclassifiedUntaxedAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var value = await settings.GetAsync(companyId, TaxSettingKeys.UnclassifiedItems, cancellationToken);
+        return value is { ValueKind: JsonValueKind.String } s && string.Equals(s.GetString()?.Trim(), TaxSettingKeys.Untaxed, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<Result<TaxDetermination>> DetermineAsync(Scope scope, Guid? itemGroup, Guid? partnerGroup, string? from, string? to, CancellationToken cancellationToken, bool unclassified = false, bool untaxedWhenUnclassified = false)
     {
         if (scope.Regime is null)
         {
@@ -177,8 +186,14 @@ public sealed class TaxDeterminationService(TaxDbContext db, ICompanyDirectory c
         }
 
         // An item always says how it is taxed; only lines without an item (expenses, charges) fall to the rows for any item.
+        // A company that chose so (tax.unclassified_items = untaxed) sells and buys such an item with no tax instead.
         if (unclassified)
         {
+            if (untaxedWhenUnclassified)
+            {
+                return new TaxDetermination(null, TaxReasons.Unclassified, null, null);
+            }
+
             return Error.Validation("tax.item_unclassified", "The item has no tax group, nor has its category; give one of them a tax group.").WithWhy(("regime", scope.Regime.Code));
         }
 

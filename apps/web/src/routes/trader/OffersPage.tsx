@@ -91,6 +91,7 @@ export function OffersPage() {
   const [offer, setOffer] = useState<OfferForm | null>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [ordered, setOrdered] = useState<{ id: string; number: string; shipmentId: string } | null>(null);
+  const [partialFor, setPartialFor] = useState<string | null>(null);
   const [invitee, setInvitee] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const suppliers = useSuppliers(companyId);
@@ -258,6 +259,9 @@ export function OffersPage() {
     }
   }, [r, collecting, openOfferIn]);
   const notInvited = (suppliers.data ?? []).filter((s) => !r?.suppliers.some((x) => x.partnerId === s.partnerId));
+  // How many of the lines with an item a supplier priced: ordering from one that priced some is the trader's call.
+  const itemLines = (r?.lines ?? []).filter((l) => l.itemCode).length;
+  const pricedLines = (quote: Rfq["quotes"][number]): number => (r?.lines ?? []).filter((l) => l.itemCode && quote.lines.some((q) => q.rfqLineId === l.id)).length;
   const recommendation = comparison?.rfqId === r?.id ? comparison?.recommendation ?? null : null;
   const rankingOf = (quoteId: string): Ranking | undefined => (comparison?.rfqId === r?.id ? comparison?.rankings.find((x) => x.quoteId === quoteId) : undefined);
   const lineLabel = (lineNo: number | string): string => {
@@ -400,7 +404,16 @@ export function OffersPage() {
                           <TableCell>
                             <div className="flex flex-wrap justify-end gap-1">
                               {collecting ? <Button type="button" variant="ghost" size="sm" onClick={() => { openOffer(s.partnerId); }} data-testid={`enter-offer-${s.partnerCode}`}>{quote ? t("trader.offers.changeOffer") : t("trader.offers.enterOffer")}</Button> : null}
-                              {collecting && quote ? <Button type="button" variant={isRecommended ? "primary" : "secondary"} size="sm" onClick={() => { award.mutate({ id: r.id, quoteId: quote.id }); }} loading={award.isPending} data-testid={`order-from-${s.partnerCode}`}>{t("trader.offers.orderFrom")}</Button> : null}
+                              {collecting && quote ? (partialFor === quote.id ? (
+                                <span className="flex flex-wrap items-center gap-1 text-xs" dir="auto" data-testid={`order-partial-${s.partnerCode}`}>
+                                  {t("trader.offers.partialConfirm", { priced: pricedLines(quote), total: itemLines })}
+                                  <Button type="button" size="sm" onClick={() => { setPartialFor(null); award.mutate({ id: r.id, quoteId: quote.id }); }} loading={award.isPending} data-testid={`order-from-${s.partnerCode}-yes`}>{t("trader.offers.partialYes")}</Button>
+                                  <Button type="button" size="sm" variant="ghost" onClick={() => { setPartialFor(null); }}>{t("common.cancel")}</Button>
+                                </span>
+                              ) : (
+                                // The choice is the trader's: any offer is ordered from, the recommendation is only that; a supplier that priced some lines is asked about the rest first.
+                                <Button type="button" variant={isRecommended ? "primary" : "secondary"} size="sm" onClick={() => { if (pricedLines(quote) < itemLines) { setPartialFor(quote.id); } else { award.mutate({ id: r.id, quoteId: quote.id }); } }} loading={award.isPending} data-testid={`order-from-${s.partnerCode}`}>{t("trader.offers.orderFrom")}</Button>
+                              )) : null}
                             </div>
                           </TableCell>
                         </TableRow>

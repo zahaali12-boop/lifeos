@@ -16,6 +16,8 @@ SSO/OIDC, MFA, least-privilege down to company, branch, warehouse, document type
 * **API keys** per tenant with scopes, expiry, IP allow-list, hashed at rest, last-used tracking; service accounts for integrations.
 * **Step-up**: sensitive actions (reopening periods, changing posting profiles, exporting the tenant, changing bank details) require a recent MFA (`auth_time` within 5 minutes) when the tenant enables it.
 
+**Amended 2026-11-03 (two windows renewing at once).** A refresh token presented again within 30 seconds of its rotation is not read as a replay: the same app open in another window found its access token expired at the same minute and is honoured with a session of its own in the same family, while the first window keeps the one it got. Past that grace a replay revokes the whole family as before. The web app also follows the session another window stored (the browser's storage event, a re-read before renewing), so the grace is rarely needed.
+
 ### Authorization
 
 * **Permissions** are code-defined strings `module.entity.action` (`sales.invoice.post`, `gl.period.reopen`, `inventory.count.approve`) with a catalogue exposed to the UI.

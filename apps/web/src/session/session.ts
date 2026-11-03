@@ -35,6 +35,34 @@ export function getSession(): Session | null {
   return current;
 }
 
+/**
+ * Takes what another window of the app stored (its renewal, its sign-in or its sign-out), so this window never trades
+ * a refresh token that window already rotated; nothing happens when the stored session is this one already.
+ */
+export function syncSession(): Session | null {
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return current;
+  }
+  if (raw === (current ? JSON.stringify(current) : null)) {
+    return current;
+  }
+  current = raw ? (JSON.parse(raw) as Session) : null;
+  emit();
+  return current;
+}
+
+if (typeof window !== "undefined") {
+  // The browser tells every other window when one of them writes the session.
+  window.addEventListener("storage", (event) => {
+    if (event.key === null || event.key === STORAGE_KEY) {
+      syncSession();
+    }
+  });
+}
+
 export function setSession(tokens: TokenResponse): Session {
   current = { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, tenant: tokens.tenant, user: tokens.user, membershipId: tokens.membershipId };
   try {

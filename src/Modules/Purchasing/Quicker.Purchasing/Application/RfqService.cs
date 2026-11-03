@@ -562,7 +562,11 @@ public sealed class RfqService(
         return new QuoteRecommendation(first.QuoteId, first.PartnerCode, reasons, savingVsNext, splitSaving);
     }
 
-    /// <summary>Awards a quote: the request is closed as awarded and a purchase order draft is created from the quote, priced as quoted.</summary>
+    /// <summary>
+    /// Awards a quote: the request is closed as awarded and a purchase order draft is created from the quote, priced as
+    /// quoted. The choice is the buyer's (ADR-0035 §17): a supplier that priced only some of the lines is ordered from
+    /// for those, and the lines it left out are named in the audit; only a quote that prices nothing is refused.
+    /// </summary>
     public async Task<Result<PurchaseOrderSummary>> AwardAsync(Guid id, AwardRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -585,10 +589,12 @@ public sealed class RfqService(
             return Error.NotFound("supplier_quote", request.QuoteId);
         }
 
-        if (quote.Lines.Count == 0 || rfq.Lines.Any(l => quote.Lines.All(q => q.RfqLineId != l.Id) && l.ItemId is not null))
+        if (quote.Lines.Count == 0)
         {
-            return Error.Conflict("rfq.quote_incomplete", "The awarded quote must price every line with an item.").WithWhy(("quoteId", quote.Id));
+            return Error.Conflict("rfq.quote_empty", "The quote prices no line.").WithWhy(("quoteId", quote.Id));
         }
+
+        var notOrdered = rfq.Lines.Where(l => l.ItemId is not null && quote.Lines.All(q => q.RfqLineId != l.Id)).Select(static l => l.LineNo).Order().ToList();
 
         var company = (await companies.FindAsync(new CompanyId(rfq.CompanyId), cancellationToken))!;
         var today = clock.TodayIn(company.TimeZone);
@@ -619,7 +625,7 @@ public sealed class RfqService(
         rfq.AwardedQuoteId = quote.Id;
         rfq.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry(DocumentType, rfq.Id, rfq.Number, AuditActions.StateChanged, After: new { status = rfq.Status, awardedQuoteId = quote.Id, partnerId = supplier.PartnerId, order = order.Value.Number, comparison = quote.ComparisonScore is null ? (JsonElement?)null : Shared.Parse(quote.ComparisonScore) }, CompanyId: rfq.CompanyId), cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, rfq.Id, rfq.Number, AuditActions.StateChanged, After: new { status = rfq.Status, awardedQuoteId = quote.Id, partnerId = supplier.PartnerId, order = order.Value.Number, linesNotOrdered = notOrdered, comparison = quote.ComparisonScore is null ? (JsonElement?)null : Shared.Parse(quote.ComparisonScore) }, CompanyId: rfq.CompanyId), cancellationToken);
         return order.Value;
     }
 

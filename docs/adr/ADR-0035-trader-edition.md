@@ -192,6 +192,19 @@ would also throw away the tests and the invariants that make the books right.
     payment, what is owed on Money and another sale; after goods are received, the selling prices; after prices are
     applied, a sale at them. The full edition keeps its own next steps (the customer's 360, the supplier's record).
 
+17. **The founder's second day: the blockers (T11a).** Five things stood between the founder and the day's work.
+    (1) The app open in two windows signed him out: one window rotated the refresh token, the other presented it
+    minutes later, and the replay detector revoked the family. The web app now follows the session another window
+    stored (the storage event, a re-read before renewing), and the API honours a token rotated within the last 30
+    seconds with a session of its own (ADR-0014, amended). (2) A sale of an item with no tax group was refused under
+    a registered regime; the trader wants neither tax nor categories, so the company setting `tax.unclassified_items`
+    (`refuse`, the full edition's default, or `untaxed`) is written as `untaxed` by the switch to the trader edition,
+    and such a line carries no tax, reason `unclassified`. (3) Items shows what the store holds of each, all
+    warehouses of the company together. (4) The choice of offer is the trader's: a supplier that priced only some
+    lines is ordered from for those, the rest named in the audit and asked about on the screen first; the
+    recommendation stays a suggestion. (5) A price typed on the board shows its margin as it is typed and saves from
+    its own row.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

@@ -1,5 +1,5 @@
 import { i18n } from "../i18n";
-import { clearSession, getSession, setSession, type TokenResponse } from "../session/session";
+import { clearSession, getSession, setSession, syncSession, type TokenResponse } from "../session/session";
 import { requestStepUp } from "../session/stepUp";
 import { createApiClient, defaultBaseUrl, isApiProblem, type ApiProblem } from "./client";
 
@@ -23,12 +23,20 @@ const replayable = new Map<string, Request>();
 
 let renewal: Promise<boolean> | null = null;
 
-/** Trades the session's refresh token for new tokens, once for every request that found the old token expired; false when the session is gone. */
+/**
+ * Trades the session's refresh token for new tokens, once for every request that found the old token expired; false
+ * when the session is gone. Another window of the app may have renewed first: then its tokens serve this one too,
+ * and the token it rotated is not presented again.
+ */
 function renewSession(): Promise<boolean> {
   renewal ??= (async () => {
-    const session = getSession();
+    const stale = getSession();
+    const session = syncSession();
     if (!session?.refreshToken) {
       return false;
+    }
+    if (stale && session.accessToken !== stale.accessToken) {
+      return true;
     }
     try {
       const response = await globalThis.fetch(`${baseUrl}/api/v1/auth/refresh`, {

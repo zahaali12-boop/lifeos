@@ -261,6 +261,12 @@ public sealed class AuthService(
         return user is null ? Error.Validation("auth.challenge_invalid", "The challenge has expired; sign in again.") : await webAuthn.AssertionOptionsAsync(user, cancellationToken);
     }
 
+    /// <summary>
+    /// How long a refresh token just rotated is still honoured (ADR-0014, amended): two windows of the same app that find
+    /// their access token expired at the same moment both present it, and the second would otherwise read as a replay.
+    /// </summary>
+    private static readonly TimeSpan ConcurrentRefreshGrace = TimeSpan.FromSeconds(30);
+
     public async Task<Result<TokenResponse>> RefreshAsync(RefreshRequest request, ClientInfo client, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -272,7 +278,7 @@ public sealed class AuthService(
             return Error.Forbidden("auth.session_invalid", "The session is not valid.");
         }
 
-        if (session.RevokedAt is not null)
+        if (session.RevokedAt is { } revokedAt && (session.RevokedReason != "rotated" || now - revokedAt > ConcurrentRefreshGrace))
         {
             // Reuse of a rotated token: someone replayed an old token. Revoke the whole family and keep that revocation.
             unitOfWork.Current.CommitOnFailure = true;
@@ -281,6 +287,10 @@ public sealed class AuthService(
             await audit.RecordAsync(new AuditEntry("session", session.Id, session.FamilyId.ToString(), "session_family_revoked", Reason: "refresh_token_reuse"), cancellationToken);
             return Error.Forbidden("auth.session_revoked", "The session was revoked because a refresh token was reused.");
         }
+
+        // Rotated moments ago by another window of the same app: that window keeps the session it got, and this one gets
+        // its own in the same family, instead of the family being revoked for a replay that was none.
+        var concurrent = session.RevokedAt is not null;
 
         if (session.ExpiresAt <= now)
         {
@@ -304,8 +314,12 @@ public sealed class AuthService(
             return NetworkNotAllowed(client);
         }
 
-        session.RevokedAt = now;
-        session.RevokedReason = "rotated";
+        if (!concurrent)
+        {
+            session.RevokedAt = now;
+            session.RevokedReason = "rotated";
+        }
+
         var replacement = NewSession(user, membership, tenant, client, session.Amr, session.AuthTime, session.FamilyId, now, out var refreshToken);
         db.Sessions.Add(replacement);
         await db.SaveChangesAsync(cancellationToken);

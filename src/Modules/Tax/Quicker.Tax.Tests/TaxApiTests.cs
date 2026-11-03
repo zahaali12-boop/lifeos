@@ -134,6 +134,13 @@ public sealed class TaxApiTests(ApiHostFixture host)
         problem.GetProperty("why").GetProperty("line").GetString().ShouldBe("misc");
         problem.GetProperty("why").GetProperty("regime").GetString().ShouldBe("SA-VAT");
 
+        // A company that chose to leave such items untaxed (the trader edition's choice, ADR-0035 §17) sells it with no tax instead.
+        (await owner.PutAsJsonAsync("/api/v1/organization/settings/tax.unclassified_items", new { value = "untaxed", valueType = "string" }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var untaxed = await CalculateAsync(owner, new { companyId = s.CompanyId, direction = "sales", taxDate = "2026-09-25", currency = "SAR", pricesIncludeTax = false, partnerId = s.Domestic, lines = new[] { new { key = "misc", amount = 10m, itemId = s.Unclassified } } });
+        Why(untaxed, "misc").GetProperty("reason").GetString().ShouldBe(TaxReasons.Unclassified);
+        Amounts(Line(untaxed, "misc")).ShouldBe((10m, 0m, 10m));
+        (await owner.PutAsJsonAsync("/api/v1/organization/settings/tax.unclassified_items", new { value = "refuse", valueType = "string" }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
         // A sale without an item matches no row (the templates have none for sales), so the line must name its code.
         (code, problem) = await owner.PostErrorAsync("/api/v1/tax/calculate", new { companyId = s.CompanyId, direction = "sales", taxDate = "2026-09-25", currency = "SAR", pricesIncludeTax = false, partnerId = s.Domestic, lines = new[] { new { key = "fee", amount = 10m } } }, HttpStatusCode.UnprocessableEntity);
         code.ShouldBe("tax.no_determination");

@@ -246,6 +246,12 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("unpriced-count")).toHaveCount(0);
   // The floor under every price: the pads landed at 16,708, so not below 16,750 at the 250 step.
   await expect(padsRow.getByTestId("floor-price")).toContainText("16,750");
+  // A price typed by hand: the margin follows the typing and the row saves on its own.
+  const filterRow = page.getByTestId("price-row").filter({ hasText: "FILTER" });
+  await filterRow.locator("[data-testid^='suggested-']").fill("12250");
+  await expect(filterRow.getByTestId("live-margin")).toContainText("%");
+  await filterRow.getByTestId("save-price").click();
+  await expect(filterRow.getByTestId("current-price")).toContainText("12,250");
   // A belt never shipped is priced from "New pricing" with its cost typed in, shows its margin, and is taken off again.
   await page.getByTestId("new-pricing").click();
   await page.getByTestId("pricing-item").fill("BELT");

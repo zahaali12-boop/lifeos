@@ -7,14 +7,14 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import { DataGrid } from "../../grid/DataGrid";
-import { formatDate, localized } from "../../lib/format";
+import { formatDate, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { rememberRecent } from "../../shell/CommandPalette";
 import { Amount } from "../accounting/shared";
 import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { ItemCostingEditor, ItemPlanningEditor, ItemSuppliersEditor, ItemUnitsEditor } from "./ItemEditors";
 import { ItemAttributesEditor, ItemBomEditor, ItemImage, ItemSubstitutesEditor, ItemVariantsEditor } from "./ItemStructure";
-import { DocStatus, Tabs, type Item } from "./shared";
+import { DocStatus, Tabs, useCompanyContext, type Item } from "./shared";
 import { RecordDiscussion, RecordHistory } from "../RecordDiscussion";
 import { asCustomFieldValues, CustomFieldsFieldset, CustomFieldValuesList, type CustomFieldValues } from "../CustomFieldsFieldset";
 import { CurrencyField } from "../CurrencyField";
@@ -90,6 +90,21 @@ export function ItemsPage() {
   const uoms = useQuery({ queryKey: ["uoms"], queryFn: async () => unwrap(await api.GET("/api/v1/organization/uoms")) });
   const categories = useQuery({ queryKey: ["item-categories"], queryFn: async () => unwrap(await api.GET("/api/v1/items/categories")) });
   const brands = useQuery({ queryKey: ["item-brands"], queryFn: async () => unwrap(await api.GET("/api/v1/items/brands")) });
+  // What the store holds of each item in the company at hand (the one the stock screens last showed), all warehouses together.
+  const { companyId } = useCompanyContext();
+  const balances = useQuery({
+    queryKey: ["stock-balances", companyId],
+    enabled: Boolean(companyId),
+    staleTime: 30_000,
+    queryFn: async () => unwrap(await api.GET("/api/v1/inventory/stock/balances", { params: { query: { companyId, includeZero: false } } })),
+  });
+  const onHand = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const balance of balances.data ?? []) {
+      totals.set(balance.itemId, (totals.get(balance.itemId) ?? 0) + Number(balance.onHand));
+    }
+    return totals;
+  }, [balances.data]);
 
   const open = (id: string | null): void => { void navigate({ to: "/inventory/items", search: id ? { open: id } : {} }); };
 
@@ -133,13 +148,14 @@ export function ItemsPage() {
       { id: "name", accessorFn: (row) => localized(row.name), header: t("inventory.items.name"), size: 300 },
       { id: "type", accessorKey: "type", header: t("inventory.items.type"), size: 100, cell: ({ row }) => t(`inventory.items.types.${row.original.type}`, { defaultValue: row.original.type }) },
       { id: "baseUom", accessorKey: "baseUom", header: t("inventory.items.baseUom"), size: 90 },
+      { id: "onHand", accessorFn: (row) => onHand.get(row.id) ?? 0, header: t("inventory.items.onHand"), size: 110, meta: { exportType: "number" as const }, cell: ({ row }) => <span className="tabular" dir="ltr" data-testid="item-on-hand">{balances.data ? formatNumber(onHand.get(row.original.id) ?? 0, { maximumFractionDigits: 3 }) : "—"}</span> },
       { id: "tracking", accessorKey: "tracking", header: t("inventory.items.tracking"), size: 130, cell: ({ row }) => t(`inventory.items.trackings.${row.original.tracking}`, { defaultValue: row.original.tracking }) },
       { id: "category", accessorKey: "categoryCode", header: t("inventory.items.category"), size: 110 },
       { id: "brand", accessorKey: "brandCode", header: t("inventory.items.brand"), size: 110 },
       { id: "isActive", accessorKey: "isActive", header: t("common.status"), size: 100, cell: ({ row }) => <Badge tone={row.original.isActive ? "success" : "neutral"}>{row.original.isActive ? t("common.active") : t("common.inactive")}</Badge> },
       { id: "updatedAt", accessorKey: "updatedAt", header: t("common.updated"), size: 130, cell: ({ row }) => formatDate(row.original.updatedAt) },
     ],
-    [t],
+    [t, onHand, balances.data],
   );
 
   const rows = items.data?.pages.flatMap((page) => page.items) ?? [];

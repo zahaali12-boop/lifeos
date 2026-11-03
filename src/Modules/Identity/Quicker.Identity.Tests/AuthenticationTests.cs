@@ -98,6 +98,8 @@ public sealed class AuthenticationTests(ApiHostFixture host)
         var rotated = first.GetProperty("refreshToken").GetString()!;
         rotated.ShouldNotBe(ws.RefreshToken);
 
+        // A replay after the grace for two windows renewing at once is an attack: the whole family goes.
+        Api.Clock.Advance(TimeSpan.FromSeconds(31));
         var reuse = await Api.Client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = ws.RefreshToken }, Json);
         reuse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await reuse.ErrorCodeAsync()).ShouldBe("auth.session_revoked");
@@ -107,6 +109,30 @@ public sealed class AuthenticationTests(ApiHostFixture host)
 
         using var client = Api.ClientFor(ws.AccessToken);
         (await client.GetAsync("/api/v1/me")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Two_windows_renewing_at_once_each_get_a_session_of_their_own()
+    {
+        // The founder's sign-out: the app open in two windows, both finding the access token expired at the same minute.
+        var ws = await Api.SignupAsync();
+        var a = await (await Api.Client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = ws.RefreshToken }, Json)).ReadJsonAsync();
+        var second = await Api.Client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = ws.RefreshToken }, Json);
+        second.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var b = await second.ReadJsonAsync();
+        b.GetProperty("refreshToken").GetString().ShouldNotBe(a.GetProperty("refreshToken").GetString());
+
+        // Both windows go on renewing on their own.
+        var a2 = await Api.Client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = a.GetProperty("refreshToken").GetString() }, Json);
+        a2.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Api.Client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = b.GetProperty("refreshToken").GetString() }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Past the grace, the first token is a replay and the family, both windows included, is revoked.
+        Api.Clock.Advance(TimeSpan.FromSeconds(31));
+        var replay = await Api.Client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = ws.RefreshToken }, Json);
+        (await replay.ErrorCodeAsync()).ShouldBe("auth.session_revoked");
+        var aNow = await Api.Client.PostAsJsonAsync("/api/v1/auth/refresh", new { refreshToken = (await a2.ReadJsonAsync()).GetProperty("refreshToken").GetString() }, Json);
+        (await aNow.ErrorCodeAsync()).ShouldBe("auth.session_revoked");
     }
 
     [Fact]
