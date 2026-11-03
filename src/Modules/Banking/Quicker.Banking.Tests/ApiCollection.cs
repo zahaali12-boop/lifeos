@@ -73,6 +73,14 @@ internal static class BankingApi
         return json;
     }
 
+    public static async Task<string> GetTextAsync(this HttpClient client, string path)
+    {
+        var response = await client.GetAsync(new Uri(path, UriKind.Relative));
+        var body = await response.Content.ReadAsStringAsync();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        return body;
+    }
+
     public static async Task DeleteOkAsync(this HttpClient client, string path)
     {
         var response = await client.DeleteAsync(new Uri(path, UriKind.Relative));

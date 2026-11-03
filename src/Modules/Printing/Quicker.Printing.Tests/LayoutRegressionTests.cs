@@ -25,6 +25,9 @@ public sealed class LayoutRegressionTests(ApiHostFixture host)
     [InlineData("SALES-INVOICE", "ar", "sales_invoice.ar")]
     [InlineData("SALES-INVOICE", "bilingual", "sales_invoice.bilingual")]
     [InlineData("CUSTOMER-STATEMENT", "ar", "customer_statement.ar")]
+    [InlineData("SALES-INVOICE-BRAND", "bilingual", "sales_invoice_brand.bilingual")]
+    [InlineData("RECEIPT-BRAND", "ar", "bank_receipt_brand.ar")]
+    [InlineData("RECEIPT", "bilingual", "bank_receipt.bilingual")]
     public async Task The_shipped_template_rendered_from_its_sample_lays_out_as_the_baseline(string code, string languageMode, string baseline)
     {
         var ws = await host.Api.SignupAsync();
@@ -44,7 +47,7 @@ public sealed class LayoutRegressionTests(ApiHostFixture host)
             var renderer = scope.ServiceProvider.GetRequiredService<IPdfRenderer>();
             renderer.Executable.ShouldNotBeNull("the print pipeline tests need a Chromium (QUICKER_CHROMIUM, the Playwright browsers folder or chromium on the path)");
             var html = await owner.GetTextAsync($"/api/v1/print/templates/{templateId}/preview");
-            var withFonts = html.Replace("url(\"DejaVuSans", $"url(\"{renderer.FontDirectoryUrl}DejaVuSans", StringComparison.Ordinal);
+            var withFonts = ShippedTemplates.FontFiles.Aggregate(html, (h, font) => h.Replace($"url(\"{font}\")", $"url(\"{renderer.FontDirectoryUrl}{font}\")", StringComparison.Ordinal));
             pdf = await renderer.RenderPdfAsync(withFonts, TestContext.Current.CancellationToken);
         }
 

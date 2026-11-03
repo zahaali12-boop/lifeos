@@ -55,6 +55,38 @@ public sealed class PrintingTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task The_branded_invoice_carries_the_company_logo_and_only_an_image_data_uri_is_printed()
+    {
+        var s = await SetUpAsync();
+        var (invoiceId, number) = await DraftInvoiceAsync(s);
+        await s.Owner.PostAsync($"/api/v1/sales/invoices/{invoiceId}/post", new { }, HttpStatusCode.OK);
+
+        // The document type lists the branded variant beside the standard and the pro forma.
+        var types = await s.Owner.GetOkAsync("/api/v1/print/document-types");
+        var invoiceType = types.EnumerateArray().Single(t => t.GetProperty("documentType").GetString() == "sales_invoice");
+        invoiceType.GetProperty("variants").EnumerateArray().Select(static v => v.GetProperty("code").GetString()).ShouldBe(["standard", "proforma", "brand"]);
+
+        // No logo yet: the dark band shows the company's name as a wordmark.
+        var brand = await s.Owner.GetTextAsync($"/api/v1/print/preview?documentType=sales_invoice&documentId={invoiceId}&variant=brand");
+        brand.ShouldContain("class=\"band\"");
+        brand.ShouldContain("class=\"wordmark\"");
+        brand.ShouldNotContain("class=\"logo\"");
+        brand.ShouldContain(number);
+        brand.ShouldContain("Montserrat-Variable.ttf");
+
+        // The logo is a company setting, an image data URI; the templates print it and nothing else (never a URL to fetch).
+        const string logo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+        (await s.Owner.PutAsJsonAsync($"/api/v1/organization/companies/{s.CompanyId}/settings/company.logo", new { value = logo, valueType = "string" }, ApiFixture.Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var withLogo = await s.Owner.GetTextAsync($"/api/v1/print/preview?documentType=sales_invoice&documentId={invoiceId}&variant=brand");
+        withLogo.ShouldContain($"<img class=\"logo\" src=\"{logo}\"");
+        withLogo.ShouldNotContain("class=\"wordmark\"");
+        (await s.Owner.GetTextAsync($"/api/v1/print/preview?documentType=sales_invoice&documentId={invoiceId}")).ShouldNotContain("class=\"band\"");
+
+        (await s.Owner.PutAsJsonAsync($"/api/v1/organization/companies/{s.CompanyId}/settings/company.logo", new { value = "https://example.com/logo.png", valueType = "string" }, ApiFixture.Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await s.Owner.GetTextAsync($"/api/v1/print/preview?documentType=sales_invoice&documentId={invoiceId}&variant=brand")).ShouldNotContain("example.com");
+    }
+
+    [Fact]
     public async Task A_draft_prints_pro_forma_only_and_the_posted_invoice_previews_bilingually_renders_to_pdf_once_per_fingerprint_with_evidence_and_rerenders_when_the_template_changes()
     {
         var s = await SetUpAsync();
@@ -196,7 +228,7 @@ public sealed class PrintingTests(ApiHostFixture host)
         (await RenderedAsync(host, owner, statementRender.GetProperty("id").GetGuid())).GetProperty("isEvidence").GetBoolean().ShouldBeFalse();
 
         // The document types the UI offers; a member who may read invoices but not print is refused, and one who may print but not read invoices too.
-        (await owner.GetOkAsync("/api/v1/print/document-types")).EnumerateArray().Select(static d => d.GetProperty("documentType").GetString()).ShouldBe(["customer_statement", "financial_statement", "payslip", "pos_order", "report", "sales_invoice", "sales_order"]);
+        (await owner.GetOkAsync("/api/v1/print/document-types")).EnumerateArray().Select(static d => d.GetProperty("documentType").GetString()).ShouldBe(["bank_receipt", "customer_statement", "financial_statement", "payslip", "pos_order", "report", "sales_invoice", "sales_order"]);
         var reader = await InviteAsync(owner, s.Ws, "invoice_reader", "sales.invoice.read");
         (await reader.GetErrorAsync($"/api/v1/print/preview?documentType=sales_invoice&documentId={invoiceId}", HttpStatusCode.Forbidden)).Code.ShouldBe("auth.forbidden");
         var printer = await InviteAsync(owner, s.Ws, "printer_only", "print.document.render");

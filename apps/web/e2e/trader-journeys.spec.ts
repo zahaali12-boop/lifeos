@@ -292,17 +292,36 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("sell").click();
   await expect(page.getByTestId("sales-notice")).toContainText("210,000", { timeout: 20_000 });
   await expect(page.getByTestId("invoice-state").first()).toHaveText("Unpaid");
+  // The invoice is printed or sent from the next-step bar; the company's branded layout previews first (T12b).
+  await page.getByTestId("next-invoice-pdf").click();
+  await expect(page.getByTestId("print-dialog")).toBeVisible();
+  await expect(page.getByTestId("print-variant")).toHaveValue("brand");
+  await expect(page.getByTestId("print-preview")).toBeVisible({ timeout: 20_000 });
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("print-dialog")).toHaveCount(0);
   // The next step is offered right there: the payment of the invoice just made.
   await page.getByTestId("next-record-payment").click();
   await page.getByTestId("payment-amount").fill("100000");
   await page.getByTestId("save-payment").click();
   await expect(page.getByTestId("sales-notice")).toContainText("Payment recorded", { timeout: 20_000 });
   await expect(page.getByTestId("next-step")).toContainText("Money");
+  // The receipt of that payment, as a PDF or a message, right there.
+  await page.getByTestId("next-receipt-pdf").click();
+  await expect(page.getByTestId("print-dialog")).toBeVisible();
+  await expect(page.getByTestId("print-preview")).toBeVisible({ timeout: 20_000 });
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("print-dialog")).toHaveCount(0);
   await expect(page.getByTestId("invoice-state").first()).toHaveText("Partly paid");
   await expect(page.getByTestId("invoice-remaining").first()).toContainText("110,000");
   await expectAccessible(page);
   await page.getByTestId("flat-nav").getByRole("link", { name: "Money" }).click();
   await expect(page.getByTestId("owed-to-you-total")).toContainText("110,000");
+  // The customer's statement, ready to print or send, from the list of who owes.
+  await page.getByTestId("statement-ALI").click();
+  await expect(page.getByTestId("print-dialog")).toBeVisible();
+  await expect(page.getByTestId("print-preview")).toBeVisible({ timeout: 20_000 });
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("print-dialog")).toHaveCount(0);
   await expect(page.getByTestId("you-owe-total")).toContainText("1,000,000");
   await expect(page.getByTestId("nothing-to-chase")).toBeVisible();
   await expect(page.getByTestId("pay-row")).toHaveCount(1);

@@ -245,6 +245,16 @@ would also throw away the tests and the invariants that make the books right.
     the one port, and no cross-origin rule applies. The manifest is the app's own (`public/manifest.webmanifest`,
     opening on `/`, linked from `index.html` in every mode); the PWA plugin generates only the service worker, in
     production builds, as it has since the scanner (3.8), whose generated manifest that opened on `/m` it replaces.
+20. **The trader's documents in his company's identity (T12b; A-205, ADR-0022 amended).** The founder wants invoices
+    and receipts that carry his company's name and logo and look like his, and a customer statement ready to print
+    or send. The print pipeline gains a `brand` variant of the invoice and the statement and a receipt document of
+    its own (`bank_receipt`), standard and branded; the company's logo is a company setting set on the Companies
+    screen, printed on the dark band of the branded layouts. On the trader's screens: an invoice is printed or sent
+    from its row and from the next-step bar after a sale (the branded layout first, the plain one beside it); the
+    receipt of a payment is offered in the next-step bar as soon as the payment is recorded; a customer's statement
+    is printed or sent from the list of who owes on Money. All three go through the print dialog: preview, PDF,
+    email, WhatsApp, a link. Deferred: the logo and brand colour asked for at sign-up; a bank-details block on the
+    invoice; a receipt sent automatically by WhatsApp when the payment is recorded.
 
 ## Consequences
 

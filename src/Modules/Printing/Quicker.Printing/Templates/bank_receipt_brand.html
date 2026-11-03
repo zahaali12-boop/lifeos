@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Brand"; src: url("{{ font_dir }}Montserrat-Variable.ttf"); font-weight: 100 900; }
+@font-face { font-family: "Quicker Arabic"; src: url("{{ font_dir }}Cairo-Variable.ttf"); font-weight: 200 900; }
+@page { size: {{ paper }}; margin: 12mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Brand", "Quicker Arabic", sans-serif; font-size: 8pt; color: #6b7280; } }
+{{ css }}
+/* The company's branded receipt (T12b): the dark band with the logo, the amount large on blue, the facts, the invoices settled, two signatures. */
+:root { --ink: #0a0a0a; --brand: #3C82C4; --tint: #EAF2FA; --muted: #6b7280; --line: #e5e7eb; }
+body { font-family: "Quicker Brand", "Quicker Arabic", "DejaVu Sans", sans-serif; color: var(--ink); font-size: 10pt; }
+body.ar { font-family: "Quicker Arabic", "Quicker Brand", "DejaVu Sans", sans-serif; }
+.band { display: flex; justify-content: space-between; align-items: center; gap: 10mm; background: var(--ink); color: #fff; border-radius: 3mm; padding: 6mm 8mm; margin-block-end: 6mm; page-break-inside: avoid; }
+.band .logo { display: block; max-block-size: 22mm; max-inline-size: 60mm; object-fit: contain; }
+.band .wordmark { font-size: 20pt; font-weight: 800; letter-spacing: 0.02em; }
+.band .band-doc { text-align: end; }
+.band .eyebrow { margin: 0; font-size: 8pt; letter-spacing: 0.12em; text-transform: uppercase; color: #cfd8e3; }
+.band .title { margin: 1mm 0 0; font-size: 18pt; font-weight: 800; }
+.band .number { margin: 0.5mm 0 0; font-size: 12pt; font-weight: 600; color: #9cc3ea; direction: ltr; unicode-bidi: isolate; }
+.amount-card { display: flex; justify-content: space-between; align-items: center; gap: 8mm; background: var(--brand); color: #fff; border-radius: 3mm; padding: 6mm 8mm; margin-block-end: 6mm; page-break-inside: avoid; }
+.amount-card .k { font-size: 8pt; letter-spacing: 0.12em; text-transform: uppercase; color: #e3eefa; }
+.amount-card .v { font-size: 24pt; font-weight: 800; direction: ltr; unicode-bidi: isolate; }
+.amount-card .date { text-align: end; }
+.amount-card .date .k { display: block; }
+.amount-card .date .v { font-size: 13pt; font-weight: 700; }
+.words { margin: 0 0 6mm; padding: 3mm 4mm; background: var(--tint); border-radius: 2mm; }
+.words p { margin: 0; }
+.words .ar { direction: rtl; unicode-bidi: isolate; }
+.facts { inline-size: 100%; border-collapse: collapse; margin-block-end: 6mm; }
+.facts td { padding: 2mm 2.5mm; border-block-end: 1px solid var(--line); vertical-align: top; }
+.facts td.k { inline-size: 44mm; font-size: 7.5pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); font-weight: 700; }
+.facts td.v { font-weight: 600; }
+.facts tr.after td { background: #fafbfc; }
+.facts tr.after td.v { font-size: 12pt; }
+.box { border: 1px solid var(--line); border-radius: 2mm; }
+.box h3 { color: var(--brand); }
+.box table th { color: var(--brand); border-block-end: 1px solid var(--line); }
+.signatures { display: flex; gap: 12mm; margin-block-start: 16mm; page-break-inside: avoid; }
+.signatures .sig { flex: 1; border-block-start: 1.2mm solid var(--ink); padding-block-start: 2mm; font-size: 8pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.brand-foot { margin-block-start: 8mm; border-block-start: 1.2mm solid var(--brand); padding-block-start: 2.5mm; display: flex; justify-content: space-between; gap: 6mm; font-size: 8pt; color: var(--muted); }
+.brand-foot .thanks { color: var(--ink); font-weight: 600; }
+.watermark { color: rgba(60, 130, 196, 0.16); }
+</style>
+</head>
+<body class="{{ mode }} {{ variant }} receipt brand">
+{{ if document.status == "draft" }}<div class="watermark">{{ L.draft_receipt_watermark }}</div>{{ else if document.status == "reversed" }}<div class="watermark">{{ L.reversed_watermark }}</div>{{ end }}
+<div class="sheet">
+  <header class="band">
+    <div class="brand-id">
+      {{ if company.logo }}<img class="logo" src="{{ company.logo }}" alt="{{ company.name | html.escape }}">{{ else }}<div class="wordmark">{{ company.name | html.escape }}</div>{{ end }}
+    </div>
+    <div class="band-doc">
+      {{ if company.logo }}<p class="eyebrow">{{ company.name | html.escape }}</p>{{ end }}
+      <p class="title">{{ title | html.escape }}</p>
+      <p class="number">{{ number | html.escape }}</p>
+    </div>
+  </header>
+
+  <div class="amount-card">
+    <div>
+      <div class="k">{{ L.amount_received }}</div>
+      <div class="v">{{ document.amount }} {{ document.currency }}</div>
+    </div>
+    <div class="date">
+      <span class="k">{{ L.date }}</span>
+      <span class="v ltr">{{ document.receipt_date }}</span>
+    </div>
+  </div>
+
+  {{ if document.amount_in_words_en || document.amount_in_words_ar }}
+  <div class="words">
+    {{ if mode != "ar" && document.amount_in_words_en }}<p class="en">{{ document.amount_in_words_en | html.escape }}</p>{{ end }}
+    {{ if mode != "en" && document.amount_in_words_ar }}<p class="ar">{{ document.amount_in_words_ar | html.escape }}</p>{{ end }}
+  </div>
+  {{ end }}
+
+  <table class="facts">
+    <tr><td class="k">{{ L.received_from }}</td><td class="v">{{ if partner }}{{ partner.name | html.escape }} <span class="muted ltr">{{ partner.code | html.escape }}</span>{{ if partner.address_text }}<br><span class="muted">{{ partner.address_text | html.escape }}</span>{{ end }}{{ end }}</td></tr>
+    <tr><td class="k">{{ L.paid_by }}</td><td class="v">{{ document.method | html.escape }}{{ if document.cheque }} · {{ L.cheque_number }} <span class="ltr">{{ document.cheque.number | html.escape }}</span>{{ if document.cheque.bank }} · {{ L.bank }} {{ document.cheque.bank | html.escape }}{{ end }}{{ end }}</td></tr>
+    <tr><td class="k">{{ L.received_into }}</td><td class="v">{{ document.bank_account | html.escape }}</td></tr>
+    {{ if document.reference }}<tr><td class="k">{{ L.reference }}</td><td class="v ltr">{{ document.reference | html.escape }}</td></tr>{{ end }}
+    {{ if document.on_account_shown }}<tr><td class="k">{{ L.on_account }}</td><td class="v num">{{ document.on_account }} {{ document.currency }}</td></tr>{{ end }}
+    {{ if document.balance_after }}<tr class="after"><td class="k">{{ L.balance_after }}</td><td class="v num">{{ document.balance_after }} {{ document.currency }}</td></tr>{{ end }}
+  </table>
+
+  {{ if document.has_lines }}
+  <div class="box">
+    <h3>{{ L.applied_to }}</h3>
+    <table>
+      <thead><tr><th>{{ L.document }}</th><th>{{ L.due_date }}</th><th class="num">{{ L.amount }}</th>{{ if document.has_discount }}<th class="num">{{ L.discount }}</th>{{ end }}<th class="num">{{ L.remaining }}</th></tr></thead>
+      <tbody>
+      {{ for l in document.lines }}
+      <tr><td class="ltr">{{ l.document_number | html.escape }}{{ if l.instalment > 1 }} / {{ l.instalment }}{{ end }}</td><td class="ltr">{{ l.due_date }}</td><td class="num">{{ l.amount }}</td>{{ if document.has_discount }}<td class="num">{{ l.discount }}</td>{{ end }}<td class="num">{{ l.remaining }}</td></tr>
+      {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ end }}
+
+  {{ if document.notes }}
+  <div class="box"><h3>{{ L.notes }}</h3><p class="note">{{ document.notes | html.escape }}</p></div>
+  {{ end }}
+
+  <p class="muted">{{ L.receipt_note }}</p>
+  <div class="signatures">
+    <div class="sig">{{ L.received_by }}</div>
+    <div class="sig">{{ L.customer_signature }}</div>
+  </div>
+
+  <footer class="brand-foot">
+    <span class="thanks">{{ L.thank_you }}</span>
+    <span>{{ company.name | html.escape }}{{ if company.address_text }} · {{ company.address_text | html.escape }}{{ end }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

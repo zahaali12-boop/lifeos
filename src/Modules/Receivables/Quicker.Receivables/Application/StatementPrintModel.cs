@@ -18,7 +18,11 @@ public sealed class StatementPrintModel(ReceivablesService receivables, ICompany
 
     string IPrintModelProvider.DocumentType => DocumentType;
 
-    public IReadOnlyList<PrintVariant> Variants { get; } = [new(PrintVariants.Standard, LocalizedText.Bilingual("Statement of account", "كشف حساب"))];
+    public IReadOnlyList<PrintVariant> Variants { get; } =
+    [
+        new(PrintVariants.Standard, LocalizedText.Bilingual("Statement of account", "كشف حساب")),
+        new(PrintVariants.Brand, LocalizedText.Bilingual("Branded statement", "كشف حساب بهوية الشركة")),
+    ];
 
     public async Task<Result<PrintModel>> BuildAsync(PrintSubject subject, string variant, CancellationToken cancellationToken = default)
     {

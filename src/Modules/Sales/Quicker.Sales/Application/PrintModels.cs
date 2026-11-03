@@ -21,6 +21,7 @@ public sealed class SalesInvoicePrintModel(InvoiceService invoices, ICompanyDire
     [
         new(PrintVariants.Standard, LocalizedText.Bilingual("Tax invoice", "فاتورة ضريبية")),
         new(PrintVariants.Proforma, LocalizedText.Bilingual("Pro forma", "فاتورة أولية")),
+        new(PrintVariants.Brand, LocalizedText.Bilingual("Branded invoice", "فاتورة بهوية الشركة")),
     ];
 
     public async Task<Result<PrintModel>> BuildAsync(PrintSubject subject, string variant, CancellationToken cancellationToken = default)

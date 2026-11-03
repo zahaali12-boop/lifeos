@@ -39,6 +39,7 @@ public sealed class PrintService(
     TemplateService templates,
     IPdfRenderer renderer,
     ICompanyDirectory companies,
+    ICompanySettings settings,
     IPartnerDirectory partners,
     IObjectStorage storage,
     PrintOptions options,
@@ -357,6 +358,7 @@ public sealed class PrintService(
         var branch = model.Value.BranchId is { } branchId ? await companies.FindBranchAsync(new BranchId(branchId), cancellationToken) : null;
         var partner = model.Value.PartnerId is { } partnerId ? await partners.FindAsync(partnerId, cancellationToken) : null;
         var addresses = partner is null ? [] : await partners.AddressesAsync(partner.Id, cancellationToken);
+        var logo = await LogoAsync(company.Id.Value, cancellationToken);
 
         var globals = new ScriptObject
         {
@@ -366,7 +368,7 @@ public sealed class PrintService(
             ["is_final"] = model.Value.IsFinal,
             ["document_date"] = PrintFormat.Date(model.Value.DocumentDate),
             ["currency"] = model.Value.Currency,
-            ["company"] = CompanyBlock(company, mode),
+            ["company"] = CompanyBlock(company, mode, logo),
             ["branch"] = branch is null ? null : new ScriptObject { ["code"] = branch.Code, ["name"] = PrintFormat.Resolve(branch.Name, mode) },
             ["partner"] = partner is null ? null : PartnerBlock(partner, addresses, mode),
             ["document"] = ScribanModel.Dictionary(model.Value.Data, mode),
@@ -445,13 +447,25 @@ public sealed class PrintService(
         return (render, false);
     }
 
-    private static ScriptObject CompanyBlock(CompanyInfo company, string mode)
+    /// <summary>
+    /// The company's logo for its templates (<c>company.logo</c>, T12b): a data URI of an image, set on the Companies
+    /// screen; anything else is ignored, so a template never fetches from the network while it prints.
+    /// </summary>
+    private async Task<string?> LogoAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var value = await settings.GetAsync(companyId, CompanySettingKeys.Logo, cancellationToken);
+        var text = value is { ValueKind: JsonValueKind.String } s ? s.GetString()?.Trim() : null;
+        return text is not null && text.StartsWith("data:image/", StringComparison.Ordinal) && text.Length <= 1_000_000 ? text : null;
+    }
+
+    private static ScriptObject CompanyBlock(CompanyInfo company, string mode, string? logo)
     {
         var address = company.Address ?? new Dictionary<string, string>(StringComparer.Ordinal);
         var registrations = company.RegistrationNumbers ?? new Dictionary<string, string>(StringComparer.Ordinal);
         return new ScriptObject
         {
             ["code"] = company.Code,
+            ["logo"] = logo,
             ["name"] = PrintFormat.Resolve(company.LegalName, mode),
             ["name_en"] = company.LegalName.Resolve("en"),
             ["name_ar"] = company.LegalName.Resolve("ar"),

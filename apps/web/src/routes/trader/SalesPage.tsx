@@ -2,7 +2,7 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, Dialo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Plus, Printer } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
@@ -15,6 +15,7 @@ import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } fr
 import { CompanyFilter, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { emptyLine, LinesEditor, num, type LineForm } from "../purchasing/shared";
 import { useBankAccounts } from "../payables/shared";
+import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
 import { QuickCreateButton } from "../QuickCreate";
 import { rangeParams } from "./period";
 import { PeriodFilter, usePeriod } from "./PeriodFilter";
@@ -63,7 +64,10 @@ function paymentState(invoice: Invoice, today: string): string {
 const tones: Record<string, "success" | "warning" | "danger" | "info" | "neutral"> = { paid: "success", partly: "info", unpaid: "warning", overdue: "danger", draft: "neutral", cancelled: "neutral", reversed: "neutral" };
 
 /** What the program offers next after a sale (the payment, the same customer again) or a payment (what is owed, another sale). */
-type NextStep = { kind: "sold"; number: string; partnerId: string } | { kind: "paid" };
+type NextStep = { kind: "sold"; number: string; partnerId: string; invoiceId: string } | { kind: "paid"; receiptId: string; receiptNumber: string; partnerId: string };
+
+/** The invoice or the receipt printed or sent from here: the company's branded layout first, the plain one beside it (T12b). */
+const printVariants = ["brand", "standard"];
 
 /**
  * Sales (trader edition, ADR-0035 §6, §16): a sale in one step (the order confirmed, the goods shipped from the store,
@@ -81,6 +85,7 @@ export function SalesPage() {
   const [sale, setSale] = useState<SaleForm | null>(null);
   const [payment, setPayment] = useState<PaymentForm | null>(null);
   const [next, setNext] = useState<NextStep | null>(null);
+  const [printing, setPrinting] = useState<PrintSubject | null>(null);
   const warehouses = useWarehouses(companyId);
   const accounts = useBankAccounts(companyId);
   const company = companies.find((c) => c.id === companyId);
@@ -127,7 +132,7 @@ export function SalesPage() {
       setProblem(null);
       setSale(null);
       setNotice(t("trader.sales.sold", { number: result.invoiceNumber, amount: formatMoney(result.totalGross, result.currency) }));
-      setNext({ kind: "sold", number: result.invoiceNumber, partnerId: f.partnerId });
+      setNext({ kind: "sold", number: result.invoiceNumber, partnerId: f.partnerId, invoiceId: result.invoiceId });
       await refresh();
     },
     onError: fail,
@@ -142,7 +147,7 @@ export function SalesPage() {
       const receipt = unwrap(await api.POST("/api/v1/banking/receipts", { body: { companyId, partnerId: p.invoice.partnerId, bankAccountId: p.accountId, kind: "customer_receipt", receiptDate: p.date || null, method: p.method, lines: [{ openItemId: p.openItemId, amount: num(p.amount) }], onAccount: 0, charges: 0 } }));
       return unwrap(await api.POST("/api/v1/banking/receipts/{receiptId}/post", { params: { path: { receiptId: receipt.id } } }));
     },
-    onSuccess: async () => { setProblem(null); setPayment(null); setNotice(t("trader.sales.paymentRecorded")); setNext({ kind: "paid" }); await refresh(); await queryClient.invalidateQueries({ queryKey: ["receipts"] }); },
+    onSuccess: async (receipt, p) => { setProblem(null); setPayment(null); setNotice(t("trader.sales.paymentRecorded")); setNext({ kind: "paid", receiptId: receipt.id, receiptNumber: receipt.number, partnerId: p.invoice.partnerId }); await refresh(); await queryClient.invalidateQueries({ queryKey: ["receipts"] }); },
     onError: fail,
   });
   const invoiceByNumber = (number: string): Invoice | undefined => invoices.data?.find((i) => i.number === number);
@@ -166,7 +171,12 @@ export function SalesPage() {
         id: "actions", header: "", size: 160, enableSorting: false,
         cell: ({ row }) => {
           const open = row.original.openItems.find((i) => n(i.remainingTc) > 0);
-          return row.original.status === "posted" && open ? <Button type="button" variant="ghost" size="sm" onClick={() => { setProblem(null); setPayment({ invoice: row.original, openItemId: open.id, amount: String(n(open.remainingTc)), accountId: accounts.data?.[0]?.id ?? "", method: "cash", date: "" }); }} data-testid={`pay-${row.original.number}`}>{t("trader.sales.recordPayment")}</Button> : null;
+          const print = row.original.status === "posted" ? (
+            <Button type="button" variant="ghost" size="icon" aria-label={t("trader.sales.printInvoice", { number: row.original.number })} title={t("trader.sales.printInvoice", { number: row.original.number })} onClick={() => { setPrinting({ documentType: "sales_invoice", documentId: row.original.id, number: row.original.number, partnerId: row.original.partnerId, variants: printVariants }); }} data-testid="print-invoice">
+              <Printer aria-hidden="true" />
+            </Button>
+          ) : null;
+          return <div className="flex items-center gap-1">{print}{row.original.status === "posted" && open ? <Button type="button" variant="ghost" size="sm" onClick={() => { setProblem(null); setPayment({ invoice: row.original, openItemId: open.id, amount: String(n(open.remainingTc)), accountId: accounts.data?.[0]?.id ?? "", method: "cash", date: "" }); }} data-testid={`pay-${row.original.number}`}>{t("trader.sales.recordPayment")}</Button> : null}</div>;
         },
       },
     ],
@@ -227,16 +237,19 @@ export function SalesPage() {
           {next.kind === "sold" ? (
             <>
               <Button type="button" size="sm" disabled={!invoiceByNumber(next.number)} onClick={() => { const invoice = invoiceByNumber(next.number); if (invoice) { openPaymentFor(invoice); } }} data-testid="next-record-payment">{t("trader.next.recordPayment", { number: next.number })}</Button>
+              <Button type="button" size="sm" variant="secondary" onClick={() => { setPrinting({ documentType: "sales_invoice", documentId: next.invoiceId, number: next.number, partnerId: next.partnerId, variants: printVariants }); }} data-testid="next-invoice-pdf">{t("trader.next.invoicePdf")}</Button>
               <Button type="button" size="sm" variant="secondary" onClick={() => { openSaleFor(next.partnerId); }} data-testid="next-sell-again">{t("trader.next.sellAgain")}</Button>
             </>
           ) : (
             <>
+              <Button type="button" size="sm" onClick={() => { setPrinting({ documentType: "bank_receipt", documentId: next.receiptId, number: next.receiptNumber, partnerId: next.partnerId, variants: printVariants }); }} data-testid="next-receipt-pdf">{t("trader.next.receiptPdf", { number: next.receiptNumber })}</Button>
               <Button asChild size="sm" variant="secondary"><Link to="/trader/money" data-testid="next-money">{t("trader.next.seeMoney")}</Link></Button>
               <Button type="button" size="sm" variant="secondary" onClick={openSale} data-testid="next-new-sale">{t("trader.sales.newSale")}</Button>
             </>
           )}
         </div>
       ) : null}
+      {printing ? <PrintDialog subject={printing} onClose={() => { setPrinting(null); }} /> : null}
       <DataGrid<Invoice> label="trader.sales.title" columns={columns} data={invoices.data ?? []} rowKey={(row) => row.id} loading={invoices.isPending && Boolean(companyId)} emptyTitle={t("trader.sales.empty")} emptyDescription={t("trader.sales.emptyDescription")} />
 
       <Dialog open={Boolean(sale)} onOpenChange={(isOpen) => { if (!isOpen) { setSale(null); } }}>

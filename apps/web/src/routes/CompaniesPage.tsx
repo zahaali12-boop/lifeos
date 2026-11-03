@@ -112,9 +112,23 @@ export function CompaniesPage() {
   const openCompany = async (company: Company): Promise<void> => {
     setProblem(null);
     const result = await api.GET("/api/v1/organization/companies/{companyId}", { params: { path: { companyId: company.id } } });
+    const settings = await api.GET("/api/v1/organization/companies/{companyId}/settings", { params: { path: { companyId: company.id } } });
+    const stored = settings.data?.find((s) => s.key === "company.logo")?.value;
+    setLogo({ value: typeof stored === "string" && stored.startsWith("data:image/") ? stored : null, dirty: false });
     setEditing({ id: company.id, form: toForm(result.data ?? company), version: result.response.headers.get("etag") ?? undefined });
   };
   const [problem, setProblem] = useState<FormProblem | null>(null);
+  // The company's logo (a company setting, printed on its documents, T12b): shown as stored, replaced or removed here, saved with the company.
+  const [logo, setLogo] = useState<{ value: string | null; dirty: boolean }>({ value: null, dirty: false });
+  const readLogo = (file: File): void => {
+    if (file.size > 400 * 1024) {
+      setProblem({ message: t("companies.logoTooLarge"), fields: {} });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => { setLogo({ value: typeof reader.result === "string" ? reader.result : null, dirty: true }); };
+    reader.readAsDataURL(file);
+  };
 
   const filter = query.trim() ? `code like '${query.trim().replace(/'/g, "''")}'` : undefined;
   const companies = useQuery({
@@ -124,7 +138,7 @@ export function CompaniesPage() {
 
   useEffect(() => {
     if (search.new) {
-      setEditing({ id: null, form: empty });
+      setLogo({ value: null, dirty: false }); setEditing({ id: null, form: empty });
     } else if (search.open && companies.data) {
       const company = companies.data.find((c) => c.id === search.open);
       if (company) {
@@ -156,6 +170,9 @@ export function CompaniesPage() {
       setEditing(null);
       setProblem(null);
       rememberRecent({ to: `/companies?open=${company.id}`, label: `${company.code} · ${localized(company.legalName)}` });
+      if (logo.dirty) {
+        unwrap(await api.PUT("/api/v1/organization/companies/{companyId}/settings/{key}", { params: { path: { companyId: company.id, key: "company.logo" } }, body: { value: logo.value ?? "", valueType: "string" } }));
+      }
       await queryClient.invalidateQueries({ queryKey: ["companies"] });
       void navigate({ to: "/companies", search: {} });
     },
@@ -194,7 +211,7 @@ export function CompaniesPage() {
         title={t("nav.companies")}
         description={t("companies.description")}
         actions={
-          <Button onClick={() => { setProblem(null); setEditing({ id: null, form: empty }); }} data-testid="new-company">
+          <Button onClick={() => { setProblem(null); setLogo({ value: null, dirty: false }); setEditing({ id: null, form: empty }); }} data-testid="new-company">
             <Plus aria-hidden="true" />
             {t("companies.new")}
           </Button>
@@ -210,7 +227,7 @@ export function CompaniesPage() {
         onOpen={(company) => { void openCompany(company); }}
         emptyTitle={t("companies.emptyTitle")}
         emptyDescription={t("companies.emptyDescription")}
-        emptyAction={<Button onClick={() => { setEditing({ id: null, form: empty }); }}>{t("companies.new")}</Button>}
+        emptyAction={<Button onClick={() => { setLogo({ value: null, dirty: false }); setEditing({ id: null, form: empty }); }}>{t("companies.new")}</Button>}
         toolbar={<Input type="search" placeholder={t("companies.searchPlaceholder")} value={query} onChange={(e) => { setQuery(e.target.value); }} className="w-56" aria-label={t("common.search")} />}
       />
 
@@ -249,6 +266,18 @@ export function CompaniesPage() {
                   <input type="checkbox" checked={form.isActive} onChange={(e) => { setForm({ isActive: e.target.checked }); }} name="isActive" />
                   {t("common.active")}
                 </label>
+                <div className="sm:col-span-2">
+                  <Field label={t("companies.logo")} description={t("companies.logoHint")}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {logo.value ? <img src={logo.value} alt="" className="max-h-16 max-w-40 rounded-md border border-border bg-neutral-900 p-1" data-testid="company-logo-preview" /> : null}
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-canvas">
+                        {t("companies.logoChoose")}
+                        <input type="file" accept="image/png,image/jpeg,image/svg+xml" className="sr-only" data-testid="company-logo-file" onChange={(e) => { const file = e.target.files?.[0]; if (file) { readLogo(file); } e.target.value = ""; }} />
+                      </label>
+                      {logo.value ? <Button type="button" variant="ghost" size="sm" onClick={() => { setLogo({ value: null, dirty: true }); }} data-testid="company-logo-remove">{t("companies.logoRemove")}</Button> : null}
+                    </div>
+                  </Field>
+                </div>
               </div>
               <fieldset className="grid gap-4 rounded-md border border-border p-4 sm:grid-cols-2" data-testid="company-policies">
                 <legend className="px-1 text-sm font-medium">{t("companies.policies.title")}</legend>

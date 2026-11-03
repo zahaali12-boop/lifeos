@@ -164,6 +164,13 @@ public interface IDimensionSets
 }
 
 /// <summary>Reads tenant and company settings (a company value overrides the tenant value for the same key).</summary>
+/// <summary>Company settings the product itself reads (an administrator sets them on the Companies or Settings screen).</summary>
+public static class CompanySettingKeys
+{
+    /// <summary>The company's logo as a data URI (PNG, JPEG or SVG, a few hundred kilobytes at most), printed on its documents.</summary>
+    public const string Logo = "company.logo";
+}
+
 public interface ICompanySettings
 {
     Task<System.Text.Json.JsonElement?> GetAsync(Guid? companyId, string key, CancellationToken cancellationToken = default);

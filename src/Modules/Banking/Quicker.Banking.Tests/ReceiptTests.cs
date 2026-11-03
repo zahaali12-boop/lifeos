@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Dapper;
@@ -190,5 +191,39 @@ public sealed class ReceiptTests(ApiHostFixture host)
         aging.GetProperty("totals").GetProperty("totalFc").GetDecimal().ShouldBe(9_660m);
         (await owner.GetOkAsync($"/api/v1/banking/receipts?companyId={s.CompanyId}")).GetArrayLength().ShouldBe(4);
         await owner.AssertInvariantsAsync();
+    }
+
+    [Fact]
+    public async Task A_receipt_prints_as_a_payment_receipt_plain_and_branded_and_a_draft_carries_the_watermark()
+    {
+        // T12b: the receipt is a document of its own in the print pipeline, with the balance the customer still owes after it.
+        var s = await SetUpAsync();
+        var item = await InvoiceAsync(s, s.Local, "LR-PRINT", "2026-09-05", 1000m);
+        var draft = await s.Owner.PostAsync("/api/v1/banking/receipts", new { companyId = s.CompanyId, partnerId = s.Local, bankAccountId = s.Cash, receiptDate = "2026-09-12", method = "cash", lines = new[] { new { openItemId = item, amount = 400m } } });
+        var id = draft.GetProperty("id").GetGuid();
+        var number = draft.GetProperty("number").GetString()!;
+        (await s.Owner.GetTextAsync($"/api/v1/print/preview?documentType=bank_receipt&documentId={id}")).ShouldContain("DRAFT");
+
+        await s.Owner.PostAsync($"/api/v1/banking/receipts/{id}/post", new { }, HttpStatusCode.OK);
+        var html = await s.Owner.GetTextAsync($"/api/v1/print/preview?documentType=bank_receipt&documentId={id}");
+        html.ShouldContain("Payment receipt / سند قبض");
+        html.ShouldContain(number);
+        html.ShouldContain("Local Retail / تجزئة محلية");
+        html.ShouldContain("400.00 USD");
+        html.ShouldContain("Cash / نقداً");
+        html.ShouldContain("CASH &#183; Cash box"); // the template escapes the middle dot
+        // The balance after it: the invoice less the amount and the early-payment discount the customer's terms gave.
+        var posted = await s.Owner.GetOkAsync($"/api/v1/banking/receipts/{id}");
+        var remaining = 1000m - 400m - posted.GetProperty("discountTc").GetDecimal();
+        html.ShouldContain($"{remaining.ToString("N2", CultureInfo.InvariantCulture)} USD");
+        html.ShouldNotContain("DRAFT");
+
+        var brand = await s.Owner.GetTextAsync($"/api/v1/print/preview?documentType=bank_receipt&documentId={id}&variant=brand");
+        brand.ShouldContain("class=\"amount-card\"");
+        brand.ShouldContain(number);
+        brand.ShouldContain("Cairo-Variable.ttf");
+        var types = await s.Owner.GetOkAsync("/api/v1/print/document-types");
+        types.EnumerateArray().Single(t => t.GetProperty("documentType").GetString() == "bank_receipt").GetProperty("variants").EnumerateArray().Select(static v => v.GetProperty("code").GetString()).ShouldBe(["standard", "brand"]);
+        await s.Owner.AssertInvariantsAsync();
     }
 }

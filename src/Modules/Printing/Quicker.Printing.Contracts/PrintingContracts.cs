@@ -13,6 +13,9 @@ public static class PrintVariants
 {
     public const string Standard = "standard";
     public const string Proforma = "proforma";
+
+    /// <summary>The company's branded layout (T12b): its logo on a dark band, the brand typefaces, a design made to be sent to customers.</summary>
+    public const string Brand = "brand";
 }
 
 /// <summary>

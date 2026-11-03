@@ -580,7 +580,12 @@
     "timeZone": "المنطقة الزمنية",
     "searchPlaceholder": "تصفية بالرمز…",
     "emptyTitle": "لا شركات بعد",
-    "emptyDescription": "أنشئ أول كيان قانوني لبدء الترحيل."
+    "emptyDescription": "أنشئ أول كيان قانوني لبدء الترحيل.",
+    "logo": "الشعار",
+    "logoHint": "PNG أو JPEG أو SVG حتى 400 كيلوبايت؛ يُطبع على فواتير الشركة وسنداتها وكشوف حسابها.",
+    "logoRemove": "إزالة الشعار",
+    "logoTooLarge": "الصورة أكبر من 400 كيلوبايت.",
+    "logoChoose": "اختر صورة"
   },
   "routines": {
     "pageDescription": "القيود المتكررة وجداول التأجيل، والروتين اليومي الذي يرحّل المستحق (العكوس التلقائية والقيود المتكررة وإطلاقات التأجيل).",
@@ -5300,7 +5305,8 @@
     "documentTypes": {
       "sales_invoice": "فاتورة مبيعات",
       "sales_order": "أمر بيع",
-      "customer_statement": "كشف حساب عميل"
+      "customer_statement": "كشف حساب عميل",
+      "bank_receipt": "سند قبض"
     },
     "variants": {
       "standard": "قياسي",
@@ -6453,7 +6459,8 @@
       "priceHint": "من قائمة أسعارك",
       "notEnoughStock": "المخزون من {item} لا يكفي: المتوفر {available} والمطلوب {wanted}. استلم بضاعة أولاً، أو بِع المتوفر.",
       "newCustomerHint": "زبون ليس في القائمة بعد؟",
-      "customerReady": "اختير الزبون الجديد: اختر الأصناف وبِع."
+      "customerReady": "اختير الزبون الجديد: اختر الأصناف وبِع.",
+      "printInvoice": "طباعة أو إرسال الفاتورة {number}"
     },
     "money": {
       "title": "المال",
@@ -6497,7 +6504,8 @@
       "payDate": "التاريخ",
       "payNow": "ادفع",
       "payNothingOpen": "لا فاتورة على {name} لتُدفع.",
-      "paid": "دُفع: {number} بمبلغ {amount}."
+      "paid": "دُفع: {number} بمبلغ {amount}.",
+      "statement": "كشف حساب"
     },
     "health": {
       "title": "صحة المشروع",
@@ -6795,7 +6803,9 @@
       "title": "التالي",
       "recordPayment": "سجّل دفعة الفاتورة {number}",
       "sellAgain": "بِع للزبون نفسه مرة أخرى",
-      "seeMoney": "اعرض ما هو مستحق في المال"
+      "seeMoney": "اعرض ما هو مستحق في المال",
+      "invoicePdf": "PDF الفاتورة / إرسالها",
+      "receiptPdf": "سند القبض {number} PDF / إرساله"
     },
     "period": {
       "label": "الفترة",

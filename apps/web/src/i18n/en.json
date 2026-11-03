@@ -580,7 +580,12 @@
     "timeZone": "Time zone",
     "searchPlaceholder": "Filter by code…",
     "emptyTitle": "No companies yet",
-    "emptyDescription": "Create the first legal entity to start posting."
+    "emptyDescription": "Create the first legal entity to start posting.",
+    "logo": "Logo",
+    "logoHint": "PNG, JPEG or SVG up to 400 KB; printed on the company's invoices, receipts and statements.",
+    "logoRemove": "Remove logo",
+    "logoTooLarge": "The image is larger than 400 KB.",
+    "logoChoose": "Choose an image"
   },
   "routines": {
     "pageDescription": "Recurring journals and deferral schedules, and the daily routine that posts what is due (auto-reversals, recurring journals, deferral releases).",
@@ -5300,7 +5305,8 @@
     "documentTypes": {
       "sales_invoice": "Sales invoice",
       "sales_order": "Sales order",
-      "customer_statement": "Customer statement"
+      "customer_statement": "Customer statement",
+      "bank_receipt": "Payment receipt"
     },
     "variants": {
       "standard": "Standard",
@@ -6453,7 +6459,8 @@
       "priceHint": "From your sales list",
       "notEnoughStock": "Not enough {item} in the store: {available} on hand, {wanted} wanted. Receive stock first, or sell what there is.",
       "newCustomerHint": "A customer not in the list yet?",
-      "customerReady": "The new customer is chosen: pick the items and sell."
+      "customerReady": "The new customer is chosen: pick the items and sell.",
+      "printInvoice": "Print or send invoice {number}"
     },
     "money": {
       "title": "Money",
@@ -6497,7 +6504,8 @@
       "payDate": "Date",
       "payNow": "Pay",
       "payNothingOpen": "{name} has no invoice to pay.",
-      "paid": "Paid: {number} for {amount}."
+      "paid": "Paid: {number} for {amount}.",
+      "statement": "Statement"
     },
     "health": {
       "title": "Health",
@@ -6795,7 +6803,9 @@
       "title": "Next",
       "recordPayment": "Record the payment for {number}",
       "sellAgain": "Sell to the same customer again",
-      "seeMoney": "See what is owed on Money"
+      "seeMoney": "See what is owed on Money",
+      "invoicePdf": "Invoice PDF / send",
+      "receiptPdf": "Receipt {number} PDF / send"
     },
     "period": {
       "label": "Period",

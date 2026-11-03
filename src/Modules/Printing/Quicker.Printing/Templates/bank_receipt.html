@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans.ttf"); font-weight: 400; }
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans-Bold.ttf"); font-weight: 700; }
+@page { size: {{ paper }}; margin: 14mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Sans", sans-serif; font-size: 8pt; color: #666; } }
+{{ css }}
+/* The payment receipt (T12b): what was received, from whom, into what, how; the invoices it settled; the balance after. */
+.amount-block { display: flex; justify-content: space-between; align-items: baseline; gap: 6mm; border: 2px solid #1a1a1a; border-radius: 1.5mm; padding: 3mm 4mm; margin-block-end: 5mm; page-break-inside: avoid; }
+.amount-block .k { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.04em; color: #666; }
+.amount-block .v { font-size: 18pt; font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+.facts { inline-size: 100%; border-collapse: collapse; margin-block-end: 5mm; }
+.facts td { padding: 1.2mm 1.5mm; border-block-end: 1px solid #ddd; vertical-align: top; }
+.facts td.k { inline-size: 40mm; color: #555; }
+.facts td.v { font-weight: 600; }
+.signatures { display: flex; gap: 12mm; margin-block-start: 14mm; page-break-inside: avoid; }
+.signatures .sig { flex: 1; border-block-start: 1px solid #1a1a1a; padding-block-start: 2mm; font-size: 8pt; color: #555; }
+</style>
+</head>
+<body class="{{ mode }} {{ variant }} receipt">
+{{ if document.status == "draft" }}<div class="watermark">{{ L.draft_receipt_watermark }}</div>{{ else if document.status == "reversed" }}<div class="watermark">{{ L.reversed_watermark }}</div>{{ end }}
+<div class="sheet">
+  <header class="doc-header">
+    <div class="company">
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+      {{ if company.tax_number }}<p>{{ L.tax_number }}: <span class="ltr">{{ company.tax_number | html.escape }}</span></p>{{ end }}
+    </div>
+    <div class="doc">
+      <p class="title">{{ title | html.escape }}</p>
+      <p class="number">{{ number | html.escape }}</p>
+      <table>
+        <tr><td class="k">{{ L.date }}</td><td class="v">{{ document.receipt_date }}</td></tr>
+        <tr><td class="k">{{ L.currency }}</td><td class="v">{{ document.currency }}</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <div class="amount-block">
+    <span class="k">{{ L.amount_received }}</span>
+    <span class="v">{{ document.amount }} {{ document.currency }}</span>
+  </div>
+
+  <table class="facts">
+    <tr><td class="k">{{ L.received_from }}</td><td class="v">{{ if partner }}{{ partner.name | html.escape }} <span class="muted ltr">{{ partner.code | html.escape }}</span>{{ end }}</td></tr>
+    {{ if document.amount_in_words_en || document.amount_in_words_ar }}
+    <tr><td class="k">{{ L.amount_in_words }}</td><td class="v words">{{ if mode != "ar" && document.amount_in_words_en }}<span class="en">{{ document.amount_in_words_en | html.escape }}</span>{{ end }}{{ if mode == "bilingual" && document.amount_in_words_en && document.amount_in_words_ar }}<br>{{ end }}{{ if mode != "en" && document.amount_in_words_ar }}<span class="ar">{{ document.amount_in_words_ar | html.escape }}</span>{{ end }}</td></tr>
+    {{ end }}
+    <tr><td class="k">{{ L.paid_by }}</td><td class="v">{{ document.method | html.escape }}{{ if document.cheque }} · {{ L.cheque_number }} <span class="ltr">{{ document.cheque.number | html.escape }}</span>{{ if document.cheque.bank }} · {{ L.bank }} {{ document.cheque.bank | html.escape }}{{ end }}{{ end }}</td></tr>
+    <tr><td class="k">{{ L.received_into }}</td><td class="v">{{ document.bank_account | html.escape }}</td></tr>
+    {{ if document.reference }}<tr><td class="k">{{ L.reference }}</td><td class="v ltr">{{ document.reference | html.escape }}</td></tr>{{ end }}
+    {{ if document.on_account_shown }}<tr><td class="k">{{ L.on_account }}</td><td class="v num">{{ document.on_account }} {{ document.currency }}</td></tr>{{ end }}
+    {{ if document.balance_after }}<tr><td class="k">{{ L.balance_after }}</td><td class="v num">{{ document.balance_after }} {{ document.currency }}</td></tr>{{ end }}
+  </table>
+
+  {{ if document.has_lines }}
+  <div class="box">
+    <h3>{{ L.applied_to }}</h3>
+    <table>
+      <thead><tr><th>{{ L.document }}</th><th>{{ L.due_date }}</th><th class="num">{{ L.amount }}</th>{{ if document.has_discount }}<th class="num">{{ L.discount }}</th>{{ end }}<th class="num">{{ L.remaining }}</th></tr></thead>
+      <tbody>
+      {{ for l in document.lines }}
+      <tr><td class="ltr">{{ l.document_number | html.escape }}{{ if l.instalment > 1 }} / {{ l.instalment }}{{ end }}</td><td class="ltr">{{ l.due_date }}</td><td class="num">{{ l.amount }}</td>{{ if document.has_discount }}<td class="num">{{ l.discount }}</td>{{ end }}<td class="num">{{ l.remaining }}</td></tr>
+      {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ end }}
+
+  {{ if document.notes }}
+  <div class="box"><h3>{{ L.notes }}</h3><p class="note">{{ document.notes | html.escape }}</p></div>
+  {{ end }}
+
+  <p class="muted">{{ L.receipt_note }}</p>
+  <div class="signatures">
+    <div class="sig">{{ L.received_by }}</div>
+    <div class="sig">{{ L.customer_signature }}</div>
+  </div>
+
+  <footer class="foot">
+    <span>{{ L.thank_you }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

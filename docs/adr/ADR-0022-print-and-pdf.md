@@ -27,6 +27,15 @@ Designable print templates for invoices, orders, statements and more, including 
 * Chromium in the worker image adds ~300 MB; acceptable, and Playwright is already used for tests.
 * Bilingual documents are a first-class template mode, not a hack.
 
+## Amendment (2026-11-03): branded documents, the company's logo, the receipt
+
+The trader (ADR-0035 §20, A-205) wants invoices and receipts in his company's identity. Four things changed, none of them special to one company:
+
+* **A `brand` variant** (`PrintVariants.Brand`) of the sales invoice and the customer statement, and of the new receipt below: the company's logo on a dark band with the title and number, the brand typefaces, blue accents, the total in a black block, a footer rule in the brand colour. It is a shipped template like the others, copied into the workspace on first use and editable there; the standard layouts are untouched. A draft invoice still prints pro forma only.
+* **The company's logo is a company setting**, `company.logo` (`CompanySettingKeys.Logo`), an image data URI of a few hundred kilobytes set on the Companies screen (file picker, preview, remove). `PrintService` hands it to every template as `company.logo`; a value that is not an image data URI is ignored, so a template never fetches from the network while it prints.
+* **The customer receipt is a document of its own**: `bank_receipt` (the banking module's `ReceiptPrintModel`, standard and branded templates): the amount received and in words, from whom, into which box or account and how (cash, transfer, cheque with its number and bank, card), the invoices it settled with what remains on each, the customer's balance after it from the receivables subledger, two signature lines. Posted receipts are final and kept as evidence; a draft prints with a draft watermark, a reversed one with a reversed watermark.
+* **Two more embedded fonts**, Montserrat (Latin) and Cairo (Arabic), both variable and under the SIL Open Font License beside DejaVu Sans; the branded templates set them, the standard ones keep DejaVu. The layout regression keeps baselines for the branded invoice and receipt too.
+
 ## Amendment (2026-10-31): share links and the print dialog
 
 * A rendered PDF can be opened without signing in through a **share link** (`prt_share_links`, A-176): the token carries the tenant id and 32 random bytes and is handed out once; only its SHA-256 is stored, so a copy of the database yields no working links. Links expire (7 days by default, 30 at most), can be revoked and count their openings. The public endpoint (`/api/v1/public/prints/{token}`) switches the unit of work to the token's tenant and reads the row under RLS; unknown, tampered and revoked links read alike.

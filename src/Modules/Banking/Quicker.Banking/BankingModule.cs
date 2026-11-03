@@ -7,6 +7,7 @@ using Quicker.Collaboration.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Numbering.Contracts;
 using Quicker.Persistence.EntityFramework;
+using Quicker.Printing.Contracts;
 namespace Quicker.Banking;
 
 public static class BankingModule
@@ -24,6 +25,7 @@ public static class BankingModule
         services.AddScoped<BankAccountService>();
         services.AddScoped<PaymentService>();
         services.AddScoped<CustomerReceiptService>();
+        services.AddScoped<IPrintModelProvider, ReceiptPrintModel>();
         services.AddScoped<ChequeRegistry>();
         services.AddScoped<ChequeBookService>();
         services.AddScoped<ChequeService>();

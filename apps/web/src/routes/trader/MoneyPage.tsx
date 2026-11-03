@@ -9,6 +9,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
+import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
 
 type OpenItem = components["schemas"]["OpenItemSummary"];
 
@@ -80,6 +81,7 @@ export function MoneyPage() {
   const invoices = useQuery({ queryKey: ["invoices", companyId, "posted", "money"], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/sales/invoices", { params: { query: { companyId, status: "posted" } } })) });
   const queryClient = useQueryClient();
   const accounts = useBankAccounts(companyId);
+  const [statement, setStatement] = useState<PrintSubject | null>(null);
   const [paying, setPaying] = useState<SupplierPayForm | null>(null);
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -135,6 +137,8 @@ export function MoneyPage() {
     { label: t("trader.money.days61To90"), value: n(totals.days61To90) },
     { label: t("trader.money.over90"), value: n(totals.over90) },
   ];
+  // Everyone who owes, largest first: each with the statement to print or send (T12b).
+  const owing = (ar?.rows ?? []).filter((r) => n(r.totalFc) > 0).sort((a, b) => n(b.totalFc) - n(a.totalFc));
   const chase = (ar?.rows ?? []).filter((r) => overdueOf(r) > 0).sort((a, b) => oldestLate(b) - oldestLate(a) || overdueOf(b) - overdueOf(a));
   const pay = (ap?.rows ?? []).filter((r) => n(r.totalFc) > 0).sort((a, b) => overdueOf(b) - overdueOf(a) || n(b.totalFc) - n(a.totalFc));
   const chaseText = (row: AgingLike): string => {
@@ -178,6 +182,7 @@ export function MoneyPage() {
       {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="money-notice">{notice}</p> : null}
       {ar && ap ? (
         <div className="flex flex-col gap-4">
+          {statement ? <PrintDialog subject={statement} onClose={() => { setStatement(null); }} /> : null}
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4" data-testid="owed-to-you">
               <div>
@@ -186,6 +191,19 @@ export function MoneyPage() {
                 {overdueOf({ ...ar.totals, partnerId: "", partnerCode: "", partnerName: {} }) > 0 ? <div className="text-sm text-danger" dir="ltr">{formatMoney(overdueOf({ ...ar.totals, partnerId: "", partnerCode: "", partnerName: {} }), currency)} {t("trader.money.overdue")}</div> : null}
               </div>
               <Buckets rows={bucketRows(ar.totals)} currency={currency} testId="ar-buckets" />
+              {owing.length > 0 ? (
+                <ul className="flex flex-col gap-1 border-t border-border pt-2" data-testid="owed-by-customer">
+                  {owing.map((row) => (
+                    <li key={row.partnerId} className="flex items-center justify-between gap-2 text-sm" data-testid="owed-row">
+                      <span dir="auto" className="truncate">{row.partnerCode} · {localized(row.partnerName)}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="tabular" dir="ltr">{formatMoney(n(row.totalFc), currency)}</span>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => { setStatement({ documentType: "customer_statement", documentId: row.partnerId, parameters: { companyId }, number: row.partnerCode, partnerId: row.partnerId, variants: ["brand", "standard"] }); }} data-testid={`statement-${row.partnerCode}`}>{t("trader.money.statement")}</Button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
             <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4" data-testid="you-owe">
               <div>
