@@ -649,6 +649,34 @@ public sealed class RfqService(
         return await MapAsync(rfq, cancellationToken);
     }
 
+    /// <summary>Removes a request that led to no order, with its suppliers, their quotes and its lines: a comparison the trader is done with (ADR-0035 §13).</summary>
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var rfq = await LoadAsync(id, false, cancellationToken);
+        if (rfq is null)
+        {
+            return Error.NotFound("purchase_rfq", id);
+        }
+
+        if (rfq.Status == "awarded" || rfq.AwardedQuoteId is not null)
+        {
+            return Error.Conflict("rfq.awarded", "A request that became an order is kept; cancel the order instead.").WithWhy(("status", rfq.Status));
+        }
+
+        var supplierIds = rfq.Suppliers.Select(static s => s.Id).ToList();
+        var quotes = await db.Quotes.Include(static q => q.Lines).Where(q => supplierIds.Contains(q.RfqSupplierId)).ToListAsync(cancellationToken);
+        // The quote lines point at the request lines without a navigation the model orders by, so they go first.
+        db.QuoteLines.RemoveRange(quotes.SelectMany(static q => q.Lines));
+        db.Quotes.RemoveRange(quotes);
+        await db.SaveChangesAsync(cancellationToken);
+        db.RfqSuppliers.RemoveRange(rfq.Suppliers);
+        db.RfqLines.RemoveRange(rfq.Lines);
+        db.Rfqs.Remove(rfq);
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, rfq.Id, rfq.Number, AuditActions.Deleted, Before: new { rfq.Title, rfq.Status, suppliers = supplierIds.Count, quotes = quotes.Count }, CompanyId: rfq.CompanyId), cancellationToken);
+        return Result.Success();
+    }
+
     private async Task<Rfq?> LoadAsync(Guid id, bool readOnly, CancellationToken cancellationToken)
     {
         var query = db.Rfqs.Include(static r => r.Lines).Include(static r => r.Suppliers);

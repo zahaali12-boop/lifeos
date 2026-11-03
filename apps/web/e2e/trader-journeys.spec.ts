@@ -79,13 +79,24 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("flat-nav").getByRole("link", { name: "Offers" })).toBeVisible();
   await expectAccessible(page);
 
-  // Offers: 100 pads and 50 filters from the two suppliers.
+  // Offers: a comparison started by mistake is deleted for good; then 100 pads and 50 filters, Shenzhen ticked now and
+  // Guangzhou added once the comparison is open.
   await page.getByTestId("flat-nav").getByRole("link", { name: "Offers" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Purchase offers");
   await page.getByTestId("new-offer-set").click();
+  await page.getByTestId("offer-title").fill("Throwaway");
+  await page.getByTestId("offer-supplier-SHENZ").check();
+  await page.getByTestId("line-item-0").fill("PADS");
+  await page.getByTestId("save-offer-set").click();
+  await expect(page.getByTestId("offers-detail")).toBeVisible();
+  await expect(page.getByTestId("offer-form")).toBeVisible();
+  await page.getByTestId("delete-offer-set").click();
+  await page.getByTestId("delete-offer-set-yes").click();
+  await expect(page.getByTestId("offers-detail")).toHaveCount(0);
+  await expect(page.getByText("No comparisons yet.")).toBeVisible();
+  await page.getByTestId("new-offer-set").click();
   await page.getByTestId("offer-title").fill("Brake pads and filters, autumn");
   await page.getByTestId("offer-supplier-SHENZ").check();
-  await page.getByTestId("offer-supplier-GUANG").check();
   await page.getByTestId("line-item-0").fill("PADS");
   await page.getByTestId("line-qty-0").fill("100");
   await page.getByTestId("add-line").click();
@@ -93,10 +104,11 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("line-qty-1").fill("50");
   await page.getByTestId("save-offer-set").click();
   await expect(page.getByTestId("offers-detail")).toBeVisible();
-  await expect(page.getByTestId("offer-row")).toHaveCount(2);
+  await expect(page.getByTestId("offer-row")).toHaveCount(1);
 
-  // Shenzhen: pads 14,000 but only from 500, filters 9,000; the only offer so far is recommended as such.
-  await page.getByTestId("enter-offer-SHENZ").click();
+  // Shenzhen's offer form is open already: pads 14,000 but only from 500, filters 9,000; the only offer so far is
+  // recommended as such.
+  await expect(page.getByTestId("offer-form")).toContainText("SHENZ");
   await page.getByTestId("offer-lead-time").fill("30");
   await page.getByTestId("offer-price-0").fill("14000");
   await page.getByTestId("offer-moq-0").fill("500");
@@ -108,8 +120,12 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("recommendation")).toContainText("the only offer so far");
   await expect(page.getByTestId("offer-row").filter({ hasText: "SHENZ" }).getByTestId("offer-moq")).toHaveText("Below minimum");
 
-  // Guangzhou: pads 15,000 and filters 9,500, slower; it is the one to order from, Shenzhen's minimum rules it out.
-  await page.getByTestId("enter-offer-GUANG").click();
+  // Guangzhou added to the comparison now; its offer form opens at once: pads 15,000 and filters 9,500, slower; it is
+  // the one to order from, Shenzhen's minimum rules it out.
+  await page.getByTestId("add-supplier-select").selectOption({ label: "GUANG · Guangzhou Motors" });
+  await page.getByTestId("invite-supplier").click();
+  await expect(page.getByTestId("offer-row")).toHaveCount(2);
+  await expect(page.getByTestId("offer-form")).toContainText("GUANG");
   await page.getByTestId("offer-lead-time").fill("45");
   await page.getByTestId("offer-price-0").fill("15000");
   await page.getByTestId("offer-price-1").fill("9500");

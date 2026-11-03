@@ -1,5 +1,5 @@
 import { Field, Input, Select, Textarea, useFieldControl } from "@quicker/ui";
-import type { ComponentProps, ReactNode } from "react";
+import { useLayoutEffect, useRef, type ComponentProps, type ReactNode } from "react";
 
 export function PageHeader({ title, description, actions }: { title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
   return (
@@ -27,6 +27,20 @@ export function SelectField(props: ComponentProps<typeof Select>) {
 export function TextareaField(props: ComponentProps<typeof Textarea>) {
   const control = useFieldControl();
   return <Textarea {...control} {...props} />;
+}
+
+/** A one-line textarea that grows with what is typed, so a long description stays readable in a table cell. */
+export function GrowingTextareaField({ className, onChange, value, ...props }: ComponentProps<typeof Textarea>) {
+  const control = useFieldControl();
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const area = ref.current;
+    if (area) {
+      area.style.height = "auto";
+      area.style.height = `${String(area.scrollHeight)}px`;
+    }
+  }, [value]);
+  return <Textarea ref={ref} rows={1} value={value} onChange={onChange} className={`min-h-9 resize-none overflow-hidden py-1.5 ${className ?? ""}`} {...control} {...props} />;
 }
 
 export function FormError({ message }: { message: string | null }) {

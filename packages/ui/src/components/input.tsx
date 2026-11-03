@@ -12,7 +12,7 @@ export function Input({ className, dir = "auto", ...props }: InputProps) {
   return <input className={cn(control, "h-9", className)} dir={dir} {...props} />;
 }
 
-export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
+export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & { ref?: Ref<HTMLTextAreaElement> | undefined };
 
 export function Textarea({ className, dir = "auto", ...props }: TextareaProps) {
   return <textarea className={cn(control, "min-h-24 py-2", className)} dir={dir} {...props} />;

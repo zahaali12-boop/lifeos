@@ -26424,6 +26424,29 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Removes a request that led to no order, with its suppliers, their quotes and its lines; one that became an order is kept",
+        "operationId": "deletePurchasingRfqsByRfqId",
+        "parameters": [
+          {
+            "name": "rfqId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
       }
     },
     "/api/v1/purchasing/rfqs/{rfqId}/invite": {

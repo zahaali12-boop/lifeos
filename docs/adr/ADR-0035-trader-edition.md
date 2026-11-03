@@ -149,6 +149,18 @@ would also throw away the tests and the invariants that make the books right.
     defaults. The Trader module keeps no table for them: the journals are the record, numbered, listed and reversible
     in the full edition.
 
+13. **The founder's first day: what a real trader asked for (T10).** The field feedback of 2026-11-03 is taken as
+    it came, in order of harm. The web app renews its access token silently (a ten-minute token and a session of
+    days had been read as a sign-out after ten minutes and an "Unauthorized" on the next click). A sale in one step
+    refuses what the store cannot cover in the trader's words, before anything is written. The workspace name leaves
+    the top bar. The Offers screen is rebuilt around how offers are collected in practice: a supplier not in the list
+    is made from the comparison itself (the quick create, with the next code), an item not found is made on the spot
+    the same way, the description grows as it is typed, the unit is not asked (the item's own unit; pieces for a line
+    without an item), a supplier is added to a comparison after it was made, the first supplier's offer form opens
+    with the comparison and each saved offer opens the next supplier's, the comparison refreshing with every offer,
+    and a comparison that led to no order is deleted for good (`DELETE /purchasing/rfqs/{id}`; one that became an
+    order is kept).
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

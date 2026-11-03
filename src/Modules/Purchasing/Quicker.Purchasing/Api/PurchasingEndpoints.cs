@@ -52,6 +52,9 @@ public static class PurchasingEndpoints
             .RequirePermission(PurchasingPermissions.RfqRead);
         rfqs.MapPut("/{rfqId:guid}", async (Guid rfqId, SaveRfqRequest request, RfqService service, CancellationToken ct) => ApiProblems.Ok(await service.UpdateAsync(rfqId, request, ct)))
             .RequirePermission(PurchasingPermissions.RfqManage);
+        rfqs.MapDelete("/{rfqId:guid}", async (Guid rfqId, RfqService service, CancellationToken ct) => ApiProblems.NoContent(await service.DeleteAsync(rfqId, ct)))
+            .RequirePermission(PurchasingPermissions.RfqManage)
+            .WithSummary("Removes a request that led to no order, with its suppliers, their quotes and its lines; one that became an order is kept");
         rfqs.MapPost("/{rfqId:guid}/invite", async (Guid rfqId, InviteSuppliersRequest request, RfqService service, CancellationToken ct) => ApiProblems.Ok(await service.InviteAsync(rfqId, request, ct)))
             .RequirePermission(PurchasingPermissions.RfqManage);
         rfqs.MapPost("/{rfqId:guid}/send", async (Guid rfqId, SendRfqRequest? request, RfqService service, CancellationToken ct) => ApiProblems.Ok(await service.SendAsync(rfqId, request ?? new SendRfqRequest(), ct)))

@@ -9137,7 +9137,8 @@ export interface paths {
         get: operations["getPurchasingRfqsByRfqId"];
         put: operations["putPurchasingRfqsByRfqId"];
         post?: never;
-        delete?: never;
+        /** Removes a request that led to no order, with its suppliers, their quotes and its lines; one that became an order is kept */
+        delete: operations["deletePurchasingRfqsByRfqId"];
         options?: never;
         head?: never;
         patch?: never;
@@ -44716,6 +44717,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RfqSummary"];
                 };
+            };
+        };
+    };
+    deletePurchasingRfqsByRfqId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rfqId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

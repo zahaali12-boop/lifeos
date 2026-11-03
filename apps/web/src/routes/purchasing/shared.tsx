@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { formatMoney, formatNumber } from "../../lib/format";
-import { DecimalField, SelectField, TextField } from "../common";
+import { DecimalField, SelectField, TextField, GrowingTextareaField } from "../common";
 import { CostCentreSelect, costCentreText, type LineDimensionReference } from "../accounting/JournalLineDetails";
 import { ItemCodeField } from "../inventory/ItemCodeField";
 import { lineKeys, pastedCode, pastedNumber } from "../lineKeys";
@@ -109,11 +109,11 @@ export function lineDimensions(line: LineForm): Record<string, string> | null {
   return Object.keys(line.dimensions).length > 0 ? line.dimensions : null;
 }
 
-export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, suppliers, showDescription = false, costCentres }: { lines: LineForm[]; onChange: (lines: LineForm[]) => void; showPrice?: boolean; priceLabel?: string; suppliers?: { partnerId: string; partnerCode: string }[]; showDescription?: boolean; costCentres?: LineDimensionReference }) {
+export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, suppliers, showDescription = false, costCentres, showUom = true, hint }: { lines: LineForm[]; onChange: (lines: LineForm[]) => void; showPrice?: boolean; priceLabel?: string; suppliers?: { partnerId: string; partnerCode: string }[]; showDescription?: boolean; showUom?: boolean; hint?: string; costCentres?: LineDimensionReference }) {
   const showCostCentre = Boolean(costCentres?.dimensions.some((d) => d.code === "COST_CENTER"));
   const { t } = useTranslation();
   const patch = (index: number, change: Partial<LineForm>): void => { onChange(lines.map((l, i) => (i === index ? { ...l, ...change } : l))); };
-  const keys = lineKeys<LineForm>({ lines, onChange, empty: emptyLine, columns: ["itemCode", ...(showDescription ? ["description" as const] : []), "quantity", "uom", ...(showPrice ? ["price" as const] : [])], parse: { itemCode: pastedCode, uom: pastedCode, quantity: pastedNumber, price: pastedNumber } });
+  const keys = lineKeys<LineForm>({ lines, onChange, empty: emptyLine, columns: ["itemCode", ...(showDescription ? ["description" as const] : []), "quantity", ...(showUom ? ["uom" as const] : []), ...(showPrice ? ["price" as const] : [])], parse: { itemCode: pastedCode, uom: pastedCode, quantity: pastedNumber, price: pastedNumber } });
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -129,7 +129,7 @@ export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, sup
               <TableHead>{t("purchasing.itemCode")}</TableHead>
               {showDescription ? <TableHead>{t("purchasing.description")}</TableHead> : null}
               <TableHead>{t("purchasing.quantity")}</TableHead>
-              <TableHead>{t("purchasing.uom")}</TableHead>
+              {showUom ? <TableHead>{t("purchasing.uom")}</TableHead> : null}
               {showPrice ? <TableHead>{priceLabel ?? t("purchasing.unitPrice")}</TableHead> : null}
               {showCostCentre ? <TableHead>{t("accounting.costCentre")}</TableHead> : null}
               {suppliers ? <TableHead>{t("purchasing.suggestedSupplier")}</TableHead> : null}
@@ -140,9 +140,9 @@ export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, sup
             {lines.map((line, index) => (
               <TableRow key={index}>
                 <TableCell><ItemCodeField aria-label={t("purchasing.itemCode")} value={line.itemCode} onChange={(code) => { patch(index, { itemCode: code }); }} className="w-28" data-testid={`line-item-${String(index)}`} {...keys.cell(index, "itemCode")} /></TableCell>
-                {showDescription ? <TableCell><TextField aria-label={t("purchasing.description")} value={line.description} onChange={(e) => { patch(index, { description: e.target.value }); }} className="w-40" {...keys.cell(index, "description")} /></TableCell> : null}
+                {showDescription ? <TableCell><GrowingTextareaField aria-label={t("purchasing.description")} value={line.description} onChange={(e) => { patch(index, { description: e.target.value }); }} className="w-56" {...keys.cell(index, "description")} /></TableCell> : null}
                 <TableCell><DecimalField aria-label={t("purchasing.quantity")} value={line.quantity} onChange={(e) => { patch(index, { quantity: e.target.value }); }} dir="ltr" className="w-20" {...keys.cell(index, "quantity")} data-testid={`line-qty-${String(index)}`} /></TableCell>
-                <TableCell><TextField aria-label={t("purchasing.uom")} value={line.uom} onChange={(e) => { patch(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" {...keys.cell(index, "uom")} placeholder={t("purchasing.baseUom")} data-testid={`line-uom-${String(index)}`} /></TableCell>
+                {showUom ? <TableCell><TextField aria-label={t("purchasing.uom")} value={line.uom} onChange={(e) => { patch(index, { uom: e.target.value.toUpperCase() }); }} dir="ltr" className="w-20" {...keys.cell(index, "uom")} placeholder={t("purchasing.baseUom")} data-testid={`line-uom-${String(index)}`} /></TableCell> : null}
                 {showPrice ? <TableCell><DecimalField aria-label={priceLabel ?? t("purchasing.unitPrice")} value={line.price} onChange={(e) => { patch(index, { price: e.target.value }); }} dir="ltr" className="w-24" {...keys.cell(index, "price")} data-testid={`line-price-${String(index)}`} /></TableCell> : null}
                 {showCostCentre && costCentres ? (
                   <TableCell>
@@ -171,7 +171,7 @@ export function LinesEditor({ lines, onChange, showPrice = true, priceLabel, sup
       ) : (
         <p className="text-xs text-fg-muted">{t("purchasing.noLines")}</p>
       )}
-      <p className="text-xs text-fg-subtle">{t("common.lineKeysHint")}</p>
+      <p className="text-xs text-fg-subtle">{hint ?? t("common.lineKeysHint")}</p>
     </div>
   );
 }

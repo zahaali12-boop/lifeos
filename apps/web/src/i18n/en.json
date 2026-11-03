@@ -6200,7 +6200,15 @@
       "empty": "No comparisons yet.",
       "emptyDescription": "Start one: name what you want to buy, tick the suppliers and list the items with quantities.",
       "cancel": "Cancel this comparison",
-      "followShipment": "Follow the shipment"
+      "followShipment": "Follow the shipment",
+      "newSupplierHint": "A supplier not in the list yet is added here with the + and ticked at once.",
+      "linesHint": "Type the item's code or its name; an item not found yet is created on the spot with the next code. Enter adds a row.",
+      "addSupplier": "Add a supplier",
+      "chooseSupplier": "Choose a supplier",
+      "invite": "Add",
+      "delete": "Delete comparison",
+      "deleteConfirm": "Delete this comparison and its offers for good?",
+      "deleteYes": "Delete"
     },
     "shipments": {
       "title": "Shipments",
