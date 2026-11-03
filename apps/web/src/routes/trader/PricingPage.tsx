@@ -68,6 +68,7 @@ export function PricingPage() {
   const [pricingOpen, setPricingOpen] = useState(false);
   const [costEdit, setCostEdit] = useState<{ itemId: string; value: string } | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [sellNext, setSellNext] = useState(false);
   const canCost = can("inventory.item.manage");
 
   const board = useQuery({
@@ -111,6 +112,7 @@ export function PricingPage() {
       setEdits({});
       setTicked({});
       setNotice(t("trader.pricing.applied"));
+      setSellNext(true);
       await showBoard(result);
     },
     onError: fail,
@@ -178,6 +180,12 @@ export function PricingPage() {
       </div>
       <FormError message={problem?.message ?? null} />
       {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="pricing-notice">{notice}</p> : null}
+      {sellNext ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-border p-2 text-sm" data-testid="next-step">
+          <span className="font-medium">{t("trader.next.title")}</span>
+          <Button asChild size="sm" variant="secondary"><Link to="/trader/sales" search={{ new: "1" }} data-testid="next-sell">{t("trader.pricing.sellNow")}</Link></Button>
+        </div>
+      ) : null}
 
       {b ? (
         <>

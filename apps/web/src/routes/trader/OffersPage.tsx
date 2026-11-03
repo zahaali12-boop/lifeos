@@ -1,6 +1,6 @@
 import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
 import { Plus } from "lucide-react";
@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
-import { useOpenRecord } from "../../lib/documents";
+import { useNewFromUrl, useOpenRecord } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { CurrencyField } from "../CurrencyField";
@@ -230,6 +230,18 @@ export function OffersPage() {
   );
 
   const openNew = (): void => { setProblem(null); setForm({ title: "", partnerIds: [], lines: [emptyLine()] }); };
+  useNewFromUrl("/trader/offers", openNew, Boolean(companyId));
+  // A supplier just made (on Suppliers, from the + menu) comes with the offers as the next step: a comparison opens with it ticked.
+  const navigate = useNavigate();
+  const search: { supplier?: string } = useSearch({ strict: false });
+  const wantedSupplier = search.supplier;
+  useEffect(() => {
+    if (wantedSupplier && companyId) {
+      setProblem(null);
+      setForm({ title: "", partnerIds: [wantedSupplier], lines: [emptyLine()] });
+      void navigate({ to: "/trader/offers", search: {}, replace: true });
+    }
+  }, [wantedSupplier, companyId, navigate]);
   const submit = (event: FormEvent): void => { event.preventDefault(); if (form) { create.mutate(form); } };
   const openOffer = (partnerId: string): void => { if (r) { openOfferIn(r, partnerId); } };
   const collecting = r?.status === "draft" || r?.status === "sent";

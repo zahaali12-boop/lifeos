@@ -281,7 +281,7 @@ const dashboardsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/
 const traderOffersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/offers", component: OffersPage, validateSearch: searchRecord });
 const traderShipmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/shipments", component: TraderShipmentsPage, validateSearch: searchRecord });
 const traderPricingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/pricing", component: TraderPricingPage });
-const traderSalesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/sales", component: TraderSalesPage });
+const traderSalesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/sales", component: TraderSalesPage, validateSearch: searchRecord });
 const traderMoneyRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/money", component: TraderMoneyPage });
 const traderHealthRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/health", component: TraderHealthPage });
 const traderStockRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/stock", component: TraderStockPage });

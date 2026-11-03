@@ -17,6 +17,7 @@ import { CustomerAccountFields, customerAccountBody, emptyCustomerAccount, type 
 import { CreditBadge, money, useSalesReps, type CustomerAccount } from "./shared";
 import { CodeField } from "../CodeField";
 import { useNewFromUrl } from "../../lib/documents";
+import { useSession } from "../../session/session";
 
 interface PartnerForm {
   code: string;
@@ -37,6 +38,7 @@ export function CustomersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const can = useCan();
+  const session = useSession();
   const { companies, companyId, setCompanyId, company } = useCompanyContext();
   const [q, setQ] = useState("");
   const [credit, setCredit] = useState("");
@@ -65,6 +67,11 @@ export function CustomersPage() {
       setCreating(null);
       setProblem(null);
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      // In the trader edition the next step after a customer is the sale: Sales opens with the customer chosen.
+      if (session?.tenant.edition === "trader") {
+        void navigate({ to: "/trader/sales", search: { customer: partner.id } });
+        return;
+      }
       void navigate({ to: "/sales/customers/$partnerId", params: { partnerId: partner.id } });
     },
     onError: (error) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },

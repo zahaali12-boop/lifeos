@@ -1,19 +1,21 @@
 import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@quicker/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
 import type { components } from "../../api/schema";
 import { DataGrid } from "../../grid/DataGrid";
+import { useNewFromUrl } from "../../lib/documents";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { emptyLine, LinesEditor, num, type LineForm } from "../purchasing/shared";
 import { useBankAccounts } from "../payables/shared";
+import { QuickCreateButton } from "../QuickCreate";
 
 type Invoice = components["schemas"]["SalesInvoiceSummary"];
 
@@ -58,18 +60,25 @@ function paymentState(invoice: Invoice, today: string): string {
 
 const tones: Record<string, "success" | "warning" | "danger" | "info" | "neutral"> = { paid: "success", partly: "info", unpaid: "warning", overdue: "danger", draft: "neutral", cancelled: "neutral", reversed: "neutral" };
 
+/** What the program offers next after a sale (the payment, the same customer again) or a payment (what is owed, another sale). */
+type NextStep = { kind: "sold"; number: string; partnerId: string } | { kind: "paid" };
+
 /**
- * Sales (trader edition, ADR-0035 §6): a sale in one step (the order confirmed, the goods shipped from the store, the
- * invoice posted), the invoices with what each customer still owes, and payments recorded against them.
+ * Sales (trader edition, ADR-0035 §6, §16): a sale in one step (the order confirmed, the goods shipped from the store,
+ * the invoice posted), the invoices with what each customer still owes, payments recorded against them, and the next
+ * step offered after each: a customer made elsewhere arrives here with the sale open and the customer chosen.
  */
 export function SalesPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const search: { customer?: string } = useSearch({ strict: false });
   const { companies, companyId, setCompanyId } = useCompanyContext();
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [sale, setSale] = useState<SaleForm | null>(null);
   const [payment, setPayment] = useState<PaymentForm | null>(null);
+  const [next, setNext] = useState<NextStep | null>(null);
   const warehouses = useWarehouses(companyId);
   const accounts = useBankAccounts(companyId);
   const company = companies.find((c) => c.id === companyId);
@@ -111,7 +120,13 @@ export function SalesPage() {
       unwrap(await api.POST("/api/v1/sales/quick-sales", {
         body: { companyId, partnerId: f.partnerId, warehouseId: f.warehouseId, date: f.date || null, customerReference: f.reference || null, lines: f.lines.filter((l) => l.itemCode.trim()).map((l) => ({ itemCode: l.itemCode, quantity: num(l.quantity), uom: l.uom || null, unitPrice: l.price.trim() ? num(l.price) : null })) },
       })),
-    onSuccess: async (result) => { setProblem(null); setSale(null); setNotice(t("trader.sales.sold", { number: result.invoiceNumber, amount: formatMoney(result.totalGross, result.currency) })); await refresh(); },
+    onSuccess: async (result, f) => {
+      setProblem(null);
+      setSale(null);
+      setNotice(t("trader.sales.sold", { number: result.invoiceNumber, amount: formatMoney(result.totalGross, result.currency) }));
+      setNext({ kind: "sold", number: result.invoiceNumber, partnerId: f.partnerId });
+      await refresh();
+    },
     onError: fail,
   });
   const createCash = useMutation({
@@ -124,9 +139,17 @@ export function SalesPage() {
       const receipt = unwrap(await api.POST("/api/v1/banking/receipts", { body: { companyId, partnerId: p.invoice.partnerId, bankAccountId: p.accountId, kind: "customer_receipt", receiptDate: p.date || null, method: p.method, lines: [{ openItemId: p.openItemId, amount: num(p.amount) }], onAccount: 0, charges: 0 } }));
       return unwrap(await api.POST("/api/v1/banking/receipts/{receiptId}/post", { params: { path: { receiptId: receipt.id } } }));
     },
-    onSuccess: async () => { setProblem(null); setPayment(null); setNotice(t("trader.sales.paymentRecorded")); await refresh(); await queryClient.invalidateQueries({ queryKey: ["receipts"] }); },
+    onSuccess: async () => { setProblem(null); setPayment(null); setNotice(t("trader.sales.paymentRecorded")); setNext({ kind: "paid" }); await refresh(); await queryClient.invalidateQueries({ queryKey: ["receipts"] }); },
     onError: fail,
   });
+  const invoiceByNumber = (number: string): Invoice | undefined => invoices.data?.find((i) => i.number === number);
+  const openPaymentFor = (invoice: Invoice): void => {
+    const open = invoice.openItems.find((i) => n(i.remainingTc) > 0);
+    if (open) {
+      setProblem(null);
+      setPayment({ invoice, openItemId: open.id, amount: String(n(open.remainingTc)), accountId: accounts.data?.[0]?.id ?? "", method: "cash", date: "" });
+    }
+  };
 
   const columns = useMemo<ColumnDef<Invoice, unknown>[]>(
     () => [
@@ -147,7 +170,19 @@ export function SalesPage() {
     [t, today, accounts.data],
   );
 
-  const openSale = (): void => { setProblem(null); setSale({ partnerId: "", warehouseId: warehouses.data?.[0]?.id ?? "", date: "", reference: "", lines: [emptyLine()] }); };
+
+  const openSaleFor = useCallback((partnerId: string): void => { setProblem(null); setNext(null); setSale({ partnerId, warehouseId: warehouses.data?.[0]?.id ?? "", date: "", reference: "", lines: [emptyLine()] }); }, [warehouses.data]);
+  const openSale = (): void => { openSaleFor(""); };
+  useNewFromUrl("/trader/sales", openSale, Boolean(companyId));
+  // A customer just made (on Customers, from the + menu) comes with the sale as the next step: the form opens with them chosen.
+  const wantedCustomer = search.customer;
+  useEffect(() => {
+    if (wantedCustomer && companyId && warehouses.data) {
+      openSaleFor(wantedCustomer);
+      setNotice(t("trader.sales.customerReady"));
+      void navigate({ to: "/trader/sales", search: {}, replace: true });
+    }
+  }, [wantedCustomer, companyId, warehouses.data, openSaleFor, navigate, t]);
   // A line that just got its item takes the selling price from the pricing board when no price was typed.
   const onLines = (lines: LineForm[]): void => {
     if (!sale) {
@@ -182,6 +217,22 @@ export function SalesPage() {
       </div>
       <FormError message={!sale && !payment ? wordProblem(problem) : null} />
       {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="sales-notice">{notice}</p> : null}
+      {next ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-border p-2 text-sm" data-testid="next-step">
+          <span className="font-medium">{t("trader.next.title")}</span>
+          {next.kind === "sold" ? (
+            <>
+              <Button type="button" size="sm" disabled={!invoiceByNumber(next.number)} onClick={() => { const invoice = invoiceByNumber(next.number); if (invoice) { openPaymentFor(invoice); } }} data-testid="next-record-payment">{t("trader.next.recordPayment", { number: next.number })}</Button>
+              <Button type="button" size="sm" variant="secondary" onClick={() => { openSaleFor(next.partnerId); }} data-testid="next-sell-again">{t("trader.next.sellAgain")}</Button>
+            </>
+          ) : (
+            <>
+              <Button asChild size="sm" variant="secondary"><Link to="/trader/money" data-testid="next-money">{t("trader.next.seeMoney")}</Link></Button>
+              <Button type="button" size="sm" variant="secondary" onClick={openSale} data-testid="next-new-sale">{t("trader.sales.newSale")}</Button>
+            </>
+          )}
+        </div>
+      ) : null}
       <DataGrid<Invoice> label="trader.sales.title" columns={columns} data={invoices.data ?? []} rowKey={(row) => row.id} loading={invoices.isPending && Boolean(companyId)} emptyTitle={t("trader.sales.empty")} emptyDescription={t("trader.sales.emptyDescription")} />
 
       <Dialog open={Boolean(sale)} onOpenChange={(isOpen) => { if (!isOpen) { setSale(null); } }}>
@@ -207,7 +258,11 @@ export function SalesPage() {
                   <TextField value={sale.reference} onChange={(e) => { setSale({ ...sale, reference: e.target.value }); }} dir="auto" data-testid="sale-reference" />
                 </Field>
               </div>
-              <p className="text-xs text-fg-muted"><Link to="/sales/customers" className="text-accent underline">{t("trader.sales.newCustomer")}</Link> · {t("trader.sales.priceHint")}</p>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-fg-muted">
+                <span>{t("trader.sales.newCustomerHint")}</span>
+                <QuickCreateButton kind="customer" companyId={companyId} currency={currency} onCreated={(created) => { setSale((prev) => (prev ? { ...prev, partnerId: created.id } : prev)); }} />
+                <span>· {t("trader.sales.priceHint")}</span>
+              </div>
               <LinesEditor lines={sale.lines} onChange={onLines} priceLabel={t("trader.pricing.currentPrice")} />
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setSale(null); }}>{t("common.cancel")}</Button>

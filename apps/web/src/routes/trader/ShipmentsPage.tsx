@@ -526,7 +526,8 @@ export function ShipmentsPage() {
               ) : null}
               {s.receiptNumber ? (
                 <p className="text-sm" data-testid="received-note">
-                  {t("trader.shipments.receivedNote", { number: s.receiptNumber })}{s.landedCostId ? ` ${t("trader.shipments.landedNote")}` : ""}
+                  {t("trader.shipments.receivedNote", { number: s.receiptNumber })}{s.landedCostId ? ` ${t("trader.shipments.landedNote")}` : ""}{" "}
+                  <Link to="/trader/pricing" className="font-medium text-accent underline" data-testid="next-set-prices">{t("trader.shipments.setPrices")}</Link>
                 </p>
               ) : null}
               {s.status === "received" && s.invoiceId === null ? (

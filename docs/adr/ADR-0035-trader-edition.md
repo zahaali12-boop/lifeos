@@ -182,6 +182,16 @@ would also throw away the tests and the invariants that make the books right.
     deleted), so the list stays the trader's to shape. The unit a price is for stays the item's sales unit; changing
     units stays on the item.
 
+16. **The next step follows the record (T10e).** The founder wanted a customer or supplier just made to lead on to
+    the sale or the offers, and every screen to say what comes next. In the trader edition the top bar's "New" lists
+    the day's few starts (a sale, an offer comparison, an expense, a customer, a supplier, an item), each landing on
+    the trader's screen with its form open; a customer saved on Customers goes on to Sales with the sale open and
+    the customer chosen (`/trader/sales?customer=`), a supplier saved on Suppliers goes on to Offers with a comparison
+    open and the supplier ticked (`/trader/offers?supplier=`), and a customer not in the list is made from the sale
+    form itself. After a sale the screen offers the payment of that invoice and the same customer again; after a
+    payment, what is owed on Money and another sale; after goods are received, the selling prices; after prices are
+    applied, a sale at them. The full edition keeps its own next steps (the customer's 360, the supplier's record).
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

@@ -19,13 +19,23 @@ export const quickNew: { id: string; to: string; permission: string; group: "sal
   { id: "item", to: "/inventory/items", permission: "inventory.item.manage", group: "masters" },
 ];
 
+/** The trader edition's "New": the day's few starts, each landing on the trader's own screen with its form open; a customer or supplier made here goes on to the sale or the offers. */
+export const traderQuickNew: typeof quickNew = [
+  { id: "sale", to: "/trader/sales", permission: "sales.invoice.manage", group: "sales" },
+  { id: "comparison", to: "/trader/offers", permission: "purchasing.rfq.manage", group: "purchasing" },
+  { id: "expense", to: "/trader/expenses", permission: "expenses.expense.manage", group: "money" },
+  { id: "customer", to: "/sales/customers", permission: "partners.customer.manage", group: "masters" },
+  { id: "supplier", to: "/purchasing/suppliers", permission: "partners.supplier.manage", group: "masters" },
+  { id: "item", to: "/inventory/items", permission: "inventory.item.manage", group: "masters" },
+];
+
 const groups: ("sales" | "purchasing" | "money" | "masters")[] = ["sales", "purchasing", "money", "masters"];
 
 /** The "New" button in the top bar: a document or a master record started from anywhere, only those the member may create. */
-export function NewMenu({ permissions }: { permissions: ReadonlySet<string> }) {
+export function NewMenu({ permissions, edition }: { permissions: ReadonlySet<string>; edition?: string | undefined }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const allowed = quickNew.filter((entry) => covers(permissions, entry.permission));
+  const allowed = (edition === "trader" ? traderQuickNew : quickNew).filter((entry) => covers(permissions, entry.permission));
   if (allowed.length === 0) {
     return null;
   }

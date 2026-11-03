@@ -4977,7 +4977,10 @@
       "journal": "Journal entry",
       "customer": "Customer",
       "supplier": "Supplier",
-      "item": "Item"
+      "item": "Item",
+      "sale": "Sale",
+      "comparison": "Offer comparison",
+      "expense": "Expense"
     }
   },
   "expenses": {
@@ -6320,7 +6323,8 @@
       "choosePaidTo": "Choose who is paid",
       "payCost": "Pay",
       "costPaid": "Paid · {number}",
-      "payCostHint": "Paid before the goods arrive: an advance, taken off the agent's invoice made on arrival. After: a payment of that invoice."
+      "payCostHint": "Paid before the goods arrive: an advance, taken off the agent's invoice made on arrival. After: a payment of that invoice.",
+      "setPrices": "Set the selling prices"
     },
     "pricing": {
       "title": "Selling prices",
@@ -6387,7 +6391,8 @@
       "removePrice": "Take the price off the list",
       "removeConfirm": "Take {item} off the price list?",
       "removeYes": "Yes, take it off",
-      "removed": "The price was taken off the list; earlier prices stay in the history."
+      "removed": "The price was taken off the list; earlier prices stay in the history.",
+      "sellNow": "Sell at these prices"
     },
     "sales": {
       "title": "Sales",
@@ -6437,7 +6442,9 @@
       "empty": "No sales yet.",
       "emptyDescription": "Press New sale: pick the customer, the items and the quantities; the price comes from your sales list.",
       "priceHint": "From your sales list",
-      "notEnoughStock": "Not enough {item} in the store: {available} on hand, {wanted} wanted. Receive stock first, or sell what there is."
+      "notEnoughStock": "Not enough {item} in the store: {available} on hand, {wanted} wanted. Receive stock first, or sell what there is.",
+      "newCustomerHint": "A customer not in the list yet?",
+      "customerReady": "The new customer is chosen: pick the items and sell."
     },
     "money": {
       "title": "Money",
@@ -6774,6 +6781,12 @@
       "later": "Later",
       "save": "Save today's rate",
       "failed": "The rate could not be saved."
+    },
+    "next": {
+      "title": "Next",
+      "recordPayment": "Record the payment for {number}",
+      "sellAgain": "Sell to the same customer again",
+      "seeMoney": "See what is owed on Money"
     }
   }
 }

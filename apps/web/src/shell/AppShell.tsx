@@ -142,7 +142,7 @@ export function AppShell() {
             {flat ? <FlatNav items={visibleNavigation} location={location} /> : <TopNav items={visibleNavigation} location={location} />}
           </div>
           <div className="ms-auto flex items-center gap-0.5">
-            <NewMenu permissions={permissions} />
+            <NewMenu permissions={permissions} edition={session?.tenant.edition} />
             <Button variant="secondary" className="hidden h-8 w-52 justify-start gap-2 text-fg-muted xl:inline-flex" onClick={() => { setPaletteOpen(true); }}>
               <Search aria-hidden="true" />
               <span className="flex-1 truncate text-start">{t("shell.search")}</span>

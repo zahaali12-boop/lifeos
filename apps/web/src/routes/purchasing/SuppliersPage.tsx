@@ -19,6 +19,7 @@ import { covers } from "../../lib/permissions";
 import { CurrencyField } from "../CurrencyField";
 import { CodeField } from "../CodeField";
 import { useNewFromUrl } from "../../lib/documents";
+import { useSession } from "../../session/session";
 
 type SupplierAccount = components["schemas"]["SupplierAccountSummary"];
 
@@ -91,6 +92,7 @@ export function SuppliersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const search = useSearch({ strict: false });
+  const session = useSession();
   const openId = search.open;
   const { companies, companyId, setCompanyId, company } = useCompanyContext();
   const [q, setQ] = useState("");
@@ -121,6 +123,11 @@ export function SuppliersPage() {
       setCreating(null);
       setProblem(null);
       await refresh();
+      // In the trader edition the next step after a supplier is asking it for offers: Offers opens with it ticked.
+      if (session?.tenant.edition === "trader") {
+        void navigate({ to: "/trader/offers", search: { supplier: partner.id } });
+        return;
+      }
       open(partner.id);
     },
     onError: (error) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },

@@ -63,7 +63,7 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await call("post", "/api/v1/items", { code: "FILTER", name: { en: "Oil filter", ar: "فلتر زيت" }, baseUom: "PCS" });
   await call("post", "/api/v1/items", { code: "BELT", name: { en: "Fan belt", ar: "سير مروحة" }, baseUom: "PCS" });
   await call("post", "/api/v1/inventory/warehouses", { companyId, code: "MAIN", name: { en: "Main store", ar: "المخزن الرئيسي" } });
-  for (const [code, en, ar] of [["SHENZ", "Shenzhen Auto Parts", "شنجن لقطع السيارات"], ["GUANG", "Guangzhou Motors", "غوانزو موتورز"], ["FWD", "Gulf Forwarding", "الخليج للشحن"], ["ELEC", "Electricity office", "دائرة الكهرباء"]]) {
+  for (const [code, en, ar] of [["SHENZ", "Shenzhen Auto Parts", "شنجن لقطع السيارات"], ["FWD", "Gulf Forwarding", "الخليج للشحن"], ["ELEC", "Electricity office", "دائرة الكهرباء"]]) {
     const supplier = await call("post", "/api/v1/partners", { code, legalName: { en, ar }, isSupplier: true });
     await call("put", `/api/v1/partners/${supplier.id}/supplier-accounts/${companyId}`, { currency: "IQD", leadTimeDays: 30 });
   }
@@ -82,6 +82,19 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("flat-nav")).toBeVisible();
   await expect(page.getByTestId("flat-nav").getByRole("link", { name: "Offers" })).toBeVisible();
   await expectAccessible(page);
+
+  // The chain the founder asked for, supplier side: Guangzhou is made from the + menu and the program goes on to the
+  // offers with it ticked; the comparison itself is made below, so this one is closed.
+  await page.getByTestId("new-menu").click();
+  await page.getByTestId("new-menu-supplier").click();
+  await page.getByTestId("partner-code").fill("GUANG");
+  await page.getByTestId("partner-legal-name-en").fill("Guangzhou Motors");
+  await page.getByTestId("partner-legal-name-ar").fill("غوانزو موتورز");
+  await page.getByTestId("save-supplier").click();
+  await expect(page).toHaveURL(/\/trader\/offers/);
+  await expect(page.getByTestId("offer-supplier-GUANG")).toBeChecked();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("offer-title")).toHaveCount(0);
 
   // Offers: a comparison started by mistake is deleted for good; then 100 pads and 50 filters, Shenzhen ticked now and
   // Guangzhou added once the comparison is open.
@@ -251,13 +264,16 @@ test("English: the trader edition switched on, offers compared with minimum quan
 
   // Sales and money: a customer and a cash box through the API; ten pads sold in one step at the list price; 100,000
   // received against the invoice; the Money page shows what is still owed and the supplier invoice to pay.
-  const ali = await call("post", "/api/v1/partners", { code: "ALI", legalName: { en: "Ali Auto Repair", ar: "ورشة علي" }, isCustomer: true });
-  await call("put", `/api/v1/partners/${ali.id}/customer-accounts/${companyId}`, { currency: "IQD" });
   await call("post", "/api/v1/banking/bank-accounts", { companyId, code: "CASH", name: { en: "Cash box", ar: "الصندوق" }, kind: "cash", currency: "IQD", isActive: true });
-  await page.getByTestId("flat-nav").getByRole("link", { name: "Sales" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Sales");
-  await page.getByTestId("new-sale").click();
-  await page.getByTestId("sale-customer").selectOption({ label: "ALI · Ali Auto Repair" });
+  // The chain, customer side: Ali is made from the + menu and the program goes on to Sales with the sale open and Ali chosen.
+  await page.getByTestId("new-menu").click();
+  await page.getByTestId("new-menu-customer").click();
+  await page.getByTestId("partner-code").fill("ALI");
+  await page.getByTestId("partner-legal-name-en").fill("Ali Auto Repair");
+  await page.getByTestId("partner-legal-name-ar").fill("ورشة علي");
+  await page.getByTestId("save-customer").click();
+  await expect(page).toHaveURL(/\/trader\/sales/);
+  await expect(page.getByTestId("sale-customer").locator("option:checked")).toHaveText("ALI · Ali Auto Repair");
   await page.getByTestId("line-item-0").fill("PADS");
   await page.getByTestId("line-qty-0").fill("10");
   await expect(page.getByTestId("line-price-0")).toHaveValue("21,000");
@@ -270,10 +286,12 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("sell").click();
   await expect(page.getByTestId("sales-notice")).toContainText("210,000", { timeout: 20_000 });
   await expect(page.getByTestId("invoice-state").first()).toHaveText("Unpaid");
-  await page.getByRole("button", { name: "Record a payment" }).first().click();
+  // The next step is offered right there: the payment of the invoice just made.
+  await page.getByTestId("next-record-payment").click();
   await page.getByTestId("payment-amount").fill("100000");
   await page.getByTestId("save-payment").click();
   await expect(page.getByTestId("sales-notice")).toContainText("Payment recorded", { timeout: 20_000 });
+  await expect(page.getByTestId("next-step")).toContainText("Money");
   await expect(page.getByTestId("invoice-state").first()).toHaveText("Partly paid");
   await expect(page.getByTestId("invoice-remaining").first()).toContainText("110,000");
   await expectAccessible(page);
