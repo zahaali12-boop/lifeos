@@ -71,6 +71,19 @@ public static class BankingEndpoints
             .RequirePermission(BankingPermissions.ReceiptPost)
             .WithSummary("Reverses a posted receipt whose remainder was not applied further: items reopen at their booked values.");
 
+        var transfers = banking.MapGroup("/transfers");
+        transfers.MapGet("/", async (Guid? companyId, Guid? bankAccountId, DateOnly? from, DateOnly? to, BankTransferService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, bankAccountId, from, to, ct)))
+            .RequirePermission(BankingPermissions.TransferRead)
+            .WithSummary("Transfers between the company's bank accounts and cash boxes, newest first; with an account, those in or out of it.");
+        transfers.MapPost("/", async (RecordBankTransferRequest request, BankTransferService service, CancellationToken ct) => ApiProblems.Created(await service.RecordAsync(request, ct), static t => $"/api/v1/banking/transfers/{t.Id}"))
+            .RequirePermission(BankingPermissions.TransferPost)
+            .WithSummary("Records and posts a transfer: what left one account and what arrived in the other (asked for when the currencies differ), both boxes moved, and the realised exchange difference.");
+        transfers.MapGet("/{transferId:guid}", async (Guid transferId, BankTransferService service, CancellationToken ct) => ApiProblems.Ok(await service.GetAsync(transferId, ct)))
+            .RequirePermission(BankingPermissions.TransferRead);
+        transfers.MapPost("/{transferId:guid}/reverse", async (Guid transferId, ReversePaymentRequest request, BankTransferService service, CancellationToken ct) => ApiProblems.Ok(await service.ReverseAsync(transferId, request, ct)))
+            .RequirePermission(BankingPermissions.TransferPost)
+            .WithSummary("Reverses a transfer: the mirror entry and both boxes' movements given back, on its own date or a later one.");
+
         var books = banking.MapGroup("/cheque-books");
         books.MapGet("/", async (Guid? companyId, Guid? bankAccountId, ChequeBookService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, bankAccountId, ct)))
             .RequirePermission(BankingPermissions.ChequeRead)

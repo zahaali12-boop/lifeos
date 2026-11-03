@@ -17,6 +17,8 @@ public static class BankingPermissions
     public const string ChequeManage = "banking.cheque.manage";
     public const string ReconciliationRead = "banking.reconciliation.read";
     public const string ReconciliationManage = "banking.reconciliation.manage";
+    public const string TransferRead = "banking.transfer.read";
+    public const string TransferPost = "banking.transfer.post";
 
     public static readonly PermissionDefinition[] All =
     [
@@ -32,5 +34,7 @@ public static class BankingPermissions
         new(ChequeManage, "banking", "Deposit, clear, bounce, pay and cancel cheques and keep cheque books"),
         new(ReconciliationRead, "banking", "Read bank statements, matches, reconciliations and the unreconciled aging"),
         new(ReconciliationManage, "banking", "Import statements, match and create movements, keep the rules and complete reconciliations"),
+        new(TransferRead, "banking", "Read transfers between the company's bank accounts and cash boxes"),
+        new(TransferPost, "banking", "Record transfers between the company's bank accounts and cash boxes (deposits, withdrawals, currency changed) and reverse them"),
     ];
 }

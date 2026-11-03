@@ -3410,22 +3410,31 @@ erDiagram
   bnk_transfers {
     uuid id PK
     uuid company_id
-    text number
+    text number "TRF-"
+    date transfer_date
     uuid from_bank_account_id
     uuid to_bank_account_id
-    date posting_date
-    numeric amount_from
-    numeric amount_to
-    numeric rate
-    numeric charges
-    text status "draft | in_transit | completed"
+    numeric amount_sent "in the first account's currency"
+    text currency_sent
+    numeric amount_received "in the second account's currency"
+    text currency_received
+    numeric exchange_rate "foreign side to the company's currency"
+    numeric amount_sent_fc
+    numeric amount_received_fc
+    numeric exchange_difference_fc "received less sent"
+    text status "posted | reversed"
     uuid journal_entry_id
+    uuid from_transaction_id
+    uuid to_transaction_id
+    uuid reversal_entry_id
   }
 ```
 
 Post-dated cheque life cycle (hard scenario 10, A-177): `in_hand` (the receipt settles the invoices, PDC receivable up, the bank untouched) → `deposited` on or after the cheque's date (cheques under collection, one slip for several cheques) → `cleared` (the bank, less the collection charge) or `bounced` (the receipt is reversed so the invoices reopen at their booked values, the cheque's journey is unwound, the bank's charge is booked and a fee can be re-charged to the customer as a receivable of kind `adjustment` on the cheque; a replacement cheque links both ways). A cheque still in hand is `returned` by reversing its receipt. Issued cheques go `issued` (PDC payable, the supplier's invoices settled) → `paid` (the bank) or `bounced` (back on PDC payable) → `cancelled` (the payment reversed). Every step is a `bnk_cheque_events` row; the invariant `cheques_match_control` holds each cheque's PDC lines to its status.
 
 Bank statements and reconciliation (roadmap 6.2, A-178): a statement is a file imported for one bank account in one of four formats (a CSV read through a saved mapping, OFX, MT940 or CAMT.053); its lines are signed from the account's side and keyed so the same line imported twice adds nothing. A line is `matched` when one or more book movements (`bnk_bank_transactions`) stand for it, each movement matched once; `excluded` when set aside (the bank's own duplicate or error); `unmatched` otherwise. A movement is `unreconciled` until a line matches it, `matched` from then, and `reconciled` for good when a reconciliation completes at or after its date. A reconciliation records, at a date, the statement balance against the book balance with what is in transit either way and the bank lines not yet in the books, and completes when nothing differs and no line up to that date is unmatched.
+
+Transfers between the company's own accounts (T14, A-210, `V0076`): a `bnk_transfers` row is created posted, numbered `TRF-`, and names both accounts, what left the first and what arrived in the second (each in its own currency, equal when the currencies are), both values in the company's currency and the realised exchange difference between them (`amount_received_fc - amount_sent_fc`, a check constraint). Its journal's two account lines each name the bank transaction it made (`transfer_out`, `transfer_in`), so the bank invariant holds every box to its ledger account. A transfer is never edited: its reversal posts the mirror entry and gives both movements back (`reversal`, `reverses_transaction_id`). In transit and the bank's charges on a transfer, sketched earlier, are not built.
 
 ## 15. Fixed assets
 

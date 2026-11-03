@@ -303,6 +303,27 @@ would also throw away the tests and the invariants that make the books right.
     account. Below the large breakpoint the drawer still carries the same list (the phone site has its own tabs,
     §21). The full edition's module menus are unchanged.
 
+24. **Movements of a box from Cash & bank** (T14, A-210). The founder wants to enter what happens to a cash box or a
+    bank account from the screen that shows it: a deposit, a withdrawal, a payment and the rest. "New movement" on Cash &
+    bank (and "Cash or bank movement" in the trader's "New") asks what happened, in plain words, and hands each answer to
+    the record that already keeps it, so the books move as they would from that record's own screen: money between two
+    of the boxes (cash paid into the bank, cash drawn from it, money moved between boxes, dinars changed for dollars) is
+    a new Banking document, the transfer; money from a customer is a customer receipt that settles the customer's oldest
+    invoices in the box's currency first and keeps anything beyond to the customer's credit; money to a supplier is a
+    supplier payment spread the same way, anything beyond paid in advance; an expense is the quick expense paid now from
+    the box; the owner's money in or out is the owner's journal (§12). The transfer (`BankTransferService`,
+    `bnk_transfers`, `POST /banking/transfers`, permissions `banking.transfer.read|post`) posts at once through the
+    posting engine: the account it arrives in is debited and the one it left credited, each line naming its own bank
+    movement (`transfer_in`, `transfer_out`). Between two accounts of one currency what arrives is what left. When the
+    currencies differ the trader says what arrived as well as what left, the screen shows the rate the money changed at,
+    and the books value the foreign side at the company's spot rate of the day (the exchange's own rate when the company
+    has none) and the dinar side at what actually moved, the gap being a realised exchange gain or loss as payments and
+    receipts book theirs. A transfer is undone from its row (a reason and a day; the mirror entry and both movements
+    given back), never edited. Every box on Cash & bank now shows its amounts in its own currency (a dollar box in
+    dollars). Deferred: a transfer in transit and the bank's charge on a transfer (an expense of its own meanwhile);
+    a transfer between two foreign currencies (through an account in the company's currency); other income (interest,
+    a refund) from this window; a printed transfer voucher.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

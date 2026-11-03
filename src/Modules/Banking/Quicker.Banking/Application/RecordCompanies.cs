@@ -16,6 +16,7 @@ internal sealed class BankingRecordCompanies(IUnitOfWorkAccessor unitOfWork) : I
         ["bank_cheque_book"] = "app.bnk_cheque_books",
         ["bank_statement"] = "app.bnk_statements",
         ["bank_reconciliation"] = "app.bnk_reconciliations",
+        ["bank_transfer"] = "app.bnk_transfers",
     };
 
     public IReadOnlyCollection<string> EntityTypes => Tables.Keys;

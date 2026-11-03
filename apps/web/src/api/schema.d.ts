@@ -8398,6 +8398,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/banking/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Transfers between the company's bank accounts and cash boxes, newest first; with an account, those in or out of it. */
+        get: operations["getBankingTransfers"];
+        put?: never;
+        /** Records and posts a transfer: what left one account and what arrived in the other (asked for when the currencies differ), both boxes moved, and the realised exchange difference. */
+        post: operations["postBankingTransfers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/transfers/{transferId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBankingTransfersByTransferId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/banking/transfers/{transferId}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverses a transfer: the mirror entry and both boxes' movements given back, on its own date or a later one. */
+        post: operations["postBankingTransfersByTransferIdReverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/banking/cheque-books": {
         parameters: {
             query?: never;
@@ -13525,6 +13576,55 @@ export interface components {
             /** Format: uuid */
             reversesTransactionId: null | string;
             reconciliationStatus: string;
+        };
+        /** @description A transfer as read back: both accounts with their codes and currencies, both amounts and their values in the company's currency, the exchange difference, the journal, and whether it still stands. */
+        BankTransferSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            companyId: string;
+            number: string;
+            status: string;
+            /** Format: date */
+            transferDate: string;
+            /** Format: uuid */
+            fromBankAccountId: string;
+            fromBankAccountCode: string;
+            fromBankAccountName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            toBankAccountId: string;
+            toBankAccountCode: string;
+            toBankAccountName: {
+                [key: string]: string;
+            };
+            /** Format: double */
+            amountSent: number | string;
+            currencySent: string;
+            /** Format: double */
+            amountReceived: number | string;
+            currencyReceived: string;
+            /** Format: double */
+            exchangeRate: number | string;
+            functionalCurrency: string;
+            /** Format: double */
+            amountSentFc: number | string;
+            /** Format: double */
+            amountReceivedFc: number | string;
+            /** Format: double */
+            exchangeDifferenceFc: number | string;
+            reference: null | string;
+            notes: null | string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+            /** Format: uuid */
+            reversalEntryId: null | string;
+            reversalReason: null | string;
+            /** Format: date-time */
+            postedAt: null | string;
+            /** Format: date-time */
+            reversedAt: null | string;
         };
         BarcodeMatch: {
             /** Format: uuid */
@@ -20883,6 +20983,23 @@ export interface components {
             bankAccountId: null | string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        /** @description Money moved between two of the company's accounts: from where, to where, what left, what arrived (asked for only when the currencies differ), on which day, the bank's reference and a note. */
+        RecordBankTransferRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            fromBankAccountId: string;
+            /** Format: uuid */
+            toBankAccountId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: double */
+            amountReceived?: null | number | string;
+            /** Format: date */
+            transferDate?: null | string;
+            reference?: null | string;
+            notes?: null | string;
         };
         RecordPurchaseShipmentInvoiceRequest: {
             supplierInvoiceNumber?: null | string;
@@ -43645,6 +43762,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentSummary"];
+                };
+            };
+        };
+    };
+    getBankingTransfers: {
+        parameters: {
+            query?: {
+                companyId?: string;
+                bankAccountId?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransferSummary"][];
+                };
+            };
+        };
+    };
+    postBankingTransfers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordBankTransferRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransferSummary"];
+                };
+            };
+        };
+    };
+    getBankingTransfersByTransferId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transferId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransferSummary"];
+                };
+            };
+        };
+    };
+    postBankingTransfersByTransferIdReverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transferId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReversePaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankTransferSummary"];
                 };
             };
         };

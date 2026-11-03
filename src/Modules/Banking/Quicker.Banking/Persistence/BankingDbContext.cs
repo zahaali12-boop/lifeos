@@ -35,6 +35,8 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options,
 
     public DbSet<BankReconciliation> Reconciliations => Set<BankReconciliation>();
 
+    public DbSet<BankTransfer> Transfers => Set<BankTransfer>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -160,6 +162,21 @@ public sealed class BankingDbContext(DbContextOptions<BankingDbContext> options,
             b.Property(static x => x.Confidence).HasPrecision(5, 4);
             b.HasOne<StatementLine>().WithMany().HasForeignKey(static x => new { x.TenantId, x.StatementLineId });
             b.HasOne<BankTransaction>().WithMany().HasForeignKey(static x => new { x.TenantId, x.BankTransactionId });
+        });
+
+        modelBuilder.Entity<BankTransfer>(b =>
+        {
+            b.ToTable("bnk_transfers", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.AmountSent).HasPrecision(24, 6);
+            b.Property(static x => x.AmountReceived).HasPrecision(24, 6);
+            b.Property(static x => x.ExchangeRate).HasPrecision(24, 12);
+            b.Property(static x => x.AmountSentFc).HasPrecision(24, 6);
+            b.Property(static x => x.AmountReceivedFc).HasPrecision(24, 6);
+            b.Property(static x => x.ExchangeDifferenceFc).HasPrecision(24, 6);
+            b.HasOne<BankAccount>().WithMany().HasForeignKey(static x => new { x.TenantId, x.FromBankAccountId });
+            b.HasOne<BankAccount>().WithMany().HasForeignKey(static x => new { x.TenantId, x.ToBankAccountId });
+            b.HasAuditTrail("bank_transfer", static x => x.Number);
         });
 
         modelBuilder.Entity<BankReconciliation>(b =>

@@ -80,6 +80,16 @@ public static class BankingRowFactories
             await c.ExecuteAsync("INSERT INTO app.bnk_reconciliations (tenant_id, id, company_id, bank_account_id, number, as_of, statement_balance, book_balance) VALUES (@t, @id, @company, @account, @number, '2026-09-30', 0, 0)", new { t, id, company, account, number = Suffix(id) }, tx);
             return new RowRef("app.bnk_reconciliations", $"id = '{id}'");
         });
+        IsolationRegistry.Register("app.bnk_transfers", static async (c, tx, t) =>
+        {
+            var (from, company) = await BankAccountAsync(c, tx, t);
+            var gl = await c.QuerySingleAsync<Guid>("SELECT gl_account_id FROM app.bnk_bank_accounts WHERE tenant_id = @t AND id = @from", new { t, from }, tx);
+            var to = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_bank_accounts (tenant_id, id, company_id, code, name_i18n, kind, currency, gl_account_id) VALUES (@t, @to, @company, @code, '{\"en\":\"Probe\"}', 'cash', 'IQD', @gl)", new { t, to, company, code = Suffix(to), gl }, tx);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("INSERT INTO app.bnk_transfers (tenant_id, id, company_id, number, transfer_date, from_bank_account_id, to_bank_account_id, amount_sent, currency_sent, amount_received, currency_received, amount_sent_fc, amount_received_fc) VALUES (@t, @id, @company, @number, '2026-09-22', @from, @to, 10, 'IQD', 10, 'IQD', 10, 10)", new { t, id, company, number = Suffix(id), from, to }, tx);
+            return new RowRef("app.bnk_transfers", $"id = '{id}'");
+        });
     }
 
     private static async Task<Guid> ChequeAsync(NpgsqlConnection c, NpgsqlTransaction tx, Guid t)

@@ -24286,6 +24286,166 @@
         }
       }
     },
+    "/api/v1/banking/transfers": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Transfers between the company's bank accounts and cash boxes, newest first; with an account, those in or out of it.",
+        "operationId": "getBankingTransfers",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bankAccountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankTransferSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Records and posts a transfer: what left one account and what arrived in the other (asked for when the currencies differ), both boxes moved, and the realised exchange difference.",
+        "operationId": "postBankingTransfers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordBankTransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankTransferSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/transfers/{transferId}": {
+      "get": {
+        "tags": [
+          "Banking"
+        ],
+        "operationId": "getBankingTransfersByTransferId",
+        "parameters": [
+          {
+            "name": "transferId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankTransferSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/banking/transfers/{transferId}/reverse": {
+      "post": {
+        "tags": [
+          "Banking"
+        ],
+        "summary": "Reverses a transfer: the mirror entry and both boxes' movements given back, on its own date or a later one.",
+        "operationId": "postBankingTransfersByTransferIdReverse",
+        "parameters": [
+          {
+            "name": "transferId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReversePaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankTransferSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/banking/cheque-books": {
       "get": {
         "tags": [
@@ -40268,6 +40428,188 @@
             "type": "string"
           }
         }
+      },
+      "BankTransferSummary": {
+        "required": [
+          "id",
+          "companyId",
+          "number",
+          "status",
+          "transferDate",
+          "fromBankAccountId",
+          "fromBankAccountCode",
+          "fromBankAccountName",
+          "toBankAccountId",
+          "toBankAccountCode",
+          "toBankAccountName",
+          "amountSent",
+          "currencySent",
+          "amountReceived",
+          "currencyReceived",
+          "exchangeRate",
+          "functionalCurrency",
+          "amountSentFc",
+          "amountReceivedFc",
+          "exchangeDifferenceFc",
+          "reference",
+          "notes",
+          "journalEntryId",
+          "reversalEntryId",
+          "reversalReason",
+          "postedAt",
+          "reversedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "transferDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "fromBankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromBankAccountCode": {
+            "type": "string"
+          },
+          "fromBankAccountName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "toBankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toBankAccountCode": {
+            "type": "string"
+          },
+          "toBankAccountName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "amountSent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currencySent": {
+            "type": "string"
+          },
+          "amountReceived": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currencyReceived": {
+            "type": "string"
+          },
+          "exchangeRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "functionalCurrency": {
+            "type": "string"
+          },
+          "amountSentFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountReceivedFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "exchangeDifferenceFc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "reversalReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "postedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "reversedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "A transfer as read back: both accounts with their codes and currencies, both amounts and their values in the company's currency, the exchange difference, the journal, and whether it still stands."
       },
       "BarcodeMatch": {
         "required": [
@@ -67997,6 +68339,66 @@
             "format": "date-time"
           }
         }
+      },
+      "RecordBankTransferRequest": {
+        "required": [
+          "companyId",
+          "fromBankAccountId",
+          "toBankAccountId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromBankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toBankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountReceived": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "transferDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Money moved between two of the company's accounts: from where, to where, what left, what arrived (asked for only when the currencies differ), on which day, the bank's reference and a note."
       },
       "RecordPurchaseShipmentInvoiceRequest": {
         "type": "object",

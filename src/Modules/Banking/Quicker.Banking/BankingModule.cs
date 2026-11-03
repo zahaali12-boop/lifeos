@@ -32,6 +32,8 @@ public static class BankingModule
         NumberedDocumentTypes.Register(new NumberedDocumentType(BankDocumentTypes.ChequeDeposit, BankingPermissions.ChequeRead));
         services.AddScoped<StatementService>();
         services.AddScoped<ReconciliationService>();
+        services.AddScoped<BankTransferService>();
+        NumberedDocumentTypes.Register(new NumberedDocumentType(BankDocumentTypes.Transfer, BankingPermissions.TransferRead));
         NumberedDocumentTypes.Register(new NumberedDocumentType(BankDocumentTypes.Reconciliation, BankingPermissions.ReconciliationRead));
         services.AddScoped<IBankAccountDirectory>(static sp => sp.GetRequiredService<BankAccountService>());
         services.AddScoped<IBankTransactions, BankTransactionService>();
@@ -47,6 +49,7 @@ public static class BankingModule
         services.AddSingleton(new RecordReadPermission("bank_cheque_book", BankingPermissions.ChequeRead));
         services.AddSingleton(new RecordReadPermission("bank_statement", BankingPermissions.ReconciliationRead));
         services.AddSingleton(new RecordReadPermission("bank_reconciliation", BankingPermissions.ReconciliationRead));
+        services.AddSingleton(new RecordReadPermission("bank_transfer", BankingPermissions.TransferRead));
         services.AddScoped<IRecordCompanies, BankingRecordCompanies>();
         return services;
     }

@@ -4995,7 +4995,8 @@
       "item": "Item",
       "sale": "Sale",
       "comparison": "Offer comparison",
-      "expense": "Expense"
+      "expense": "Expense",
+      "cashMovement": "Cash or bank movement"
     }
   },
   "expenses": {
@@ -6962,7 +6963,61 @@
         "bank_statement": "Bank statement",
         "petty_cash_voucher": "Petty cash",
         "expense": "Expense",
-        "other": "Movement"
+        "other": "Movement",
+        "bank_transfer": "Transfer"
+      },
+      "newMovement": "New movement",
+      "actions": "Actions",
+      "undo": "Undo",
+      "undoTitle": "Undo this transfer",
+      "undoHint": "Both boxes get their money back on the day you choose; the transfer stays in the books, marked as undone.",
+      "undoReason": "Why",
+      "undoConfirm": "Undo the transfer",
+      "undone": "Transfer {number} undone.",
+      "transferKinds": {
+        "transfer_in": "Transfer in",
+        "transfer_out": "Transfer out",
+        "reversal": "Transfer undone"
+      },
+      "movement": {
+        "title": "A new movement",
+        "kind": "What happened",
+        "kinds": {
+          "transfer": "Between my boxes and accounts",
+          "customer": "Received from a customer",
+          "supplier": "Paid to a supplier",
+          "expense": "An expense",
+          "ownerIn": "Owner put money in",
+          "ownerOut": "Owner took money out"
+        },
+        "hints": {
+          "transfer": "Cash paid into the bank, cash drawn from it, money moved between boxes, or dinars changed for dollars.",
+          "customer": "Settles the customer's oldest invoices first; anything beyond stays to their credit.",
+          "supplier": "Pays the supplier's oldest invoices first; anything beyond is paid in advance.",
+          "expense": "Rent, salaries, electricity, bank fees… paid now.",
+          "ownerIn": "Capital the owner adds to the business.",
+          "ownerOut": "Money the owner takes out for personal use."
+        },
+        "from": "From",
+        "to": "To",
+        "into": "Into",
+        "outOf": "Out of",
+        "customer": "Customer",
+        "supplier": "Supplier",
+        "category": "Kind of expense",
+        "amount": "Amount ({currency})",
+        "received": "What arrived ({currency})",
+        "rate": "Exchange rate:",
+        "owes": "Owes you {amount}",
+        "owed": "You owe {amount}",
+        "all": "All of it",
+        "nothingOwedCustomer": "Nothing open in {currency}; the whole amount stays to the customer's credit.",
+        "nothingOwedSupplier": "Nothing open in {currency}; the whole amount is paid in advance.",
+        "companyCurrencyOnly": "This goes through a box or account in {currency}.",
+        "date": "Date (today when empty)",
+        "note": "Note",
+        "save": "Record",
+        "recorded": "Recorded: {number}."
       }
     }
   },

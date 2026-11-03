@@ -25,6 +25,7 @@ export const traderQuickNew: typeof quickNew = [
   { id: "comparison", to: "/trader/offers", permission: "purchasing.rfq.manage", group: "purchasing" },
   { id: "goods", to: "/trader/purchases", permission: "purchasing.order.manage", group: "purchasing" },
   { id: "expense", to: "/trader/expenses", permission: "expenses.expense.manage", group: "money" },
+  { id: "cashMovement", to: "/trader/cash", permission: "banking.bank_account.read", group: "money" },
   { id: "customer", to: "/sales/customers", permission: "partners.customer.manage", group: "masters" },
   { id: "supplier", to: "/purchasing/suppliers", permission: "partners.supplier.manage", group: "masters" },
   { id: "item", to: "/inventory/items", permission: "inventory.item.manage", group: "masters" },

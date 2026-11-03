@@ -518,3 +518,74 @@ public sealed class BankReconciliation : ITenantEntity
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+/// <summary>
+/// Money moved from one of the company's bank accounts or cash boxes to another (ADR-0035 §24): cash paid into the
+/// bank, cash drawn from it, money moved between boxes, or dinars changed for dollars. What left one and what arrived in
+/// the other, each in its own currency, their values in the company's currency and the exchange difference between them.
+/// </summary>
+public sealed class BankTransfer : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public string Number { get; set; } = string.Empty;
+
+    public DateOnly TransferDate { get; set; }
+
+    public Guid FromBankAccountId { get; set; }
+
+    public Guid ToBankAccountId { get; set; }
+
+    /// <summary>What left the first account, in its currency.</summary>
+    public decimal AmountSent { get; set; }
+
+    public string CurrencySent { get; set; } = string.Empty;
+
+    /// <summary>What arrived in the second account, in its currency.</summary>
+    public decimal AmountReceived { get; set; }
+
+    public string CurrencyReceived { get; set; } = string.Empty;
+
+    /// <summary>The rate to the company's currency the foreign side was valued at; 1 when both sides are in the company's currency.</summary>
+    public decimal ExchangeRate { get; set; } = 1m;
+
+    public decimal AmountSentFc { get; set; }
+
+    public decimal AmountReceivedFc { get; set; }
+
+    /// <summary>What arrived less what left, in the company's currency: a gain above zero, a loss below.</summary>
+    public decimal ExchangeDifferenceFc { get; set; }
+
+    public string? Reference { get; set; }
+
+    public string? Notes { get; set; }
+
+    /// <summary>posted or reversed.</summary>
+    public string Status { get; set; } = "posted";
+
+    public Guid? JournalEntryId { get; set; }
+
+    public Guid? FromTransactionId { get; set; }
+
+    public Guid? ToTransactionId { get; set; }
+
+    public Guid? ReversalEntryId { get; set; }
+
+    public string? ReversalReason { get; set; }
+
+    public DateTimeOffset? ReversedAt { get; set; }
+
+    public Guid? ReversedBy { get; set; }
+
+    public DateTimeOffset? PostedAt { get; set; }
+
+    public Guid? PostedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}
