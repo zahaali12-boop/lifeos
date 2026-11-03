@@ -81,6 +81,21 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("edition-trader").check();
   await expect(page.getByTestId("flat-nav")).toBeVisible();
   await expect(page.getByTestId("flat-nav").getByRole("link", { name: "Offers" })).toBeVisible();
+  // The links sit on their own row under the bar, and on a narrower laptop they wrap: every screen in sight, nothing
+  // scrolling sideways (A-209).
+  const menu = page.getByTestId("flat-nav");
+  await expect(page.getByRole("banner").getByTestId("flat-nav")).toHaveCount(0);
+  const size = page.viewportSize();
+  for (const width of [1280, 1024]) {
+    await page.setViewportSize({ width, height: 800 });
+    expect(await menu.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    for (const link of await menu.getByRole("link").all()) {
+      await expect(link).toBeInViewport({ ratio: 1 });
+    }
+  }
+  if (size) {
+    await page.setViewportSize(size);
+  }
   await expectAccessible(page);
 
   // The chain the founder asked for, supplier side: Guangzhou is made from the + menu and the program goes on to the

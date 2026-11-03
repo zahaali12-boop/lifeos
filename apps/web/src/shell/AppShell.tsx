@@ -138,9 +138,11 @@ export function AppShell() {
           <Link to="/" className="me-1 flex items-center gap-2 rounded-md px-1.5 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent" aria-label={t("shell.home")} data-testid="home-link">
             <span className="text-base font-bold tracking-tight text-accent">Quicker</span>
           </Link>
-          <div className="hidden min-w-0 lg:flex">
-            {flat ? <FlatNav items={visibleNavigation} location={location} /> : <TopNav items={visibleNavigation} location={location} />}
-          </div>
+          {flat ? null : (
+            <div className="hidden min-w-0 lg:flex">
+              <TopNav items={visibleNavigation} location={location} />
+            </div>
+          )}
           <div className="ms-auto flex items-center gap-0.5">
             <NewMenu permissions={permissions} edition={session?.tenant.edition} />
             <Button variant="secondary" className="hidden h-8 w-52 justify-start gap-2 text-fg-muted xl:inline-flex" onClick={() => { setPaletteOpen(true); }}>
@@ -221,6 +223,12 @@ export function AppShell() {
             </DropdownMenu>
           </div>
         </header>
+        {/* The trader's screens on their own row under the bar, wrapping rather than scrolling (small screens use the drawer). */}
+        {flat ? (
+          <div className="relative z-10 hidden shrink-0 border-b border-border bg-surface/95 px-2 py-1 sm:px-3 lg:block">
+            <FlatNav items={visibleNavigation} location={location} />
+          </div>
+        ) : null}
         {/* Only the page scrolls, under a bar that stays put (nothing hides beneath it). */}
         <main id="main" className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6" tabIndex={-1}>
           <Outlet />

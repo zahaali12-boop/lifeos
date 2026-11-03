@@ -22,12 +22,16 @@ function sectionsOf(items: NavigationItem[], group: NavigationGroup): { section:
   return loose.length > 0 ? [...result, { section: null, items: loose }] : result;
 }
 
-/** The trader edition's bar: the screens themselves as links, the current one marked, scrolling sideways when the window is narrow. */
+/**
+ * The trader edition's menu (ADR-0035 §2, §23): the screens themselves as links on their own row under the top bar, the
+ * current one marked. When the window is too narrow for one line the links wrap onto the next, so every screen is in
+ * sight and nothing scrolls sideways.
+ */
 export function FlatNav({ items, location, onNavigate }: { items: NavigationItem[]; location: string; onNavigate?: () => void }) {
   const { t } = useTranslation();
   const current = activeItem(items, location);
   return (
-    <nav aria-label={t("shell.primaryNavigation")} data-main-nav className="flex min-w-0 items-center gap-0.5 overflow-x-auto" data-testid="flat-nav">
+    <nav aria-label={t("shell.primaryNavigation")} data-main-nav className="flex flex-wrap items-center gap-1" data-testid="flat-nav">
       {items.map((item) => {
         const active = current?.to === item.to;
         return (

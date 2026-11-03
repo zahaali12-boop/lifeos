@@ -33,7 +33,8 @@ would also throw away the tests and the invariants that make the books right.
 
 2. **The trader shell is a flat menu in plain words.** When the session's edition is `trader`, the web shell shows one
    row of links in place of the module menus: Home, Offers, Orders, Suppliers, Customers, Invoices, Receipts, Items,
-   Stock, Rates, Settings (more arrive with each slice: Shipments, Pricing, Money, Reports). The drawer, the shortcuts
+   Stock, Rates, Settings (more arrive with each slice: Shipments, Pricing, Money, Reports; the row sits under the top
+   bar and wraps, §23). The drawer, the shortcuts
    and the command palette follow the same list. Every link opens either an existing screen or a trader screen that
    wraps a module's service in the trader's vocabulary ("offers" are supplier quotes on a request for quotation,
    "what to buy" is its title, "ordered" is awarded). Labels are everyday words in English and Arabic, and the
@@ -293,6 +294,14 @@ would also throw away the tests and the invariants that make the books right.
     with the `no_price` alert until a price is written. Deferred: a supplier invoice typed by hand for goods already
     received through a shipment that has one (the full edition's screen); a payment on account from the trader's
     screens; the supplier's own document printed.
+
+23. **The trader's menu on its own row** (T13e, A-209). With fifteen screens the links no longer fit in the top bar
+    beside the "New", search, language and account buttons, and the bar scrolled them sideways behind a scroll strip,
+    hiding the last screens. The links now sit on their own row directly under the top bar, across the whole width, and
+    wrap onto a second line when the window is too narrow for one, so every screen is in sight and nothing scrolls
+    sideways; the current screen stays marked. The top bar keeps the name, "New", search, approvals, language and the
+    account. Below the large breakpoint the drawer still carries the same list (the phone site has its own tabs,
+    §21). The full edition's module menus are unchanged.
 
 ## Consequences
 
