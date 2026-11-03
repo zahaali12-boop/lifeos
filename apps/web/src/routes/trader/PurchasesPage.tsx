@@ -192,7 +192,7 @@ export function PurchasesPage() {
 
   const columns = useMemo<ColumnDef<Invoice, unknown>[]>(
     () => [
-      { id: "number", accessorKey: "number", header: t("trader.purchases.invoice"), size: 150, cell: ({ row }) => <span dir="ltr">{row.original.number}{row.original.supplierInvoiceNumber ? <span className="text-fg-muted"> · {row.original.supplierInvoiceNumber}</span> : null}</span> },
+      { id: "number", accessorKey: "number", header: t("trader.purchases.invoice"), size: 210, cell: ({ row }) => <span dir="ltr">{row.original.number}{row.original.supplierInvoiceNumber ? <span className="text-fg-muted"> · {row.original.supplierInvoiceNumber}</span> : null}</span> },
       { id: "supplier", accessorFn: (row) => `${row.partnerCode} ${localized(row.partnerName)}`, header: t("trader.purchases.supplier"), size: 220, cell: ({ row }) => <span dir="auto">{row.original.partnerCode} · {localized(row.original.partnerName)}</span> },
       { id: "date", accessorKey: "documentDate", header: t("trader.purchases.date"), size: 110, cell: ({ row }) => <span dir="ltr">{formatDate(row.original.documentDate)}</span> },
       { id: "due", accessorFn: (row) => row.openItems.map((i) => i.dueDate).sort()[0] ?? row.dueDate ?? "", header: t("trader.purchases.due"), size: 110, cell: ({ row }) => { const due = row.original.openItems.map((i) => i.dueDate).sort()[0] ?? row.original.dueDate; return <span dir="ltr">{due ? formatDate(due) : ""}</span>; } },
@@ -259,18 +259,18 @@ export function PurchasesPage() {
               <div>
                 <h3 className="mb-1 text-sm font-semibold">{t("trader.purchases.lines")}</h3>
                 <table className="w-full text-sm">
-                  <thead><tr className="text-start text-fg-muted"><th className="text-start font-medium">{t("trader.purchases.item")}</th><th className="text-end font-medium">{t("trader.purchases.quantity")}</th><th className="text-end font-medium">{t("trader.purchases.unitPrice")}</th><th className="text-end font-medium">{t("trader.purchases.net")}</th></tr></thead>
+                  <thead><tr className="text-start text-fg-muted"><th className="px-2 py-1 text-start font-medium">{t("trader.purchases.item")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.purchases.quantity")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.purchases.unitPrice")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.purchases.net")}</th></tr></thead>
                   <tbody>
                     {opened.lines.map((line) => (
                       <tr key={line.id} className="border-t border-border">
-                        <td dir="auto">{line.itemCode ? `${line.itemCode} · ${localized(line.itemName ?? {})}` : (line.description ?? "")}</td>
-                        <td className="tabular text-end" dir="ltr">{formatNumber(n(line.quantity))} {line.uomCode ?? ""}</td>
-                        <td className="tabular text-end" dir="ltr">{formatMoney(line.unitPrice, opened.currency)}</td>
-                        <td className="tabular text-end" dir="ltr">{formatMoney(line.netAmount, opened.currency)}</td>
+                        <td className="px-2 py-1 text-start" dir="auto">{line.itemCode ? `${line.itemCode} · ${localized(line.itemName ?? {})}` : (line.description ?? "")}</td>
+                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatNumber(n(line.quantity))} {line.uomCode ?? ""}</td>
+                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.unitPrice, opened.currency)}</td>
+                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.netAmount, opened.currency)}</td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot><tr className="border-t border-border font-semibold"><td colSpan={3}>{t("trader.purchases.total")}</td><td className="tabular text-end" dir="ltr">{formatMoney(opened.totalGross, opened.currency)}</td></tr></tfoot>
+                  <tfoot><tr className="border-t border-border font-semibold"><td className="px-2 py-1" colSpan={3}>{t("trader.purchases.total")}</td><td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(opened.totalGross, opened.currency)}</td></tr></tfoot>
                 </table>
               </div>
               <div>

@@ -257,18 +257,18 @@ export function SalesPage() {
               <div>
                 <h3 className="mb-1 text-sm font-semibold">{t("trader.sales.lines")}</h3>
                 <table className="w-full text-sm">
-                  <thead><tr className="text-fg-muted"><th className="text-start font-medium">{t("trader.sales.item")}</th><th className="text-end font-medium">{t("trader.sales.quantity")}</th><th className="text-end font-medium">{t("trader.sales.unitPrice")}</th><th className="text-end font-medium">{t("trader.sales.net")}</th></tr></thead>
+                  <thead><tr className="text-fg-muted"><th className="px-2 py-1 text-start font-medium">{t("trader.sales.item")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.sales.quantity")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.sales.unitPrice")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.sales.net")}</th></tr></thead>
                   <tbody>
                     {opened.lines.map((line) => (
                       <tr key={line.id} className="border-t border-border">
-                        <td dir="auto">{line.itemCode ? `${line.itemCode} · ${localized(line.itemName ?? {})}` : (line.description ?? "")}</td>
-                        <td className="tabular text-end" dir="ltr">{formatNumber(n(line.quantity))} {line.uomCode ?? ""}</td>
-                        <td className="tabular text-end" dir="ltr">{formatMoney(line.unitPrice, opened.currency)}</td>
-                        <td className="tabular text-end" dir="ltr">{formatMoney(line.netAmount, opened.currency)}</td>
+                        <td className="px-2 py-1 text-start" dir="auto">{line.itemCode ? `${line.itemCode} · ${localized(line.itemName ?? {})}` : (line.description ?? "")}</td>
+                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatNumber(n(line.quantity))} {line.uomCode ?? ""}</td>
+                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.unitPrice, opened.currency)}</td>
+                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.netAmount, opened.currency)}</td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot><tr className="border-t border-border font-semibold"><td colSpan={3}>{t("trader.sales.total")}</td><td className="tabular text-end" dir="ltr">{formatMoney(opened.totalGross, opened.currency)}</td></tr></tfoot>
+                  <tfoot><tr className="border-t border-border font-semibold"><td className="px-2 py-1" colSpan={3}>{t("trader.sales.total")}</td><td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(opened.totalGross, opened.currency)}</td></tr></tfoot>
                 </table>
               </div>
               <div>
