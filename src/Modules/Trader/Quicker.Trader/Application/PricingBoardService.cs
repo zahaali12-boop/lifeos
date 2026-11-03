@@ -106,11 +106,14 @@ public sealed class PricingBoardService(
                 }
             }
 
-            var costBasis = shipment?.LandedUnitCostRc ?? stockUnit;
+            // The cost the trader typed on the item stands in until a shipment or the stock ledger knows better.
+            var itemCost = (await items.CompanyPolicyAsync(itemId, companyId, cancellationToken))?.StandardCost;
+            var costBasis = shipment?.LandedUnitCostRc ?? stockUnit ?? itemCost;
             var basisForPrice = replacement ?? costBasis;
             prices.TryGetValue(itemId, out var current);
             var hasPrice = prices.ContainsKey(itemId);
             var suggested = basisForPrice is { } basis ? Suggest(basis, config.TargetMarginPct, config.RoundTo, fc) : (decimal?)null;
+            var floor = basisForPrice is { } fb ? Suggest(fb, 0m, config.RoundTo, fc) : (decimal?)null;
             var currentMargin = hasPrice && basisForPrice is { } b1 && b1 > 0m ? RoundingPolicy.Default.Round((current - b1) * 100m / b1, 1) : (decimal?)null;
             var suggestedMargin = suggested is { } sp && basisForPrice is { } b2 && b2 > 0m ? RoundingPolicy.Default.Round((sp - b2) * 100m / b2, 1) : (decimal?)null;
 
@@ -149,7 +152,7 @@ public sealed class PricingBoardService(
             }
 
             rows.Add(new TraderPricingRow(itemId, item.Code, item.Name.Values, onHand, shipment?.Currency, shipment?.UnitPriceFc, shipment?.RatePaid, marketRate, rateMove,
-                shipment?.LandedUnitCostRc, stockUnit, costBasis, replacement, hasPrice ? current : null, currentMargin, suggested, suggestedMargin, alerts, shipment?.OrderNumber));
+                shipment?.LandedUnitCostRc, stockUnit, itemCost, costBasis, replacement, hasPrice ? current : null, currentMargin, suggested, suggestedMargin, floor, alerts, shipment?.OrderNumber));
         }
 
         var ordered = rows.OrderByDescending(Losing).ThenByDescending(static r => r.Alerts.Count).ThenBy(static r => r.ItemCode, StringComparer.Ordinal).ToList();
@@ -200,6 +203,36 @@ public sealed class PricingBoardService(
         }
 
         return await BoardAsync(request.CompanyId, list.Value.Id, cancellationToken);
+    }
+
+    /// <summary>Takes the item's price off the sales price list from today (the history stays), then returns the board as it now stands.</summary>
+    public async Task<Result<TraderPricingBoard>> RemovePriceAsync(Guid companyId, Guid itemId, Guid? priceListId, CancellationToken cancellationToken)
+    {
+        var company = await companies.FindAsync(new CompanyId(companyId), cancellationToken);
+        if (company is null)
+        {
+            return Error.NotFound("company", companyId);
+        }
+
+        var config = await ConfigAsync(companyId, cancellationToken);
+        var list = await ListAsync(companyId, priceListId ?? config.PriceListId, company.FunctionalCurrency.Code, cancellationToken);
+        if (list.IsFailure)
+        {
+            return list.Error!;
+        }
+
+        if (list.Value is null)
+        {
+            return Error.Validation("trader.price_list_missing", "There is no sales price list in the company's currency to take the price off.").WithWhy(("currency", company.FunctionalCurrency.Code));
+        }
+
+        var removed = await priceLists.RemovePriceAsync(list.Value.Id, itemId, clock.TodayIn(company.TimeZone), cancellationToken);
+        if (removed.IsFailure)
+        {
+            return removed.Error!.WithWhy(("itemId", itemId));
+        }
+
+        return await BoardAsync(companyId, list.Value.Id, cancellationToken);
     }
 
     /// <summary>The list priced: the one named (it must be the company's and in its currency), else the setting's, else the default active list in the company's currency.</summary>

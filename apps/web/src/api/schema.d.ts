@@ -12286,6 +12286,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/trader/pricing/prices/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Takes the item's price off the sales price list from today (the board's list, or the one named; earlier prices stay in the history) and returns the board */
+        delete: operations["deleteTraderPricingPricesByItemId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/trader/health": {
         parameters: {
             query?: never;
@@ -27066,8 +27083,10 @@ export interface components {
         };
         /**
          * @description One item on the pricing board: what it cost landed (from its latest shipment), what it would cost to buy again at
-         *     today's rate, the price it sells at now and the margin that leaves, the suggested price at the target margin, and
-         *     the alerts (no_price, no_cost, no_market_rate, loss_at_cost, loss_at_replacement, margin_below_target, rate_up, rate_down).
+         *     today's rate, the cost the trader entered on the item when the program knows no other, the price it sells at now
+         *     and the margin that leaves, the suggested price at the target margin, the floor below which a unit sells at a loss
+         *     (the cost basis rounded up to the increment), and the alerts (no_price, no_cost, no_market_rate, loss_at_cost,
+         *     loss_at_replacement, margin_below_target, rate_up, rate_down).
          */
         TraderPricingRow: {
             /** Format: uuid */
@@ -27092,6 +27111,8 @@ export interface components {
             /** Format: double */
             stockUnitCostRc: null | number | string;
             /** Format: double */
+            itemCostRc: null | number | string;
+            /** Format: double */
             costBasisRc: null | number | string;
             /** Format: double */
             replacementUnitCostRc: null | number | string;
@@ -27103,6 +27124,8 @@ export interface components {
             suggestedPrice: null | number | string;
             /** Format: double */
             suggestedMarginPct: null | number | string;
+            /** Format: double */
+            floorPrice: null | number | string;
             alerts: string[];
             orderNumber: null | string;
         };
@@ -50607,6 +50630,31 @@ export interface operations {
                 "application/json": components["schemas"]["TraderApplyPricesRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraderPricingBoard"];
+                };
+            };
+        };
+    };
+    deleteTraderPricingPricesByItemId: {
+        parameters: {
+            query: {
+                companyId: string;
+                priceListId?: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

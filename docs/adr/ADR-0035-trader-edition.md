@@ -171,6 +171,17 @@ would also throw away the tests and the invariants that make the books right.
     corrected only with a reason, as under Exchange rates (ADR-0017). The hour is changed from the prompt itself,
     which is where the trader meets it.
 
+15. **The pricing board edited by hand (T10d).** The board had priced only what a shipment or the stock ledger
+    could cost, and only suggested. The trader prices anything now: "New pricing" names an item (made on the spot
+    when new), its selling price and, when the program knows no cost yet, what a unit costs, kept as the item's
+    standard cost for the company through the items module and used as the basis until a shipment or the ledger
+    knows better; "cost unknown" on a row is a button that asks for that cost in place. Under every price box the
+    floor is shown, the cost basis rounded up to the increment, and a price typed below it says what a unit would
+    lose. A price is taken off the list from today (`DELETE /trader/pricing/prices/{itemId}` over the new
+    `IPriceLists.RemovePriceAsync`: an entry that began earlier ends the day before, one that began today is
+    deleted), so the list stays the trader's to shape. The unit a price is for stays the item's sales unit; changing
+    units stays on the item.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

@@ -61,6 +61,7 @@ test("English: the trader edition switched on, offers compared with minimum quan
   };
   await call("post", "/api/v1/items", { code: "PADS", name: { en: "Brake pads", ar: "فحمات فرامل" }, baseUom: "PCS" });
   await call("post", "/api/v1/items", { code: "FILTER", name: { en: "Oil filter", ar: "فلتر زيت" }, baseUom: "PCS" });
+  await call("post", "/api/v1/items", { code: "BELT", name: { en: "Fan belt", ar: "سير مروحة" }, baseUom: "PCS" });
   await call("post", "/api/v1/inventory/warehouses", { companyId, code: "MAIN", name: { en: "Main store", ar: "المخزن الرئيسي" } });
   for (const [code, en, ar] of [["SHENZ", "Shenzhen Auto Parts", "شنجن لقطع السيارات"], ["GUANG", "Guangzhou Motors", "غوانزو موتورز"], ["FWD", "Gulf Forwarding", "الخليج للشحن"], ["ELEC", "Electricity office", "دائرة الكهرباء"]]) {
     const supplier = await call("post", "/api/v1/partners", { code, legalName: { en, ar }, isSupplier: true });
@@ -230,7 +231,23 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(padsRow.getByTestId("current-price")).toContainText("21,000");
   await expect(padsRow.getByTestId("alert-no_price")).toHaveCount(0);
   await expect(page.getByTestId("unpriced-count")).toHaveCount(0);
+  // The floor under every price: the pads landed at 16,708, so not below 16,750 at the 250 step.
+  await expect(padsRow.getByTestId("floor-price")).toContainText("16,750");
+  // A belt never shipped is priced from "New pricing" with its cost typed in, shows its margin, and is taken off again.
+  await page.getByTestId("new-pricing").click();
+  await page.getByTestId("pricing-item").fill("BELT");
+  await page.getByTestId("pricing-price").fill("12000");
+  await page.getByTestId("pricing-cost").fill("9000");
+  await page.getByTestId("save-pricing").click();
+  const beltRow = page.getByTestId("price-row").filter({ hasText: "BELT" });
+  await expect(beltRow.getByTestId("current-price")).toContainText("12,000");
+  await expect(beltRow.getByTestId("current-margin")).toContainText("33.3");
+  await expect(beltRow.getByTestId("landed-cost")).toContainText("9,000");
   await expectAccessible(page);
+  await beltRow.getByTestId("remove-price").click();
+  await beltRow.getByTestId("remove-price-yes").click();
+  await expect(page.getByTestId("price-row").filter({ hasText: "BELT" })).toHaveCount(0);
+  await expect(page.getByTestId("pricing-notice")).toContainText("taken off");
 
   // Sales and money: a customer and a cash box through the API; ten pads sold in one step at the list price; 100,000
   // received against the invoice; the Money page shows what is still owed and the supplier invoice to pay.

@@ -266,6 +266,45 @@ public sealed class PriceListService(PricingDbContext db, ICompanyDirectory comp
         return saved.IsFailure ? saved.Error! : Result.Success();
     }
 
+    async Task<Result> IPriceLists.RemovePriceAsync(Guid priceListId, Guid itemId, DateOnly asOf, CancellationToken cancellationToken)
+    {
+        var list = await db.PriceLists.SingleOrDefaultAsync(l => l.Id == priceListId, cancellationToken);
+        if (list is null || !access.MayIn(list.CompanyId, PricingPermissions.Read))
+        {
+            return Error.NotFound("price_list", priceListId);
+        }
+
+        var allowed = access.Require(list.CompanyId, PricingPermissions.PriceListManage);
+        if (allowed.IsFailure)
+        {
+            return allowed.Error!;
+        }
+
+        var open = await db.PriceListItems
+            .Where(e => e.PriceListId == priceListId && e.ItemId == itemId && e.VariantId == null && e.MinQuantity <= 1m && (e.ValidTo == null || e.ValidTo >= asOf))
+            .ToListAsync(cancellationToken);
+        if (open.Count == 0)
+        {
+            return Result.Success();
+        }
+
+        foreach (var entry in open)
+        {
+            if (entry.ValidFrom is { } from && from >= asOf)
+            {
+                db.PriceListItems.Remove(entry);
+            }
+            else
+            {
+                entry.ValidTo = asOf.AddDays(-1);
+            }
+        }
+
+        list.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
     public async Task<Result<IReadOnlyList<PriceListItemSummary>>> ListItemsAsync(Guid listId, string? q, CancellationToken cancellationToken)
     {
         var list = await db.PriceLists.AsNoTracking().SingleOrDefaultAsync(l => l.Id == listId, cancellationToken);

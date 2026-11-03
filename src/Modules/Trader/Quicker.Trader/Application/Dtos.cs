@@ -5,8 +5,10 @@ public sealed record TraderMarketRate(string Currency, decimal? Rate, DateOnly? 
 
 /// <summary>
 /// One item on the pricing board: what it cost landed (from its latest shipment), what it would cost to buy again at
-/// today's rate, the price it sells at now and the margin that leaves, the suggested price at the target margin, and
-/// the alerts (no_price, no_cost, no_market_rate, loss_at_cost, loss_at_replacement, margin_below_target, rate_up, rate_down).
+/// today's rate, the cost the trader entered on the item when the program knows no other, the price it sells at now
+/// and the margin that leaves, the suggested price at the target margin, the floor below which a unit sells at a loss
+/// (the cost basis rounded up to the increment), and the alerts (no_price, no_cost, no_market_rate, loss_at_cost,
+/// loss_at_replacement, margin_below_target, rate_up, rate_down).
 /// </summary>
 public sealed record TraderPricingRow(
     Guid ItemId,
@@ -20,12 +22,14 @@ public sealed record TraderPricingRow(
     decimal? RateMovePct,
     decimal? LandedUnitCostRc,
     decimal? StockUnitCostRc,
+    decimal? ItemCostRc,
     decimal? CostBasisRc,
     decimal? ReplacementUnitCostRc,
     decimal? CurrentPrice,
     decimal? CurrentMarginPct,
     decimal? SuggestedPrice,
     decimal? SuggestedMarginPct,
+    decimal? FloorPrice,
     IReadOnlyList<string> Alerts,
     string? OrderNumber);
 

@@ -253,4 +253,11 @@ public interface IPriceLists
 
     /// <summary>Sets an item's plain price from a date: the open entry for no variant and the item's sales unit is updated, or one is created. The caller needs the list's manage permission.</summary>
     Task<Result> SetPriceAsync(Guid priceListId, Guid itemId, decimal price, DateOnly validFrom, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Takes an item's plain prices off the list from a date: an entry that began before the date ends the day before
+    /// it (the history stays), one that began on or after it is deleted; nothing to take off is fine. The caller needs
+    /// the list's manage permission.
+    /// </summary>
+    Task<Result> RemovePriceAsync(Guid priceListId, Guid itemId, DateOnly asOf, CancellationToken cancellationToken = default);
 }

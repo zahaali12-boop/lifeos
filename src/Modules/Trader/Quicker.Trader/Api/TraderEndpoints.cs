@@ -35,6 +35,9 @@ public static class TraderEndpoints
         pricing.MapPost("/apply", async (TraderApplyPricesRequest request, PricingBoardService service, CancellationToken ct) => ApiProblems.Ok(await service.ApplyAsync(request, ct)))
             .RequirePermission(PriceListManage)
             .WithSummary("Writes the given prices into the sales price list from today and returns the board");
+        pricing.MapDelete("/prices/{itemId:guid}", async (Guid itemId, Guid companyId, Guid? priceListId, PricingBoardService service, CancellationToken ct) => ApiProblems.Ok(await service.RemovePriceAsync(companyId, itemId, priceListId, ct)))
+            .RequirePermission(PriceListManage)
+            .WithSummary("Takes the item's price off the sales price list from today (the board's list, or the one named; earlier prices stay in the history) and returns the board");
         trader.MapGet("/health", async (Guid companyId, DateOnly? from, DateOnly? to, HealthService service, CancellationToken ct) => ApiProblems.Ok(await service.ReadAsync(companyId, from, to, ct)))
             .RequirePermission(ReportRun)
             .WithSummary("The health of the project for a period (this month so far by default): the income statement in plain words with the period before and six months of results, fixed costs, break-even and cash runway, the money position, warnings, the shipments on the way with their money, sales by item and by customer, what to reorder");

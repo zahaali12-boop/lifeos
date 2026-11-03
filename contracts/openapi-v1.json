@@ -35523,6 +35523,55 @@
         }
       }
     },
+    "/api/v1/trader/pricing/prices/{itemId}": {
+      "delete": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "Takes the item's price off the sales price list from today (the board's list, or the one named; earlier prices stay in the history) and returns the board",
+        "operationId": "deleteTraderPricingPricesByItemId",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "priceListId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderPricingBoard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/trader/health": {
       "get": {
         "tags": [
@@ -89820,12 +89869,14 @@
           "rateMovePct",
           "landedUnitCostRc",
           "stockUnitCostRc",
+          "itemCostRc",
           "costBasisRc",
           "replacementUnitCostRc",
           "currentPrice",
           "currentMarginPct",
           "suggestedPrice",
           "suggestedMarginPct",
+          "floorPrice",
           "alerts",
           "orderNumber"
         ],
@@ -89912,6 +89963,15 @@
             ],
             "format": "double"
           },
+          "itemCostRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "costBasisRc": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
@@ -89966,6 +90026,15 @@
             ],
             "format": "double"
           },
+          "floorPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "alerts": {
             "type": "array",
             "items": {
@@ -89979,7 +90048,7 @@
             ]
           }
         },
-        "description": "One item on the pricing board: what it cost landed (from its latest shipment), what it would cost to buy again at\ntoday's rate, the price it sells at now and the margin that leaves, the suggested price at the target margin, and\nthe alerts (no_price, no_cost, no_market_rate, loss_at_cost, loss_at_replacement, margin_below_target, rate_up, rate_down)."
+        "description": "One item on the pricing board: what it cost landed (from its latest shipment), what it would cost to buy again at\ntoday's rate, the cost the trader entered on the item when the program knows no other, the price it sells at now\nand the margin that leaves, the suggested price at the target margin, the floor below which a unit sells at a loss\n(the cost basis rounded up to the increment), and the alerts (no_price, no_cost, no_market_rate, loss_at_cost,\nloss_at_replacement, margin_below_target, rate_up, rate_down)."
       },
       "TraderRateEntry": {
         "required": [
