@@ -107,6 +107,9 @@ if (trustedProxies.Length > 0)
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
         options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        // Walk the whole chain (a private-network relay, then nginx in the stack) and stop at the first address that
+        // is not a trusted proxy: that is the device, not the last hop.
+        options.ForwardLimit = null;
         options.KnownProxies.Clear();
         options.KnownIPNetworks.Clear();
         foreach (var entry in trustedProxies)

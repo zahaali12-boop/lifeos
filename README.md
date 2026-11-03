@@ -54,6 +54,16 @@ Home Screen" (the share button) or Chrome's "Add to Home screen" puts the app on
 full-screen with its own icon. Plain HTTP on the local network is enough for that; the browser's "install" prompt and
 working without the network need HTTPS, and a store listing needs a native wrapper, neither of which is set up yet.
 
+**From anywhere (the phone away from home).** The trader program is reached from outside through Tailscale, a private
+network between the devices signed in to one account: nothing is opened to the internet, the traffic is encrypted end
+to end, and the app gets an HTTPS address of the machine (so passkeys and the camera work too). Once: install Tailscale
+on the computer (https://tailscale.com/download/windows) and sign in (a Google, Microsoft or Apple account); in its
+admin console under DNS turn on MagicDNS and "HTTPS certificates"; then double-click
+`deploy\windows\share-trader-anywhere.bat`, which shares the app's port, writes the address as the program's public
+origin (`QUICKER_TRADER_PUBLIC_ORIGIN` in `.env`) and restarts the stack. On the phone: install Tailscale from the App
+Store, sign in with the same account, switch it on, open the printed address (`https://<computer>.<tailnet>.ts.net`)
+in Safari and add it to the home screen. The computer must be on and online; Tailscale starts with Windows.
+
 To work on the web app with hot reload outside Docker: `pnpm install`, then `set VITE_API_BASE_URL=http://localhost:8080`
 (`export` on macOS and Linux) and `pnpm --filter @quicker/web dev`.
 

@@ -73,6 +73,9 @@ services:
       # so the API is not published and the forwarded client address is trusted from the private ranges only.
       Quicker__Api__AllowedOrigins: http://localhost:${QUICKER_TRADER_WEB_PORT:-5174},http://127.0.0.1:${QUICKER_TRADER_WEB_PORT:-5174}
       Quicker__Api__TrustedProxies: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+      # Where the app is reached from outside this machine (passkeys and security keys, and the links in messages,
+      # need it); share-trader-anywhere.bat writes the Tailscale address into .env.
+      Quicker__Auth__PublicOrigin: ${QUICKER_TRADER_PUBLIC_ORIGIN:-http://localhost:5174}
     volumes:
       - auditanchors:/app/.data/audit-anchors
     depends_on:
