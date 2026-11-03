@@ -16,6 +16,8 @@ import { CompanyFilter, useCompanyContext, useWarehouses, WarehouseSelect } from
 import { emptyLine, LinesEditor, num, type LineForm } from "../purchasing/shared";
 import { useBankAccounts } from "../payables/shared";
 import { QuickCreateButton } from "../QuickCreate";
+import { rangeParams } from "./period";
+import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
 type Invoice = components["schemas"]["SalesInvoiceSummary"];
 
@@ -90,10 +92,11 @@ export function SalesPage() {
     enabled: Boolean(companyId),
     queryFn: async () => unwrap(await api.GET("/api/v1/partners/customers", { params: { query: { companyId } } })),
   });
+  const [period, setPeriod, range] = usePeriod("month");
   const invoices = useQuery({
-    queryKey: ["invoices", companyId, "trader"],
+    queryKey: ["invoices", companyId, "trader", range.from ?? "", range.to ?? ""],
     enabled: Boolean(companyId),
-    queryFn: async () => unwrap(await api.GET("/api/v1/sales/invoices", { params: { query: { companyId } } })),
+    queryFn: async () => unwrap(await api.GET("/api/v1/sales/invoices", { params: { query: { companyId, ...rangeParams(range) } } })),
   });
   const board = useQuery({
     queryKey: ["trader-pricing", companyId],
@@ -214,6 +217,7 @@ export function SalesPage() {
       />
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
+        <PeriodFilter value={period} onChange={setPeriod} />
       </div>
       <FormError message={!sale && !payment ? wordProblem(problem) : null} />
       {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="sales-notice">{notice}</p> : null}

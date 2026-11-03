@@ -184,7 +184,8 @@
       "money": "Money",
       "health": "Health",
       "stock": "Stock",
-      "expenses": "Expenses"
+      "expenses": "Expenses",
+      "cash": "Cash & bank"
     }
   },
   "shell": {
@@ -6740,7 +6741,7 @@
         "pending_approval": "Recorded: {number}, {amount}, waiting for approval."
       },
       "thisMonth": "This month",
-      "monthTotal": "Spent this month",
+      "monthTotal": "Spent in this period",
       "byKind": "By kind",
       "nothingYet": "Nothing recorded this month.",
       "columns": {
@@ -6794,6 +6795,55 @@
       "recordPayment": "Record the payment for {number}",
       "sellAgain": "Sell to the same customer again",
       "seeMoney": "See what is owed on Money"
+    },
+    "period": {
+      "label": "Period",
+      "from": "From",
+      "to": "To",
+      "presets": {
+        "month": "This month",
+        "today": "Today",
+        "last7": "Last 7 days",
+        "lastMonth": "Last month",
+        "quarter": "This quarter",
+        "year": "This year",
+        "all": "Everything",
+        "custom": "Pick the dates"
+      }
+    },
+    "cash": {
+      "title": "Cash and bank",
+      "description": "Each cash box and bank account: what it holds, what came in and went out over the period, and the balance after every movement.",
+      "accounts": "Boxes and accounts",
+      "balanceNow": "Holds now",
+      "inOut": "In {in} · out {out}",
+      "opening": "At the start",
+      "in": "In",
+      "out": "Out",
+      "closing": "At the end",
+      "date": "Date",
+      "what": "What",
+      "reference": "Reference",
+      "balanceAfter": "Balance after",
+      "noMovements": "No movements in this period.",
+      "empty": "No cash box or bank account yet.",
+      "emptyDescription": "Make one from Expenses (\"Create a cash box\") or from Money, and its movements appear here.",
+      "kinds": {
+        "cash": "Cash box",
+        "bank": "Bank account",
+        "petty_cash": "Petty cash"
+      },
+      "sources": {
+        "bank_receipt": "Customer payment",
+        "bank_payment": "Supplier payment",
+        "journal_entry": "Opening or owner's money",
+        "bank_cheque": "Cheque",
+        "bank_cheque_deposit": "Cheque deposited",
+        "bank_statement": "Bank statement",
+        "petty_cash_voucher": "Petty cash",
+        "expense": "Expense",
+        "other": "Movement"
+      }
     }
   }
 }

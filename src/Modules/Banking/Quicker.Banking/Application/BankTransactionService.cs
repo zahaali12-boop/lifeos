@@ -75,6 +75,24 @@ public sealed class BankTransactionService(BankingDbContext db, IClock clock) : 
 
         return await query.SumAsync(static t => t.AmountTc, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<BankMovementInfo>> MovementsAsync(Guid bankAccountId, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default)
+    {
+        var query = db.Transactions.AsNoTracking().Where(t => t.BankAccountId == bankAccountId);
+        if (from is { } f)
+        {
+            query = query.Where(t => t.PostingDate >= f);
+        }
+
+        if (to is { } u)
+        {
+            query = query.Where(t => t.PostingDate <= u);
+        }
+
+        return (await query.OrderByDescending(static t => t.PostingDate).ThenByDescending(static t => t.CreatedAt).ThenByDescending(static t => t.Id).ToListAsync(cancellationToken))
+            .Select(static t => new BankMovementInfo(t.Id, t.PostingDate, t.Kind, t.AmountTc, t.AmountFc, t.Reference, t.SourceDocumentType, t.SourceDocumentId, t.JournalEntryId, t.ReversesTransactionId))
+            .ToList();
+    }
 }
 
 /// <summary>Supplier payments for other modules (an expense paid from its own screen): one open item, created and posted in one go.</summary>

@@ -205,6 +205,17 @@ would also throw away the tests and the invariants that make the books right.
     recommendation stays a suggestion. (5) A price typed on the board shows its margin as it is typed and saves from
     its own row.
 
+18. **The money's own screen, newest first, and the period (T11b).** The founder asked to see each cash box and
+    bank account on its own, what it holds, what came in and went out and the balance after every movement; every
+    list newest first whatever else; and filters by day, month, quarter and any range. Cash and bank
+    (`GET /trader/cash`) reads the bank subledger through a new contract method (`IBankTransactions.MovementsAsync`):
+    per account the balance now, the balance the day before the period began, what came in and went out, the
+    balance at the period's end, and the movements newest first with the balance after each (the closing balance
+    less the movements above it). Lists are ordered by the document's own date and then by creation, newest first
+    (comparisons and shipments by the day they were made, in the company's time zone; invoices by their date), and
+    take `from` and `to`. One period chooser (today, the last seven days, this month, last month, this quarter, this
+    year, everything, or typed dates) sits on Sales, Offers, Shipments, Expenses and Cash and bank.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

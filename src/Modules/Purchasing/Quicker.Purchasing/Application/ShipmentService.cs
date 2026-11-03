@@ -52,12 +52,15 @@ public sealed class ShipmentService(
 
     private static readonly string[] ClosedOrderStatuses = ["cancelled", "closed", "rejected"];
 
-    public async Task<IReadOnlyList<PurchaseShipmentSummary>> ListAsync(Guid? companyId, string? status, CancellationToken cancellationToken)
+    /// <summary>Shipments newest first by the day they were started (in the company's time zone, which also bounds the list when days are asked for).</summary>
+    public async Task<IReadOnlyList<PurchaseShipmentSummary>> ListAsync(Guid? companyId, string? status, DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
     {
         var query = db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).Include(static s => s.Payments).AsSplitQuery().AsNoTracking().AsQueryable();
+        var timeZone = "UTC";
         if (companyId is { } c)
         {
             query = query.Where(s => s.CompanyId == c);
+            timeZone = (await companies.FindAsync(new CompanyId(c), cancellationToken))?.TimeZone ?? timeZone;
         }
 
         if (!string.IsNullOrWhiteSpace(status))
@@ -65,7 +68,19 @@ public sealed class ShipmentService(
             query = query.Where(s => s.Status == status);
         }
 
-        var shipments = await query.OrderByDescending(static s => s.UpdatedAt).ToListAsync(cancellationToken);
+        if (from is { } f)
+        {
+            var start = Clocks.StartOfDay(f, timeZone);
+            query = query.Where(s => s.CreatedAt >= start);
+        }
+
+        if (to is { } u)
+        {
+            var end = Clocks.StartOfDay(u.AddDays(1), timeZone);
+            query = query.Where(s => s.CreatedAt < end);
+        }
+
+        var shipments = await query.OrderByDescending(static s => s.CreatedAt).ThenByDescending(static s => s.Id).ToListAsync(cancellationToken);
         var result = new List<PurchaseShipmentSummary>(shipments.Count);
         foreach (var shipment in shipments)
         {
@@ -739,7 +754,7 @@ public sealed class ShipmentService(
     public async Task<IReadOnlyList<ShipmentUnderwayInfo>> UnderwayAsync(Guid companyId, CancellationToken cancellationToken = default)
     {
         var result = new List<ShipmentUnderwayInfo>();
-        foreach (var s in await ListAsync(companyId, null, cancellationToken))
+        foreach (var s in await ListAsync(companyId, null, null, null, cancellationToken))
         {
             if (s.Status is "received" or "cancelled")
             {

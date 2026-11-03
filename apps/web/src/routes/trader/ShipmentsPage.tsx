@@ -15,6 +15,8 @@ import { CurrencyField } from "../CurrencyField";
 import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
+import { rangeParams } from "./period";
+import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
 type Shipment = components["schemas"]["PurchaseShipmentSummary"];
 
@@ -79,10 +81,11 @@ export function ShipmentsPage() {
   const [invoice, setInvoice] = useState<{ number: string; date: string }>({ number: "", date: "" });
   const warehouses = useWarehouses(companyId);
 
+  const [period, setPeriod, range] = usePeriod("all");
   const list = useQuery({
-    queryKey: ["shipments", companyId],
+    queryKey: ["shipments", companyId, range.from ?? "", range.to ?? ""],
     enabled: Boolean(companyId),
-    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/shipments", { params: { query: { companyId } } })),
+    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/shipments", { params: { query: { companyId, ...rangeParams(range) } } })),
   });
   const orders = useQuery({
     queryKey: ["orders", companyId, "for-shipments"],
@@ -230,6 +233,7 @@ export function ShipmentsPage() {
       />
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
+        <PeriodFilter value={period} onChange={setPeriod} />
       </div>
       <DataGrid<Shipment> label="trader.shipments.title" columns={columns} data={list.data ?? []} rowKey={(row) => row.id} loading={list.isPending && Boolean(companyId)} emptyTitle={t("trader.shipments.empty")} emptyDescription={t("trader.shipments.emptyDescription")} onOpen={(row) => { setProblem(null); setCost(null); setPay(null); setCostPay(null); setOpenId(row.id); }} />
 

@@ -10,6 +10,8 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
+import { rangeParams } from "./period";
+import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
 type Expense = components["schemas"]["ExpenseSummary"];
 type OwnerMovement = components["schemas"]["TraderOwnerMovement"];
@@ -33,8 +35,6 @@ interface OwnerForm {
 }
 
 const n = (value: number | string | null | undefined): number => (value === null || value === undefined ? 0 : Number(value));
-const pad = (value: number): string => String(value).padStart(2, "0");
-const isoDate = (date: Date): string => `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 const emptyExpense: ExpenseForm = { categoryId: "", amount: "", date: "", paidFrom: "", partnerId: "", dueDate: "", note: "" };
 
 /** What an expense is, for the state column: a voucher is paid when it is recorded; a bill carries its payable's state. */
@@ -61,10 +61,9 @@ export function ExpensesPage() {
   // Nothing is formatted in a currency before the company is known.
   const money = (amount: number | string | null | undefined): string => (currency === "" ? "—" : formatMoney(n(amount), currency));
   const queryClient = useQueryClient();
-  const today = isoDate(new Date());
-  const monthStart = today.slice(0, 8) + "01";
+  const [period, setPeriod, range] = usePeriod("month");
   const categories = useQuery({ queryKey: ["expense-categories"], queryFn: async () => unwrap(await api.GET("/api/v1/expenses/categories", { params: { query: { isActive: true } } })) });
-  const expenses = useQuery({ queryKey: ["expenses", companyId, "month"], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/expenses", { params: { query: { companyId, status: "confirmed", from: monthStart, to: today, includeLines: true } } })) });
+  const expenses = useQuery({ queryKey: ["expenses", companyId, range.from ?? "", range.to ?? ""], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/expenses", { params: { query: { companyId, status: "confirmed", ...rangeParams(range), includeLines: true } } })) });
   const suppliers = useQuery({ queryKey: ["supplier-accounts", companyId], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/partners/suppliers", { params: { query: { companyId } } })) });
   const ownerMoney = useQuery({ queryKey: ["owner-money", companyId], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/trader/owner-money", { params: { query: { companyId } } })) });
   const accounts = useBankAccounts(companyId);
@@ -148,6 +147,7 @@ export function ExpensesPage() {
       <PageHeader title={t("trader.expenses.title")} description={t("trader.expenses.description")} />
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
+        <PeriodFilter value={period} onChange={setPeriod} />
       </div>
       {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="expenses-notice">{notice}</p> : null}
       <div className="grid gap-4 lg:grid-cols-2">

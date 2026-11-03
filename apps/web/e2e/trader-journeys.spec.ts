@@ -314,6 +314,16 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("nothing-to-pay")).toBeVisible();
   await expect(page.getByTestId("sales-month")).toHaveCount(6);
   await expectAccessible(page);
+  // Cash and bank: the bank account's movements newest first with the balance after each; the supplier's million is the latest.
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Cash & bank" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Cash and bank");
+  await expect(page.getByTestId("cash-account")).toHaveCount(2);
+  await page.getByTestId("cash-account").filter({ hasText: "BANK" }).click();
+  await expect(page.getByTestId("cash-detail")).toContainText("BANK");
+  const latestMove = page.getByTestId("cash-movement").first();
+  await expect(latestMove.getByTestId("cash-move-out")).toContainText("1,000,000");
+  await expect(latestMove.getByTestId("cash-balance-after")).toContainText(/\d/);
+  await expectAccessible(page);
   // The shipment knows the invoice was paid from Money: nothing is left to pay there.
   await page.getByTestId("flat-nav").getByRole("link", { name: "Shipments" }).click();
   await page.getByRole("grid").getByText("PO-", { exact: false }).first().dblclick();

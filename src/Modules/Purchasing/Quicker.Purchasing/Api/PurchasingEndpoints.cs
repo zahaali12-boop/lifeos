@@ -43,8 +43,9 @@ public static class PurchasingEndpoints
             .WithSummary("Purchase order drafts from the approved lines, one per supplier (the suggested one, or partnerId for all)");
 
         var rfqs = purchasing.MapGroup("/rfqs");
-        rfqs.MapGet("/", async (Guid? companyId, string? status, RfqService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
-            .RequirePermission(PurchasingPermissions.RfqRead);
+        rfqs.MapGet("/", async (Guid? companyId, string? status, DateOnly? from, DateOnly? to, RfqService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, from, to, ct)))
+            .RequirePermission(PurchasingPermissions.RfqRead)
+            .WithSummary("Requests for quotation newest first; from and to bound the days they were made (the company's time zone)");
         rfqs.MapPost("/", async (SaveRfqRequest request, RfqService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static r => $"/api/v1/purchasing/rfqs/{r.Id}"))
             .RequirePermission(PurchasingPermissions.RfqManage)
             .WithSummary("Lines to price (from requisition lines or ad hoc) and the suppliers to invite");
@@ -229,8 +230,9 @@ public static class PurchasingEndpoints
         // Shipments (trader edition, ADR-0035 §4): an order's journey with its costs and what was paid; arrival posts the
         // receipt and the landed costs through their own services, so the posting permissions of those documents apply.
         var shipments = purchasing.MapGroup("/shipments");
-        shipments.MapGet("/", async (Guid? companyId, string? status, ShipmentService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, ct)))
-            .RequirePermission(PurchasingPermissions.OrderRead);
+        shipments.MapGet("/", async (Guid? companyId, string? status, DateOnly? from, DateOnly? to, ShipmentService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, from, to, ct)))
+            .RequirePermission(PurchasingPermissions.OrderRead)
+            .WithSummary("Shipments newest first; from and to bound the days they were started (the company's time zone)");
         shipments.MapPost("/", async (CreatePurchaseShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static s => $"/api/v1/purchasing/shipments/{s.Id}"))
             .RequirePermission(PurchasingPermissions.OrderManage)
             .WithSummary("Starts tracking a purchase order as a shipment; a draft order is submitted first");

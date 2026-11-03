@@ -59,6 +59,15 @@ public sealed record TraderRateEntry(string Currency, decimal Rate);
 /// <summary>Today's spot rates entered in one go, 1 unit of each currency = the rate in the company's currency; a reason when a rate of today is corrected.</summary>
 public sealed record TraderDailyRatesRequest(Guid CompanyId, IReadOnlyList<TraderRateEntry> Rates, string? Reason = null);
 
+/// <summary>One movement of a cash box or bank account in the trader's words: what came in or went out, and the balance after it.</summary>
+public sealed record TraderCashMovement(Guid Id, DateOnly Date, string Kind, decimal In, decimal Out, decimal BalanceAfter, string? Reference, string? SourceDocumentType, Guid? SourceDocumentId);
+
+/// <summary>A cash box or bank account over the period: its balance now, what it held when the period began, what came in and went out, what it held at the period's end, and its movements newest first.</summary>
+public sealed record TraderCashReportAccount(Guid Id, string Code, IReadOnlyDictionary<string, string> Name, string Kind, string Currency, bool IsActive, decimal BalanceNow, decimal Opening, decimal In, decimal Out, decimal Closing, IReadOnlyList<TraderCashMovement> Movements);
+
+/// <summary>The cash and bank screen (ADR-0035 §18): every box and account of the company over the period asked for (to today when no end is given).</summary>
+public sealed record TraderCashReport(Guid CompanyId, string Currency, DateOnly AsOf, DateOnly? From, DateOnly To, IReadOnlyList<TraderCashReportAccount> Accounts);
+
 public sealed record TraderPriceChange(Guid ItemId, decimal Price);
 
 /// <summary>Writes prices into the sales price list (the board's list, or the one named) from today.</summary>

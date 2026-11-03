@@ -74,7 +74,13 @@ public interface IBankTransactions
 
     /// <summary>The account's balance in its own currency from its movements up to a day (every movement when no day is given).</summary>
     Task<decimal> BalanceAsync(Guid bankAccountId, DateOnly? asOf = null, CancellationToken cancellationToken = default);
+
+    /// <summary>The account's movements between two days (either open), newest first: the day's later movement first within a day.</summary>
+    Task<IReadOnlyList<BankMovementInfo>> MovementsAsync(Guid bankAccountId, DateOnly? from = null, DateOnly? to = null, CancellationToken cancellationToken = default);
 }
+
+/// <summary>One movement of a bank or cash account as its subledger holds it: signed in the account's currency (in positive, out negative), with the document that made it.</summary>
+public sealed record BankMovementInfo(Guid Id, DateOnly PostingDate, string Kind, decimal AmountTc, decimal AmountFc, string? Reference, string? SourceDocumentType, Guid? SourceDocumentId, Guid? JournalEntryId, Guid? ReversesTransactionId);
 
 /// <summary>
 /// One payment that settles one payable open item from a bank account on a day: what an expense's "pay" button sends.

@@ -9117,6 +9117,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Requests for quotation newest first; from and to bound the days they were made (the company's time zone) */
         get: operations["getPurchasingRfqs"];
         put?: never;
         /** Lines to price (from requisition lines or ad hoc) and the suppliers to invite */
@@ -9871,6 +9872,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Shipments newest first; from and to bound the days they were started (the company's time zone) */
         get: operations["getPurchasingShipments"];
         put?: never;
         /** Starts tracking a purchase order as a shipment; a draft order is submitted first */
@@ -12312,6 +12314,23 @@ export interface paths {
         };
         /** The health of the project for a period (this month so far by default): the income statement in plain words with the period before and six months of results, fixed costs, break-even and cash runway, the money position, warnings, the shipments on the way with their money, sales by item and by customer, what to reorder */
         get: operations["getTraderHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trader/cash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every cash box and bank account of the company over the period (to today when no end is given): the balance now, the balance when the period began, what came in and went out, the balance at its end, and the movements newest first with the balance after each */
+        get: operations["getTraderCash"];
         put?: never;
         post?: never;
         delete?: never;
@@ -26882,6 +26901,60 @@ export interface components {
             balanceTc: number | string;
             /** Format: double */
             balanceFc: number | string;
+        };
+        /** @description One movement of a cash box or bank account in the trader's words: what came in or went out, and the balance after it. */
+        TraderCashMovement: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            date: string;
+            kind: string;
+            /** Format: double */
+            in: number | string;
+            /** Format: double */
+            out: number | string;
+            /** Format: double */
+            balanceAfter: number | string;
+            reference: null | string;
+            sourceDocumentType: null | string;
+            /** Format: uuid */
+            sourceDocumentId: null | string;
+        };
+        /** @description The cash and bank screen (ADR-0035 §18): every box and account of the company over the period asked for (to today when no end is given). */
+        TraderCashReport: {
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            /** Format: date */
+            asOf: string;
+            /** Format: date */
+            from: null | string;
+            /** Format: date */
+            to: string;
+            accounts: components["schemas"]["TraderCashReportAccount"][];
+        };
+        /** @description A cash box or bank account over the period: its balance now, what it held when the period began, what came in and went out, what it held at the period's end, and its movements newest first. */
+        TraderCashReportAccount: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: {
+                [key: string]: string;
+            };
+            kind: string;
+            currency: string;
+            isActive: boolean;
+            /** Format: double */
+            balanceNow: number | string;
+            /** Format: double */
+            opening: number | string;
+            /** Format: double */
+            in: number | string;
+            /** Format: double */
+            out: number | string;
+            /** Format: double */
+            closing: number | string;
+            movements: components["schemas"]["TraderCashMovement"][];
         };
         /** @description One currency the trader buys in: the spot rate to the company's currency in force today, the date it was entered from, and whether it was entered for today. */
         TraderDailyRate: {
@@ -44704,6 +44777,8 @@ export interface operations {
             query?: {
                 companyId?: string;
                 status?: string;
+                from?: string;
+                to?: string;
             };
             header?: never;
             path?: never;
@@ -46191,6 +46266,8 @@ export interface operations {
             query?: {
                 companyId?: string;
                 status?: string;
+                from?: string;
+                to?: string;
             };
             header?: never;
             path?: never;
@@ -47353,6 +47430,8 @@ export interface operations {
                 status?: string;
                 kind?: string;
                 partnerId?: string;
+                from?: string;
+                to?: string;
             };
             header?: never;
             path?: never;
@@ -50687,6 +50766,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TraderHealth"];
+                };
+            };
+        };
+    };
+    getTraderCash: {
+        parameters: {
+            query: {
+                companyId: string;
+                from?: string;
+                to?: string;
+                bankAccountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraderCashReport"];
                 };
             };
         };

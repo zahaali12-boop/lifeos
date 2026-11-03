@@ -12,6 +12,9 @@ public static class TraderEndpoints
     // The day's rate is an organization rate: entering one needs the rate permission; whether one is due, any signed-in person may ask.
     private const string RateManage = "organization.rate.manage";
 
+    // The cash and bank screen reads the bank subledger: the banking module's own read permission applies.
+    private const string BankAccountRead = "banking.bank_account.read";
+
     // The board reads prices and costs, and writes the sales price list: the pricing module's own permissions apply.
     private const string PriceRead = "pricing.price.read";
     private const string PriceListManage = "pricing.price_list.manage";
@@ -48,6 +51,9 @@ public static class TraderEndpoints
         owner.MapPost("/", async (TraderOwnerMovementRequest request, OwnerMoneyService service, CancellationToken ct) => ApiProblems.Ok(await service.RecordAsync(request, ct)))
             .RequirePermission(JournalManage).RequirePermission(JournalPost)
             .WithSummary("Records money the owner put in (kind in: the box against capital) or took out (kind out: drawings against the box) as a posted manual journal, and returns the owner's money");
+        trader.MapGet("/cash", async (Guid companyId, DateOnly? from, DateOnly? to, Guid? bankAccountId, CashService service, CancellationToken ct) => ApiProblems.Ok(await service.ReadAsync(companyId, from, to, bankAccountId, ct)))
+            .RequirePermission(BankAccountRead)
+            .WithSummary("Every cash box and bank account of the company over the period (to today when no end is given): the balance now, the balance when the period began, what came in and went out, the balance at its end, and the movements newest first with the balance after each");
         var rates = trader.MapGroup("/rates");
         rates.MapGet("/today", async (Guid companyId, DailyRatesService service, CancellationToken ct) => ApiProblems.Ok(await service.ReadAsync(companyId, ct)))
             .WithSummary("Today's spot rate of every currency the trader buys in, with the date each was entered from, and whether the day's prompt is due (the hour chosen reached and a currency without today's rate)");

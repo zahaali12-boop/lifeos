@@ -17,6 +17,8 @@ import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } fr
 import { QuickCreateButton } from "../QuickCreate";
 import { CompanyFilter, KeyValues, useCompanyContext } from "../inventory/shared";
 import { emptyLine, LinesEditor, LinesTable, num, useSuppliers, type LineForm, type Rfq } from "../purchasing/shared";
+import { rangeParams } from "./period";
+import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
 type Comparison = components["schemas"]["QuoteComparison"];
 type Ranking = components["schemas"]["QuoteRanking"];
@@ -96,10 +98,11 @@ export function OffersPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const suppliers = useSuppliers(companyId);
 
+  const [period, setPeriod, range] = usePeriod("all");
   const list = useQuery({
-    queryKey: ["rfqs", companyId],
+    queryKey: ["rfqs", companyId, range.from ?? "", range.to ?? ""],
     enabled: Boolean(companyId),
-    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/rfqs", { params: { query: { companyId } } })),
+    queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/rfqs", { params: { query: { companyId, ...rangeParams(range) } } })),
   });
   const detail = useQuery({
     queryKey: ["rfq", openId],
@@ -283,6 +286,7 @@ export function OffersPage() {
       />
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
+        <PeriodFilter value={period} onChange={setPeriod} />
       </div>
       <DataGrid<Rfq> label="trader.offers.title" columns={columns} data={list.data ?? []} rowKey={(row) => row.id} loading={list.isPending && Boolean(companyId)} emptyTitle={t("trader.offers.empty")} emptyDescription={t("trader.offers.emptyDescription")} onOpen={(row) => { setProblem(null); setComparison(null); setOrdered(null); setOffer(null); setOpenId(row.id); }} />
 

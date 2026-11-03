@@ -105,7 +105,7 @@ public static class SalesEndpoints
             .WithSummary("Sets the carrier and its tracking reference, also after posting");
 
         var invoices = sales.MapGroup("/invoices");
-        invoices.MapGet("/", async (Guid? companyId, string? status, string? kind, Guid? partnerId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, kind, partnerId, ct)))
+        invoices.MapGet("/", async (Guid? companyId, string? status, string? kind, Guid? partnerId, DateOnly? from, DateOnly? to, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.ListAsync(companyId, status, kind, partnerId, from, to, ct)))
             .RequirePermission(SalesPermissions.InvoiceRead)
             .WithSummary("Sales invoices and credit notes, newest first, filtered by company, status, kind or customer");
         invoices.MapGet("/invoicable", async (Guid companyId, Guid partnerId, InvoiceService service, CancellationToken ct) => TypedResults.Ok(await service.InvoicableAsync(companyId, partnerId, ct)))

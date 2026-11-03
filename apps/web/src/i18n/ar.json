@@ -184,7 +184,8 @@
       "money": "المال",
       "health": "صحة المشروع",
       "stock": "المخزون",
-      "expenses": "المصاريف"
+      "expenses": "المصاريف",
+      "cash": "الصندوق والبنك"
     }
   },
   "shell": {
@@ -6740,7 +6741,7 @@
         "pending_approval": "سُجّل: {number}، {amount}، بانتظار الموافقة."
       },
       "thisMonth": "هذا الشهر",
-      "monthTotal": "المصروف هذا الشهر",
+      "monthTotal": "المصروف في هذه الفترة",
       "byKind": "حسب النوع",
       "nothingYet": "لم يُسجَّل شيء هذا الشهر.",
       "columns": {
@@ -6794,6 +6795,55 @@
       "recordPayment": "سجّل دفعة الفاتورة {number}",
       "sellAgain": "بِع للزبون نفسه مرة أخرى",
       "seeMoney": "اعرض ما هو مستحق في المال"
+    },
+    "period": {
+      "label": "الفترة",
+      "from": "من",
+      "to": "إلى",
+      "presets": {
+        "month": "هذا الشهر",
+        "today": "اليوم",
+        "last7": "آخر 7 أيام",
+        "lastMonth": "الشهر الماضي",
+        "quarter": "هذا الربع",
+        "year": "هذه السنة",
+        "all": "الكل",
+        "custom": "اختر التواريخ"
+      }
+    },
+    "cash": {
+      "title": "الصندوق والبنك",
+      "description": "كل صندوق وحساب مصرفي: ما فيه، ما دخل وما خرج في الفترة، والرصيد بعد كل حركة.",
+      "accounts": "الصناديق والحسابات",
+      "balanceNow": "فيه الآن",
+      "inOut": "دخل {in} · خرج {out}",
+      "opening": "في البداية",
+      "in": "الداخل",
+      "out": "الخارج",
+      "closing": "في النهاية",
+      "date": "التاريخ",
+      "what": "ماذا",
+      "reference": "المرجع",
+      "balanceAfter": "الرصيد بعدها",
+      "noMovements": "لا حركات في هذه الفترة.",
+      "empty": "لا صندوق ولا حساب مصرفي بعد.",
+      "emptyDescription": "أنشئ واحداً من المصاريف (\"أنشئ صندوقاً\") أو من المال، وتظهر حركاته هنا.",
+      "kinds": {
+        "cash": "صندوق",
+        "bank": "حساب مصرفي",
+        "petty_cash": "نثرية"
+      },
+      "sources": {
+        "bank_receipt": "قبض من زبون",
+        "bank_payment": "دفع لمورد",
+        "journal_entry": "افتتاحي أو مال المالك",
+        "bank_cheque": "شيك",
+        "bank_cheque_deposit": "إيداع شيك",
+        "bank_statement": "كشف البنك",
+        "petty_cash_voucher": "نثرية",
+        "expense": "مصروف",
+        "other": "حركة"
+      }
     }
   }
 }

@@ -41,4 +41,13 @@ public static class Clocks
         var local = TimeZoneInfo.ConvertTime(instant, zone);
         return DateOnly.FromDateTime(local.DateTime);
     }
+
+    /// <summary>The instant a calendar day begins in the time zone, as UTC (what a timestamptz parameter takes), for bounding creation stamps by the days a person asked for.</summary>
+    public static DateTimeOffset StartOfDay(DateOnly day, string timeZoneId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(timeZoneId);
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+        var local = day.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
+        return new DateTimeOffset(local, zone.GetUtcOffset(local)).ToUniversalTime();
+    }
 }

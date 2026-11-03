@@ -75,7 +75,8 @@ public sealed class InvoiceService(
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public async Task<IReadOnlyList<SalesInvoiceSummary>> ListAsync(Guid? companyId, string? status, string? kind, Guid? partnerId, CancellationToken cancellationToken)
+    /// <summary>Invoices newest first by their date, then by number; from and to bound the invoice date.</summary>
+    public async Task<IReadOnlyList<SalesInvoiceSummary>> ListAsync(Guid? companyId, string? status, string? kind, Guid? partnerId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
     {
         var query = db.Invoices.AsNoTracking().Include(static i => i.Lines).AsQueryable();
         if (companyId is { } c)
@@ -98,7 +99,17 @@ public sealed class InvoiceService(
             query = query.Where(i => i.PartnerId == p);
         }
 
-        var invoices = await query.OrderByDescending(static i => i.PostingDate).ThenByDescending(static i => i.Number).Take(500).ToListAsync(cancellationToken);
+        if (from is { } f)
+        {
+            query = query.Where(i => i.DocumentDate >= f);
+        }
+
+        if (to is { } u)
+        {
+            query = query.Where(i => i.DocumentDate <= u);
+        }
+
+        var invoices = await query.OrderByDescending(static i => i.DocumentDate).ThenByDescending(static i => i.Number).Take(500).ToListAsync(cancellationToken);
         var result = new List<SalesInvoiceSummary>(invoices.Count);
         foreach (var invoice in invoices)
         {

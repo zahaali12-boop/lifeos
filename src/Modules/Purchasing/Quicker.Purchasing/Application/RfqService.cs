@@ -36,12 +36,15 @@ public sealed class RfqService(
 {
     public const string DocumentType = PurchaseDocumentTypes.Rfq;
 
-    public async Task<IReadOnlyList<RfqSummary>> ListAsync(Guid? companyId, string? status, CancellationToken cancellationToken)
+    /// <summary>Requests newest first (the day they were made, in the company's time zone, bounds the list when days are asked for).</summary>
+    public async Task<IReadOnlyList<RfqSummary>> ListAsync(Guid? companyId, string? status, DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
     {
         var query = db.Rfqs.Include(static r => r.Lines).Include(static r => r.Suppliers).AsNoTracking().AsQueryable();
+        var timeZone = "UTC";
         if (companyId is { } c)
         {
             query = query.Where(r => r.CompanyId == c);
+            timeZone = (await companies.FindAsync(new CompanyId(c), cancellationToken))?.TimeZone ?? timeZone;
         }
 
         if (!string.IsNullOrWhiteSpace(status))
@@ -50,7 +53,19 @@ public sealed class RfqService(
             query = query.Where(r => r.Status == s);
         }
 
-        var rows = await query.OrderByDescending(static r => r.Id).Take(200).ToListAsync(cancellationToken);
+        if (from is { } f)
+        {
+            var start = Clocks.StartOfDay(f, timeZone);
+            query = query.Where(r => r.CreatedAt >= start);
+        }
+
+        if (to is { } u)
+        {
+            var end = Clocks.StartOfDay(u.AddDays(1), timeZone);
+            query = query.Where(r => r.CreatedAt < end);
+        }
+
+        var rows = await query.OrderByDescending(static r => r.CreatedAt).ThenByDescending(static r => r.Id).Take(200).ToListAsync(cancellationToken);
         var result = new List<RfqSummary>(rows.Count);
         foreach (var row in rows)
         {
