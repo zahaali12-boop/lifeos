@@ -9,6 +9,7 @@ import { currentLanguage, setLanguage, type Language } from "../i18n";
 import { formatNumber, setDigitStyle, useDigitStyle } from "../lib/format";
 import { clearSession, useSession } from "../session/session";
 import { CommandPalette } from "./CommandPalette";
+import { DailyRatesPrompt } from "./DailyRatesPrompt";
 import { navigationFor } from "./navigation";
 import { NewMenu } from "./NewMenu";
 import { ShortcutsOverlay } from "./ShortcutsOverlay";
@@ -228,6 +229,8 @@ export function AppShell() {
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} permissions={permissions} screens={items} />
       <ShortcutsOverlay open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <StepUpDialog />
+      {/* The trader's day starts with the rate: asked for at the first open from the hour chosen. */}
+      {flat && me.data ? <DailyRatesPrompt permissions={permissions} /> : null}
     </TooltipProvider>
   );
 }

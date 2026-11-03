@@ -161,6 +161,16 @@ would also throw away the tests and the invariants that make the books right.
     and a comparison that led to no order is deleted for good (`DELETE /purchasing/rfqs/{id}`; one that became an
     order is kept).
 
+14. **The day's rate (T10c).** A trader who buys in dollars and sells in dinars lives by the morning's rate. From the
+    hour the trader chose (`trader.rates.prompt_hour`, 08:00 by default; a negative value never asks), the first open
+    of the app on a day with no spot rate entered for that day asks for it: one box per currency the shop buys in
+    (`trader.rates.currencies`, plus those seen on shipments; the dollar when nothing is named or seen), the last
+    known rate as a hint, saved in one go through `POST /trader/rates/today` into the organization's rates (the new
+    `IExchangeRateEntry` contract beside the resolver), so every document of the day converts at it and the pricing
+    board re-values at it. "Later" keeps quiet until the app is opened again; a rate of the day already entered is
+    corrected only with a reason, as under Exchange rates (ADR-0017). The hour is changed from the prompt itself,
+    which is where the trader meets it.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

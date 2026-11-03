@@ -36,6 +36,7 @@ public static class OrganizationModule
         services.AddScoped<IPostingWindows>(static sp => sp.GetRequiredService<FiscalCalendarService>());
         services.AddScoped<CurrencyService>();
         services.AddScoped<IExchangeRateResolver>(static sp => sp.GetRequiredService<CurrencyService>());
+        services.AddScoped<IExchangeRateEntry>(static sp => sp.GetRequiredService<CurrencyService>());
         services.AddScoped<DimensionService>();
         services.AddScoped<IDimensionSets>(static sp => sp.GetRequiredService<DimensionService>());
         services.AddScoped<IDimensionDirectory>(static sp => sp.GetRequiredService<DimensionService>());

@@ -69,6 +69,17 @@ public interface IExchangeRateResolver
     Task<Result<ResolvedRate>> ResolveAsync(CompanyId companyId, string fromCurrency, string toCurrency, DateOnly date, string rateType = RateTypes.Spot, CancellationToken cancellationToken = default);
 }
 
+/// <summary>A rate entered by hand from a module's own screen (ADR-0017), stored like a rate typed under Exchange rates.</summary>
+public interface IExchangeRateEntry
+{
+    /// <summary>
+    /// Stores 1 <paramref name="fromCurrency"/> = <paramref name="rate"/> <paramref name="toCurrency"/> from the date on
+    /// and returns the stored rate's id. A rate already stored for that pair, type and date is changed only with a
+    /// reason (<c>rate.reason_required</c>).
+    /// </summary>
+    Task<Result<Guid>> SaveAsync(string fromCurrency, string toCurrency, DateOnly validFrom, decimal rate, string? reason = null, string rateType = RateTypes.Spot, CancellationToken cancellationToken = default);
+}
+
 public static class RateTypes
 {
     public const string Spot = "spot";

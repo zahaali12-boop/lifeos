@@ -71,6 +71,9 @@ test("English: the trader edition switched on, offers compared with minimum quan
   const openedOn = new Date().toISOString().slice(0, 10);
   await call("post", `/api/v1/onboarding/companies/${companyId}/opening-balances?asOf=${openedOn}`, { lines: [{ account: "1121", debit: 2200000, credit: 0, bankAccount: "BANK" }, { account: "3100", debit: 0, credit: 2200000 }] });
 
+  // The day's rate is asked for from 08:00 by the company's clock; the journey decides when (below), not the hour it runs at.
+  await call("put", "/api/v1/organization/settings/trader.rates.prompt_hour", { value: -1, valueType: "number" });
+
   // Settings: the workspace switched to the trader edition; the bar shows the flat links at once.
   await nav(page, "Settings");
   await expect(page.getByTestId("edition-card")).toBeVisible();
@@ -196,9 +199,20 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await page.getByTestId("flat-nav").getByRole("link", { name: "Offers" }).click();
   await expect(page.getByRole("grid")).toContainText("Ordered");
 
-  // Prices: the landed cost per unit from the shipment, a 25 % target rounded up to 250, the suggestion written to a new sales list.
+  // Prices: the day starts with the rate. Asked for from any hour now, the first open shows the prompt; 1,400 dinars to
+  // the dollar is entered and the board's "Rates today" carries it.
   await page.getByTestId("flat-nav").getByRole("link", { name: "Prices" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Selling prices");
+  await call("put", "/api/v1/organization/settings/trader.rates.prompt_hour", { value: 0, valueType: "number" });
+  await page.reload();
+  await expect(page.getByTestId("daily-rates")).toBeVisible();
+  await expect(page.getByTestId("daily-rates")).toContainText("No rate entered yet.");
+  await expectAccessible(page);
+  await page.getByTestId("rate-USD").fill("1400");
+  await page.getByTestId("save-daily-rates").click();
+  await expect(page.getByTestId("daily-rates")).toHaveCount(0);
+  await expect(page.getByTestId("market-rates")).toContainText("USD: 1,400");
+  // Then the landed cost per unit from the shipment, a 25 % target rounded up to 250, the suggestion written to a new sales list.
   await page.getByTestId("create-price-list").click();
   await expect(page.getByTestId("no-price-list")).toHaveCount(0);
   await page.getByTestId("edit-pricing-settings").click();

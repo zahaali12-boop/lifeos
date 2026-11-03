@@ -11,6 +11,7 @@ public static class TraderModule
         services.AddScoped<PricingBoardService>();
         services.AddScoped<HealthService>();
         services.AddScoped<OwnerMoneyService>();
+        services.AddScoped<DailyRatesService>();
         return services;
     }
 }

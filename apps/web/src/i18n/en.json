@@ -6742,6 +6742,18 @@
         "reversed": "Reversed",
         "accounts": "Capital account {capital}, drawings account {drawings}."
       }
+    },
+    "rates": {
+      "title": "Today's exchange rate",
+      "description": "It is {date}. Enter today's rate for what you buy in, so costs and prices follow the market from the first sale of the day.",
+      "rateLabel": "1 {currency} = how many {functional}?",
+      "lastKnown": "Last entered: {rate}, from {date}.",
+      "noneYet": "No rate entered yet.",
+      "askFrom": "Ask me each day from",
+      "never": "Never ask",
+      "later": "Later",
+      "save": "Save today's rate",
+      "failed": "The rate could not be saved."
     }
   }
 }

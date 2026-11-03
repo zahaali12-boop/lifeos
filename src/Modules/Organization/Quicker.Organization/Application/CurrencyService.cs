@@ -12,7 +12,7 @@ using Quicker.Persistence;
 namespace Quicker.Organization.Application;
 
 /// <summary>ISO currencies, rate types, effective-dated rates, resolution with inverse and cross rates, provider import (ADR-0017).</summary>
-public sealed class CurrencyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, IEnumerable<IExchangeRateProvider> providers, IAuditSink audit, IClock clock) : IExchangeRateResolver
+public sealed class CurrencyService(OrganizationDbContext db, IUnitOfWorkAccessor unitOfWork, IEnumerable<IExchangeRateProvider> providers, IAuditSink audit, IClock clock) : IExchangeRateResolver, IExchangeRateEntry
 {
     private Guid? ActorUserId => unitOfWork.Current.Context.UserId?.Value;
 
@@ -140,6 +140,13 @@ public sealed class CurrencyService(OrganizationDbContext db, IUnitOfWorkAccesso
         rate.Reason = request.Reason?.Trim();
         await db.SaveChangesAsync(cancellationToken);
         return Map(rate, type.Code);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<Guid>> SaveAsync(string fromCurrency, string toCurrency, DateOnly validFrom, decimal rate, string? reason = null, string rateType = RateTypes.Spot, CancellationToken cancellationToken = default)
+    {
+        var saved = await SaveRateAsync(new SaveRateRequest(rateType, fromCurrency, toCurrency, validFrom, rate, reason), cancellationToken);
+        return saved.IsFailure ? saved.Error! : saved.Value.Id;
     }
 
     public async Task<Result> DeleteRateAsync(Guid rateId, string? reason, CancellationToken cancellationToken)

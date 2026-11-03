@@ -12321,6 +12321,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/trader/rates/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Today's spot rate of every currency the trader buys in, with the date each was entered from, and whether the day's prompt is due (the hour chosen reached and a currency without today's rate) */
+        get: operations["getTraderRatesToday"];
+        put?: never;
+        /** Enters today's spot rates in one go (1 unit of each currency = the rate in the company's currency) into the organization's rates, a reason being needed to correct one already entered today, and returns the day's rates */
+        post: operations["postTraderRatesToday"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -26848,6 +26866,34 @@ export interface components {
             /** Format: double */
             balanceFc: number | string;
         };
+        /** @description One currency the trader buys in: the spot rate to the company's currency in force today, the date it was entered from, and whether it was entered for today. */
+        TraderDailyRate: {
+            currency: string;
+            /** Format: double */
+            rate: null | number | string;
+            /** Format: date */
+            asOf: null | string;
+            enteredToday: boolean;
+        };
+        /** @description The day's rates (ADR-0035 §14): whether the prompt is due now (the hour reached and a currency without today's rate), the hour it is asked from (negative: never), and each currency's rate. */
+        TraderDailyRates: {
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            promptHour: number | string;
+            due: boolean;
+            rates: components["schemas"]["TraderDailyRate"][];
+        };
+        /** @description Today's spot rates entered in one go, 1 unit of each currency = the rate in the company's currency; a reason when a rate of today is corrected. */
+        TraderDailyRatesRequest: {
+            /** Format: uuid */
+            companyId: string;
+            rates: components["schemas"]["TraderRateEntry"][];
+            reason?: null | string;
+        };
         /** @description The health of the project (ADR-0035 §8): one read over the modules' contracts, nothing kept. */
         TraderHealth: {
             /** Format: uuid */
@@ -27059,6 +27105,11 @@ export interface components {
             suggestedMarginPct: null | number | string;
             alerts: string[];
             orderNumber: null | string;
+        };
+        TraderRateEntry: {
+            currency: string;
+            /** Format: double */
+            rate: number | string;
         };
         /** @description An item the stock and the shipments on the way will not carry through the cover days at the pace of the last cover days' sales, and how many to order. */
         TraderReorderRow: {
@@ -50634,6 +50685,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TraderOwnerMoney"];
+                };
+            };
+        };
+    };
+    getTraderRatesToday: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraderDailyRates"];
+                };
+            };
+        };
+    };
+    postTraderRatesToday: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraderDailyRatesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraderDailyRates"];
                 };
             };
         };

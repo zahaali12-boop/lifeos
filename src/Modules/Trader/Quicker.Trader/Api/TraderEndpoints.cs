@@ -6,9 +6,12 @@ using Quicker.Web;
 
 namespace Quicker.Trader.Api;
 
-/// <summary>The trader edition's own endpoints under /api/v1/trader (ADR-0035): the pricing board and applying its prices; the health of the project; the owner's money.</summary>
+/// <summary>The trader edition's own endpoints under /api/v1/trader (ADR-0035): the pricing board and applying its prices; the health of the project; the owner's money; the day's exchange rate.</summary>
 public static class TraderEndpoints
 {
+    // The day's rate is an organization rate: entering one needs the rate permission; whether one is due, any signed-in person may ask.
+    private const string RateManage = "organization.rate.manage";
+
     // The board reads prices and costs, and writes the sales price list: the pricing module's own permissions apply.
     private const string PriceRead = "pricing.price.read";
     private const string PriceListManage = "pricing.price_list.manage";
@@ -42,6 +45,12 @@ public static class TraderEndpoints
         owner.MapPost("/", async (TraderOwnerMovementRequest request, OwnerMoneyService service, CancellationToken ct) => ApiProblems.Ok(await service.RecordAsync(request, ct)))
             .RequirePermission(JournalManage).RequirePermission(JournalPost)
             .WithSummary("Records money the owner put in (kind in: the box against capital) or took out (kind out: drawings against the box) as a posted manual journal, and returns the owner's money");
+        var rates = trader.MapGroup("/rates");
+        rates.MapGet("/today", async (Guid companyId, DailyRatesService service, CancellationToken ct) => ApiProblems.Ok(await service.ReadAsync(companyId, ct)))
+            .WithSummary("Today's spot rate of every currency the trader buys in, with the date each was entered from, and whether the day's prompt is due (the hour chosen reached and a currency without today's rate)");
+        rates.MapPost("/today", async (TraderDailyRatesRequest request, DailyRatesService service, CancellationToken ct) => ApiProblems.Ok(await service.EnterAsync(request, ct)))
+            .RequirePermission(RateManage)
+            .WithSummary("Enters today's spot rates in one go (1 unit of each currency = the rate in the company's currency) into the organization's rates, a reason being needed to correct one already entered today, and returns the day's rates");
         return trader;
     }
 }

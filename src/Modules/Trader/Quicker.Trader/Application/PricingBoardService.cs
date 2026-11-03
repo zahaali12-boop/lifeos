@@ -58,10 +58,10 @@ public sealed class PricingBoardService(
         var prices = list.Value is null ? new Dictionary<Guid, decimal>() : (await priceLists.PricesAsync(list.Value.Id, today, cancellationToken)).ToDictionary(static p => p.ItemId, static p => p.Price);
         var landed = (await landedCosts.LatestByItemAsync(companyId, cancellationToken)).ToDictionary(static l => l.ItemId);
 
-        // Today's rate for every purchase currency seen, once.
+        // Today's rate for every currency the trader buys in (named in the settings or seen on shipments), once.
         var marketRates = new List<TraderMarketRate>();
         var rateByCurrency = new Dictionary<string, (decimal Rate, DateOnly AsOf)>(StringComparer.Ordinal);
-        foreach (var currency in landed.Values.Select(static l => l.Currency).Where(c => !string.Equals(c, fc.Code, StringComparison.Ordinal)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal))
+        foreach (var currency in await TraderCurrencies.ForAsync(settings, companyId, fc.Code, landed.Values.Select(static l => l.Currency), cancellationToken))
         {
             var resolved = await rates.ResolveAsync(company.Id, currency, fc.Code, today, RateTypes.Spot, cancellationToken);
             if (resolved.IsSuccess)

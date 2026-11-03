@@ -44,6 +44,17 @@ public sealed record TraderPricingBoard(
     int UnpricedItems,
     IReadOnlyList<string> Hints);
 
+/// <summary>One currency the trader buys in: the spot rate to the company's currency in force today, the date it was entered from, and whether it was entered for today.</summary>
+public sealed record TraderDailyRate(string Currency, decimal? Rate, DateOnly? AsOf, bool EnteredToday);
+
+/// <summary>The day's rates (ADR-0035 §14): whether the prompt is due now (the hour reached and a currency without today's rate), the hour it is asked from (negative: never), and each currency's rate.</summary>
+public sealed record TraderDailyRates(Guid CompanyId, string Currency, DateOnly Date, int PromptHour, bool Due, IReadOnlyList<TraderDailyRate> Rates);
+
+public sealed record TraderRateEntry(string Currency, decimal Rate);
+
+/// <summary>Today's spot rates entered in one go, 1 unit of each currency = the rate in the company's currency; a reason when a rate of today is corrected.</summary>
+public sealed record TraderDailyRatesRequest(Guid CompanyId, IReadOnlyList<TraderRateEntry> Rates, string? Reason = null);
+
 public sealed record TraderPriceChange(Guid ItemId, decimal Price);
 
 /// <summary>Writes prices into the sales price list (the board's list, or the one named) from today.</summary>

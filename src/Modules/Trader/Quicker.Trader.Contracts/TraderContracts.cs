@@ -26,4 +26,10 @@ public static class TraderSettingKeys
 
     /// <summary>How many days of sales to keep in stock or on the way, for what to reorder (number; default 90).</summary>
     public const string CoverDays = "trader.health.cover_days";
+
+    /// <summary>The hour of the company's day (0–23) from which the day's exchange rate is asked for at the first open, when none is entered for the day; a negative number never asks (number; default 8).</summary>
+    public const string RatesPromptHour = "trader.rates.prompt_hour";
+
+    /// <summary>The currencies the trader buys in, asked for daily and shown on the pricing board, as ISO codes separated by commas (string); added to those seen on shipments, and USD when nothing is named or seen.</summary>
+    public const string RatesCurrencies = "trader.rates.currencies";
 }

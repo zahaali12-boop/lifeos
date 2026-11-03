@@ -35631,6 +35631,67 @@
           }
         }
       }
+    },
+    "/api/v1/trader/rates/today": {
+      "get": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "Today's spot rate of every currency the trader buys in, with the date each was entered from, and whether the day's prompt is due (the hour chosen reached and a currency without today's rate)",
+        "operationId": "getTraderRatesToday",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderDailyRates"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "Enters today's spot rates in one go (1 unit of each currency = the rate in the company's currency) into the organization's rates, a reason being needed to correct one already entered today, and returns the day's rates",
+        "operationId": "postTraderRatesToday",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraderDailyRatesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderDailyRates"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -88996,6 +89057,108 @@
         },
         "description": "A bank account or cash box with its balance today, in its currency and the company's."
       },
+      "TraderDailyRate": {
+        "required": [
+          "currency",
+          "rate",
+          "asOf",
+          "enteredToday"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "rate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "asOf": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "enteredToday": {
+            "type": "boolean"
+          }
+        },
+        "description": "One currency the trader buys in: the spot rate to the company's currency in force today, the date it was entered from, and whether it was entered for today."
+      },
+      "TraderDailyRates": {
+        "required": [
+          "companyId",
+          "currency",
+          "date",
+          "promptHour",
+          "due",
+          "rates"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "promptHour": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "due": {
+            "type": "boolean"
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderDailyRate"
+            }
+          }
+        },
+        "description": "The day's rates (ADR-0035 §14): whether the prompt is due now (the hour reached and a currency without today's rate), the hour it is asked from (negative: never), and each currency's rate."
+      },
+      "TraderDailyRatesRequest": {
+        "required": [
+          "companyId",
+          "rates"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderRateEntry"
+            }
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Today's spot rates entered in one go, 1 unit of each currency = the rate in the company's currency; a reason when a rate of today is corrected."
+      },
       "TraderHealth": {
         "required": [
           "companyId",
@@ -89817,6 +89980,26 @@
           }
         },
         "description": "One item on the pricing board: what it cost landed (from its latest shipment), what it would cost to buy again at\ntoday's rate, the price it sells at now and the margin that leaves, the suggested price at the target margin, and\nthe alerts (no_price, no_cost, no_market_rate, loss_at_cost, loss_at_replacement, margin_below_target, rate_up, rate_down)."
+      },
+      "TraderRateEntry": {
+        "required": [
+          "currency",
+          "rate"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "rate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
       },
       "TraderReorderRow": {
         "required": [
