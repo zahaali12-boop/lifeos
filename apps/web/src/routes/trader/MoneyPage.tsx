@@ -119,7 +119,8 @@ export function MoneyPage() {
       setPaying(null);
       setProblem(null);
       setNotice(t("trader.money.paid", { number: posted.number, amount: formatMoney(posted.amountTc, posted.currency) }));
-      await Promise.all([["ap-aging"], ["bank-accounts"], ["trader-health"], ["home"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+      // The shipment the invoice came from shows what is left to pay, so it is refreshed too (the cache keeps pages for ten seconds).
+      await Promise.all([["ap-aging"], ["bank-accounts"], ["trader-health"], ["home"], ["shipments"], ["shipment"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
     },
     onError: (error: unknown) => { setNotice(null); setProblem(toFormProblem(error, t("common.saveFailed"))); },
   });
