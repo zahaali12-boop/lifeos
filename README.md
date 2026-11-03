@@ -53,6 +53,8 @@ The full system's development server needs `QUICKER_LAN_HOST` in `.env` set to t
 Home Screen" (the share button) or Chrome's "Add to Home screen" puts the app on the home screen, and it opens
 full-screen with its own icon. Plain HTTP on the local network is enough for that; the browser's "install" prompt and
 working without the network need HTTPS, and a store listing needs a native wrapper, neither of which is set up yet.
+On a phone the trader program opens its phone site (`/p`: balances, sell, collect, pay, customers), with the full
+program one tap away in its header.
 
 **From anywhere (the phone away from home).** The trader program is reached from outside through Tailscale, a private
 network between the devices signed in to one account: nothing is opened to the internet, the traffic is encrypted end

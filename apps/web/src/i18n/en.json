@@ -6856,5 +6856,91 @@
         "other": "Movement"
       }
     }
+  },
+  "phone": {
+    "company": "Company",
+    "fullProgram": "Open the full program",
+    "tabs": {
+      "label": "Phone screens",
+      "home": "Home",
+      "sell": "Sell",
+      "collect": "Collect",
+      "buy": "Pay",
+      "customers": "Customers"
+    },
+    "home": {
+      "title": "Today",
+      "balances": "Balances",
+      "noAccounts": "No cash box or bank account yet; make one on the computer under Cash & bank.",
+      "owedToYou": "Owed to you",
+      "youOwe": "You owe",
+      "sell": "Sell",
+      "collect": "Collect a payment",
+      "latestSales": "Latest sales",
+      "noSales": "No sales yet.",
+      "open": "{amount} open",
+      "paid": "Paid",
+      "printInvoice": "Print or send invoice {number}"
+    },
+    "sell": {
+      "title": "New sale",
+      "customer": "Customer",
+      "chooseCustomer": "Choose a customer",
+      "warehouse": "Store",
+      "item": "Item",
+      "chooseItem": "Choose an item",
+      "quantity": "Quantity",
+      "price": "Unit price",
+      "addLine": "Add another item",
+      "removeLine": "Remove",
+      "total": "Total",
+      "submit": "Sell",
+      "sold": "Sold: invoice {number} for {amount}.",
+      "invoicePdf": "Invoice PDF / send",
+      "collectNow": "Collect the payment now",
+      "newSale": "New sale",
+      "noItems": "Nothing in stock and no prices yet; receive goods or set prices on the computer."
+    },
+    "collect": {
+      "title": "Collect a payment",
+      "customer": "Customer",
+      "chooseCustomer": "Choose a customer",
+      "invoice": "Invoice",
+      "amount": "Amount",
+      "account": "Into",
+      "date": "Date",
+      "submit": "Collect",
+      "collected": "Collected: receipt {number} for {amount}.",
+      "receiptPdf": "Receipt PDF / send",
+      "another": "Another payment",
+      "nothingOpen": "Nothing is open: every invoice is paid.",
+      "noAccount": "No cash box or bank account to receive into.",
+      "createCash": "Make a cash box",
+      "remaining": "{amount} open, due {date}"
+    },
+    "buy": {
+      "title": "Pay a supplier",
+      "youOwe": "You owe",
+      "pay": "Pay",
+      "amount": "Amount",
+      "account": "From",
+      "submit": "Pay now",
+      "cancel": "Cancel",
+      "paid": "Paid: {number} for {amount}.",
+      "nothingToPay": "You owe nothing.",
+      "noAccount": "No box or account in {currency} to pay from.",
+      "recordHint": "Purchases are recorded on the computer: Offers, then Shipments, where the goods and their costs arrive.",
+      "openShipments": "Open Shipments in the full program"
+    },
+    "customers": {
+      "title": "Customers",
+      "search": "Search",
+      "owes": "Owes {amount}",
+      "nothingOwed": "Nothing owed",
+      "overdue": "Overdue",
+      "statement": "Statement",
+      "collect": "Collect",
+      "none": "No customers yet."
+    }
   }
 }

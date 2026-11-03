@@ -255,6 +255,19 @@ would also throw away the tests and the invariants that make the books right.
     is printed or sent from the list of who owes on Money. All three go through the print dialog: preview, PDF,
     email, WhatsApp, a link. Deferred: the logo and brand colour asked for at sign-up; a bank-details block on the
     invoice; a receipt sent automatically by WhatsApp when the payment is recorded.
+21. **The phone site (T12c; A-206).** The founder wants the program on his phone with only the essentials. The
+    trader edition gains a phone site, `/p`, with its own thumb-reach shell (five tabs) over the same records and the
+    same API as the full program: Home (each cash box and bank account with what it holds, what customers owe, what
+    he owes, the latest sales with their invoices to print or send), Sell (a customer, made on the spot when new;
+    every item the store holds and every item the price board knows, with the board's price when it has one and
+    what the store holds; the total; then the
+    invoice or the payment right away), Collect (the customer's open invoices oldest first, the amount, the box or
+    account; the receipt to print or send when done), Pay (who he owes and a payment to one of them from a box or
+    account in the invoice's currency, the oldest invoices first; recording purchases stays on the computer, where
+    the goods and their costs arrive through Shipments), Customers (search, what each owes, the statement, the
+    payment). On a phone (a viewport of 640 px or less) the trader edition's home opens the phone site; "Open the
+    full program" in its header keeps the full program for the session. The scanner's shell (§9) stays what it is.
+    Deferred: a purchase recorded from the phone; expenses from the phone; a daily summary notification.
 
 ## Consequences
 

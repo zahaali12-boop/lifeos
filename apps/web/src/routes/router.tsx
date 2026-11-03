@@ -119,6 +119,12 @@ import { CashPage as TraderCashPage } from "./trader/CashPage";
 import { HealthPage as TraderHealthPage } from "./trader/HealthPage";
 import { StockPage as TraderStockPage } from "./trader/StockPage";
 import { ExpensesPage as TraderExpensesPage } from "./trader/ExpensesPage";
+import { PhoneShell } from "./phone/PhoneShell";
+import { PhoneHomePage } from "./phone/PhoneHomePage";
+import { PhoneSellPage } from "./phone/PhoneSellPage";
+import { PhoneCollectPage } from "./phone/PhoneCollectPage";
+import { PhoneBuyPage } from "./phone/PhoneBuyPage";
+import { PhoneCustomersPage } from "./phone/PhoneCustomersPage";
 import { ReportBuilderPage } from "./reports/ReportBuilderPage";
 import { ReportsPage } from "./reports/ReportsPage";
 import { SchedulesPage } from "./schedules/SchedulesPage";
@@ -237,6 +243,23 @@ const printTemplatesRoute = createRoute({ getParentRoute: () => shellRoute, path
 const approvalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/approvals", component: ApprovalsPage, validateSearch: searchRecord });
 const workflowsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/workflows", component: WorkflowsPage, validateSearch: searchRecord });
 
+// The trader's phone site (ADR-0035 §21): its own thumb-first shell over the same records, the same session.
+const phoneRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "phone",
+  component: PhoneShell,
+  beforeLoad: () => {
+    if (!getSession()) {
+      throw redirect({ to: "/login" });
+    }
+  },
+});
+const phoneHomeRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p", component: PhoneHomePage });
+const phoneSellRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/sell", component: PhoneSellPage });
+const phoneCollectRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/collect", component: PhoneCollectPage, validateSearch: searchRecord });
+const phoneBuyRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/buy", component: PhoneBuyPage });
+const phoneCustomersRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/customers", component: PhoneCustomersPage });
+
 // The scanner (roadmap 3.8): its own thumb-first shell, the same session.
 const mobileRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -301,6 +324,7 @@ const routeTree = rootRoute.addChildren([
     approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute, payComponentsRoute, employeesRoute, leaveRoute, payrollRunsRoute, reportsRoute, reportBuilderRoute, statementsRoute, statementDesignerRoute, dashboardsRoute, dashboardViewRoute, schedulesRoute, traderOffersRoute, traderShipmentsRoute, traderPricingRoute, traderSalesRoute, traderMoneyRoute, traderCashRoute, traderHealthRoute, traderStockRoute, traderExpensesRoute,
   ]),
   mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
+  phoneRoute.addChildren([phoneHomeRoute, phoneSellRoute, phoneCollectRoute, phoneBuyRoute, phoneCustomersRoute]),
   posRoute.addChildren([posHomeRoute, posSellRoute, posOrdersRoute]),
 ]);
 

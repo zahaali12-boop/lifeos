@@ -6856,5 +6856,91 @@
         "other": "حركة"
       }
     }
+  },
+  "phone": {
+    "company": "الشركة",
+    "fullProgram": "افتح البرنامج الكامل",
+    "tabs": {
+      "label": "شاشات الهاتف",
+      "home": "الرئيسية",
+      "sell": "بيع",
+      "collect": "قبض",
+      "buy": "دفع",
+      "customers": "الزبائن"
+    },
+    "home": {
+      "title": "اليوم",
+      "balances": "الأرصدة",
+      "noAccounts": "لا صندوق ولا حساب مصرفي بعد؛ أنشئه من الحاسوب في الصندوق والمصرف.",
+      "owedToYou": "مستحق لك",
+      "youOwe": "عليك",
+      "sell": "بيع",
+      "collect": "قبض دفعة",
+      "latestSales": "آخر المبيعات",
+      "noSales": "لا مبيعات بعد.",
+      "open": "متبقٍ {amount}",
+      "paid": "مدفوعة",
+      "printInvoice": "طباعة أو إرسال الفاتورة {number}"
+    },
+    "sell": {
+      "title": "بيع جديد",
+      "customer": "الزبون",
+      "chooseCustomer": "اختر زبوناً",
+      "warehouse": "المخزن",
+      "item": "الصنف",
+      "chooseItem": "اختر صنفاً",
+      "quantity": "الكمية",
+      "price": "سعر الوحدة",
+      "addLine": "أضف صنفاً آخر",
+      "removeLine": "إزالة",
+      "total": "الإجمالي",
+      "submit": "بيع",
+      "sold": "تم البيع: الفاتورة {number} بمبلغ {amount}.",
+      "invoicePdf": "PDF الفاتورة / إرسالها",
+      "collectNow": "اقبض الدفعة الآن",
+      "newSale": "بيع جديد",
+      "noItems": "لا بضاعة في المخزن ولا أسعار بعد؛ استلم البضاعة أو حدّد الأسعار من الحاسوب."
+    },
+    "collect": {
+      "title": "قبض دفعة",
+      "customer": "الزبون",
+      "chooseCustomer": "اختر زبوناً",
+      "invoice": "الفاتورة",
+      "amount": "المبلغ",
+      "account": "في",
+      "date": "التاريخ",
+      "submit": "قبض",
+      "collected": "تم القبض: سند {number} بمبلغ {amount}.",
+      "receiptPdf": "سند القبض PDF / إرساله",
+      "another": "دفعة أخرى",
+      "nothingOpen": "لا شيء مستحق: كل الفواتير مدفوعة.",
+      "noAccount": "لا صندوق ولا حساب مصرفي للقبض فيه.",
+      "createCash": "أنشئ صندوقاً",
+      "remaining": "متبقٍ {amount}، يستحق {date}"
+    },
+    "buy": {
+      "title": "دفع لمورّد",
+      "youOwe": "عليك",
+      "pay": "ادفع",
+      "amount": "المبلغ",
+      "account": "من",
+      "submit": "ادفع الآن",
+      "cancel": "إلغاء",
+      "paid": "تم الدفع: {number} بمبلغ {amount}.",
+      "nothingToPay": "لا شيء عليك.",
+      "noAccount": "لا صندوق ولا حساب بعملة {currency} للدفع منه.",
+      "recordHint": "تُسجَّل المشتريات من الحاسوب: العروض ثم الشحنات، حيث تصل البضاعة وتكاليفها.",
+      "openShipments": "افتح الشحنات في البرنامج الكامل"
+    },
+    "customers": {
+      "title": "الزبائن",
+      "search": "بحث",
+      "owes": "عليه {amount}",
+      "nothingOwed": "لا شيء عليه",
+      "overdue": "متأخر",
+      "statement": "كشف حساب",
+      "collect": "قبض",
+      "none": "لا زبائن بعد."
+    }
   }
 }
