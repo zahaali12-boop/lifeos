@@ -56,7 +56,7 @@ public sealed record TraderViability(
     decimal NetPosition,
     decimal? CashRunwayMonths);
 
-/// <summary>Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count).</summary>
+/// <summary>Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_negative (amount), cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count).</summary>
 public sealed record TraderWarning(string Code, decimal? Value);
 
 /// <summary>A shipment on the way: its stage, dates, the goods in the order's currency and the company's, what was paid for them, the journey's costs so far and the hints of the shipment screen.</summary>

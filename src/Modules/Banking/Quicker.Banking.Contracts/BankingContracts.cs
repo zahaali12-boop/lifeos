@@ -76,13 +76,27 @@ public interface IBankTransactions
     Task<decimal> BalanceAsync(Guid bankAccountId, DateOnly? asOf = null, CancellationToken cancellationToken = default);
 }
 
-/// <summary>One payment that settles one payable open item from a bank account on a day: what an expense's "pay" button sends.</summary>
-public sealed record PayOpenItemRequest(Guid CompanyId, Guid PartnerId, Guid BankAccountId, Guid OpenItemId, decimal Amount, DateOnly PaymentDate, string Method = "transfer", string? Reference = null);
+/// <summary>
+/// One payment that settles one payable open item from a bank account on a day: what an expense's "pay" button sends.
+/// The amount is in the item's currency; when the account is in the company's currency and the item is not, the bank
+/// amount is what left the account (the rate actually paid), and the exchange rate defaults to the day's spot rate.
+/// </summary>
+public sealed record PayOpenItemRequest(Guid CompanyId, Guid PartnerId, Guid BankAccountId, Guid OpenItemId, decimal Amount, DateOnly PaymentDate, string Method = "transfer", string? Reference = null, decimal? BankAmount = null, decimal? ExchangeRate = null);
 
-public sealed record PaymentRef(Guid Id, string Number);
+/// <summary>
+/// An advance to a supplier before its invoice (a deposit on an order, freight paid before the goods arrive): an open
+/// item on the supplier-advances control in the advance's currency, applied to the invoice when it is posted.
+/// </summary>
+public sealed record SupplierAdvanceRequest(Guid CompanyId, Guid PartnerId, Guid BankAccountId, string Currency, decimal Amount, DateOnly PaymentDate, decimal? ExchangeRate = null, decimal? BankAmount = null, string Method = "transfer", string? Reference = null);
+
+/// <summary>A posted payment: its number, the advance's open item when it is one, the rate it was booked at and what left the account in the account's currency.</summary>
+public sealed record PaymentRef(Guid Id, string Number, Guid? OpenItemId = null, decimal ExchangeRate = 1m, decimal BankAmount = 0m, string? BankCurrency = null);
 
 /// <summary>Supplier payments as other modules drive them: created and posted in one go, under the payment permissions.</summary>
 public interface IPayments
 {
     Task<Result<PaymentRef>> PayAsync(PayOpenItemRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Pays a supplier in advance: a posted advance whose open item waits for the invoice.</summary>
+    Task<Result<PaymentRef>> AdvanceAsync(SupplierAdvanceRequest request, CancellationToken cancellationToken = default);
 }

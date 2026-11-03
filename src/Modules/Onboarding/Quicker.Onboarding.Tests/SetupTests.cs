@@ -44,7 +44,7 @@ public sealed class SetupTests(ApiHostFixture host)
         noChart.GetProperty("code").GetString().ShouldBe("opening.chart_required");
 
         await owner.PostAsync("/api/v1/accounting/charts/from-template", new { templateCode = "IFRS_SME", code = "MAIN", companyId });
-        await owner.PostAsync("/api/v1/banking/bank-accounts", new { companyId, code = "CASH", name = Name("Main cash box", "الصندوق الرئيسي"), kind = "cash", currency = "IQD" });
+        var cashBox = (await owner.PostAsync("/api/v1/banking/bank-accounts", new { companyId, code = "CASH", name = Name("Main cash box", "الصندوق الرئيسي"), kind = "cash", currency = "IQD" })).GetProperty("id").GetGuid();
         await owner.PostContentAsync($"/api/v1/partners/import?companyId={companyId}", CsvOf("code,name_en,name_ar,customer,supplier\nCUS-A,Alpha,ألفا,yes,no\nSUP-B,Beta,بيتا,no,yes\n"));
         var ready = await owner.GetOkAsync($"/api/v1/onboarding/status?companyId={companyId}");
         ready.GetProperty("hasChart").GetBoolean().ShouldBeTrue();
@@ -91,6 +91,12 @@ public sealed class SetupTests(ApiHostFixture host)
         var trial = await owner.GetOkAsync($"/api/v1/accounting/companies/{companyId}/reports/trial-balance?asOf=2026-09-30");
         var equity = trial.GetProperty("rows").EnumerateArray().Single(r => r.GetProperty("accountCode").GetString() == "3400");
         (equity.GetProperty("credit").GetDecimal() - equity.GetProperty("debit").GetDecimal()).ShouldBe(300_000m, "opening balance equity carries what the sheet did not balance");
+
+        // The cash counted is in the cash box itself, not only on its ledger account (A-194).
+        (await owner.GetOkAsync($"/api/v1/banking/bank-accounts/{cashBox}")).GetProperty("balanceTc").GetDecimal().ShouldBe(1_000_000m);
+        var cashRow = trial.GetProperty("rows").EnumerateArray().Single(r => r.GetProperty("accountCode").GetString() == "1111");
+        (cashRow.GetProperty("debit").GetDecimal() - cashRow.GetProperty("credit").GetDecimal()).ShouldBe(1_000_000m);
+        await owner.AssertInvariantsAsync();
     }
 
     [Fact]

@@ -133,6 +133,15 @@ public sealed record ProposalLineInfo(Guid Id, Guid OpenItemId, Guid PartnerId, 
 
 public sealed record ProposalInfo(Guid Id, Guid CompanyId, string Number, DateOnly RunDate, DateOnly PayThrough, string Currency, Guid? BankAccountId, Guid? PartnerId, string Status, decimal TotalTc, decimal DiscountTc, IReadOnlyList<ProposalLineInfo> Lines);
 
+/// <summary>Applies an advance, a payment on account or a debit note (the settling item) to an invoice item of the same supplier and currency; a rate difference is realised FX, booked by the subledger.</summary>
+public sealed record ApplyPayableRequest(Guid SettlingItemId, Guid SettledItemId, decimal Amount, DateOnly? SettlementDate = null, string? Reason = null);
+
+/// <summary>Applications between payable open items as other modules drive them (an order's advance applied to its invoice).</summary>
+public interface IPayableSettlements
+{
+    Task<Result<SettlementInfo>> ApplyAsync(ApplyPayableRequest request, CancellationToken cancellationToken = default);
+}
+
 /// <summary>What is owed to suppliers at a date in the company's currency, as the aging shows it: in all (advances apart) and the part past due, with the suppliers counted.</summary>
 public sealed record PayableTotals(decimal TotalFc, decimal OverdueFc, int Suppliers, int OverdueSuppliers);
 

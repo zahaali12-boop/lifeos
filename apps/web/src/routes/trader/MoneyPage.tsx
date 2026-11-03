@@ -1,10 +1,27 @@
-import { Badge } from "@quicker/ui";
-import { useQuery } from "@tanstack/react-query";
+import { Badge, Button } from "@quicker/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
+import type { components } from "../../api/schema";
 import { formatDate, formatMoney, formatNumber, localized } from "../../lib/format";
-import { PageHeader } from "../common";
+import { toFormProblem, type FormProblem } from "../../lib/problem";
+import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
+import { useBankAccounts } from "../payables/shared";
+
+type OpenItem = components["schemas"]["OpenItemSummary"];
+
+interface SupplierPayForm {
+  partnerId: string;
+  partnerName: string;
+  items: OpenItem[];
+  currency: string;
+  bankAccountId: string;
+  amount: string;
+  bankAmount: string;
+  on: string;
+}
 
 interface AgingLike {
   partnerId: string;
@@ -52,7 +69,8 @@ function Buckets({ rows, currency, testId }: { rows: { label: string; value: num
 
 /**
  * Money (trader edition, ADR-0035 §6): who owes the trader and whom he owes, from the receivables and payables aging
- * of today, in plain words with what to do first; and sales by month from the posted invoices.
+ * of today, in plain words with what to do first; and sales by month from the posted invoices. A supplier or an agent
+ * is paid from here (ADR-0035 §11): a posted supplier payment settling their oldest open invoices first.
  */
 export function MoneyPage() {
   const { t } = useTranslation();
@@ -60,6 +78,51 @@ export function MoneyPage() {
   const receivables = useQuery({ queryKey: ["ar-aging", companyId], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/receivables/open-items/aging", { params: { query: { companyId } } })) });
   const payables = useQuery({ queryKey: ["ap-aging", companyId], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/payables/open-items/aging", { params: { query: { companyId } } })) });
   const invoices = useQuery({ queryKey: ["invoices", companyId, "posted", "money"], enabled: Boolean(companyId), queryFn: async () => unwrap(await api.GET("/api/v1/sales/invoices", { params: { query: { companyId, status: "posted" } } })) });
+  const queryClient = useQueryClient();
+  const accounts = useBankAccounts(companyId);
+  const [paying, setPaying] = useState<SupplierPayForm | null>(null);
+  const [problem, setProblem] = useState<FormProblem | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const liveAccounts = (accounts.data ?? []).filter((a) => a.isActive);
+  const startPaying = async (row: AgingLike): Promise<void> => {
+    setProblem(null);
+    setNotice(null);
+    const open = unwrap(await api.GET("/api/v1/payables/open-items", { params: { query: { companyId, partnerId: row.partnerId, status: "live" } } }))
+      .filter((i) => i.item.kind === "invoice" && n(i.item.remainingTc) > 0)
+      .sort((a, b) => a.item.dueDate.localeCompare(b.item.dueDate));
+    const currency = open[0]?.item.currency ?? receivables.data?.functionalCurrency ?? payables.data?.functionalCurrency ?? "";
+    const items = open.filter((i) => i.item.currency === currency);
+    const owed = items.reduce((sum, i) => sum + n(i.item.remainingTc), 0);
+    setPaying({ partnerId: row.partnerId, partnerName: localized(row.partnerName), items, currency, bankAccountId: liveAccounts[0]?.id ?? "", amount: String(owed), bankAmount: "", on: "" });
+  };
+  const payAccount = paying ? liveAccounts.find((a) => a.id === paying.bankAccountId) : undefined;
+  const needsBankAmount = paying !== null && payAccount !== undefined && payAccount.currency !== paying.currency;
+  const paySupplier = useMutation({
+    mutationFn: async (f: SupplierPayForm) => {
+      // The oldest invoices are paid first, each up to what it still asks for.
+      let left = Number(f.amount);
+      const lines: { openItemId: string; amount: number }[] = [];
+      for (const i of f.items) {
+        if (left <= 0) {
+          break;
+        }
+        const take = Math.min(left, n(i.item.remainingTc));
+        lines.push({ openItemId: i.item.id, amount: take });
+        left -= take;
+      }
+      const created = unwrap(await api.POST("/api/v1/banking/payments", {
+        body: { companyId, partnerId: f.partnerId, bankAccountId: f.bankAccountId, kind: "supplier_payment", paymentDate: f.on || null, method: payAccount?.kind === "bank" ? "transfer" : "cash", currency: f.currency, lines, onAccount: left > 0 ? left : 0, charges: 0, bankAmount: needsBankAmount && f.bankAmount.trim() ? Number(f.bankAmount) : null, applyWht: true },
+      }));
+      return unwrap(await api.POST("/api/v1/banking/payments/{paymentId}/post", { params: { path: { paymentId: created.id } } }));
+    },
+    onSuccess: async (posted) => {
+      setPaying(null);
+      setProblem(null);
+      setNotice(t("trader.money.paid", { number: posted.number, amount: formatMoney(posted.amountTc, posted.currency) }));
+      await Promise.all([["ap-aging"], ["bank-accounts"], ["trader-health"], ["home"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+    },
+    onError: (error: unknown) => { setNotice(null); setProblem(toFormProblem(error, t("common.saveFailed"))); },
+  });
 
   const ar = receivables.data;
   const ap = payables.data;
@@ -110,6 +173,8 @@ export function MoneyPage() {
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
         {ar ? <span className="text-sm text-fg-muted">{t("trader.money.asOf", { date: formatDate(ar.asOf) })}</span> : null}
       </div>
+      <FormError message={problem?.message ?? null} />
+      {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="money-notice">{notice}</p> : null}
       {ar && ap ? (
         <div className="flex flex-col gap-4">
           <section className="grid gap-4 lg:grid-cols-2">
@@ -155,7 +220,36 @@ export function MoneyPage() {
                     <li key={row.partnerId} className="flex flex-col gap-0.5 rounded-md border border-border p-2 text-sm" data-testid="pay-row">
                       <span dir="auto">{payText(row)}</span>
                       <span className="text-xs text-fg-muted" dir="ltr">{row.partnerCode} · {t("trader.money.total")} {formatMoney(row.totalFc, currency)}</span>
-                      {overdueOf(row) > 0 ? <Badge tone="danger" className="w-fit">{t("trader.money.overdue")}</Badge> : null}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {overdueOf(row) > 0 ? <Badge tone="danger" className="w-fit">{t("trader.money.overdue")}</Badge> : null}
+                        {paying?.partnerId !== row.partnerId ? <Button type="button" variant="secondary" size="sm" onClick={() => { void startPaying(row); }} data-testid="pay-supplier">{t("trader.money.payButton")}</Button> : null}
+                      </div>
+                      {paying?.partnerId === row.partnerId ? (
+                        <form onSubmit={(e) => { e.preventDefault(); paySupplier.mutate(paying); }} className="mt-2 grid items-end gap-2 sm:grid-cols-2" data-testid="supplier-pay-form">
+                          <Field label={t("trader.money.payFrom")} required>
+                            <SelectField value={paying.bankAccountId} onChange={(e) => { setPaying({ ...paying, bankAccountId: e.target.value }); }} required data-testid="supplier-pay-account">
+                              <option value="">{t("trader.money.chooseAccount")}</option>
+                              {liveAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} · {localized(a.name)} ({a.currency})</option>)}
+                            </SelectField>
+                          </Field>
+                          <Field label={t("trader.money.payAmount", { currency: paying.currency })} required>
+                            <DecimalField value={paying.amount} onChange={(e) => { setPaying({ ...paying, amount: e.target.value }); }} required data-testid="supplier-pay-amount" />
+                          </Field>
+                          {needsBankAmount ? (
+                            <Field label={t("trader.money.payBankAmount", { currency: payAccount.currency })} required>
+                              <DecimalField value={paying.bankAmount} onChange={(e) => { setPaying({ ...paying, bankAmount: e.target.value }); }} required data-testid="supplier-pay-bank-amount" />
+                            </Field>
+                          ) : null}
+                          <Field label={t("trader.money.payDate")}>
+                            <TextField type="date" value={paying.on} onChange={(e) => { setPaying({ ...paying, on: e.target.value }); }} dir="ltr" data-testid="supplier-pay-date" />
+                          </Field>
+                          {paying.items.length === 0 ? <p className="text-xs text-fg-muted sm:col-span-2" dir="auto">{t("trader.money.payNothingOpen", { name: paying.partnerName })}</p> : null}
+                          <div className="flex justify-end gap-2 sm:col-span-2">
+                            <Button type="button" variant="secondary" onClick={() => { setPaying(null); }}>{t("common.cancel")}</Button>
+                            <Button type="submit" loading={paySupplier.isPending} disabled={!paying.bankAccountId || paying.items.length === 0} data-testid="save-supplier-payment">{t("trader.money.payNow")}</Button>
+                          </div>
+                        </form>
+                      ) : null}
                     </li>
                   ))}
                 </ol>

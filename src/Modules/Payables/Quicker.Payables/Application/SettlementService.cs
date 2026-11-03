@@ -21,8 +21,14 @@ namespace Quicker.Payables.Application;
 /// FX, booked in the company's currency against each item's control account (ADR-0031), so every control account keeps
 /// equalling its open items. A reversal mirrors the settlement and its journal.
 /// </summary>
-public sealed class SettlementService(PayablesDbContext db, PayablesService payables, ICompanyDirectory companies, IPartnerDirectory partners, IPostingService posting, IAuditSink audit, IClock clock)
+public sealed class SettlementService(PayablesDbContext db, PayablesService payables, ICompanyDirectory companies, IPartnerDirectory partners, IPostingService posting, IAuditSink audit, IClock clock) : IPayableSettlements
 {
+    Task<Result<SettlementInfo>> IPayableSettlements.ApplyAsync(ApplyPayableRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return ApplyAsync(new ApplyRequest(request.SettlingItemId, request.SettledItemId, request.Amount, request.SettlementDate, request.Reason), cancellationToken);
+    }
+
     public async Task<IReadOnlyList<SettlementInfo>> ListAsync(Guid companyId, Guid? openItemId, Guid? partnerId, CancellationToken cancellationToken)
     {
         var query = db.Settlements.AsNoTracking().Where(s => s.CompanyId == companyId);

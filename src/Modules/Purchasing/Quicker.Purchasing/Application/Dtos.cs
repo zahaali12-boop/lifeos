@@ -222,7 +222,23 @@ public sealed record RecordPurchaseShipmentInvoiceRequest(string? SupplierInvoic
 
 public sealed record PurchaseShipmentEventSummary(Guid Id, string Status, DateOnly OccurredOn, string? Note, DateTimeOffset CreatedAt);
 
-public sealed record PurchaseShipmentCostSummary(Guid Id, int LineNo, Guid ChargeTypeId, string ChargeTypeCode, IReadOnlyDictionary<string, string> ChargeTypeName, string? Description, decimal Amount, string Currency, decimal ExchangeRate, decimal AmountRc, DateOnly? PaidOn, Guid? PartnerId);
+/// <summary>A cost of the journey: who it is paid to, the agent's invoice once the goods arrived, and the payment that paid it (none while unpaid).</summary>
+public sealed record PurchaseShipmentCostSummary(Guid Id, int LineNo, Guid ChargeTypeId, string ChargeTypeCode, IReadOnlyDictionary<string, string> ChargeTypeName, string? Description, decimal Amount, string Currency, decimal ExchangeRate, decimal AmountRc, DateOnly? PaidOn, Guid? PartnerId,
+    string? PartnerCode = null, Guid? InvoiceId = null, string? InvoiceNumber = null, string? PaymentNumber = null);
+
+/// <summary>
+/// Pays the supplier for the goods from a cash box or bank account (ADR-0035 §11): the amount in the order's currency
+/// (the rest of the goods when none is given); when the account is in the company's currency and the order is not,
+/// what left the account in that currency (the rate actually paid). Before the supplier's invoice it is an advance,
+/// applied to the invoice when that is posted; after, a payment of the invoice.
+/// </summary>
+public sealed record PayPurchaseShipmentRequest(Guid BankAccountId, decimal? Amount = null, decimal? PaidRc = null, DateOnly? PaidOn = null, string? Method = null, string? Reference = null);
+
+/// <summary>Pays one cost of the journey to its agent from a cash box or bank account in the company's currency; the agent is named here when the cost does not name one yet.</summary>
+public sealed record PayPurchaseShipmentCostRequest(Guid BankAccountId, Guid? PartnerId = null, DateOnly? PaidOn = null, string? Method = null, string? Reference = null);
+
+/// <summary>One payment made from the shipment, as Banking posted it.</summary>
+public sealed record PurchaseShipmentPaymentSummary(Guid Id, int LineNo, string Kind, Guid? CostId, Guid PartnerId, string PartnerCode, IReadOnlyDictionary<string, string> PartnerName, Guid BankAccountId, Guid PaymentId, string PaymentNumber, string PaymentKind, string Currency, decimal AmountTc, decimal AmountRc, DateOnly PaidOn, decimal AppliedTc);
 
 /// <summary>One ordered item with its share of the goods paid and of the costs, in the company's currency, and the landed cost of one unit.</summary>
 public sealed record PurchaseShipmentLineSummary(Guid OrderLineId, int LineNo, Guid ItemId, string ItemCode, IReadOnlyDictionary<string, string> ItemName, decimal Quantity, string UomCode, decimal UnitPrice, decimal GoodsRc, decimal CostsRc, decimal LandedRc, decimal LandedUnitCostRc);
@@ -230,6 +246,7 @@ public sealed record PurchaseShipmentLineSummary(Guid OrderLineId, int LineNo, G
 /// <summary>Something the trader should look at, as a code the client words: arrival_overdue (days), no_costs, payment_missing, rate_above_order (percent), rate_below_order (percent), invoice_missing, stale (days).</summary>
 public sealed record PurchaseShipmentHint(string Code, decimal? Value);
 
+/// <summary>A shipment as its screen shows it. <c>GoodsOutstandingTc</c> is what the posted supplier invoice still asks for (whoever paid the rest), before the invoice the order's total less the shipment's own payments; <c>GoodsPaidTc</c> is the goods total less that.</summary>
 public sealed record PurchaseShipmentSummary(
     Guid Id,
     Guid CompanyId,
@@ -264,4 +281,7 @@ public sealed record PurchaseShipmentSummary(
     IReadOnlyList<PurchaseShipmentCostSummary> Costs,
     IReadOnlyList<PurchaseShipmentLineSummary> Lines,
     IReadOnlyList<PurchaseShipmentHint> Hints,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<PurchaseShipmentPaymentSummary> Payments,
+    decimal GoodsPaidTc,
+    decimal GoodsOutstandingTc);

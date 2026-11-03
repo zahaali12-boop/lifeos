@@ -372,10 +372,19 @@ public sealed class InvariantHarness(IUnitOfWorkAccessor unitOfWork, IAuditChain
             "SELECT count(*) FROM app.bnk_bank_transactions WHERE (@company::uuid IS NULL OR company_id = @company)", new { company = companyId }, uow.Transaction, cancellationToken: cancellationToken));
         var mismatches = (await uow.Connection.QueryAsync<ControlMismatch>(new CommandDefinition("""
             WITH booked AS (
-              SELECT t.company_id, t.bank_account_id::text AS control, sum(l.debit_fc - l.credit_fc) AS booked
-              FROM app.gl_journal_lines l
-              JOIN app.bnk_bank_transactions t ON t.tenant_id = l.tenant_id AND t.id = l.subledger_ref
-              WHERE l.subledger_type = 'BANK' AND (@company::uuid IS NULL OR l.company_id = @company)
+              SELECT company_id, control, sum(amount) AS booked
+              FROM (
+                -- A document's line names the bank transaction it made; a journal's line names the bank account itself (A-194).
+                SELECT t.company_id, t.bank_account_id::text AS control, l.debit_fc - l.credit_fc AS amount
+                FROM app.gl_journal_lines l
+                JOIN app.bnk_bank_transactions t ON t.tenant_id = l.tenant_id AND t.id = l.subledger_ref
+                WHERE l.subledger_type = 'BANK' AND (@company::uuid IS NULL OR l.company_id = @company)
+                UNION ALL
+                SELECT a.company_id, a.id::text, l.debit_fc - l.credit_fc
+                FROM app.gl_journal_lines l
+                JOIN app.bnk_bank_accounts a ON a.tenant_id = l.tenant_id AND a.id = l.subledger_ref
+                WHERE l.subledger_type = 'BANK' AND (@company::uuid IS NULL OR l.company_id = @company)
+              ) moved
               GROUP BY 1, 2
             ), expected AS (
               SELECT t.company_id, t.bank_account_id::text AS control, sum(t.amount_fc) AS expected

@@ -223,7 +223,7 @@ public sealed class PostingService(
             {
                 var lines = resolvedLines.Select((l, i) => (Line: l, No: i + 1))
                     .Where(x => string.Equals(x.Line.Account.SubledgerType, subledger.SubledgerType, StringComparison.Ordinal) && x.Line.Source.SubledgerRef is not null)
-                    .Select(x => new JournalSubledgerLine(x.No, subledger.SubledgerType, x.Line.Source.SubledgerRef!.Value, x.Line.Source.AccountRole, x.Line.Tc, x.Line.Fc, x.Line.Source.DueDate))
+                    .Select(x => new JournalSubledgerLine(x.No, subledger.SubledgerType, x.Line.Source.SubledgerRef!.Value, x.Line.Source.AccountRole, x.Line.Tc, x.Line.Fc, x.Line.Source.DueDate, x.Line.Account.Id, tc.Code))
                     .ToList();
                 if (lines.Count == 0)
                 {

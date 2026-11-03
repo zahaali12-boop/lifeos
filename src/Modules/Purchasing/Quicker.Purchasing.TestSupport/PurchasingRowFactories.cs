@@ -63,6 +63,16 @@ public static class PurchasingRowFactories
         IsolationRegistry.Register("app.pur_shipments", static async (c, tx, t) => new RowRef("app.pur_shipments", $"id = '{(await ShipmentAsync(c, tx, t)).Shipment}'"));
         IsolationRegistry.Register("app.pur_shipment_events", static async (c, tx, t) => new RowRef("app.pur_shipment_events", $"id = '{(await ShipmentAsync(c, tx, t)).Event}'"));
         IsolationRegistry.Register("app.pur_shipment_costs", static async (c, tx, t) => new RowRef("app.pur_shipment_costs", $"id = '{(await ShipmentAsync(c, tx, t)).Cost}'"));
+        IsolationRegistry.Register("app.pur_shipment_payments", static async (c, tx, t) =>
+        {
+            var (shipment, _, _) = await ShipmentAsync(c, tx, t);
+            var id = Guid.CreateVersion7();
+            await c.ExecuteAsync("""
+                INSERT INTO app.pur_shipment_payments (tenant_id, id, shipment_id, line_no, kind, partner_id, bank_account_id, payment_id, payment_number, payment_kind, currency, amount_tc, amount_rc, paid_on)
+                VALUES (@t, @id, @shipment, 1, 'goods', @partner, @bank, @payment, 'PAY-PROBE', 'supplier_payment', 'IQD', 10, 10, '2026-09-22')
+                """, new { t, id, shipment, partner = Guid.CreateVersion7(), bank = Guid.CreateVersion7(), payment = Guid.CreateVersion7() }, tx);
+            return new RowRef("app.pur_shipment_payments", $"id = '{id}'");
+        });
         IsolationRegistry.Register("app.pur_commitments", static async (c, tx, t) =>
         {
             var (order, line, company) = await OrderAsync(c, tx, t);

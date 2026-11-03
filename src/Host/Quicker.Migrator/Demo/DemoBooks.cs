@@ -2,6 +2,8 @@ using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Accounting.Application;
 using Quicker.Accounting.Persistence;
+using Quicker.Banking.Application;
+using Quicker.Banking.Contracts;
 using Quicker.Integrity.Contracts;
 using Quicker.Kernel.Amounts;
 using Quicker.Kernel.Ids;
@@ -77,6 +79,8 @@ internal static class DemoBooks
         var harness = services.GetRequiredService<IInvariantHarness>();
         var accounting = services.GetRequiredService<AccountingDbContext>();
         var payables = services.GetRequiredService<IPayables>();
+        var bankAccountService = services.GetRequiredService<BankAccountService>();
+        var bankAccounts = services.GetRequiredService<IBankAccountDirectory>();
         // The v2 books name their suppliers and customers by fixed ids; the payables (4.7) and receivables (5.6)
         // subledgers keep open items per partner, so those parties become real partner records with the same ids before
         // the first journal names them (idempotent, like the rest of the seed; the CRM seed fills in the rest later).
@@ -137,8 +141,11 @@ internal static class DemoBooks
             Require(await profiles.CreateFromChartAsync(companyId, null, cancellationToken));
             await fiscal.EnsureYearCoversAsync(company.FiscalCalendarId, windowStart, cancellationToken);
 
-            var bank = DemoIds.For("bank:" + code);
-            var cashBox = DemoIds.For("cash:" + code);
+            // The operating account and the cash box the books move: real accounts, so each keeps its balance with its ledger account (A-194).
+            var bank = (await bankAccounts.FindByCodeAsync(companyId, "OPS", cancellationToken))?.Id
+                ?? Require(await bankAccountService.SaveAsync(null, new SaveCompanyBankAccountRequest(companyId, "OPS", Bilingual("Operating account", "الحساب التشغيلي"), "bank", currency, BankName: "Rafidain Bank"), cancellationToken)).Id;
+            var cashBox = (await bankAccounts.FindByCodeAsync(companyId, "CASH", cancellationToken))?.Id
+                ?? Require(await bankAccountService.SaveAsync(null, new SaveCompanyBankAccountRequest(companyId, "CASH", Bilingual("Cash box", "الصندوق"), "cash", currency), cancellationToken)).Id;
             var vehicle = DemoIds.For("asset:" + code + ":vehicles");
             decimal M(decimal usd) => Amount(usd, currency);
 

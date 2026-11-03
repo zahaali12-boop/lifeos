@@ -132,7 +132,7 @@ public sealed class HealthService(
         var owed = await receivables.OpenTotalsAsync(companyId, today, cancellationToken);
         var owing = await payables.OpenTotalsAsync(companyId, today, cancellationToken);
         var netPosition = Round(cash + owed.TotalFc - owing.TotalFc, fc);
-        var runway = fixedCosts is > 0m ? RoundingPolicy.Default.Round(cash / fixedCosts.Value, 1) : (decimal?)null;
+        var runway = fixedCosts is > 0m && cash >= 0m ? RoundingPolicy.Default.Round(cash / fixedCosts.Value, 1) : (decimal?)null;
         var viability = new TraderViability(fixedCosts, fixedSource, margin is { } m ? RoundingPolicy.Default.Round(m, 1) : null, marginSource, breakEven, monthToDate.NetSales, projected, coverage,
             cash, cashAccounts, Round(owed.TotalFc, fc), Round(owed.OverdueFc, fc), Round(owing.TotalFc, fc), Round(owing.OverdueFc, fc), netPosition, runway);
 
@@ -206,7 +206,12 @@ public sealed class HealthService(
             warnings.Add(new TraderWarning("fixed_costs_unknown", null));
         }
 
-        if (runway is { } runwayMonths && runwayMonths < RunwayWarningMonths)
+        if (cash < 0m)
+        {
+            // More was paid out than the books saw come in: usually the money the owner put in is not recorded yet.
+            warnings.Add(new TraderWarning("cash_negative", cash));
+        }
+        else if (runway is { } runwayMonths && runwayMonths < RunwayWarningMonths)
         {
             warnings.Add(new TraderWarning("cash_runway_short", runwayMonths));
         }

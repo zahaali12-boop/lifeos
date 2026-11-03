@@ -34,6 +34,8 @@ public static class BankingModule
         services.AddScoped<IBankAccountDirectory>(static sp => sp.GetRequiredService<BankAccountService>());
         services.AddScoped<IBankTransactions, BankTransactionService>();
         services.AddScoped<IPayments, PaymentsGateway>();
+        // A journal line on a bank or cash account records the movement in the box it names (A-140, A-194).
+        services.AddScoped<IJournalSubledger, BankJournalSubledger>();
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("bank_payment", BankingPermissions.PaymentRead));
         services.AddSingleton(new RecordReadPermission("bank_receipt", BankingPermissions.ReceiptRead));

@@ -8,6 +8,7 @@ type Warning = components["schemas"]["TraderWarning"];
 export const warningTones: Record<string, "danger" | "warning" | "info"> = {
   loss: "danger",
   cash_runway_short: "danger",
+  cash_negative: "danger",
   break_even_not_covered: "warning",
   margin_below_target: "warning",
   overdue_receivables: "warning",
@@ -23,6 +24,7 @@ export const warningTargets: Record<string, { to: string; label: string }> = {
   loss: { to: "/trader/health", label: "nav.trader.health" },
   fixed_costs_unknown: { to: "/trader/health", label: "nav.trader.health" },
   cash_runway_short: { to: "/trader/money", label: "nav.trader.money" },
+  cash_negative: { to: "/setup", label: "nav.setupWizard" },
   break_even_not_covered: { to: "/trader/sales", label: "nav.trader.sales" },
   margin_below_target: { to: "/trader/pricing", label: "nav.trader.pricing" },
   overdue_receivables: { to: "/trader/money", label: "nav.trader.money" },
@@ -38,6 +40,7 @@ export function traderWarningText(t: TFunction, w: Warning, coverDays: number, c
   const money = (amount: number | null): string => (amount === null ? "—" : formatMoney(amount, currency));
   switch (w.code) {
     case "loss":
+    case "cash_negative":
     case "overdue_receivables":
     case "overdue_payables":
       return t(`trader.health.warnings.${w.code}`, { amount: money(value) });

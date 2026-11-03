@@ -63,6 +63,8 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
 
     public DbSet<ShipmentCost> ShipmentCosts => Set<ShipmentCost>();
 
+    public DbSet<ShipmentPayment> ShipmentPayments => Set<ShipmentPayment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Requisition>(b =>
@@ -288,6 +290,16 @@ public sealed class PurchasingDbContext(DbContextOptions<PurchasingDbContext> op
             b.Property(static x => x.PaidAmountRc).HasPrecision(24, 6);
             b.HasMany(static x => x.Events).WithOne().HasForeignKey(static e => new { e.TenantId, e.ShipmentId });
             b.HasMany(static x => x.Costs).WithOne().HasForeignKey(static c => new { c.TenantId, c.ShipmentId });
+            b.HasMany(static x => x.Payments).WithOne().HasForeignKey(static p => new { p.TenantId, p.ShipmentId });
+        });
+
+        modelBuilder.Entity<ShipmentPayment>(b =>
+        {
+            b.ToTable("pur_shipment_payments", "app");
+            b.HasKey(static x => new { x.TenantId, x.Id });
+            b.Property(static x => x.AmountTc).HasPrecision(24, 6);
+            b.Property(static x => x.AmountRc).HasPrecision(24, 6);
+            b.Property(static x => x.AppliedTc).HasPrecision(24, 6);
         });
 
         modelBuilder.Entity<ShipmentEvent>(b =>

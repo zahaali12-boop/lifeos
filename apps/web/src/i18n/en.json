@@ -6291,7 +6291,27 @@
       "emptyDescription": "Order from an offer, or track an existing order, and follow it here.",
       "cancel": "Cancel this shipment",
       "openOrder": "Open the order",
-      "attention": "Needs a look"
+      "attention": "Needs a look",
+      "paySupplier": "Pay the supplier",
+      "payFrom": "Pay from",
+      "chooseAccount": "Choose a cash box or bank account",
+      "payAmount": "Amount ({currency})",
+      "paidRcHint": "What left the cash box or bank in your currency: the rate you paid is kept.",
+      "payNow": "Pay",
+      "leftToPay": "Still to pay for the goods: {amount}",
+      "paidElsewhere": "Paid on the supplier's invoice outside this screen (Money or a payment): {amount}",
+      "payAdvanceHint": "Paid before the supplier's invoice: kept as an advance and taken off the invoice when it is recorded.",
+      "payInvoiceHint": "Paid against the supplier's invoice.",
+      "paymentKinds": {
+        "supplier_advance": "advance",
+        "supplier_payment": "payment of the invoice"
+      },
+      "paidTo": "Paid to",
+      "paidToHint": "The freight forwarder or customs broker, so what you pay them is kept on their account.",
+      "choosePaidTo": "Choose who is paid",
+      "payCost": "Pay",
+      "costPaid": "Paid · {number}",
+      "payCostHint": "Paid before the goods arrive: an advance, taken off the agent's invoice made on arrival. After: a payment of that invoice."
     },
     "pricing": {
       "title": "Selling prices",
@@ -6422,7 +6442,16 @@
       "monthlySales": "Sales by month",
       "monthlySalesHint": "Posted invoices of the last six months.",
       "noSales": "No sales in the last six months.",
-      "openInvoices": "Open invoices"
+      "openInvoices": "Open invoices",
+      "payButton": "Pay",
+      "payFrom": "Pay from",
+      "chooseAccount": "Choose a cash box or bank account",
+      "payAmount": "Amount ({currency})",
+      "payBankAmount": "What left the account ({currency})",
+      "payDate": "Date",
+      "payNow": "Pay",
+      "payNothingOpen": "{name} has no invoice to pay.",
+      "paid": "Paid: {number} for {amount}."
     },
     "health": {
       "title": "Health",
@@ -6454,7 +6483,8 @@
         "overdue_payables": "Suppliers",
         "shipments_attention": "Shipments",
         "no_recent_sales": "Sales",
-        "reorder_needed": "Stock"
+        "reorder_needed": "Stock",
+        "cash_negative": "Cash"
       },
       "warnings": {
         "loss": "This period lost {amount}: the goods and the expenses cost more than what was sold.",
@@ -6467,7 +6497,8 @@
         "shipments_attention": "{count} shipment(s) on the way need attention: see Shipments.",
         "no_recent_sales": "No sale recorded for {days} days.",
         "no_sales_in_cover": "No sale recorded in the last {days} days.",
-        "reorder_needed": "{count} item(s) will run out: see what to reorder below."
+        "reorder_needed": "{count} item(s) will run out: see what to reorder below.",
+        "cash_negative": "The cash boxes and banks show {amount}: record the money you put in (opening balances under Setup) or check the payments."
       },
       "income": {
         "title": "Income statement",

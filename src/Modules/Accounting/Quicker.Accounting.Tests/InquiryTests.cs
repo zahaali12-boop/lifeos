@@ -38,10 +38,11 @@ public sealed class InquiryTests(ApiHostFixture host)
         await owner.ChartFromTemplateAsync("IFRS_SME", "CH-GRP", companyId);
         await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/posting-profiles/from-chart", new { });
         var (_, cc1) = await owner.DimensionValueAsync("COST_CENTER", "CC-G1");
+        var cashBox = (await owner.PostAsync("/api/v1/banking/bank-accounts", new { companyId, code = "CASH", name = new { en = "Cash box", ar = "الصندوق" }, kind = "cash", currency = "IQD" })).GetProperty("id").GetGuid();
         var landlord = (await owner.PostAsync("/api/v1/partners", new { code = "LANDLORD", legalName = new { en = "Tigris Properties", ar = "عقارات دجلة" }, isSupplier = true })).GetProperty("id").GetGuid();
         var reports = $"/api/v1/accounting/companies/{companyId}/reports";
 
-        await PostJournalAsync(owner, companyId, "2026-01-15", "Go-live", [Line("1111", debit: 5000000m, subledgerType: "BANK", subledgerRef: Guid.NewGuid()), Line("2510", credit: 3000000m)], kind: "opening");
+        await PostJournalAsync(owner, companyId, "2026-01-15", "Go-live", [Line("1111", debit: 5000000m, subledgerType: "BANK", subledgerRef: cashBox), Line("2510", credit: 3000000m)], kind: "opening");
         var rent = new { accountCode = "6110", debit = 1500000m, credit = 0m, partnerId = landlord, dimensions = new { COST_CENTER = cc1 } };
         await PostJournalAsync(owner, companyId, "2026-09-05", "Rent September", [rent, Line("2170", credit: 1500000m)]);
         await PostJournalAsync(owner, companyId, "2026-10-12", "Salaries October", [Line("6100", debit: 2000000m), Line("2190", credit: 2000000m)]);
@@ -109,10 +110,11 @@ public sealed class InquiryTests(ApiHostFixture host)
         await owner.ChartFromTemplateAsync("IFRS_SME", "CH-INQ", companyId);
         await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/posting-profiles/from-chart", new { });
         var (_, cc1) = await owner.DimensionValueAsync("COST_CENTER", "CC-1");
+        var cashBox = (await owner.PostAsync("/api/v1/banking/bank-accounts", new { companyId, code = "CASH", name = new { en = "Cash box", ar = "الصندوق" }, kind = "cash", currency = "IQD" })).GetProperty("id").GetGuid();
         var (_, cc2) = await owner.DimensionValueAsync("COST_CENTER", "CC-2");
         var reports = $"/api/v1/accounting/companies/{companyId}/reports";
 
-        await PostJournalAsync(owner, companyId, "2026-01-15", "Go-live balances", [Line("1111", debit: 5000000m, subledgerType: "BANK", subledgerRef: Guid.NewGuid()), Line("2510", credit: 3000000m)], kind: "opening");
+        await PostJournalAsync(owner, companyId, "2026-01-15", "Go-live balances", [Line("1111", debit: 5000000m, subledgerType: "BANK", subledgerRef: cashBox), Line("2510", credit: 3000000m)], kind: "opening");
         await PostJournalAsync(owner, companyId, "2026-09-05", "Rent September", [Line("6110", debit: 1500000m, dimensions: new { COST_CENTER = cc1 }), Line("2170", credit: 1500000m, dimensions: new { COST_CENTER = cc1 })]);
         await PostJournalAsync(owner, companyId, "2026-10-12", "Salaries October", [Line("6100", debit: 2000000m, dimensions: new { COST_CENTER = cc2 }), Line("2190", credit: 2000000m, dimensions: new { COST_CENTER = cc2 })]);
         var customer = (await owner.PostAsync("/api/v1/partners", new { code = "CUS-I", legalName = new { en = "Inquiry Customer", ar = "عميل الاستعلام" }, isCustomer = true })).GetProperty("id").GetGuid();

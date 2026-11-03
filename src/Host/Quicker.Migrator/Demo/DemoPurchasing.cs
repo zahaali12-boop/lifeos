@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Quicker.Banking.Application;
+using Quicker.Banking.Contracts;
 using Quicker.Kernel.Amounts;
 using Quicker.Kernel.Results;
 using Quicker.Organization.Application;
@@ -64,6 +65,7 @@ internal static class DemoPurchasing
         var requisitionService = services.GetRequiredService<RequisitionService>();
         var agreementService = services.GetRequiredService<BlanketAgreementService>();
         var bankAccountService = services.GetRequiredService<BankAccountService>();
+        var bankAccountDirectory = services.GetRequiredService<IBankAccountDirectory>();
         var paymentService = services.GetRequiredService<PaymentService>();
         var payables = services.GetRequiredService<IPayables>();
 
@@ -173,13 +175,15 @@ internal static class DemoPurchasing
             await InvoiceAsync(2, openReceipt, openOrder, Day(4));
 
             // The bank account payments go out of: the on-time supplier paid in full, the late one in part.
-            var bank = Require(await bankAccountService.SaveAsync(null, new SaveCompanyBankAccountRequest(companyId, "OPS",
-                new Dictionary<string, string>(StringComparer.Ordinal) { ["en"] = "Operating account", ["ar"] = "الحساب التشغيلي" }, "bank", currency, BankName: "Rafidain Bank"), cancellationToken));
+            // The books (DemoBooks) opened it for the companies they keep; any other company gets it here.
+            var bankId = (await bankAccountDirectory.FindByCodeAsync(companyId, "OPS", cancellationToken))?.Id
+                ?? Require(await bankAccountService.SaveAsync(null, new SaveCompanyBankAccountRequest(companyId, "OPS",
+                    new Dictionary<string, string>(StringComparer.Ordinal) { ["en"] = "Operating account", ["ar"] = "الحساب التشغيلي" }, "bank", currency, BankName: "Rafidain Bank"), cancellationToken)).Id;
             foreach (var (supplier, invoiceId, share, date) in new[] { (0, onTimeInvoice.Id, 1m, Day(10)), (1, lateInvoice.Id, 0.5m, Day(12)) })
             {
                 var item = (await payables.ItemsOfAsync(PurchaseDocumentTypes.Invoice, invoiceId, cancellationToken))[0];
                 var amount = Rounding.Round(await RemainingAsync(invoiceId) * share, plan.Decimals);
-                var payment = Require(await paymentService.CreateAsync(new SavePaymentRequest(companyId, suppliers[supplier], bank.Id, PaymentDate: date, Reference: $"TT-{plan.Company}-{supplier + 1}",
+                var payment = Require(await paymentService.CreateAsync(new SavePaymentRequest(companyId, suppliers[supplier], bankId, PaymentDate: date, Reference: $"TT-{plan.Company}-{supplier + 1}",
                     Currency: currency, Lines: [new SavePaymentLineRequest(item.Id, amount)]), cancellationToken));
                 Require(await paymentService.PostAsync(payment.Id, cancellationToken));
                 payments++;

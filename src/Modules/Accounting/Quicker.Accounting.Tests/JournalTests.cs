@@ -191,6 +191,8 @@ public sealed class JournalTests(ApiHostFixture host)
         var ws = await Api.SignupAsync();
         using var owner = Api.ClientFor(ws.AccessToken);
         var companyId = await CompanyReadyAsync(owner, "OPN", "IQD");
+        // The cash line names the cash box it opens (A-194).
+        var cashBox = (await owner.PostAsync("/api/v1/banking/bank-accounts", new { companyId, code = "CASH", name = new { en = "Cash box", ar = "الصندوق" }, kind = "cash", currency = "IQD" })).GetProperty("id").GetGuid();
 
         var opening = await owner.PostAsync($"/api/v1/accounting/companies/{companyId}/journals", new
         {
@@ -198,7 +200,7 @@ public sealed class JournalTests(ApiHostFixture host)
             postingDate = "2026-09-01",
             currency = "IQD",
             description = new { en = "Go-live balances", ar = "أرصدة الانطلاق" },
-            lines = new[] { Line("1111", debit: 5000000m, subledgerType: "BANK", subledgerRef: Guid.NewGuid()), Line("1510", debit: 20000000m, subledgerType: "FA", subledgerRef: Guid.NewGuid()), Line("2510", credit: 10000000m) },
+            lines = new[] { Line("1111", debit: 5000000m, subledgerType: "BANK", subledgerRef: cashBox), Line("1510", debit: 20000000m, subledgerType: "FA", subledgerRef: Guid.NewGuid()), Line("2510", credit: 10000000m) },
         });
         var openingPosted = await owner.PostAsync($"/api/v1/accounting/journals/{opening.GetProperty("id").GetGuid()}/post", new { }, HttpStatusCode.OK);
         var openingEntry = await owner.GetOkAsync($"/api/v1/accounting/journal-entries/{openingPosted.GetProperty("journalEntryId").GetGuid()}");

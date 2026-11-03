@@ -84,13 +84,27 @@ public sealed class PaymentsGateway(PaymentService payments) : IPayments
     {
         ArgumentNullException.ThrowIfNull(request);
         var created = await payments.CreateAsync(new SavePaymentRequest(request.CompanyId, request.PartnerId, request.BankAccountId, "supplier_payment", request.PaymentDate, request.Method, request.Reference,
-            Lines: [new SavePaymentLineRequest(request.OpenItemId, request.Amount)]), cancellationToken);
-        if (created.IsFailure)
+            ExchangeRate: request.ExchangeRate, Lines: [new SavePaymentLineRequest(request.OpenItemId, request.Amount)], BankAmount: request.BankAmount), cancellationToken);
+        return created.IsFailure ? created.Error! : await PostAsync(created.Value.Id, cancellationToken);
+    }
+
+    public async Task<Result<PaymentRef>> AdvanceAsync(SupplierAdvanceRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var created = await payments.CreateAsync(new SavePaymentRequest(request.CompanyId, request.PartnerId, request.BankAccountId, "supplier_advance", request.PaymentDate, request.Method, request.Reference,
+            request.Currency, request.ExchangeRate, OnAccount: request.Amount, BankAmount: request.BankAmount), cancellationToken);
+        return created.IsFailure ? created.Error! : await PostAsync(created.Value.Id, cancellationToken);
+    }
+
+    private async Task<Result<PaymentRef>> PostAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var posted = await payments.PostAsync(id, cancellationToken);
+        if (posted.IsFailure)
         {
-            return created.Error!;
+            return posted.Error!;
         }
 
-        var posted = await payments.PostAsync(created.Value.Id, cancellationToken);
-        return posted.IsFailure ? posted.Error! : new PaymentRef(posted.Value.Id, posted.Value.Number);
+        var p = posted.Value;
+        return new PaymentRef(p.Id, p.Number, p.OpenItemId, p.ExchangeRate, p.BankAmount, p.BankCurrency);
     }
 }

@@ -6291,7 +6291,27 @@
       "emptyDescription": "اطلب من عرض، أو تتبّع طلبية موجودة، وتابعها هنا.",
       "cancel": "إلغاء هذه الشحنة",
       "openOrder": "افتح الطلبية",
-      "attention": "يحتاج نظرة"
+      "attention": "يحتاج نظرة",
+      "paySupplier": "ادفع للمورد",
+      "payFrom": "ادفع من",
+      "chooseAccount": "اختر صندوقاً أو حساباً بنكياً",
+      "payAmount": "المبلغ ({currency})",
+      "paidRcHint": "ما خرج من الصندوق أو البنك بعملتك: يُحفظ سعر الصرف الذي دفعت به.",
+      "payNow": "ادفع",
+      "leftToPay": "المتبقي من ثمن البضاعة: {amount}",
+      "paidElsewhere": "دُفع على فاتورة المورد خارج هذه الشاشة (من المال أو بدفعة): {amount}",
+      "payAdvanceHint": "مدفوع قبل فاتورة المورد: يُحفظ دفعةً مقدمة ويُخصم من الفاتورة عند تسجيلها.",
+      "payInvoiceHint": "مدفوع على فاتورة المورد.",
+      "paymentKinds": {
+        "supplier_advance": "دفعة مقدمة",
+        "supplier_payment": "سداد الفاتورة"
+      },
+      "paidTo": "مدفوع إلى",
+      "paidToHint": "وكيل الشحن أو المخلص الجمركي، ليُحفظ ما تدفعه له على حسابه.",
+      "choosePaidTo": "اختر لمن يُدفع",
+      "payCost": "ادفع",
+      "costPaid": "مدفوع · {number}",
+      "payCostHint": "قبل وصول البضاعة: دفعة مقدمة تُخصم من فاتورة الوكيل عند الوصول. بعدها: سداد تلك الفاتورة."
     },
     "pricing": {
       "title": "أسعار البيع",
@@ -6422,7 +6442,16 @@
       "monthlySales": "المبيعات حسب الشهر",
       "monthlySalesHint": "الفواتير المرحّلة في الأشهر الستة الأخيرة.",
       "noSales": "لا مبيعات في الأشهر الستة الأخيرة.",
-      "openInvoices": "الفواتير المفتوحة"
+      "openInvoices": "الفواتير المفتوحة",
+      "payButton": "ادفع",
+      "payFrom": "ادفع من",
+      "chooseAccount": "اختر صندوقاً أو حساباً بنكياً",
+      "payAmount": "المبلغ ({currency})",
+      "payBankAmount": "ما خرج من الحساب ({currency})",
+      "payDate": "التاريخ",
+      "payNow": "ادفع",
+      "payNothingOpen": "لا فاتورة على {name} لتُدفع.",
+      "paid": "دُفع: {number} بمبلغ {amount}."
     },
     "health": {
       "title": "صحة المشروع",
@@ -6454,7 +6483,8 @@
         "overdue_payables": "الموردون",
         "shipments_attention": "الشحنات",
         "no_recent_sales": "المبيعات",
-        "reorder_needed": "المخزون"
+        "reorder_needed": "المخزون",
+        "cash_negative": "النقد"
       },
       "warnings": {
         "loss": "خسرت هذه الفترة {amount}: كلفة البضاعة والمصاريف أكثر مما بيع.",
@@ -6467,7 +6497,8 @@
         "shipments_attention": "{count} شحنة في الطريق تحتاج انتباهك: انظر الشحنات.",
         "no_recent_sales": "لم يُسجَّل بيع منذ {days} يوماً.",
         "no_sales_in_cover": "لم يُسجَّل بيع في آخر {days} يوماً.",
-        "reorder_needed": "{count} صنف سينفد: انظر ما يجب إعادة طلبه أدناه."
+        "reorder_needed": "{count} صنف سينفد: انظر ما يجب إعادة طلبه أدناه.",
+        "cash_negative": "الصناديق والبنوك تظهر {amount}: سجّل المال الذي وضعته (الأرصدة الافتتاحية في الإعداد) أو راجع الدفعات."
       },
       "income": {
         "title": "قائمة الدخل",

@@ -6,8 +6,9 @@ import { expect, test, type Page } from "@playwright/test";
  * bar of plain-language screens; on Offers a comparison is started for two car parts from two suppliers in China, the
  * offers entered (one cheaper but with a minimum quantity the order does not reach), compared landed in the company's
  * currency, the recommendation names the usable supplier with its reason and the saving a split would bring, and
- * "order from this supplier" makes the purchase order; the order is followed as a shipment to arrival, priced, sold
- * and paid for, and the Money and Health screens say what is owed and whether the project carries itself. Then the
+ * "order from this supplier" makes the purchase order; the order is followed as a shipment to arrival with its freight
+ * and a deposit paid from the bank, priced, sold and paid for, the rest of the supplier's invoice paid from Money, and
+ * the Money and Health screens say what is owed and whether the project carries itself. Then the
  * same screens in Arabic, right-to-left. Every screen passes axe with no serious or critical violation.
  */
 const password = "correct-horse-battery-staple";
@@ -60,10 +61,14 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await call("post", "/api/v1/items", { code: "PADS", name: { en: "Brake pads", ar: "فحمات فرامل" }, baseUom: "PCS" });
   await call("post", "/api/v1/items", { code: "FILTER", name: { en: "Oil filter", ar: "فلتر زيت" }, baseUom: "PCS" });
   await call("post", "/api/v1/inventory/warehouses", { companyId, code: "MAIN", name: { en: "Main store", ar: "المخزن الرئيسي" } });
-  for (const [code, en, ar] of [["SHENZ", "Shenzhen Auto Parts", "شنجن لقطع السيارات"], ["GUANG", "Guangzhou Motors", "غوانزو موتورز"]]) {
+  for (const [code, en, ar] of [["SHENZ", "Shenzhen Auto Parts", "شنجن لقطع السيارات"], ["GUANG", "Guangzhou Motors", "غوانزو موتورز"], ["FWD", "Gulf Forwarding", "الخليج للشحن"]]) {
     const supplier = await call("post", "/api/v1/partners", { code, legalName: { en, ar }, isSupplier: true });
     await call("put", `/api/v1/partners/${supplier.id}/supplier-accounts/${companyId}`, { currency: "IQD", leadTimeDays: 30 });
   }
+  // The money the purchase is paid from: 2,200,000 in the bank at go-live, as the setup wizard posts it.
+  await call("post", "/api/v1/banking/bank-accounts", { companyId, code: "BANK", name: { en: "Rafidain account", ar: "حساب الرافدين" }, kind: "bank", currency: "IQD", isActive: true });
+  const openedOn = new Date().toISOString().slice(0, 10);
+  await call("post", `/api/v1/onboarding/companies/${companyId}/opening-balances?asOf=${openedOn}`, { lines: [{ account: "1121", debit: 2200000, credit: 0, bankAccount: "BANK" }, { account: "3100", debit: 0, credit: 2200000 }] });
 
   // Settings: the workspace switched to the trader edition; the bar shows the flat links at once.
   await nav(page, "Settings");
@@ -125,8 +130,10 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("ordered-note")).toContainText("PO-");
   await expect(page.getByTestId("offers-detail").getByTestId("offer-status")).toHaveText("Ordered");
 
-  // The shipment: ordered at once; shipped with a date; sea freight added; what was paid recorded; received into the
-  // store, which posts the receipt and lands the freight on the stock; the supplier's invoice recorded into the payable.
+  // The shipment: ordered at once; shipped with a date; sea freight to the forwarder added and paid from the bank; a
+  // deposit of 975,000 paid to the supplier (an advance); received into the store, which posts the receipt, lands the
+  // freight on the stock and turns the forwarder's charge into its invoice; the supplier's invoice recorded into the
+  // payable, the deposit applied to it.
   await page.getByTestId("ordered-note").getByRole("link", { name: "Follow the shipment" }).click();
   await expect(page.getByTestId("shipment-detail")).toBeVisible();
   await expect(page.getByTestId("shipment-stage")).toHaveText("Ordered");
@@ -138,15 +145,24 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("shipment-hint")).toHaveCount(2);
   await page.getByTestId("add-cost").click();
   await page.getByTestId("cost-type").selectOption({ label: "FREIGHT · Freight" });
-  await page.getByTestId("cost-amount").fill("200000");
+  await page.getByTestId("cost-amount").fill("225000");
+  await page.getByTestId("cost-partner").selectOption({ label: "FWD · Gulf Forwarding" });
   await page.getByTestId("save-cost").click();
   await expect(page.getByTestId("cost-row")).toHaveCount(1);
-  await expect(page.getByTestId("cost-row")).toContainText("200,000");
+  await expect(page.getByTestId("cost-row")).toContainText("225,000");
+  await expect(page.getByTestId("cost-row")).toContainText("FWD");
+  await page.getByTestId("pay-cost-0").click();
+  await expect(page.getByTestId("cost-pay-partner")).toHaveValue(/.+/);
+  await page.getByTestId("cost-pay-account").selectOption({ label: "BANK · Rafidain account" });
+  await page.getByTestId("save-cost-payment").click();
+  await expect(page.getByTestId("cost-paid")).toBeVisible({ timeout: 20_000 });
   await page.getByTestId("record-payment").click();
-  await page.getByTestId("paid-amount").fill("2000000");
+  await page.getByTestId("pay-account").selectOption({ label: "BANK · Rafidain account (IQD)" });
+  await page.getByTestId("pay-amount").fill("975000");
   await page.getByTestId("save-payment").click();
+  await expect(page.getByTestId("shipment-payment")).toHaveCount(1, { timeout: 20_000 });
+  await expect(page.getByTestId("goods-outstanding")).toContainText("1,000,000");
   await expect(page.getByTestId("landed-total")).toContainText("2,200,000");
-  await expect(page.getByTestId("shipment-hints")).toContainText("above the order's");
   await expect(page.getByTestId("shipment-line").first().getByTestId("landed-unit")).toContainText("16,708");
   await expectAccessible(page);
   await page.getByTestId("receive-warehouse").selectOption({ label: "MAIN · Main store" });
@@ -209,14 +225,27 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expectAccessible(page);
   await page.getByTestId("flat-nav").getByRole("link", { name: "Money" }).click();
   await expect(page.getByTestId("owed-to-you-total")).toContainText("110,000");
-  await expect(page.getByTestId("you-owe-total")).toContainText("1,975,000");
+  await expect(page.getByTestId("you-owe-total")).toContainText("1,000,000");
   await expect(page.getByTestId("nothing-to-chase")).toBeVisible();
   await expect(page.getByTestId("pay-row")).toHaveCount(1);
+  await page.getByTestId("pay-supplier").click();
+  await page.getByTestId("supplier-pay-account").selectOption({ label: "BANK · Rafidain account (IQD)" });
+  await expect(page.getByTestId("supplier-pay-amount")).toHaveValue(/^1,?000,?000$/);
+  await page.getByTestId("save-supplier-payment").click();
+  await expect(page.getByTestId("money-notice")).toContainText("1,000,000", { timeout: 20_000 });
+  await expect(page.getByTestId("nothing-to-pay")).toBeVisible();
   await expect(page.getByTestId("sales-month")).toHaveCount(6);
   await expectAccessible(page);
+  // The shipment knows the invoice was paid from Money: nothing is left to pay there.
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Shipments" }).click();
+  await page.getByRole("grid").getByText("PO-", { exact: false }).first().dblclick();
+  await expect(page.getByTestId("paid-elsewhere")).toContainText("1,000,000");
+  await expect(page.getByTestId("goods-outstanding")).toHaveCount(0);
+  await expect(page.getByTestId("record-payment")).toHaveCount(0);
+  await page.keyboard.press("Escape");
 
   // Health: the month made a profit on the ten pads; the fixed costs entered give the break-even and how long the
-  // 100,000 in the cash box lasts; nothing is on the way, the pads sold to Ali, and the stock covers the coming days.
+  // 100,000 in the cash box lasts (the bank paid out all it held); nothing is on the way, the pads sold to Ali, and the stock covers the coming days.
   await page.getByTestId("flat-nav").getByRole("link", { name: "Health" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Health");
   await expect(page.getByTestId("verdict")).toContainText("a profit of");

@@ -9954,9 +9954,43 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** What was paid for the goods in the company's currency; the effective exchange rate follows */
+        /** What was paid for the goods in the company's currency, when it was paid outside the program; the effective exchange rate follows. Refused once the goods are paid from the shipment. */
         put: operations["putPurchasingShipmentsByShipmentIdPayment"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pays the supplier for the goods from a cash box or bank account: an advance before the invoice (applied to it when it is posted), a payment of the invoice after */
+        post: operations["postPurchasingShipmentsByShipmentIdPay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchasing/shipments/{shipmentId}/costs/{costId}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pays one cost of the journey to its agent: an advance while the goods are on the way, a payment of the agent's invoice after they arrive */
+        post: operations["postPurchasingShipmentsByShipmentIdCostsByCostIdPay"];
         delete?: never;
         options?: never;
         head?: never;
@@ -18068,6 +18102,35 @@ export interface components {
             /** @default transfer */
             method: string;
         };
+        /** @description Pays one cost of the journey to its agent from a cash box or bank account in the company's currency; the agent is named here when the cost does not name one yet. */
+        PayPurchaseShipmentCostRequest: {
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: date */
+            paidOn?: null | string;
+            method?: null | string;
+            reference?: null | string;
+        };
+        /**
+         * @description Pays the supplier for the goods from a cash box or bank account (ADR-0035 §11): the amount in the order's currency
+         *     (the rest of the goods when none is given); when the account is in the company's currency and the order is not,
+         *     what left the account in that currency (the rate actually paid). Before the supplier's invoice it is an advance,
+         *     applied to the invoice when that is posted; after, a payment of the invoice.
+         */
+        PayPurchaseShipmentRequest: {
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: double */
+            amount?: null | number | string;
+            /** Format: double */
+            paidRc?: null | number | string;
+            /** Format: date */
+            paidOn?: null | string;
+            method?: null | string;
+            reference?: null | string;
+        };
         PayrollRunItemSummary: {
             /** Format: uuid */
             id: string;
@@ -19745,6 +19808,7 @@ export interface components {
             /** @default line */
             taxRoundingLevel: string;
         };
+        /** @description A cost of the journey: who it is paid to, the agent's invoice once the goods arrived, and the payment that paid it (none while unpaid). */
         PurchaseShipmentCostSummary: {
             /** Format: uuid */
             id: string;
@@ -19768,6 +19832,11 @@ export interface components {
             paidOn: null | string;
             /** Format: uuid */
             partnerId: null | string;
+            partnerCode?: null | string;
+            /** Format: uuid */
+            invoiceId?: null | string;
+            invoiceNumber?: null | string;
+            paymentNumber?: null | string;
         };
         PurchaseShipmentEventSummary: {
             /** Format: uuid */
@@ -19811,6 +19880,38 @@ export interface components {
             /** Format: double */
             landedUnitCostRc: number | string;
         };
+        /** @description One payment made from the shipment, as Banking posted it. */
+        PurchaseShipmentPaymentSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            lineNo: number | string;
+            kind: string;
+            /** Format: uuid */
+            costId: null | string;
+            /** Format: uuid */
+            partnerId: string;
+            partnerCode: string;
+            partnerName: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: uuid */
+            paymentId: string;
+            paymentNumber: string;
+            paymentKind: string;
+            currency: string;
+            /** Format: double */
+            amountTc: number | string;
+            /** Format: double */
+            amountRc: number | string;
+            /** Format: date */
+            paidOn: string;
+            /** Format: double */
+            appliedTc: number | string;
+        };
+        /** @description A shipment as its screen shows it. `GoodsOutstandingTc` is what the posted supplier invoice still asks for (whoever paid the rest), before the invoice the order's total less the shipment's own payments; `GoodsPaidTc` is the goods total less that. */
         PurchaseShipmentSummary: {
             /** Format: uuid */
             id: string;
@@ -19866,6 +19967,11 @@ export interface components {
             hints: components["schemas"]["PurchaseShipmentHint"][];
             /** Format: date-time */
             updatedAt: string;
+            payments: components["schemas"]["PurchaseShipmentPaymentSummary"][];
+            /** Format: double */
+            goodsPaidTc: number | string;
+            /** Format: double */
+            goodsOutstandingTc: number | string;
         };
         QuantityConversion: {
             /** Format: double */
@@ -26946,7 +27052,7 @@ export interface components {
             /** Format: double */
             cashRunwayMonths: null | number | string;
         };
-        /** @description Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count). */
+        /** @description Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_negative (amount), cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count). */
         TraderWarning: {
             code: string;
             /** Format: double */
@@ -46043,6 +46149,59 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SetPurchaseShipmentPaymentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingShipmentsByShipmentIdPay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPurchaseShipmentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseShipmentSummary"];
+                };
+            };
+        };
+    };
+    postPurchasingShipmentsByShipmentIdCostsByCostIdPay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shipmentId: string;
+                costId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayPurchaseShipmentCostRequest"];
             };
         };
         responses: {

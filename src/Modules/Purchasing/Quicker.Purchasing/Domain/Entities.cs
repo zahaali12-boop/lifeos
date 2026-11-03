@@ -1043,6 +1043,8 @@ public sealed class Shipment : ITenantEntity
     public List<ShipmentEvent> Events { get; } = [];
 
     public List<ShipmentCost> Costs { get; } = [];
+
+    public List<ShipmentPayment> Payments { get; } = [];
 }
 
 public sealed class ShipmentEvent : ITenantEntity
@@ -1090,6 +1092,60 @@ public sealed class ShipmentCost : ITenantEntity
     public DateOnly? PaidOn { get; set; }
 
     public Guid? PartnerId { get; set; }
+
+    /// <summary>The charge of the landed-cost document the cost became when the goods arrived.</summary>
+    public Guid? LandedCostChargeId { get; set; }
+
+    /// <summary>The invoice of the agent who was paid the cost (freight forwarder, customs broker), which clears the charge into what is owed to them.</summary>
+    public Guid? InvoiceId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>
+/// A payment made from a shipment (ADR-0035 §11): for the goods to the supplier, or for one cost to its agent. Each is a
+/// posted supplier payment or advance in Banking; an advance's open item is applied to the invoice when it is posted.
+/// </summary>
+public sealed class ShipmentPayment : ITenantEntity
+{
+    public Guid TenantId { get; set; }
+
+    public Guid Id { get; set; }
+
+    public Guid ShipmentId { get; set; }
+
+    public int LineNo { get; set; }
+
+    /// <summary>goods or cost.</summary>
+    public string Kind { get; set; } = "goods";
+
+    public Guid? CostId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public Guid BankAccountId { get; set; }
+
+    public Guid PaymentId { get; set; }
+
+    public string PaymentNumber { get; set; } = string.Empty;
+
+    /// <summary>supplier_advance (before the invoice) or supplier_payment (of the invoice).</summary>
+    public string PaymentKind { get; set; } = "supplier_advance";
+
+    public string Currency { get; set; } = string.Empty;
+
+    public decimal AmountTc { get; set; }
+
+    /// <summary>What the payment cost in the company's currency: what left the account when it is in the company's currency.</summary>
+    public decimal AmountRc { get; set; }
+
+    public DateOnly PaidOn { get; set; }
+
+    public Guid? AdvanceItemId { get; set; }
+
+    public decimal AppliedTc { get; set; }
+
+    public Guid? CreatedBy { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }

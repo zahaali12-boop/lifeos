@@ -24,6 +24,7 @@ public static class PayablesModule
         services.AddScoped<SettlementService>();
         services.AddScoped<ProposalService>();
         services.AddScoped<IPayables>(static sp => sp.GetRequiredService<PayablesService>());
+        services.AddScoped<IPayableSettlements>(static sp => sp.GetRequiredService<SettlementService>());
         services.AddScoped<IJournalSubledger, PayablesJournalSubledger>();
         services.AddScoped<IPartnerActivitySource, PayablesPartnerActivity>();
         // Comments, files, history and links on these records are shown to those who may read the records.

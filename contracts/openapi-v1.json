@@ -28846,7 +28846,7 @@
         "tags": [
           "Purchasing"
         ],
-        "summary": "What was paid for the goods in the company's currency; the effective exchange rate follows",
+        "summary": "What was paid for the goods in the company's currency, when it was paid outside the program; the effective exchange rate follows. Refused once the goods are paid from the shipment.",
         "operationId": "putPurchasingShipmentsByShipmentIdPayment",
         "parameters": [
           {
@@ -28864,6 +28864,99 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SetPurchaseShipmentPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/pay": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Pays the supplier for the goods from a cash box or bank account: an advance before the invoice (applied to it when it is posted), a payment of the invoice after",
+        "operationId": "postPurchasingShipmentsByShipmentIdPay",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPurchaseShipmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseShipmentSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purchasing/shipments/{shipmentId}/costs/{costId}/pay": {
+      "post": {
+        "tags": [
+          "Purchasing"
+        ],
+        "summary": "Pays one cost of the journey to its agent: an advance while the goods are on the way, a payment of the agent's invoice after they arrive",
+        "operationId": "postPurchasingShipmentsByShipmentIdCostsByCostIdPay",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "costId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayPurchaseShipmentCostRequest"
               }
             }
           },
@@ -57340,6 +57433,95 @@
           }
         }
       },
+      "PayPurchaseShipmentCostRequest": {
+        "required": [
+          "bankAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "paidOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "method": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Pays one cost of the journey to its agent from a cash box or bank account in the company's currency; the agent is named here when the cost does not name one yet."
+      },
+      "PayPurchaseShipmentRequest": {
+        "required": [
+          "bankAccountId"
+        ],
+        "type": "object",
+        "properties": {
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "method": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Pays the supplier for the goods from a cash box or bank account (ADR-0035 §11): the amount in the order's currency\n(the rest of the goods when none is given); when the account is in the company's currency and the order is not,\nwhat left the account in that currency (the rate actually paid). Before the supplier's invoice it is an advance,\napplied to the invoice when that is posted; after, a payment of the invoice."
+      },
       "PayrollRunItemSummary": {
         "required": [
           "id",
@@ -63939,8 +64121,34 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "partnerCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "invoiceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "invoiceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paymentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        }
+        },
+        "description": "A cost of the journey: who it is paid to, the agent's invoice once the goods arrived, and the payment that paid it (none while unpaid)."
       },
       "PurchaseShipmentEventSummary": {
         "required": [
@@ -64093,6 +64301,110 @@
         },
         "description": "One ordered item with its share of the goods paid and of the costs, in the company's currency, and the landed cost of one unit."
       },
+      "PurchaseShipmentPaymentSummary": {
+        "required": [
+          "id",
+          "lineNo",
+          "kind",
+          "costId",
+          "partnerId",
+          "partnerCode",
+          "partnerName",
+          "bankAccountId",
+          "paymentId",
+          "paymentNumber",
+          "paymentKind",
+          "currency",
+          "amountTc",
+          "amountRc",
+          "paidOn",
+          "appliedTc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lineNo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "costId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "partnerCode": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentNumber": {
+            "type": "string"
+          },
+          "paymentKind": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "amountTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amountRc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paidOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "appliedTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "One payment made from the shipment, as Banking posted it."
+      },
       "PurchaseShipmentSummary": {
         "required": [
           "id",
@@ -64128,7 +64440,10 @@
           "costs",
           "lines",
           "hints",
-          "updatedAt"
+          "updatedAt",
+          "payments",
+          "goodsPaidTc",
+          "goodsOutstandingTc"
         ],
         "type": "object",
         "properties": {
@@ -64326,8 +64641,31 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PurchaseShipmentPaymentSummary"
+            }
+          },
+          "goodsPaidTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "goodsOutstandingTc": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
-        }
+        },
+        "description": "A shipment as its screen shows it. `GoodsOutstandingTc` is what the posted supplier invoice still asks for (whoever paid the rest), before the invoice the order's total less the shipment's own payments; `GoodsPaidTc` is the goods total less that."
       },
       "QuantityConversion": {
         "required": [
@@ -89535,7 +89873,7 @@
             "format": "double"
           }
         },
-        "description": "Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count)."
+        "description": "Something to act on, as a code the client words with the value where one helps: loss, fixed_costs_unknown, cash_negative (amount), cash_runway_short (months), break_even_not_covered (percent), margin_below_target (percent), overdue_receivables (amount), overdue_payables (amount), shipments_attention (count), no_recent_sales (days), reorder_needed (count)."
       },
       "TransferLineSummary": {
         "required": [

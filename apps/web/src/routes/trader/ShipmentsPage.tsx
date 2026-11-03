@@ -14,6 +14,7 @@ import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { CurrencyField } from "../CurrencyField";
 import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } from "../common";
 import { CompanyFilter, KeyValues, useCompanyContext, useWarehouses, WarehouseSelect } from "../inventory/shared";
+import { useBankAccounts } from "../payables/shared";
 
 type Shipment = components["schemas"]["PurchaseShipmentSummary"];
 
@@ -39,12 +40,29 @@ interface CostForm {
   currency: string;
   exchangeRate: string;
   paidOn: string;
+  partnerId: string;
+}
+
+interface PayForm {
+  bankAccountId: string;
+  amount: string;
+  paidRc: string;
+  on: string;
+}
+
+interface CostPayForm {
+  costId: string;
+  bankAccountId: string;
+  partnerId: string;
+  on: string;
 }
 
 /**
  * Shipments (trader edition, ADR-0035 §4): every purchase order on its way, with its stages and dates, the costs paid
  * along the way, what was paid for the goods, the landed cost of each unit, and the hints a trader should act on.
  * Arrival posts the goods receipt and lands the costs on the stock; the supplier's invoice is recorded against it.
+ * Paying is real (ADR-0035 §11): the goods are paid to the supplier and each cost to its agent from a cash box or bank
+ * account, as advances before the invoices and payments after, so the cash and what is owed always agree.
  */
 export function ShipmentsPage() {
   const { t } = useTranslation();
@@ -55,7 +73,8 @@ export function ShipmentsPage() {
   const [openId, setOpenId] = useOpenRecord("/trader/shipments");
   const [nextStage, setNextStage] = useState<{ status: string; occurredOn: string; note: string }>({ status: "", occurredOn: "", note: "" });
   const [cost, setCost] = useState<CostForm | null>(null);
-  const [paid, setPaid] = useState<{ amount: string; on: string } | null>(null);
+  const [pay, setPay] = useState<PayForm | null>(null);
+  const [costPay, setCostPay] = useState<CostPayForm | null>(null);
   const [receive, setReceive] = useState<{ warehouseId: string; date: string }>({ warehouseId: "", date: "" });
   const [invoice, setInvoice] = useState<{ number: string; date: string }>({ number: "", date: "" });
   const warehouses = useWarehouses(companyId);
@@ -71,6 +90,12 @@ export function ShipmentsPage() {
     queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/orders", { params: { query: { companyId } } })),
   });
   const chargeTypes = useQuery({ queryKey: ["charge-types"], queryFn: async () => unwrap(await api.GET("/api/v1/purchasing/charge-types")) });
+  const accounts = useBankAccounts(companyId);
+  const suppliers = useQuery({
+    queryKey: ["supplier-accounts", companyId],
+    enabled: Boolean(companyId),
+    queryFn: async () => unwrap(await api.GET("/api/v1/partners/suppliers", { params: { query: { companyId } } })),
+  });
   const detail = useQuery({
     queryKey: ["shipment", openId],
     enabled: Boolean(openId),
@@ -99,7 +124,7 @@ export function ShipmentsPage() {
     mutationFn: async (input: { id: string; form: CostForm }) =>
       unwrap(await api.POST("/api/v1/purchasing/shipments/{shipmentId}/costs", {
         params: { path: { shipmentId: input.id } },
-        body: { chargeTypeId: input.form.chargeTypeId, amount: Number(input.form.amount), currency: input.form.currency || null, exchangeRate: input.form.exchangeRate.trim() ? Number(input.form.exchangeRate) : null, description: input.form.description || null, paidOn: input.form.paidOn || null },
+        body: { chargeTypeId: input.form.chargeTypeId, amount: Number(input.form.amount), currency: input.form.currency || null, exchangeRate: input.form.exchangeRate.trim() ? Number(input.form.exchangeRate) : null, description: input.form.description || null, paidOn: input.form.paidOn || null, partnerId: input.form.partnerId || null },
       })),
     onSuccess: async () => { setCost(null); await settle(); },
     onError: fail,
@@ -109,10 +134,31 @@ export function ShipmentsPage() {
     onSuccess: settle,
     onError: fail,
   });
-  const setPayment = useMutation({
-    mutationFn: async (input: { id: string; amount: string; on: string }) =>
-      unwrap(await api.PUT("/api/v1/purchasing/shipments/{shipmentId}/payment", { params: { path: { shipmentId: input.id } }, body: { paidAmountRc: input.amount.trim() ? Number(input.amount) : null, paidOn: input.on || null } })),
-    onSuccess: async () => { setPaid(null); await settle(); },
+  const moneyMoved = async (): Promise<void> => {
+    await settle();
+    await Promise.all([["bank-accounts"], ["ap-aging"], ["trader-health"], ["home"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
+  };
+  const paySupplier = useMutation({
+    mutationFn: async (input: { id: string; form: PayForm }) =>
+      unwrap(await api.POST("/api/v1/purchasing/shipments/{shipmentId}/pay", {
+        params: { path: { shipmentId: input.id } },
+        body: { bankAccountId: input.form.bankAccountId, amount: input.form.amount.trim() ? Number(input.form.amount) : null, paidRc: input.form.paidRc.trim() ? Number(input.form.paidRc) : null, paidOn: input.form.on || null },
+      })),
+    onSuccess: async () => { setPay(null); await moneyMoved(); },
+    onError: fail,
+  });
+  const payCost = useMutation({
+    mutationFn: async (input: { id: string; form: CostPayForm }) =>
+      unwrap(await api.POST("/api/v1/purchasing/shipments/{shipmentId}/costs/{costId}/pay", {
+        params: { path: { shipmentId: input.id, costId: input.form.costId } },
+        body: { bankAccountId: input.form.bankAccountId, partnerId: input.form.partnerId || null, paidOn: input.form.on || null },
+      })),
+    onSuccess: async () => { setCostPay(null); await moneyMoved(); },
+    onError: fail,
+  });
+  const createCash = useMutation({
+    mutationFn: async (currency: string) => unwrap(await api.POST("/api/v1/banking/bank-accounts", { body: { companyId, code: "CASH", name: { en: "Cash box", ar: "الصندوق" }, kind: "cash", currency, isActive: true } })),
+    onSuccess: async () => { setProblem(null); await queryClient.invalidateQueries({ queryKey: ["bank-accounts"] }); },
     onError: fail,
   });
   const receiveGoods = useMutation({
@@ -163,7 +209,12 @@ export function ShipmentsPage() {
   };
   const openTrack = (): void => { setProblem(null); setTrack({ orderId: "", expectedArrival: "", trackingReference: "" }); };
   const submitTrack = (event: FormEvent): void => { event.preventDefault(); if (track?.orderId) { create.mutate(track); } };
-  const openCost = (): void => { setProblem(null); setCost({ chargeTypeId: chargeTypes.data?.[0]?.id ?? "", description: "", amount: "", currency: fc, exchangeRate: "", paidOn: "" }); };
+  const openCost = (): void => { setProblem(null); setCost({ chargeTypeId: chargeTypes.data?.[0]?.id ?? "", description: "", amount: "", currency: fc, exchangeRate: "", paidOn: "", partnerId: "" }); };
+  const liveAccounts = (accounts.data ?? []).filter((a) => a.isActive);
+  const payAccount = pay ? liveAccounts.find((a) => a.id === pay.bankAccountId) : undefined;
+  const needsRc = s !== undefined && s.currency !== fc && payAccount?.currency === fc;
+  const goodsPayments = s?.payments.filter((p) => p.kind === "goods") ?? [];
+  const supplierOptions = (suppliers.data ?? []).filter((x) => x.partnerId !== s?.partnerId);
 
   return (
     <>
@@ -180,7 +231,7 @@ export function ShipmentsPage() {
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
       </div>
-      <DataGrid<Shipment> label="trader.shipments.title" columns={columns} data={list.data ?? []} rowKey={(row) => row.id} loading={list.isPending && Boolean(companyId)} emptyTitle={t("trader.shipments.empty")} emptyDescription={t("trader.shipments.emptyDescription")} onOpen={(row) => { setProblem(null); setCost(null); setPaid(null); setOpenId(row.id); }} />
+      <DataGrid<Shipment> label="trader.shipments.title" columns={columns} data={list.data ?? []} rowKey={(row) => row.id} loading={list.isPending && Boolean(companyId)} emptyTitle={t("trader.shipments.empty")} emptyDescription={t("trader.shipments.emptyDescription")} onOpen={(row) => { setProblem(null); setCost(null); setPay(null); setCostPay(null); setOpenId(row.id); }} />
 
       <Dialog open={Boolean(track)} onOpenChange={(isOpen) => { if (!isOpen) { setTrack(null); } }}>
         <DialogContent closeLabel={t("common.close")} className="max-w-2xl">
@@ -281,19 +332,52 @@ export function ShipmentsPage() {
                     [t("trader.shipments.costsTotal"), <span key="c" dir="ltr">{formatMoney(s.costsTotalRc, fc)}</span>],
                     [t("trader.shipments.landedTotal"), <span key="l" dir="ltr" className="font-semibold" data-testid="landed-total">{formatMoney(s.landedTotalRc, fc)}</span>],
                   ]} />
-                  {s.status !== "cancelled" ? (
-                    paid ? (
-                      <form onSubmit={(e) => { e.preventDefault(); setPayment.mutate({ id: s.id, amount: paid.amount, on: paid.on }); }} className="grid items-end gap-3 sm:grid-cols-[1fr_1fr_auto]" data-testid="payment-form">
-                        <Field label={t("trader.shipments.paidAmount", { currency: fc })}>
-                          <DecimalField value={paid.amount} onChange={(e) => { setPaid({ ...paid, amount: e.target.value }); }} dir="ltr" data-testid="paid-amount" />
+                  {goodsPayments.length > 0 ? (
+                    <ul className="flex flex-col gap-1 text-sm" data-testid="goods-payments">
+                      {goodsPayments.map((p) => (
+                        <li key={p.id} className="flex flex-wrap items-center justify-between gap-2" data-testid="shipment-payment">
+                          <span dir="auto">{formatDate(p.paidOn)} · <span dir="ltr">{p.paymentNumber}</span> · {t(`trader.shipments.paymentKinds.${p.paymentKind}`)}</span>
+                          <span className="tabular" dir="ltr">{formatMoney(p.amountTc, p.currency)}{p.currency !== fc ? ` = ${formatMoney(p.amountRc, fc)}` : ""}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {Number(s.goodsPaidTc) > goodsPayments.reduce((sum, p) => sum + Number(p.amountTc), 0) ? <p className="text-sm" dir="auto" data-testid="paid-elsewhere">{t("trader.shipments.paidElsewhere", { amount: formatMoney(Number(s.goodsPaidTc) - goodsPayments.reduce((sum, p) => sum + Number(p.amountTc), 0), s.currency) })}</p> : null}
+                  {s.status !== "cancelled" && Number(s.goodsOutstandingTc) > 0 ? <p className="text-sm" dir="auto" data-testid="goods-outstanding">{t("trader.shipments.leftToPay", { amount: formatMoney(s.goodsOutstandingTc, s.currency) })}</p> : null}
+                  {s.status !== "cancelled" && Number(s.goodsOutstandingTc) > 0 ? (
+                    pay ? (
+                      <form onSubmit={(e) => { e.preventDefault(); paySupplier.mutate({ id: s.id, form: pay }); }} className="grid items-end gap-3 rounded-md border border-border p-3 sm:grid-cols-2" data-testid="payment-form">
+                        <Field label={t("trader.shipments.payFrom")} required>
+                          <SelectField value={pay.bankAccountId} onChange={(e) => { setPay({ ...pay, bankAccountId: e.target.value }); }} required data-testid="pay-account">
+                            <option value="">{t("trader.shipments.chooseAccount")}</option>
+                            {liveAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} · {localized(a.name)} ({a.currency})</option>)}
+                          </SelectField>
                         </Field>
+                        <Field label={t("trader.shipments.payAmount", { currency: s.currency })} required>
+                          <DecimalField value={pay.amount} onChange={(e) => { setPay({ ...pay, amount: e.target.value }); }} dir="ltr" required data-testid="pay-amount" />
+                        </Field>
+                        {needsRc ? (
+                          <Field label={t("trader.shipments.paidAmount", { currency: fc })} description={t("trader.shipments.paidRcHint")} required>
+                            <DecimalField value={pay.paidRc} onChange={(e) => { setPay({ ...pay, paidRc: e.target.value }); }} dir="ltr" required data-testid="paid-amount" />
+                          </Field>
+                        ) : null}
                         <Field label={t("trader.shipments.paidOn")}>
-                          <TextField type="date" value={paid.on} onChange={(e) => { setPaid({ ...paid, on: e.target.value }); }} dir="ltr" data-testid="paid-on" />
+                          <TextField type="date" value={pay.on} onChange={(e) => { setPay({ ...pay, on: e.target.value }); }} dir="ltr" data-testid="paid-on" />
                         </Field>
-                        <Button type="submit" variant="secondary" loading={setPayment.isPending} data-testid="save-payment">{t("trader.shipments.savePayment")}</Button>
+                        {liveAccounts.length === 0 ? (
+                          <div className="flex flex-wrap items-center gap-2 text-sm sm:col-span-2">
+                            <span>{t("trader.sales.noAccounts")}</span>
+                            <Button type="button" variant="secondary" size="sm" onClick={() => { createCash.mutate(fc); }} loading={createCash.isPending} data-testid="create-cash">{t("trader.sales.createCash")}</Button>
+                          </div>
+                        ) : null}
+                        <p className="text-xs text-fg-muted sm:col-span-2" dir="auto">{s.invoiceId ? t("trader.shipments.payInvoiceHint") : t("trader.shipments.payAdvanceHint")}</p>
+                        <div className="flex justify-end gap-2 sm:col-span-2">
+                          <Button type="button" variant="secondary" onClick={() => { setPay(null); }}>{t("common.cancel")}</Button>
+                          <Button type="submit" loading={paySupplier.isPending} disabled={!pay.bankAccountId} data-testid="save-payment">{t("trader.shipments.payNow")}</Button>
+                        </div>
                       </form>
                     ) : (
-                      <div><Button type="button" variant="ghost" size="sm" onClick={() => { setProblem(null); setPaid({ amount: s.paidAmountRc === null ? "" : String(s.paidAmountRc), on: s.paidOn ?? "" }); }} data-testid="record-payment">{t("trader.shipments.recordPayment")}</Button></div>
+                      <div><Button type="button" variant="secondary" size="sm" onClick={() => { setProblem(null); setPay({ bankAccountId: liveAccounts[0]?.id ?? "", amount: String(s.goodsOutstandingTc), paidRc: "", on: "" }); }} data-testid="record-payment">{t("trader.shipments.paySupplier")}</Button></div>
                     )
                   ) : null}
                 </div>
@@ -311,6 +395,7 @@ export function ShipmentsPage() {
                           <TableHead className="text-end">{t("trader.shipments.amount")}</TableHead>
                           <TableHead className="text-end">{t("trader.shipments.rate")}</TableHead>
                           <TableHead className="text-end">{t("trader.shipments.inYourCurrency")}</TableHead>
+                          <TableHead>{t("trader.shipments.paidTo")}</TableHead>
                           <TableHead />
                         </TableRow>
                       </TableHeader>
@@ -321,12 +406,43 @@ export function ShipmentsPage() {
                             <TableCell className="tabular text-end" dir="ltr">{formatMoney(c.amount, c.currency)}</TableCell>
                             <TableCell className="tabular text-end" dir="ltr">{formatNumber(c.exchangeRate, { maximumFractionDigits: 6 })}</TableCell>
                             <TableCell className="tabular text-end" dir="ltr">{formatMoney(c.amountRc, fc)}</TableCell>
-                            <TableCell>{underway ? <Button type="button" variant="ghost" size="sm" onClick={() => { removeCost.mutate({ id: s.id, costId: c.id }); }} data-testid={`remove-cost-${String(index)}`}>{t("trader.shipments.removeCost")}</Button> : null}</TableCell>
+                            <TableCell dir="auto">{c.partnerCode ?? "—"}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap items-center gap-1">
+                                {c.paymentNumber ? <Badge tone="success" data-testid="cost-paid">{t("trader.shipments.costPaid", { number: c.paymentNumber })}</Badge> : null}
+                                {!c.paymentNumber && s.status !== "cancelled" ? <Button type="button" variant="ghost" size="sm" onClick={() => { setProblem(null); setCostPay({ costId: c.id, bankAccountId: liveAccounts.find((a) => a.currency === fc)?.id ?? "", partnerId: c.partnerId ?? "", on: "" }); }} data-testid={`pay-cost-${String(index)}`}>{t("trader.shipments.payCost")}</Button> : null}
+                                {underway && !c.paymentNumber ? <Button type="button" variant="ghost" size="sm" onClick={() => { removeCost.mutate({ id: s.id, costId: c.id }); }} data-testid={`remove-cost-${String(index)}`}>{t("trader.shipments.removeCost")}</Button> : null}
+                              </div>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   )}
+                  {costPay ? (
+                    <form onSubmit={(e) => { e.preventDefault(); payCost.mutate({ id: s.id, form: costPay }); }} className="grid items-end gap-3 rounded-md border border-border p-3 sm:grid-cols-3" data-testid="cost-pay-form">
+                      <Field label={t("trader.shipments.paidTo")} required>
+                        <SelectField value={costPay.partnerId} onChange={(e) => { setCostPay({ ...costPay, partnerId: e.target.value }); }} required data-testid="cost-pay-partner">
+                          <option value="">{t("trader.shipments.choosePaidTo")}</option>
+                          {supplierOptions.map((x) => <option key={x.partnerId} value={x.partnerId}>{x.partnerCode} · {localized(x.partnerName)}</option>)}
+                        </SelectField>
+                      </Field>
+                      <Field label={t("trader.shipments.payFrom")} required>
+                        <SelectField value={costPay.bankAccountId} onChange={(e) => { setCostPay({ ...costPay, bankAccountId: e.target.value }); }} required data-testid="cost-pay-account">
+                          <option value="">{t("trader.shipments.chooseAccount")}</option>
+                          {liveAccounts.filter((a) => a.currency === fc).map((a) => <option key={a.id} value={a.id}>{a.code} · {localized(a.name)}</option>)}
+                        </SelectField>
+                      </Field>
+                      <Field label={t("trader.shipments.paidOn")}>
+                        <TextField type="date" value={costPay.on} onChange={(e) => { setCostPay({ ...costPay, on: e.target.value }); }} dir="ltr" data-testid="cost-pay-date" />
+                      </Field>
+                      <p className="text-xs text-fg-muted sm:col-span-3" dir="auto">{t("trader.shipments.payCostHint")}</p>
+                      <div className="flex justify-end gap-2 sm:col-span-3">
+                        <Button type="button" variant="secondary" onClick={() => { setCostPay(null); }}>{t("common.cancel")}</Button>
+                        <Button type="submit" loading={payCost.isPending} disabled={!costPay.bankAccountId || !costPay.partnerId} data-testid="save-cost-payment">{t("trader.shipments.payNow")}</Button>
+                      </div>
+                    </form>
+                  ) : null}
                   {cost ? (
                     <form onSubmit={(e) => { e.preventDefault(); addCost.mutate({ id: s.id, form: cost }); }} className="flex flex-col gap-3 rounded-md border border-border p-3" data-testid="cost-form">
                       <div className="grid gap-3 sm:grid-cols-2">
@@ -349,6 +465,12 @@ export function ShipmentsPage() {
                         </Field>
                         <Field label={t("trader.shipments.paidOn")}>
                           <TextField type="date" value={cost.paidOn} onChange={(e) => { setCost({ ...cost, paidOn: e.target.value }); }} dir="ltr" data-testid="cost-paid-on" />
+                        </Field>
+                        <Field label={t("trader.shipments.paidTo")} description={t("trader.shipments.paidToHint")}>
+                          <SelectField value={cost.partnerId} onChange={(e) => { setCost({ ...cost, partnerId: e.target.value }); }} data-testid="cost-partner">
+                            <option value="">{t("trader.shipments.choosePaidTo")}</option>
+                            {supplierOptions.map((x) => <option key={x.partnerId} value={x.partnerId}>{x.partnerCode} · {localized(x.partnerName)}</option>)}
+                          </SelectField>
                         </Field>
                       </div>
                       <div className="flex justify-end gap-2">

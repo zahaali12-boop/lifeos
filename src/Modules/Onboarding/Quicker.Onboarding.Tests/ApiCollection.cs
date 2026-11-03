@@ -54,4 +54,11 @@ internal static class OnboardingApi
         response.StatusCode.ShouldBe(HttpStatusCode.OK, json.ToString());
         return json;
     }
+
+    /// <summary>The invariant harness after a scenario (ADR-0029): balances equal the ledger, the books, the chain and isolation hold.</summary>
+    public static async Task AssertInvariantsAsync(this HttpClient client)
+    {
+        var report = await client.PostAsync("/api/v1/platform/integrity/run", new { }, HttpStatusCode.OK);
+        report.GetProperty("passed").GetBoolean().ShouldBeTrue("invariants violated: " + string.Join(" | ", report.GetProperty("checks").EnumerateArray().Where(static c => !c.GetProperty("passed").GetBoolean()).Select(static c => c.GetProperty("code").GetString() + ": " + string.Join("; ", c.GetProperty("problems").EnumerateArray().Select(static p => p.GetString())))));
+    }
 }

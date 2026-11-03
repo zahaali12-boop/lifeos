@@ -166,8 +166,8 @@ public sealed record JournalEntryPosted(
 /// </summary>
 public sealed record PostingDocumentModule(string Module);
 
-/// <summary>A line of an Accounting-owned entry on a control account; <paramref name="AmountTc"/> and <paramref name="AmountFc"/> are signed, positive debit.</summary>
-public sealed record JournalSubledgerLine(int LineNo, string SubledgerType, Guid SubledgerRef, string AccountRole, decimal AmountTc, decimal AmountFc, DateOnly? DueDate);
+/// <summary>A line of an Accounting-owned entry on a control account; <paramref name="AmountTc"/> and <paramref name="AmountFc"/> are signed, positive debit, <paramref name="Currency"/> is the entry's transaction currency and <paramref name="AccountId"/> the ledger account the line posts to.</summary>
+public sealed record JournalSubledgerLine(int LineNo, string SubledgerType, Guid SubledgerRef, string AccountRole, decimal AmountTc, decimal AmountFc, DateOnly? DueDate, Guid AccountId = default, string? Currency = null);
 
 /// <summary>An entry Accounting owns (a manual, opening, recurring or correcting journal) as the subledger behind a control account sees it; the id and number are known once it is written.</summary>
 public sealed record JournalSubledgerEntry(Guid CompanyId, Guid EntryId, string Number, DateOnly PostingDate, DateOnly DocumentDate, string Currency, decimal RateTcFc, bool IsOpeningEntry, Guid? BranchId, IReadOnlyList<JournalSubledgerLine> Lines);

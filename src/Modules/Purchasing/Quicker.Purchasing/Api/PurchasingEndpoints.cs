@@ -9,6 +9,9 @@ namespace Quicker.Purchasing.Api;
 /// <summary>Procure to pay under /api/v1/purchasing: requisitions, requests for quotation, blanket agreements and purchase orders.</summary>
 public static class PurchasingEndpoints
 {
+    /// <summary>Banking's permission to post a supplier payment, which paying from a shipment needs (the string, not a reference to Banking).</summary>
+    private const string BankingPaymentPost = "banking.payment.post";
+
     public static RouteGroupBuilder MapPurchasingEndpoints(this RouteGroupBuilder api)
     {
         ArgumentNullException.ThrowIfNull(api);
@@ -242,7 +245,14 @@ public static class PurchasingEndpoints
             .RequirePermission(PurchasingPermissions.OrderManage);
         shipments.MapPut("/{shipmentId:guid}/payment", async (Guid shipmentId, SetPurchaseShipmentPaymentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.SetPaymentAsync(shipmentId, request, ct)))
             .RequirePermission(PurchasingPermissions.OrderManage)
-            .WithSummary("What was paid for the goods in the company's currency; the effective exchange rate follows");
+            .WithSummary("What was paid for the goods in the company's currency, when it was paid outside the program; the effective exchange rate follows. Refused once the goods are paid from the shipment.");
+        // Paying is a supplier payment in Banking: its own permissions apply besides the order's.
+        shipments.MapPost("/{shipmentId:guid}/pay", async (Guid shipmentId, PayPurchaseShipmentRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.PayAsync(shipmentId, request, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage).RequirePermission(BankingPaymentPost)
+            .WithSummary("Pays the supplier for the goods from a cash box or bank account: an advance before the invoice (applied to it when it is posted), a payment of the invoice after");
+        shipments.MapPost("/{shipmentId:guid}/costs/{costId:guid}/pay", async (Guid shipmentId, Guid costId, PayPurchaseShipmentCostRequest request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.PayCostAsync(shipmentId, costId, request, ct)))
+            .RequirePermission(PurchasingPermissions.OrderManage).RequirePermission(BankingPaymentPost)
+            .WithSummary("Pays one cost of the journey to its agent: an advance while the goods are on the way, a payment of the agent's invoice after they arrive");
         shipments.MapPost("/{shipmentId:guid}/receive", async (Guid shipmentId, ReceivePurchaseShipmentRequest? request, ShipmentService service, CancellationToken ct) => ApiProblems.Ok(await service.ReceiveAsync(shipmentId, request ?? new ReceivePurchaseShipmentRequest(), ct)))
             .RequirePermission(PurchasingPermissions.ReceiptPost).RequirePermission(PurchasingPermissions.LandedCostPost)
             .WithSummary("The goods arrived: a receipt for everything open on the order is posted into the warehouse and the costs become a posted landed-cost document");

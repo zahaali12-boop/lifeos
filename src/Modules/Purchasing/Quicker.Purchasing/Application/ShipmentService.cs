@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Quicker.Audit.Contracts;
+using Quicker.Banking.Contracts;
 using Quicker.Identity.Contracts;
 using Quicker.Items.Contracts;
 using Quicker.Kernel.Amounts;
@@ -8,6 +9,7 @@ using Quicker.Kernel.Results;
 using Quicker.Kernel.Time;
 using Quicker.Organization.Contracts;
 using Quicker.Partners.Contracts;
+using Quicker.Payables.Contracts;
 using Quicker.Purchasing.Contracts;
 using Quicker.Purchasing.Domain;
 using Quicker.Purchasing.Persistence;
@@ -20,7 +22,10 @@ namespace Quicker.Purchasing.Application;
 /// in its own currency at the rate actually paid; what was paid for the goods in the company's currency; and, on
 /// arrival, the goods receipt and the landed-cost document posted through the purchasing services, then the
 /// supplier's invoice. Nothing is posted outside those services: the shipment adds the timeline, the money paid, the
-/// landed cost per unit and the hints a trader should act on.
+/// landed cost per unit and the hints a trader should act on. Money paid from the shipment is real (ADR-0035 §11):
+/// the goods are paid to the supplier as an advance before the invoice (applied to it when it is posted) or as a
+/// payment of the invoice after; a cost is paid to its agent the same way, the agent's invoice clearing the cost when
+/// the goods arrive; every payment goes through Banking and every application through Payables.
 /// </summary>
 public sealed class ShipmentService(
     PurchasingDbContext db,
@@ -34,7 +39,11 @@ public sealed class ShipmentService(
     PurchaseOrderService orders,
     ReceiptService receipts,
     LandedCostService landedCosts,
-    InvoiceService invoices) : IPurchaseLandedCosts, IPurchaseShipments
+    InvoiceService invoices,
+    IPayments payments,
+    IPayables payables,
+    IPayableSettlements settlements,
+    IBankAccountDirectory bankAccounts) : IPurchaseLandedCosts, IPurchaseShipments
 {
     public const string DocumentType = PurchaseDocumentTypes.Shipment;
 
@@ -45,7 +54,7 @@ public sealed class ShipmentService(
 
     public async Task<IReadOnlyList<PurchaseShipmentSummary>> ListAsync(Guid? companyId, string? status, CancellationToken cancellationToken)
     {
-        var query = db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).AsSplitQuery().AsNoTracking().AsQueryable();
+        var query = db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).Include(static s => s.Payments).AsSplitQuery().AsNoTracking().AsQueryable();
         if (companyId is { } c)
         {
             query = query.Where(s => s.CompanyId == c);
@@ -284,6 +293,11 @@ public sealed class ShipmentService(
             return Error.NotFound("shipment_cost", costId);
         }
 
+        if (shipment.Payments.Any(p => p.CostId == costId))
+        {
+            return Error.Conflict("shipment.cost_paid", "The cost was paid from the shipment; the payment stands, so the cost stays.").WithWhy(("costId", costId));
+        }
+
         shipment.Costs.Remove(cost);
         db.ShipmentCosts.Remove(cost);
         shipment.UpdatedAt = clock.UtcNow;
@@ -306,6 +320,11 @@ public sealed class ShipmentService(
             return Error.Validation("shipment.paid_invalid", "The amount paid is zero or more.");
         }
 
+        if (shipment.Payments.Any(static p => p.Kind == "goods"))
+        {
+            return Error.Conflict("shipment.paid_by_payments", "The goods were paid from the shipment; what was paid follows those payments.");
+        }
+
         var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
         shipment.PaidAmountRc = request.PaidAmountRc is { } amount ? Shared.Round(amount, company.FunctionalCurrency) : null;
         shipment.PaidOn = request.PaidAmountRc is null ? null : request.PaidOn ?? clock.TodayIn(company.TimeZone);
@@ -313,6 +332,203 @@ public sealed class ShipmentService(
         await db.SaveChangesAsync(cancellationToken);
         var order = await OrderOfAsync(shipment, cancellationToken);
         await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.Updated, After: new { shipment.PaidAmountRc, shipment.PaidOn }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    /// <summary>
+    /// Pays the supplier for the goods from a cash box or bank account: before the supplier's invoice is posted, an
+    /// advance in the order's currency (applied to the invoice when it is); after, a payment of the invoice's open item.
+    /// When the account is in the company's currency and the order is not, what left the account is the rate paid.
+    /// </summary>
+    public async Task<Result<PurchaseShipmentSummary>> PayAsync(Guid id, PayPurchaseShipmentRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (shipment.Status == "cancelled")
+        {
+            return Error.Conflict("shipment.closed", "A cancelled shipment is not paid.").WithWhy(("status", shipment.Status));
+        }
+
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        var fc = company.FunctionalCurrency;
+        var currency = await Shared.CurrencyAsync(companies, order.Currency, fc.Code, "shipment", cancellationToken);
+        if (currency.IsFailure)
+        {
+            return currency.Error!;
+        }
+
+        // Once the supplier's invoice is posted, what is left is what its open items still ask for, whoever paid the
+        // rest (this screen, Money or the full edition's payments); before, the order's total less this screen's payments.
+        var invoiceItems = await InvoiceItemsAsync(shipment.InvoiceId, cancellationToken);
+        var outstanding = invoiceItems.Count > 0
+            ? invoiceItems.Sum(static i => i.RemainingTc)
+            : order.TotalGross - shipment.Payments.Where(static p => p.Kind == "goods").Sum(static p => p.AmountTc);
+        if (outstanding <= 0m)
+        {
+            return Error.Conflict("shipment.goods_paid", "The goods are paid in full.").WithWhy(("order", order.Number), ("total", order.TotalGross));
+        }
+
+        var amount = request.Amount is { } given ? Shared.Round(given, currency.Value) : outstanding;
+        if (amount <= 0m)
+        {
+            return Error.Validation("shipment.amount_invalid", "An amount is positive.");
+        }
+
+        if (amount > outstanding)
+        {
+            return Error.Validation("shipment.overpaid", "That is more than is left to pay for the goods.").WithWhy(("amount", amount), ("outstanding", outstanding), ("currency", order.Currency));
+        }
+
+        var bank = await AccountAsync(shipment, request.BankAccountId, cancellationToken);
+        if (bank.IsFailure)
+        {
+            return bank.Error!;
+        }
+
+        var foreign = !string.Equals(order.Currency, fc.Code, StringComparison.Ordinal);
+        decimal? bankAmount = null;
+        decimal? rate = null;
+        if (foreign && string.Equals(bank.Value.Currency, fc.Code, StringComparison.Ordinal))
+        {
+            if (request.PaidRc is not { } paidRc || paidRc <= 0m)
+            {
+                return Error.Validation("shipment.paid_rc_required", "The account is in the company's currency: give what left it, so the rate you paid is kept.").WithWhy(("bankCurrency", bank.Value.Currency), ("orderCurrency", order.Currency));
+            }
+
+            bankAmount = Shared.Round(paidRc, fc);
+            rate = RoundingPolicy.Default.Round(bankAmount.Value / amount, 12);
+        }
+        else if (!string.Equals(bank.Value.Currency, order.Currency, StringComparison.Ordinal) && !string.Equals(bank.Value.Currency, fc.Code, StringComparison.Ordinal))
+        {
+            return Error.Validation("shipment.bank_currency", "Pay from an account in the order's currency or in the company's.").WithWhy(("bankCurrency", bank.Value.Currency), ("orderCurrency", order.Currency));
+        }
+
+        var paidOn = request.PaidOn ?? clock.TodayIn(company.TimeZone);
+        var method = request.Method ?? (bank.Value.Kind == BankAccountKinds.Bank ? "transfer" : "cash");
+        var reference = Shared.Trim(request.Reference) ?? order.Number;
+        var invoiceItem = invoiceItems.Where(static i => i.RemainingTc > 0m).OrderBy(static i => i.Instalment).FirstOrDefault();
+        if (invoiceItem is not null && amount > invoiceItem.RemainingTc)
+        {
+            return Error.Validation("shipment.overpaid", "That is more than the invoice still asks for.").WithWhy(("amount", amount), ("outstanding", invoiceItem.RemainingTc), ("currency", order.Currency));
+        }
+
+        var paid = invoiceItem is not null
+            ? await payments.PayAsync(new PayOpenItemRequest(shipment.CompanyId, order.PartnerId, bank.Value.Id, invoiceItem.Id, amount, paidOn, method, reference, bankAmount, rate), cancellationToken)
+            : await payments.AdvanceAsync(new SupplierAdvanceRequest(shipment.CompanyId, order.PartnerId, bank.Value.Id, order.Currency, amount, paidOn, rate, bankAmount, method, reference), cancellationToken);
+        if (paid.IsFailure)
+        {
+            return paid.Error!;
+        }
+
+        var amountRc = !foreign ? amount : bankAmount ?? Shared.Round(amount * paid.Value.ExchangeRate, fc);
+        AddPayment(shipment, "goods", null, order.PartnerId, bank.Value.Id, paid.Value, invoiceItem is null ? "supplier_advance" : "supplier_payment", order.Currency, amount, amountRc, paidOn);
+        shipment.PaidAmountRc = shipment.Payments.Where(static p => p.Kind == "goods").Sum(static p => p.AmountRc);
+        shipment.PaidOn = paidOn;
+        shipment.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.Updated, After: new { payment = paid.Value.Number, amount, order.Currency, amountRc }, CompanyId: shipment.CompanyId), cancellationToken);
+        return await MapAsync(shipment, order, cancellationToken);
+    }
+
+    /// <summary>
+    /// Pays one cost of the journey to its agent from an account in the company's currency: an advance while the goods
+    /// are on the way (applied to the agent's invoice when they arrive), or a payment of that invoice after. A cost
+    /// that arrived without an agent gets its invoice now, so the money paid clears it.
+    /// </summary>
+    public async Task<Result<PurchaseShipmentSummary>> PayCostAsync(Guid id, Guid costId, PayPurchaseShipmentCostRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var shipment = await LoadAsync(id, false, cancellationToken);
+        if (shipment is null)
+        {
+            return Error.NotFound(DocumentType, id);
+        }
+
+        if (shipment.Status == "cancelled")
+        {
+            return Error.Conflict("shipment.closed", "A cancelled shipment is not paid.").WithWhy(("status", shipment.Status));
+        }
+
+        var cost = shipment.Costs.SingleOrDefault(c => c.Id == costId);
+        if (cost is null)
+        {
+            return Error.NotFound("shipment_cost", costId);
+        }
+
+        if (shipment.Payments.Any(p => p.CostId == costId))
+        {
+            return Error.Conflict("shipment.cost_paid", "The cost is paid already.").WithWhy(("costId", costId));
+        }
+
+        var partnerId = request.PartnerId ?? cost.PartnerId;
+        if (partnerId is null)
+        {
+            return Error.Validation("shipment.cost_partner_required", "Name who was paid (the freight forwarder, the customs broker): what is paid to them is kept on their account.").WithWhy(("costId", costId));
+        }
+
+        if (cost.InvoiceId is not null && cost.PartnerId != partnerId)
+        {
+            return Error.Validation("shipment.cost_partner_fixed", "The cost is invoiced by another agent already.").WithWhy(("costId", costId));
+        }
+
+        if (await partners.FindAsync(partnerId.Value, cancellationToken) is null)
+        {
+            return Error.Validation("shipment.partner_unknown", "The cost's supplier does not exist.").WithWhy(("partnerId", partnerId));
+        }
+
+        var company = (await companies.FindAsync(new CompanyId(shipment.CompanyId), cancellationToken))!;
+        var fc = company.FunctionalCurrency;
+        var bank = await AccountAsync(shipment, request.BankAccountId, cancellationToken);
+        if (bank.IsFailure)
+        {
+            return bank.Error!;
+        }
+
+        if (!string.Equals(bank.Value.Currency, fc.Code, StringComparison.Ordinal))
+        {
+            return Error.Validation("shipment.cost_bank_currency", "A cost is paid from an account in the company's currency, at the amount it was recorded at.").WithWhy(("bankCurrency", bank.Value.Currency), ("currency", fc.Code));
+        }
+
+        var order = await OrderOfAsync(shipment, cancellationToken);
+        var paidOn = request.PaidOn ?? clock.TodayIn(company.TimeZone);
+        cost.PartnerId = partnerId;
+        if (cost.InvoiceId is null && cost.LandedCostChargeId is not null)
+        {
+            var invoiced = await InvoiceCostsAsync(shipment, order, [cost], paidOn, fc, cancellationToken);
+            if (invoiced.IsFailure)
+            {
+                return invoiced.Error!;
+            }
+        }
+
+        var method = request.Method ?? (bank.Value.Kind == BankAccountKinds.Bank ? "transfer" : "cash");
+        var reference = Shared.Trim(request.Reference) ?? order.Number;
+        var invoiceItem = await OpenInvoiceItemAsync(cost.InvoiceId, cancellationToken);
+        if (cost.InvoiceId is not null && invoiceItem is null)
+        {
+            return Error.Conflict("shipment.cost_settled", "The agent's invoice for this cost has nothing left to pay.").WithWhy(("costId", costId));
+        }
+
+        var amount = invoiceItem is null ? cost.AmountRc : Math.Min(cost.AmountRc, invoiceItem.RemainingTc);
+        var paid = invoiceItem is not null
+            ? await payments.PayAsync(new PayOpenItemRequest(shipment.CompanyId, partnerId.Value, bank.Value.Id, invoiceItem.Id, amount, paidOn, method, reference), cancellationToken)
+            : await payments.AdvanceAsync(new SupplierAdvanceRequest(shipment.CompanyId, partnerId.Value, bank.Value.Id, fc.Code, amount, paidOn, Method: method, Reference: reference), cancellationToken);
+        if (paid.IsFailure)
+        {
+            return paid.Error!;
+        }
+
+        AddPayment(shipment, "cost", cost.Id, partnerId.Value, bank.Value.Id, paid.Value, invoiceItem is null ? "supplier_advance" : "supplier_payment", fc.Code, amount, amount, paidOn);
+        cost.PaidOn = paidOn;
+        shipment.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        await audit.RecordAsync(new AuditEntry(DocumentType, shipment.Id, order.Number, AuditActions.Updated, After: new { costPayment = paid.Value.Number, cost.LineNo, amount }, CompanyId: shipment.CompanyId), cancellationToken);
         return await MapAsync(shipment, order, cancellationToken);
     }
 
@@ -377,6 +593,21 @@ public sealed class ShipmentService(
             }
 
             shipment.LandedCostId = landed.Value.Id;
+
+            // Each cost is now a charge of the landed-cost document, waiting in the clearing account; the agents named
+            // on the costs invoice them, so what is owed to them (or what they were paid in advance) settles it.
+            var landedCharges = landedPosted.Value.Charges.OrderBy(static c => c.LineNo).ToList();
+            var orderedCosts = shipment.Costs.OrderBy(static c => c.LineNo).ToList();
+            for (var i = 0; i < orderedCosts.Count && i < landedCharges.Count; i++)
+            {
+                orderedCosts[i].LandedCostChargeId = landedCharges[i].Id;
+            }
+
+            var invoiced = await InvoiceCostsAsync(shipment, order, orderedCosts.Where(static c => c.PartnerId is not null).ToList(), postingDate, company.FunctionalCurrency, cancellationToken);
+            if (invoiced.IsFailure)
+            {
+                return invoiced.Error!;
+            }
         }
 
         var now = clock.UtcNow;
@@ -437,6 +668,13 @@ public sealed class ShipmentService(
             {
                 return posted.Error!;
             }
+
+            // What was paid in advance for the goods settles the invoice; a rate difference is realised there.
+            var applied = await ApplyAdvancesAsync(shipment.Payments.Where(static p => p.Kind == "goods").ToList(), invoice.Value.Id, posted.Value.PostingDate, cancellationToken);
+            if (applied.IsFailure)
+            {
+                return applied.Error!;
+            }
         }
 
         shipment.InvoiceId = invoice.Value.Id;
@@ -473,7 +711,7 @@ public sealed class ShipmentService(
     /// <summary>For pricing: each item's landed unit cost from the most recently tracked shipment that carries it (cancelled shipments aside).</summary>
     public async Task<IReadOnlyList<LandedUnitCostInfo>> LatestByItemAsync(Guid companyId, CancellationToken cancellationToken = default)
     {
-        var shipments = await db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).AsSplitQuery().AsNoTracking()
+        var shipments = await db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).Include(static s => s.Payments).AsSplitQuery().AsNoTracking()
             .Where(s => s.CompanyId == companyId && s.Status != "cancelled").OrderByDescending(static s => s.CreatedAt).ToListAsync(cancellationToken);
         var seen = new HashSet<Guid>();
         var result = new List<LandedUnitCostInfo>();
@@ -515,9 +753,127 @@ public sealed class ShipmentService(
         return result;
     }
 
+    /// <summary>The agents' invoices for costs that became charges on arrival: one per agent, posted, with what was paid them in advance applied.</summary>
+    private async Task<Result> InvoiceCostsAsync(Shipment shipment, PurchaseOrder order, IReadOnlyList<ShipmentCost> costs, DateOnly date, Currency fc, CancellationToken cancellationToken)
+    {
+        foreach (var group in costs.Where(static c => c.PartnerId is not null && c.InvoiceId is null && c.LandedCostChargeId is not null).GroupBy(static c => c.PartnerId!.Value))
+        {
+            var lines = group.OrderBy(static c => c.LineNo).Select(static c => new SaveInvoiceLineRequest("charge", 1m, c.AmountRc, Description: c.Description, LandedCostChargeId: c.LandedCostChargeId)).ToList();
+            var notes = string.Join(" · ", new[] { order.Number, shipment.TrackingReference }.Where(static x => !string.IsNullOrWhiteSpace(x)));
+            var created = await invoices.CreateAsync(new SaveInvoiceRequest(shipment.CompanyId, group.Key, lines, "invoice", null, date, date, fc.Code, Notes: notes), cancellationToken);
+            if (created.IsFailure)
+            {
+                return created.Error!;
+            }
+
+            var submitted = await invoices.SubmitAsync(created.Value.Id, cancellationToken);
+            if (submitted.IsFailure)
+            {
+                return submitted.Error!;
+            }
+
+            foreach (var cost in group)
+            {
+                cost.InvoiceId = created.Value.Id;
+            }
+
+            if (submitted.Value.Status != "approved")
+            {
+                continue;
+            }
+
+            var posted = await invoices.PostAsync(created.Value.Id, cancellationToken);
+            if (posted.IsFailure)
+            {
+                return posted.Error!;
+            }
+
+            var costIds = group.Select(static c => c.Id).ToHashSet();
+            var applied = await ApplyAdvancesAsync(shipment.Payments.Where(p => p.CostId is { } c && costIds.Contains(c)).ToList(), created.Value.Id, date, cancellationToken);
+            if (applied.IsFailure)
+            {
+                return applied.Error!;
+            }
+        }
+
+        return Result.Success();
+    }
+
+    /// <summary>Applies the advances of the payments given to the invoice's open items, oldest instalment first, as far as each reaches.</summary>
+    private async Task<Result> ApplyAdvancesAsync(IReadOnlyList<ShipmentPayment> paid, Guid invoiceId, DateOnly date, CancellationToken cancellationToken)
+    {
+        var open = (await payables.ItemsOfAsync(PurchaseDocumentTypes.Invoice, invoiceId, cancellationToken)).Where(static i => i.RemainingTc > 0m && i.Status != "reversed").OrderBy(static i => i.Instalment).ToList();
+        var remaining = open.ToDictionary(static i => i.Id, static i => i.RemainingTc);
+        foreach (var payment in paid.Where(static p => p.AdvanceItemId is not null && p.AppliedTc < p.AmountTc).OrderBy(static p => p.LineNo))
+        {
+            foreach (var item in open)
+            {
+                var left = payment.AmountTc - payment.AppliedTc;
+                if (left <= 0m || remaining[item.Id] <= 0m || !string.Equals(item.Currency, payment.Currency, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var take = Math.Min(left, remaining[item.Id]);
+                var on = date > payment.PaidOn ? date : payment.PaidOn;
+                var applied = await settlements.ApplyAsync(new ApplyPayableRequest(payment.AdvanceItemId!.Value, item.Id, take, on, $"Advance {payment.PaymentNumber}"), cancellationToken);
+                if (applied.IsFailure)
+                {
+                    return applied.Error!;
+                }
+
+                payment.AppliedTc += take;
+                remaining[item.Id] -= take;
+            }
+        }
+
+        return Result.Success();
+    }
+
+    /// <summary>The live (not reversed) open items of a posted invoice, none while it is not posted.</summary>
+    private async Task<IReadOnlyList<OpenItemInfo>> InvoiceItemsAsync(Guid? invoiceId, CancellationToken cancellationToken) =>
+        invoiceId is { } id ? (await payables.ItemsOfAsync(PurchaseDocumentTypes.Invoice, id, cancellationToken)).Where(static i => i.Status != "reversed").ToList() : [];
+
+    private async Task<OpenItemInfo?> OpenInvoiceItemAsync(Guid? invoiceId, CancellationToken cancellationToken) =>
+        invoiceId is { } id ? (await payables.ItemsOfAsync(PurchaseDocumentTypes.Invoice, id, cancellationToken)).Where(static i => i.RemainingTc > 0m && i.Status != "reversed").OrderBy(static i => i.Instalment).FirstOrDefault() : null;
+
+    private async Task<Result<BankAccountInfo>> AccountAsync(Shipment shipment, Guid bankAccountId, CancellationToken cancellationToken)
+    {
+        var bank = await bankAccounts.FindAsync(bankAccountId, cancellationToken);
+        return bank is null || bank.CompanyId != shipment.CompanyId || !bank.IsActive
+            ? Error.Validation("shipment.bank_account_invalid", "Pay from an active cash box or bank account of the company.").WithWhy(("bankAccountId", bankAccountId))
+            : bank;
+    }
+
+    private void AddPayment(Shipment shipment, string kind, Guid? costId, Guid partnerId, Guid bankAccountId, PaymentRef paid, string paymentKind, string currency, decimal amountTc, decimal amountRc, DateOnly paidOn)
+    {
+        var payment = new ShipmentPayment
+        {
+            Id = Guid.CreateVersion7(),
+            ShipmentId = shipment.Id,
+            LineNo = shipment.Payments.Count == 0 ? 1 : shipment.Payments.Max(static p => p.LineNo) + 1,
+            Kind = kind,
+            CostId = costId,
+            PartnerId = partnerId,
+            BankAccountId = bankAccountId,
+            PaymentId = paid.Id,
+            PaymentNumber = paid.Number,
+            PaymentKind = paymentKind,
+            Currency = currency,
+            AmountTc = amountTc,
+            AmountRc = amountRc,
+            PaidOn = paidOn,
+            AdvanceItemId = paymentKind == "supplier_advance" ? paid.OpenItemId : null,
+            CreatedBy = principal.Principal?.MembershipId.Value,
+            CreatedAt = clock.UtcNow,
+        };
+        shipment.Payments.Add(payment);
+        db.ShipmentPayments.Add(payment);
+    }
+
     private async Task<Shipment?> LoadAsync(Guid id, bool readOnly, CancellationToken cancellationToken)
     {
-        var query = db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).AsSplitQuery();
+        var query = db.Shipments.Include(static s => s.Events).Include(static s => s.Costs).Include(static s => s.Payments).AsSplitQuery();
         return readOnly ? await query.AsNoTracking().SingleOrDefaultAsync(s => s.Id == id, cancellationToken) : await query.SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
@@ -532,8 +888,22 @@ public sealed class ShipmentService(
         var partner = await partners.FindAsync(order.PartnerId, cancellationToken);
         var goodsTotal = order.TotalGross;
         var goodsRc = Shared.Round(goodsTotal * order.ExchangeRate, fc);
-        var effectiveRate = s.PaidAmountRc is { } paid && goodsTotal > 0m ? RoundingPolicy.Default.Round(paid / goodsTotal, 6) : (decimal?)null;
-        var basisRc = s.PaidAmountRc ?? goodsRc;
+        var goodsPayments = s.Payments.Where(static p => p.Kind == "goods").ToList();
+        var paidTc = goodsPayments.Sum(static p => p.AmountTc);
+        decimal? effectiveRate;
+        decimal basisRc;
+        if (goodsPayments.Count > 0)
+        {
+            // Paid from the shipment: the goods cost what left the accounts, and what is still to pay at the order's rate.
+            var paidRc = goodsPayments.Sum(static p => p.AmountRc);
+            effectiveRate = paidTc > 0m ? RoundingPolicy.Default.Round(paidRc / paidTc, 6) : null;
+            basisRc = paidRc + Shared.Round((goodsTotal - paidTc) * order.ExchangeRate, fc);
+        }
+        else
+        {
+            effectiveRate = s.PaidAmountRc is { } paid && goodsTotal > 0m ? RoundingPolicy.Default.Round(paid / goodsTotal, 6) : null;
+            basisRc = s.PaidAmountRc ?? goodsRc;
+        }
         var costsRc = s.Costs.Sum(static c => c.AmountRc);
         var landedRc = basisRc + costsRc;
 
@@ -557,19 +927,38 @@ public sealed class ShipmentService(
         }
 
         var chargeTypes = await db.ChargeTypes.AsNoTracking().Where(c => s.Costs.Select(static x => x.ChargeTypeId).Contains(c.Id)).ToDictionaryAsync(static c => c.Id, cancellationToken);
+        var partnerCodes = new Dictionary<Guid, PartnerInfo?>();
+        foreach (var pid in s.Costs.Where(static c => c.PartnerId is not null).Select(static c => c.PartnerId!.Value).Concat(s.Payments.Select(static p => p.PartnerId)).Distinct())
+        {
+            partnerCodes[pid] = await partners.FindAsync(pid, cancellationToken);
+        }
+
+        var costInvoiceIds = s.Costs.Where(static c => c.InvoiceId is not null).Select(static c => c.InvoiceId!.Value).Distinct().ToList();
+        var costInvoices = costInvoiceIds.Count == 0 ? new Dictionary<Guid, string>() : await db.Invoices.AsNoTracking().Where(x => costInvoiceIds.Contains(x.Id)).ToDictionaryAsync(static x => x.Id, static x => x.Number, cancellationToken);
         var costs = s.Costs.OrderBy(static c => c.LineNo).Select(c =>
         {
             var type = chargeTypes.GetValueOrDefault(c.ChargeTypeId);
-            return new PurchaseShipmentCostSummary(c.Id, c.LineNo, c.ChargeTypeId, type?.Code ?? string.Empty, type?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), c.Description, c.Amount, c.Currency, c.ExchangeRate, c.AmountRc, c.PaidOn, c.PartnerId);
+            var payment = s.Payments.Where(p => p.CostId == c.Id).OrderBy(static p => p.LineNo).LastOrDefault();
+            return new PurchaseShipmentCostSummary(c.Id, c.LineNo, c.ChargeTypeId, type?.Code ?? string.Empty, type?.Name.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), c.Description, c.Amount, c.Currency, c.ExchangeRate, c.AmountRc, c.PaidOn, c.PartnerId,
+                c.PartnerId is { } pid ? partnerCodes.GetValueOrDefault(pid)?.Code : null, c.InvoiceId, c.InvoiceId is { } iid ? costInvoices.GetValueOrDefault(iid) : null, payment?.PaymentNumber);
+        }).ToList();
+        var paymentRows = s.Payments.OrderBy(static p => p.LineNo).Select(p =>
+        {
+            var who = partnerCodes.GetValueOrDefault(p.PartnerId);
+            return new PurchaseShipmentPaymentSummary(p.Id, p.LineNo, p.Kind, p.CostId, p.PartnerId, who?.Code ?? string.Empty, who?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal), p.BankAccountId, p.PaymentId, p.PaymentNumber, p.PaymentKind, p.Currency, p.AmountTc, p.AmountRc, p.PaidOn, p.AppliedTc);
         }).ToList();
         var events = s.Events.OrderBy(static e => e.OccurredOn).ThenBy(static e => e.CreatedAt).Select(static e => new PurchaseShipmentEventSummary(e.Id, e.Status, e.OccurredOn, e.Note, e.CreatedAt)).ToList();
         var receipt = s.ReceiptId is { } receiptId ? await db.Receipts.AsNoTracking().Where(r => r.Id == receiptId).Select(static r => r.Number).SingleOrDefaultAsync(cancellationToken) : null;
         var invoice = s.InvoiceId is { } invoiceId ? await db.Invoices.AsNoTracking().Where(x => x.Id == invoiceId).Select(static x => new { x.Number, x.Status }).SingleOrDefaultAsync(cancellationToken) : null;
         var ordered = events.Count > 0 ? events[0].OccurredOn : order.OrderDate;
+        // What is left on the goods: the posted invoice's open items when there is one (payments from Money count too).
+        var invoiceItems = await InvoiceItemsAsync(s.InvoiceId, cancellationToken);
+        var outstandingTc = invoiceItems.Count > 0 ? invoiceItems.Sum(static i => i.RemainingTc) : goodsTotal - paidTc;
 
         return new PurchaseShipmentSummary(s.Id, s.CompanyId, order.Id, order.Number, order.Status, order.PartnerId, partner?.Code ?? string.Empty, partner?.LegalName.Values ?? new Dictionary<string, string>(StringComparer.Ordinal),
             order.Currency, order.ExchangeRate, goodsTotal, goodsRc, fc.Code, s.Status, ordered, s.ExpectedArrival, s.TrackingReference, s.Notes, s.PaidAmountRc, s.PaidOn, effectiveRate, costsRc, landedRc,
-            s.ReceiptId, receipt, s.LandedCostId, s.InvoiceId, invoice?.Number, invoice?.Status, events, costs, lines, Hints(s, order, today, effectiveRate, costsRc), s.UpdatedAt);
+            s.ReceiptId, receipt, s.LandedCostId, s.InvoiceId, invoice?.Number, invoice?.Status, events, costs, lines, Hints(s, order, today, effectiveRate, costsRc), s.UpdatedAt,
+            paymentRows, goodsTotal - outstandingTc, outstandingTc);
     }
 
     /// <summary>What a trader should look at, in codes the client words with the value where one helps.</summary>

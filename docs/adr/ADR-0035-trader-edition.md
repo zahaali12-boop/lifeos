@@ -121,6 +121,22 @@ would also throw away the tests and the invariants that make the books right.
     The page owns no figure of its own, so it never disagrees with Health or Money; a workspace switched back to the
     full edition gets the full home again.
 
+11. **Paying for a shipment moves the books (T8, A-193, A-194).** "Paid for the goods" on a shipment is no longer a
+    note: `POST /purchasing/shipments/{id}/pay` pays the supplier from a bank account or cash box through the Banking
+    payment service, as a supplier advance before the invoice exists and as a payment of the invoice's open item
+    after it; a payment in a foreign currency from a dinar account carries the dinars that left the account, which
+    give the effective rate. Each payment is kept on the shipment (`pur_shipment_payments`) with what it applied.
+    Recording the supplier's invoice applies the advances to it through the payables settlement service, the
+    difference between the advance's rate and the invoice's posted as realised exchange. A journey cost names the
+    party it is paid to (the forwarder, customs); `POST /purchasing/shipments/{id}/costs/{costId}/pay` pays it the
+    same way, and arrival turns each party's estimated costs into its invoice of landed-cost charges, which clears
+    the landed-cost clearing account and to which the advance is applied. Money gets a "Pay" for each supplier that
+    pays the oldest invoices first through the same payment service. A bank or cash line of a journal (the setup
+    wizard's opening balances, a manual or recurring journal) now records the movement in the box it names, so a
+    box's balance on every screen equals its ledger account (A-194). The whole chain, from the opening cash through
+    offers, order, payments, arrival, invoice, pricing, sale, receipt and count to the health figures, is one test
+    whose every figure ties to the ledger and passes the invariant harness.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two
@@ -133,7 +149,10 @@ would also throw away the tests and the invariants that make the books right.
   "order from this supplier" step orders every line from one supplier, a split order is a suggestion the trader
   carries out by hand; offers in a foreign currency need a spot rate of the day entered under Rates, else the
   comparison says so; costs that arrive after the goods were received (a landed-cost document by hand); partial
-  arrivals (one receipt per shipment); paying the supplier from the shipment screen; prices per customer group or
+  arrivals (one receipt per shipment); inventory valued at the advance's rate for the part paid in advance (IFRIC 22;
+  the stock is valued at the receipt's rate and the difference is realised exchange, A-193); a supplier invoice that
+  differs from the order (the invoice is created at the ordered prices); paying a cost after it was invoiced from the
+  shipment (Money pays it); prices per customer group or
   quantity break and margins per item or category on the pricing board; a trader-worded customer page, discounts
   and returns from the sales screen, receipts on account; profit by item (needs the cost of each sale from the stock
   ledger; the health screen shows sales by item and the pricing board the margin per item today); a cash forecast by
