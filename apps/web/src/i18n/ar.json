@@ -505,7 +505,10 @@
     "groups": "{count, plural, zero {لا مجموعات} one {مجموعة واحدة} two {مجموعتان} few {# مجموعات} many {# مجموعة} other {# مجموعة}}",
     "default": "افتراضي",
     "saveDefaultView": "حفظ كعرضي الافتراضي…",
-    "saveViewFailed": "تعذّر حفظ العرض؛ حاول مرة أخرى."
+    "saveViewFailed": "تعذّر حفظ العرض؛ حاول مرة أخرى.",
+    "resizeColumn": "عرض العمود",
+    "resizeHint": "اسحب حافة العمود لتوسيعه أو تضييقه، وانقر الحافة مرتين ليتّسع لمحتواه.",
+    "resetWidths": "إعادة عرض الأعمدة"
   },
   "companies": {
     "policies": {
@@ -6471,7 +6474,11 @@
       "net": "المبلغ",
       "payments": "الدفعات",
       "noPayments": "لم يُدفع شيء على هذه الفاتورة بعد.",
-      "openHint": "افتح الفاتورة لترى أصنافها وكل دفعة عليها."
+      "openHint": "افتح الفاتورة لترى أصنافها وكل دفعة عليها.",
+      "paidColumn": "المسدَّد من الزبون",
+      "paidSoFar": "المسدَّد حتى الآن",
+      "paymentDocument": "سند القبض",
+      "paymentAmount": "المبلغ"
     },
     "purchases": {
       "title": "فواتير الموردين",
@@ -6558,7 +6565,11 @@
         "pay": "سجّل دفعة {number}",
         "another": "بضاعة أخرى",
         "seeMoney": "انظر ما عليك في المال"
-      }
+      },
+      "paidColumn": "المدفوع للمورد",
+      "paidSoFar": "المدفوع حتى الآن",
+      "paymentDocument": "سند الدفع",
+      "paymentAmount": "المبلغ"
     },
     "money": {
       "title": "المال",

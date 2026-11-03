@@ -505,7 +505,10 @@
     "groups": "{count, plural, one {# group} other {# groups}}",
     "default": "default",
     "saveDefaultView": "Save as my default view…",
-    "saveViewFailed": "The view could not be saved; try again."
+    "saveViewFailed": "The view could not be saved; try again.",
+    "resizeColumn": "Column width",
+    "resizeHint": "Drag a column's edge to widen or narrow it; double-click the edge to fit its content.",
+    "resetWidths": "Reset column widths"
   },
   "companies": {
     "policies": {
@@ -6471,7 +6474,11 @@
       "net": "Amount",
       "payments": "Payments",
       "noPayments": "Nothing paid on this invoice yet.",
-      "openHint": "Open an invoice to see its items and every payment."
+      "openHint": "Open an invoice to see its items and every payment.",
+      "paidColumn": "Paid by the customer",
+      "paidSoFar": "Paid so far",
+      "paymentDocument": "Receipt",
+      "paymentAmount": "Amount"
     },
     "purchases": {
       "title": "Supplier invoices",
@@ -6558,7 +6565,11 @@
         "pay": "Record the payment for {number}",
         "another": "More goods",
         "seeMoney": "See what you owe on Money"
-      }
+      },
+      "paidColumn": "Paid to the supplier",
+      "paidSoFar": "Paid so far",
+      "paymentDocument": "Payment",
+      "paymentAmount": "Amount"
     },
     "money": {
       "title": "Money",

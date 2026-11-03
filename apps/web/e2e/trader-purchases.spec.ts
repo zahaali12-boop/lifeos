@@ -94,7 +94,21 @@ test("supplier invoices: goods entered without a shipment, paid in part and in f
   await page.getByTestId("save-supplier-payment").click();
   await expect(page.getByTestId("purchases-notice")).toContainText("120,000.00", { timeout: 20_000 });
   await expect(invoiceRow.getByTestId("purchase-state")).toContainText("Partly paid");
+  await expect(invoiceRow.getByTestId("purchase-paid")).toContainText("120,000.00");
   await expect(invoiceRow.getByTestId("purchase-remaining")).toContainText("200,000.00");
+
+  // Every column can be widened from its edge; the width stays when the screen is opened again.
+  const supplierHeading = page.getByRole("columnheader", { name: /Supplier/ });
+  const before = (await supplierHeading.boundingBox())?.width ?? 0;
+  await page.getByTestId("grid-resize-supplier").focus();
+  for (let i = 0; i < 5; i += 1) {
+    await page.keyboard.press("ArrowRight");
+  }
+  await expect.poll(async () => (await supplierHeading.boundingBox())?.width ?? 0).toBeGreaterThan(before + 40);
+  const widened = (await supplierHeading.boundingBox())?.width ?? 0;
+  await page.reload();
+  await expect(page.getByRole("columnheader", { name: /Supplier/ })).toBeVisible({ timeout: 20_000 });
+  await expect.poll(async () => Math.round((await page.getByRole("columnheader", { name: /Supplier/ }).boundingBox())?.width ?? 0)).toBe(Math.round(widened));
   await invoiceRow.getByRole("gridcell").first().dblclick();
   await expect(page.getByTestId("purchase-dialog")).toBeVisible();
   await expect(page.getByTestId("payments-list").getByTestId("payment-row")).toHaveCount(1);
@@ -149,6 +163,7 @@ test("supplier invoices: goods entered without a shipment, paid in part and in f
   await expect(page.getByTestId("sales-notice")).toContainText("Payment recorded", { timeout: 20_000 });
   const saleRow = page.getByRole("row").filter({ hasText: "ALI" });
   await expect(saleRow.getByTestId("invoice-state")).toContainText("Partly paid");
+  await expect(saleRow.getByTestId("invoice-paid")).toContainText("10,000.00");
   await saleRow.getByRole("gridcell").first().dblclick();
   await expect(page.getByTestId("invoice-dialog")).toBeVisible();
   await expect(page.getByTestId("payments-list").getByTestId("payment-row")).toHaveCount(1);

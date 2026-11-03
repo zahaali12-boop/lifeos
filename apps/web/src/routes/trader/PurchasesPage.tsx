@@ -16,7 +16,8 @@ import { CompanyFilter, useCompanyContext, useWarehouses, WarehouseSelect } from
 import { emptyLine, LinesEditor, num, useChargeTypes, useSuppliers, type LineForm } from "../purchasing/shared";
 import { useBankAccounts } from "../payables/shared";
 import { QuickCreateButton } from "../QuickCreate";
-import { n, paymentState, remainingOf, stateTones } from "./invoices";
+import { InvoiceFacts, InvoiceLines, InvoicePayments } from "./InvoiceParts";
+import { n, paidOf, paymentState, remainingOf, stateTones } from "./invoices";
 import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
 type Invoice = components["schemas"]["InvoiceSummary"];
@@ -197,6 +198,7 @@ export function PurchasesPage() {
       { id: "date", accessorKey: "documentDate", header: t("trader.purchases.date"), size: 110, cell: ({ row }) => <span dir="ltr">{formatDate(row.original.documentDate)}</span> },
       { id: "due", accessorFn: (row) => row.openItems.map((i) => i.dueDate).sort()[0] ?? row.dueDate ?? "", header: t("trader.purchases.due"), size: 110, cell: ({ row }) => { const due = row.original.openItems.map((i) => i.dueDate).sort()[0] ?? row.original.dueDate; return <span dir="ltr">{due ? formatDate(due) : ""}</span>; } },
       { id: "total", accessorKey: "totalGross", header: t("trader.purchases.total"), size: 150, cell: ({ row }) => <span className="tabular" dir="ltr">{formatMoney(row.original.totalGross, row.original.currency)}</span> },
+      { id: "paid", accessorFn: (row) => (row.status === "posted" ? paidOf(row) : 0), header: t("trader.purchases.paidColumn"), size: 150, cell: ({ row }) => <span className="tabular" dir="ltr" data-testid="purchase-paid">{row.original.status === "posted" ? formatMoney(paidOf(row.original), row.original.currency) : ""}</span> },
       { id: "remaining", accessorFn: (row) => remainingOf(row), header: t("trader.purchases.remaining"), size: 150, cell: ({ row }) => <span className="tabular" dir="ltr" data-testid="purchase-remaining">{row.original.status === "posted" ? formatMoney(remainingOf(row.original), row.original.currency) : ""}</span> },
       { id: "state", accessorFn: (row) => paymentState(row, today), header: t("trader.purchases.status"), size: 130, cell: ({ row }) => { const state = paymentState(row.original, today); return <Badge tone={stateTones[state] ?? "neutral"} data-testid="purchase-state">{t(`trader.purchases.statuses.${state}`, { defaultValue: state })}</Badge>; } },
       {
@@ -250,42 +252,19 @@ export function PurchasesPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold"><span dir="ltr">{t("trader.purchases.invoiceDetails", { number: opened.number })}</span></DialogTitle>
               </DialogHeader>
-              <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-                <dt className="text-fg-muted">{t("trader.purchases.supplier")}</dt><dd dir="auto">{opened.partnerCode} · {localized(opened.partnerName)}</dd>
-                <dt className="text-fg-muted">{t("trader.purchases.supplierReference")}</dt><dd dir="ltr">{opened.supplierInvoiceNumber ?? "—"}</dd>
-                <dt className="text-fg-muted">{t("trader.purchases.date")}</dt><dd dir="ltr">{formatDate(opened.documentDate)}</dd>
-                <dt className="text-fg-muted">{t("trader.purchases.status")}</dt><dd><Badge tone={stateTones[paymentState(opened, today)] ?? "neutral"}>{t(`trader.purchases.statuses.${paymentState(opened, today)}`, { defaultValue: opened.status })}</Badge></dd>
-              </dl>
+              <InvoiceFacts rows={[
+                [t("trader.purchases.supplier"), <span key="p" dir="auto">{opened.partnerCode} · {localized(opened.partnerName)}</span>],
+                [t("trader.purchases.supplierReference"), <bdi key="r" dir="ltr">{opened.supplierInvoiceNumber ?? "—"}</bdi>],
+                [t("trader.purchases.date"), <bdi key="d" dir="ltr">{formatDate(opened.documentDate)}</bdi>],
+                [t("trader.purchases.status"), <Badge key="s" tone={stateTones[paymentState(opened, today)] ?? "neutral"}>{t(`trader.purchases.statuses.${paymentState(opened, today)}`, { defaultValue: opened.status })}</Badge>],
+              ]} />
               <div>
                 <h3 className="mb-1 text-sm font-semibold">{t("trader.purchases.lines")}</h3>
-                <table className="w-full text-sm">
-                  <thead><tr className="text-start text-fg-muted"><th className="px-2 py-1 text-start font-medium">{t("trader.purchases.item")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.purchases.quantity")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.purchases.unitPrice")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.purchases.net")}</th></tr></thead>
-                  <tbody>
-                    {opened.lines.map((line) => (
-                      <tr key={line.id} className="border-t border-border">
-                        <td className="px-2 py-1 text-start" dir="auto">{line.itemCode ? `${line.itemCode} · ${localized(line.itemName ?? {})}` : (line.description ?? "")}</td>
-                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatNumber(n(line.quantity))} {line.uomCode ?? ""}</td>
-                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.unitPrice, opened.currency)}</td>
-                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.netAmount, opened.currency)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot><tr className="border-t border-border font-semibold"><td className="px-2 py-1" colSpan={3}>{t("trader.purchases.total")}</td><td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(opened.totalGross, opened.currency)}</td></tr></tfoot>
-                </table>
+                <InvoiceLines lines={opened.lines} currency={opened.currency} total={opened.totalGross} paid={paidOf(opened)} remaining={remainingOf(opened)} labels={{ item: t("trader.purchases.item"), quantity: t("trader.purchases.quantity"), unitPrice: t("trader.purchases.unitPrice"), net: t("trader.purchases.net"), total: t("trader.purchases.total"), paid: t("trader.purchases.paidSoFar"), remaining: t("trader.purchases.remaining") }} />
               </div>
               <div>
                 <h3 className="mb-1 text-sm font-semibold">{t("trader.purchases.payments")}</h3>
-                {paymentsOf(opened).length === 0 ? <p className="text-sm text-fg-muted" data-testid="no-payments">{t("trader.purchases.noPayments")}</p> : (
-                  <ul className="flex flex-col gap-1 text-sm" data-testid="payments-list">
-                    {paymentsOf(opened).map((s) => (
-                      <li key={s.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1" data-testid="payment-row">
-                        <span dir="ltr">{formatDate(s.settlementDate)} · {s.settlingDocumentNumber}</span>
-                        <span className="tabular" dir="ltr">{formatMoney(s.amountTc, s.currency)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="mt-2 text-sm font-medium" data-testid="dialog-remaining">{t("trader.purchases.remaining")}: <span className="tabular" dir="ltr">{formatMoney(remainingOf(opened), opened.currency)}</span></p>
+                <InvoicePayments payments={paymentsOf(opened)} empty={t("trader.purchases.noPayments")} labels={{ date: t("trader.purchases.paymentDate"), document: t("trader.purchases.paymentDocument"), amount: t("trader.purchases.paymentAmount") }} />
               </div>
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setOpenId(null); }}>{t("common.close")}</Button>

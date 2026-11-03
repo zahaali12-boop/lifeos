@@ -44,8 +44,8 @@ export function Receipt({ order, register, catalogue, companyName, onPrint }: { 
                 <span dir="auto">{localized(line.name)}</span>
                 <span className="block text-xs text-fg-muted" dir="ltr">{line.code} · {money(line.unitPrice)}{line.discountPct !== "0" ? ` · -${line.discountPct}%` : ""}</span>
               </td>
-              <td className="py-1 text-end tabular-nums" dir="ltr">{formatNumber(line.quantity)}</td>
-              <td className="py-1 text-end tabular-nums" dir="ltr">{money(lineAmount(line, minor))}</td>
+              <td className="py-1 text-end tabular-nums"><bdi dir="ltr">{formatNumber(line.quantity)}</bdi></td>
+              <td className="py-1 text-end tabular-nums"><bdi dir="ltr">{money(lineAmount(line, minor))}</bdi></td>
             </tr>
           ))}
         </tbody>

@@ -20,6 +20,11 @@ export function remainingOf(invoice: InvoiceLike): number {
   return invoice.openItems.reduce((sum, item) => sum + n(item.remainingTc), 0);
 }
 
+/** What has been paid against an invoice so far: what its open items asked for less what they still ask for. */
+export function paidOf(invoice: { openItems: { originalTc: number | string; remainingTc: number | string }[] }): number {
+  return invoice.openItems.reduce((sum, item) => sum + n(item.originalTc) - n(item.remainingTc), 0);
+}
+
 export function paymentState(invoice: InvoiceLike, today: string): string {
   if (invoice.status !== "posted") {
     return invoice.status;

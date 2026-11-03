@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { flexRender, getCoreRowModel, getExpandedRowModel, getFilteredRowModel, getGroupedRowModel, getSortedRowModel, useReactTable, type Column, type ColumnDef, type ExpandedState, type GroupingState, type Row, type RowData, type SortingState, type VisibilityState } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp, Bookmark, ChevronDown, ChevronRight, Columns3, Download, ListTree, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../api";
 import { sumDecimals } from "../lib/decimal";
@@ -140,16 +140,62 @@ interface ViewDefinition {
 }
 
 const ROW_HEIGHT = 40;
+const MIN_WIDTH = 60;
+const MAX_WIDTH = 1200;
+const clampWidth = (width: number): number => Math.round(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width)));
+
+/** The widths a reader gave the columns of one list, kept in this browser (a convenience, not a saved view). */
+function loadWidths(key: string): Record<string, number> {
+  try {
+    const stored = window.localStorage.getItem(key);
+    const parsed: unknown = stored ? JSON.parse(stored) : {};
+    if (parsed === null || typeof parsed !== "object") {
+      return {};
+    }
+    return Object.fromEntries(Object.entries(parsed as Record<string, unknown>).filter((entry): entry is [string, number] => typeof entry[1] === "number").map(([id, width]) => [id, clampWidth(width)]));
+  } catch {
+    return {};
+  }
+}
+
+function storeWidths(key: string, widths: Record<string, number>): void {
+  try {
+    if (Object.keys(widths).length === 0) {
+      window.localStorage.removeItem(key);
+    } else {
+      window.localStorage.setItem(key, JSON.stringify(widths));
+    }
+  } catch {
+    // Storage refused (a private window): the widths last for this visit only.
+  }
+}
+
+/** Shows the whole text of a cell or heading on hover when its column cuts it short. */
+function titleWhenCut(event: React.MouseEvent<HTMLElement>): void {
+  const element = event.currentTarget;
+  if (element.scrollWidth > element.clientWidth + 1) {
+    element.title = element.textContent.trim();
+  } else {
+    element.removeAttribute("title");
+  }
+}
 
 /**
  * Data grid v1 (ADR-0013): TanStack Table for state, TanStack Virtual for rows, column chooser, sortable headers,
  * multi-select with bulk actions, saved views (private or shared) and j/k/Enter keyboard navigation. Group by any
  * fields in order with exact sums on the group rows (founder programme item 1f; the grid is then a treegrid, whose rows
- * may say their level and whether they are open), and a quick filter over every column.
+ * may say their level and whether they are open), and a quick filter over every column. Every column is as wide as its
+ * content asks by default (the list scrolls sideways rather than cut words), can be widened or narrowed by dragging or
+ * with the arrow keys on its edge, fits its content on a double click, and keeps the width the reader gave it in this
+ * browser; a cell cut short shows its whole text on hover.
  */
 export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selectable = false, bulkActions, toolbar, loading = false, emptyTitle, emptyDescription, emptyAction, height = 560, label, documentType, exportable = true, initialColumns, initialGrouping, presets, groupable = true, searchable = true, viewExtras, onApplyView }: DataGridProps<T>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const rtl = i18n.dir() === "rtl";
+  const gridId = useId();
+  const widthsKey = `quicker.grid.widths.${label}${entityType ? `.${entityType}` : ""}`;
+  const [widths, setWidths] = useState<Record<string, number>>(() => loadWidths(widthsKey));
   const [sorting, setSorting] = useState<SortingState>([]);
   const [visibility, setVisibility] = useState<VisibilityState>(initialColumns ?? {});
   const [grouping, setGrouping] = useState<GroupingState>(initialGrouping ?? []);
@@ -368,7 +414,62 @@ export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selecta
   const selectedKeys = [...selected];
   const visibleColumns = table.getVisibleLeafColumns();
   const firstDataColumnId = visibleColumns.find((column) => column.id !== "__select")?.id;
-  const gridTemplate = visibleColumns.map((column) => (column.id === "__select" ? "40px" : `minmax(${column.getSize() < 150 ? column.getSize() : 150}px, ${column.id === "__select" ? "40px" : "1fr"})`)).join(" ");
+  // A column the reader sized keeps that width; the others are at least as wide as they were designed and share what is left.
+  const widthOf = (column: Column<T>): number => (column.id === "__select" ? 40 : widths[column.id] ?? column.getSize());
+  const gridTemplate = visibleColumns.map((column) => (column.id === "__select" ? "40px" : widths[column.id] !== undefined ? `${String(widthOf(column))}px` : `minmax(${String(widthOf(column))}px, 1fr)`)).join(" ");
+  const minimumWidth = visibleColumns.reduce((sum, column) => sum + widthOf(column), 0);
+  const setWidth = useCallback((id: string, width: number, persist: boolean) => {
+    setWidths((prev) => {
+      const next = { ...prev, [id]: clampWidth(width) };
+      if (persist) {
+        storeWidths(widthsKey, next);
+      }
+      return next;
+    });
+  }, [widthsKey]);
+  const resetWidths = (): void => { setWidths({}); storeWidths(widthsKey, {}); };
+  /** The edge of a heading dragged: the column follows the pointer (towards the inline end widens it, in either direction). */
+  const startResize = (id: string, event: ReactPointerEvent<HTMLElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    const heading = event.currentTarget.parentElement;
+    const startWidth = heading?.getBoundingClientRect().width ?? widths[id] ?? MIN_WIDTH;
+    const startX = event.clientX;
+    let last = startWidth;
+    const move = (e: PointerEvent): void => { last = startWidth + (rtl ? startX - e.clientX : e.clientX - startX); setWidth(id, last, false); };
+    const stop = (): void => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+      setWidth(id, last, true);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+  };
+  /** A double click on the edge fits the column to the widest of its heading and the cells on screen. */
+  const fitColumn = (id: string): void => {
+    const cells = containerRef.current?.querySelectorAll<HTMLElement>(`[data-col="${CSS.escape(id)}"]`) ?? [];
+    let widest = MIN_WIDTH;
+    cells.forEach((cell) => { widest = Math.max(widest, cell.scrollWidth + 2); });
+    setWidth(id, widest, true);
+  };
+  const resizeByKey = (column: Column<T>, event: ReactKeyboardEvent<HTMLElement>): void => {
+    const wider = rtl ? "ArrowLeft" : "ArrowRight";
+    const narrower = rtl ? "ArrowRight" : "ArrowLeft";
+    if (event.key !== wider && event.key !== narrower && event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Enter") {
+      fitColumn(column.id);
+      return;
+    }
+    const heading = event.currentTarget.parentElement;
+    const current = heading?.getBoundingClientRect().width ?? widthOf(column);
+    setWidth(column.id, current + (event.key === wider ? 16 : -16), true);
+  };
 
   /** A group row: its field and value with the count, spanning the columns up to the first measure; each measure's exact sum; the rest blank. */
   const renderGroupRow = (row: Row<T>): ReactNode => {
@@ -544,6 +645,9 @@ export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selecta
                   {typeof column.columnDef.header === "string" ? column.columnDef.header : column.id}
                 </DropdownMenuCheckboxItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={Object.keys(widths).length === 0} onSelect={resetWidths} data-testid="grid-reset-widths">{t("grid.resetWidths")}</DropdownMenuItem>
+              <p className="max-w-64 px-2 pb-1 text-xs text-fg-subtle">{t("grid.resizeHint")}</p>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -586,21 +690,41 @@ export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selecta
           style={{ maxHeight: height }}
           data-testid="data-grid"
         >
+          <div style={{ minWidth: minimumWidth }}>
           <div role="rowgroup" className="sticky top-0 z-[1] bg-surface-sunken">
             {table.getHeaderGroups().map((headerGroup) => (
               <div key={headerGroup.id} role="row" className="grid border-b border-border" style={{ gridTemplateColumns: gridTemplate }}>
                 {headerGroup.headers.map((header) => {
                   const sorted = header.column.getIsSorted();
                   return (
-                    <div key={header.id} role="columnheader" aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined} className="flex h-10 items-center px-3 text-xs font-semibold uppercase tracking-wide text-fg-muted">
+                    <div key={header.id} role="columnheader" aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined} className="group relative flex h-10 min-w-0 items-center px-3 text-xs font-semibold uppercase tracking-wide text-fg-muted" data-col={header.column.id} id={`${gridId}-${header.column.id}`}>
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                        <button type="button" className="flex items-center gap-1 rounded-sm hover:text-fg" onClick={header.column.getToggleSortingHandler()}>
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {sorted === "asc" ? <ArrowUp className="size-3" aria-hidden="true" /> : sorted === "desc" ? <ArrowDown className="size-3" aria-hidden="true" /> : null}
+                        <button type="button" className="flex min-w-0 items-center gap-1 rounded-sm hover:text-fg" onClick={header.column.getToggleSortingHandler()} onMouseEnter={titleWhenCut}>
+                          <span className="truncate">{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                          {sorted === "asc" ? <ArrowUp className="size-3 shrink-0" aria-hidden="true" /> : sorted === "desc" ? <ArrowDown className="size-3 shrink-0" aria-hidden="true" /> : null}
                         </button>
                       ) : (
-                        flexRender(header.column.columnDef.header, header.getContext())
+                        <span className="truncate" onMouseEnter={titleWhenCut}>{flexRender(header.column.columnDef.header, header.getContext())}</span>
                       )}
+                      {header.column.id !== "__select" ? (
+                        <div
+                          role="separator"
+                          aria-orientation="vertical"
+                          aria-label={t("grid.resizeColumn")}
+                          aria-describedby={`${gridId}-${header.column.id}`}
+                          aria-valuenow={Math.round(widthOf(header.column))}
+                          aria-valuemin={MIN_WIDTH}
+                          aria-valuemax={MAX_WIDTH}
+                          tabIndex={0}
+                          title={t("grid.resizeHint")}
+                          className="absolute inset-y-0 end-0 z-[2] w-2 cursor-col-resize touch-none select-none after:absolute after:inset-y-2 after:end-0 after:w-px after:bg-border hover:after:w-0.5 hover:after:bg-accent focus-visible:outline-none focus-visible:after:w-0.5 focus-visible:after:bg-accent group-hover:after:bg-border-strong"
+                          onPointerDown={(event) => { startResize(header.column.id, event); }}
+                          onDoubleClick={(event) => { event.stopPropagation(); fitColumn(header.column.id); }}
+                          onClick={(event) => { event.stopPropagation(); }}
+                          onKeyDown={(event) => { resizeByKey(header.column, event); }}
+                          data-testid={`grid-resize-${header.column.id}`}
+                        />
+                      ) : null}
                     </div>
                   );
                 })}
@@ -633,13 +757,14 @@ export function DataGrid<T>({ columns, data, rowKey, entityType, onOpen, selecta
                   onDoubleClick={() => { if (!grouped) { onOpen?.(row.original); } }}
                 >
                   {grouped ? renderGroupRow(row) : row.getVisibleCells().map((cell) => (
-                    <div key={cell.id} role="gridcell" className="truncate px-3" style={grouping.length > 0 && cell.column.id === firstDataColumnId ? { paddingInlineStart: `${String(12 + row.depth * 16)}px` } : undefined}>
+                    <div key={cell.id} role="gridcell" className="truncate px-3" data-col={cell.column.id} onMouseEnter={titleWhenCut} style={grouping.length > 0 && cell.column.id === firstDataColumnId ? { paddingInlineStart: `${String(12 + row.depth * 16)}px` } : undefined}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </div>
                   ))}
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
       )}

@@ -17,7 +17,8 @@ import { emptyLine, LinesEditor, num, type LineForm } from "../purchasing/shared
 import { useBankAccounts } from "../payables/shared";
 import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
 import { QuickCreateButton } from "../QuickCreate";
-import { n, paymentState, printVariants, remainingOf, stateTones as tones } from "./invoices";
+import { InvoiceFacts, InvoiceLines, InvoicePayments } from "./InvoiceParts";
+import { n, paidOf, paymentState, printVariants, remainingOf, stateTones as tones } from "./invoices";
 import { rangeParams } from "./period";
 import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
@@ -155,6 +156,7 @@ export function SalesPage() {
       { id: "customer", accessorFn: (row) => `${row.partnerCode} ${localized(row.partnerName)}`, header: t("trader.sales.customer"), size: 220, cell: ({ row }) => <span dir="auto">{row.original.partnerCode} · {localized(row.original.partnerName)}</span> },
       { id: "date", accessorKey: "documentDate", header: t("trader.sales.date"), size: 120, cell: ({ row }) => <span dir="ltr">{formatDate(row.original.documentDate)}</span> },
       { id: "total", accessorKey: "totalGross", header: t("trader.sales.total"), size: 150, cell: ({ row }) => <span className="tabular" dir="ltr">{formatMoney(row.original.totalGross, row.original.currency)}</span> },
+      { id: "paid", accessorFn: (row) => (row.status === "posted" ? paidOf(row) : 0), header: t("trader.sales.paidColumn"), size: 150, cell: ({ row }) => <span className="tabular" dir="ltr" data-testid="invoice-paid">{row.original.status === "posted" ? formatMoney(paidOf(row.original), row.original.currency) : ""}</span> },
       { id: "remaining", accessorFn: (row) => remainingOf(row), header: t("trader.sales.remaining"), size: 150, cell: ({ row }) => <span className="tabular" dir="ltr" data-testid="invoice-remaining">{row.original.status === "posted" ? formatMoney(remainingOf(row.original), row.original.currency) : ""}</span> },
       { id: "state", accessorFn: (row) => paymentState(row, today), header: t("trader.sales.status"), size: 130, cell: ({ row }) => { const state = paymentState(row.original, today); return <Badge tone={tones[state] ?? "neutral"} data-testid="invoice-state">{t(`trader.sales.statuses.${state}`, { defaultValue: state })}</Badge>; } },
       {
@@ -249,41 +251,18 @@ export function SalesPage() {
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold"><span dir="ltr">{t("trader.sales.invoiceDetails", { number: opened.number })}</span></DialogTitle>
               </DialogHeader>
-              <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-                <dt className="text-fg-muted">{t("trader.sales.customer")}</dt><dd dir="auto">{opened.partnerCode} · {localized(opened.partnerName)}</dd>
-                <dt className="text-fg-muted">{t("trader.sales.date")}</dt><dd dir="ltr">{formatDate(opened.documentDate)}</dd>
-                <dt className="text-fg-muted">{t("trader.sales.status")}</dt><dd><Badge tone={tones[paymentState(opened, today)] ?? "neutral"}>{t(`trader.sales.statuses.${paymentState(opened, today)}`, { defaultValue: opened.status })}</Badge></dd>
-              </dl>
+              <InvoiceFacts rows={[
+                [t("trader.sales.customer"), <span key="p" dir="auto">{opened.partnerCode} · {localized(opened.partnerName)}</span>],
+                [t("trader.sales.date"), <bdi key="d" dir="ltr">{formatDate(opened.documentDate)}</bdi>],
+                [t("trader.sales.status"), <Badge key="s" tone={tones[paymentState(opened, today)] ?? "neutral"}>{t(`trader.sales.statuses.${paymentState(opened, today)}`, { defaultValue: opened.status })}</Badge>],
+              ]} />
               <div>
                 <h3 className="mb-1 text-sm font-semibold">{t("trader.sales.lines")}</h3>
-                <table className="w-full text-sm">
-                  <thead><tr className="text-fg-muted"><th className="px-2 py-1 text-start font-medium">{t("trader.sales.item")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.sales.quantity")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.sales.unitPrice")}</th><th className="px-2 py-1 text-end font-medium">{t("trader.sales.net")}</th></tr></thead>
-                  <tbody>
-                    {opened.lines.map((line) => (
-                      <tr key={line.id} className="border-t border-border">
-                        <td className="px-2 py-1 text-start" dir="auto">{line.itemCode ? `${line.itemCode} · ${localized(line.itemName ?? {})}` : (line.description ?? "")}</td>
-                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatNumber(n(line.quantity))} {line.uomCode ?? ""}</td>
-                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.unitPrice, opened.currency)}</td>
-                        <td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(line.netAmount, opened.currency)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot><tr className="border-t border-border font-semibold"><td className="px-2 py-1" colSpan={3}>{t("trader.sales.total")}</td><td className="tabular px-2 py-1 text-end" dir="ltr">{formatMoney(opened.totalGross, opened.currency)}</td></tr></tfoot>
-                </table>
+                <InvoiceLines lines={opened.lines} currency={opened.currency} total={opened.totalGross} paid={paidOf(opened)} remaining={remainingOf(opened)} labels={{ item: t("trader.sales.item"), quantity: t("trader.sales.quantity"), unitPrice: t("trader.sales.unitPrice"), net: t("trader.sales.net"), total: t("trader.sales.total"), paid: t("trader.sales.paidSoFar"), remaining: t("trader.sales.remaining") }} />
               </div>
               <div>
                 <h3 className="mb-1 text-sm font-semibold">{t("trader.sales.payments")}</h3>
-                {paymentsOf(opened).length === 0 ? <p className="text-sm text-fg-muted" data-testid="no-payments">{t("trader.sales.noPayments")}</p> : (
-                  <ul className="flex flex-col gap-1 text-sm" data-testid="payments-list">
-                    {paymentsOf(opened).map((s) => (
-                      <li key={s.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1" data-testid="payment-row">
-                        <span dir="ltr">{formatDate(s.settlementDate)} · {s.settlingDocumentNumber}</span>
-                        <span className="tabular" dir="ltr">{formatMoney(s.amountTc, s.currency)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="mt-2 text-sm font-medium" data-testid="dialog-remaining">{t("trader.sales.remaining")}: <span className="tabular" dir="ltr">{formatMoney(remainingOf(opened), opened.currency)}</span></p>
+                <InvoicePayments payments={paymentsOf(opened)} empty={t("trader.sales.noPayments")} labels={{ date: t("trader.sales.paymentDate"), document: t("trader.sales.paymentDocument"), amount: t("trader.sales.paymentAmount") }} />
               </div>
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setOpenedId(null); }}>{t("common.close")}</Button>

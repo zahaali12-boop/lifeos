@@ -20,6 +20,18 @@ The product must feel like the best modern SaaS: keyboard-first, command palette
 * **Performance budgets**: initial route under 250 KB gzip, route-level code splitting, list pages render 100k rows through virtualization without pagination in the client, p95 interaction under 100 ms.
 * **Testing**: Vitest + Testing Library for components, Playwright for flows (including RTL snapshots), Storybook interaction tests.
 
+**Amendment 2026-11-03 (column widths, A-208).** The grid's columns are no longer squeezed below their designed width
+to fit the screen (they were held to at most 150 px, cutting codes and names): each column is at least as wide as its
+definition says and shares what room is left, and a list wider than the screen scrolls sideways. Every heading has an
+edge, a focusable separator (`role="separator"` with its width as the value, named "Column width" and described by its
+heading, so a form field of the same name as a column stays the only match for that label), that widens or narrows the column by
+dragging (pointer events, so touch works too; dragging towards the inline end widens in either direction) or with the
+arrow keys, and fits it to the heading and the cells on screen on a double click or Enter. The widths a reader gives are
+kept in this browser per list (`quicker.grid.widths.<list>`), not in saved views, and "Reset column widths" in the
+column chooser clears them; a cell or heading cut short shows its whole text on hover. Hand-built tables keep the cell
+in the table's direction and give a code, number or date its direction on an isolated run inside it (`TableCell`'s
+`dir`), never on the cell, so the content stays under its heading in Arabic.
+
 ## Alternatives considered
 
 * **Commercial grid (AG Grid Enterprise, DevExtreme).** Fast start, but licensing per developer, RTL and accessibility gaps in pivot/tree modes, and a hard dependency for the product's strongest selling point (reporting). Building on TanStack keeps control.

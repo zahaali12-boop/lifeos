@@ -149,8 +149,8 @@ export function NotificationsPage() {
             <tbody>
               {(preferences.data ?? []).map((preference) => (
                 <tr key={preference.kind} className="border-t border-border">
-                  <td className="py-2" dir="ltr">
-                    {preference.kind === "*" ? t("notifications.allKinds") : preference.kind}
+                  <td className="py-2">
+                    {preference.kind === "*" ? t("notifications.allKinds") : <bdi dir="ltr">{preference.kind}</bdi>}
                   </td>
                   <td className="py-2 text-center">
                     <input type="checkbox" aria-label={`${preference.kind} ${t("notifications.inApp")}`} checked={preference.inApp} onChange={(e) => { togglePreference(preference.kind, "inApp", e.target.checked); }} />
