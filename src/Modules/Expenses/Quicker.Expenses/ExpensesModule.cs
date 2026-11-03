@@ -25,6 +25,7 @@ public static class ExpensesModule
         services.AddScoped<CategoryService>();
         services.AddScoped<ExpenseService>();
         services.AddScoped<FundService>();
+        services.AddScoped<QuickExpenseService>();
         services.AddScoped<IWorkflowSubjectProvider, ExpenseWorkflowSubject>();
         // Comments, files, history and links on these records are shown to those who may read the records.
         services.AddSingleton(new RecordReadPermission("expense", ExpensesPermissions.ExpenseRead));

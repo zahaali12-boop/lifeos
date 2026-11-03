@@ -9,6 +9,9 @@ namespace Quicker.Expenses.Api;
 /// <summary>The expenses surface of /api/v1: categories, expenses (record, confirm, pay, reverse), petty cash funds and their replenishments.</summary>
 public static class ExpensesEndpoints
 {
+    // Paying from a bank account in the same step is a posted payment: Banking's permission applies with the expense ones.
+    private const string BankingPaymentPost = "banking.payment.post";
+
     public static RouteGroupBuilder MapExpensesEndpoints(this RouteGroupBuilder api)
     {
         ArgumentNullException.ThrowIfNull(api);
@@ -21,6 +24,9 @@ public static class ExpensesEndpoints
         categories.MapPost("/", async (SaveExpenseCategoryRequest request, CategoryService service, CancellationToken ct) => ApiProblems.Created(await service.SaveAsync(null, request, ct), static c => $"/api/v1/expenses/categories/{c.Id}"))
             .RequirePermission(ExpensesPermissions.CategoryManage)
             .WithSummary("A new expense category");
+        categories.MapPost("/defaults", async (CategoryService service, CancellationToken ct) => ApiProblems.Ok(await service.EnsureDefaultsAsync(ct)))
+            .RequirePermission(ExpensesPermissions.CategoryManage)
+            .WithSummary("Makes sure the usual kinds of spend exist (rent, salaries, utilities, transport, phone and internet, maintenance, marketing, supplies, fees, other), each on its usual account, and returns the active categories");
         categories.MapPut("/{categoryId:guid}", async (Guid categoryId, SaveExpenseCategoryRequest request, CategoryService service, CancellationToken ct) => ApiProblems.Ok(await service.SaveAsync(categoryId, request, ct)))
             .RequirePermission(ExpensesPermissions.CategoryManage)
             .WithSummary("Changes a category; expenses already confirmed keep the account they were posted to");
@@ -48,13 +54,16 @@ public static class ExpensesEndpoints
             .RequirePermission(ExpensesPermissions.FundManage)
             .WithSummary("Reverses a replenishment: the mirror journal and the mirror movements, dated the reversal");
 
-        expenses.MapGet("/", async (Guid companyId, string? status, string? kind, Guid? partnerId, Guid? fundId, DateOnly? from, DateOnly? to, ExpenseService service, CancellationToken ct) =>
-            TypedResults.Ok(await service.ListAsync(companyId, status, kind, partnerId, fundId, from, to, ct)))
+        expenses.MapGet("/", async (Guid companyId, string? status, string? kind, Guid? partnerId, Guid? fundId, DateOnly? from, DateOnly? to, bool? includeLines, ExpenseService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.ListAsync(companyId, status, kind, partnerId, fundId, from, to, ct, includeLines ?? false)))
             .RequirePermission(ExpensesPermissions.ExpenseRead)
-            .WithSummary("Expenses of a company, newest first (up to 500): by status, kind (supplier, employee, petty_cash), payee, fund and expense date; each with what has been paid on it");
+            .WithSummary("Expenses of a company, newest first (up to 500): by status, kind (supplier, employee, petty_cash), payee, fund and expense date; each with what has been paid on it, and with its lines when includeLines is set");
         expenses.MapPost("/", async (SaveExpenseRequest request, ExpenseService service, CancellationToken ct) => ApiProblems.Created(await service.CreateAsync(request, ct), static e => $"/api/v1/expenses/{e.Id}"))
             .RequirePermission(ExpensesPermissions.ExpenseManage)
             .WithSummary("Records an expense as a draft: its payee or fund, date, currency and lines (category, amount, description, tax code, dimensions); custom fields under host 'expense'");
+        expenses.MapPost("/quick", async (QuickExpenseRequest request, QuickExpenseService service, CancellationToken ct) => ApiProblems.Created(await service.RecordAsync(request, ct), static r => $"/api/v1/expenses/{r.Expense.Id}"))
+            .RequirePermission(ExpensesPermissions.ExpenseManage).RequirePermission(ExpensesPermissions.ExpenseConfirm).RequirePermission(BankingPaymentPost)
+            .WithSummary("Records, confirms and pays an expense in one step: a petty cash voucher when paid from a cash box, the payee's bill paid from a bank account the same day, or the payee's bill left owed; says whether it is paid, owed or awaiting approval");
         expenses.MapGet("/{expenseId:guid}", async (Guid expenseId, ExpenseService service, CancellationToken ct) => ApiProblems.Found(await service.GetAsync(expenseId, ct), ExpenseService.DocumentType, expenseId))
             .RequirePermission(ExpensesPermissions.ExpenseRead)
             .WithSummary("One expense with its lines, its journal and what was paid");

@@ -409,7 +409,7 @@ export function ShipmentsPage() {
                             <TableCell dir="auto">{c.partnerCode ?? "—"}</TableCell>
                             <TableCell>
                               <div className="flex flex-wrap items-center gap-1">
-                                {c.paymentNumber ? <Badge tone="success" data-testid="cost-paid">{t("trader.shipments.costPaid", { number: c.paymentNumber })}</Badge> : null}
+                                {c.paymentNumber ? <Badge tone="success" className="whitespace-nowrap" data-testid="cost-paid">{t("trader.shipments.costPaid", { number: c.paymentNumber })}</Badge> : null}
                                 {!c.paymentNumber && s.status !== "cancelled" ? <Button type="button" variant="ghost" size="sm" onClick={() => { setProblem(null); setCostPay({ costId: c.id, bankAccountId: liveAccounts.find((a) => a.currency === fc)?.id ?? "", partnerId: c.partnerId ?? "", on: "" }); }} data-testid={`pay-cost-${String(index)}`}>{t("trader.shipments.payCost")}</Button> : null}
                                 {underway && !c.paymentNumber ? <Button type="button" variant="ghost" size="sm" onClick={() => { removeCost.mutate({ id: s.id, costId: c.id }); }} data-testid={`remove-cost-${String(index)}`}>{t("trader.shipments.removeCost")}</Button> : null}
                               </div>

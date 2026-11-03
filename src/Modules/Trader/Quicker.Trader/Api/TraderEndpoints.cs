@@ -6,7 +6,7 @@ using Quicker.Web;
 
 namespace Quicker.Trader.Api;
 
-/// <summary>The trader edition's own endpoints under /api/v1/trader (ADR-0035): the pricing board and applying its prices; the health of the project.</summary>
+/// <summary>The trader edition's own endpoints under /api/v1/trader (ADR-0035): the pricing board and applying its prices; the health of the project; the owner's money.</summary>
 public static class TraderEndpoints
 {
     // The board reads prices and costs, and writes the sales price list: the pricing module's own permissions apply.
@@ -15,6 +15,11 @@ public static class TraderEndpoints
 
     // The health screen is the company's figures in plain words: what running a statement needs.
     private const string ReportRun = "reporting.report.run";
+
+    // The owner's money moves as a manual journal: the journal permissions apply.
+    private const string JournalRead = "accounting.journal.read";
+    private const string JournalManage = "accounting.journal.manage";
+    private const string JournalPost = "accounting.journal.post";
 
     public static RouteGroupBuilder MapTraderEndpoints(this RouteGroupBuilder api)
     {
@@ -30,6 +35,13 @@ public static class TraderEndpoints
         trader.MapGet("/health", async (Guid companyId, DateOnly? from, DateOnly? to, HealthService service, CancellationToken ct) => ApiProblems.Ok(await service.ReadAsync(companyId, from, to, ct)))
             .RequirePermission(ReportRun)
             .WithSummary("The health of the project for a period (this month so far by default): the income statement in plain words with the period before and six months of results, fixed costs, break-even and cash runway, the money position, warnings, the shipments on the way with their money, sales by item and by customer, what to reorder");
+        var owner = trader.MapGroup("/owner-money");
+        owner.MapGet("/", async (Guid companyId, OwnerMoneyService service, CancellationToken ct) => ApiProblems.Ok(await service.ReadAsync(companyId, ct)))
+            .RequirePermission(JournalRead)
+            .WithSummary("The owner's money in the business: what was put in and taken out in all, the equity accounts used, and every movement newest first");
+        owner.MapPost("/", async (TraderOwnerMovementRequest request, OwnerMoneyService service, CancellationToken ct) => ApiProblems.Ok(await service.RecordAsync(request, ct)))
+            .RequirePermission(JournalManage).RequirePermission(JournalPost)
+            .WithSummary("Records money the owner put in (kind in: the box against capital) or took out (kind out: drawings against the box) as a posted manual journal, and returns the owner's money");
         return trader;
     }
 }

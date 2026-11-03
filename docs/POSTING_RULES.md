@@ -202,6 +202,8 @@ Built 2026-10-31 (A-175): the `FixedAssets` module. Every line below carries the
 | Event | Journal (Dr / Cr) | Notes |
 |-------|-------------------|-------|
 | Manual journal | as entered; balanced; control accounts blocked unless the journal targets a subledger item explicitly (creating an open item adjustment) | approval workflow optional; a line on a bank or cash account names the bank account or cash box, which records the movement (opening, receipt or disbursement; mirrored as `reversal` when the journal is reversed), refused for no box of the company, a box on another ledger account or in another currency (A-194) |
+| **Owner's money put in** (trader screen, A-195) | Dr `Cash` or `Bank` (the box named, its movement recorded) / Cr the capital account (`trader.owner.capital_account`, default 3100) | a manual journal referenced `OWNER-IN`; reversed like any journal |
+| **Owner's money taken out** (trader screen, A-195) | Dr the drawings account (`trader.owner.drawings_account`, default 3600) / Cr `Cash` or `Bank` (the box named) | a manual journal referenced `OWNER-OUT` |
 | Recurring journal | generated from template on schedule; may require review | |
 | Reversing journal / accrual | entry with `auto_reverse_on`; the reversal is posted automatically on that date as a mirror entry | e.g. Dr `Expense` / Cr `AccruedExpenses`, reversed next period |
 | Prepayment amortisation | Dr expense / Cr `Prepayments` per period from the deferral schedule | |

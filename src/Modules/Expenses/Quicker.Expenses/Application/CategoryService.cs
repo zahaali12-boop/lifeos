@@ -27,6 +27,42 @@ public sealed class CategoryService(ExpensesDbContext db, IAuditSink audit, IClo
         return (await query.OrderBy(static c => c.Code).ToListAsync(cancellationToken)).Select(Map).ToList();
     }
 
+    /// <summary>The usual kinds of spend of a small business and the account each lands on in the shipped charts (A-195).</summary>
+    private static readonly (string Code, string En, string Ar, string Account)[] Defaults =
+    [
+        ("RENT", "Rent", "الإيجار", "6110"),
+        ("SALARIES", "Salaries and wages", "الرواتب والأجور", "6100"),
+        ("UTILITIES", "Electricity, water and fuel", "الكهرباء والماء والوقود", "6120"),
+        ("TRANSPORT", "Transport and delivery", "النقل والتوصيل", "6140"),
+        ("PHONE", "Phone and internet", "الهاتف والإنترنت", "6190"),
+        ("MAINTENANCE", "Repairs and maintenance", "الصيانة والإصلاح", "6180"),
+        ("MARKETING", "Marketing and advertising", "التسويق والإعلان", "6130"),
+        ("SUPPLIES", "Shop and office supplies", "مستلزمات المحل والمكتب", "6150"),
+        ("FEES", "Professional fees", "الأتعاب المهنية", "6160"),
+        ("OTHER", "Other expenses", "مصروفات أخرى", "6600"),
+    ];
+
+    /// <summary>Makes sure every usual kind exists (by code; the ones already there, renamed or re-pointed, are left alone) and returns the active categories.</summary>
+    public async Task<Result<IReadOnlyList<ExpenseCategorySummary>>> EnsureDefaultsAsync(CancellationToken cancellationToken)
+    {
+        var existing = (await db.Categories.AsNoTracking().Select(static c => c.Code).ToListAsync(cancellationToken)).ToHashSet(StringComparer.Ordinal);
+        foreach (var (code, en, ar, account) in Defaults)
+        {
+            if (existing.Contains(code))
+            {
+                continue;
+            }
+
+            var saved = await SaveAsync(null, new SaveExpenseCategoryRequest(code, new Dictionary<string, string>(StringComparer.Ordinal) { ["en"] = en, ["ar"] = ar }, account), cancellationToken);
+            if (saved.IsFailure)
+            {
+                return saved.Error!;
+            }
+        }
+
+        return Result<IReadOnlyList<ExpenseCategorySummary>>.Success(await ListAsync(true, cancellationToken));
+    }
+
     public async Task<Result<ExpenseCategorySummary>> SaveAsync(Guid? id, SaveExpenseCategoryRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);

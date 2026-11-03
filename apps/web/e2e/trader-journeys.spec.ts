@@ -8,7 +8,8 @@ import { expect, test, type Page } from "@playwright/test";
  * currency, the recommendation names the usable supplier with its reason and the saving a split would bring, and
  * "order from this supplier" makes the purchase order; the order is followed as a shipment to arrival with its freight
  * and a deposit paid from the bank, priced, sold and paid for, the rest of the supplier's invoice paid from Money, and
- * the Money and Health screens say what is owed and whether the project carries itself. Then the
+ * the Money and Health screens say what is owed and whether the project carries itself, the owner's own money put in
+ * and the shop's expenses recorded in one step. Then the
  * same screens in Arabic, right-to-left. Every screen passes axe with no serious or critical violation.
  */
 const password = "correct-horse-battery-staple";
@@ -61,7 +62,7 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await call("post", "/api/v1/items", { code: "PADS", name: { en: "Brake pads", ar: "فحمات فرامل" }, baseUom: "PCS" });
   await call("post", "/api/v1/items", { code: "FILTER", name: { en: "Oil filter", ar: "فلتر زيت" }, baseUom: "PCS" });
   await call("post", "/api/v1/inventory/warehouses", { companyId, code: "MAIN", name: { en: "Main store", ar: "المخزن الرئيسي" } });
-  for (const [code, en, ar] of [["SHENZ", "Shenzhen Auto Parts", "شنجن لقطع السيارات"], ["GUANG", "Guangzhou Motors", "غوانزو موتورز"], ["FWD", "Gulf Forwarding", "الخليج للشحن"]]) {
+  for (const [code, en, ar] of [["SHENZ", "Shenzhen Auto Parts", "شنجن لقطع السيارات"], ["GUANG", "Guangzhou Motors", "غوانزو موتورز"], ["FWD", "Gulf Forwarding", "الخليج للشحن"], ["ELEC", "Electricity office", "دائرة الكهرباء"]]) {
     const supplier = await call("post", "/api/v1/partners", { code, legalName: { en, ar }, isSupplier: true });
     await call("put", `/api/v1/partners/${supplier.id}/supplier-accounts/${companyId}`, { currency: "IQD", leadTimeDays: 30 });
   }
@@ -295,12 +296,50 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("home-month-row")).toHaveCount(6);
   await expectAccessible(page);
 
-  // Arabic, right-to-left: the flat bar, the list and the record in Arabic.
+  // Expenses: the owner puts 500,000 of his own into the cash box; the usual kinds of spend are added once; the rent,
+  // 20,000, paid out of the box; the phone bill, 10,000, owed to the electricity office until Money pays it.
+  await page.getByTestId("flat-nav").getByRole("link", { name: "Expenses" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Expenses");
+  await expect(page.getByTestId("no-owner-moves")).toBeVisible();
+  await page.getByTestId("owner-account").selectOption({ label: "CASH · Cash box" });
+  await page.getByTestId("owner-amount").fill("500000");
+  await page.getByTestId("owner-note").fill("From savings");
+  await page.getByTestId("save-owner-move").click();
+  await expect(page.getByTestId("expenses-notice")).toContainText("MJ-", { timeout: 20_000 });
+  await expect(page.getByTestId("owner-put-in")).toContainText("500,000");
+  await expect(page.getByTestId("owner-move-row")).toHaveCount(1);
+  await expect(page.getByTestId("owner-move-row")).toContainText("From savings");
+  await page.getByTestId("add-expense-kinds").click();
+  await expect(page.getByTestId("expenses-notice")).toContainText("usual kinds", { timeout: 20_000 });
+  await page.getByTestId("expense-kind").selectOption({ label: "Rent" });
+  await page.getByTestId("expense-amount").fill("20000");
+  await page.getByTestId("expense-paid-from").selectOption({ label: "CASH · Cash box" });
+  await page.getByTestId("save-expense").click();
+  await expect(page.getByTestId("expenses-notice")).toContainText("20,000", { timeout: 20_000 });
+  await expect(page.getByTestId("expense-row")).toHaveCount(1);
+  await page.getByTestId("expense-kind").selectOption({ label: "Phone and internet" });
+  await page.getByTestId("expense-amount").fill("10000");
+  await page.getByTestId("expense-paid-from").selectOption("");
+  await page.getByTestId("expense-payee").selectOption({ label: "ELEC · Electricity office" });
+  await page.getByTestId("save-expense").click();
+  await expect(page.getByTestId("expenses-notice")).toContainText("owed", { timeout: 20_000 });
+  await expect(page.getByTestId("expense-row")).toHaveCount(2);
+  await expect(page.getByTestId("month-expenses-total")).toContainText("30,000");
+  await expect(page.getByTestId("expense-state").filter({ hasText: "Owed" })).toHaveCount(1);
+  await expectAccessible(page);
+
+  // Arabic, right-to-left: the flat bar, the list and the record in Arabic (the month is a loss now the rent and the
+  // phone bill are in, which the home and the health say).
   await page.getByTestId("language-menu").click();
   await page.getByTestId("language-ar").click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("المصاريف");
+  await expect(page.getByTestId("expense-row")).toHaveCount(2);
+  await expect(page.getByTestId("owner-move-row")).toContainText("أودعتُ مالاً");
+  await expectAccessible(page);
+  await page.getByTestId("flat-nav").getByRole("link", { name: "الرئيسية" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("مرحباً");
-  await expect(page.getByTestId("home-month-value")).toContainText("ربح قدره");
+  await expect(page.getByTestId("home-month-value")).toContainText("خسارة قدرها");
   await expectAccessible(page);
   await page.getByTestId("flat-nav").getByRole("link", { name: "المخزون" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("المخزون");
@@ -308,8 +347,9 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expectAccessible(page);
   await page.getByTestId("flat-nav").getByRole("link", { name: "صحة المشروع" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("صحة المشروع");
-  await expect(page.getByTestId("verdict")).toContainText("ربح قدره");
-  await expect(page.getByTestId("cash-runway")).toContainText("0.3");
+  await expect(page.getByTestId("verdict")).toContainText("خسارة قدرها");
+  await expect(page.getByTestId("cash-runway")).toContainText("1.9");
+  await expect(page.getByTestId("cash-total")).toContainText("580,000");
   await expectAccessible(page);
   await page.getByTestId("flat-nav").getByRole("link", { name: "المال" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("المال");

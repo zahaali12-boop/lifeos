@@ -11186,6 +11186,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/expenses/categories/defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Makes sure the usual kinds of spend exist (rent, salaries, utilities, transport, phone and internet, maintenance, marketing, supplies, fees, other), each on its usual account, and returns the active categories */
+        post: operations["postExpensesCategoriesDefaults"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expenses/categories/{categoryId}": {
         parameters: {
             query?: never;
@@ -11297,11 +11314,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Expenses of a company, newest first (up to 500): by status, kind (supplier, employee, petty_cash), payee, fund and expense date; each with what has been paid on it */
+        /** Expenses of a company, newest first (up to 500): by status, kind (supplier, employee, petty_cash), payee, fund and expense date; each with what has been paid on it, and with its lines when includeLines is set */
         get: operations["getExpenses"];
         put?: never;
         /** Records an expense as a draft: its payee or fund, date, currency and lines (category, amount, description, tax code, dimensions); custom fields under host 'expense' */
         post: operations["postExpenses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/quick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Records, confirms and pays an expense in one step: a petty cash voucher when paid from a cash box, the payee's bill paid from a bank account the same day, or the payee's bill left owed; says whether it is paid, owed or awaiting approval */
+        post: operations["postExpensesQuick"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12262,6 +12296,24 @@ export interface paths {
         get: operations["getTraderHealth"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trader/owner-money": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The owner's money in the business: what was put in and taken out in all, the equity accounts used, and every movement newest first */
+        get: operations["getTraderOwnerMoney"];
+        put?: never;
+        /** Records money the owner put in (kind in: the box against capital) or took out (kind out: drawings against the box) as a posted manual journal, and returns the owner's money */
+        post: operations["postTraderOwnerMoney"];
         delete?: never;
         options?: never;
         head?: never;
@@ -20059,6 +20111,34 @@ export interface components {
             field: string;
             aggregation?: null | string;
         };
+        /**
+         * @description An expense in one step, as a shop records it (ADR-0035 §12, A-195): what for (the category), how much in the company's
+         *     currency, when, paid from which bank account or cash box (or not yet), and to whom. A payee is needed unless the
+         *     money left a cash box.
+         */
+        QuickExpenseRequest: {
+            /** Format: uuid */
+            companyId: string;
+            /** Format: uuid */
+            categoryId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: date */
+            expenseDate?: null | string;
+            /** Format: uuid */
+            paidFromBankAccountId?: null | string;
+            /** Format: uuid */
+            partnerId?: null | string;
+            /** Format: date */
+            dueDate?: null | string;
+            description?: null | string;
+            reference?: null | string;
+        };
+        QuickExpenseResult: {
+            outcome: string;
+            expense: components["schemas"]["ExpenseSummary"];
+            paymentNumber: null | string;
+        };
         QuickSaleLineRequest: {
             /** Format: double */
             quantity: number | string;
@@ -26862,6 +26942,50 @@ export interface components {
             expenses: number | string;
             /** Format: double */
             netProfit: number | string;
+        };
+        /** @description The owner's money in the business (ADR-0035 §12): what was put in and taken out in all, the equity accounts each goes to, and the movements newest first. */
+        TraderOwnerMoney: {
+            /** Format: uuid */
+            companyId: string;
+            currency: string;
+            /** Format: double */
+            putIn: number | string;
+            /** Format: double */
+            takenOut: number | string;
+            capitalAccount: string;
+            drawingsAccount: string;
+            movements: components["schemas"]["TraderOwnerMovement"][];
+        };
+        /** @description One movement as the trader reads it back: the journal that holds it, its kind, the box, the amount, the note, and whether it still stands. */
+        TraderOwnerMovement: {
+            /** Format: uuid */
+            journalId: string;
+            number: null | string;
+            kind: string;
+            /** Format: date */
+            date: string;
+            /** Format: uuid */
+            bankAccountId: null | string;
+            bankAccountCode: string;
+            /** Format: double */
+            amount: number | string;
+            note: null | string;
+            status: string;
+            /** Format: uuid */
+            journalEntryId: null | string;
+        };
+        /** @description Money the owner puts in or takes out: which, from or into which bank account or cash box, how much in the company's currency, on which day, and a note. */
+        TraderOwnerMovementRequest: {
+            /** Format: uuid */
+            companyId: string;
+            kind: string;
+            /** Format: uuid */
+            bankAccountId: string;
+            /** Format: double */
+            amount: number | string;
+            /** Format: date */
+            date?: null | string;
+            note?: null | string;
         };
         TraderPriceChange: {
             /** Format: uuid */
@@ -48368,6 +48492,26 @@ export interface operations {
             };
         };
     };
+    postExpensesCategoriesDefaults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseCategorySummary"][];
+                };
+            };
+        };
+    };
     putExpensesCategoriesByCategoryId: {
         parameters: {
             query?: never;
@@ -48572,6 +48716,7 @@ export interface operations {
                 fundId?: string;
                 from?: string;
                 to?: string;
+                includeLines?: boolean;
             };
             header?: never;
             path?: never;
@@ -48610,6 +48755,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExpenseSummary"];
+                };
+            };
+        };
+    };
+    postExpensesQuick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickExpenseRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickExpenseResult"];
                 };
             };
         };
@@ -50398,6 +50567,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TraderHealth"];
+                };
+            };
+        };
+    };
+    getTraderOwnerMoney: {
+        parameters: {
+            query: {
+                companyId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraderOwnerMoney"];
+                };
+            };
+        };
+    };
+    postTraderOwnerMoney: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraderOwnerMovementRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraderOwnerMoney"];
                 };
             };
         };

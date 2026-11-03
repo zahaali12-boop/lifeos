@@ -21,3 +21,28 @@ public interface IOpeningJournals
 {
     Task<Result<OpeningJournalResult>> PostAsync(OpeningJournalRequest request, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// A journal another module creates and posts through Accounting in the company's currency (the trader's owner
+/// movements, A-195): a manual journal with the lines as <see cref="OpeningJournalLine"/> hands them over (a bank or
+/// cash line names its box, a control line its partner), a bilingual description and a reference the module finds
+/// it by again. It is numbered, listed, reversed and audited like any manual journal.
+/// </summary>
+public sealed record ModuleJournalRequest(Guid CompanyId, DateOnly PostingDate, IReadOnlyList<OpeningJournalLine> Lines, IReadOnlyDictionary<string, string> Description, string? Reference = null);
+
+public sealed record ModuleJournalResult(Guid JournalId, string Number, Guid JournalEntryId);
+
+/// <summary>A line of a posted journal as a module reads it back: the account by code, one side, and the subledger item it names.</summary>
+public sealed record JournalBriefLine(int LineNo, string AccountCode, decimal Debit, decimal Credit, string? SubledgerType, Guid? SubledgerRef);
+
+/// <summary>A journal as a module reads it back by its reference: the header, its status and its lines.</summary>
+public sealed record JournalBrief(Guid JournalId, string? Number, DateOnly PostingDate, IReadOnlyDictionary<string, string> Description, string? Reference, string Status, Guid? JournalEntryId, DateTimeOffset CreatedAt, IReadOnlyList<JournalBriefLine> Lines);
+
+/// <summary>Manual journals for another module (A-195): created and posted in one go, and read back by the reference the module gave them.</summary>
+public interface IJournals
+{
+    Task<Result<ModuleJournalResult>> PostAsync(ModuleJournalRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>The company's journals whose reference starts with the prefix, newest first.</summary>
+    Task<IReadOnlyList<JournalBrief>> ListByReferenceAsync(Guid companyId, string referencePrefix, int limit = 200, CancellationToken cancellationToken = default);
+}

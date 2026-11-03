@@ -138,6 +138,7 @@ export const traderNavigation: NavigationItem[] = [
   { to: "/trader/pricing", label: "nav.trader.pricing", icon: Tags, shortcut: "g p", permission: "pricing.price.read" },
   { to: "/trader/sales", label: "nav.trader.sales", icon: ShoppingCart, shortcut: "s i", permission: "sales.invoice.read" },
   { to: "/trader/money", label: "nav.trader.money", icon: Wallet, shortcut: "r o", permission: "receivables.open_item.read" },
+  { to: "/trader/expenses", label: "nav.trader.expenses", icon: ReceiptText, shortcut: "e x", permission: "expenses.expense.read" },
   { to: "/trader/health", label: "nav.trader.health", icon: HeartPulse, shortcut: "f h", permission: "reporting.report.run" },
   { to: "/sales/customers", label: "nav.customers", icon: Contact, shortcut: "s c", permission: "partners.customer.read" },
   { to: "/purchasing/suppliers", label: "nav.suppliers", icon: Handshake, shortcut: "g 3", permission: "partners.supplier.read" },

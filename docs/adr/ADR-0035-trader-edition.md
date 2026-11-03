@@ -137,6 +137,18 @@ would also throw away the tests and the invariants that make the books right.
     offers, order, payments, arrival, invoice, pricing, sale, receipt and count to the health figures, is one test
     whose every figure ties to the ledger and passes the invariant harness.
 
+12. **Expenses and the owner's own money, in one step each (T9, A-195).** The trader's Expenses screen records what
+    the shop spends through the Expenses module's own services (`POST /expenses/quick`): paid from a cash box it is a
+    petty cash voucher from the fund that sits on the box (made on first use, with the box's code and name), paid from
+    a bank account it is the payee's bill confirmed and paid the same day, not paid it is the payee's bill left owed,
+    which Money then pays. The usual kinds of spend (`POST /expenses/categories/defaults`) are made once on their usual
+    accounts. The owner's capital and drawings are manual journals posted through a new Accounting contract
+    (`IJournals`: a module's journal created and posted in one go and read back by its reference): money put in is
+    Dr the box / Cr the capital account, money taken out Dr the drawings account / Cr the box, the box named on the
+    bank line so its balance follows (A-194); the equity accounts are settings with the chart's usual codes as
+    defaults. The Trader module keeps no table for them: the journals are the record, numbered, listed and reversible
+    in the full edition.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two
@@ -157,7 +169,7 @@ would also throw away the tests and the invariants that make the books right.
   and returns from the sales screen, receipts on account; profit by item (needs the cost of each sale from the stock
   ledger; the health screen shows sales by item and the pricing board the margin per item today); a cash forecast by
   week from the open items' due dates; a lead time per supplier in the reorder (one cover-days setting for now);
-  recording an expense from the health screen (the Expenses screens stand); a phone shell of its own (the scanner is
+  a payee made from the expense form (the suppliers screen makes one); an expense in a foreign currency from the trader's screen (the full Expenses screen takes it); reversing an owner movement from the trader's screen (the Journals screen reverses it); a phone shell of its own (the scanner is
   the installed web app; a store-listed iPhone build is a later programme); printing barcode labels for items that
   carry none (the item code is typed on the phone meanwhile); a trader-worded mobile home (the scanner's own words
   stand: Count, Transfer, Receive, Pick, Queue).

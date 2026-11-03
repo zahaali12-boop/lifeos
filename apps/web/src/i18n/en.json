@@ -183,7 +183,8 @@
       "sales": "Sales",
       "money": "Money",
       "health": "Health",
-      "stock": "Stock"
+      "stock": "Stock",
+      "expenses": "Expenses"
     }
   },
   "shell": {
@@ -6669,6 +6670,69 @@
       "setPrices": "Set the prices",
       "salesByMonth": "Sales by month",
       "healthLink": "The whole picture: Health"
+    },
+    "expenses": {
+      "title": "Expenses",
+      "description": "What the shop spends, paid from the cash box or the bank or owed until you pay it; and the money you put in or take out yourself.",
+      "record": "Record an expense",
+      "kind": "What for",
+      "chooseKind": "Choose what it was for",
+      "noKinds": "No kinds of spend yet.",
+      "addKinds": "Add the usual kinds",
+      "kindsAdded": "The usual kinds are in: rent, salaries, electricity and more.",
+      "amount": "Amount",
+      "date": "Date",
+      "paidFrom": "Paid from",
+      "notPaid": "Not paid yet (owed)",
+      "payee": "To whom",
+      "choosePayee": "Choose who was paid",
+      "payeeHint": "Needed unless the money left a cash box. A new payee is added under Suppliers.",
+      "newPayee": "New payee",
+      "dueDate": "Due on",
+      "note": "Note",
+      "save": "Record",
+      "recorded": {
+        "paid": "Recorded: {number}, {amount} paid.",
+        "owed": "Recorded: {number}, {amount} owed; it is on Money to pay.",
+        "pending_approval": "Recorded: {number}, {amount}, waiting for approval."
+      },
+      "thisMonth": "This month",
+      "monthTotal": "Spent this month",
+      "byKind": "By kind",
+      "nothingYet": "Nothing recorded this month.",
+      "columns": {
+        "date": "Date",
+        "what": "What for",
+        "who": "To whom / from where",
+        "amount": "Amount",
+        "state": "State"
+      },
+      "states": {
+        "paid": "Paid",
+        "partial": "Partly paid",
+        "unpaid": "Owed",
+        "pending": "Awaiting approval"
+      },
+      "seeAll": "All expenses (full screens)",
+      "owner": {
+        "title": "Your own money",
+        "description": "Money you put into the business or take out of it: not a sale, not an expense; it changes what the business owes you.",
+        "putIn": "Put in so far",
+        "takenOut": "Taken out so far",
+        "kind": "What",
+        "in": "I put money in",
+        "out": "I took money out",
+        "account": "Through",
+        "amount": "Amount",
+        "date": "Date",
+        "note": "Note",
+        "save": "Record",
+        "recorded": "Recorded: {number}.",
+        "list": "Movements",
+        "nothing": "No movements yet.",
+        "reversed": "Reversed",
+        "accounts": "Capital account {capital}, drawings account {drawings}."
+      }
     }
   }
 }

@@ -56,9 +56,14 @@ public sealed class ExpenseService(
 
     // ------------------------------------------------------------------ reads
 
-    public async Task<IReadOnlyList<ExpenseSummary>> ListAsync(Guid companyId, string? status, string? kind, Guid? partnerId, Guid? fundId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ExpenseSummary>> ListAsync(Guid companyId, string? status, string? kind, Guid? partnerId, Guid? fundId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken, bool includeLines = false)
     {
         var query = db.Expenses.AsNoTracking().Where(e => e.CompanyId == companyId);
+        if (includeLines)
+        {
+            query = query.Include(static e => e.Lines);
+        }
+
         if (!string.IsNullOrWhiteSpace(status))
         {
             query = query.Where(e => e.Status == status);
@@ -93,7 +98,7 @@ public sealed class ExpenseService(
         var result = new List<ExpenseSummary>(expenses.Count);
         foreach (var expense in expenses)
         {
-            result.Add(await MapAsync(expense, false, cancellationToken));
+            result.Add(await MapAsync(expense, includeLines, cancellationToken));
         }
 
         return result;

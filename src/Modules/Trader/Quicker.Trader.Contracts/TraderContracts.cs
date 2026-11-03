@@ -12,6 +12,12 @@ public static class TraderSettingKeys
     /// <summary>The increment suggested prices are rounded up to, in the company's currency (number; 0 for none).</summary>
     public const string RoundTo = "trader.pricing.round_to";
 
+    /// <summary>The equity account the owner's money put in is credited to (string, an account code of the company's chart; default 3100, share capital).</summary>
+    public const string OwnerCapitalAccount = "trader.owner.capital_account";
+
+    /// <summary>The equity account the owner's money taken out is debited to (string, an account code of the company's chart; default 3600, distributions).</summary>
+    public const string OwnerDrawingsAccount = "trader.owner.drawings_account";
+
     /// <summary>The sales price list pricing reads and writes (string, the list's id); the company's default list when empty.</summary>
     public const string PriceListId = "trader.pricing.price_list_id";
 

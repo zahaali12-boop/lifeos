@@ -32401,6 +32401,30 @@
         }
       }
     },
+    "/api/v1/expenses/categories/defaults": {
+      "post": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "Makes sure the usual kinds of spend exist (rent, salaries, utilities, transport, phone and internet, maintenance, marketing, supplies, fees, other), each on its usual account, and returns the active categories",
+        "operationId": "postExpensesCategoriesDefaults",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseCategorySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/expenses/categories/{categoryId}": {
       "put": {
         "tags": [
@@ -32702,7 +32726,7 @@
         "tags": [
           "Expenses"
         ],
-        "summary": "Expenses of a company, newest first (up to 500): by status, kind (supplier, employee, petty_cash), payee, fund and expense date; each with what has been paid on it",
+        "summary": "Expenses of a company, newest first (up to 500): by status, kind (supplier, employee, petty_cash), payee, fund and expense date; each with what has been paid on it, and with its lines when includeLines is set",
         "operationId": "getExpenses",
         "parameters": [
           {
@@ -32759,6 +32783,13 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "includeLines",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -32800,6 +32831,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ExpenseSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expenses/quick": {
+      "post": {
+        "tags": [
+          "Expenses"
+        ],
+        "summary": "Records, confirms and pays an expense in one step: a petty cash voucher when paid from a cash box, the payee's bill paid from a bank account the same day, or the payee's bill left owed; says whether it is paid, owed or awaiting approval",
+        "operationId": "postExpensesQuick",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickExpenseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickExpenseResult"
                 }
               }
             }
@@ -35479,6 +35541,67 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TraderHealth"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trader/owner-money": {
+      "get": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "The owner's money in the business: what was put in and taken out in all, the equity accounts used, and every movement newest first",
+        "operationId": "getTraderOwnerMoney",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderOwnerMoney"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Trader"
+        ],
+        "summary": "Records money the owner put in (kind in: the box against capital) or took out (kind out: drawings against the box) as a posted manual journal, and returns the owner's money",
+        "operationId": "postTraderOwnerMoney",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraderOwnerMovementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraderOwnerMoney"
                 }
               }
             }
@@ -65025,6 +65148,95 @@
         },
         "description": "A measure to aggregate; the aggregation defaults to the field's own."
       },
+      "QuickExpenseRequest": {
+        "required": [
+          "companyId",
+          "categoryId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "expenseDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "paidFromBankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "partnerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "An expense in one step, as a shop records it (ADR-0035 §12, A-195): what for (the category), how much in the company's\ncurrency, when, paid from which bank account or cash box (or not yet), and to whom. A payee is needed unless the\nmoney left a cash box."
+      },
+      "QuickExpenseResult": {
+        "required": [
+          "outcome",
+          "expense",
+          "paymentNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string"
+          },
+          "expense": {
+            "$ref": "#/components/schemas/ExpenseSummary"
+          },
+          "paymentNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "QuickSaleLineRequest": {
         "required": [
           "quantity"
@@ -89127,6 +89339,169 @@
           }
         },
         "description": "One month of results for the trend."
+      },
+      "TraderOwnerMoney": {
+        "required": [
+          "companyId",
+          "currency",
+          "putIn",
+          "takenOut",
+          "capitalAccount",
+          "drawingsAccount",
+          "movements"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "putIn": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "takenOut": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "capitalAccount": {
+            "type": "string"
+          },
+          "drawingsAccount": {
+            "type": "string"
+          },
+          "movements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraderOwnerMovement"
+            }
+          }
+        },
+        "description": "The owner's money in the business (ADR-0035 §12): what was put in and taken out in all, the equity accounts each goes to, and the movements newest first."
+      },
+      "TraderOwnerMovement": {
+        "required": [
+          "journalId",
+          "number",
+          "kind",
+          "date",
+          "bankAccountId",
+          "bankAccountCode",
+          "amount",
+          "note",
+          "status",
+          "journalEntryId"
+        ],
+        "type": "object",
+        "properties": {
+          "journalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "bankAccountCode": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "journalEntryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "One movement as the trader reads it back: the journal that holds it, its kind, the box, the amount, the note, and whether it still stands."
+      },
+      "TraderOwnerMovementRequest": {
+        "required": [
+          "companyId",
+          "kind",
+          "bankAccountId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Money the owner puts in or takes out: which, from or into which bank account or cash box, how much in the company's currency, on which day, and a note."
       },
       "TraderPriceChange": {
         "required": [
