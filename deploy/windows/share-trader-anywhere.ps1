@@ -3,6 +3,9 @@
 # It turns on Tailscale Serve for the app's port, which gives the app an HTTPS address of this machine, writes that
 # address as the program's public origin (sign-in with a passkey or security key, and the links in its messages, use
 # it) and restarts the stack to take it. Run by share-trader-anywhere.bat; install Tailscale and sign in first.
+# With -Public (share-trader-public.bat) the same address is opened to the whole internet through Tailscale Funnel,
+# so a phone needs nothing installed: the program's own sign-in is then what protects it (A-204).
+param([switch]$Public)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $envFile = Join-Path $root '.env'
@@ -34,10 +37,11 @@ if (-not $name) {
     exit 1
 }
 
-Write-Host "Sharing http://127.0.0.1:$port as https://$name ..."
-& $tailscale serve --bg "http://127.0.0.1:$port"
+$how = if ($Public) { 'funnel' } else { 'serve' }
+Write-Host "Sharing http://127.0.0.1:$port as https://$name ($(if ($Public) { 'the whole internet, protected by the sign-in' } else { 'your own devices only' })) ..."
+& $tailscale $how --bg "http://127.0.0.1:$port"
 if ($LASTEXITCODE -ne 0) {
-    Write-Host 'Tailscale could not share it. If it asked for HTTPS, enable "HTTPS certificates" at https://login.tailscale.com/admin/dns and run this again.'
+    Write-Host 'Tailscale could not share it. If it asked for HTTPS, enable "HTTPS certificates" at https://login.tailscale.com/admin/dns; if it asked for Funnel, open the link it printed and allow it; then run this again.'
     exit 1
 }
 
@@ -58,6 +62,13 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ''
-Write-Host "Done. On the phone: install Tailscale from the App Store, sign in with the same account, switch it on, then open"
-Write-Host "  $origin"
-Write-Host 'in Safari and add it to the home screen. It works wherever the phone has internet, as long as this computer is on.'
+if ($Public) {
+    Write-Host "Done. On any phone, open"
+    Write-Host "  $origin"
+    Write-Host 'in Safari and add it to the home screen: nothing to install. Anyone with the address reaches the sign-in page,'
+    Write-Host 'so keep the password long and turn on two-step verification (Account, Security). This computer must stay on.'
+} else {
+    Write-Host "Done. On the phone: install Tailscale from the App Store, sign in with the same account, switch it on, then open"
+    Write-Host "  $origin"
+    Write-Host 'in Safari and add it to the home screen. It works wherever the phone has internet, as long as this computer is on.'
+}

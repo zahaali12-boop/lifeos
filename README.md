@@ -64,6 +64,12 @@ origin (`QUICKER_TRADER_PUBLIC_ORIGIN` in `.env`) and restarts the stack. On the
 Store, sign in with the same account, switch it on, open the printed address (`https://<computer>.<tailnet>.ts.net`)
 in Safari and add it to the home screen. The computer must be on and online; Tailscale starts with Windows.
 
+**From anywhere, with nothing on the phone.** `deploy\windows\share-trader-public.bat` opens the same address to the
+whole internet (Tailscale Funnel; the first run prints a link to allow it once in Tailscale's console), so any phone
+opens `https://<computer>.<tailnet>.ts.net` in Safari with nothing installed. Anyone who has the address then reaches
+the sign-in page, and the program's own sign-in is what protects the data: keep the password long, turn on two-step
+verification (Account, Security), and prefer the private way above when the phone can carry Tailscale.
+
 To work on the web app with hot reload outside Docker: `pnpm install`, then `set VITE_API_BASE_URL=http://localhost:8080`
 (`export` on macOS and Linux) and `pnpm --filter @quicker/web dev`.
 
