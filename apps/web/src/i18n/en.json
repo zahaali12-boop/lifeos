@@ -264,7 +264,8 @@
     "verify": "Verify",
     "failed": "Sign-in failed. Check the details and try again.",
     "unexpected": "The server answered in an unexpected way.",
-    "serverUnreachable": "The program's server is not answering. If an update is being installed, wait two minutes and try again; otherwise check that Docker Desktop is running."
+    "serverUnreachable": "The program's server is not answering. If an update is being installed, wait two minutes and try again; otherwise check that Docker Desktop is running.",
+    "traderProgram": "This workspace opens as the trader program: offers, shipments, prices, sales, money and the cash box, nothing else."
   },
   "account": {
     "title": "My account",

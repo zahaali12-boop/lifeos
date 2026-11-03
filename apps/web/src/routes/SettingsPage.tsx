@@ -65,12 +65,8 @@ function EditionCard() {
   const allowed = can("identity.tenant.manage");
   const edition = useQuery({ queryKey: ["tenant-edition"], enabled: allowed, queryFn: async () => unwrap(await api.GET("/api/v1/tenant/edition")) });
   const save = useMutation({
-    mutationFn: async (next: string) => {
-      const saved = unwrap(await api.PUT("/api/v1/tenant/edition", { body: { edition: next } }));
-      // The trader sells what has no tax group with no tax; the full edition insists on a classification (ADR-0035 §17).
-      unwrap(await api.PUT("/api/v1/organization/settings/{key}", { params: { path: { key: "tax.unclassified_items" } }, body: { value: next === "trader" ? "untaxed" : "refuse", valueType: "string" } }));
-      return saved;
-    },
+    // The server applies what the edition means with it (the trader sells what has no tax group untaxed, ADR-0035 §17).
+    mutationFn: async (next: string) => unwrap(await api.PUT("/api/v1/tenant/edition", { body: { edition: next } })),
     onSuccess: async (result) => {
       setProblem(null);
       updateSessionTenant({ edition: result.edition });

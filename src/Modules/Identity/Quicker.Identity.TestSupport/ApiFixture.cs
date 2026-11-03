@@ -94,11 +94,11 @@ public sealed class ApiFixture : IAsyncDisposable
     }
 
     /// <summary>Creates a tenant with an owner through the public sign-up endpoint.</summary>
-    public async Task<Workspace> SignupAsync(string? slug = null, string password = "correct-horse-battery-staple")
+    public async Task<Workspace> SignupAsync(string? slug = null, string password = "correct-horse-battery-staple", string edition = "full")
     {
         slug ??= "ws" + Guid.NewGuid().ToString("N")[^10..];
         var email = $"owner-{slug}@example.test";
-        var response = await Client.PostAsJsonAsync("/api/v1/auth/signup", new { tenantName = "Workspace " + slug, slug, ownerEmail = email, ownerName = "Owner " + slug, password }, Json);
+        var response = await Client.PostAsJsonAsync("/api/v1/auth/signup", new { tenantName = "Workspace " + slug, slug, ownerEmail = email, ownerName = "Owner " + slug, password, edition }, Json);
         var body = await response.Content.ReadAsStringAsync();
         if (!response.IsSuccessStatusCode)
         {

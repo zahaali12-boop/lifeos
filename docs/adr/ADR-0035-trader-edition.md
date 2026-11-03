@@ -215,6 +215,29 @@ would also throw away the tests and the invariants that make the books right.
     (comparisons and shipments by the day they were made, in the company's time zone; invoices by their date), and
     take `from` and `to`. One period chooser (today, the last seven days, this month, last month, this quarter, this
     year, everything, or typed dates) sits on Sales, Offers, Shipments, Expenses and Cash and bank.
+19. **The trader program on its own, with nothing in it, and on the phone (T11c; A-202).** The founder's trader
+    program runs as a second installation of the same product next to the full system on one machine, sharing nothing
+    with it: `docker-compose.trader.yml` (Compose project `quicker-trader`) has its own PostgreSQL, file store, mail
+    catcher, API, worker and web app, its own volumes (named by the project) and its own ports (the app on 5174, the
+    API on 8090; the full system keeps 5173 and 8080), reading the same `.env` for the machine's address on the local
+    network. Its migrator runs `prepare`, a new verb that creates the database, applies the migrations and the
+    reference data, and never seeds the demo workspace, so the installation starts with no data at all. The web app of
+    that stack is built with `VITE_EDITION=trader`: the sign-up screen says so and sends `edition: trader`, and
+    `POST /auth/signup` takes an `edition` (`full` by default; an unknown one is refused with `tenant.edition_invalid`
+    before anything is made), so the workspace opens as the trader program from its first screen without a visit to
+    Settings. What an edition means is applied by the server, at sign-up and at every switch: `ITenantEditionStep`
+    (Tenancy contracts) is run by `AccountService.ChangeEditionAsync` after the edition is recorded, and the tax
+    module's step writes `tax.unclassified_items` organization-wide (untaxed for the trader, refuse for the full
+    edition), which the settings screen used to do from the browser (§17). On Windows, `deploy\windows\setup-trader.bat`
+    installs the stack once and registers "Quicker Trader auto-update" (`update-trader.bat`; `register-task.ps1` now
+    takes a task name and a script); the two stacks share one `update.lock` so only one build runs at a time on the
+    machine. On the phone the app is a home-screen app: a web manifest (standalone display, icons at 192 and 512 and
+    the Apple one at 180, rendered from the app's icon), the Apple meta tags, and a service worker that caches nothing
+    (an update is live at the next open) and exists only so that browsers offer the install. Over plain HTTP on the
+    local network, which is how the founder's machine serves it, Safari's "Add to Home Screen" opens the app
+    full-screen with its own icon and Chrome on Android adds the same shortcut; the browser's install prompt and
+    working offline need HTTPS, and a store listing needs a native wrapper (a Mac with Xcode and an Apple developer
+    account): both are deferred, stated as such to the founder.
 
 ## Consequences
 

@@ -4,6 +4,7 @@ using Quicker.Persistence.EntityFramework;
 using Quicker.Tax.Application;
 using Quicker.Tax.Contracts;
 using Quicker.Tax.Persistence;
+using Quicker.Tenancy.Contracts;
 
 namespace Quicker.Tax;
 
@@ -19,6 +20,7 @@ public static class TaxModule
         services.AddScoped<TaxDeterminationService>();
         services.AddScoped<ITaxDetermination>(static sp => sp.GetRequiredService<TaxDeterminationService>());
         services.AddScoped<ITaxDirectory, TaxDirectory>();
+        services.AddScoped<ITenantEditionStep, TaxEditionDefaults>();
         services.AddScoped<TaxLedgerService>();
         services.AddScoped<ITaxLedger>(static sp => sp.GetRequiredService<TaxLedgerService>());
         services.AddScoped<TaxReturnService>();

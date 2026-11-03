@@ -25587,6 +25587,7 @@ export interface components {
             shipDate?: null | string;
             lines?: null | components["schemas"]["TransferQuantityRequest"][];
         };
+        /** @description A new workspace with its owner; Edition is the shell it opens in from the start (`full`, or `trader` in the trader program's own stack, ADR-0035 §19). */
         SignupRequest: {
             tenantName: string;
             slug: string;
@@ -25595,6 +25596,8 @@ export interface components {
             password: string;
             /** @default en */
             language: string;
+            /** @default full */
+            edition: string;
         };
         /** @description Stock idle for at least int SlowMovingReport.MinIdleDays days at DateOnly SlowMovingReport.AsOf, the longest idle first; the value total only when costs may be seen. */
         SlowMovingReport: {

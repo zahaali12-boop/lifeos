@@ -11,6 +11,7 @@ namespace Quicker.Migrator;
 /// Usage: quicker-migrate [migrate|seed|demo|status|all]  (default: all)
 ///   migrate  create roles and database, apply versioned and repeatable scripts
 ///   seed     apply the reference-data seeds (idempotent)
+///   prepare  migrate and seed, never the demo tenant: a real installation (the trader program's stack, ADR-0035 §19)
 ///   demo     migrate, seed, then rebuild the demo tenant from scratch (ADR-0029)
 ///   all      migrate, seed, and create the demo tenant only when it is missing
 ///   rebuild-balances --tenant SLUG [--company CODE]   recompute gl_balances from the journal lines (ADR-0007)
@@ -57,6 +58,12 @@ internal static class MigratorProgram
 
             case "seed":
                 return Report(migrator.Seed());
+
+            case "prepare":
+                // A real installation: the database, the migrations and the reference data, and never the demo tenant.
+                await migrator.EnsureDatabaseAndRolesAsync(appPassword);
+                var prepared = migrator.Migrate();
+                return Report(prepared.Successful ? migrator.Seed() : prepared);
 
             case "all":
             case "demo":

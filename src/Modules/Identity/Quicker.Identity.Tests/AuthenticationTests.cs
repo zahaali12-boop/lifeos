@@ -247,6 +247,34 @@ public sealed class AuthenticationTests(ApiHostFixture host)
     }
 
     [Fact]
+    public async Task Signup_can_make_the_workspace_as_the_trader_program_and_the_edition_sets_the_tax_default()
+    {
+        // The trader program's own stack signs up in the trader edition from the first screen (ADR-0035 §19).
+        var ws = await Api.SignupAsync(edition: "trader");
+        using var client = Api.ClientFor(ws.AccessToken);
+        (await (await client.GetAsync("/api/v1/me")).ReadJsonAsync()).GetProperty("tenant").GetProperty("edition").GetString().ShouldBe("trader");
+        (await SettingAsync(client, "tax.unclassified_items")).ShouldBe("untaxed");
+
+        // Every switch applies what the edition means (ITenantEditionStep): back to full, items must be classified again.
+        (await client.PutAsJsonAsync("/api/v1/tenant/edition", new { edition = "full" }, Json)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await SettingAsync(client, "tax.unclassified_items")).ShouldBe("refuse");
+
+        // An unknown edition makes nothing: the slug is still free afterwards.
+        var slug = "ws" + Guid.NewGuid().ToString("N")[^10..];
+        var unknown = await Api.Client.PostAsJsonAsync("/api/v1/auth/signup", new { tenantName = "x", slug, ownerEmail = $"owner-{slug}@example.test", ownerName = "x", password = ws.OwnerPassword, edition = "retail" }, Json);
+        unknown.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await unknown.ErrorCodeAsync()).ShouldBe("tenant.edition_invalid");
+        (await Api.SignupAsync(slug)).Slug.ShouldBe(slug);
+    }
+
+    private static async Task<string?> SettingAsync(HttpClient client, string key)
+    {
+        var settings = await (await client.GetAsync("/api/v1/organization/settings")).ReadJsonAsync();
+        var row = settings.EnumerateArray().SingleOrDefault(s => s.GetProperty("key").GetString() == key);
+        return row.ValueKind == JsonValueKind.Object ? row.GetProperty("value").GetString() : null;
+    }
+
+    [Fact]
     public async Task Tenant_policy_can_require_mfa_before_the_first_session()
     {
         var ws = await Api.SignupAsync();

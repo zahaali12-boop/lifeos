@@ -463,3 +463,32 @@ test("English: the trader edition switched on, offers compared with minimum quan
   await expect(page.getByTestId("shipment-stage")).toHaveText("وصلت");
   await expectAccessible(page);
 });
+
+test("a workspace made as the trader program opens on the trader bar, and the app can be put on a phone's home screen", async ({ page }) => {
+  // The trader program's own stack signs up in the trader edition from the first screen (ADR-0035 §19).
+  const slug = `trp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const email = `owner-${slug}@example.test`;
+  const signup = await page.request.post(`${apiUrl}/api/v1/auth/signup`, { data: { tenantName: "Trader " + slug, slug, ownerName: "Owner", ownerEmail: email, password, edition: "trader" } });
+  expect(signup.ok(), await signup.text()).toBeTruthy();
+  expect(((await signup.json()) as { tenant: { edition: string } }).tenant.edition).toBe("trader");
+
+  await page.addInitScript(() => { window.localStorage.setItem("quicker.language", "en"); });
+  await page.goto("/login");
+  await page.getByLabel(/^Email/).fill(email);
+  await page.getByLabel(/^Password/).fill(password);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByTestId("flat-nav")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("flat-nav").getByRole("link", { name: "Offers" })).toBeVisible();
+  await expectAccessible(page);
+
+  // The page says it can live on a phone's home screen: the manifest, its icons and the Apple tags all answer.
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.webmanifest");
+  await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute("content", "yes");
+  const manifest = await page.request.get("/manifest.webmanifest");
+  expect(manifest.ok()).toBeTruthy();
+  const declared = (await manifest.json()) as { display: string; icons: { src: string }[] };
+  expect(declared.display).toBe("standalone");
+  for (const icon of [...declared.icons.map((i) => i.src), "/icons/apple-touch-icon.png", "/sw.js"]) {
+    expect((await page.request.get(icon)).ok(), icon).toBeTruthy();
+  }
+});

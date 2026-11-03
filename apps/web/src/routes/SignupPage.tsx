@@ -9,6 +9,9 @@ import { setSession } from "../session/session";
 import { FormError, TextField } from "./common";
 import { LanguageSwitch } from "./LanguageSwitch";
 
+/** The trader program's own stack is built with VITE_EDITION=trader: its workspaces open as the trader program (ADR-0035 §19). */
+const traderProgram = import.meta.env.VITE_EDITION === "trader";
+
 /** Creates a workspace (tenant) with its owner and signs them in. */
 export function SignupPage() {
   const { t } = useTranslation();
@@ -27,7 +30,7 @@ export function SignupPage() {
     setBusy(true);
     setProblem(null);
     try {
-      const tokens = unwrap(await api.POST("/api/v1/auth/signup", { body: { ...values, language: currentLanguage() } }));
+      const tokens = unwrap(await api.POST("/api/v1/auth/signup", { body: { ...values, language: currentLanguage(), edition: traderProgram ? "trader" : "full" } }));
       setSession(tokens);
       void navigate({ to: "/" });
     } catch (error) {
@@ -48,6 +51,11 @@ export function SignupPage() {
           <h2 id="signup-title" className="text-lg font-semibold">
             {t("auth.createWorkspace")}
           </h2>
+          {traderProgram && (
+            <p className="text-sm text-fg-muted" data-testid="trader-program-hint">
+              {t("auth.traderProgram")}
+            </p>
+          )}
           <FormError message={problem && Object.keys(problem.fields).length === 0 ? problem.message : null} />
           <Field label={t("auth.workspaceName")} required error={problem?.fields.tenantName}>
             <TextField name="tenantName" value={values.tenantName} onChange={update("tenantName")} required autoComplete="organization" />

@@ -2,7 +2,8 @@ namespace Quicker.Identity.Application;
 
 // Request and response shapes of the identity API. Records keep them immutable and OpenAPI-friendly.
 
-public sealed record SignupRequest(string TenantName, string Slug, string OwnerEmail, string OwnerName, string Password, string Language = "en");
+/// <summary>A new workspace with its owner; <paramref name="Edition"/> is the shell it opens in from the start (<c>full</c>, or <c>trader</c> in the trader program's own stack, ADR-0035 §19).</summary>
+public sealed record SignupRequest(string TenantName, string Slug, string OwnerEmail, string OwnerName, string Password, string Language = "en", string Edition = "full");
 
 public sealed record LoginRequest(string Email, string Password, string? TenantSlug = null);
 

@@ -498,6 +498,12 @@ public sealed class CompanyService(OrganizationDbContext db, IUnitOfWorkAccessor
         return row is null ? null : JsonDocument.Parse(row.ValueJson).RootElement.Clone();
     }
 
+    public async Task<Result> SetAsync(Guid? companyId, string key, JsonElement value, string valueType, CancellationToken cancellationToken = default)
+    {
+        var saved = await SetSettingAsync(companyId, key, new SettingRequest(value, valueType), cancellationToken);
+        return saved.IsFailure ? saved.Error! : Result.Success();
+    }
+
     public async Task<Result> AssignPostingProfileAsync(CompanyId id, Guid? profileId, CancellationToken cancellationToken = default)
     {
         var company = await db.Companies.SingleOrDefaultAsync(c => c.Id == id.Value, cancellationToken);

@@ -70,6 +70,15 @@ public interface ITenantSetupStep
     Task SetUpAsync(TenantId tenantId, string defaultLanguage, CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// What a module sets up when a workspace takes an edition of <see cref="TenantEditions"/>: at sign-up in that edition
+/// and at every switch (ADR-0035 §17, §19). Runs inside the workspace, after the edition is recorded.
+/// </summary>
+public interface ITenantEditionStep
+{
+    Task ApplyAsync(TenantId tenantId, string edition, CancellationToken cancellationToken);
+}
+
 public interface ITenantProvisioner
 {
     /// <summary>Creates the tenant row (status provisioning) inside the caller's unit of work; Identity then adds the owner.</summary>

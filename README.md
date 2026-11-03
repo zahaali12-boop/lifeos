@@ -37,6 +37,21 @@ Windows restarts and after a crash (say, memory running out while an update buil
 If the app ever says its server is not answering for more than a few minutes, open Docker Desktop, Containers, and
 press Start on the `lifeos` row.
 
+**The trader program on its own.** The same checkout can run a second, separate installation next to the full system
+for the trader program (ADR-0035 §19): `docker compose -f docker-compose.trader.yml up -d --build`, or on Windows
+double-click `deploy\windows\setup-trader.bat` once (it registers "Quicker Trader auto-update"; `update-trader.bat`
+updates at once, `remove-trader-auto-update.bat` turns it off, each update is written to `update-trader.log`). It has
+its own database, files and ports (the app on http://localhost:5174, its API on 8090; `QUICKER_TRADER_WEB_PORT` and
+`QUICKER_TRADER_API_PORT` in `.env` move them), starts with no data at all and never gets the demo workspace: open it,
+press "Create workspace", and the workspace is the trader program from its first screen. Nothing is shared with the
+full system, not a database, a volume or a port; in Docker Desktop it is the `quicker-trader` row.
+
+**On a phone.** Set `QUICKER_LAN_HOST` in `.env` to the machine's address on the local network (say 192.168.1.20) and
+start again; on a phone on the same Wi-Fi open `http://192.168.1.20:5174` (5173 for the full system). Safari's "Add to
+Home Screen" (the share button) or Chrome's "Add to Home screen" puts the app on the home screen, and it opens
+full-screen with its own icon. Plain HTTP on the local network is enough for that; the browser's "install" prompt and
+working without the network need HTTPS, and a store listing needs a native wrapper, neither of which is set up yet.
+
 To work on the web app with hot reload outside Docker: `pnpm install`, then `set VITE_API_BASE_URL=http://localhost:8080`
 (`export` on macOS and Linux) and `pnpm --filter @quicker/web dev`.
 

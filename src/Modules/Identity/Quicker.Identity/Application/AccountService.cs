@@ -33,7 +33,8 @@ public sealed class AccountService(
     AuthOptions options,
     IAuditSink audit,
     IClock clock,
-    IEnumerable<ITenantSetupStep> setupSteps)
+    IEnumerable<ITenantSetupStep> setupSteps,
+    IEnumerable<ITenantEditionStep> editionSteps)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -50,6 +51,11 @@ public sealed class AccountService(
         if (passwordCheck.IsFailure)
         {
             return passwordCheck.Error!;
+        }
+
+        if (!TenantEditions.IsValid(request.Edition))
+        {
+            return Error.Validation("tenant.edition_invalid", "The edition is one of the known editions.").WithWhy(("edition", request.Edition), ("allowed", TenantEditions.All));
         }
 
         var provisioned = await provisioner.ProvisionAsync(new ProvisionTenantRequest(request.Slug, request.TenantName, request.Language), cancellationToken);
@@ -102,12 +108,42 @@ public sealed class AccountService(
             await step.SetUpAsync(tenant.Id, request.Language, cancellationToken);
         }
 
+        // The trader program's stack makes its workspaces in the trader edition from the first screen (ADR-0035 §19).
+        if (request.Edition != TenantEditions.Full)
+        {
+            var edition = await ChangeEditionAsync(tenant.Id, request.Edition, cancellationToken);
+            if (edition.IsFailure)
+            {
+                return edition.Error!;
+            }
+        }
+
         await provisioner.ActivateAsync(tenant.Id, cancellationToken);
-        await audit.RecordAsync(new AuditEntry("tenant", tenant.Id.Value, tenant.Slug, AuditActions.Created, After: new { tenant.Slug, tenant.Name }), cancellationToken);
+        await audit.RecordAsync(new AuditEntry("tenant", tenant.Id.Value, tenant.Slug, AuditActions.Created, After: new { tenant.Slug, tenant.Name, request.Edition }), cancellationToken);
         await audit.RecordAsync(new AuditEntry("user", user.Id, user.Email, AuditActions.Created, After: new { user.Email, user.DisplayName, Role = "owner" }), cancellationToken);
 
         var activeTenant = (await tenants.FindByIdAsync(tenant.Id, cancellationToken))!;
         return await auth.IssueSessionAsync(user, membership, activeTenant, client, "pwd", now, cancellationToken);
+    }
+
+    /// <summary>
+    /// Records the workspace's edition and lets every module apply what the edition means (<see cref="ITenantEditionStep"/>):
+    /// at sign-up in that edition and from the settings screen. Runs inside the workspace.
+    /// </summary>
+    public async Task<Result> ChangeEditionAsync(TenantId tenantId, string edition, CancellationToken cancellationToken)
+    {
+        var changed = await provisioner.UpdateEditionAsync(tenantId, edition, cancellationToken);
+        if (changed.IsFailure)
+        {
+            return changed;
+        }
+
+        foreach (var step in editionSteps)
+        {
+            await step.ApplyAsync(tenantId, edition, cancellationToken);
+        }
+
+        return Result.Success();
     }
 
     public async Task<Result<MemberSummary>> InviteAsync(Guid tenantId, Guid invitedBy, InviteUserRequest request, string tenantName, CancellationToken cancellationToken)

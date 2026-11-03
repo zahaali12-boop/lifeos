@@ -84550,8 +84550,13 @@
           "language": {
             "type": "string",
             "default": "en"
+          },
+          "edition": {
+            "type": "string",
+            "default": "full"
           }
-        }
+        },
+        "description": "A new workspace with its owner; Edition is the shell it opens in from the start (`full`, or `trader` in the trader program's own stack, ADR-0035 §19)."
       },
       "SlowMovingReport": {
         "required": [

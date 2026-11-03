@@ -167,6 +167,12 @@ public interface IDimensionSets
 public interface ICompanySettings
 {
     Task<System.Text.Json.JsonElement?> GetAsync(Guid? companyId, string key, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Writes a setting of the company, or of the whole organization when <paramref name="companyId"/> is null, as the
+    /// settings screen would; <paramref name="valueType"/> is string, number, boolean or json and the value must match it.
+    /// </summary>
+    Task<Result> SetAsync(Guid? companyId, string key, System.Text.Json.JsonElement value, string valueType, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
