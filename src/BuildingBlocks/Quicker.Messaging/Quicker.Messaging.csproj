@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Platform messaging (ADR-0010): transactional outbox and dispatcher, inbox dedupe, jobs with SKIP LOCKED, schedules, LISTEN/NOTIFY wake-up, email sender contracts.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Dapper" />
+    <ProjectReference Include="../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../Quicker.Observability/Quicker.Observability.csproj" />
+    <ProjectReference Include="../../Modules/Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

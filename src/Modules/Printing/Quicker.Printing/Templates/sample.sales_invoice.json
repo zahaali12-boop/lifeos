@@ -1,0 +1,71 @@
+{
+  "title": "Tax invoice / فاتورة ضريبية",
+  "number": "INV-2026-00042",
+  "status": "posted",
+  "is_final": true,
+  "document_date": "2026-09-22",
+  "currency": "IQD",
+  "company": {
+    "code": "IQT",
+    "name": "Iraq Trading Co. / شركة العراق للتجارة",
+    "name_en": "Iraq Trading Co.",
+    "name_ar": "شركة العراق للتجارة",
+    "country": "IQ",
+    "currency": "IQD",
+    "address": { "street": "Al-Karrada, Arasat St. 14", "city": "Baghdad" },
+    "address_text": "Al-Karrada, Arasat St. 14, Baghdad",
+    "registration_numbers": { "tax": "IQ-1234567", "cr": "CR-77812" },
+    "tax_number": "IQ-1234567"
+  },
+  "branch": null,
+  "partner": {
+    "code": "BAGHDAD-MALL",
+    "name": "Baghdad Mall LLC / شركة بغداد مول",
+    "name_en": "Baghdad Mall LLC",
+    "name_ar": "شركة بغداد مول",
+    "email": "ap@baghdadmall.example",
+    "language": "ar",
+    "country": "IQ",
+    "region": "Baghdad",
+    "address": { "street": "Mansour, Princesses St. 7", "city": "Baghdad" },
+    "address_text": "Mansour, Princesses St. 7, Baghdad, Baghdad, IQ"
+  },
+  "document": {
+    "kind": "invoice",
+    "is_credit_note": false,
+    "is_proforma": false,
+    "status": "posted",
+    "document_date": "2026-09-22",
+    "posting_date": "2026-09-22",
+    "due_date": "2026-10-22",
+    "currency": "IQD",
+    "exchange_rate": "1",
+    "exchange_rate_shown": false,
+    "customer_reference": "BM-PO-2026-0917",
+    "credits_invoice_number": null,
+    "payment_terms": "NET30",
+    "notes": "Delivered to the Mansour store, dock 3. Pallets returnable.",
+    "prices_include_tax": false,
+    "reverse_charge": false,
+    "has_discount": true,
+    "qr_payload": "AQpJcmFxIFRyYWRpbmcCCklRLTEyMzQ1NjcDFDIwMjYtMDktMjJUMDA6MDA6MDBaBAk4MjUwMDAuMDAFCDc1MDAwLjAw",
+    "total_net": "7,500,000.000",
+    "total_discount": "250,000.000",
+    "total_tax": "750,000.000",
+    "total_gross": "8,250,000.000",
+    "amount_in_words_en": "Eight million two hundred fifty thousand Iraqi dinars",
+    "amount_in_words_ar": "ثمانية ملايين ومئتان وخمسون ألف دينار عراقي",
+    "lines": [
+      { "line_no": 1, "kind": "shipment", "item_code": "BEV-COLA-24", "description": "Cola 330 ml, carton of 24 / كولا ٣٣٠ مل، كرتون ٢٤", "source": "SHP-2026-00012", "quantity": "240", "uom": "CTN", "unit_price": "18,000.000", "discount_pct": "5", "discount_amount": "216,000.000", "net": "4,104,000.000", "tax_code": "IQ-ST", "tax_rate": "10", "tax_amount": "410,400.000", "gross": "4,514,400.000" },
+      { "line_no": 2, "kind": "shipment", "item_code": "BEV-WATER-12", "description": "Mineral water 1.5 l, pack of 12 / ماء معدني ١٫٥ لتر، عبوة ١٢", "source": "SHP-2026-00012", "quantity": "180", "uom": "PCK", "unit_price": "9,000.000", "discount_pct": "0", "discount_amount": "0.000", "net": "1,620,000.000", "tax_code": "IQ-ST", "tax_rate": "10", "tax_amount": "162,000.000", "gross": "1,782,000.000" },
+      { "line_no": 3, "kind": "shipment", "item_code": "GROC-RICE-5", "description": "Basmati rice 5 kg / أرز بسمتي ٥ كغ", "source": "SHP-2026-00012", "quantity": "160", "uom": "BAG", "unit_price": "11,100.000", "discount_pct": "0", "discount_amount": "34,000.000", "net": "1,776,000.000", "tax_code": "IQ-ST", "tax_rate": "10", "tax_amount": "177,600.000", "gross": "1,953,600.000" }
+    ],
+    "tax_summary": [
+      { "code": "IQ-ST", "rate": "10", "base": "7,500,000.000", "amount": "750,000.000" }
+    ],
+    "instalments": [
+      { "instalment": 1, "due_date": "2026-10-07", "amount": "4,125,000.000", "remaining": "4,125,000.000", "status": "open" },
+      { "instalment": 2, "due_date": "2026-10-22", "amount": "4,125,000.000", "remaining": "4,125,000.000", "status": "open" }
+    ]
+  }
+}

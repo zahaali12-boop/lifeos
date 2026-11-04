@@ -1,0 +1,298 @@
+{
+  "code": "OM-VAT",
+  "country": "OM",
+  "version": "2026.1",
+  "name": {
+    "en": "Oman VAT",
+    "ar": "ضريبة القيمة المضافة - عُمان"
+  },
+  "family": "vat",
+  "roundingLevel": "line",
+  "taxPoint": "invoice",
+  "returnFrequency": "quarterly",
+  "einvoicingScheme": null,
+  "itemGroups": [
+    {
+      "code": "STANDARD",
+      "name": {
+        "en": "Standard-rated goods and services",
+        "ar": "سلع وخدمات بالنسبة الأساسية"
+      }
+    },
+    {
+      "code": "ZERO",
+      "name": {
+        "en": "Zero-rated supplies",
+        "ar": "توريدات بنسبة صفر"
+      }
+    },
+    {
+      "code": "EXEMPT",
+      "name": {
+        "en": "Exempt supplies",
+        "ar": "توريدات معفاة"
+      }
+    },
+    {
+      "code": "SERVICES",
+      "name": {
+        "en": "Services",
+        "ar": "خدمات"
+      }
+    },
+    {
+      "code": "OUT",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      }
+    }
+  ],
+  "partnerGroups": [
+    {
+      "code": "DOMESTIC",
+      "name": {
+        "en": "Domestic, registered",
+        "ar": "محلي مسجل"
+      }
+    },
+    {
+      "code": "DOMESTIC_UNREG",
+      "name": {
+        "en": "Domestic, not registered",
+        "ar": "محلي غير مسجل"
+      }
+    },
+    {
+      "code": "GCC",
+      "name": {
+        "en": "GCC registered",
+        "ar": "مسجل في دول الخليج"
+      }
+    },
+    {
+      "code": "FOREIGN",
+      "name": {
+        "en": "Outside the country",
+        "ar": "خارج الدولة"
+      }
+    }
+  ],
+  "codes": [
+    {
+      "code": "OM-S",
+      "name": {
+        "en": "Standard rate",
+        "ar": "النسبة الأساسية"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2021-04-16",
+          "pct": 5
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "1a",
+        "salesTax": "1a",
+        "purchaseBase": "6a",
+        "purchaseTax": "6a"
+      }
+    },
+    {
+      "code": "OM-Z",
+      "name": {
+        "en": "Zero rate",
+        "ar": "نسبة الصفر"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2021-04-16",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "3a"
+      }
+    },
+    {
+      "code": "OM-E",
+      "name": {
+        "en": "Exempt",
+        "ar": "معفى"
+      },
+      "kind": "vat",
+      "treatment": "exempt",
+      "rates": [
+        {
+          "from": "2021-04-16",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "1d"
+      }
+    },
+    {
+      "code": "OM-X",
+      "name": {
+        "en": "Export (zero rate)",
+        "ar": "تصدير (نسبة الصفر)"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2021-04-16",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "3b"
+      }
+    },
+    {
+      "code": "OM-RC",
+      "name": {
+        "en": "Reverse charge on imported services",
+        "ar": "احتساب عكسي على الخدمات المستوردة"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2021-04-16",
+          "pct": 5
+        }
+      ],
+      "reverseCharge": true,
+      "recoverable": true,
+      "appliesTo": "services",
+      "boxes": {
+        "salesBase": "2b",
+        "salesTax": "2b",
+        "purchaseBase": "6b",
+        "purchaseTax": "6b"
+      }
+    },
+    {
+      "code": "OM-O",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      },
+      "kind": "vat",
+      "treatment": "out_of_scope",
+      "rates": [
+        {
+          "from": "2021-04-16",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {}
+    }
+  ],
+  "rules": [
+    {
+      "direction": "sales",
+      "code": "OM-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "sales",
+      "code": "OM-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "sales",
+      "code": "OM-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "sales",
+      "code": "OM-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "sales",
+      "code": "OM-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "sales",
+      "code": "OM-X",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "sales",
+      "code": "OM-X",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-RC",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-O",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "OM-RC",
+      "partnerGroup": "FOREIGN"
+    }
+  ]
+}

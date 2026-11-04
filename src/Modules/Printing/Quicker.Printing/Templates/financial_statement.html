@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans.ttf"); font-weight: 400; }
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans-Bold.ttf"); font-weight: 700; }
+@page { size: {{ paper }}; margin: 14mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Sans", sans-serif; font-size: 8pt; color: #666; } }
+{{ css }}
+table.lines tr.header td { background: #f3f3f3; font-weight: 700; }
+table.lines tr.bold td { font-weight: 700; border-block-start: 1px solid #999; }
+table.lines tr.account td { color: #444; font-size: 8.5pt; }
+table.lines tr.blank td { border: 0; block-size: 3mm; }
+table.lines td.label { padding-inline-start: calc(1.5mm + var(--indent, 0) * 4mm); }
+.dates { color: #777; font-weight: 400; font-size: 7.5pt; direction: ltr; unicode-bidi: isolate; }
+</style>
+</head>
+<body class="{{ mode }} {{ variant }} statement">
+<div class="sheet">
+  <header class="doc-header">
+    <div class="company">
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+    </div>
+    <div class="doc">
+      <p class="title">{{ document.name | html.escape }}</p>
+      <table>
+        <tr><td class="k">{{ L.period }}</td><td class="v">{{ document.period_from }} – {{ document.period_to }}</td></tr>
+        <tr><td class="k">{{ L.currency }}</td><td class="v">{{ currency }}</td></tr>
+        <tr><td class="k">{{ L.date }}</td><td class="v">{{ document_date }}</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th>{{ document.line_label | html.escape }}</th>
+        {{ for c in document.columns }}<th class="num">{{ c.label | html.escape }}{{ if c.dates }}<br><span class="dates">{{ c.dates }}</span>{{ end }}</th>{{ end }}
+      </tr>
+    </thead>
+    <tbody>
+      {{ for r in document.rows }}
+      <tr class="{{ r.kind }}{{ if r.bold }} bold{{ end }}">
+        <td class="label" style="--indent: {{ r.indent }}">{{ r.label | html.escape }}</td>
+        {{ for v in r.values }}<td class="num">{{ v }}</td>{{ end }}
+      </tr>
+      {{ for a in r.accounts }}
+      <tr class="account">
+        <td class="label" style="--indent: {{ r.indent + 1 }}"><span class="ltr">{{ a.code | html.escape }}</span> {{ a.name | html.escape }}</td>
+        {{ for v in a.values }}<td class="num">{{ v }}</td>{{ end }}
+      </tr>
+      {{ end }}
+      {{ end }}
+    </tbody>
+  </table>
+  {{ if document.closing_note }}<p class="muted">{{ document.closing_note | html.escape }}</p>{{ end }}
+
+  <footer class="foot">
+    <span>{{ document.scope_note | html.escape }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

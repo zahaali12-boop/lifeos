@@ -1,0 +1,45 @@
+{
+  "title": "Report / تقرير",
+  "number": "2026-09",
+  "status": "ready",
+  "is_final": false,
+  "document_date": "2026-09-30",
+  "currency": "IQD",
+  "company": {
+    "code": "IQT",
+    "name": "Iraq Trading Co. / شركة العراق للتجارة",
+    "name_en": "Iraq Trading Co.",
+    "name_ar": "شركة العراق للتجارة",
+    "country": "IQ",
+    "currency": "IQD",
+    "address": { "street": "Al-Karrada, Arasat St. 14", "city": "Baghdad" },
+    "address_text": "Al-Karrada, Arasat St. 14, Baghdad",
+    "registration_numbers": { "tax": "IQ-1234567" },
+    "tax_number": "IQ-1234567"
+  },
+  "branch": null,
+  "partner": null,
+  "document": {
+    "name": "Sales by customer / المبيعات حسب العميل",
+    "model": "Sales lines / بنود المبيعات",
+    "source_label": "Source / المصدر",
+    "rows_label": "rows / صفوف",
+    "truncated_label": "the first rows only / الصفوف الأولى فقط",
+    "period_from": "2026-09-01",
+    "period_to": "2026-09-30",
+    "filters": [ { "label": "Status / الحالة", "text": "Posted / مرحّل" } ],
+    "columns": [
+      { "label": "Customer / العميل", "numeric": false },
+      { "label": "Invoices / الفواتير", "numeric": true },
+      { "label": "Net amount / المبلغ الصافي", "numeric": true },
+      { "label": "Net amount (prior period) / المبلغ الصافي (الفترة السابقة)", "numeric": true }
+    ],
+    "rows": [
+      { "cells": [ { "text": "Baghdad Mall LLC / شركة بغداد مول", "numeric": false }, { "text": "12", "numeric": true }, { "text": "48,250,000.00", "numeric": true }, { "text": "41,900,000.00", "numeric": true } ] },
+      { "cells": [ { "text": "Basra Retail / البصرة للتجزئة", "numeric": false }, { "text": "7", "numeric": true }, { "text": "21,075,000.00", "numeric": true }, { "text": "19,400,000.00", "numeric": true } ] },
+      { "cells": [ { "text": "Erbil Hypermarket / إربيل هايبر ماركت", "numeric": false }, { "text": "4", "numeric": true }, { "text": "9,800,000.00", "numeric": true }, { "text": "12,150,000.00", "numeric": true } ] }
+    ],
+    "row_count": 3,
+    "truncated": false
+  }
+}

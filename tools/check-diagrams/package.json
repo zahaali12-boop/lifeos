@@ -1,0 +1,20 @@
+{
+  "name": "@quicker/tools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Repository tooling: Mermaid diagram validation for the docs, API contract compatibility check",
+  "scripts": {
+    "check-diagrams": "node check-diagrams.mjs",
+    "lint": "echo skip",
+    "typecheck": "echo skip",
+    "test": "echo skip",
+    "build": "echo skip",
+    "format": "echo skip",
+    "check-api-contract": "node check-api-contract.mjs"
+  },
+  "dependencies": {
+    "jsdom": "^26.1.0",
+    "mermaid": "^11.9.0"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "title": "Order confirmation / تأكيد الطلب",
+  "number": "SO-2026-00031",
+  "status": "confirmed",
+  "is_final": false,
+  "document_date": "2026-09-20",
+  "currency": "IQD",
+  "company": {
+    "code": "IQT",
+    "name": "Iraq Trading Co. / شركة العراق للتجارة",
+    "name_en": "Iraq Trading Co.",
+    "name_ar": "شركة العراق للتجارة",
+    "country": "IQ",
+    "currency": "IQD",
+    "address": { "street": "Al-Karrada, Arasat St. 14", "city": "Baghdad" },
+    "address_text": "Al-Karrada, Arasat St. 14, Baghdad",
+    "registration_numbers": { "tax": "IQ-1234567" },
+    "tax_number": "IQ-1234567"
+  },
+  "branch": null,
+  "partner": {
+    "code": "AL-NOOR",
+    "name": "Al-Noor Supermarkets / أسواق النور",
+    "name_en": "Al-Noor Supermarkets",
+    "name_ar": "أسواق النور",
+    "email": "orders@alnoor.example",
+    "language": "ar",
+    "country": "IQ",
+    "region": "Najaf",
+    "address": { "street": "Kufa Rd. 3", "city": "Najaf" },
+    "address_text": "Kufa Rd. 3, Najaf, Najaf, IQ"
+  },
+  "document": {
+    "status": "confirmed",
+    "status_label": "Confirmed / مؤكَّد",
+    "order_date": "2026-09-20",
+    "pricing_date": "2026-09-20",
+    "currency": "IQD",
+    "notes": "Deliver Sunday before 10:00; call the receiving desk on arrival.",
+    "has_discount": false,
+    "total_net": "2,340,000.000",
+    "total_tax": "234,000.000",
+    "total_gross": "2,574,000.000",
+    "lines": [
+      { "line_no": 1, "item_code": "BEV-JUICE-6", "description": "Orange juice 1 l, pack of 6 / عصير برتقال ١ لتر، عبوة ٦", "quantity": "120", "uom": "PCK", "unit_price": "12,000.000", "discount_pct": "0", "net": "1,440,000.000", "tax_rate": "10", "tax_amount": "144,000.000", "gross": "1,584,000.000", "qty_shipped": "0", "drop_ship": false },
+      { "line_no": 2, "item_code": "GROC-OIL-2", "description": "Sunflower oil 2 l / زيت دوار الشمس ٢ لتر", "quantity": "150", "uom": "PCS", "unit_price": "6,000.000", "discount_pct": "0", "net": "900,000.000", "tax_rate": "10", "tax_amount": "90,000.000", "gross": "990,000.000", "qty_shipped": "0", "drop_ship": true }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Shared test infrastructure: a migrated PostgreSQL per test class, tenant contexts, isolation row factories.</Description>
+    <NoWarn>$(NoWarn);CA1515</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <ProjectReference Include="../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../Host/Quicker.Migrator/Quicker.Migrator.csproj" />
+  </ItemGroup>
+
+</Project>

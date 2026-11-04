@@ -1,0 +1,62 @@
+{
+  "title": "Simplified tax invoice / فاتورة ضريبية مبسطة",
+  "number": "POS-2026-000128",
+  "status": "posted",
+  "is_final": true,
+  "document_date": "2026-10-31",
+  "currency": "SAR",
+  "company": {
+    "code": "RYD",
+    "name": "Riyadh Retail Co. / شركة الرياض للتجزئة",
+    "name_en": "Riyadh Retail Co.",
+    "name_ar": "شركة الرياض للتجزئة",
+    "country": "SA",
+    "currency": "SAR",
+    "address": { "street": "King Fahd Road 1234", "city": "Riyadh" },
+    "address_text": "King Fahd Road 1234, Riyadh",
+    "registration_numbers": { "tax": "310123456700003", "cr": "1010010000" },
+    "tax_number": "310123456700003"
+  },
+  "branch": null,
+  "partner": null,
+  "document": {
+    "kind": "sale",
+    "is_refund": false,
+    "status": "posted",
+    "document_date": "2026-10-31",
+    "ordered_at": "2026-10-31 14:02",
+    "currency": "SAR",
+    "register": "Front till / الصندوق الأمامي",
+    "register_code": "FRONT",
+    "session": "SES-2026-00007",
+    "cashier": "Noor",
+    "refunds_number": null,
+    "prices_include_tax": false,
+    "has_discount": true,
+    "has_tax": true,
+    "has_rounding": true,
+    "total_net": "57.00",
+    "total_discount": "3.00",
+    "total_tax": "8.55",
+    "total_gross": "65.55",
+    "rounding": "-0.05",
+    "total_due": "65.50",
+    "total_paid": "100.00",
+    "change_given": "34.50",
+    "has_change": true,
+    "einvoice_status": "reported",
+    "qr_payload": "ARdSaXlhZGggUmV0YWlsIENvLgIPMzEwMTIzNDU2NzAwMDAzAxQyMDI2LTEwLTMxVDE0OjAyOjAwWgQFNjUuNTUFBDguNTU=",
+    "footer": "Exchanges within 7 days with this receipt. / الاستبدال خلال 7 أيام بهذا الإيصال.",
+    "notes": null,
+    "lines": [
+      { "line_no": 1, "item_code": "WATER-500", "description": "Mineral water 500 ml / مياه معدنية 500 مل", "quantity": "6", "uom": "EA", "unit_price": "2.00", "discount_pct": "0", "discount_amount": "0.00", "has_discount": false, "net": "12.00", "tax_rate": "15", "tax_amount": "1.80", "gross": "13.80" },
+      { "line_no": 2, "item_code": "COFFEE-250", "description": "Ground coffee 250 g / قهوة مطحونة 250 غ", "quantity": "2", "uom": "EA", "unit_price": "24.00", "discount_pct": "6.25", "discount_amount": "3.00", "has_discount": true, "net": "45.00", "tax_rate": "15", "tax_amount": "6.75", "gross": "51.75" }
+    ],
+    "payments": [
+      { "method": "cash", "method_label": "Cash / نقدًا", "amount": "100.00", "reference": null }
+    ],
+    "tax_summary": [
+      { "rate": "15", "base": "57.00", "amount": "8.55" }
+    ]
+  }
+}

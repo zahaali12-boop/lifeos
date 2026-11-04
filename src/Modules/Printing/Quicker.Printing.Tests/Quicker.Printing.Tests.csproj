@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="PdfPig" />
+    <ProjectReference Include="../Quicker.Printing/Quicker.Printing.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Baselines/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

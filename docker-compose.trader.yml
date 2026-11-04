@@ -1,0 +1,137 @@
+# The trader program on its own (ADR-0035 §19, A-202): a second, separate installation of the same product next to the
+# full system on one machine, with its own database, files and ports, no demo workspace, and workspaces that open in
+# the trader edition from the start. It shares nothing with the full system: not a database, not a volume, not a port.
+#   docker compose -f docker-compose.trader.yml up -d --build     (on Windows: deploy\windows\setup-trader.bat once)
+# Only the app (5174, which also carries the API under /api) is published; the API, the database, the file store and
+# the mail catcher stay inside the stack's own network.
+name: quicker-trader
+
+services:
+  postgres:
+    restart: unless-stopped
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: quicker_owner
+      POSTGRES_PASSWORD: quicker
+      POSTGRES_DB: quicker
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=all", "-c", "log_min_duration_statement=250ms"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quicker_owner -d quicker"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    restart: unless-stopped
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: quicker
+      MINIO_ROOT_PASSWORD: quickerquicker
+    volumes:
+      - miniodata:/data
+
+  mailpit:
+    restart: unless-stopped
+    image: axllent/mailpit:latest
+
+  migrator:
+    build:
+      context: .
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: migrator
+    # prepare: the database, the migrations and the reference data; no demo workspace, ever.
+    command: ["prepare"]
+    environment:
+      QUICKER__DB__OWNERCONNECTION: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      QUICKER__DB__APPPASSWORD: quicker
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
+      Quicker__Storage__Endpoint: http://minio:9000
+      Quicker__Storage__AccessKey: quicker
+      Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
+      Quicker__Email__SmtpHost: mailpit
+      Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+      # The app reaches the API through its own origin (nginx in the web container, on the stack's private network),
+      # so the API is not published and the forwarded client address is trusted from the private ranges only.
+      Quicker__Api__AllowedOrigins: http://localhost:${QUICKER_TRADER_WEB_PORT:-5174},http://127.0.0.1:${QUICKER_TRADER_WEB_PORT:-5174}
+      Quicker__Api__TrustedProxies: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+      # Where the app is reached from outside this machine (passkeys and security keys, and the links in messages,
+      # need it); share-trader-anywhere.bat writes the Tailscale address into .env.
+      Quicker__Auth__PublicOrigin: ${QUICKER_TRADER_PUBLIC_ORIGIN:-http://localhost:5174}
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
+  worker:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: worker
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8081
+      Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
+      Quicker__Storage__Endpoint: http://minio:9000
+      Quicker__Storage__AccessKey: quicker
+      Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
+      Quicker__Email__SmtpHost: mailpit
+      Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
+  web:
+    # The built app behind nginx (no development server): a tenth of the memory, and the API on the same origin
+    # (nginx proxies /api and /health to the api container), so one port serves the machine and the phone alike.
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/docker/web.Dockerfile
+      target: static
+      args:
+        # A workspace made here is the trader program from its first screen.
+        VITE_EDITION: trader
+    ports:
+      - "${QUICKER_TRADER_WEB_PORT:-5174}:80"
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  pgdata:
+  miniodata:
+  auditanchors:

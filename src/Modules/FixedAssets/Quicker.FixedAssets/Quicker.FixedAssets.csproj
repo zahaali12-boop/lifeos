@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Fixed assets module (founder programme item 3, roadmap 6.6, A-175): asset categories and books, the register with acquisitions from a supplier, the bank, the clearing account or opening balances, depreciation by every method and convention to the cent over the life, monthly runs, additions, impairment, revaluation, transfers, full and partial disposals, verification; the FA subledger reconciling to its control accounts.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.FixedAssets.Contracts/Quicker.FixedAssets.Contracts.csproj" />
+    <ProjectReference Include="../../Accounting/Quicker.Accounting.Contracts/Quicker.Accounting.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Banking/Quicker.Banking.Contracts/Quicker.Banking.Contracts.csproj" />
+    <ProjectReference Include="../../Collaboration/Quicker.Collaboration.Contracts/Quicker.Collaboration.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Integrity/Quicker.Integrity.Contracts/Quicker.Integrity.Contracts.csproj" />
+    <ProjectReference Include="../../Numbering/Quicker.Numbering.Contracts/Quicker.Numbering.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Partners/Quicker.Partners.Contracts/Quicker.Partners.Contracts.csproj" />
+    <ProjectReference Include="../../Payables/Quicker.Payables.Contracts/Quicker.Payables.Contracts.csproj" />
+    <ProjectReference Include="../../Receivables/Quicker.Receivables.Contracts/Quicker.Receivables.Contracts.csproj" />
+    <ProjectReference Include="../../Tax/Quicker.Tax.Contracts/Quicker.Tax.Contracts.csproj" />
+    <ProjectReference Include="../../Tenancy/Quicker.Tenancy.Contracts/Quicker.Tenancy.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Messaging/Quicker.Messaging.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+
+</Project>

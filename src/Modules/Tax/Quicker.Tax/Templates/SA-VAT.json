@@ -1,0 +1,338 @@
+{
+  "code": "SA-VAT",
+  "country": "SA",
+  "version": "2026.1",
+  "name": {
+    "en": "Saudi Arabia VAT",
+    "ar": "ضريبة القيمة المضافة - السعودية"
+  },
+  "family": "vat",
+  "roundingLevel": "line",
+  "taxPoint": "invoice",
+  "returnFrequency": "quarterly",
+  "einvoicingScheme": "zatca",
+  "itemGroups": [
+    {
+      "code": "STANDARD",
+      "name": {
+        "en": "Standard-rated goods and services",
+        "ar": "سلع وخدمات بالنسبة الأساسية"
+      }
+    },
+    {
+      "code": "ZERO",
+      "name": {
+        "en": "Zero-rated supplies",
+        "ar": "توريدات بنسبة صفر"
+      }
+    },
+    {
+      "code": "EXEMPT",
+      "name": {
+        "en": "Exempt supplies",
+        "ar": "توريدات معفاة"
+      }
+    },
+    {
+      "code": "SERVICES",
+      "name": {
+        "en": "Services",
+        "ar": "خدمات"
+      }
+    },
+    {
+      "code": "OUT",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      }
+    }
+  ],
+  "partnerGroups": [
+    {
+      "code": "DOMESTIC",
+      "name": {
+        "en": "Domestic, registered",
+        "ar": "محلي مسجل"
+      }
+    },
+    {
+      "code": "DOMESTIC_UNREG",
+      "name": {
+        "en": "Domestic, not registered",
+        "ar": "محلي غير مسجل"
+      }
+    },
+    {
+      "code": "GCC",
+      "name": {
+        "en": "GCC registered",
+        "ar": "مسجل في دول الخليج"
+      }
+    },
+    {
+      "code": "FOREIGN",
+      "name": {
+        "en": "Outside the country",
+        "ar": "خارج الدولة"
+      }
+    }
+  ],
+  "codes": [
+    {
+      "code": "SA-S",
+      "name": {
+        "en": "Standard rate",
+        "ar": "النسبة الأساسية"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 5
+        },
+        {
+          "from": "2020-07-01",
+          "pct": 15
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "1",
+        "salesTax": "1",
+        "purchaseBase": "7",
+        "purchaseTax": "7"
+      }
+    },
+    {
+      "code": "SA-Z",
+      "name": {
+        "en": "Zero rate",
+        "ar": "نسبة الصفر"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "3",
+        "purchaseBase": "10"
+      }
+    },
+    {
+      "code": "SA-E",
+      "name": {
+        "en": "Exempt",
+        "ar": "معفى"
+      },
+      "kind": "vat",
+      "treatment": "exempt",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "5",
+        "purchaseBase": "11"
+      },
+      "exemptionReasonCode": "VATEX-SA-29",
+      "exemptionReason": {
+        "en": "Financial services mentioned in Article 29 of the VAT Regulations",
+        "ar": "الخدمات المالية الواردة في المادة 29 من اللائحة التنفيذية لنظام ضريبة القيمة المضافة"
+      }
+    },
+    {
+      "code": "SA-X",
+      "name": {
+        "en": "Export (zero rate)",
+        "ar": "تصدير (نسبة الصفر)"
+      },
+      "kind": "vat",
+      "treatment": "zero_rated",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {
+        "salesBase": "4"
+      }
+    },
+    {
+      "code": "SA-RC",
+      "name": {
+        "en": "Reverse charge on imported services",
+        "ar": "احتساب عكسي على الخدمات المستوردة"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 5
+        },
+        {
+          "from": "2020-07-01",
+          "pct": 15
+        }
+      ],
+      "reverseCharge": true,
+      "recoverable": true,
+      "appliesTo": "services",
+      "boxes": {
+        "salesTax": "9",
+        "purchaseBase": "9",
+        "purchaseTax": "9"
+      }
+    },
+    {
+      "code": "SA-O",
+      "name": {
+        "en": "Outside the tax",
+        "ar": "خارج نطاق الضريبة"
+      },
+      "kind": "vat",
+      "treatment": "out_of_scope",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 0
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "both",
+      "boxes": {}
+    },
+    {
+      "code": "SA-IMP",
+      "name": {
+        "en": "Imports of goods, VAT paid at customs",
+        "ar": "استيراد السلع، الضريبة مسددة في الجمارك"
+      },
+      "kind": "vat",
+      "treatment": "standard",
+      "rates": [
+        {
+          "from": "2018-01-01",
+          "pct": 5
+        },
+        {
+          "from": "2020-07-01",
+          "pct": 15
+        }
+      ],
+      "reverseCharge": false,
+      "recoverable": true,
+      "appliesTo": "goods",
+      "boxes": {
+        "purchaseBase": "8",
+        "purchaseTax": "8"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "direction": "sales",
+      "code": "SA-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "sales",
+      "code": "SA-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "sales",
+      "code": "SA-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "sales",
+      "code": "SA-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "sales",
+      "code": "SA-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "sales",
+      "code": "SA-X",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "sales",
+      "code": "SA-X",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-S",
+      "itemGroup": "STANDARD"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-S",
+      "itemGroup": "SERVICES"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-Z",
+      "itemGroup": "ZERO"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-E",
+      "itemGroup": "EXEMPT"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-O",
+      "itemGroup": "OUT"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-RC",
+      "itemGroup": "SERVICES",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-IMP",
+      "itemGroup": "STANDARD",
+      "partnerGroup": "FOREIGN"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-S"
+    },
+    {
+      "direction": "purchase",
+      "code": "SA-RC",
+      "partnerGroup": "FOREIGN"
+    }
+  ]
+}

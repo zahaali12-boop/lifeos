@@ -1,0 +1,59 @@
+{
+  "title": "Payment receipt / سند قبض",
+  "number": "RCT-2026-00018",
+  "status": "posted",
+  "is_final": true,
+  "document_date": "2026-09-25",
+  "currency": "IQD",
+  "company": {
+    "code": "IQT",
+    "name": "Iraq Trading Co. / شركة العراق للتجارة",
+    "name_en": "Iraq Trading Co.",
+    "name_ar": "شركة العراق للتجارة",
+    "country": "IQ",
+    "currency": "IQD",
+    "address": { "street": "Al-Karrada, Arasat St. 14", "city": "Baghdad" },
+    "address_text": "Al-Karrada, Arasat St. 14, Baghdad",
+    "registration_numbers": { "tax": "IQ-1234567", "cr": "CR-77812" },
+    "tax_number": "IQ-1234567",
+    "logo": null
+  },
+  "branch": null,
+  "partner": {
+    "code": "BAGHDAD-MALL",
+    "name": "Baghdad Mall LLC / شركة بغداد مول",
+    "name_en": "Baghdad Mall LLC",
+    "name_ar": "شركة بغداد مول",
+    "email": "ap@baghdadmall.example",
+    "language": "ar",
+    "country": "IQ",
+    "region": "Baghdad",
+    "address": { "street": "Mansour, Princesses St. 7", "city": "Baghdad" },
+    "address_text": "Mansour, Princesses St. 7, Baghdad, Baghdad, IQ"
+  },
+  "document": {
+    "status": "posted",
+    "receipt_date": "2026-09-25",
+    "currency": "IQD",
+    "bank_account": "MAIN · Main account / الحساب الرئيسي",
+    "bank_account_code": "MAIN",
+    "method": "Bank transfer / حوالة مصرفية",
+    "method_code": "transfer",
+    "reference": "TRF-20260925-114",
+    "amount": "5,000,000.000",
+    "on_account": "0.000",
+    "on_account_shown": false,
+    "discount": "0.000",
+    "has_discount": false,
+    "has_lines": true,
+    "lines": [
+      { "document_number": "INV-2026-00042", "instalment": 1, "due_date": "2026-10-22", "amount": "5,000,000.000", "discount": "0.000", "remaining": "3,250,000.000" }
+    ],
+    "balance_after": "3,250,000.000",
+    "amount_in_words_en": "Five million Iraqi dinars",
+    "amount_in_words_ar": "خمسة ملايين دينار عراقي",
+    "notes": null,
+    "cheque": null
+  },
+  "generated_at": "2026-09-25 11:00 UTC"
+}

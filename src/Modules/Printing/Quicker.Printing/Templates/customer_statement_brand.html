@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Brand"; src: url("{{ font_dir }}Montserrat-Variable.ttf"); font-weight: 100 900; }
+@font-face { font-family: "Quicker Arabic"; src: url("{{ font_dir }}Cairo-Variable.ttf"); font-weight: 200 900; }
+@page { size: {{ paper }}; margin: 12mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Brand", "Quicker Arabic", sans-serif; font-size: 8pt; color: #6b7280; } }
+{{ css }}
+/* The company's branded statement (T12b): the dark band with the logo, the customer's card, one table per currency. */
+:root { --ink: #0a0a0a; --brand: #3C82C4; --tint: #EAF2FA; --muted: #6b7280; --line: #e5e7eb; }
+body { font-family: "Quicker Brand", "Quicker Arabic", "DejaVu Sans", sans-serif; color: var(--ink); font-size: 9.5pt; }
+body.ar { font-family: "Quicker Arabic", "Quicker Brand", "DejaVu Sans", sans-serif; }
+.band { display: flex; justify-content: space-between; align-items: center; gap: 10mm; background: var(--ink); color: #fff; border-radius: 3mm; padding: 6mm 8mm; margin-block-end: 6mm; page-break-inside: avoid; }
+.band .logo { display: block; max-block-size: 22mm; max-inline-size: 60mm; object-fit: contain; }
+.band .wordmark { font-size: 20pt; font-weight: 800; letter-spacing: 0.02em; }
+.band .band-doc { text-align: end; }
+.band .eyebrow { margin: 0; font-size: 8pt; letter-spacing: 0.12em; text-transform: uppercase; color: #cfd8e3; }
+.band .title { margin: 1mm 0 0; font-size: 18pt; font-weight: 800; }
+.band .period { margin: 0.5mm 0 0; font-size: 10.5pt; font-weight: 600; color: #9cc3ea; direction: ltr; unicode-bidi: isolate; }
+.parties { gap: 6mm; }
+.parties .party { border: 0; border-inline-start: 1.2mm solid var(--brand); border-radius: 0; background: #fafbfc; padding: 3mm 4mm; }
+.parties .party h3 { color: var(--brand); letter-spacing: 0.1em; }
+.parties .party .name { font-size: 11.5pt; font-weight: 700; }
+.summary { display: flex; gap: 3mm; margin-block-end: 5mm; }
+.summary .chip { flex: 1; background: var(--tint); border-radius: 2mm; padding: 2.5mm 3.5mm; }
+.summary .chip .k { display: block; font-size: 7pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); font-weight: 700; }
+.summary .chip .v { display: block; font-weight: 700; font-size: 11pt; direction: ltr; unicode-bidi: isolate; text-align: start; }
+.summary .chip.closing { background: var(--ink); }
+.summary .chip.closing .k { color: #9cc3ea; }
+.summary .chip.closing .v { color: #fff; }
+.box { border: 1px solid var(--line); border-radius: 2mm; }
+.box h3 { color: var(--brand); }
+table.lines th { background: var(--brand); color: #fff; border: 0; font-weight: 700; letter-spacing: 0.04em; padding: 2.2mm 2mm; }
+table.lines td { border-block-end: 1px solid var(--line); padding: 1.8mm 2mm; }
+table.lines tbody tr:nth-child(even) td { background: #f7f9fc; }
+table.lines tr.total td { background: var(--tint); font-weight: 700; }
+.brand-foot { margin-block-start: 8mm; border-block-start: 1.2mm solid var(--brand); padding-block-start: 2.5mm; display: flex; justify-content: space-between; gap: 6mm; font-size: 8pt; color: var(--muted); }
+.brand-foot .thanks { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body class="{{ mode }} {{ variant }} statement brand">
+<div class="sheet">
+  <header class="band">
+    <div class="brand-id">
+      {{ if company.logo }}<img class="logo" src="{{ company.logo }}" alt="{{ company.name | html.escape }}">{{ else }}<div class="wordmark">{{ company.name | html.escape }}</div>{{ end }}
+    </div>
+    <div class="band-doc">
+      {{ if company.logo }}<p class="eyebrow">{{ company.name | html.escape }}</p>{{ end }}
+      <p class="title">{{ title | html.escape }}</p>
+      <p class="period">{{ document.period_from }} – {{ document.period_to }}</p>
+    </div>
+  </header>
+
+  <section class="parties">
+    <div class="party">
+      <h3>{{ L.customer }}</h3>
+      {{ if partner }}
+      <p class="name">{{ partner.name | html.escape }}</p>
+      {{ if partner.address_text }}<p>{{ partner.address_text | html.escape }}</p>{{ end }}
+      {{ if partner.email }}<p class="ltr">{{ partner.email | html.escape }}</p>{{ end }}
+      <p class="muted"><span class="ltr">{{ partner.code | html.escape }}</span></p>
+      {{ end }}
+    </div>
+    <div class="party">
+      <h3>{{ L.date }}</h3>
+      <p class="name ltr">{{ document_date }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+      {{ if company.tax_number }}<p>{{ L.tax_number }}: <span class="ltr">{{ company.tax_number | html.escape }}</span></p>{{ end }}
+    </div>
+  </section>
+
+  {{ for c in document.currencies }}
+  <section class="summary">
+    <div class="chip"><span class="k">{{ L.opening_balance }}</span><span class="v">{{ c.opening }} {{ c.currency }}</span></div>
+    <div class="chip"><span class="k">{{ L.debit }}</span><span class="v">{{ c.increases }} {{ c.currency }}</span></div>
+    <div class="chip"><span class="k">{{ L.credit }}</span><span class="v">{{ c.decreases }} {{ c.currency }}</span></div>
+    <div class="chip closing"><span class="k">{{ L.closing_balance }}</span><span class="v">{{ c.closing }} {{ c.currency }}</span></div>
+  </section>
+  <table class="lines">
+    <thead>
+      <tr>
+        <th>{{ L.date }}</th>
+        <th>{{ L.document }}</th>
+        <th>{{ L.number }}</th>
+        <th>{{ L.due_date }}</th>
+        <th class="num">{{ L.debit }}</th>
+        <th class="num">{{ L.credit }}</th>
+        <th class="num">{{ L.balance }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="total"><td></td><td colspan="3">{{ L.opening_balance }}</td><td class="num"></td><td class="num"></td><td class="num">{{ c.opening }}</td></tr>
+      {{ for l in c.lines }}
+      <tr>
+        <td class="ltr">{{ l.date }}</td>
+        <td>{{ l.document_type | html.escape }}{{ if l.reversal }} <span class="badge">{{ L.reversal }}</span>{{ end }}{{ if l.reference }} <span class="muted ltr">{{ l.reference | html.escape }}</span>{{ end }}</td>
+        <td class="ltr">{{ l.document_number | html.escape }}</td>
+        <td class="ltr">{{ l.due_date }}</td>
+        <td class="num">{{ l.debit }}</td>
+        <td class="num">{{ l.credit }}</td>
+        <td class="num">{{ l.balance }}</td>
+      </tr>
+      {{ end }}
+      <tr class="total"><td></td><td colspan="3">{{ L.closing_balance }}</td><td class="num">{{ c.increases }}</td><td class="num">{{ c.decreases }}</td><td class="num">{{ c.closing }}</td></tr>
+    </tbody>
+  </table>
+  {{ end }}
+
+  <footer class="brand-foot">
+    <span class="thanks">{{ L.thank_you }}</span>
+    <span>{{ company.name | html.escape }}{{ if company.address_text }} · {{ company.address_text | html.escape }}{{ end }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

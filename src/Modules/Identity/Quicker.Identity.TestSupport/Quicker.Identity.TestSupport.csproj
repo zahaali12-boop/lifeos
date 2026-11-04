@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Test infrastructure for the Identity module: API fixture over a per-class database, row factories, fake OIDC provider.</Description>
+    <NoWarn>$(NoWarn);CA1515;CA1812;CA1861;QK0003</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Testing/Quicker.Testing.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Messaging/Quicker.Messaging.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../Host/Quicker.Api/Quicker.Api.csproj" />
+  </ItemGroup>
+
+</Project>

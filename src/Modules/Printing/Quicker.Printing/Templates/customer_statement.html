@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans.ttf"); font-weight: 400; }
+@font-face { font-family: "Quicker Sans"; src: url("{{ font_dir }}DejaVuSans-Bold.ttf"); font-weight: 700; }
+@page { size: {{ paper }}; margin: 14mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Sans", sans-serif; font-size: 8pt; color: #666; } }
+{{ css }}
+</style>
+</head>
+<body class="{{ mode }} {{ variant }} statement">
+<div class="sheet">
+  <header class="doc-header">
+    <div class="company">
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+      {{ if company.tax_number }}<p>{{ L.tax_number }}: <span class="ltr">{{ company.tax_number | html.escape }}</span></p>{{ end }}
+    </div>
+    <div class="doc">
+      <p class="title">{{ title | html.escape }}</p>
+      <table>
+        <tr><td class="k">{{ L.period }}</td><td class="v">{{ document.period_from }} – {{ document.period_to }}</td></tr>
+        <tr><td class="k">{{ L.date }}</td><td class="v">{{ document_date }}</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="parties">
+    <div class="party">
+      <h3>{{ L.customer }}</h3>
+      {{ if partner }}
+      <p class="name">{{ partner.name | html.escape }}</p>
+      {{ if partner.address_text }}<p>{{ partner.address_text | html.escape }}</p>{{ end }}
+      {{ if partner.email }}<p class="ltr">{{ partner.email | html.escape }}</p>{{ end }}
+      <p class="muted"><span class="ltr">{{ partner.code | html.escape }}</span></p>
+      {{ end }}
+    </div>
+  </section>
+
+  {{ for c in document.currencies }}
+  <div class="box">
+    <h3>{{ c.currency }}</h3>
+    <table class="lines">
+      <thead>
+        <tr>
+          <th>{{ L.date }}</th>
+          <th>{{ L.document }}</th>
+          <th>{{ L.number }}</th>
+          <th>{{ L.due_date }}</th>
+          <th class="num">{{ L.debit }}</th>
+          <th class="num">{{ L.credit }}</th>
+          <th class="num">{{ L.balance }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td></td><td colspan="3"><strong>{{ L.opening_balance }}</strong></td><td class="num"></td><td class="num"></td><td class="num"><strong>{{ c.opening }}</strong></td></tr>
+        {{ for l in c.lines }}
+        <tr>
+          <td class="ltr">{{ l.date }}</td>
+          <td>{{ l.document_type | html.escape }}{{ if l.reversal }} <span class="badge">{{ L.reversal }}</span>{{ end }}{{ if l.reference }} <span class="muted ltr">{{ l.reference | html.escape }}</span>{{ end }}</td>
+          <td class="ltr">{{ l.document_number | html.escape }}</td>
+          <td class="ltr">{{ l.due_date }}</td>
+          <td class="num">{{ l.debit }}</td>
+          <td class="num">{{ l.credit }}</td>
+          <td class="num">{{ l.balance }}</td>
+        </tr>
+        {{ end }}
+        <tr><td></td><td colspan="3"><strong>{{ L.closing_balance }}</strong></td><td class="num">{{ c.increases }}</td><td class="num">{{ c.decreases }}</td><td class="num"><strong>{{ c.closing }}</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  {{ end }}
+
+  <footer class="foot">
+    <span>{{ L.thank_you }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

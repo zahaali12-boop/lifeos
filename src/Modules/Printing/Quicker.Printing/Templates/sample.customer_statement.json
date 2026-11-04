@@ -1,0 +1,52 @@
+{
+  "title": "Statement of account / كشف حساب",
+  "number": "BAGHDAD-MALL 2026-09",
+  "status": "ready",
+  "is_final": false,
+  "document_date": "2026-09-30",
+  "currency": "IQD",
+  "company": {
+    "code": "IQT",
+    "name": "Iraq Trading Co. / شركة العراق للتجارة",
+    "name_en": "Iraq Trading Co.",
+    "name_ar": "شركة العراق للتجارة",
+    "country": "IQ",
+    "currency": "IQD",
+    "address": { "street": "Al-Karrada, Arasat St. 14", "city": "Baghdad" },
+    "address_text": "Al-Karrada, Arasat St. 14, Baghdad",
+    "registration_numbers": { "tax": "IQ-1234567" },
+    "tax_number": "IQ-1234567"
+  },
+  "branch": null,
+  "partner": {
+    "code": "BAGHDAD-MALL",
+    "name": "Baghdad Mall LLC / شركة بغداد مول",
+    "name_en": "Baghdad Mall LLC",
+    "name_ar": "شركة بغداد مول",
+    "email": "ap@baghdadmall.example",
+    "language": "ar",
+    "country": "IQ",
+    "region": "Baghdad",
+    "address": { "street": "Mansour, Princesses St. 7", "city": "Baghdad" },
+    "address_text": "Mansour, Princesses St. 7, Baghdad, Baghdad, IQ"
+  },
+  "document": {
+    "period_from": "2026-09-01",
+    "period_to": "2026-09-30",
+    "currencies": [
+      {
+        "currency": "IQD",
+        "opening": "1,200,000.000",
+        "increases": "8,250,000.000",
+        "decreases": "5,450,000.000",
+        "closing": "4,000,000.000",
+        "lines": [
+          { "date": "2026-09-05", "kind": "receipt", "document_type": "Customer receipt / مقبوضات العملاء", "document_number": "RCT-2026-00007", "reference": "TT-BM-0901", "due_date": "", "reversal": false, "debit": "", "credit": "1,200,000.000", "balance": "0.000" },
+          { "date": "2026-09-22", "kind": "invoice", "document_type": "Sales invoice / فاتورة مبيعات", "document_number": "INV-2026-00042", "reference": "BM-PO-2026-0917", "due_date": "2026-10-22", "reversal": false, "debit": "8,250,000.000", "credit": "", "balance": "8,250,000.000" },
+          { "date": "2026-09-24", "kind": "credit_note", "document_type": "Credit note / إشعار دائن", "document_number": "CN-2026-00003", "reference": "BM-PO-2026-0917", "due_date": "", "reversal": false, "debit": "", "credit": "250,000.000", "balance": "8,000,000.000" },
+          { "date": "2026-09-28", "kind": "receipt", "document_type": "Customer receipt / مقبوضات العملاء", "document_number": "RCT-2026-00011", "reference": "TT-BM-0928", "due_date": "", "reversal": false, "debit": "", "credit": "4,000,000.000", "balance": "4,000,000.000" }
+        ]
+      }
+    ]
+  }
+}

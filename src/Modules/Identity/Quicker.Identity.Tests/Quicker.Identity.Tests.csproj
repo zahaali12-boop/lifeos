@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Otp.NET" />
+    <ProjectReference Include="../Quicker.Identity.TestSupport/Quicker.Identity.TestSupport.csproj" />
+    <ProjectReference Include="../Quicker.Identity/Quicker.Identity.csproj" />
+  </ItemGroup>
+
+</Project>

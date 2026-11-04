@@ -1,0 +1,7 @@
+# Files keep LF endings on every machine, Windows included, so the Docker builds see the same bytes as CI does.
+* text=auto eol=lf
+# Windows command scripts need CRLF to run reliably in cmd.exe; they are stored with CRLF so a ZIP download has it too.
+*.bat -text
+*.cmd -text
+# Bank statement samples are kept byte for byte (MT940 files arrive with CRLF).
+*.mt940 -text

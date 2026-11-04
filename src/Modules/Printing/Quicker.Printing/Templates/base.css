@@ -1,0 +1,57 @@
+/* Shipped base stylesheet of the print templates (ADR-0022). Logical properties only, so the same rules read left to
+   right and right to left; the template's own <style> sets the fonts, the page size and the footer. */
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: "Quicker Sans", "DejaVu Sans", "Noto Sans Arabic", "Noto Sans", Arial, sans-serif; font-size: 9.5pt; line-height: 1.35; color: #1a1a1a; background: #fff; }
+.watermark { position: fixed; inset-block-start: 38%; inset-inline: 0; text-align: center; font-size: 34pt; font-weight: 700; color: rgba(180, 30, 30, 0.14); transform: rotate(-18deg); pointer-events: none; z-index: 0; }
+.sheet { position: relative; z-index: 1; }
+.doc-header { display: flex; justify-content: space-between; gap: 12mm; align-items: flex-start; border-block-end: 2px solid #1a1a1a; padding-block-end: 4mm; margin-block-end: 5mm; }
+.doc-header .company { max-inline-size: 60%; }
+.doc-header .company .name { font-size: 15pt; font-weight: 700; margin: 0 0 1mm; }
+.doc-header .company p { margin: 0; color: #444; }
+.doc-header .doc { text-align: end; }
+.doc-header .doc .title { font-size: 17pt; font-weight: 700; margin: 0 0 1mm; }
+.doc-header .doc .number { font-size: 12pt; font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+.doc-header .doc table { margin-inline-start: auto; border-collapse: collapse; }
+.doc-header .doc td { padding: 0.4mm 1.5mm; }
+.doc-header .doc td.k { color: #555; }
+.doc-header .doc td.v { font-weight: 600; direction: ltr; unicode-bidi: isolate; text-align: end; }
+.parties { display: flex; gap: 8mm; margin-block-end: 5mm; }
+.parties .party { flex: 1; border: 1px solid #ccc; border-radius: 1.5mm; padding: 2.5mm 3mm; }
+.parties .party h3 { margin: 0 0 1mm; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.04em; color: #666; }
+.parties .party .name { font-weight: 700; font-size: 10.5pt; }
+.parties .party p { margin: 0.3mm 0; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+.num { text-align: end; font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+table.lines { inline-size: 100%; border-collapse: collapse; margin-block-end: 4mm; page-break-inside: auto; }
+table.lines thead { display: table-header-group; }
+table.lines tr { page-break-inside: avoid; }
+table.lines th { background: #eee; border-block: 1px solid #999; padding: 1.6mm 1.5mm; font-size: 8pt; text-align: start; vertical-align: bottom; }
+table.lines th.num { text-align: end; }
+table.lines td { border-block-end: 1px solid #ddd; padding: 1.4mm 1.5mm; vertical-align: top; }
+table.lines td.desc .code { font-weight: 600; }
+table.lines td.desc .text { color: #333; }
+table.lines td.desc .meta { color: #777; font-size: 8pt; }
+.after-lines { display: flex; gap: 8mm; align-items: flex-start; page-break-inside: avoid; }
+.after-lines .left { flex: 1; }
+.totals { inline-size: 70mm; border-collapse: collapse; margin-inline-start: auto; }
+.totals td { padding: 1.2mm 1.5mm; }
+.totals td.k { color: #444; }
+.totals tr.grand td { border-block-start: 2px solid #1a1a1a; font-weight: 700; font-size: 11pt; }
+.box { border: 1px solid #ccc; border-radius: 1.5mm; padding: 2.5mm 3mm; margin-block-end: 3mm; }
+.box h3 { margin: 0 0 1.5mm; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.04em; color: #666; }
+.box table { inline-size: 100%; border-collapse: collapse; }
+.box table th { text-align: start; font-size: 8pt; color: #666; padding: 0.6mm 1mm; border-block-end: 1px solid #ddd; }
+.box table th.num { text-align: end; }
+.box table td { padding: 0.8mm 1mm; }
+.words { font-style: italic; }
+.words .ar { direction: rtl; unicode-bidi: isolate; }
+.qr { text-align: center; }
+.qr svg { inline-size: 28mm; block-size: 28mm; }
+.qr p { margin: 1mm 0 0; font-size: 7.5pt; color: #666; }
+.note { white-space: pre-wrap; }
+.foot { margin-block-start: 6mm; border-block-start: 1px solid #ccc; padding-block-start: 2mm; font-size: 8pt; color: #666; display: flex; justify-content: space-between; gap: 6mm; }
+.badge { display: inline-block; border: 1px solid #999; border-radius: 1mm; padding: 0.3mm 1.5mm; font-size: 7.5pt; color: #444; }
+.statement thead th { white-space: nowrap; }
+.muted { color: #666; }

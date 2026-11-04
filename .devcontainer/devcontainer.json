@@ -1,0 +1,21 @@
+{
+  "name": "Quicker ERP",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [5173, 8080, 5432, 8025, 9001],
+  "postCreateCommand": "corepack enable && pnpm install && dotnet restore Quicker.sln",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "dbaeumer.vscode-eslint",
+        "stylelint.vscode-stylelint",
+        "bradlc.vscode-tailwindcss",
+        "bierner.markdown-mermaid"
+      ]
+    }
+  }
+}

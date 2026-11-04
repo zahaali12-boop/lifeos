@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Reporting module: read models over the other modules' tables (read-only SQL under row-level security, each section behind its module's read permission), the home dashboard first (founder programme item 1; roadmap 7.5 grows from here).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Reporting.Contracts/Quicker.Reporting.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Collaboration/Quicker.Collaboration.Contracts/Quicker.Collaboration.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Accounting/Quicker.Accounting.Contracts/Quicker.Accounting.Contracts.csproj" />
+    <ProjectReference Include="../../Inventory/Quicker.Inventory.Contracts/Quicker.Inventory.Contracts.csproj" />
+    <ProjectReference Include="../../Printing/Quicker.Printing.Contracts/Quicker.Printing.Contracts.csproj" />
+    <ProjectReference Include="../../Tenancy/Quicker.Tenancy.Contracts/Quicker.Tenancy.Contracts.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Messaging/Quicker.Messaging.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Storage/Quicker.Storage.csproj" />
+  </ItemGroup>
+
+</Project>

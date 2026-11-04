@@ -1,0 +1,339 @@
+import { Outlet, createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
+import { getSession } from "../session/session";
+import { AppShell } from "../shell/AppShell";
+import { AuditPage } from "./AuditPage";
+import { CompaniesPage } from "./CompaniesPage";
+import { CustomFieldsPage } from "./CustomFieldsPage";
+import { HomeRoute } from "./HomeRoute";
+import { JobsPage } from "./JobsPage";
+import { LoginPage } from "./LoginPage";
+import { MembersPage } from "./MembersPage";
+import { NotificationsPage } from "./NotificationsPage";
+import { DimensionsPage } from "./DimensionsPage";
+import { NumberingPage } from "./NumberingPage";
+import { CalendarsPage } from "./CalendarsPage";
+import { SecurityPage } from "./SecurityPage";
+import { AccountPage } from "./account/AccountPage";
+import { SettingsPage } from "./SettingsPage";
+import { UnitsPage } from "./UnitsPage";
+import { RatesPage } from "./RatesPage";
+import { RolesPage } from "./RolesPage";
+import { SignupPage } from "./SignupPage";
+import { WebhooksPage } from "./WebhooksPage";
+import { ChartPage } from "./accounting/ChartPage";
+import { JournalBrowserPage } from "./accounting/JournalBrowserPage";
+import { JournalsPage } from "./accounting/JournalsPage";
+import { LedgerPage } from "./accounting/LedgerPage";
+import { PeriodsPage } from "./accounting/PeriodsPage";
+import { PostingRulesPage } from "./accounting/PostingRulesPage";
+import { RoutinesPage } from "./accounting/RoutinesPage";
+import { TrialBalancePage } from "./accounting/TrialBalancePage";
+import { AdjustmentsPage } from "./inventory/AdjustmentsPage";
+import { AssembliesPage } from "./inventory/AssembliesPage";
+import { CountsPage } from "./inventory/CountsPage";
+import { ItemsPage } from "./inventory/ItemsPage";
+import { ReplenishmentPage } from "./inventory/ReplenishmentPage";
+import { RevaluationsPage } from "./inventory/RevaluationsPage";
+import { StockPage } from "./inventory/StockPage";
+import { TrackingPage } from "./inventory/TrackingPage";
+import { TransfersPage } from "./inventory/TransfersPage";
+import { SlowMovingPage } from "./inventory/SlowMovingPage";
+import { ValuationPage } from "./inventory/ValuationPage";
+import { WarehousesPage } from "./inventory/WarehousesPage";
+import { AgreementsPage } from "./purchasing/AgreementsPage";
+import { InvoicesPage } from "./purchasing/InvoicesPage";
+import { LandedCostsPage } from "./purchasing/LandedCostsPage";
+import { ReturnsPage } from "./purchasing/ReturnsPage";
+import { SupplierIntelligencePage } from "./purchasing/SupplierIntelligencePage";
+import { OpenOrderLinesPage } from "./purchasing/OpenOrderLinesPage";
+import { PurchaseAnalysisPage } from "./purchasing/PurchaseAnalysisPage";
+import { OpenItemsPage } from "./payables/OpenItemsPage";
+import { ReceivablesPage } from "./receivables/OpenItemsPage";
+import { ProposalsPage } from "./payables/ProposalsPage";
+import { BankAccountsPage } from "./banking/BankAccountsPage";
+import { PaymentsPage } from "./banking/PaymentsPage";
+import { ReceiptsPage as CustomerReceiptsPage } from "./banking/ReceiptsPage";
+import { ChequesPage } from "./banking/ChequesPage";
+import { ChequeBooksPage } from "./banking/ChequeBooksPage";
+import { ReconciliationPage } from "./banking/ReconciliationPage";
+import { PurchaseOrdersPage } from "./purchasing/PurchaseOrdersPage";
+import { PurchasingSettingsPage } from "./purchasing/PurchasingSettingsPage";
+import { ReceiptsPage } from "./purchasing/ReceiptsPage";
+import { RequisitionsPage } from "./purchasing/RequisitionsPage";
+import { RfqsPage } from "./purchasing/RfqsPage";
+import { SuppliersPage } from "./purchasing/SuppliersPage";
+import { ActivitiesPage } from "./sales/ActivitiesPage";
+import { Customer360Page } from "./sales/Customer360Page";
+import { CustomersPage } from "./sales/CustomersPage";
+import { InvoicesPage as SalesInvoicesPage } from "./sales/InvoicesPage";
+import { OrdersPage } from "./sales/OrdersPage";
+import { PipelinePage } from "./sales/PipelinePage";
+import { QuotationsPage } from "./sales/QuotationsPage";
+import { RecurringInvoicesPage } from "./sales/RecurringInvoicesPage";
+import { ReturnsPage as SalesReturnsPage } from "./sales/ReturnsPage";
+import { SalesAnalysisPage } from "./sales/SalesAnalysisPage";
+import { SetupPage } from "./setup/SetupPage";
+import { ExpensesPage } from "./expenses/ExpensesPage";
+import { ExpenseCategoriesPage } from "./expenses/ExpenseCategoriesPage";
+import { PettyCashFundsPage } from "./expenses/PettyCashFundsPage";
+import { AssetsPage } from "./fixed-assets/AssetsPage";
+import { DepreciationPage } from "./fixed-assets/DepreciationPage";
+import { AssetCategoriesPage } from "./fixed-assets/AssetCategoriesPage";
+import { AssetBooksPage } from "./fixed-assets/AssetBooksPage";
+import { PrintTemplatesPage } from "./print/PrintTemplatesPage";
+import { SalesSetupPage } from "./sales/SalesSetupPage";
+import { ShipmentsPage } from "./sales/ShipmentsPage";
+import { PriceCheckPage } from "./sales/pricing/PriceCheckPage";
+import { PriceListPage } from "./sales/pricing/PriceListPage";
+import { PriceListsPage } from "./sales/pricing/PriceListsPage";
+import { PricingRulesPage } from "./sales/pricing/PricingRulesPage";
+import { TaxReturnsPage } from "./tax/TaxReturnsPage";
+import { TaxSetupPage } from "./tax/TaxSetupPage";
+import { EinvoicingPage } from "./tax/EinvoicingPage";
+import { ApprovalsPage } from "./workflow/ApprovalsPage";
+import { WorkflowsPage } from "./workflow/WorkflowsPage";
+import { MobileCountPage } from "./mobile/MobileCountPage";
+import { MobileHomePage } from "./mobile/MobileHomePage";
+import { MobileQueuePage } from "./mobile/MobileQueuePage";
+import { MobileShell } from "./mobile/MobileShell";
+import { MobileTransferPage } from "./mobile/MobileTransferPage";
+import { MobileReceivePage } from "./mobile/MobileReceivePage";
+import { MobilePickPage } from "./mobile/MobilePickPage";
+import { PosShell } from "./pos/PosShell";
+import { PosHomePage } from "./pos/PosHomePage";
+import { PosSellPage } from "./pos/PosSellPage";
+import { PosOrdersPage } from "./pos/PosOrdersPage";
+import { PosPage } from "./sales/PosPage";
+import { EmployeesPage } from "./hr/EmployeesPage";
+import { LeavePage } from "./hr/LeavePage";
+import { PayComponentsPage } from "./hr/PayComponentsPage";
+import { PayrollRunsPage } from "./hr/PayrollRunsPage";
+import { DashboardsPage } from "./dashboards/DashboardsPage";
+import { DashboardViewPage } from "./dashboards/DashboardViewPage";
+import { OffersPage } from "./trader/OffersPage";
+import { ShipmentsPage as TraderShipmentsPage } from "./trader/ShipmentsPage";
+import { PricingPage as TraderPricingPage } from "./trader/PricingPage";
+import { SalesPage as TraderSalesPage } from "./trader/SalesPage";
+import { MoneyPage as TraderMoneyPage } from "./trader/MoneyPage";
+import { CashPage as TraderCashPage } from "./trader/CashPage";
+import { HealthPage as TraderHealthPage } from "./trader/HealthPage";
+import { PurchasesPage as TraderPurchasesPage } from "./trader/PurchasesPage";
+import { StockPage as TraderStockPage } from "./trader/StockPage";
+import { ExpensesPage as TraderExpensesPage } from "./trader/ExpensesPage";
+import { PhoneShell } from "./phone/PhoneShell";
+import { PhoneHomePage } from "./phone/PhoneHomePage";
+import { PhoneSellPage } from "./phone/PhoneSellPage";
+import { PhoneCollectPage } from "./phone/PhoneCollectPage";
+import { PhoneBuyPage } from "./phone/PhoneBuyPage";
+import { PhoneCustomersPage } from "./phone/PhoneCustomersPage";
+import { ReportBuilderPage } from "./reports/ReportBuilderPage";
+import { ReportsPage } from "./reports/ReportsPage";
+import { SchedulesPage } from "./schedules/SchedulesPage";
+import { StatementDesignerPage } from "./statements/StatementDesignerPage";
+import { StatementsPage } from "./statements/StatementsPage";
+import { PickListsPage } from "./inventory/PickListsPage";
+
+/** Typed routes (ADR-0013): anonymous auth screens, the shell whose children require a session, and the mobile scanner under /m. */
+const rootRoute = createRootRoute({ component: () => <Outlet /> });
+
+const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: "/login", component: LoginPage, beforeLoad: () => { if (getSession()) { throw redirect({ to: "/" }); } } });
+const signupRoute = createRoute({ getParentRoute: () => rootRoute, path: "/signup", component: SignupPage, beforeLoad: () => { if (getSession()) { throw redirect({ to: "/" }); } } });
+
+const shellRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "shell",
+  component: AppShell,
+  beforeLoad: () => {
+    if (!getSession()) {
+      throw redirect({ to: "/login" });
+    }
+  },
+});
+
+const searchRecord = (search: Record<string, unknown>): Record<string, string> =>
+  Object.fromEntries(Object.entries(search).filter(([, value]) => typeof value === "string").map(([key, value]) => [key, value as string]));
+
+const dashboardRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: HomeRoute });
+const setupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/setup", component: SetupPage });
+const companiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/companies", component: CompaniesPage, validateSearch: searchRecord });
+const ratesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/rates", component: RatesPage });
+const dimensionsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dimensions", component: DimensionsPage });
+const numberingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/numbering", component: NumberingPage });
+const unitsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/units", component: UnitsPage });
+const calendarsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/calendars", component: CalendarsPage });
+const settingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/settings", component: SettingsPage });
+const securityRoute = createRoute({ getParentRoute: () => shellRoute, path: "/security", component: SecurityPage });
+const accountRoute = createRoute({ getParentRoute: () => shellRoute, path: "/account", component: AccountPage });
+const membersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/members", component: MembersPage });
+const rolesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/roles", component: RolesPage });
+const customFieldsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/custom-fields", component: CustomFieldsPage });
+const notificationsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/notifications", component: NotificationsPage, validateSearch: searchRecord });
+const auditRoute = createRoute({ getParentRoute: () => shellRoute, path: "/audit", component: AuditPage });
+const jobsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/jobs", component: JobsPage });
+const webhooksRoute = createRoute({ getParentRoute: () => shellRoute, path: "/webhooks", component: WebhooksPage });
+const chartRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/chart", component: ChartPage });
+const journalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/journals", component: JournalsPage, validateSearch: searchRecord });
+const trialBalanceRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/trial-balance", component: TrialBalancePage });
+const ledgerRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/ledger", component: LedgerPage, validateSearch: searchRecord });
+const journalEntriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/journal-entries", component: JournalBrowserPage, validateSearch: searchRecord });
+const periodsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/periods", component: PeriodsPage });
+const postingRulesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/posting-rules", component: PostingRulesPage });
+const routinesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/accounting/routines", component: RoutinesPage });
+const itemsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/items", component: ItemsPage, validateSearch: searchRecord });
+const warehousesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/warehouses", component: WarehousesPage, validateSearch: searchRecord });
+const stockRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/stock", component: StockPage });
+const adjustmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/adjustments", component: AdjustmentsPage, validateSearch: searchRecord });
+const transfersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/transfers", component: TransfersPage, validateSearch: searchRecord });
+const assembliesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/assemblies", component: AssembliesPage, validateSearch: searchRecord });
+const trackingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/tracking", component: TrackingPage, validateSearch: searchRecord });
+const countsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/counts", component: CountsPage, validateSearch: searchRecord });
+const pickListsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/pick-lists", component: PickListsPage, validateSearch: searchRecord });
+const replenishmentRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/replenishment", component: ReplenishmentPage, validateSearch: searchRecord });
+const valuationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/valuation", component: ValuationPage });
+const slowMovingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/slow-moving", component: SlowMovingPage });
+const revaluationsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/inventory/revaluations", component: RevaluationsPage, validateSearch: searchRecord });
+const suppliersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/suppliers", component: SuppliersPage, validateSearch: searchRecord });
+const purchasingSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/settings", component: PurchasingSettingsPage });
+const requisitionsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/requisitions", component: RequisitionsPage, validateSearch: searchRecord });
+const rfqsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/rfqs", component: RfqsPage, validateSearch: searchRecord });
+const purchaseOrdersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/orders", component: PurchaseOrdersPage, validateSearch: searchRecord });
+const agreementsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/agreements", component: AgreementsPage, validateSearch: searchRecord });
+const receiptsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/receipts", component: ReceiptsPage, validateSearch: searchRecord });
+const invoicesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/invoices", component: InvoicesPage, validateSearch: searchRecord });
+const landedCostsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/landed-costs", component: LandedCostsPage, validateSearch: searchRecord });
+const returnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/returns", component: ReturnsPage, validateSearch: searchRecord });
+const intelligenceRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/intelligence", component: SupplierIntelligencePage, validateSearch: searchRecord });
+const openLinesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/open-lines", component: OpenOrderLinesPage });
+const analysisRoute = createRoute({ getParentRoute: () => shellRoute, path: "/purchasing/analysis", component: PurchaseAnalysisPage });
+const customersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers", component: CustomersPage, validateSearch: searchRecord });
+const customer360Route = createRoute({ getParentRoute: () => shellRoute, path: "/sales/customers/$partnerId", component: Customer360Page });
+const quotationsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/quotations", component: QuotationsPage, validateSearch: searchRecord });
+const salesOrdersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/orders", component: OrdersPage, validateSearch: searchRecord });
+const shipmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/shipments", component: ShipmentsPage, validateSearch: searchRecord });
+const salesInvoicesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/invoices", component: SalesInvoicesPage, validateSearch: searchRecord });
+const recurringInvoicesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/recurring-invoices", component: RecurringInvoicesPage, validateSearch: searchRecord });
+const salesReturnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/returns", component: SalesReturnsPage, validateSearch: searchRecord });
+const salesAnalysisRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/analysis", component: SalesAnalysisPage });
+const receivablesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/receivables/open-items", component: ReceivablesPage, validateSearch: searchRecord });
+const pipelineRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pipeline", component: PipelinePage, validateSearch: searchRecord });
+const crmActivitiesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/activities", component: ActivitiesPage });
+const salesSetupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/setup", component: SalesSetupPage });
+const priceListsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/price-lists", component: PriceListsPage });
+const priceListRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/price-lists/$listId", component: PriceListPage });
+const pricingRulesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pricing-rules", component: PricingRulesPage });
+const priceCheckRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/price-check", component: PriceCheckPage });
+const taxSetupRoute = createRoute({ getParentRoute: () => shellRoute, path: "/tax/setup", component: TaxSetupPage });
+const taxReturnsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/tax/returns", component: TaxReturnsPage });
+const einvoicingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/tax/einvoicing", component: EinvoicingPage, validateSearch: searchRecord });
+const payablesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/open-items", component: OpenItemsPage, validateSearch: searchRecord });
+const proposalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/payables/proposals", component: ProposalsPage, validateSearch: searchRecord });
+const bankAccountsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/bank-accounts", component: BankAccountsPage, validateSearch: searchRecord });
+const paymentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/payments", component: PaymentsPage, validateSearch: searchRecord });
+const customerReceiptsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/receipts", component: CustomerReceiptsPage, validateSearch: searchRecord });
+const chequesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/cheques", component: ChequesPage, validateSearch: searchRecord });
+const chequeBooksRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/cheque-books", component: ChequeBooksPage });
+const reconciliationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/banking/reconciliation", component: ReconciliationPage, validateSearch: searchRecord });
+const expensesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses", component: ExpensesPage, validateSearch: searchRecord });
+const expenseCategoriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses/categories", component: ExpenseCategoriesPage });
+const pettyCashFundsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/expenses/funds", component: PettyCashFundsPage, validateSearch: searchRecord });
+const assetsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/fixed-assets", component: AssetsPage, validateSearch: searchRecord });
+const depreciationRoute = createRoute({ getParentRoute: () => shellRoute, path: "/fixed-assets/depreciation", component: DepreciationPage, validateSearch: searchRecord });
+const assetCategoriesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/fixed-assets/categories", component: AssetCategoriesPage });
+const assetBooksRoute = createRoute({ getParentRoute: () => shellRoute, path: "/fixed-assets/books", component: AssetBooksPage });
+const printTemplatesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/print-templates", component: PrintTemplatesPage, validateSearch: searchRecord });
+const approvalsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/approvals", component: ApprovalsPage, validateSearch: searchRecord });
+const workflowsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/workflows", component: WorkflowsPage, validateSearch: searchRecord });
+
+// The trader's phone site (ADR-0035 §21): its own thumb-first shell over the same records, the same session.
+const phoneRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "phone",
+  component: PhoneShell,
+  beforeLoad: () => {
+    if (!getSession()) {
+      throw redirect({ to: "/login" });
+    }
+  },
+});
+const phoneHomeRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p", component: PhoneHomePage });
+const phoneSellRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/sell", component: PhoneSellPage });
+const phoneCollectRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/collect", component: PhoneCollectPage, validateSearch: searchRecord });
+const phoneBuyRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/buy", component: PhoneBuyPage });
+const phoneCustomersRoute = createRoute({ getParentRoute: () => phoneRoute, path: "/p/customers", component: PhoneCustomersPage });
+
+// The scanner (roadmap 3.8): its own thumb-first shell, the same session.
+const mobileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "mobile",
+  component: MobileShell,
+  beforeLoad: () => {
+    if (!getSession()) {
+      throw redirect({ to: "/login" });
+    }
+  },
+});
+const mobileHomeRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m", component: MobileHomePage });
+const mobileCountRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/count", component: MobileCountPage });
+const mobileTransferRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/transfer", component: MobileTransferPage });
+const mobileQueueRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/queue", component: MobileQueuePage });
+const mobileReceiveRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/receive", component: MobileReceivePage });
+const mobilePickRoute = createRoute({ getParentRoute: () => mobileRoute, path: "/m/pick", component: MobilePickPage, validateSearch: searchRecord });
+
+// The till (A-180): its own full-width shell, the same session, sells offline from the catalogue it cached.
+const posRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "pos",
+  component: PosShell,
+  beforeLoad: () => {
+    if (!getSession()) {
+      throw redirect({ to: "/login" });
+    }
+  },
+});
+const posHomeRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos", component: PosHomePage });
+const posSellRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos/sell", component: PosSellPage, validateSearch: searchRecord });
+const posOrdersRoute = createRoute({ getParentRoute: () => posRoute, path: "/pos/orders", component: PosOrdersPage });
+const posBackOfficeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/sales/pos", component: PosPage, validateSearch: searchRecord });
+const payComponentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/pay-components", component: PayComponentsPage });
+const employeesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/employees", component: EmployeesPage, validateSearch: searchRecord });
+const leaveRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/leave", component: LeavePage, validateSearch: searchRecord });
+const payrollRunsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/hr/payroll", component: PayrollRunsPage, validateSearch: searchRecord });
+const reportsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/reports", component: ReportsPage });
+const reportBuilderRoute = createRoute({ getParentRoute: () => shellRoute, path: "/reports/builder", component: ReportBuilderPage, validateSearch: searchRecord });
+const statementsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/statements", component: StatementsPage, validateSearch: searchRecord });
+const statementDesignerRoute = createRoute({ getParentRoute: () => shellRoute, path: "/statements/designer", component: StatementDesignerPage, validateSearch: searchRecord });
+const dashboardsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dashboards", component: DashboardsPage });
+const traderOffersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/offers", component: OffersPage, validateSearch: searchRecord });
+const traderShipmentsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/shipments", component: TraderShipmentsPage, validateSearch: searchRecord });
+const traderPricingRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/pricing", component: TraderPricingPage });
+const traderSalesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/sales", component: TraderSalesPage, validateSearch: searchRecord });
+const traderMoneyRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/money", component: TraderMoneyPage });
+const traderCashRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/cash", component: TraderCashPage });
+const traderHealthRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/health", component: TraderHealthPage });
+const traderStockRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/stock", component: TraderStockPage });
+const traderExpensesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/expenses", component: TraderExpensesPage });
+const traderPurchasesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/trader/purchases", component: TraderPurchasesPage, validateSearch: searchRecord });
+const dashboardViewRoute = createRoute({ getParentRoute: () => shellRoute, path: "/dashboards/view", component: DashboardViewPage, validateSearch: searchRecord });
+const schedulesRoute = createRoute({ getParentRoute: () => shellRoute, path: "/reports/schedules", component: SchedulesPage });
+
+const routeTree = rootRoute.addChildren([
+  loginRoute,
+  signupRoute,
+  shellRoute.addChildren([
+    dashboardRoute, setupRoute, companiesRoute, ratesRoute, numberingRoute, dimensionsRoute, unitsRoute, calendarsRoute, settingsRoute, securityRoute, accountRoute, membersRoute, rolesRoute, customFieldsRoute, notificationsRoute, auditRoute, jobsRoute, webhooksRoute,
+    chartRoute, journalsRoute, trialBalanceRoute, ledgerRoute, journalEntriesRoute, periodsRoute, routinesRoute, postingRulesRoute,
+    itemsRoute, warehousesRoute, stockRoute, adjustmentsRoute, transfersRoute, assembliesRoute, trackingRoute, countsRoute, pickListsRoute, replenishmentRoute, valuationRoute, slowMovingRoute, revaluationsRoute,
+    approvalsRoute, workflowsRoute, suppliersRoute, purchasingSettingsRoute, requisitionsRoute, rfqsRoute, purchaseOrdersRoute, agreementsRoute, receiptsRoute, invoicesRoute, landedCostsRoute, returnsRoute, intelligenceRoute, openLinesRoute, analysisRoute, customersRoute, customer360Route, quotationsRoute, salesOrdersRoute, shipmentsRoute, salesInvoicesRoute, recurringInvoicesRoute, salesReturnsRoute, salesAnalysisRoute, receivablesRoute, pipelineRoute, crmActivitiesRoute, salesSetupRoute, priceListsRoute, priceListRoute, pricingRulesRoute, priceCheckRoute, taxSetupRoute, taxReturnsRoute, einvoicingRoute, posBackOfficeRoute, payablesRoute, proposalsRoute, bankAccountsRoute, paymentsRoute, customerReceiptsRoute, chequesRoute, chequeBooksRoute, reconciliationRoute, expensesRoute, expenseCategoriesRoute, pettyCashFundsRoute, assetsRoute, depreciationRoute, assetCategoriesRoute, assetBooksRoute, printTemplatesRoute, payComponentsRoute, employeesRoute, leaveRoute, payrollRunsRoute, reportsRoute, reportBuilderRoute, statementsRoute, statementDesignerRoute, dashboardsRoute, dashboardViewRoute, schedulesRoute, traderOffersRoute, traderShipmentsRoute, traderPricingRoute, traderSalesRoute, traderMoneyRoute, traderCashRoute, traderHealthRoute, traderStockRoute, traderExpensesRoute, traderPurchasesRoute,
+  ]),
+  mobileRoute.addChildren([mobileHomeRoute, mobileCountRoute, mobileTransferRoute, mobileQueueRoute, mobileReceiveRoute, mobilePickRoute]),
+  phoneRoute.addChildren([phoneHomeRoute, phoneSellRoute, phoneCollectRoute, phoneBuyRoute, phoneCustomersRoute]),
+  posRoute.addChildren([posHomeRoute, posSellRoute, posOrdersRoute]),
+]);
+
+export const router = createRouter({ routeTree, defaultPreload: "intent" });
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}

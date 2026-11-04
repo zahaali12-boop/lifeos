@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Payroll and HR module, simple (founder programme item 8, ADR-0033, A-181): pay components that land on accounts through posting rules, employees over the partner with the employee role, leave, and monthly payroll runs calculated with prorating, approved through the workflow engine, posted through the posting engine with the net pay as a payable the bank pays, and printed as payslips.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <ProjectReference Include="../Quicker.Payroll.Contracts/Quicker.Payroll.Contracts.csproj" />
+    <ProjectReference Include="../../Accounting/Quicker.Accounting.Contracts/Quicker.Accounting.Contracts.csproj" />
+    <ProjectReference Include="../../Audit/Quicker.Audit.Contracts/Quicker.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../Banking/Quicker.Banking.Contracts/Quicker.Banking.Contracts.csproj" />
+    <ProjectReference Include="../../Collaboration/Quicker.Collaboration.Contracts/Quicker.Collaboration.Contracts.csproj" />
+    <ProjectReference Include="../../Identity/Quicker.Identity.Contracts/Quicker.Identity.Contracts.csproj" />
+    <ProjectReference Include="../../Numbering/Quicker.Numbering.Contracts/Quicker.Numbering.Contracts.csproj" />
+    <ProjectReference Include="../../Organization/Quicker.Organization.Contracts/Quicker.Organization.Contracts.csproj" />
+    <ProjectReference Include="../../Partners/Quicker.Partners.Contracts/Quicker.Partners.Contracts.csproj" />
+    <ProjectReference Include="../../Payables/Quicker.Payables.Contracts/Quicker.Payables.Contracts.csproj" />
+    <ProjectReference Include="../../Printing/Quicker.Printing.Contracts/Quicker.Printing.Contracts.csproj" />
+    <ProjectReference Include="../../Workflow/Quicker.Workflow.Contracts/Quicker.Workflow.Contracts.csproj" />
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Persistence/Quicker.Persistence.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Quicker.Web/Quicker.Web.csproj" />
+  </ItemGroup>
+
+</Project>

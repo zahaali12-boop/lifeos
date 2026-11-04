@@ -1,0 +1,67 @@
+{
+  "title": "Payslip / قسيمة راتب",
+  "number": "PRL-2026-009-01",
+  "status": "paid",
+  "is_final": true,
+  "document_date": "2026-09-30",
+  "currency": "SAR",
+  "company": {
+    "code": "RYD",
+    "name": "Riyadh Trading Co. / شركة الرياض للتجارة",
+    "name_en": "Riyadh Trading Co.",
+    "name_ar": "شركة الرياض للتجارة",
+    "country": "SA",
+    "currency": "SAR",
+    "address": { "street": "King Fahd Road 1234", "city": "Riyadh" },
+    "address_text": "King Fahd Road 1234, Riyadh",
+    "registration_numbers": { "cr": "1010010000" },
+    "tax_number": null
+  },
+  "branch": null,
+  "partner": { "code": "NOURA", "name": "Noura Al-Harbi / نورة الحربي" },
+  "document": {
+    "status": "paid",
+    "run_number": "PRL-2026-009",
+    "period": "September 2026 / سبتمبر 2026",
+    "period_start": "2026-09-01",
+    "period_end": "2026-09-30",
+    "document_date": "2026-09-30",
+    "pay_date": "2026-09-28",
+    "currency": "SAR",
+    "employee_number": "EMP-0001",
+    "employee_name": "Noura Al-Harbi / نورة الحربي",
+    "job_title": "Accountant / محاسبة",
+    "department": "FIN",
+    "hire_date": "2026-01-01",
+    "days_in_period": 30,
+    "paid_days": "27",
+    "unpaid_days": "3",
+    "has_unpaid": true,
+    "basic_salary": "10,000.00",
+    "basic_amount": "9,000.00",
+    "earnings": [
+      { "code": "BASIC", "name": "Basic salary / الراتب الأساسي", "calculation": "basic", "has_rate": false, "base": "10,000.00", "rate": "0", "amount": "9,000.00" },
+      { "code": "HOUSING", "name": "Housing allowance / بدل سكن", "calculation": "percent_of_basic", "has_rate": true, "base": "9,000.00", "rate": "25", "amount": "2,250.00" },
+      { "code": "TRANSPORT", "name": "Transport allowance / بدل نقل", "calculation": "fixed", "has_rate": false, "base": "300.00", "rate": "0", "amount": "270.00" }
+    ],
+    "deductions": [
+      { "code": "GOSI-EE", "name": "Social insurance, employee / التأمينات الاجتماعية، الموظف", "calculation": "percent_of_basic", "has_rate": true, "base": "9,000.00", "rate": "9.75", "amount": "877.50" }
+    ],
+    "employer": [
+      { "code": "GOSI-ER", "name": "Social insurance, employer / التأمينات الاجتماعية، صاحب العمل", "calculation": "percent_of_basic", "has_rate": true, "base": "9,000.00", "rate": "11.75", "amount": "1,057.50" }
+    ],
+    "has_deductions": true,
+    "has_employer": true,
+    "gross": "11,520.00",
+    "deductions_total": "877.50",
+    "employer_total": "1,057.50",
+    "net": "10,642.50",
+    "payment_method": "transfer",
+    "payment_method_label": "Bank transfer / حوالة بنكية",
+    "bank_name": "Al Rajhi",
+    "iban": "SA0380000000608010167519",
+    "is_paid": true,
+    "paid_on": "2026-09-28",
+    "payment_number": "PAY-2026-00012"
+  }
+}

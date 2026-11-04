@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>What other modules may know about receivables: the open items invoices and credit notes create and reverse, the settlements a receipt or a credit application carries, and a customer's open balance for credit control (roadmap 5.6–5.7, DOMAIN_MODEL §13).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Kernel/Quicker.Kernel/Quicker.Kernel.csproj" />
+  </ItemGroup>
+</Project>

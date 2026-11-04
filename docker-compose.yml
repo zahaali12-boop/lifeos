@@ -1,0 +1,142 @@
+# Local development topology (ADR-0024). `make up` is the one command.
+name: quicker
+
+services:
+  postgres:
+    restart: unless-stopped
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: quicker_owner
+      POSTGRES_PASSWORD: quicker
+      POSTGRES_DB: quicker
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=all", "-c", "log_min_duration_statement=250ms"]
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quicker_owner -d quicker"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    restart: unless-stopped
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: quicker
+      MINIO_ROOT_PASSWORD: quickerquicker
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  mailpit:
+    restart: unless-stopped
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  migrator:
+    build:
+      context: .
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: migrator
+    environment:
+      QUICKER__DB__OWNERCONNECTION: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      QUICKER__DB__APPPASSWORD: quicker
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
+      Quicker__Storage__Endpoint: http://minio:9000
+      Quicker__Storage__AccessKey: quicker
+      Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
+      Quicker__Email__SmtpHost: mailpit
+      Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+      # QUICKER_LAN_HOST (in .env) is this machine's address on the local network (ipconfig / ip addr), so a phone on
+      # the same Wi-Fi can open the app and count stock (ADR-0035 §9); the browser on this machine keeps working too.
+      Quicker__Api__AllowedOrigins: http://localhost:5173,http://127.0.0.1:5173,http://${QUICKER_LAN_HOST:-localhost}:5173
+    ports:
+      # QUICKER_API_PORT (in .env) when another program already answers on 8080 on your machine.
+      - "${QUICKER_API_PORT:-8080}:8080"
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
+  worker:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: worker
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8081
+      Quicker__Db__OwnerConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
+      Quicker__Db__AppConnection: Host=postgres;Port=5432;Database=quicker;Username=quicker_app;Password=quicker
+      Quicker__Storage__Provider: s3
+      Quicker__Storage__Endpoint: http://minio:9000
+      Quicker__Storage__AccessKey: quicker
+      Quicker__Storage__SecretKey: quickerquicker
+      Quicker__Email__Provider: smtp
+      Quicker__Email__SmtpHost: mailpit
+      Quicker__Email__SmtpPort: "1025"
+      Quicker__Audit__Anchoring__Store: file
+      Quicker__Audit__Anchoring__Path: /app/.data/audit-anchors
+    ports:
+      - "8081:8081"
+    volumes:
+      - auditanchors:/app/.data/audit-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
+  web:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/docker/web.Dockerfile
+      target: dev
+    environment:
+      # With QUICKER_LAN_HOST set, the app calls the API by that address, so it works from a phone on the same network.
+      VITE_API_BASE_URL: http://${QUICKER_LAN_HOST:-localhost}:${QUICKER_API_PORT:-8080}
+    ports:
+      - "5173:5173"
+    volumes:
+      # The sources come from the host for hot reload; the installed packages stay the image's own (pnpm keeps a
+      # node_modules inside every workspace package, so each one needs its own anonymous volume).
+      - ./apps/web:/workspace/apps/web
+      - ./packages:/workspace/packages
+      - /workspace/node_modules
+      - /workspace/apps/web/node_modules
+      - /workspace/packages/ui/node_modules
+
+volumes:
+  pgdata:
+  miniodata:
+  auditanchors:

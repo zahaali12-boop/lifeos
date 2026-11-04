@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="{{ if is_rtl }}ar{{ else }}en{{ end }}" dir="{{ if is_rtl }}rtl{{ else }}ltr{{ end }}">
+<head>
+<meta charset="utf-8">
+<title>{{ title | html.escape }} {{ number | html.escape }}</title>
+<style>
+@font-face { font-family: "Quicker Brand"; src: url("{{ font_dir }}Montserrat-Variable.ttf"); font-weight: 100 900; }
+@font-face { font-family: "Quicker Arabic"; src: url("{{ font_dir }}Cairo-Variable.ttf"); font-weight: 200 900; }
+@page { size: {{ paper }}; margin: 12mm 12mm 18mm 12mm; @bottom-center { content: "{{ L.page }} " counter(page) " {{ L.of }} " counter(pages); font-family: "Quicker Brand", "Quicker Arabic", sans-serif; font-size: 8pt; color: #6b7280; } }
+{{ css }}
+/* The company's branded layout (T12b): its logo on a dark band, the brand typefaces, blue accents, a black total. */
+:root { --ink: #0a0a0a; --brand: #3C82C4; --tint: #EAF2FA; --muted: #6b7280; --line: #e5e7eb; }
+body { font-family: "Quicker Brand", "Quicker Arabic", "DejaVu Sans", sans-serif; color: var(--ink); font-size: 9.5pt; }
+body.ar { font-family: "Quicker Arabic", "Quicker Brand", "DejaVu Sans", sans-serif; }
+.band { display: flex; justify-content: space-between; align-items: center; gap: 10mm; background: var(--ink); color: #fff; border-radius: 3mm; padding: 6mm 8mm; margin-block-end: 6mm; page-break-inside: avoid; }
+.band .logo { display: block; max-block-size: 22mm; max-inline-size: 60mm; object-fit: contain; }
+.band .wordmark { font-size: 20pt; font-weight: 800; letter-spacing: 0.02em; }
+.band .band-doc { text-align: end; }
+.band .eyebrow { margin: 0; font-size: 8pt; letter-spacing: 0.12em; text-transform: uppercase; color: #cfd8e3; }
+.band .title { margin: 1mm 0 0; font-size: 18pt; font-weight: 800; }
+.band .number { margin: 0.5mm 0 0; font-size: 12pt; font-weight: 600; color: #9cc3ea; direction: ltr; unicode-bidi: isolate; }
+.meta { display: flex; flex-wrap: wrap; gap: 3mm; margin-block-end: 6mm; }
+.meta .chip { background: var(--tint); border-radius: 2mm; padding: 2mm 3.5mm; min-inline-size: 30mm; }
+.meta .chip .k { display: block; font-size: 7pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); font-weight: 700; }
+.meta .chip .v { display: block; font-weight: 600; direction: ltr; unicode-bidi: isolate; text-align: start; }
+.parties { gap: 6mm; }
+.parties .party { border: 0; border-inline-start: 1.2mm solid var(--brand); border-radius: 0; background: #fafbfc; padding: 3mm 4mm; }
+.parties .party h3 { color: var(--brand); letter-spacing: 0.1em; }
+.parties .party .name { font-size: 11.5pt; font-weight: 700; }
+table.lines th { background: var(--brand); color: #fff; border: 0; font-weight: 700; letter-spacing: 0.04em; padding: 2.2mm 2mm; }
+table.lines th:first-child { border-start-start-radius: 2mm; border-end-start-radius: 2mm; }
+table.lines th:last-child { border-start-end-radius: 2mm; border-end-end-radius: 2mm; }
+table.lines td { border-block-end: 1px solid var(--line); padding: 2mm; }
+table.lines tbody tr:nth-child(even) td { background: #f7f9fc; }
+table.lines td.desc .code { color: var(--brand); }
+.totals td { padding: 1.4mm 2mm; }
+.totals td.k { color: var(--muted); }
+.totals tr.grand td { border: 0; background: var(--ink); color: #fff; font-size: 12pt; padding: 3mm 3mm; }
+.totals tr.grand td:first-child { border-start-start-radius: 2mm; border-end-start-radius: 2mm; }
+.totals tr.grand td:last-child { border-start-end-radius: 2mm; border-end-end-radius: 2mm; }
+.box { border: 1px solid var(--line); border-radius: 2mm; }
+.box h3 { color: var(--brand); }
+.box table th { color: var(--brand); border-block-end: 1px solid var(--line); }
+.brand-foot { margin-block-start: 8mm; border-block-start: 1.2mm solid var(--brand); padding-block-start: 2.5mm; display: flex; justify-content: space-between; gap: 6mm; font-size: 8pt; color: var(--muted); }
+.brand-foot .thanks { color: var(--ink); font-weight: 600; }
+.watermark { color: rgba(60, 130, 196, 0.16); }
+</style>
+</head>
+<body class="{{ mode }} {{ variant }} brand">
+{{ if document.is_proforma }}<div class="watermark">{{ L.proforma_watermark }}</div>{{ else if document.status == "draft" }}<div class="watermark">{{ L.draft_watermark }}</div>{{ else if document.status == "cancelled" }}<div class="watermark">{{ L.cancelled_watermark }}</div>{{ end }}
+<div class="sheet">
+  <header class="band">
+    <div class="brand-id">
+      {{ if company.logo }}<img class="logo" src="{{ company.logo }}" alt="{{ company.name | html.escape }}">{{ else }}<div class="wordmark">{{ company.name | html.escape }}</div>{{ end }}
+    </div>
+    <div class="band-doc">
+      {{ if company.logo }}<p class="eyebrow">{{ company.name | html.escape }}</p>{{ end }}
+      <p class="title">{{ title | html.escape }}</p>
+      <p class="number">{{ number | html.escape }}</p>
+    </div>
+  </header>
+
+  <section class="meta">
+    <div class="chip"><span class="k">{{ L.document_date }}</span><span class="v">{{ document.document_date }}</span></div>
+    {{ if document.due_date }}<div class="chip"><span class="k">{{ L.due_date }}</span><span class="v">{{ document.due_date }}</span></div>{{ end }}
+    <div class="chip"><span class="k">{{ L.currency }}</span><span class="v">{{ document.currency }}</span></div>
+    {{ if document.exchange_rate_shown }}<div class="chip"><span class="k">{{ L.exchange_rate }}</span><span class="v">{{ document.exchange_rate }}</span></div>{{ end }}
+    {{ if document.payment_terms }}<div class="chip"><span class="k">{{ L.payment_terms }}</span><span class="v">{{ document.payment_terms | html.escape }}</span></div>{{ end }}
+    {{ if document.customer_reference }}<div class="chip"><span class="k">{{ L.your_reference }}</span><span class="v">{{ document.customer_reference | html.escape }}</span></div>{{ end }}
+    {{ if document.credits_invoice_number }}<div class="chip"><span class="k">{{ L.credits_invoice }}</span><span class="v">{{ document.credits_invoice_number | html.escape }}</span></div>{{ end }}
+  </section>
+
+  <section class="parties">
+    <div class="party">
+      <h3>{{ L.bill_to }}</h3>
+      {{ if partner }}
+      <p class="name">{{ partner.name | html.escape }}</p>
+      {{ if partner.address_text }}<p>{{ partner.address_text | html.escape }}</p>{{ end }}
+      {{ if partner.email }}<p class="ltr">{{ partner.email | html.escape }}</p>{{ end }}
+      <p class="muted"><span class="ltr">{{ partner.code | html.escape }}</span></p>
+      {{ end }}
+    </div>
+    <div class="party">
+      <h3>{{ L.seller }}</h3>
+      <p class="name">{{ company.name | html.escape }}</p>
+      {{ if company.address_text }}<p>{{ company.address_text | html.escape }}</p>{{ end }}
+      {{ if company.tax_number }}<p>{{ L.tax_number }}: <span class="ltr">{{ company.tax_number | html.escape }}</span></p>{{ end }}
+      {{ if company.registration_numbers.cr }}<p>{{ L.registration }}: <span class="ltr">{{ company.registration_numbers.cr | html.escape }}</span></p>{{ end }}
+      {{ if branch }}<p>{{ branch.name | html.escape }}</p>{{ end }}
+    </div>
+  </section>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th>{{ L.line }}</th>
+        <th>{{ L.item }}</th>
+        <th class="num">{{ L.quantity }}</th>
+        <th class="num">{{ L.unit_price }}</th>
+        {{ if document.has_discount }}<th class="num">{{ L.discount }}</th>{{ end }}
+        <th class="num">{{ L.net }}</th>
+        <th class="num">{{ L.tax }}</th>
+        <th class="num">{{ L.gross }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ for line in document.lines }}
+      <tr>
+        <td class="num">{{ line.line_no }}</td>
+        <td class="desc">
+          {{ if line.item_code }}<span class="code ltr">{{ line.item_code | html.escape }}</span> {{ end }}<span class="text">{{ line.description | html.escape }}</span>
+          {{ if line.source }}<div class="meta ltr">{{ line.source | html.escape }}</div>{{ end }}
+        </td>
+        <td class="num">{{ line.quantity }} {{ line.uom | html.escape }}</td>
+        <td class="num">{{ line.unit_price }}</td>
+        {{ if document.has_discount }}<td class="num">{{ if line.discount_pct != "0" }}{{ line.discount_pct }}%{{ end }}</td>{{ end }}
+        <td class="num">{{ line.net }}</td>
+        <td class="num">{{ if line.tax_code }}{{ line.tax_amount }} ({{ line.tax_rate }}%){{ else }}{{ line.tax_amount }}{{ end }}</td>
+        <td class="num">{{ line.gross }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+
+  <div class="after-lines">
+    <div class="left">
+      {{ if document.tax_summary && document.tax_summary.size > 0 }}
+      <div class="box">
+        <h3>{{ L.tax_summary }}</h3>
+        <table>
+          <thead><tr><th>{{ L.tax }}</th><th class="num">{{ L.tax_rate }}</th><th class="num">{{ L.taxable_amount }}</th><th class="num">{{ L.tax }}</th></tr></thead>
+          <tbody>
+          {{ for t in document.tax_summary }}
+          <tr><td class="ltr">{{ t.code | html.escape }}</td><td class="num">{{ t.rate }}%</td><td class="num">{{ t.base }}</td><td class="num">{{ t.amount }}</td></tr>
+          {{ end }}
+          </tbody>
+        </table>
+        {{ if document.reverse_charge }}<p class="muted">{{ L.reverse_charge }}</p>{{ end }}
+        {{ if document.prices_include_tax }}<p class="muted">{{ L.prices_include_tax }}</p>{{ end }}
+      </div>
+      {{ end }}
+      {{ if document.instalments && document.instalments.size > 1 }}
+      <div class="box">
+        <h3>{{ L.instalments }}</h3>
+        <table>
+          <thead><tr><th>{{ L.instalment }}</th><th>{{ L.due_date }}</th><th class="num">{{ L.amount }}</th><th class="num">{{ L.remaining }}</th></tr></thead>
+          <tbody>
+          {{ for i in document.instalments }}
+          <tr><td class="num">{{ i.instalment }}</td><td class="ltr">{{ i.due_date }}</td><td class="num">{{ i.amount }}</td><td class="num">{{ i.remaining }}</td></tr>
+          {{ end }}
+          </tbody>
+        </table>
+      </div>
+      {{ end }}
+      {{ if document.amount_in_words_en || document.amount_in_words_ar }}
+      <div class="box words">
+        <h3>{{ L.amount_in_words }}</h3>
+        {{ if mode != "ar" && document.amount_in_words_en }}<p class="en">{{ document.amount_in_words_en | html.escape }}</p>{{ end }}
+        {{ if mode != "en" && document.amount_in_words_ar }}<p class="ar">{{ document.amount_in_words_ar | html.escape }}</p>{{ end }}
+      </div>
+      {{ end }}
+      {{ if qr_svg }}
+      <div class="box qr">{{ qr_svg }}<p>{{ L.qr_hint }}</p></div>
+      {{ end }}
+    </div>
+    <table class="totals">
+      <tr><td class="k">{{ L.total_net }}</td><td class="num">{{ document.total_net }} {{ document.currency }}</td></tr>
+      {{ if document.has_discount }}<tr><td class="k">{{ L.total_discount }}</td><td class="num">{{ document.total_discount }} {{ document.currency }}</td></tr>{{ end }}
+      <tr><td class="k">{{ L.total_tax }}</td><td class="num">{{ document.total_tax }} {{ document.currency }}</td></tr>
+      <tr class="grand"><td class="k">{{ L.total_gross }}</td><td class="num">{{ document.total_gross }} {{ document.currency }}</td></tr>
+    </table>
+  </div>
+
+  {{ if document.notes }}
+  <div class="box"><h3>{{ L.notes }}</h3><p class="note">{{ document.notes | html.escape }}</p></div>
+  {{ end }}
+
+  <footer class="brand-foot">
+    <span class="thanks">{{ L.thank_you }}</span>
+    <span>{{ company.name | html.escape }}{{ if company.address_text }} · {{ company.address_text | html.escape }}{{ end }}</span>
+    <span class="ltr">{{ L.generated }} {{ generated_at }}</span>
+  </footer>
+</div>
+</body>
+</html>

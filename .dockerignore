@@ -1,0 +1,10 @@
+# What no image needs: the history, what a build or an install leaves behind (rebuilt inside the image), test output and local data.
+.git
+**/bin
+**/obj
+**/node_modules
+**/test-results
+**/playwright-report
+**/dist
+.data
+backups
