@@ -40,7 +40,8 @@ services:
   migrator:
     build:
       context: .
-      dockerfile: deploy/docker/migrator.Dockerfile
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: migrator
     # prepare: the database, the migrations and the reference data; no demo workspace, ever.
     command: ["prepare"]
     environment:
@@ -54,7 +55,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: deploy/docker/api.Dockerfile
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
@@ -88,7 +90,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: deploy/docker/worker.Dockerfile
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: worker
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8081

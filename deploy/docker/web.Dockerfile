@@ -5,7 +5,8 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps ./apps
 COPY packages ./packages
 COPY tools ./tools
-RUN pnpm install --frozen-lockfile
+# The package store is kept between builds, so an update downloads nothing it already has.
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 FROM base AS dev
 EXPOSE 5173

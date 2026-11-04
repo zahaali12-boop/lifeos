@@ -43,7 +43,8 @@ services:
   migrator:
     build:
       context: .
-      dockerfile: deploy/docker/migrator.Dockerfile
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: migrator
     environment:
       QUICKER__DB__OWNERCONNECTION: Host=postgres;Port=5432;Database=quicker;Username=quicker_owner;Password=quicker
       QUICKER__DB__APPPASSWORD: quicker
@@ -55,7 +56,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: deploy/docker/api.Dockerfile
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8080
@@ -88,7 +90,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: deploy/docker/worker.Dockerfile
+      dockerfile: deploy/docker/dotnet.Dockerfile
+      target: worker
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:8081
