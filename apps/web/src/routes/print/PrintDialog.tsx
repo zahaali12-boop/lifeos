@@ -10,7 +10,7 @@ import { useCan } from "../../lib/permissions";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, SelectField, TextareaField, TextField } from "../common";
 import { Tabs } from "../inventory/shared";
-import { awaitRender, documentTypeLabel, phoneDigits, useDocumentTypes, type PrintRender } from "./shared";
+import { documentTypeLabel, phoneDigits, requestRender, useDocumentTypes, type PrintRender } from "./shared";
 
 /** What to print: a document by id, or a report by its parameters (a statement by company, customer and period). */
 export interface PrintSubject {
@@ -116,13 +116,11 @@ export function PrintDialog({ subject, onClose }: { subject: PrintSubject; onClo
 
   /** The PDF of the document as it stands: asked for (reused when an identical one exists) and waited for. */
   const ensureRender = async (): Promise<PrintRender> => {
-    const requested = unwrap(await api.POST("/api/v1/print/renders", { body: { documentType: subject.documentType, documentId, parameters: Object.keys(parameters).length > 0 ? parameters : null, variant, templateId: null } }));
-    const render = requested.status === "queued" ? await awaitRender(requested.id) : requested;
-    await queryClient.invalidateQueries({ queryKey: ["print-renders"] });
-    if (render.status !== "ready") {
-      throw new Error(render.error ?? t("print.renderFailed"));
+    try {
+      return await requestRender({ documentType: subject.documentType, documentId, parameters, variant }, t("print.renderFailed"));
+    } finally {
+      await queryClient.invalidateQueries({ queryKey: ["print-renders"] });
     }
-    return render;
   };
   const pdfBlob = async (render: PrintRender): Promise<{ blob: Blob; headers: Headers }> => {
     const file = await api.GET("/api/v1/print/renders/{renderId}/file", { params: { path: { renderId: render.id } }, parseAs: "blob" });

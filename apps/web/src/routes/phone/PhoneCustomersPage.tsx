@@ -6,6 +6,7 @@ import { localized } from "../../lib/format";
 import { TextField } from "../common";
 import { useCompanyContext } from "../inventory/shared";
 import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
+import { WhatsAppDialog, type WhatsAppSubject } from "../trader/WhatsAppDialog";
 import { money, n, overdueOf, printVariants, useCustomers, useReceivablesAging } from "./shared";
 
 /** Every customer with what he owes; his statement to print or send, and the way to his payment. */
@@ -18,6 +19,7 @@ export function PhoneCustomersPage() {
   const aging = useReceivablesAging(companyId);
   const [query, setQuery] = useState("");
   const [printing, setPrinting] = useState<PrintSubject | null>(null);
+  const [whatsapp, setWhatsapp] = useState<WhatsAppSubject | null>(null);
   const needle = query.trim().toLowerCase();
   const rows = (customers.data ?? [])
     .map((customer) => ({ customer, aging: aging.data?.rows.find((row) => row.partnerId === customer.partnerId) }))
@@ -39,7 +41,8 @@ export function PhoneCustomersPage() {
                   {row && overdueOf(row) > 0 ? <Badge tone="danger">{t("phone.customers.overdue")}</Badge> : null}
                 </div>
                 <div className="text-sm tabular" dir="ltr" data-testid="phone-customer-owed">{owed > 0 ? t("phone.customers.owes", { amount: money(owed, currency) }) : t("phone.customers.nothingOwed")}</div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <Button type="button" variant="secondary" className="h-11" disabled={owed <= 0} onClick={() => { setWhatsapp({ kind: "reminder", partnerId: customer.partnerId }); }} data-testid={`phone-whatsapp-${customer.partnerCode}`}>{t("trader.whatsapp.remind")}</Button>
                   <Button type="button" variant="secondary" className="h-11" onClick={() => { setPrinting({ documentType: "customer_statement", documentId: customer.partnerId, parameters: { companyId }, number: customer.partnerCode, partnerId: customer.partnerId, variants: printVariants }); }} data-testid={`phone-statement-${customer.partnerCode}`}>{t("phone.customers.statement")}</Button>
                   <Button type="button" className="h-11" disabled={owed <= 0} onClick={() => { void navigate({ to: "/p/collect", search: { customer: customer.partnerId } }); }} data-testid={`phone-collect-${customer.partnerCode}`}>{t("phone.customers.collect")}</Button>
                 </div>
@@ -49,6 +52,7 @@ export function PhoneCustomersPage() {
         </ul>
       )}
       {printing ? <PrintDialog subject={printing} onClose={() => { setPrinting(null); }} /> : null}
+      {whatsapp ? <WhatsAppDialog subject={whatsapp} companyId={companyId} onClose={() => { setWhatsapp(null); }} /> : null}
     </div>
   );
 }

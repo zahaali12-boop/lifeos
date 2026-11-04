@@ -11,7 +11,8 @@ import { useCan } from "../lib/permissions";
 import { toFormProblem, type FormProblem } from "../lib/problem";
 import { updateSessionTenant, useSession } from "../session/session";
 import { CompanySelect, useCompanies, useCompanySelection } from "./accounting/shared";
-import { FormError, PageHeader, SelectField, TextField } from "./common";
+import { FormError, PageHeader, SelectField, TextareaField, TextField } from "./common";
+import { defaultTemplates, placeholders, templateSettingKey, type MessageKind, type MessageLanguage } from "./trader/whatsappMessages";
 import { CurrencyField } from "./CurrencyField";
 import { Tabs } from "./inventory/shared";
 
@@ -151,6 +152,52 @@ function FavouriteCurrencies({ value, onSave }: { value: string[]; onSave: (code
  * Settings (roadmap 1.8): per-company and workspace-wide switches the modules read (approval for manual journals and
  * stock adjustments today), and the typed key-value store behind them for anything else an administrator configures.
  */
+/**
+ * The company's own wording of the WhatsApp messages the trader sends his customers (ADR-0035 §25): the reminder of
+ * what is owed and the confirmation of a payment, each in Arabic and in English. The words in braces are filled in by
+ * the program; an empty text means the program's standard wording.
+ */
+function WhatsAppMessagesCard({ settings, onSave }: { settings: Setting[]; onSave: (key: string, value: string) => void }) {
+  const { t } = useTranslation();
+  const stored = (kind: MessageKind, language: MessageLanguage): string => {
+    const value = settings.find((s) => s.key === templateSettingKey(kind, language))?.value;
+    return typeof value === "string" ? value : "";
+  };
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const kinds: MessageKind[] = ["reminder", "receipt"];
+  const languages: MessageLanguage[] = ["ar", "en"];
+  return (
+    <section className="mb-6 flex flex-col gap-3 rounded-md border border-border p-4" data-testid="whatsapp-messages">
+      <h2 className="text-base font-semibold">{t("settings.whatsapp.title")}</h2>
+      <p className="text-sm text-fg-muted">{t("settings.whatsapp.hint")}</p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {kinds.flatMap((kind) => languages.map((language) => {
+          const key = templateSettingKey(kind, language);
+          const saved = stored(kind, language);
+          const value = drafts[key] ?? (saved !== "" ? saved : defaultTemplates[kind][language]);
+          const dirty = key in drafts && drafts[key] !== (saved !== "" ? saved : defaultTemplates[kind][language]);
+          return (
+            <div key={key} className="flex flex-col gap-2">
+              <Field label={t(`settings.whatsapp.${kind}`, { language: language === "ar" ? "العربية" : "English" })} description={<span dir="ltr" className="font-mono text-xs">{placeholders[kind].map((p) => `{${p}}`).join(" ")}</span>}>
+                <TextareaField value={value} onChange={(e) => { setDrafts({ ...drafts, [key]: e.target.value }); }} rows={6} dir={language === "ar" ? "rtl" : "ltr"} data-testid={`whatsapp-template-${kind}-${language}`} />
+              </Field>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" disabled={!dirty} onClick={() => { onSave(key, value.trim()); setDrafts(Object.fromEntries(Object.entries(drafts).filter(([k]) => k !== key))); }} data-testid={`whatsapp-template-save-${kind}-${language}`}>{t("common.save")}</Button>
+                {saved !== "" || key in drafts ? <Button type="button" size="sm" variant="ghost" onClick={() => { onSave(key, ""); setDrafts(Object.fromEntries(Object.entries(drafts).filter(([k]) => k !== key))); }} data-testid={`whatsapp-template-reset-${kind}-${language}`}>{t("settings.whatsapp.reset")}</Button> : null}
+              </div>
+            </div>
+          );
+        }))}
+      </div>
+      <dl className="grid gap-x-6 gap-y-1 text-xs text-fg-muted sm:grid-cols-2" data-testid="whatsapp-placeholders">
+        {["name", "company", "amount", "overdue", "invoices", "date", "number", "balance"].map((p) => (
+          <div key={p} className="flex gap-2"><dt className="font-mono" dir="ltr">{`{${p}}`}</dt><dd>{t(`settings.whatsapp.placeholders.${p}`)}</dd></div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 export function SettingsPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -240,6 +287,8 @@ export function SettingsPage() {
           </div>
         </section>
       ) : null}
+
+      {tab === "company" && companyId ? <WhatsAppMessagesCard settings={settings.data ?? []} onSave={(key, value) => { save.mutate({ key, valueType: "string", value }); }} /> : null}
 
       {tab === "workspace" ? (
         <FavouriteCurrencies

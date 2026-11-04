@@ -33,7 +33,12 @@ const moved = [["trader-cash"], ["bank-accounts"], ["bank-transfers"], ["ar-agin
  * already keeps it (a transfer, a receipt, a payment, an expense, the owner's journal), so the books move as they would
  * from that record's own screen.
  */
-export function CashMovementDialog({ open, onClose, companyId, companyCurrency, accountId, onDone }: { open: boolean; onClose: () => void; companyId: string; companyCurrency: string; accountId: string | undefined; onDone: (notice: string) => void }) {
+/** What a movement left behind that the trader may want next: the receipt of a customer's payment, to send him. */
+export interface MovementFollowUp {
+  receiptId: string;
+}
+
+export function CashMovementDialog({ open, onClose, companyId, companyCurrency, accountId, onDone }: { open: boolean; onClose: () => void; companyId: string; companyCurrency: string; accountId: string | undefined; onDone: (notice: string, followUp: MovementFollowUp | null) => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const accounts = useBankAccounts(companyId);
@@ -77,7 +82,7 @@ export function CashMovementDialog({ open, onClose, companyId, companyCurrency, 
   const close = (): void => { setForm(blank); setProblem(null); onClose(); };
 
   const record = useMutation({
-    mutationFn: async (f: MovementForm): Promise<string> => {
+    mutationFn: async (f: MovementForm): Promise<{ number: string; followUp: MovementFollowUp | null }> => {
       if (!box) {
         throw new Error("no box");
       }
@@ -87,32 +92,33 @@ export function CashMovementDialog({ open, onClose, companyId, companyCurrency, 
       switch (f.kind) {
         case "transfer": {
           const done = unwrap(await api.POST("/api/v1/banking/transfers", { body: { companyId, fromBankAccountId: box.id, toBankAccountId: f.toAccountId, amount: Number(f.amount), amountReceived: changes ? Number(f.received) : null, transferDate: date, notes: note } }));
-          return done.number;
+          return { number: done.number, followUp: null };
         }
         case "customer": {
           const spread = spreadOldestFirst(owedItems, f.amount);
           const draft = unwrap(await api.POST("/api/v1/banking/receipts", { body: { companyId, partnerId: f.partnerId, bankAccountId: box.id, kind: "customer_receipt", receiptDate: date, method, currency: box.currency, lines: spread.lines, onAccount: spread.onAccount, charges: 0, notes: note } }));
-          return unwrap(await api.POST("/api/v1/banking/receipts/{receiptId}/post", { params: { path: { receiptId: draft.id } } })).number;
+          const posted = unwrap(await api.POST("/api/v1/banking/receipts/{receiptId}/post", { params: { path: { receiptId: draft.id } } }));
+          return { number: posted.number, followUp: { receiptId: posted.id } };
         }
         case "supplier": {
           const spread = spreadOldestFirst(owedItems, f.amount);
           const draft = unwrap(await api.POST("/api/v1/banking/payments", { body: { companyId, partnerId: f.partnerId, bankAccountId: box.id, kind: "supplier_payment", paymentDate: date, method, currency: box.currency, lines: spread.lines, onAccount: spread.onAccount, charges: 0, applyWht: false, notes: note } }));
-          return unwrap(await api.POST("/api/v1/banking/payments/{paymentId}/post", { params: { path: { paymentId: draft.id } } })).number;
+          return { number: unwrap(await api.POST("/api/v1/banking/payments/{paymentId}/post", { params: { path: { paymentId: draft.id } } })).number, followUp: null };
         }
         case "expense": {
           const done = unwrap(await api.POST("/api/v1/expenses/quick", { body: { companyId, categoryId: f.categoryId, amount: Number(f.amount), expenseDate: date, paidFromBankAccountId: box.id, partnerId: null, dueDate: null, description: note } }));
-          return done.expense.number;
+          return { number: done.expense.number, followUp: null };
         }
         case "ownerIn":
         case "ownerOut": {
           const done = unwrap(await api.POST("/api/v1/trader/owner-money", { body: { companyId, kind: f.kind === "ownerIn" ? "in" : "out", bankAccountId: box.id, amount: Number(f.amount), date, note } }));
-          return done.movements[0]?.number ?? "";
+          return { number: done.movements[0]?.number ?? "", followUp: null };
         }
       }
     },
-    onSuccess: async (number) => {
+    onSuccess: async (result) => {
       await Promise.all(moved.map((key) => queryClient.invalidateQueries({ queryKey: key })));
-      onDone(t("trader.cash.movement.recorded", { number }));
+      onDone(t("trader.cash.movement.recorded", { number: result.number }), result.followUp);
       close();
     },
     onError: (error: unknown) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },

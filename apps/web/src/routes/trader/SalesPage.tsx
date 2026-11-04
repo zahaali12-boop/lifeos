@@ -2,7 +2,7 @@ import { Badge, Button, Dialog, DialogContent, DialogFooter, DialogHeader, Dialo
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { Plus, Printer } from "lucide-react";
+import { MessageCircle, Plus, Printer } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { api, unwrap } from "../../api";
@@ -16,6 +16,7 @@ import { CompanyFilter, useCompanyContext, useWarehouses, WarehouseSelect } from
 import { emptyLine, LinesEditor, num, type LineForm } from "../purchasing/shared";
 import { useBankAccounts } from "../payables/shared";
 import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
+import { WhatsAppDialog, type WhatsAppSubject } from "./WhatsAppDialog";
 import { QuickCreateButton } from "../QuickCreate";
 import { InvoiceFacts, InvoiceLines, InvoicePayments } from "./InvoiceParts";
 import { n, paidOf, paymentState, printVariants, remainingOf, stateTones as tones } from "./invoices";
@@ -63,6 +64,7 @@ export function SalesPage() {
   const [payment, setPayment] = useState<PaymentForm | null>(null);
   const [next, setNext] = useState<NextStep | null>(null);
   const [printing, setPrinting] = useState<PrintSubject | null>(null);
+  const [whatsapp, setWhatsapp] = useState<WhatsAppSubject | null>(null);
   const [openedId, setOpenedId] = useState<string | null>(null);
   const warehouses = useWarehouses(companyId);
   const accounts = useBankAccounts(companyId);
@@ -160,15 +162,20 @@ export function SalesPage() {
       { id: "remaining", accessorFn: (row) => remainingOf(row), header: t("trader.sales.remaining"), size: 150, cell: ({ row }) => <span className="tabular" dir="ltr" data-testid="invoice-remaining">{row.original.status === "posted" ? formatMoney(remainingOf(row.original), row.original.currency) : ""}</span> },
       { id: "state", accessorFn: (row) => paymentState(row, today), header: t("trader.sales.status"), size: 130, cell: ({ row }) => { const state = paymentState(row.original, today); return <Badge tone={tones[state] ?? "neutral"} data-testid="invoice-state">{t(`trader.sales.statuses.${state}`, { defaultValue: state })}</Badge>; } },
       {
-        id: "actions", header: "", size: 160, enableSorting: false,
+        id: "actions", header: "", size: 230, enableSorting: false,
         cell: ({ row }) => {
           const open = row.original.openItems.find((i) => n(i.remainingTc) > 0);
           const print = row.original.status === "posted" ? (
-            <Button type="button" variant="ghost" size="icon" aria-label={t("trader.sales.printInvoice", { number: row.original.number })} title={t("trader.sales.printInvoice", { number: row.original.number })} onClick={() => { setPrinting({ documentType: "sales_invoice", documentId: row.original.id, number: row.original.number, partnerId: row.original.partnerId, variants: printVariants }); }} data-testid="print-invoice">
+            <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={t("trader.sales.printInvoice", { number: row.original.number })} title={t("trader.sales.printInvoice", { number: row.original.number })} onClick={() => { setPrinting({ documentType: "sales_invoice", documentId: row.original.id, number: row.original.number, partnerId: row.original.partnerId, variants: printVariants }); }} data-testid="print-invoice">
               <Printer aria-hidden="true" />
             </Button>
           ) : null;
-          return <div className="flex items-center gap-1">{print}{row.original.status === "posted" && open ? <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setProblem(null); setPayment({ invoice: row.original, openItemId: open.id, amount: String(n(open.remainingTc)), accountId: accounts.data?.[0]?.id ?? "", method: "cash", date: "" }); }} data-testid={`pay-${row.original.number}`}>{t("trader.sales.recordPayment")}</Button> : null}</div>;
+          const remind = row.original.status === "posted" && open ? (
+            <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={t("trader.whatsapp.remindTitle", { name: localized(row.original.partnerName) })} title={t("trader.whatsapp.remindTitle", { name: localized(row.original.partnerName) })} onClick={(e) => { e.stopPropagation(); setWhatsapp({ kind: "reminder", partnerId: row.original.partnerId, invoiceId: row.original.id, invoiceNumber: row.original.number }); }} data-testid={`remind-${row.original.number}`}>
+              <MessageCircle aria-hidden="true" />
+            </Button>
+          ) : null;
+          return <div className="flex items-center gap-1">{print}{remind}{row.original.status === "posted" && open ? <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setProblem(null); setPayment({ invoice: row.original, openItemId: open.id, amount: String(n(open.remainingTc)), accountId: accounts.data?.[0]?.id ?? "", method: "cash", date: "" }); }} data-testid={`pay-${row.original.number}`}>{t("trader.sales.recordPayment")}</Button> : null}</div>;
         },
       },
     ],
@@ -235,6 +242,7 @@ export function SalesPage() {
           ) : (
             <>
               <Button type="button" size="sm" onClick={() => { setPrinting({ documentType: "bank_receipt", documentId: next.receiptId, number: next.receiptNumber, partnerId: next.partnerId, variants: printVariants }); }} data-testid="next-receipt-pdf">{t("trader.next.receiptPdf", { number: next.receiptNumber })}</Button>
+              <Button type="button" size="sm" variant="secondary" onClick={() => { setWhatsapp({ kind: "receipt", receiptId: next.receiptId }); }} data-testid="next-receipt-whatsapp"><MessageCircle aria-hidden="true" />{t("trader.whatsapp.sendReceipt")}</Button>
               <Button asChild size="sm" variant="secondary"><Link to="/trader/money" data-testid="next-money">{t("trader.next.seeMoney")}</Link></Button>
               <Button type="button" size="sm" variant="secondary" onClick={openSale} data-testid="next-new-sale">{t("trader.sales.newSale")}</Button>
             </>
@@ -242,6 +250,7 @@ export function SalesPage() {
         </div>
       ) : null}
       {printing ? <PrintDialog subject={printing} onClose={() => { setPrinting(null); }} /> : null}
+      {whatsapp ? <WhatsAppDialog subject={whatsapp} companyId={companyId} onClose={() => { setWhatsapp(null); }} /> : null}
       <DataGrid<Invoice> label="trader.sales.title" columns={columns} data={invoices.data ?? []} rowKey={(row) => row.id} loading={invoices.isPending && Boolean(companyId)} emptyTitle={t("trader.sales.empty")} emptyDescription={t("trader.sales.emptyDescription")} onOpen={(row) => { setProblem(null); setOpenedId(row.id); }} />
 
       <Dialog open={opened !== null} onOpenChange={(isOpen) => { if (!isOpen) { setOpenedId(null); } }}>
@@ -267,6 +276,7 @@ export function SalesPage() {
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={() => { setOpenedId(null); }}>{t("common.close")}</Button>
                 {opened.status === "posted" ? <Button type="button" variant="secondary" onClick={() => { setPrinting({ documentType: "sales_invoice", documentId: opened.id, number: opened.number, partnerId: opened.partnerId, variants: printVariants }); }} data-testid="dialog-print">{t("trader.next.invoicePdf")}</Button> : null}
+                {opened.status === "posted" && remainingOf(opened) > 0 ? <Button type="button" variant="secondary" onClick={() => { setWhatsapp({ kind: "reminder", partnerId: opened.partnerId, invoiceId: opened.id, invoiceNumber: opened.number }); }} data-testid="dialog-whatsapp"><MessageCircle aria-hidden="true" />{t("trader.whatsapp.remindInvoice")}</Button> : null}
                 {opened.status === "posted" && remainingOf(opened) > 0 ? <Button type="button" onClick={() => { openPaymentFor(opened); }} data-testid="dialog-pay">{t("trader.sales.recordPayment")}</Button> : null}
               </DialogFooter>
             </div>

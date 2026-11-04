@@ -10,6 +10,7 @@ import { DecimalField, Field, FormError, PageHeader, SelectField, TextField } fr
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
 import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
+import { WhatsAppDialog, type WhatsAppSubject } from "./WhatsAppDialog";
 
 type OpenItem = components["schemas"]["OpenItemSummary"];
 
@@ -82,6 +83,7 @@ export function MoneyPage() {
   const queryClient = useQueryClient();
   const accounts = useBankAccounts(companyId);
   const [statement, setStatement] = useState<PrintSubject | null>(null);
+  const [whatsapp, setWhatsapp] = useState<WhatsAppSubject | null>(null);
   const [paying, setPaying] = useState<SupplierPayForm | null>(null);
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -183,6 +185,7 @@ export function MoneyPage() {
       {ar && ap ? (
         <div className="flex flex-col gap-4">
           {statement ? <PrintDialog subject={statement} onClose={() => { setStatement(null); }} /> : null}
+          {whatsapp ? <WhatsAppDialog subject={whatsapp} companyId={companyId} onClose={() => { setWhatsapp(null); }} /> : null}
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4" data-testid="owed-to-you">
               <div>
@@ -199,6 +202,7 @@ export function MoneyPage() {
                       <span className="flex items-center gap-2">
                         <span className="tabular" dir="ltr">{formatMoney(n(row.totalFc), currency)}</span>
                         <Button type="button" variant="ghost" size="sm" onClick={() => { setStatement({ documentType: "customer_statement", documentId: row.partnerId, parameters: { companyId }, number: row.partnerCode, partnerId: row.partnerId, variants: ["brand", "standard"] }); }} data-testid={`statement-${row.partnerCode}`}>{t("trader.money.statement")}</Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => { setWhatsapp({ kind: "reminder", partnerId: row.partnerId }); }} data-testid={`whatsapp-${row.partnerCode}`}>{t("trader.whatsapp.remind")}</Button>
                       </span>
                     </li>
                   ))}
@@ -224,7 +228,10 @@ export function MoneyPage() {
                   {chase.map((row) => (
                     <li key={row.partnerId} className="flex flex-col gap-0.5 rounded-md border border-border p-2 text-sm" data-testid="chase-row">
                       <span dir="auto">{chaseText(row)}</span>
-                      <span className="text-xs text-fg-muted" dir="ltr">{row.partnerCode} · {t("trader.money.total")} {formatMoney(row.totalFc, currency)}</span>
+                      <span className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs text-fg-muted" dir="ltr">{row.partnerCode} · {t("trader.money.total")} {formatMoney(row.totalFc, currency)}</span>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => { setWhatsapp({ kind: "reminder", partnerId: row.partnerId }); }} data-testid={`chase-whatsapp-${row.partnerCode}`}>{t("trader.whatsapp.remind")}</Button>
+                      </span>
                     </li>
                   ))}
                 </ol>

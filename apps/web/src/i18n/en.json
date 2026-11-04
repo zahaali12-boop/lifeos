@@ -1079,6 +1079,23 @@
         "name": "Trader",
         "hint": "A short menu in plain words for a small import business: offers, orders, stock, sales and money."
       }
+    },
+    "whatsapp": {
+      "title": "WhatsApp messages",
+      "hint": "What the program writes to a customer when you remind him of what he owes or confirm a payment, in each language. The words in braces are filled in by the program; the links to the documents are added under the text.",
+      "reminder": "Reminder of what is owed ({language})",
+      "receipt": "Payment confirmation ({language})",
+      "reset": "Standard text",
+      "placeholders": {
+        "name": "the customer's name",
+        "company": "your company's name",
+        "amount": "what is owed, or the amount received",
+        "overdue": "a sentence naming the part past due, empty when nothing is late",
+        "invoices": "one line per invoice",
+        "date": "today, or the day of the payment",
+        "number": "the receipt's number",
+        "balance": "what the customer still owes after the payment"
+      }
     }
   },
   "security": {
@@ -7019,6 +7036,34 @@
         "save": "Record",
         "recorded": "Recorded: {number}."
       }
+    },
+    "whatsapp": {
+      "title": {
+        "reminder": "Reminder by WhatsApp",
+        "receipt": "Payment confirmation by WhatsApp"
+      },
+      "language": "Message language",
+      "savePhone": "Keep this number on the customer",
+      "attach": {
+        "title": "Attach",
+        "statement": "Account statement",
+        "invoice": "Invoice {number}",
+        "receipt": "Receipt {number}"
+      },
+      "message": "Message",
+      "messageHint": "Written from the company's wording on Settings; edit it here for this send only.",
+      "resetText": "Back to the standard text",
+      "linkDays": "Links live (days)",
+      "send": "Open WhatsApp",
+      "openAgain": "Open WhatsApp again",
+      "note": {
+        "reminder": "WhatsApp reminder sent to {phone}",
+        "receipt": "WhatsApp payment confirmation sent to {phone}"
+      },
+      "remind": "WhatsApp",
+      "remindTitle": "Remind {name} by WhatsApp",
+      "remindInvoice": "Remind by WhatsApp",
+      "sendReceipt": "Send the receipt by WhatsApp"
     }
   },
   "phone": {

@@ -10,7 +10,8 @@ import { formatDate, formatMoney, localized } from "../../lib/format";
 import { toFormProblem, type FormProblem } from "../../lib/problem";
 import { Field, FormError, PageHeader, TextField } from "../common";
 import { CompanyFilter, useCompanyContext } from "../inventory/shared";
-import { CashMovementDialog } from "./CashMovementDialog";
+import { CashMovementDialog, type MovementFollowUp } from "./CashMovementDialog";
+import { WhatsAppDialog, type WhatsAppSubject } from "./WhatsAppDialog";
 import { rangeParams } from "./period";
 import { PeriodFilter, usePeriod } from "./PeriodFilter";
 
@@ -39,6 +40,8 @@ export function CashPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [followUp, setFollowUp] = useState<MovementFollowUp | null>(null);
+  const [whatsapp, setWhatsapp] = useState<WhatsAppSubject | null>(null);
   const [undoing, setUndoing] = useState<Undoing | null>(null);
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const report = useQuery({
@@ -66,6 +69,7 @@ export function CashPage() {
       setUndoing(null);
       setProblem(null);
       setNotice(t("trader.cash.undone", { number: transfer.number }));
+      setFollowUp(null);
       await Promise.all([["trader-cash"], ["bank-accounts"], ["bank-transfers"], ["trader-health"], ["home"]].map((key) => queryClient.invalidateQueries({ queryKey: key })));
     },
     onError: (error: unknown) => { setProblem(toFormProblem(error, t("common.saveFailed"))); },
@@ -82,13 +86,18 @@ export function CashPage() {
       <PageHeader
         title={t("trader.cash.title")}
         description={t("trader.cash.description")}
-        actions={companyId ? <Button onClick={() => { setNotice(null); setAdding(true); }} data-testid="cash-new-movement"><Plus aria-hidden="true" />{t("trader.cash.newMovement")}</Button> : null}
+        actions={companyId ? <Button onClick={() => { setNotice(null); setFollowUp(null); setAdding(true); }} data-testid="cash-new-movement"><Plus aria-hidden="true" />{t("trader.cash.newMovement")}</Button> : null}
       />
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
-      {notice ? <p role="status" className="mb-3 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="cash-notice">{notice}</p> : null}
+      {notice ? (
+        <div role="status" className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-success/40 bg-success-soft p-2 text-sm" data-testid="cash-notice">
+          <span>{notice}</span>
+          {followUp ? <Button type="button" size="sm" variant="secondary" onClick={() => { setWhatsapp({ kind: "receipt", receiptId: followUp.receiptId }); }} data-testid="cash-receipt-whatsapp">{t("trader.whatsapp.sendReceipt")}</Button> : null}
+        </div>
+      ) : null}
       {report.data && accounts.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-fg-muted">
           <p className="font-medium text-fg">{t("trader.cash.empty")}</p>
@@ -164,8 +173,10 @@ export function CashPage() {
       ) : null}
 
       {adding && companyId ? (
-        <CashMovementDialog open onClose={() => { setAdding(false); }} companyId={companyId} companyCurrency={companyCurrency} accountId={current?.id} onDone={setNotice} />
+        <CashMovementDialog open onClose={() => { setAdding(false); }} companyId={companyId} companyCurrency={companyCurrency} accountId={current?.id} onDone={(text, follow) => { setNotice(text); setFollowUp(follow); }} />
       ) : null}
+
+      {whatsapp && companyId ? <WhatsAppDialog subject={whatsapp} companyId={companyId} onClose={() => { setWhatsapp(null); }} /> : null}
 
       <Dialog open={undoing !== null} onOpenChange={(isOpen) => { if (!isOpen) { setUndoing(null); } }}>
         <DialogContent closeLabel={t("common.close")} className="max-w-md">

@@ -10,6 +10,7 @@ import { DecimalField, Field, FormError, SelectField, TextField } from "../commo
 import { useCompanyContext } from "../inventory/shared";
 import { useBankAccounts } from "../payables/shared";
 import { PrintDialog, type PrintSubject } from "../print/PrintDialog";
+import { WhatsAppDialog, type WhatsAppSubject } from "../trader/WhatsAppDialog";
 import { type Invoice, money, n, printVariants, remainingOf, usePostedInvoices } from "./shared";
 
 interface Collected {
@@ -40,6 +41,7 @@ export function PhoneCollectPage() {
   const [problem, setProblem] = useState<FormProblem | null>(null);
   const [done, setDone] = useState<Collected | null>(null);
   const [printing, setPrinting] = useState<PrintSubject | null>(null);
+  const [whatsapp, setWhatsapp] = useState<WhatsAppSubject | null>(null);
 
   const invoicesOf = (partner: string): Invoice[] => open.filter((invoice) => invoice.partnerId === partner).sort(oldestFirst);
   const choosePartner = (partner: string): void => {
@@ -127,6 +129,7 @@ export function PhoneCollectPage() {
         <div className="flex flex-col gap-3 rounded-lg border border-success/40 bg-success-soft p-4" data-testid="phone-collected">
           <p role="status" className="font-medium">{t("phone.collect.collected", { number: done.number, amount: money(done.amount, done.currency) })}</p>
           <Button type="button" size="lg" className="h-12 text-base" onClick={() => { setPrinting({ documentType: "bank_receipt", documentId: done.id, number: done.number, partnerId: done.partnerId, variants: printVariants }); }} data-testid="phone-receipt-pdf">{t("phone.collect.receiptPdf")}</Button>
+          <Button type="button" size="lg" variant="secondary" className="h-12 text-base" onClick={() => { setWhatsapp({ kind: "receipt", receiptId: done.id }); }} data-testid="phone-receipt-whatsapp">{t("trader.whatsapp.sendReceipt")}</Button>
           <Button type="button" size="lg" variant="secondary" className="h-12 text-base" onClick={reset} data-testid="phone-collect-another">{t("phone.collect.another")}</Button>
           <Button asChild size="lg" variant="ghost" className="h-12 text-base">
             <Link to="/p" data-testid="phone-collect-home">{t("phone.tabs.home")}</Link>
@@ -189,6 +192,7 @@ export function PhoneCollectPage() {
         </form>
       )}
       {printing ? <PrintDialog subject={printing} onClose={() => { setPrinting(null); }} /> : null}
+      {whatsapp ? <WhatsAppDialog subject={whatsapp} companyId={companyId} onClose={() => { setWhatsapp(null); }} /> : null}
     </div>
   );
 }

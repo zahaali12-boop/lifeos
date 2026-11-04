@@ -324,6 +324,27 @@ would also throw away the tests and the invariants that make the books right.
     a transfer between two foreign currencies (through an account in the company's currency); other income (interest,
     a refund) from this window; a printed transfer voucher.
 
+25. **WhatsApp to a customer: a reminder of what he owes, a payment confirmed, the documents attached** (T15,
+    A-211). The founder wants to remind customers of their dues by WhatsApp and to confirm a payment received, with the
+    invoice or the receipt attached. The print dialog already sends any document's link by WhatsApp (ADR-0022
+    amendment); this slice writes the message. One dialog, `WhatsAppDialog`, reached from Money (who owes and the chase
+    list), Sales (an unpaid invoice's row and its details; the next step after a payment), Cash & bank (the notice after
+    a customer's payment from the movement window) and the phone's Customers and Collect screens. A *reminder* names
+    the customer's total, the part past due (a sentence left out when nothing is late) and every open invoice, the
+    oldest due first, with what is open on each; a *confirmation* names what was received, the day, the receipt's
+    number, the invoices it paid with what each still has open, and the balance after. Both are written from a
+    template with placeholders in braces, in the customer's own language (`defaultLanguage`, switchable in the dialog),
+    the company's own wording when it has written one (company settings `trader.whatsapp.<reminder|receipt>.<en|ar>`,
+    edited on Settings with the placeholders explained, the program's standard text when empty) and editable for the
+    one send. The documents chosen (the statement, the invoice, the receipt, the invoices a receipt paid) become share
+    links through the print pipeline (branded layouts, 7 days unless said otherwise) listed under the text, each named;
+    WhatsApp then opens on the customer's number with the message ready, and a number typed in is kept on the customer.
+    The send is logged as a note on the customer (`crm-activities`, kind `note`, the full text) beside the share logged
+    on each document, so who was reminded of what, and when, is on the record. Nothing is sent by the server: delivery
+    is known by the links' openings, as before. Deferred: a Business API adapter (templates approved by WhatsApp,
+    delivery receipts, sending without the trader's phone); a reminder to every late customer at once; "last reminded
+    on" beside the chase list; the message in a language other than Arabic or English.
+
 ## Consequences
 
 * A small business gets a program it can read, and the founder sells one product with two faces rather than two

@@ -18,6 +18,18 @@ public static class TraderSettingKeys
     /// <summary>The equity account the owner's money taken out is debited to (string, an account code of the company's chart; default 3600, distributions).</summary>
     public const string OwnerDrawingsAccount = "trader.owner.drawings_account";
 
+    /// <summary>The company's own wording of the WhatsApp reminder of what a customer owes, in English (string; placeholders in braces; the program's default when empty; ADR-0035 §25).</summary>
+    public const string WhatsAppReminderEn = "trader.whatsapp.reminder.en";
+
+    /// <summary>The same reminder in Arabic.</summary>
+    public const string WhatsAppReminderAr = "trader.whatsapp.reminder.ar";
+
+    /// <summary>The company's own wording of the WhatsApp confirmation of a payment received, in English (string; placeholders in braces; the program's default when empty).</summary>
+    public const string WhatsAppReceiptEn = "trader.whatsapp.receipt.en";
+
+    /// <summary>The same confirmation in Arabic.</summary>
+    public const string WhatsAppReceiptAr = "trader.whatsapp.receipt.ar";
+
     /// <summary>The sales price list pricing reads and writes (string, the list's id); the company's default list when empty.</summary>
     public const string PriceListId = "trader.pricing.price_list_id";
 
